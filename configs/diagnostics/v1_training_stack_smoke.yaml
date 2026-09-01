@@ -1,0 +1,92 @@
+schema_version: transfuser_lite_v1
+
+project:
+  name: aic_transfuser_lite
+  version: v1-training-stack-diagnostic-smoke
+  seed: 42
+
+data:
+  sample_rate_hz: 10
+  sync_tolerance_ms: 100
+  image_height: 180
+  image_width: 320
+  lidar_points: 1080
+  lidar_min_range_m: 0.05
+  lidar_max_range_m: 30.0
+  ego_dim: 1
+  ego_features:
+    - speed_mps
+  prediction_horizon_sec: 3.0
+  num_waypoints: 6
+  mode_classes:
+    follow: 0
+    avoid_left: 1
+    avoid_right: 2
+    overtake: 3
+    return_to_center: 4
+    stop: 5
+
+model:
+  name: transfuser_lite
+  initialization: component_seeded_v1
+  hidden_dim: 128
+  camera:
+    backbone: resnet18
+    pretrained: true
+    token_h: 8
+    token_w: 8
+  lidar:
+    encoder: cnn1d
+    token_count: 64
+    use_valid_mask: false
+    use_bev: false
+  ego:
+    hidden_dim: 64
+  fusion:
+    type: transformer_encoder
+    depth: 3
+    heads: 4
+    mlp_ratio: 4
+    dropout: 0.1
+    pooling: learned_cls
+  heads:
+    waypoints: true
+    target_speed: true
+    stop: false
+    behavior_mode: false
+    direct_control_aux: false
+
+loss_weights:
+  waypoint: 1.0
+  speed: 0.2
+  shape: 0.0
+  stop: 0.0
+  mode: 0.0
+  direct_control: 0.0
+
+training:
+  batch_size: 64
+  epochs: 2
+  num_workers: 2
+  data_order_seed: 42
+  optimizer: adamw
+  main_learning_rate: 0.0003
+  backbone_learning_rate: 0.00003
+  weight_decay: 0.01
+  mixed_precision: true
+  grad_clip_norm: 5.0
+  warmup_fraction: 0.05
+  min_lr_ratio: 0.01
+  early_stopping_patience: 8
+  early_stopping_min_delta_m: 0.005
+  pin_memory: true
+  persistent_workers: true
+  prefetch_factor: 2
+  freeze_backbone_epochs: 1
+  waypoint_horizon_weights:
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0
+    - 1.0

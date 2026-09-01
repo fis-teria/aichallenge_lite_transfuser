@@ -1,0 +1,46 @@
+sample:
+  sample_id: run_0001_000123
+  run_id: run_0001
+  scenario_id: normal_lap
+  timestamp_ns: 1234567890123456789
+
+  input:
+    image:
+      path: images/run_0001_000123.jpg
+      stamp_ns: 1234567890120000000
+      shape: [180, 320, 3]
+    lidar:
+      path: lidar/run_0001_000123.npy
+      stamp_ns: 1234567890118000000
+      shape: [1080]
+      unit: m
+    ego:
+      velocity_mps: 5.2
+      lateral_velocity_mps: 0.0
+      heading_rate_rps: 0.02
+      steering_tire_angle_rad: 0.04
+      gear: 1
+
+  label:
+    waypoint_frame: base_link
+    waypoint_times_sec: [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+    future_waypoints_m:
+      - [1.0, 0.02]
+      - [2.0, 0.04]
+      - [3.0, 0.10]
+      - [4.0, 0.16]
+      - [5.0, 0.20]
+      - [6.0, 0.25]
+    target_speed_mps: 4.5
+    stop_flag: 0
+    behavior_mode: follow
+    direct_control:
+      steering_tire_angle_rad: 0.05
+      acceleration_mps2: 0.4
+
+  teacher_debug_only:
+    source: manual
+    quality_score: 0.92
+    min_front_distance_m: 8.5
+    collision: false
+    offtrack: false

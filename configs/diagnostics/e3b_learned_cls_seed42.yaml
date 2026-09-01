@@ -1,0 +1,71 @@
+project:
+  name: aic_transfuser_lite
+  version: v0.1-diagnostic-paired
+  seed: 42
+
+data:
+  sample_rate_hz: 10
+  sync_tolerance_ms: 100
+  image_height: 180
+  image_width: 320
+  lidar_points: 1080
+  lidar_min_range_m: 0.05
+  lidar_max_range_m: 30.0
+  ego_dim: 1
+  ego_features:
+    - speed_mps
+  prediction_horizon_sec: 3.0
+  num_waypoints: 6
+  mode_classes:
+    follow: 0
+    avoid_left: 1
+    avoid_right: 2
+    overtake: 3
+    return_to_center: 4
+    stop: 5
+
+model:
+  name: transfuser_lite
+  initialization: component_seeded_v1
+  hidden_dim: 128
+  camera:
+    backbone: resnet18
+    pretrained: false
+    token_h: 8
+    token_w: 8
+  lidar:
+    encoder: cnn1d
+    token_count: 64
+    use_valid_mask: false
+    use_bev: false
+  ego:
+    hidden_dim: 64
+  fusion:
+    type: transformer_encoder
+    depth: 3
+    heads: 4
+    mlp_ratio: 4
+    dropout: 0.1
+    pooling: learned_cls
+  heads:
+    waypoints: true
+    target_speed: true
+    stop: true
+    behavior_mode: true
+    direct_control_aux: true
+
+loss_weights:
+  waypoint: 1.0
+  speed: 0.3
+  stop: 0
+  mode: 0
+  direct_control: 0.0
+  smoothness: 0.0
+
+training:
+  batch_size: 64
+  epochs: 100
+  learning_rate: 0.0003
+  weight_decay: 0.01
+  num_workers: 8
+  data_order_seed: 42

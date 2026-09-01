@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "metric_version": "transfuser_lite_diagnostic_v1",
+  "provenance": {
+    "selection": "First sustained positive steering-proxy segment reaching 0.35 rad in each run, frozen after the v0 audit.",
+    "steering_reference": "direct_steering_rad is a command-derived v0 teacher proxy, not measured steering.",
+    "teacher_waypoints": "v0 command-integrated proxy, not measured future pose.",
+    "final_gate_eligible": false
+  },
+  "dataset_sha256": {
+    "index.csv": "6690d6aebb8199864c68b3f3c3e20a6ca0902cfacb85eddf96720e618dc066b7",
+    "train_index.csv": "b9ee0f104e8a78229cc3620b75b5a26a9ed07a8b40ba651734d6f3e3e1b3b5fc",
+    "val_index.csv": "38d9ea792425dcdf8becbff6eb936ab911ad949f728dc83930193288c44f005e",
+    "test_index.csv": "3d709d0765629be7cd2fdfa4984f6b82f4575ef2dffc0f2744f50057a55ec419"
+  },
+  "controller": {
+    "wheelbase_m": 1.087,
+    "min_lookahead_m": 1.0,
+    "max_steer_rad": 0.6,
+    "source": "Current ROS runtime defaults; wheelbase remains pending primary-source confirmation."
+  },
+  "windows": {
+    "train": {
+      "start_sample_id": "vehicle_x1_mpc_1_000183",
+      "end_sample_id": "vehicle_x1_mpc_1_000206"
+    },
+    "val": {
+      "start_sample_id": "vehicle_x1_mpc_2_000064",
+      "end_sample_id": "vehicle_x1_mpc_2_000090"
+    },
+    "test": {
+      "start_sample_id": "vehicle_x1_mpc_3_000075",
+      "end_sample_id": "vehicle_x1_mpc_3_000100"
+    }
+  }
+}

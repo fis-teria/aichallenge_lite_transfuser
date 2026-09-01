@@ -1,0 +1,16 @@
+{
+  "format_version": "transfuser_lite_v1_offline_reference_v1",
+  "test": {
+    "ade_m": 0.5117652416229248,
+    "fde_m": 1.0373743772506714,
+    "sharp_controller_proxy_mae_rad": 0.053
+  },
+  "source": {
+    "v0_evaluation": "runs/diagnostics/e0_v0_replay_seed42_100ep/evaluation_v2.json",
+    "v0_evaluation_sha256": "d1569640cade513f105ee2054f9a07f42badc56c67a2f1b889b306eafa6f676c",
+    "v0_checkpoint_sha256": "44e45bae8b4dd79ccfac8131ea207ebea78d647caa6f152e446c0cdf238e2085",
+    "v0_actual_sharp_curvature_bucket_mae_rad": 0.0366118885576725,
+    "sharp_acceptance_ceiling_source": "Detailed design section 19 fixes the v1 acceptance ceiling at 0.053 rad.",
+    "comparability": "ADE/FDE are the frozen v0 diagnostic baseline. v0 labels are command-derived while Dataset v2 labels are measured-pose-derived, so the report must retain this provenance caveat."
+  }
+}
