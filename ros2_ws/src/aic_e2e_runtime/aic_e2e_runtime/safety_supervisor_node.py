@@ -13,6 +13,10 @@ from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import Image, LaserScan
 from std_msgs.msg import Float32, String
 
+from .canonical_source import prefer_canonical_source
+
+prefer_canonical_source()
+
 from aic_transfuser_lite.control.safety_supervisor import (
     SafetyConfig,
     SensorStamps,

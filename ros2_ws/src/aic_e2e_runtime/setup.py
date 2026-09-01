@@ -4,20 +4,18 @@ from setuptools import find_packages, setup
 
 package_name = "aic_e2e_runtime"
 canonical_source = Path(__file__).resolve().parents[3] / "src"
-runtime_packages = [
-    name for name in find_packages(exclude=["test"]) if not name.startswith("aic_transfuser_lite")
+canonical_python_data = [
+    (
+        "share/" + package_name + "/python_src/" + str(path.parent.relative_to(canonical_source)),
+        [str(path)],
+    )
+    for path in sorted((canonical_source / "aic_transfuser_lite").rglob("*.py"))
 ]
-canonical_packages = find_packages(
-    where=str(canonical_source), include=["aic_transfuser_lite*"]
-)
 
 setup(
     name=package_name,
     version="0.3.0",
-    packages=runtime_packages + canonical_packages,
-    package_dir={
-        "aic_transfuser_lite": str(canonical_source / "aic_transfuser_lite"),
-    },
+    packages=find_packages(exclude=["test"]),
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
@@ -25,7 +23,7 @@ setup(
         ("share/" + package_name + "/config", glob("config/*")),
         ("share/" + package_name + "/ckpt", glob("ckpt/*.pt")),
         ("share/" + package_name, ["aic_transfuser_lite_vendor.sha256"]),
-    ],
+    ] + canonical_python_data,
     install_requires=["setuptools"],
     zip_safe=False,
     maintainer="fis-teria",

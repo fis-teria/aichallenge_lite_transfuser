@@ -15,6 +15,10 @@ from sensor_msgs.msg import Image, LaserScan
 from std_msgs.msg import Float32MultiArray, String
 import torch
 
+from .canonical_source import prefer_canonical_source
+
+prefer_canonical_source()
+
 from aic_transfuser_lite.contracts.model_batch_v3 import ModelBatchV3
 from aic_transfuser_lite.data.image_preprocess import preprocess_image
 from aic_transfuser_lite.data.normalization import normalize_lidar_range_and_validity
