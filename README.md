@@ -58,6 +58,12 @@ Ackermann control command
 └── ros2_ws/src/aic_e2e_runtime/      # ROS 2統合骨格
 ```
 
+## Codex編集環境とWSL学習環境
+
+Windowsの`E:\workspace\e2e_lite_transfuser`をCodexの編集元・Git正本、WSLの`/home/thistle/e2e_autonomous/e2e_lite_transfuser`を本学習・Linux/CUDA/ROS検証環境として運用する。
+
+コミット単位の安全な同期手順、除外する学習資産、検証コマンドは[`docs/windows_codex_wsl_training_workflow.md`](docs/windows_codex_wsl_training_workflow.md)を参照する。
+
 ## 最初の確認
 
 Python 3.10以上を想定しています。

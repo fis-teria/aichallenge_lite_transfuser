@@ -39,6 +39,17 @@
 5. 大きなデータ・重み・rosbagをGitへ追加していない。
 6. ROSコードの場合、公式環境で未確認ならその旨を明記している。
 
+## Windows / WSL Workflow
+
+- Codexの編集元・Git正本は`E:\workspace\e2e_lite_transfuser`とする。
+- 本学習・Linux/CUDA/ROS検証は`/home/thistle/e2e_autonomous/e2e_lite_transfuser`で行う。
+- `/mnt/e`上では学習しない。`.venv`、datasets、runs、checkpoint、rosbag、ROS build出力はWSL側に保持する。
+- Windows側で変更をコミットしてから`tools/sync_to_wsl.ps1`で同一コミットをWSLへ同期する。強制reset、cleanup、`rsync --delete`で同期しない。
+- WSLおよびSSH接続先から`git push`しない。pushは必ずWindowsのローカルPC側checkoutから行う。
+- 同期前にWindows/WSL両方のGit状態、実行中の学習プロセス、対象commit SHAを確認する。
+- WSLで学習・テスト・ROS検証を実行するときは`tools/with_wsl_training_lock.sh`を通し、同期と同じworktree lockを保持する。
+- 詳細は`docs/windows_codex_wsl_training_workflow.md`を参照する。
+
 ## Work Order
 
 1. dataset audit
