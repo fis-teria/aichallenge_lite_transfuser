@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/fis-teria/aichallenge_lite_transfuser/schemas/model_batch_v3.schema.json",
+  "title": "AIC ModelBatchV3 tensor contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format_version", "tensors", "units"],
+  "properties": {
+    "format_version": {"const": "aic_model_batch_v3"},
+    "tensors": {
+      "type": "object",
+      "properties": {
+        "image": {"const": "[B,Tc,3,H,W]"},
+        "image_mask": {"const": "[B,Tc] bool"},
+        "lidar": {"const": "[B,Tl,2,P]"},
+        "lidar_mask": {"const": "[B,Tl] bool"},
+        "ego": {"const": "[B,Te,Fe]"},
+        "ego_feature_mask": {"const": "[B,Te,Fe] bool"},
+        "command_history": {"const": "[B,Tu,3]"},
+        "command_mask": {"const": "[B,Tu] bool"},
+        "sensor_dt_sec": {"const": "[B,Tc,M]"}
+      },
+      "required": ["image", "image_mask", "lidar", "lidar_mask", "ego", "ego_feature_mask", "command_history", "command_mask", "sensor_dt_sec"]
+    },
+    "units": {
+      "const": {"distance": "m", "angle": "rad", "speed": "m/s", "acceleration": "m/s^2", "time": "s"}
+    }
+  }
+}

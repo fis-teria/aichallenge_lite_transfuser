@@ -18,6 +18,9 @@ dependencies = [
   "torchvision>=0.17",
 ]
 
+[project.scripts]
+aic-e2e = "aic_transfuser_lite.cli:main"
+
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "matplotlib>=3.8"]
 

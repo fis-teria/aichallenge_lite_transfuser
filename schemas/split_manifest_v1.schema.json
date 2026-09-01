@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/fis-teria/aichallenge_lite_transfuser/schemas/split_manifest_v1.schema.json",
+  "title": "AIC leakage-safe split manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format_version",
+    "split_seed",
+    "dataset_manifest_sha256",
+    "assignments",
+    "fixed_benchmark_group_ids",
+    "leakage",
+    "manifest_sha256"
+  ],
+  "properties": {
+    "format_version": {"const": "aic_split_manifest_v1"},
+    "split_seed": {"type": "integer"},
+    "dataset_manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "assignments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["run_id", "group_id", "component_id", "split"],
+        "properties": {
+          "run_id": {"type": "string", "minLength": 1},
+          "group_id": {"type": "string", "pattern": "^[0-9a-f]{24}$"},
+          "component_id": {"type": "string", "pattern": "^[0-9a-f]{24}$"},
+          "split": {"enum": ["train", "validation", "test", "benchmark"]}
+        }
+      }
+    },
+    "fixed_benchmark_group_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[0-9a-f]{24}$"}
+    },
+    "leakage": {"type": "object"},
+    "manifest_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

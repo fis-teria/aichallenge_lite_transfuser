@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aic.example/schemas/experiment_manifest_v1.schema.json",
+  "title": "AIC experiment manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "dataset_hash", "split_hash", "view_hash", "contract_hash", "seed"],
+  "properties": {
+    "format": {"const": "aic_experiment_manifest_v1"},
+    "dataset_hash": {"type": "string", "minLength": 1},
+    "split_hash": {"type": "string", "minLength": 1},
+    "view_hash": {"type": "string", "minLength": 1},
+    "contract_hash": {"type": "string", "minLength": 1},
+    "seed": {"type": "integer", "minimum": 0}
+  }
+}

@@ -17,10 +17,11 @@ from aic_transfuser_lite.control.safety_supervisor import (
     SafetyConfig,
     SensorStamps,
     apply_safety,
+    clamp_command_envelope,
 )
 from aic_transfuser_lite.control.waypoint_controller import ControlCommand
 
-from .runtime_adapter import stamp_to_seconds
+from .runtime_adapter import strict_message_stamp_to_seconds
 
 
 class SafetySupervisorNode(Node):
@@ -40,6 +41,7 @@ class SafetySupervisorNode(Node):
         self.scan_stamp_sec = -math.inf
         self.ego_stamp_sec = -math.inf
         self.nominal_stamp_sec = -math.inf
+        self.nominal_valid_until_sec = -math.inf
         self.scan: LaserScan | None = None
         self.speed_mps = 0.0
         self.stop_probability: float | None = None
@@ -64,31 +66,52 @@ class SafetySupervisorNode(Node):
         return self.get_clock().now().nanoseconds * 1e-9
 
     def _on_image(self, message: Image) -> None:
-        now = self._now_sec()
-        self.image_stamp_sec = stamp_to_seconds(message.header.stamp, now)
+        try:
+            self.image_stamp_sec = strict_message_stamp_to_seconds(message)
+        except ValueError:
+            self.image_stamp_sec = -math.inf
 
     def _on_scan(self, message: LaserScan) -> None:
-        now = self._now_sec()
         self.scan = message
-        self.scan_stamp_sec = stamp_to_seconds(message.header.stamp, now)
+        try:
+            self.scan_stamp_sec = strict_message_stamp_to_seconds(message)
+        except ValueError:
+            self.scan_stamp_sec = -math.inf
 
     def _on_odom(self, message: Odometry) -> None:
-        now = self._now_sec()
         linear = message.twist.twist.linear
         self.speed_mps = math.hypot(float(linear.x), float(linear.y))
-        self.ego_stamp_sec = stamp_to_seconds(message.header.stamp, now)
+        try:
+            self.ego_stamp_sec = strict_message_stamp_to_seconds(message)
+        except ValueError:
+            self.ego_stamp_sec = -math.inf
 
     def _on_stop(self, message: Float32) -> None:
         self.stop_probability = float(message.data)
 
     def _on_nominal(self, message: AckermannControlCommand) -> None:
-        speed_mps = float(message.longitudinal.speed)
-        self.nominal_speed_mps = max(speed_mps, 0.0) if math.isfinite(speed_mps) else math.nan
-        self.nominal = ControlCommand(
-            steering_rad=float(message.lateral.steering_tire_angle),
-            acceleration_mps2=float(message.longitudinal.acceleration),
-        )
-        self.nominal_stamp_sec = self._now_sec()
+        now = self._now_sec()
+        try:
+            source_stamp = strict_message_stamp_to_seconds(message)
+            envelope = clamp_command_envelope(
+                proposed_speed_mps=float(message.longitudinal.speed),
+                source_observation_stamp_sec=source_stamp,
+                generated_stamp_sec=source_stamp,
+                requested_valid_until_sec=source_stamp + self.config.nominal_timeout_sec,
+                now_sec=now,
+                config=self.config,
+            )
+            self.nominal_speed_mps = envelope.speed_mps
+            self.nominal = ControlCommand(
+                steering_rad=float(message.lateral.steering_tire_angle),
+                acceleration_mps2=float(message.longitudinal.acceleration),
+            )
+            self.nominal_stamp_sec = source_stamp
+            self.nominal_valid_until_sec = envelope.valid_until_sec
+        except (ValueError, TimeoutError) as error:
+            self.nominal_stamp_sec = -math.inf
+            self.nominal_valid_until_sec = -math.inf
+            self.last_reason = f"nominal_rejected:{error}"
 
     def _publish(
         self, command: ControlCommand, reason: str, *, commanded_speed_mps: float
@@ -113,7 +136,7 @@ class SafetySupervisorNode(Node):
         if self.scan is None:
             self._publish(brake, "scan_missing", commanded_speed_mps=0.0)
             return
-        if now - self.nominal_stamp_sec > max(self.config.camera_timeout_sec, 0.3):
+        if now > self.nominal_valid_until_sec:
             self._publish(brake, "nominal_command_timeout", commanded_speed_mps=0.0)
             return
         if not math.isfinite(self.nominal_speed_mps):

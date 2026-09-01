@@ -25,6 +25,7 @@ setup(
         "console_scripts": [
             "inference_node = aic_e2e_runtime.inference_node:main",
             "inference_node_v1 = aic_e2e_runtime.inference_node_v1:main",
+            "inference_node_v3 = aic_e2e_runtime.inference_node_v3:main",
             "safety_supervisor_node = aic_e2e_runtime.safety_supervisor_node:main",
         ],
     },

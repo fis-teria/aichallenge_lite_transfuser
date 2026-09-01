@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/fis-teria/aichallenge_lite_transfuser/schemas/model_output_v3.schema.json",
+  "title": "AIC ModelOutputV3 tensor contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format_version", "required", "optional", "units"],
+  "properties": {
+    "format_version": {"const": "aic_model_output_v3"},
+    "required": {
+      "const": {
+        "trajectory_xy": "[B,K,N,2]",
+        "trajectory_speed_mps": "[B,K,N]",
+        "candidate_logits": "[B,K]"
+      }
+    },
+    "optional": {
+      "type": "array",
+      "items": {"enum": ["trajectory_log_sigma", "stop_logit", "risk_logits", "behavior_logits", "current_control", "control_sequence"]},
+      "uniqueItems": true
+    },
+    "units": {
+      "const": {"trajectory_xy": "m", "trajectory_speed": "m/s", "steering": "rad", "acceleration": "m/s^2"}
+    }
+  }
+}

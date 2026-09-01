@@ -1,0 +1,45 @@
+format: aic_model_config_v3
+model:
+  name: full_control_lite_v3
+  candidates: 1
+  trajectory_steps: 15
+  hidden_dim: 128
+  camera_tokens_hw: [4, 4]
+  lidar_tokens: 32
+  fusion_depth: 2
+  fusion_heads: 4
+  max_sensor_history: 4
+  max_ego_history: 10
+  control_head_enabled: true
+  control_bounds:
+    max_steering_rad: 0.6
+    max_speed_mps: 12.0
+    min_acceleration_mps2: -4.0
+    max_acceleration_mps2: 2.0
+data:
+  image_history_length: 4
+  lidar_history_length: 4
+  ego_history_length: 10
+  command_history_length: 10
+  image_height: 224
+  image_width: 384
+  lidar_points: 750
+  lidar_min_range_m: 0.0
+  lidar_max_range_m: 25.0
+  ego_features: [longitudinal_speed_mps, lateral_speed_mps, yaw_rate_rps, actual_steering_rad]
+targets:
+  current_control_order: [steering_rad, speed_mps, acceleration_mps2]
+  teacher_priority: [nominal, final_fallback]
+loss:
+  trajectory: 1.0
+  speed_profile: 0.5
+  current_control: 0.2
+  trajectory_regression_gate:
+    metric: trajectory_ade_m
+    max_relative_regression: 0.02
+training:
+  epochs: 50
+  target_vram_gb: 8
+  micro_batch_size: 2
+  gradient_accumulation_steps: 8
+  checkpoint_every_steps: 100

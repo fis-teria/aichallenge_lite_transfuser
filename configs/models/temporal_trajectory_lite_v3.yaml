@@ -1,0 +1,23 @@
+format: aic_model_config_v3
+model:
+  name: full_control_lite_v3
+  temporal_steps: 1
+  candidates: 1
+  trajectory_steps: 15
+  hidden_dim: 128
+  camera_tokens_hw: [4, 4]
+  lidar_tokens: 32
+  fusion_depth: 2
+  fusion_heads: 4
+data:
+  image_height: 224
+  image_width: 384
+  lidar_points: 750
+  ego_dim: 8
+units:
+  trajectory: m
+  speed: m/s
+training:
+  target_vram_gb: 8
+  micro_batch_size: 4
+  gradient_accumulation_steps: 4

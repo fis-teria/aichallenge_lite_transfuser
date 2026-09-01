@@ -166,3 +166,82 @@ python -m aic_transfuser_lite.training.train \
 - 手動走行データだけでは、回避不能停止や復帰ケースが不足する可能性があります。
 - モデル出力が妥当に見えても、センサ遅延や制御周期の不一致でclosed-loop挙動は崩れます。
 - ROS 2統合骨格は、公式環境の実際のメッセージ定義に合わせて調整してください。
+
+## V3 canonical data CLI
+
+V3のデータ基盤は、versioned topic profile、metadata-only bag inventory、
+clock epoch、同期、atomic canonical storage、audit、leakage-safe split、V1互換viewを
+`aic-e2e`から操作する。V1のconfig、Dataset v2、model、checkpoint、runtimeは変更しない。
+
+```bash
+python -m aic_transfuser_lite.cli bag scan \
+  --input-root /path/to/bags --output /tmp/bag_inventory.json
+
+python -m aic_transfuser_lite.cli bag validate \
+  --input-root /path/to/bags \
+  --config configs/data/topic_profile_v3.yaml \
+  --output /tmp/bag_validation.json
+
+python -m aic_transfuser_lite.cli dataset build \
+  --input-root /path/to/bags \
+  --config configs/data/dataset_v3.yaml \
+  --topic-profile configs/data/topic_profile_v3.yaml \
+  --dataset-id dataset_v3_001 \
+  --output /path/to/dataset_v3 \
+  --dry-run
+
+python -m aic_transfuser_lite.cli dataset audit \
+  --dataset-root /path/to/dataset_v3 --output /tmp/dataset_v3_audit
+
+python -m aic_transfuser_lite.cli dataset split \
+  --runs-json /path/to/split_runs.json \
+  --dataset-manifest-sha256 <sha256> \
+  --config configs/data/split_v3.yaml \
+  --output /path/to/split_manifest.json
+
+python -m aic_transfuser_lite.cli view build \
+  --dataset-root /path/to/dataset_v3 \
+  --config configs/data/view_v1_compat.yaml \
+  --output /path/to/view_manifest.json
+```
+
+`dataset build`の出力先は新規pathに限定し、`--resume`は完成済みで同じ
+`dataset_id`の出力だけを再利用する。`--dry-run`はDatasetを書かない。
+raw bag、Dataset、checkpoint、run artifactはGitへ追加しないこと。
+
+## V3 full-control学習（V3-018到達点）
+
+V3のfull-controlモデルは、4-frame Camera/LiDAR履歴、10-step ego/command履歴から、
+15点の軌道・速度profileと現在の`[steering rad, speed m/s, acceleration m/s^2]`を
+同時に学習する。教師はnominal commandを優先し、欠ける場合だけ
+`final_fallback` provenance付きでfinal commandを使用する。
+
+学習はLinux/CUDA環境でworkspace lockを保持して実行する。`--dry-run`はDataset、
+split、shape、full-control label能力を検証するが、run directoryやcheckpointを作らない。
+
+```bash
+tools/with_wsl_training_lock.sh .venv/bin/aic-e2e train \
+  --config configs/models/full_control_lite_v3.yaml \
+  --dataset-root /home/thistle/e2e_autonomous/datasets/aic_dataset_v3 \
+  --split-manifest /home/thistle/e2e_autonomous/datasets/aic_dataset_v3/split_manifest.json \
+  --view-config configs/data/view_temporal_v3.yaml \
+  --output /home/thistle/e2e_autonomous/runs/full_control_lite_v3 \
+  --dry-run
+
+tools/with_wsl_training_lock.sh .venv/bin/aic-e2e train \
+  --config configs/models/full_control_lite_v3.yaml \
+  --dataset-root /home/thistle/e2e_autonomous/datasets/aic_dataset_v3 \
+  --split-manifest /home/thistle/e2e_autonomous/datasets/aic_dataset_v3/split_manifest.json \
+  --view-config configs/data/view_temporal_v3.yaml \
+  --output /home/thistle/e2e_autonomous/runs/full_control_lite_v3
+```
+
+中断後は同じcommandへ`--resume`を追加する。Dataset manifest、split、view、model
+contractのhashがcheckpointと異なる場合はresumeを拒否する。actual steeringをmodel入力に
+含めるconfigでは、その値が欠損したanchorを学習対象にしない。headを無効化したまま
+current-control lossを非zeroにした場合も開始前に失敗する。
+`lidar_points`はDataset V3のnative geometryと一致必須で、既定値は現行AWSIM記録の
+750 beamsである。別geometryを黙ってresampleせず、configを明示的に変更する。
+
+ROS 2 trajectory-only profileはcontrol publisherを生成しない。AWSIM／ROS 2の実行試験は
+公式環境または指定された`graneple@192.168.3.10`で実行した結果だけを成功として扱う。

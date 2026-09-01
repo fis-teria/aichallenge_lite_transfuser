@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/fis-teria/aichallenge_lite_transfuser/schemas/dataset_v3.schema.json",
+  "title": "AIC Canonical Dataset V3 manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "dataset_id",
+    "storage_backend",
+    "topic_profile_id",
+    "coordinate_frame",
+    "distance_unit",
+    "angle_unit",
+    "time_unit",
+    "runs"
+  ],
+  "properties": {
+    "schema_version": {"const": "aic_canonical_dataset_v3"},
+    "dataset_id": {"type": "string", "minLength": 1},
+    "storage_backend": {"const": "csv_npy_jpeg"},
+    "topic_profile_id": {"type": "string", "minLength": 1},
+    "coordinate_frame": {"const": "base_link@t_obs"},
+    "distance_unit": {"const": "m"},
+    "angle_unit": {"const": "rad"},
+    "time_unit": {"const": "s"},
+    "runs": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/run_record"}
+    }
+  },
+  "$defs": {
+    "run_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "scenario_id",
+        "segment_id",
+        "source_uri",
+        "source_hash",
+        "topic_profile_id",
+        "start_stamp_ns",
+        "end_stamp_ns",
+        "capabilities",
+        "conversion_status",
+        "rejection_reasons"
+      ],
+      "properties": {
+        "run_id": {"type": "string", "minLength": 1},
+        "scenario_id": {"type": "string", "minLength": 1},
+        "segment_id": {"type": "string", "minLength": 1},
+        "source_uri": {"type": "string", "minLength": 1},
+        "source_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "topic_profile_id": {"type": "string", "minLength": 1},
+        "start_stamp_ns": {"type": "integer", "minimum": 0},
+        "end_stamp_ns": {"type": "integer", "minimum": 0},
+        "capabilities": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "conversion_status": {"enum": ["complete", "rejected", "partial"]},
+        "rejection_reasons": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "optional_numeric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "valid", "missing_reason"],
+      "properties": {
+        "value": {"type": ["number", "null"]},
+        "valid": {"type": "boolean"},
+        "missing_reason": {
+          "enum": [
+            "not_missing",
+            "not_recorded",
+            "outside_tolerance",
+            "invalid_value",
+            "not_applicable",
+            "unknown"
+          ]
+        }
+      }
+    },
+    "asset_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "valid", "source_stamp_ns", "source_age_ms", "missing_reason"],
+      "properties": {
+        "path": {"type": ["string", "null"]},
+        "valid": {"type": "boolean"},
+        "source_stamp_ns": {"type": ["integer", "null"], "minimum": 0},
+        "source_age_ms": {"type": ["number", "null"]},
+        "missing_reason": {"$ref": "#/$defs/optional_numeric/properties/missing_reason"}
+      }
+    }
+  }
+}

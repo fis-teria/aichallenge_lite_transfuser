@@ -1,0 +1,84 @@
+format_version: aic_topic_profile_v3
+profile_id: dataset_v3_default
+
+roles:
+  camera:
+    topic: /sensing/camera/image_raw
+    type: sensor_msgs/msg/Image
+    required_for_recording: true
+    required_for_conversion: true
+    timestamp_policy: header_required
+    synchronization: {policy: regular_grid_master, tolerance_ms: 40.0}
+  lidar:
+    topic: /sensing/lidar/scan
+    type: sensor_msgs/msg/LaserScan
+    required_for_recording: true
+    required_for_conversion: true
+    timestamp_policy: header_required
+    synchronization: {policy: nearest, tolerance_ms: 30.0}
+  pose:
+    topic: /localization/kinematic_state
+    type: nav_msgs/msg/Odometry
+    required_for_recording: true
+    required_for_conversion: true
+    timestamp_policy: header_required
+    synchronization: {policy: linear_interpolation, tolerance_ms: 50.0}
+  velocity:
+    topic: /vehicle/status/velocity_status
+    type: autoware_auto_vehicle_msgs/msg/VelocityReport
+    required_for_recording: true
+    required_for_conversion: true
+    timestamp_policy: stamp_required
+    synchronization: {policy: linear_interpolation, tolerance_ms: 50.0}
+  actual_steering:
+    topic: /vehicle/status/steering_status
+    type: autoware_auto_vehicle_msgs/msg/SteeringReport
+    required_for_recording: false
+    required_for_conversion: false
+    timestamp_policy: stamp_required
+    synchronization: {policy: angle_interpolation, tolerance_ms: 50.0}
+  gear:
+    topic: /vehicle/status/gear_status
+    type: autoware_auto_vehicle_msgs/msg/GearReport
+    required_for_recording: true
+    required_for_conversion: true
+    timestamp_policy: stamp_required
+    synchronization: {policy: causal_previous, tolerance_ms: 50.0}
+  nominal_command:
+    topic: /nominal_control_cmd
+    type: autoware_auto_control_msgs/msg/AckermannControlCommand
+    required_for_recording: true
+    required_for_conversion: false
+    timestamp_policy: stamp_required
+    synchronization: {policy: causal_previous, tolerance_ms: 50.0}
+  final_command:
+    topic: /control/command/control_cmd
+    type: autoware_auto_control_msgs/msg/AckermannControlCommand
+    required_for_recording: true
+    required_for_conversion: false
+    timestamp_policy: stamp_required
+    synchronization: {policy: causal_previous, tolerance_ms: 50.0}
+  clock:
+    topic: /clock
+    type: rosgraph_msgs/msg/Clock
+    required_for_recording: true
+    required_for_conversion: false
+    timestamp_policy: clock_value
+    synchronization: {policy: exact_event, tolerance_ms: null}
+  events:
+    topic: /aic/events
+    type: std_msgs/msg/String
+    required_for_recording: false
+    required_for_conversion: false
+    timestamp_policy: bag_stamp
+    synchronization: {policy: exact_event, tolerance_ms: null}
+
+capabilities:
+  camera_input: {all_roles: [camera]}
+  lidar_input: {all_roles: [lidar]}
+  trajectory_label: {all_roles: [pose, velocity]}
+  v1_compatibility: {all_roles: [camera, lidar, velocity, pose]}
+  actual_steering: {all_roles: [actual_steering]}
+  lateral_calibration: {all_roles: [final_command, actual_steering, velocity]}
+  full_control_label: {any_roles: [nominal_command, final_command]}
+  event_label: {all_roles: [events]}

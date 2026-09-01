@@ -1,0 +1,68 @@
+import hashlib
+import json
+from pathlib import Path
+
+import pytest
+import torch
+
+from aic_transfuser_lite.models.full_control_lite_v3 import FullControlLiteV3
+from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3, sha256_file_v3
+from aic_transfuser_lite.runtime.output_profiles import output_profile, validate_observation_timing
+
+
+def _artifact(tmp_path: Path) -> tuple[Path, Path, str, str, str]:
+    contract = "c" * 64
+    kwargs = dict(image_height=32, image_width=32, lidar_points=16, ego_dim=4,
+                  hidden_dim=16, camera_tokens_hw=(1, 1), lidar_tokens=2,
+                  fusion_depth=1, fusion_heads=4)
+    model = FullControlLiteV3(**kwargs)
+    checkpoint = tmp_path / "model.pt"
+    torch.save({"model": model.state_dict(), "identity": {"contract_hash": contract}}, checkpoint)
+    checkpoint_hash = sha256_file_v3(checkpoint)
+    manifest = tmp_path / "artifact.json"
+    manifest.write_text(json.dumps({
+        "format": "aic_runtime_artifact_v3", "checkpoint_sha256": checkpoint_hash,
+        "contract_hash": contract, "capabilities": ["trajectory", "speed_profile"],
+        "model_kwargs": kwargs,
+    }, sort_keys=True), encoding="utf-8")
+    return checkpoint, manifest, checkpoint_hash, sha256_file_v3(manifest), contract
+
+
+def test_strict_v3_artifact_load(tmp_path: Path) -> None:
+    args = _artifact(tmp_path)
+    loaded = load_runtime_model_v3(args[0], args[1], device=torch.device("cpu"),
+                                   expected_checkpoint_sha256=args[2],
+                                   expected_manifest_sha256=args[3], expected_contract_hash=args[4])
+    assert loaded.capabilities == frozenset({"trajectory", "speed_profile"})
+
+
+@pytest.mark.parametrize("field", ["checkpoint", "manifest", "contract"])
+def test_v3_artifact_hash_mismatch_fails(tmp_path: Path, field: str) -> None:
+    args = _artifact(tmp_path)
+    hashes = [args[2], args[3], args[4]]
+    hashes[{"checkpoint": 0, "manifest": 1, "contract": 2}[field]] = "0" * 64
+    with pytest.raises(ValueError, match="mismatch"):
+        load_runtime_model_v3(args[0], args[1], device=torch.device("cpu"),
+                              expected_checkpoint_sha256=hashes[0],
+                              expected_manifest_sha256=hashes[1], expected_contract_hash=hashes[2])
+
+
+def test_trajectory_only_has_no_nominal_control_publisher() -> None:
+    profile = output_profile("trajectory_only")
+    assert "predicted_trajectory" in profile.publisher_topics
+    assert "nominal_control_cmd" not in profile.publisher_topics
+    assert not profile.nominal_control_authority
+
+
+@pytest.mark.parametrize(
+    ("now", "camera", "roles", "message"),
+    [
+        (10.0, 9.0, {"lidar": 9.0}, "stale"),
+        (10.0, 10.1, {"lidar": 10.0}, "future_timestamp"),
+        (10.0, 9.95, {"lidar": 9.8}, "sensor_skew"),
+    ],
+)
+def test_timing_failures_are_explicit(now: float, camera: float, roles: dict[str, float], message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        validate_observation_timing(now_sec=now, camera_stamp_sec=camera,
+                                    role_stamps_sec=roles, timeout_sec=0.5, max_skew_sec=0.05)
