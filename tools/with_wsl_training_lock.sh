@@ -6,7 +6,12 @@ if (($# == 0)); then
     exit 2
 fi
 
-repository_root=$(git rev-parse --show-toplevel)
+script_directory=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+repository_root=$(git -C "$script_directory/.." rev-parse --show-toplevel)
+if test "$script_directory" != "$repository_root/tools"; then
+    printf 'Cannot resolve the TransFuser repository from script path: %s\n' "$script_directory" >&2
+    exit 1
+fi
 lock_file="$repository_root/.git/codex-wsl-worktree.lock"
 
 command -v flock >/dev/null 2>&1 || {
@@ -20,4 +25,5 @@ if ! flock -n 9; then
     exit 1
 fi
 
+cd "$repository_root"
 exec "$@"
