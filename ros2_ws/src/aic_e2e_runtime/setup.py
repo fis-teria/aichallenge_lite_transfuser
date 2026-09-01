@@ -1,13 +1,15 @@
 from glob import glob
+import os
 from pathlib import Path
 from setuptools import find_packages, setup
 
 package_name = "aic_e2e_runtime"
 canonical_source = Path(__file__).resolve().parents[3] / "src"
+setup_root = Path(__file__).resolve().parent
 canonical_python_data = [
     (
         "share/" + package_name + "/python_src/" + str(path.parent.relative_to(canonical_source)),
-        [str(path)],
+        [os.path.relpath(path, setup_root)],
     )
     for path in sorted((canonical_source / "aic_transfuser_lite").rglob("*.py"))
 ]
