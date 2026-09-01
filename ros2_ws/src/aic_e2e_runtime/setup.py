@@ -1,12 +1,23 @@
 from glob import glob
+from pathlib import Path
 from setuptools import find_packages, setup
 
 package_name = "aic_e2e_runtime"
+canonical_source = Path(__file__).resolve().parents[3] / "src"
+runtime_packages = [
+    name for name in find_packages(exclude=["test"]) if not name.startswith("aic_transfuser_lite")
+]
+canonical_packages = find_packages(
+    where=str(canonical_source), include=["aic_transfuser_lite*"]
+)
 
 setup(
     name=package_name,
     version="0.3.0",
-    packages=find_packages(exclude=["test"]),
+    packages=runtime_packages + canonical_packages,
+    package_dir={
+        "aic_transfuser_lite": str(canonical_source / "aic_transfuser_lite"),
+    },
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
