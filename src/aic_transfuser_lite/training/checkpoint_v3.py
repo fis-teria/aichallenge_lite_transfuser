@@ -40,6 +40,7 @@ def save_checkpoint_v3(
     identity.validate()
     if global_step < 0:
         raise ValueError("global_step must be non-negative")
+    numpy_rng = np.random.get_state()
     payload = {
         "format": CHECKPOINT_FORMAT_V3,
         "identity": asdict(identity),
@@ -50,7 +51,13 @@ def save_checkpoint_v3(
         "global_step": global_step,
         "rng": {
             "python": random.getstate(),
-            "numpy": np.random.get_state(),
+            "numpy": {
+                "bit_generator": numpy_rng[0],
+                "state": numpy_rng[1].tolist(),
+                "position": int(numpy_rng[2]),
+                "has_gauss": int(numpy_rng[3]),
+                "cached_gaussian": float(numpy_rng[4]),
+            },
             "torch": torch.get_rng_state(),
             "cuda": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
         },
@@ -70,7 +77,7 @@ def load_checkpoint_v3(
     scheduler: Any,
 ) -> tuple[dict[str, int], int]:
     expected_identity.validate()
-    payload = torch.load(path, map_location="cpu")
+    payload = torch.load(path, map_location="cpu", weights_only=True)
     if payload.get("format") != CHECKPOINT_FORMAT_V3:
         raise ValueError("not an AIC V3 training checkpoint")
     actual_identity = ExperimentIdentityV3(**payload["identity"])
@@ -90,7 +97,16 @@ def load_checkpoint_v3(
     elif payload["scheduler"] is not None:
         raise ValueError("checkpoint contains scheduler state but trainer does not")
     random.setstate(payload["rng"]["python"])
-    np.random.set_state(payload["rng"]["numpy"])
+    numpy_rng = payload["rng"]["numpy"]
+    np.random.set_state(
+        (
+            str(numpy_rng["bit_generator"]),
+            np.asarray(numpy_rng["state"], dtype=np.uint32),
+            int(numpy_rng["position"]),
+            int(numpy_rng["has_gauss"]),
+            float(numpy_rng["cached_gaussian"]),
+        )
+    )
     torch.set_rng_state(payload["rng"]["torch"])
     if payload["rng"]["cuda"] is not None and torch.cuda.is_available():
         torch.cuda.set_rng_state_all(payload["rng"]["cuda"])

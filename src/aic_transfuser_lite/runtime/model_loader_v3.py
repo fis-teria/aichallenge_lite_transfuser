@@ -71,7 +71,7 @@ def load_runtime_model_v3(
         raise ValueError("runtime capabilities must be a string list")
     if not {"trajectory", "speed_profile"}.issubset(capabilities):
         raise ValueError("runtime artifact lacks trajectory capability")
-    payload = torch.load(checkpoint_path, map_location="cpu")
+    payload = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
     identity = payload.get("identity")
     if not isinstance(identity, dict) or identity.get("contract_hash") != contract_hash:
         raise ValueError("checkpoint embedded contract hash mismatch")
