@@ -414,6 +414,8 @@ def load_temporal_training_batches_v3(
     for anchor, row in enumerate(rows):
         if _selected_command(row) is None:
             continue
+        if int(row["future_valid_count"]) <= 0:
+            continue
         _, current_ego_mask = _ego_row(row, ego_features)
         if not bool(current_ego_mask.all()):
             continue

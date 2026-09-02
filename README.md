@@ -224,6 +224,7 @@ Dataset V3のMCAP readerも同じ契約を使用し、V1凍結readerとは分離
 学習batchはDataset全体をRAM/GPUへ一括展開せず、選択batchのassetだけを逐次読み込み、
 optimizer stepの直前にdeviceへ転送する。`--dry-run`も同じlazy batchを全件走査して
 class weightを検証する。
+未来trajectoryのvalid stepが0件のanchorは、空mask lossを作らないよう学習対象から除外する。
 
 Full Controlは状況判断を`aic_behavior_v1`の補助Headとしても学習する。
 

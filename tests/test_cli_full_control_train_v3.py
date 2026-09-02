@@ -151,6 +151,10 @@ def test_temporal_training_loader_defers_asset_reads_until_batch_access(
     )
     assert len(batches) > 1
     assert opened == []
+    assert all(
+        int(batches.rows[anchor]["future_valid_count"]) > 0
+        for anchor in batches.usable_anchors
+    )
     first = batches[0]
     assert first.image.shape == (2, 4, 3, 32, 32)
     assert len(opened) == 8
