@@ -26,3 +26,15 @@ No measured authoritative residual limits currently exist, so residual mode
 must remain disabled outside deterministic tests. This task adds no ROS
 publisher or launch profile, does not connect a command to Safety Supervisor,
 and does not execute AWSIM. V3-023 full-control gating remains a separate task.
+
+## Verification record
+
+Commit `12fab54` passed the focused WSL suite (`12 passed`) and the combined
+repository plus ROS source suite (`411 passed`). Its exact tracked archive,
+SHA-256
+`4ce71f4aa371d57f2849d31d10162fce444d58f66449db5fbf95d60e87a6e26e`,
+passed the same 12 tests in `aichallenge-2025-dev:latest` on Graneple. The sole
+official-container warning was the expected read-only pytest-cache warning.
+
+No ROS 2 or AWSIM execution was performed for V3-022, and residual control was
+not enabled on a vehicle.
