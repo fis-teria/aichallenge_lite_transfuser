@@ -10,6 +10,8 @@ from typing import Any
 
 from autoware_auto_control_msgs.msg import AckermannControlCommand
 from autoware_auto_vehicle_msgs.msg import SteeringReport, VelocityReport
+from geometry_msgs.msg import PoseStamped
+from nav_msgs.msg import Path as PathMessage
 import numpy as np
 import rclpy
 from rclpy.node import Node
@@ -44,6 +46,7 @@ from aic_transfuser_lite.runtime.output_profiles import (
     RuntimeProfile,
     output_profile,
     runtime_clock_has_reached_observation,
+    trajectory_path_publication,
     trajectory_speed_publication,
     validate_observation_timing,
 )
@@ -75,6 +78,7 @@ class InferenceNodeV3(Node):
             "model_path": "", "artifact_manifest_path": "", "expected_checkpoint_sha256": "",
             "expected_manifest_sha256": "", "expected_contract_hash": "", "device": "auto",
             "runtime_profile": "trajectory_only",
+            "trajectory_frame_id": "base_link",
             "input_timeout_sec": 0.35, "sync_queue_size": 10,
             "sync_clock_poll_sec": 0.005,
             "max_sensor_skew_ms": 30.0,
@@ -109,6 +113,10 @@ class InferenceNodeV3(Node):
         selected_profile = output_profile(self.runtime_profile)
         if selected_profile.nominal_control_authority:
             raise RuntimeError("V3 trajectory adapter unexpectedly has control authority")
+        self.trajectory_frame_id = str(
+            self.get_parameter("trajectory_frame_id").value
+        )
+        trajectory_path_publication((0.0, 0.0), frame_id=self.trajectory_frame_id)
         requested = str(self.get_parameter("device").value)
         requested = ("cuda" if torch.cuda.is_available() else "cpu") if requested == "auto" else requested
         self.device = torch.device(requested)
@@ -197,6 +205,9 @@ class InferenceNodeV3(Node):
         self.ready_observations: deque[ReadyObservation] = deque()
         self.ready_queue_size = sync_queue_size
         self.trajectory_pub = self.create_publisher(Float32MultiArray, "predicted_trajectory", 1)
+        self.trajectory_path_pub = self.create_publisher(
+            PathMessage, "predicted_trajectory_path", 1
+        )
         self.speed_profile_pub = self.create_publisher(
             Float32MultiArray, "predicted_speed_profile", 1
         )
@@ -383,12 +394,28 @@ class InferenceNodeV3(Node):
                 output.trajectory_xy.detach().cpu().numpy(),
                 output.trajectory_speed_mps.detach().cpu().numpy(),
             )
+            path_publication = trajectory_path_publication(
+                publication.trajectory_xy_m,
+                frame_id=self.trajectory_frame_id,
+            )
             self.trajectory_pub.publish(
                 Float32MultiArray(data=list(publication.trajectory_xy_m))
             )
             self.speed_profile_pub.publish(
                 Float32MultiArray(data=list(publication.speed_profile_mps))
             )
+            path_message = PathMessage()
+            path_message.header.stamp = image.header.stamp
+            path_message.header.frame_id = path_publication.frame_id
+            for x_m, y_m in path_publication.points_xy_m:
+                pose = PoseStamped()
+                pose.header.stamp = image.header.stamp
+                pose.header.frame_id = path_publication.frame_id
+                pose.pose.position.x = x_m
+                pose.pose.position.y = y_m
+                pose.pose.orientation.w = 1.0
+                path_message.poses.append(pose)
+            self.trajectory_path_pub.publish(path_message)
             if self.shadow_control_pub is not None:
                 try:
                     self._publish_shadow_external_control(

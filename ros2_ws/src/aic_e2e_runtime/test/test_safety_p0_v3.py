@@ -115,6 +115,29 @@ def test_v3_publishes_matching_trajectory_and_speed_without_control_authority() 
     assert '"nominal_control_cmd"' not in source
 
 
+def test_v3_publishes_stamped_base_link_path_for_rviz_without_authority() -> None:
+    root = Path(__file__).parents[1]
+    source = (root / "aic_e2e_runtime" / "inference_node_v3.py").read_text()
+    launch = (
+        root / "launch" / "transfuser_lite_v3_external_controller_shadow.launch.py"
+    ).read_text()
+    rviz = (root / "config" / "v3_external_controller_shadow.rviz").read_text()
+
+    assert "from nav_msgs.msg import Path as PathMessage" in source
+    assert "from geometry_msgs.msg import PoseStamped" in source
+    assert '"predicted_trajectory_path"' in source
+    assert "path_message.header.stamp = image.header.stamp" in source
+    assert "path_message.header.frame_id = path_publication.frame_id" in source
+    assert "pose.pose.orientation.w = 1.0" in source
+    assert 'DeclareLaunchArgument("launch_rviz", default_value="false")' in launch
+    assert 'condition=IfCondition(LaunchConfiguration("launch_rviz"))' in launch
+    assert "v3_external_controller_shadow.rviz" in launch
+    assert "Fixed Frame: base_link" in rviz
+    assert "Value: /predicted_trajectory_path" in rviz
+    assert "Reliability Policy: Best Effort" in rviz
+    assert '"nominal_control_cmd"' not in source
+
+
 def test_v3_external_controller_profile_is_explicitly_shadow_only() -> None:
     root = Path(__file__).parents[1]
     source = (root / "aic_e2e_runtime" / "inference_node_v3.py").read_text()

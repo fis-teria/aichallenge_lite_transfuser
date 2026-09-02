@@ -9,6 +9,7 @@ from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3, s
 from aic_transfuser_lite.runtime.output_profiles import (
     output_profile,
     runtime_clock_has_reached_observation,
+    trajectory_path_publication,
     trajectory_speed_publication,
     validate_observation_timing,
 )
@@ -89,6 +90,7 @@ def test_trajectory_only_has_no_nominal_control_publisher() -> None:
     profile = output_profile("trajectory_only")
     assert "predicted_trajectory" in profile.publisher_topics
     assert "predicted_speed_profile" in profile.publisher_topics
+    assert "predicted_trajectory_path" in profile.publisher_topics
     assert "nominal_control_cmd" not in profile.publisher_topics
     assert not profile.nominal_control_authority
 
@@ -110,6 +112,32 @@ def test_trajectory_speed_publication_selects_matching_candidate_zero() -> None:
     assert publication.speed_profile_mps == pytest.approx(
         tuple(index / 10.0 for index in range(15))
     )
+
+
+def test_trajectory_path_publication_preserves_xy_metres_and_frame() -> None:
+    publication = trajectory_path_publication(
+        (0.25, -0.5, 1.5, 2.0), frame_id="base_link"
+    )
+
+    assert publication.frame_id == "base_link"
+    assert publication.points_xy_m == ((0.25, -0.5), (1.5, 2.0))
+
+
+@pytest.mark.parametrize(
+    ("trajectory", "frame_id", "message"),
+    [
+        ((0.0, 1.0), "", "non-empty"),
+        ((0.0, 1.0), "   ", "non-empty"),
+        ((), "base_link", r"\[N,2\]"),
+        ((0.0, 1.0, 2.0), "base_link", r"\[N,2\]"),
+        ((0.0, float("inf")), "base_link", "finite"),
+    ],
+)
+def test_trajectory_path_publication_rejects_invalid_payload(
+    trajectory: tuple[float, ...], frame_id: str, message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        trajectory_path_publication(trajectory, frame_id=frame_id)
 
 
 @pytest.mark.parametrize(

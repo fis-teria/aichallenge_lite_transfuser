@@ -86,6 +86,7 @@ publishes either message and reports success:
 | Output topic | Type / contract |
 |---|---|
 | `/v3_shadow/predicted_trajectory` | `Float32MultiArray`, flattened `[N,2]` `(x,y)` in metres |
+| `/v3_shadow/predicted_trajectory_path` | `nav_msgs/Path`, stamped `[N]` poses in `base_link` for RViz2 |
 | `/v3_shadow/predicted_speed_profile` | `Float32MultiArray`, `[N]` non-negative target speeds in m/s |
 
 The point counts must match and all values must be finite. Invalid shape,
@@ -157,6 +158,25 @@ ros2 launch aic_e2e_runtime \
   model_path:=/absolute/path/to/last.pt \
   artifact_manifest_path:=/absolute/path/to/runtime_artifact.json
 ```
+
+To open the checked-in top-down RViz2 view together with the shadow node, add
+`launch_rviz:=true`:
+
+```bash
+ros2 launch aic_e2e_runtime \
+  transfuser_lite_v3_external_controller_shadow.launch.py \
+  model_path:=/absolute/path/to/last.pt \
+  artifact_manifest_path:=/absolute/path/to/runtime_artifact.json \
+  launch_rviz:=true
+```
+
+The green `V3 Predicted Trajectory` display is the model's local future path
+in `base_link`; the red points are the native AWSIM LaserScan using best-effort
+QoS. It is not a global driven-history trace. The Path uses the source Camera
+stamp, contains one pose per validated trajectory point, and is published only
+after trajectory/speed/path validation succeeds. RViz2 is optional and has no
+control publisher. On a remote desktop host, `DISPLAY` and `XAUTHORITY` must
+refer to the logged-in graphical session before launching.
 
 Before any connection to Safety Supervisor or vehicle control, complete the V3
 calibration artifact, validate the controller against held-out scenarios, and

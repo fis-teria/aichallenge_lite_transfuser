@@ -33,8 +33,17 @@ class TrajectorySpeedPublication:
     point_count: int
 
 
+@dataclass(frozen=True)
+class TrajectoryPathPublication:
+    """ROS-independent path payload in a declared coordinate frame."""
+
+    frame_id: str
+    points_xy_m: tuple[tuple[float, float], ...]
+
+
 _BASE_TOPICS = frozenset({
     "predicted_trajectory",
+    "predicted_trajectory_path",
     "predicted_speed_profile",
     "runtime_status",
     "runtime_sync_debug",
@@ -120,6 +129,29 @@ def trajectory_speed_publication(
         trajectory_xy_m=tuple(float(value) for value in selected_points.reshape(-1)),
         speed_profile_mps=tuple(float(value) for value in selected_speeds),
         point_count=int(selected_points.shape[0]),
+    )
+
+
+def trajectory_path_publication(
+    trajectory_xy_m: tuple[float, ...],
+    *,
+    frame_id: str,
+) -> TrajectoryPathPublication:
+    """Validate flattened ``[N,2]`` metres for a stamped ROS Path message."""
+
+    if not isinstance(frame_id, str) or not frame_id.strip():
+        raise ValueError("trajectory frame_id must be a non-empty string")
+    points = np.asarray(trajectory_xy_m, dtype=np.float64)
+    if points.ndim != 1 or points.size < 2 or points.size % 2 != 0:
+        raise ValueError(
+            "trajectory_xy_m must be flattened [N,2] with at least one point"
+        )
+    if not np.isfinite(points).all():
+        raise ValueError("trajectory_xy_m must be finite")
+    shaped = points.reshape(-1, 2)
+    return TrajectoryPathPublication(
+        frame_id=frame_id,
+        points_xy_m=tuple((float(point[0]), float(point[1])) for point in shaped),
     )
 
 
