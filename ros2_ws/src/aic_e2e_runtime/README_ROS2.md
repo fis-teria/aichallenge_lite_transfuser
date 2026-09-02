@@ -162,6 +162,30 @@ Before any connection to Safety Supervisor or vehicle control, complete the V3
 calibration artifact, validate the controller against held-out scenarios, and
 run a separate authority review.
 
+### 2026-09-03 Graneple external-controller shadow verification
+
+Commit `09bd0a5` passed all 325 repository tests in WSL. The official
+`aichallenge-2025-dev:latest` environment passed the 39 focused tests and built
+the ROS 2 package. A 70-second direct AWSIM observation then recorded:
+
+- matching valid trajectory/speed outputs: 577 (`[15,2]` and `[15]`)
+- finite, stamped shadow proposals: 308
+- invalid or zero-stamp shadow proposals: 0
+- steering range: -0.5979 to 0.6000 rad
+- commanded-speed range: 0.0536 to 8.8700 m/s
+- acceleration range: -0.8552 to 2.0000 m/s^2
+- V3 `/nominal_control_cmd` publisher: absent
+- relay used: no; calibration status: `unverified`
+
+The remaining 269/577 controller attempts (46.6%) failed closed because the
+0.5 s preview target was not ahead of the ego frame. This is a model/controller
+quality blocker, not a synchronization or QoS failure, and must not be hidden
+by clamping the preview point. The observation JSON SHA-256 is
+`bef70c0c590a6882bb6a9535f561ee1a189ecba5602dc94fc2e26eb892ea85c2`.
+
+This run did not publish nominal or final vehicle commands, did not evaluate
+Safety Supervisor intervention, and did not test lap completion.
+
 Camera and LaserScan subscriptions use ROS 2 Sensor Data QoS (best effort,
 volatile) so the V3 node can consume the native AWSIM publishers without a
 reliability-changing relay. Wheel Odometry and Steer Angle keep their existing
