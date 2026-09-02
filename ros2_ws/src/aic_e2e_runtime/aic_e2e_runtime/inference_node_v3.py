@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from autoware_auto_control_msgs.msg import AckermannControlCommand
 from autoware_auto_vehicle_msgs.msg import SteeringReport, VelocityReport
 import numpy as np
 import rclpy
@@ -29,11 +30,18 @@ prefer_canonical_source()
 
 from aic_transfuser_lite.contracts.behavior_v1 import BEHAVIOR_ONTOLOGY_V1
 from aic_transfuser_lite.contracts.model_batch_v3 import ModelBatchV3
+from aic_transfuser_lite.control.delay_aware_controller import (
+    DelayAwareControllerConfig,
+)
+from aic_transfuser_lite.control.shadow_trajectory_controller import (
+    shadow_control_from_trajectory_speed_profile,
+)
 from aic_transfuser_lite.data.image_preprocess import preprocess_image
 from aic_transfuser_lite.data.normalization import normalize_lidar_range_and_validity
 from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3
 from aic_transfuser_lite.runtime.behavior_decode_v1 import decode_behavior_logits_v1
 from aic_transfuser_lite.runtime.output_profiles import (
+    RuntimeProfile,
     output_profile,
     runtime_clock_has_reached_observation,
     trajectory_speed_publication,
@@ -66,16 +74,41 @@ class InferenceNodeV3(Node):
         parameters = {
             "model_path": "", "artifact_manifest_path": "", "expected_checkpoint_sha256": "",
             "expected_manifest_sha256": "", "expected_contract_hash": "", "device": "auto",
+            "runtime_profile": "trajectory_only",
             "input_timeout_sec": 0.35, "sync_queue_size": 10,
             "sync_clock_poll_sec": 0.005,
             "max_sensor_skew_ms": 30.0,
             "lidar_min_range_m": 0.0, "lidar_max_range_m": 25.0,
             "behavior_confidence_threshold": 0.5, "behavior_temperature": 1.0,
+            "controller_calibration_status": "unverified",
+            "trajectory_step_sec": 0.1,
+            "estimated_delay_sec": 0.0,
+            "base_preview_sec": 0.35,
+            "min_preview_sec": 0.5,
+            "max_preview_sec": 1.2,
+            "wheelbase_m": 1.087,
+            "max_steer_rad": 0.6,
+            "min_accel_mps2": -4.0,
+            "max_accel_mps2": 2.0,
+            "speed_kp": 1.0,
+            "max_steering_rate_radps": 0.0,
+            "control_period_sec": 0.1,
         }
         for name, default in parameters.items():
             self.declare_parameter(name, default)
-        if output_profile("trajectory_only").nominal_control_authority:
-            raise RuntimeError("trajectory_only profile unexpectedly has control authority")
+        self.runtime_profile = RuntimeProfile(
+            str(self.get_parameter("runtime_profile").value)
+        )
+        if self.runtime_profile not in {
+            RuntimeProfile.TRAJECTORY_ONLY,
+            RuntimeProfile.EXTERNAL_CONTROLLER,
+        }:
+            raise ValueError(
+                "inference_node_v3 supports only trajectory_only or external_controller"
+            )
+        selected_profile = output_profile(self.runtime_profile)
+        if selected_profile.nominal_control_authority:
+            raise RuntimeError("V3 trajectory adapter unexpectedly has control authority")
         requested = str(self.get_parameter("device").value)
         requested = ("cuda" if torch.cuda.is_available() else "cpu") if requested == "auto" else requested
         self.device = torch.device(requested)
@@ -109,6 +142,45 @@ class InferenceNodeV3(Node):
                 "trajectory runtime requires ego_dim=4: longitudinal_velocity, "
                 "lateral_velocity, heading_rate, steering_tire_angle"
             )
+        self.controller_config: DelayAwareControllerConfig | None = None
+        if self.runtime_profile is RuntimeProfile.EXTERNAL_CONTROLLER:
+            calibration_status = str(
+                self.get_parameter("controller_calibration_status").value
+            )
+            if calibration_status != "unverified":
+                raise ValueError(
+                    "external controller shadow requires calibration_status=unverified "
+                    "until a verified V3 calibration artifact is implemented"
+                )
+            trajectory_step_sec = float(
+                self.get_parameter("trajectory_step_sec").value
+            )
+            if not np.isfinite(trajectory_step_sec) or trajectory_step_sec <= 0.0:
+                raise ValueError("trajectory_step_sec must be finite and positive")
+            waypoint_times = tuple(
+                trajectory_step_sec * (index + 1)
+                for index in range(self.model.trajectory_steps)
+            )
+            self.controller_config = DelayAwareControllerConfig(
+                waypoint_times_sec=waypoint_times,
+                estimated_delay_sec=float(
+                    self.get_parameter("estimated_delay_sec").value
+                ),
+                base_preview_sec=float(self.get_parameter("base_preview_sec").value),
+                min_preview_sec=float(self.get_parameter("min_preview_sec").value),
+                max_preview_sec=float(self.get_parameter("max_preview_sec").value),
+                wheelbase_m=float(self.get_parameter("wheelbase_m").value),
+                max_steer_rad=float(self.get_parameter("max_steer_rad").value),
+                min_accel_mps2=float(self.get_parameter("min_accel_mps2").value),
+                max_accel_mps2=float(self.get_parameter("max_accel_mps2").value),
+                speed_kp=float(self.get_parameter("speed_kp").value),
+                max_steering_rate_radps=float(
+                    self.get_parameter("max_steering_rate_radps").value
+                ),
+                control_period_sec=float(
+                    self.get_parameter("control_period_sec").value
+                ),
+            )
         self.timeout_sec = float(self.get_parameter("input_timeout_sec").value)
         self.max_skew_sec = float(self.get_parameter("max_sensor_skew_ms").value) / 1000.0
         sync_queue_size = int(self.get_parameter("sync_queue_size").value)
@@ -128,6 +200,11 @@ class InferenceNodeV3(Node):
         self.speed_profile_pub = self.create_publisher(
             Float32MultiArray, "predicted_speed_profile", 1
         )
+        self.shadow_control_pub = None
+        if self.runtime_profile is RuntimeProfile.EXTERNAL_CONTROLLER:
+            self.shadow_control_pub = self.create_publisher(
+                AckermannControlCommand, "shadow_external_control", 1
+            )
         self.status_pub = self.create_publisher(String, "runtime_status", 1)
         self.sync_debug_pub = self.create_publisher(
             Float64MultiArray, "runtime_sync_debug", 1
@@ -312,11 +389,54 @@ class InferenceNodeV3(Node):
             self.speed_profile_pub.publish(
                 Float32MultiArray(data=list(publication.speed_profile_mps))
             )
+            if self.shadow_control_pub is not None:
+                try:
+                    self._publish_shadow_external_control(
+                        publication.trajectory_xy_m,
+                        publication.speed_profile_mps,
+                        image,
+                        velocity,
+                        steering,
+                    )
+                except Exception as error:
+                    self.status_pub.publish(
+                        String(data=f"shadow_control_rejected:{error}")
+                    )
             if self.behavior_enabled:
                 self._publish_behavior(output)
             self.status_pub.publish(String(data="trajectory_published"))
         except Exception as error:
             self.status_pub.publish(String(data=f"inference_rejected:{error}"))
+
+    def _publish_shadow_external_control(
+        self,
+        trajectory_xy_m: tuple[float, ...],
+        speed_profile_mps: tuple[float, ...],
+        image: Image,
+        velocity: VelocityReport,
+        steering: SteeringReport,
+    ) -> None:
+        if self.controller_config is None or self.shadow_control_pub is None:
+            raise RuntimeError("external controller shadow is not initialized")
+        trajectory = np.asarray(trajectory_xy_m, dtype=np.float32).reshape(-1, 2)
+        speeds = np.asarray(speed_profile_mps, dtype=np.float32)
+        result = shadow_control_from_trajectory_speed_profile(
+            trajectory,
+            speeds,
+            current_longitudinal_speed_mps=float(velocity.longitudinal_velocity),
+            yaw_rate_rps=float(velocity.heading_rate),
+            actual_steering_rad=float(steering.steering_tire_angle),
+            config=self.controller_config,
+        )
+        if result.nominal_control_eligible:
+            raise RuntimeError("unverified shadow proposal became authority-eligible")
+        message = AckermannControlCommand()
+        message.stamp = image.header.stamp
+        message.longitudinal.speed = result.control.commanded_speed_mps
+        message.longitudinal.acceleration = result.control.command.acceleration_mps2
+        message.lateral.steering_tire_angle = result.control.command.steering_rad
+        self.shadow_control_pub.publish(message)
+        self.status_pub.publish(String(data="shadow_control_published:unverified"))
 
     def _make_batch(
         self,

@@ -124,6 +124,44 @@ This verifies the trajectory-plus-speed output interface only. The model did
 not own control authority, its predictions were not sent to the vehicle, and
 neither controller quality nor lap completion was tested.
 
+## v3 external-controller shadow
+
+The separate `external_controller` runtime profile passes candidate-zero
+trajectory and speed predictions through the ROS-independent delay-aware pure
+pursuit/P-speed controller. The 15 predictions correspond to the first 15
+Dataset V3 future samples at 0.1 s intervals (0.1 through 1.5 s). Lateral and
+longitudinal targets are interpolated at the same delay-adjusted preview time.
+
+This profile publishes `AckermannControlCommand` only on
+`/shadow_external_control`. The message is diagnostic: it is not remapped to
+`/nominal_control_cmd`, is not consumed by Safety Supervisor, and cannot command
+the vehicle. `controller_calibration_status` must remain `unverified` in this
+stage. The current 1.087 m wheelbase, 0.0 s delay, and disabled steering-rate
+limit are baseline assumptions pending the V3 calibration artifact; they are
+not promotion evidence.
+
+Run the pure controller unit/negative tests and publisher-ownership checks:
+
+```bash
+python3 -m pytest -q \
+  tests/test_shadow_trajectory_controller.py \
+  tests/test_runtime_v3.py \
+  ros2_ws/src/aic_e2e_runtime/test/test_safety_p0_v3.py
+```
+
+Launch the non-authoritative profile with an exact-hash runtime artifact:
+
+```bash
+ros2 launch aic_e2e_runtime \
+  transfuser_lite_v3_external_controller_shadow.launch.py \
+  model_path:=/absolute/path/to/last.pt \
+  artifact_manifest_path:=/absolute/path/to/runtime_artifact.json
+```
+
+Before any connection to Safety Supervisor or vehicle control, complete the V3
+calibration artifact, validate the controller against held-out scenarios, and
+run a separate authority review.
+
 Camera and LaserScan subscriptions use ROS 2 Sensor Data QoS (best effort,
 volatile) so the V3 node can consume the native AWSIM publishers without a
 reliability-changing relay. Wheel Odometry and Steer Angle keep their existing

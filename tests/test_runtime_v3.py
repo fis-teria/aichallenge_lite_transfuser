@@ -93,6 +93,13 @@ def test_trajectory_only_has_no_nominal_control_publisher() -> None:
     assert not profile.nominal_control_authority
 
 
+def test_external_controller_profile_is_shadow_only() -> None:
+    profile = output_profile("external_controller")
+    assert "shadow_external_control" in profile.publisher_topics
+    assert "nominal_control_cmd" not in profile.publisher_topics
+    assert not profile.nominal_control_authority
+
+
 def test_trajectory_speed_publication_selects_matching_candidate_zero() -> None:
     trajectory = torch.arange(60, dtype=torch.float32).reshape(1, 2, 15, 2)
     speeds = torch.arange(30, dtype=torch.float32).reshape(1, 2, 15) / 10.0

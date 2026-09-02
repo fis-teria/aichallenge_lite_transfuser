@@ -113,3 +113,33 @@ def test_v3_publishes_matching_trajectory_and_speed_without_control_authority() 
     assert "output.trajectory_speed_mps" in source
     assert "self.speed_profile_pub.publish" in source
     assert '"nominal_control_cmd"' not in source
+
+
+def test_v3_external_controller_profile_is_explicitly_shadow_only() -> None:
+    root = Path(__file__).parents[1]
+    source = (root / "aic_e2e_runtime" / "inference_node_v3.py").read_text()
+    launch = (
+        root / "launch" / "transfuser_lite_v3_external_controller_shadow.launch.py"
+    ).read_text()
+    params = (
+        root / "config" / "runtime.v3.external_controller_shadow.param.yaml"
+    ).read_text()
+
+    assert '"shadow_external_control"' in source
+    assert "shadow_control_from_trajectory_speed_profile(" in source
+    assert "if result.nominal_control_eligible" in source
+    assert '"nominal_control_cmd"' not in source
+    assert "runtime.v3.external_controller_shadow.param.yaml" in launch
+    assert "runtime_profile: external_controller" in params
+    assert "controller_calibration_status: unverified" in params
+    assert "trajectory_step_sec: 0.1" in params
+    assert "max_steering_rate_radps: 0.0" in params
+
+
+def test_trajectory_only_launch_does_not_select_external_controller_profile() -> None:
+    root = Path(__file__).parents[1]
+    launch = (root / "launch" / "transfuser_lite_v3_trajectory.launch.py").read_text()
+    params = (root / "config" / "runtime.v3.trajectory.param.yaml").read_text()
+
+    assert "external_controller_shadow" not in launch
+    assert "runtime_profile: external_controller" not in params

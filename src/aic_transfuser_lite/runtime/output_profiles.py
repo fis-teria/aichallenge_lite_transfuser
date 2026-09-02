@@ -44,7 +44,9 @@ _PROFILES: Mapping[RuntimeProfile, OutputProfile] = {
         frozenset({"trajectory", "speed_profile"}), _BASE_TOPICS, False
     ),
     RuntimeProfile.EXTERNAL_CONTROLLER: OutputProfile(
-        frozenset({"trajectory", "speed_profile"}), _BASE_TOPICS, False
+        frozenset({"trajectory", "speed_profile"}),
+        _BASE_TOPICS | {"shadow_external_control"},
+        False,
     ),
     RuntimeProfile.SHADOW_CONTROL: OutputProfile(
         frozenset({"trajectory", "speed_profile", "current_control"}),
