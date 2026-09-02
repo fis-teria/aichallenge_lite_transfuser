@@ -102,6 +102,8 @@ def test_ros_shadow_launch_and_node_remain_debug_only() -> None:
     assert "model_control_debug_publication(" in source
     assert '"nominal_control_cmd"' not in source
     assert "runtime.v3.shadow.param.yaml" in launch
+    assert 'DeclareLaunchArgument("launch_rviz", default_value="false")' in launch
+    assert 'condition=IfCondition(LaunchConfiguration("launch_rviz"))' in launch
     assert "safety_supervisor_node" not in launch
     assert "nominal_control_cmd" not in launch
     assert "runtime_profile: shadow_control" in params

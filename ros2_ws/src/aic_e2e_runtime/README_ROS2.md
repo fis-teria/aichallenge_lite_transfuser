@@ -250,7 +250,8 @@ Safety Supervisor. Therefore this launch alone cannot command the vehicle:
 ```bash
 ros2 launch aic_e2e_runtime transfuser_lite_v3_shadow.launch.py \
   model_path:=/absolute/path/to/last.pt \
-  artifact_manifest_path:=/absolute/path/to/runtime_artifact.json
+  artifact_manifest_path:=/absolute/path/to/runtime_artifact.json \
+  launch_rviz:=true
 ```
 
 Run the authority, shape, finite-value, negative-speed, and source-ownership
