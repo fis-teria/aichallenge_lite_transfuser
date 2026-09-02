@@ -207,6 +207,9 @@ python -m aic_transfuser_lite.cli view build \
 
 `dataset build`の出力先は新規pathに限定し、`--resume`は完成済みで同じ
 `dataset_id`の出力だけを再利用する。`--dry-run`はDatasetを書かない。
+V3 converterはpose、velocity、LiDAR、controlのtimestamp indexをrunごとに一度だけ作り、
+各sampleと未来30点の同期では二分探索を再利用する。timestampが重複または逆順のstreamは
+index作成時に明示的に拒否する。
 raw bag、Dataset、checkpoint、run artifactはGitへ追加しないこと。
 
 ## V3 full-control学習（V3-018到達点）

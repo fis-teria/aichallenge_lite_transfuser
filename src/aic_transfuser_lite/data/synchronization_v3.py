@@ -3,7 +3,7 @@ from __future__ import annotations
 from bisect import bisect_left, bisect_right
 from dataclasses import dataclass
 import math
-from typing import Generic, Sequence, TypeVar
+from typing import Generic, Iterator, Sequence, TypeVar, overload
 
 
 T = TypeVar("T")
@@ -13,6 +13,41 @@ T = TypeVar("T")
 class TimedValue(Generic[T]):
     stamp_ns: int
     value: T
+
+
+@dataclass(frozen=True)
+class IndexedTimedValues(Sequence[TimedValue[T]], Generic[T]):
+    """Immutable timed sequence with a reusable timestamp index."""
+
+    values: tuple[TimedValue[T], ...]
+    stamps_ns: tuple[int, ...]
+
+    def __post_init__(self) -> None:
+        expected = tuple(item.stamp_ns for item in self.values)
+        if self.stamps_ns != expected:
+            raise ValueError("indexed timestamps must match timed values")
+        _validate_stamps(self.stamps_ns)
+
+    @classmethod
+    def from_values(cls, values: Sequence[TimedValue[T]]) -> "IndexedTimedValues[T]":
+        frozen = tuple(values)
+        stamps = tuple(item.stamp_ns for item in frozen)
+        return cls(frozen, stamps)
+
+    @overload
+    def __getitem__(self, index: int) -> TimedValue[T]: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> tuple[TimedValue[T], ...]: ...
+
+    def __getitem__(self, index: int | slice) -> TimedValue[T] | tuple[TimedValue[T], ...]:
+        return self.values[index]
+
+    def __iter__(self) -> Iterator[TimedValue[T]]:
+        return iter(self.values)
+
+    def __len__(self) -> int:
+        return len(self.values)
 
 
 @dataclass(frozen=True)
@@ -33,7 +68,7 @@ def nearest(
     _validate(stream, target_ns=target_ns, tolerance_ns=tolerance_ns)
     if not stream:
         return _invalid("stream_empty")
-    index = bisect_left([item.stamp_ns for item in stream], target_ns)
+    index = bisect_left(_stamps(stream), target_ns)
     candidates = [item for item in stream[max(0, index - 1) : min(len(stream), index + 1)]]
     selected = min(
         candidates,
@@ -60,7 +95,7 @@ def causal_previous(
     _validate(stream, target_ns=target_ns, tolerance_ns=max_age_ns)
     if not stream:
         return _invalid("stream_empty")
-    index = bisect_right([item.stamp_ns for item in stream], target_ns) - 1
+    index = bisect_right(_stamps(stream), target_ns) - 1
     if index < 0:
         return _invalid("future_only")
     selected = stream[index]
@@ -106,7 +141,7 @@ def exact_events(
     if start_exclusive_ns < 0 or end_inclusive_ns < start_exclusive_ns:
         raise ValueError("event interval must satisfy 0 <= start <= end")
     _validate_order(stream)
-    stamps = [item.stamp_ns for item in stream]
+    stamps = _stamps(stream)
     first = bisect_right(stamps, start_exclusive_ns)
     last = bisect_right(stamps, end_inclusive_ns)
     return tuple(stream[first:last])
@@ -122,7 +157,7 @@ def _interpolate(
     _validate(stream, target_ns=target_ns, tolerance_ns=tolerance_ns)
     if not stream:
         return _invalid("stream_empty")
-    stamps = [item.stamp_ns for item in stream]
+    stamps = _stamps(stream)
     right_index = bisect_left(stamps, target_ns)
     if right_index < len(stream) and stream[right_index].stamp_ns == target_ns:
         value = float(stream[right_index].value)
@@ -175,9 +210,21 @@ def _validate(
 
 
 def _validate_order(stream: Sequence[TimedValue[T]]) -> None:
-    if any(item.stamp_ns < 0 for item in stream):
+    if isinstance(stream, IndexedTimedValues):
+        return
+    _validate_stamps(tuple(item.stamp_ns for item in stream))
+
+
+def _stamps(stream: Sequence[TimedValue[T]]) -> Sequence[int]:
+    if isinstance(stream, IndexedTimedValues):
+        return stream.stamps_ns
+    return tuple(item.stamp_ns for item in stream)
+
+
+def _validate_stamps(stamps: Sequence[int]) -> None:
+    if any(stamp < 0 for stamp in stamps):
         raise ValueError("stream timestamps must be non-negative")
-    if any(right.stamp_ns <= left.stamp_ns for left, right in zip(stream, stream[1:])):
+    if any(right <= left for left, right in zip(stamps, stamps[1:])):
         raise ValueError("stream timestamps must be strictly increasing")
 
 

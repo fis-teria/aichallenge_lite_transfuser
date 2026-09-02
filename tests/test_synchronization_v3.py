@@ -5,6 +5,7 @@ import math
 import pytest
 
 from aic_transfuser_lite.data.synchronization_v3 import (
+    IndexedTimedValues,
     TimedValue,
     angle_interpolate,
     causal_previous,
@@ -76,6 +77,28 @@ def test_exact_events_preserves_all_events_and_interval_semantics() -> None:
         TimedValue(30, "c"),
     )
     assert exact_events(stream, start_exclusive_ns=30, end_inclusive_ns=30) == ()
+
+
+def test_indexed_stream_matches_sequence_synchronization_results() -> None:
+    values = [TimedValue(0, 0.0), TimedValue(10, 20.0), TimedValue(20, 40.0)]
+    indexed = IndexedTimedValues.from_values(values)
+    assert indexed.stamps_ns == (0, 10, 20)
+    assert linear_interpolate(indexed, target_ns=5, tolerance_ns=5) == linear_interpolate(
+        values, target_ns=5, tolerance_ns=5
+    )
+    assert nearest(indexed, target_ns=14, tolerance_ns=6) == nearest(
+        values, target_ns=14, tolerance_ns=6
+    )
+    assert causal_previous(indexed, target_ns=14, max_age_ns=5) == causal_previous(
+        values, target_ns=14, max_age_ns=5
+    )
+
+
+def test_indexed_stream_rejects_duplicate_timestamps_at_construction() -> None:
+    with pytest.raises(ValueError, match="strictly increasing"):
+        IndexedTimedValues.from_values([TimedValue(10, 1), TimedValue(10, 2)])
+    with pytest.raises(ValueError, match="must match"):
+        IndexedTimedValues((TimedValue(10, 1),), (11,))
 
 
 @pytest.mark.parametrize(

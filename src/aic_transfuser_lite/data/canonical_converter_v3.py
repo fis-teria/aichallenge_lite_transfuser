@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from bisect import bisect_left
 from dataclasses import dataclass
 import hashlib
 import json
@@ -29,16 +30,17 @@ from .canonical_schema_v3 import (
 )
 from .clock_segments import ClockEpoch
 from .mcap_converter_v2 import (
+    InterpolationTiming,
     RunStreams,
     TimedImage,
     TimedLidar,
     TimedPose,
     TimedVelocity,
-    interpolate_pose,
     select_regular_grid,
 )
 from .storage_v3 import CsvNpyJpegBackend, StorageSummary
 from .synchronization_v3 import (
+    IndexedTimedValues,
     TimedValue,
     angle_interpolate,
     causal_previous,
@@ -110,6 +112,103 @@ class PreparedRunV3:
     samples: tuple[PreparedCanonicalSampleV3, ...]
 
 
+@dataclass(frozen=True)
+class _RunStreamIndexesV3:
+    poses: IndexedTimedValues[TimedPose]
+    lidars: IndexedTimedValues[TimedLidar]
+    longitudinal_velocity: IndexedTimedValues[float]
+    lateral_velocity: IndexedTimedValues[float]
+    yaw_rate: IndexedTimedValues[float]
+    actual_steering: IndexedTimedValues[float]
+    nominal_commands: IndexedTimedValues[Any]
+    final_commands: IndexedTimedValues[Any]
+    gears: IndexedTimedValues[int]
+
+
+def _index_run_streams(streams: RunStreams) -> _RunStreamIndexesV3:
+    """Build immutable timestamp indexes once for all per-sample lookups."""
+
+    return _RunStreamIndexesV3(
+        poses=IndexedTimedValues.from_values(
+            tuple(TimedValue(item.timestamp_ns, item) for item in streams.poses)
+        ),
+        lidars=IndexedTimedValues.from_values(
+            tuple(TimedValue(item.timestamp_ns, item) for item in streams.lidars)
+        ),
+        longitudinal_velocity=IndexedTimedValues.from_values(
+            tuple(TimedValue(item.timestamp_ns, float(item.longitudinal_mps)) for item in streams.velocities)
+        ),
+        lateral_velocity=IndexedTimedValues.from_values(
+            tuple(TimedValue(item.timestamp_ns, float(item.lateral_mps)) for item in streams.velocities)
+        ),
+        yaw_rate=IndexedTimedValues.from_values(
+            tuple(TimedValue(item.timestamp_ns, float(item.yaw_rate_rps)) for item in streams.velocities)
+        ),
+        actual_steering=IndexedTimedValues.from_values(
+            tuple(TimedValue(item.timestamp_ns, float(item.steering_rad)) for item in streams.actual_steering)
+        ),
+        nominal_commands=IndexedTimedValues.from_values(
+            tuple(TimedValue(item.timestamp_ns, item) for item in streams.nominal_commands)
+        ),
+        final_commands=IndexedTimedValues.from_values(
+            tuple(TimedValue(item.timestamp_ns, item) for item in streams.final_commands)
+        ),
+        gears=IndexedTimedValues.from_values(
+            tuple(TimedValue(item.timestamp_ns, int(item.gear)) for item in streams.gears)
+        ),
+    )
+
+
+def _interpolate_pose_indexed(
+    poses: IndexedTimedValues[TimedPose], target_ns: int, *, tolerance_ms: float
+) -> tuple[TimedPose, InterpolationTiming]:
+    if not poses:
+        raise ValueError("Cannot interpolate an empty stream")
+    position = bisect_left(poses.stamps_ns, target_ns)
+    if position < len(poses) and poses.stamps_ns[position] == target_ns:
+        left_index = right_index = position
+        alpha = 0.0
+        timing = InterpolationTiming(0, 0, 0)
+    else:
+        left_index, right_index = position - 1, position
+        if left_index < 0 or right_index >= len(poses):
+            raise ValueError("Target is outside the interpolation stream")
+        before_delta = poses.stamps_ns[left_index] - target_ns
+        after_delta = poses.stamps_ns[right_index] - target_ns
+        tolerance_ns = int(round(tolerance_ms * 1e6))
+        if abs(before_delta) > tolerance_ns or abs(after_delta) > tolerance_ns:
+            raise ValueError("Interpolation endpoints exceed tolerance")
+        alpha = (target_ns - poses.stamps_ns[left_index]) / (
+            poses.stamps_ns[right_index] - poses.stamps_ns[left_index]
+        )
+        timing = InterpolationTiming(
+            before_delta,
+            after_delta,
+            max(abs(before_delta), abs(after_delta)),
+        )
+    left = poses[left_index].value
+    right = poses[right_index].value
+    if left.frame_id != right.frame_id or left.child_frame_id != right.child_frame_id:
+        raise ValueError("Pose frame changed across interpolation endpoints")
+    yaw_delta = math.atan2(
+        math.sin(right.yaw_world_rad - left.yaw_world_rad),
+        math.cos(right.yaw_world_rad - left.yaw_world_rad),
+    )
+    yaw = left.yaw_world_rad + alpha * yaw_delta
+    return (
+        TimedPose(
+            timestamp_ns=int(target_ns),
+            x_world_m=float(left.x_world_m + alpha * (right.x_world_m - left.x_world_m)),
+            y_world_m=float(left.y_world_m + alpha * (right.y_world_m - left.y_world_m)),
+            yaw_world_rad=math.atan2(math.sin(yaw), math.cos(yaw)),
+            frame_id=left.frame_id,
+            child_frame_id=left.child_frame_id,
+            timestamp_source="interpolated",
+        ),
+        timing,
+    )
+
+
 def load_dataset_v3_converter_config(path: str | Path) -> DatasetV3ConverterConfig:
     source = Path(path)
     raw = yaml.safe_load(source.read_text(encoding="utf-8"))
@@ -178,6 +277,7 @@ def convert_decoded_run_v3(
     geometry = _validate_native_lidar_geometry(
         streams.lidars, expected_points=config.expected_lidar_points
     )
+    indexes = _index_run_streams(streams)
     _validate_epoch_ranges(epochs)
     prepared: list[PreparedCanonicalSampleV3] = []
     for epoch in epochs:
@@ -197,7 +297,7 @@ def convert_decoded_run_v3(
         for match in matches:
             image = epoch_images[match.source_index]
             converted = _convert_observation(
-                streams,
+                indexes=indexes,
                 image=image,
                 grid_stamp_ns=match.target_timestamp_ns,
                 camera_delta_ns=match.delta_ns,
@@ -294,8 +394,8 @@ def write_prepared_dataset_v3(
 
 
 def _convert_observation(
-    streams: RunStreams,
     *,
+    indexes: _RunStreamIndexesV3,
     image: TimedImage,
     grid_stamp_ns: int,
     camera_delta_ns: int,
@@ -307,7 +407,7 @@ def _convert_observation(
     config: DatasetV3ConverterConfig,
 ) -> PreparedCanonicalSampleV3 | None:
     lidar_sync = nearest(
-        [TimedValue(item.timestamp_ns, item) for item in streams.lidars],
+        indexes.lidars,
         target_ns=image.timestamp_ns,
         tolerance_ns=int(round(config.lidar_tolerance_ms * 1e6)),
     )
@@ -315,33 +415,32 @@ def _convert_observation(
         return None
     lidar = lidar_sync.value
     try:
-        pose, pose_timing = interpolate_pose(
-            streams.poses,
+        pose, pose_timing = _interpolate_pose_indexed(
+            indexes.poses,
             image.timestamp_ns,
             tolerance_ms=config.interpolation_tolerance_ms,
         )
         velocity, velocity_delta_ms = _velocity_at(
-            streams.velocities, image.timestamp_ns, config.interpolation_tolerance_ms
+            indexes, image.timestamp_ns, config.interpolation_tolerance_ms
         )
     except ValueError:
         return None
     actual_steering = _actual_steering_at(
-        streams.actual_steering, image.timestamp_ns, config.interpolation_tolerance_ms
+        indexes.actual_steering, image.timestamp_ns, config.interpolation_tolerance_ms
     )
     nominal = _command_at(
-        streams.nominal_commands, image.timestamp_ns, config.command_max_age_ms
+        indexes.nominal_commands, image.timestamp_ns, config.command_max_age_ms
     )
     final = _command_at(
-        streams.final_commands, image.timestamp_ns, config.command_max_age_ms
+        indexes.final_commands, image.timestamp_ns, config.command_max_age_ms
     )
     gear = causal_previous(
-        [TimedValue(item.timestamp_ns, item.gear) for item in streams.gears],
+        indexes.gears,
         target_ns=image.timestamp_ns,
         max_age_ns=int(round(config.command_max_age_ms * 1e6)),
     )
     future = _dense_future_state(
-        streams.poses,
-        streams.velocities,
+        indexes,
         observation=pose,
         epoch=epoch,
         config=config,
@@ -431,8 +530,7 @@ def _convert_observation(
 
 
 def _dense_future_state(
-    poses: Sequence[TimedPose],
-    velocities: Sequence[TimedVelocity],
+    indexes: _RunStreamIndexesV3,
     *,
     observation: TimedPose,
     epoch: ClockEpoch,
@@ -448,11 +546,13 @@ def _dense_future_state(
         if target_ns > epoch.last_sim_stamp_ns:
             continue
         try:
-            future_pose, _ = interpolate_pose(
-                poses, target_ns, tolerance_ms=config.interpolation_tolerance_ms
+            future_pose, _ = _interpolate_pose_indexed(
+                indexes.poses,
+                target_ns,
+                tolerance_ms=config.interpolation_tolerance_ms,
             )
             future_velocity, _ = _velocity_at(
-                velocities, target_ns, config.interpolation_tolerance_ms
+                indexes, target_ns, config.interpolation_tolerance_ms
             )
         except ValueError:
             continue
@@ -480,13 +580,17 @@ def _dense_future_state(
 
 
 def _velocity_at(
-    velocities: Sequence[TimedVelocity], target_ns: int, tolerance_ms: float
+    indexes: _RunStreamIndexesV3, target_ns: int, tolerance_ms: float
 ) -> tuple[TimedVelocity, float]:
     tolerance_ns = int(round(tolerance_ms * 1e6))
     components = []
-    for name in ("longitudinal_mps", "lateral_mps", "yaw_rate_rps"):
+    for name, stream in (
+        ("longitudinal_mps", indexes.longitudinal_velocity),
+        ("lateral_mps", indexes.lateral_velocity),
+        ("yaw_rate_rps", indexes.yaw_rate),
+    ):
         result = linear_interpolate(
-            [TimedValue(item.timestamp_ns, float(getattr(item, name))) for item in velocities],
+            stream,
             target_ns=target_ns,
             tolerance_ns=tolerance_ns,
         )
@@ -504,21 +608,23 @@ def _velocity_at(
 
 
 def _actual_steering_at(
-    values: Sequence[Any], target_ns: int, tolerance_ms: float
+    values: IndexedTimedValues[float], target_ns: int, tolerance_ms: float
 ) -> OptionalNumericV3:
     if not values:
         return _missing(MissingReason.NOT_RECORDED)
     result = angle_interpolate(
-        [TimedValue(item.timestamp_ns, float(item.steering_rad)) for item in values],
+        values,
         target_ns=target_ns,
         tolerance_ns=int(round(tolerance_ms * 1e6)),
     )
     return _present(float(result.value)) if result.valid and result.value is not None else _missing(MissingReason.OUTSIDE_TOLERANCE)
 
 
-def _command_at(values: Sequence[Any], target_ns: int, max_age_ms: float) -> CommandStateV3:
+def _command_at(
+    values: IndexedTimedValues[Any], target_ns: int, max_age_ms: float
+) -> CommandStateV3:
     result = causal_previous(
-        [TimedValue(item.timestamp_ns, item) for item in values],
+        values,
         target_ns=target_ns,
         max_age_ns=int(round(max_age_ms * 1e6)),
     )

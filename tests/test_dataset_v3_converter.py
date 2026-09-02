@@ -6,6 +6,8 @@ import numpy as np
 import pytest
 
 from aic_transfuser_lite.data.canonical_converter_v3 import (
+    _index_run_streams,
+    _interpolate_pose_indexed,
     convert_decoded_run_v3,
     load_dataset_v3_converter_config,
     write_prepared_dataset_v3,
@@ -20,6 +22,7 @@ from aic_transfuser_lite.data.mcap_converter_v2 import (
     TimedLidar,
     TimedPose,
     TimedVelocity,
+    interpolate_pose,
 )
 from aic_transfuser_lite.data.storage_v3 import validate_complete_dataset
 
@@ -97,6 +100,19 @@ def test_missing_actual_steering_is_nan_and_valid_false() -> None:
     steering = _convert().samples[0].sample.ego_state.actual_steering_rad
     assert not steering.valid and np.isnan(steering.value)
     assert steering.missing_reason is MissingReason.NOT_RECORDED
+
+
+def test_indexed_pose_interpolation_matches_frozen_v2_math() -> None:
+    streams = _streams(duration_steps=2)
+    target_ns = STEP_NS // 2
+    expected_pose, expected_timing = interpolate_pose(
+        streams.poses, target_ns, tolerance_ms=50.0
+    )
+    indexed_pose, indexed_timing = _interpolate_pose_indexed(
+        _index_run_streams(streams).poses, target_ns, tolerance_ms=50.0
+    )
+    assert indexed_pose == expected_pose
+    assert indexed_timing == expected_timing
 
 
 def test_future_state_never_crosses_clock_epoch() -> None:
