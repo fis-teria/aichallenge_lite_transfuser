@@ -105,6 +105,24 @@ ros2 topic echo --once /v3_shadow/runtime_status
 QoS compatibility only establishes delivery. Timestamp skew, model accuracy,
 control authority, and lap completion remain separate promotion gates.
 
+### 2026-09-03 Graneple direct-QoS verification
+
+Commit `37a1e55` was built in `aichallenge-2025-dev:latest` and connected to
+the native AWSIM graph on `graneple@192.168.3.10` without a QoS relay. The
+70-second trajectory-only observation recorded:
+
+- Camera: 598 messages
+- LaserScan: 1,257 messages
+- finite 15-point trajectories: 270
+- non-finite trajectories: 0
+- incompatible-QoS warnings: 0
+- rejected sensor-skew callbacks: 325
+
+This verifies native sensor delivery only. V3 retained no control authority,
+the test was stopped after the bounded observation, and no lap-completion claim
+is made. The remaining sensor-skew rejection requires timestamp-buffered
+synchronization rather than a further QoS change.
+
 The shared Safety Supervisor keeps `ego_speed_source:=odometry` as its default
 so the frozen V1 launch and runtime behavior remain compatible. A V3 parameter
 file must explicitly select `ego_speed_source:=velocity_report`; unsupported
