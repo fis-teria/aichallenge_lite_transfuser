@@ -6,7 +6,11 @@ import torch
 
 from aic_transfuser_lite.models.full_control_lite_v3 import FullControlLiteV3
 from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3, sha256_file_v3
-from aic_transfuser_lite.runtime.output_profiles import output_profile, validate_observation_timing
+from aic_transfuser_lite.runtime.output_profiles import (
+    output_profile,
+    runtime_clock_has_reached_observation,
+    validate_observation_timing,
+)
 
 
 def _artifact(tmp_path: Path, *, behavior: bool = False) -> tuple[Path, Path, str, str, str]:
@@ -99,3 +103,36 @@ def test_timing_failures_are_explicit(now: float, camera: float, roles: dict[str
     with pytest.raises(ValueError, match=message):
         validate_observation_timing(now_sec=now, camera_stamp_sec=camera,
                                     role_stamps_sec=roles, timeout_sec=0.5, max_skew_sec=0.05)
+
+
+def test_runtime_clock_gate_waits_for_selected_future_side_sample() -> None:
+    stamps = {"camera": 10.0, "lidar": 10.02, "velocity": 10.01}
+    assert not runtime_clock_has_reached_observation(
+        now_sec=10.0, source_stamps_sec=stamps
+    )
+    assert runtime_clock_has_reached_observation(
+        now_sec=10.019, source_stamps_sec=stamps
+    )
+
+
+@pytest.mark.parametrize(
+    ("now_sec", "stamps", "tolerance", "message"),
+    [
+        (0.0, {"camera": 1.0}, 0.001, "invalid_runtime_clock"),
+        (1.0, {}, 0.001, "source_stamps_empty"),
+        (1.0, {"camera": float("nan")}, 0.001, "invalid_timestamp"),
+        (1.0, {"camera": 1.0}, -0.001, "invalid_future_tolerance"),
+    ],
+)
+def test_runtime_clock_gate_rejects_invalid_inputs(
+    now_sec: float,
+    stamps: dict[str, float],
+    tolerance: float,
+    message: str,
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        runtime_clock_has_reached_observation(
+            now_sec=now_sec,
+            source_stamps_sec=stamps,
+            future_tolerance_sec=tolerance,
+        )

@@ -68,6 +68,28 @@ def output_profile(name: str | RuntimeProfile) -> OutputProfile:
         raise ValueError(f"unknown runtime profile: {name!r}") from error
 
 
+def runtime_clock_has_reached_observation(
+    *,
+    now_sec: float,
+    source_stamps_sec: Mapping[str, float],
+    future_tolerance_sec: float = 0.001,
+) -> bool:
+    """Return whether ROS time has reached every selected sensor stamp."""
+
+    if not math.isfinite(now_sec) or now_sec <= 0.0:
+        raise ValueError("invalid_runtime_clock")
+    if not math.isfinite(future_tolerance_sec) or future_tolerance_sec < 0.0:
+        raise ValueError("invalid_future_tolerance")
+    if not source_stamps_sec:
+        raise ValueError("source_stamps_empty")
+    if any(
+        not math.isfinite(stamp) or stamp <= 0.0
+        for stamp in source_stamps_sec.values()
+    ):
+        raise ValueError("invalid_timestamp")
+    return max(source_stamps_sec.values()) <= now_sec + future_tolerance_sec
+
+
 def validate_observation_timing(
     *,
     now_sec: float,

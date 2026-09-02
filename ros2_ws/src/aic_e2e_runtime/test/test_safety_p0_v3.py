@@ -99,3 +99,5 @@ def test_v3_uses_settled_camera_buffer_instead_of_callback_latest_values() -> No
     assert "self.synchronizer.pop_ready" in source
     assert "self.latest" not in source
     assert '"runtime_sync_debug"' in source
+    assert "runtime_clock_has_reached_observation" in source
+    assert "self.ready_observations" in source

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 """Trajectory-authority V3 ROS adapter with optional behavior diagnostics."""
 
+from collections import deque
+from dataclasses import dataclass
 import json
 from pathlib import Path
 from typing import Any
@@ -31,13 +33,26 @@ from aic_transfuser_lite.data.image_preprocess import preprocess_image
 from aic_transfuser_lite.data.normalization import normalize_lidar_range_and_validity
 from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3
 from aic_transfuser_lite.runtime.behavior_decode_v1 import decode_behavior_logits_v1
-from aic_transfuser_lite.runtime.output_profiles import output_profile, validate_observation_timing
+from aic_transfuser_lite.runtime.output_profiles import (
+    output_profile,
+    runtime_clock_has_reached_observation,
+    validate_observation_timing,
+)
 from aic_transfuser_lite.runtime.sensor_sync import (
     SettledCameraSynchronizer,
     SyncDecision,
 )
 
 from .runtime_adapter import image_message_to_rgb, strict_message_stamp_to_seconds
+
+
+@dataclass(frozen=True)
+class ReadyObservation:
+    image: Image
+    scan: LaserScan
+    velocity: VelocityReport
+    steering: SteeringReport
+    role_stamps_sec: dict[str, float]
 
 
 class InferenceNodeV3(Node):
@@ -51,6 +66,7 @@ class InferenceNodeV3(Node):
             "model_path": "", "artifact_manifest_path": "", "expected_checkpoint_sha256": "",
             "expected_manifest_sha256": "", "expected_contract_hash": "", "device": "auto",
             "input_timeout_sec": 0.35, "sync_queue_size": 10,
+            "sync_clock_poll_sec": 0.005,
             "max_sensor_skew_ms": 30.0,
             "lidar_min_range_m": 0.0, "lidar_max_range_m": 25.0,
             "behavior_confidence_threshold": 0.5, "behavior_temperature": 1.0,
@@ -94,13 +110,19 @@ class InferenceNodeV3(Node):
             )
         self.timeout_sec = float(self.get_parameter("input_timeout_sec").value)
         self.max_skew_sec = float(self.get_parameter("max_sensor_skew_ms").value) / 1000.0
+        sync_queue_size = int(self.get_parameter("sync_queue_size").value)
+        sync_clock_poll_sec = float(self.get_parameter("sync_clock_poll_sec").value)
+        if sync_clock_poll_sec <= 0.0:
+            raise ValueError("sync_clock_poll_sec must be positive")
         self.synchronizer: SettledCameraSynchronizer[Image, Any] = (
             SettledCameraSynchronizer(
                 required_roles=self.SYNC_ROLES,
-                queue_size=int(self.get_parameter("sync_queue_size").value),
+                queue_size=sync_queue_size,
                 max_skew_sec=self.max_skew_sec,
             )
         )
+        self.ready_observations: deque[ReadyObservation] = deque()
+        self.ready_queue_size = sync_queue_size
         self.trajectory_pub = self.create_publisher(Float32MultiArray, "predicted_trajectory", 1)
         self.status_pub = self.create_publisher(String, "runtime_status", 1)
         self.sync_debug_pub = self.create_publisher(
@@ -141,6 +163,9 @@ class InferenceNodeV3(Node):
             self._on_image,
             qos_profile_sensor_data,
         )
+        self.sync_clock_timer = self.create_timer(
+            sync_clock_poll_sec, self._drain_ready_observations
+        )
 
     def _add_sensor(self, role: str, message: Any) -> None:
         try:
@@ -169,6 +194,7 @@ class InferenceNodeV3(Node):
         while True:
             settled = self.synchronizer.pop_ready()
             if settled is None:
+                self._drain_ready_observations()
                 return
             decision = settled.decision
             self._publish_sync_debug(decision)
@@ -186,12 +212,54 @@ class InferenceNodeV3(Node):
                 role: decision.camera_stamp_sec + decision.deltas_sec[role]
                 for role in self.SYNC_ROLES
             }
+            self._queue_ready_observation(
+                ReadyObservation(
+                    image=settled.camera,
+                    scan=decision.samples["lidar"],
+                    velocity=decision.samples["velocity"],
+                    steering=decision.samples["steering"],
+                    role_stamps_sec=stamps,
+                )
+            )
+
+    def _queue_ready_observation(self, observation: ReadyObservation) -> None:
+        if len(self.ready_observations) >= self.ready_queue_size:
+            dropped = self.ready_observations.popleft()
+            dropped_stamp = strict_message_stamp_to_seconds(dropped.image)
+            self.status_pub.publish(
+                String(
+                    data=(
+                        "inference_rejected:runtime_clock_queue_overflow:"
+                        f"{dropped_stamp:.9f}"
+                    )
+                )
+            )
+        self.ready_observations.append(observation)
+        self._drain_ready_observations()
+
+    def _drain_ready_observations(self) -> None:
+        while self.ready_observations:
+            observation = self.ready_observations[0]
+            camera_stamp = strict_message_stamp_to_seconds(observation.image)
+            source_stamps = {
+                "camera": camera_stamp,
+                **observation.role_stamps_sec,
+            }
+            now_sec = self.get_clock().now().nanoseconds * 1e-9
+            if now_sec <= 0.0:
+                return
+            if not runtime_clock_has_reached_observation(
+                now_sec=now_sec,
+                source_stamps_sec=source_stamps,
+            ):
+                return
+            self.ready_observations.popleft()
             self._process_observation(
-                settled.camera,
-                decision.samples["lidar"],
-                decision.samples["velocity"],
-                decision.samples["steering"],
-                stamps,
+                observation.image,
+                observation.scan,
+                observation.velocity,
+                observation.steering,
+                observation.role_stamps_sec,
             )
 
     def _publish_sync_debug(self, decision: SyncDecision[Any]) -> None:

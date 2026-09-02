@@ -132,6 +132,12 @@ role, with past samples winning an equal-distance tie. Selected sensor samples
 are consumed once. Callback arrival order is therefore not treated as sensor
 time order.
 
+If nearest matching selects a sensor sample slightly later than the Camera
+stamp, the accepted observation waits in a second bounded queue until ROS
+simulation time reaches every selected stamp. `sync_clock_poll_sec` controls
+that readiness check. The strict future-timestamp validator remains enabled;
+the runtime does not weaken it to accommodate callback ordering.
+
 The bounded Camera queue is configured with `sync_queue_size`; overflow,
 non-increasing timestamps, final skew rejection, stale observations, and future
 timestamps remain explicit fail-closed status values. `runtime_sync_debug`
