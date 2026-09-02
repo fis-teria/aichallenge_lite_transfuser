@@ -152,6 +152,27 @@ python3 -m pytest -q \
   tests/test_sensor_sync_v3.py
 ```
 
+### 2026-09-03 Graneple buffered-sync verification
+
+Commit `504b4ed` was tested for 70 seconds against the same native AWSIM topics
+and model artifact as the direct-QoS check, without a relay and with the 30 ms
+limit unchanged:
+
+- Camera observations: 588
+- finite 15-point trajectories: 565 (96.1%)
+- final sensor-skew rejections: 23 (3.9%)
+- future-timestamp and stale rejections: 0
+- synchronization span: p50 14.33 ms, p95 29.22 ms
+- non-finite trajectories and incompatible-QoS warnings: 0
+
+For comparison, callback-latest commit `37a1e55` published 270 of 598 Camera
+observations (45.2%) and rejected 325 for skew. The first buffered revision
+reduced skew but exposed 172 strict future-timestamp rejections while ROS time
+lagged a selected future-side sample; the bounded runtime-clock queue removed
+those rejections without weakening timestamp validation. This remains a
+trajectory-only shadow test and is not a lap-completion or control-authority
+claim.
+
 The shared Safety Supervisor keeps `ego_speed_source:=odometry` as its default
 so the frozen V1 launch and runtime behavior remain compatible. A V3 parameter
 file must explicitly select `ego_speed_source:=velocity_report`; unsupported
