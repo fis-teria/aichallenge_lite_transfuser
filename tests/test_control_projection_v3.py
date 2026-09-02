@@ -102,7 +102,14 @@ def test_projection_rejects_missing_or_invalid_authoritative_limits(
     [
         (_timing(observation_stamp_sec=10.1, now_sec=10.0), "future"),
         (_timing(observation_stamp_sec=9.8), "stale"),
-        (_timing(observation_stamp_sec=9.9, valid_for_sec=0.05), "expired"),
+        (
+            _timing(
+                observation_stamp_sec=9.9,
+                valid_for_sec=0.05,
+                max_observation_age_sec=0.2,
+            ),
+            "expired",
+        ),
         (_timing(valid_for_sec=0.0), "lifetimes"),
     ],
 )
