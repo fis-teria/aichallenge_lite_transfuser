@@ -1,3 +1,4 @@
+import ast
 from pathlib import Path
 
 
@@ -47,3 +48,42 @@ def test_ros_package_installs_canonical_v3_source() -> None:
     assert '"/python_src/"' in source
     helper = (Path(__file__).parents[1] / "aic_e2e_runtime" / "canonical_source.py").read_text()
     assert "sys.path.insert(0, value)" in helper
+
+
+def _v3_subscription_qos_arguments() -> dict[str, ast.expr]:
+    source = (
+        Path(__file__).parents[1] / "aic_e2e_runtime" / "inference_node_v3.py"
+    ).read_text()
+    tree = ast.parse(source)
+    qos_by_message: dict[str, ast.expr] = {}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call) or len(node.args) < 4:
+            continue
+        function = node.func
+        if not isinstance(function, ast.Attribute) or function.attr != "create_subscription":
+            continue
+        message_type = node.args[0]
+        if isinstance(message_type, ast.Name):
+            qos_by_message[message_type.id] = node.args[3]
+    return qos_by_message
+
+
+def test_v3_camera_and_lidar_use_sensor_data_qos() -> None:
+    qos_by_message = _v3_subscription_qos_arguments()
+    for message_type in ("Image", "LaserScan"):
+        qos = qos_by_message[message_type]
+        assert isinstance(qos, ast.Name)
+        assert qos.id == "qos_profile_sensor_data"
+
+
+def test_v3_sensor_streams_do_not_regress_to_implicit_reliable_depth() -> None:
+    qos_by_message = _v3_subscription_qos_arguments()
+    for message_type in ("Image", "LaserScan"):
+        assert not isinstance(qos_by_message[message_type], ast.Constant)
+
+    # Wheel Odometry and Steer Angle were compatible with the official graph;
+    # do not broaden this sensor-stream compatibility change to vehicle state.
+    for message_type in ("VelocityReport", "SteeringReport"):
+        qos = qos_by_message[message_type]
+        assert isinstance(qos, ast.Constant)
+        assert qos.value == 10

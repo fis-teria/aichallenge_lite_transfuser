@@ -80,6 +80,31 @@ Angle reports. It does not subscribe to GNSS, map pose, or
 The default topics are `/vehicle/status/velocity_status` and
 `/vehicle/status/steering_status`; the four model inputs use SI units.
 
+Camera and LaserScan subscriptions use ROS 2 Sensor Data QoS (best effort,
+volatile) so the V3 node can consume the native AWSIM publishers without a
+reliability-changing relay. Wheel Odometry and Steer Angle keep their existing
+reliable subscriptions; command, safety, and status topics are not changed by
+this sensor compatibility rule. Do not apply best effort globally.
+
+The source-level QoS contract and its negative regression check run with:
+
+```bash
+python3 -m pytest -q \
+  ros2_ws/src/aic_e2e_runtime/test/test_safety_p0_v3.py
+```
+
+In the official AWSIM graph, verify the native endpoints and then confirm that
+V3 publishes without a test relay:
+
+```bash
+ros2 topic info --verbose /sensing/camera/image_raw
+ros2 topic info --verbose /sensing/lidar/scan
+ros2 topic echo --once /v3_shadow/runtime_status
+```
+
+QoS compatibility only establishes delivery. Timestamp skew, model accuracy,
+control authority, and lap completion remain separate promotion gates.
+
 The shared Safety Supervisor keeps `ego_speed_source:=odometry` as its default
 so the frozen V1 launch and runtime behavior remain compatible. A V3 parameter
 file must explicitly select `ego_speed_source:=velocity_report`; unsupported

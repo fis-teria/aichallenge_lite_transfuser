@@ -10,6 +10,7 @@ from autoware_auto_vehicle_msgs.msg import SteeringReport, VelocityReport
 import numpy as np
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import Image, LaserScan
 from std_msgs.msg import Float32, Float32MultiArray, Int32, String
 import torch
@@ -94,7 +95,12 @@ class InferenceNodeV3(Node):
                 Float32, "behavior_confidence", 1
             )
             self.behavior_side_pub = self.create_publisher(Int32, "behavior_side", 1)
-        self.create_subscription(LaserScan, "scan", lambda msg: self._remember("lidar", msg), 10)
+        self.create_subscription(
+            LaserScan,
+            "scan",
+            lambda msg: self._remember("lidar", msg),
+            qos_profile_sensor_data,
+        )
         self.create_subscription(
             VelocityReport,
             "velocity_status",
@@ -102,7 +108,12 @@ class InferenceNodeV3(Node):
             10,
         )
         self.create_subscription(SteeringReport, "steering_status", lambda msg: self._remember("steering", msg), 10)
-        self.create_subscription(Image, "image", self._on_image, 10)
+        self.create_subscription(
+            Image,
+            "image",
+            self._on_image,
+            qos_profile_sensor_data,
+        )
 
     def _remember(self, role: str, message: Any) -> None:
         try:
