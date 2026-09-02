@@ -230,6 +230,41 @@ by clamping the preview point. The observation JSON SHA-256 is
 This run did not publish nominal or final vehicle commands, did not evaluate
 Safety Supervisor intervention, and did not test lap completion.
 
+## v3 model-control shadow authority
+
+The `shadow_control` profile requires a runtime artifact with the
+`current_control` capability and publishes candidate-zero model control only
+as a Camera-stamped diagnostic on `/shadow_model_control`. The pure authority
+contract fixes three distinct owners:
+
+| Role | Owner | Topic |
+|---|---|---|
+| Debug model proposal | `inference_node_v3` | `/shadow_model_control` |
+| Nominal vehicle proposal | external controller | `/nominal_control_cmd` |
+| Final vehicle command | Safety Supervisor | `/control/command/control_cmd` |
+
+The V3 shadow launch starts only the inference/debug adapter. It deliberately
+does not start, remap, or replace the authority-bearing external controller or
+Safety Supervisor. Therefore this launch alone cannot command the vehicle:
+
+```bash
+ros2 launch aic_e2e_runtime transfuser_lite_v3_shadow.launch.py \
+  model_path:=/absolute/path/to/last.pt \
+  artifact_manifest_path:=/absolute/path/to/runtime_artifact.json
+```
+
+Run the authority, shape, finite-value, negative-speed, and source-ownership
+tests with:
+
+```bash
+python3 -m pytest -q \
+  tests/test_runtime_authority_v3.py \
+  ros2_ws/src/aic_e2e_runtime/test/test_safety_p0_v3.py
+```
+
+Publishing the debug proposal does not establish actuator calibration,
+trajectory-control consistency, Safety intervention, or closed-loop quality.
+
 Camera and LaserScan subscriptions use ROS 2 Sensor Data QoS (best effort,
 volatile) so the V3 node can consume the native AWSIM publishers without a
 reliability-changing relay. Wheel Odometry and Steer Angle keep their existing

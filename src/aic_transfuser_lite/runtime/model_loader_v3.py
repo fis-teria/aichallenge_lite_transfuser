@@ -86,6 +86,8 @@ def load_runtime_model_v3(
     model = FullControlLiteV3(**manifest["model_kwargs"]).to(device)
     if "behavior" in capabilities and model.behavior_head is None:
         raise ValueError("behavior capability requires an enabled behavior head")
+    if "current_control" in capabilities and model.control_head is None:
+        raise ValueError("current_control capability requires an enabled control head")
     model.load_state_dict(payload["model"], strict=True)
     model.eval()
     return LoadedRuntimeModelV3(

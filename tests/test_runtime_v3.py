@@ -75,6 +75,22 @@ def test_behavior_artifact_rejects_partial_capability_pair(tmp_path: Path) -> No
         )
 
 
+def test_current_control_capability_requires_enabled_head(tmp_path: Path) -> None:
+    args = _artifact(tmp_path)
+    manifest = json.loads(args[1].read_text(encoding="utf-8"))
+    manifest["capabilities"].append("current_control")
+    args[1].write_text(json.dumps(manifest, sort_keys=True), encoding="utf-8")
+    with pytest.raises(ValueError, match="enabled control head"):
+        load_runtime_model_v3(
+            args[0],
+            args[1],
+            device=torch.device("cpu"),
+            expected_checkpoint_sha256=args[2],
+            expected_manifest_sha256=sha256_file_v3(args[1]),
+            expected_contract_hash=args[4],
+        )
+
+
 @pytest.mark.parametrize("field", ["checkpoint", "manifest", "contract"])
 def test_v3_artifact_hash_mismatch_fails(tmp_path: Path, field: str) -> None:
     args = _artifact(tmp_path)

@@ -32,6 +32,7 @@ prefer_canonical_source()
 
 from aic_transfuser_lite.contracts.behavior_v1 import BEHAVIOR_ONTOLOGY_V1
 from aic_transfuser_lite.contracts.model_batch_v3 import ModelBatchV3
+from aic_transfuser_lite.runtime.authority import model_control_debug_publication
 from aic_transfuser_lite.control.delay_aware_controller import (
     DelayAwareControllerConfig,
 )
@@ -106,9 +107,11 @@ class InferenceNodeV3(Node):
         if self.runtime_profile not in {
             RuntimeProfile.TRAJECTORY_ONLY,
             RuntimeProfile.EXTERNAL_CONTROLLER,
+            RuntimeProfile.SHADOW_CONTROL,
         }:
             raise ValueError(
-                "inference_node_v3 supports only trajectory_only or external_controller"
+                "inference_node_v3 supports only trajectory_only, external_controller, "
+                "or shadow_control"
             )
         selected_profile = output_profile(self.runtime_profile)
         if selected_profile.nominal_control_authority:
@@ -129,6 +132,12 @@ class InferenceNodeV3(Node):
             expected_contract_hash=str(self.get_parameter("expected_contract_hash").value),
         )
         self.model = loaded.model
+        self.model_capabilities = loaded.capabilities
+        if (
+            self.runtime_profile is RuntimeProfile.SHADOW_CONTROL
+            and "current_control" not in self.model_capabilities
+        ):
+            raise ValueError("shadow_control requires current_control artifact capability")
         self.behavior_enabled = "behavior" in loaded.capabilities
         if self.behavior_enabled and "behavior_side" not in loaded.capabilities:
             raise ValueError("behavior runtime capability requires behavior_side")
@@ -215,6 +224,11 @@ class InferenceNodeV3(Node):
         if self.runtime_profile is RuntimeProfile.EXTERNAL_CONTROLLER:
             self.shadow_control_pub = self.create_publisher(
                 AckermannControlCommand, "shadow_external_control", 1
+            )
+        self.shadow_model_control_pub = None
+        if self.runtime_profile is RuntimeProfile.SHADOW_CONTROL:
+            self.shadow_model_control_pub = self.create_publisher(
+                AckermannControlCommand, "shadow_model_control", 1
             )
         self.status_pub = self.create_publisher(String, "runtime_status", 1)
         self.sync_debug_pub = self.create_publisher(
@@ -429,6 +443,13 @@ class InferenceNodeV3(Node):
                     self.status_pub.publish(
                         String(data=f"shadow_control_rejected:{error}")
                     )
+            if self.shadow_model_control_pub is not None:
+                try:
+                    self._publish_shadow_model_control(output.current_control, image)
+                except Exception as error:
+                    self.status_pub.publish(
+                        String(data=f"shadow_model_control_rejected:{error}")
+                    )
             if self.behavior_enabled:
                 self._publish_behavior(output)
             self.status_pub.publish(String(data="trajectory_published"))
@@ -464,6 +485,24 @@ class InferenceNodeV3(Node):
         message.lateral.steering_tire_angle = result.control.command.steering_rad
         self.shadow_control_pub.publish(message)
         self.status_pub.publish(String(data="shadow_control_published:unverified"))
+
+    def _publish_shadow_model_control(self, current_control: Any, image: Image) -> None:
+        if self.shadow_model_control_pub is None:
+            raise RuntimeError("model-control shadow publisher is not initialized")
+        if current_control is None:
+            raise ValueError("model returned no current_control output")
+        proposal = model_control_debug_publication(
+            current_control.detach().cpu().numpy()
+        )
+        if proposal.authoritative:
+            raise RuntimeError("model-control shadow became authority-eligible")
+        message = AckermannControlCommand()
+        message.stamp = image.header.stamp
+        message.lateral.steering_tire_angle = proposal.steering_rad
+        message.longitudinal.speed = proposal.speed_mps
+        message.longitudinal.acceleration = proposal.acceleration_mps2
+        self.shadow_model_control_pub.publish(message)
+        self.status_pub.publish(String(data="shadow_model_control_published:debug_only"))
 
     def _make_batch(
         self,
@@ -505,6 +544,8 @@ class InferenceNodeV3(Node):
             device=self.device,
         )
         requested = {"trajectory", "speed_profile"}
+        if self.runtime_profile is RuntimeProfile.SHADOW_CONTROL:
+            requested.add("current_control")
         if self.behavior_enabled:
             requested.update({"behavior", "behavior_side"})
         return ModelBatchV3(
