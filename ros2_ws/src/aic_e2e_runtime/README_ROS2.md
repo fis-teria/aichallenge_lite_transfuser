@@ -266,6 +266,34 @@ python3 -m pytest -q \
 Publishing the debug proposal does not establish actuator calibration,
 trajectory-control consistency, Safety intervention, or closed-loop quality.
 
+### 2026-09-03 Graneple model-control shadow verification
+
+Commit `a49b5ce` passed the 51 focused authority/runtime/ownership tests and
+the 399-test combined WSL suite. Its tracked archive SHA-256 is
+`8145034c8d8a4beee25192b80e40adbf3dda89b3794441959d8db5946d99f325`.
+The official `aichallenge-2025-dev:latest` image built the ROS package and
+passed the same 51 focused tests.
+
+AWSIM was then started without sending its Start request, and the optional V3
+RViz2 window was displayed on Graneple `DISPLAY=:1`. A 45-second direct
+observation recorded:
+
+- finite Camera-stamped `/shadow_model_control` proposals: 251
+- invalid proposals and zero timestamps: 0
+- predicted paths: 252
+- steering range: -0.2237 to -0.0999 rad
+- predicted speed range: 2.1982 to 3.0764 m/s
+- predicted acceleration range: -0.1482 to -0.0849 m/s^2
+- V3 ownership of nominal or final control topics: absent
+- dedicated RViz2 node present: yes
+
+There were 22 fail-closed inference rejections during the bounded observation.
+The observation JSON SHA-256 is
+`8dfefb91cff59acfa774b964fc17bd4dee2f6af72d091a5640a0f8a8658bb21c`.
+The external controller and Safety Supervisor were not launched by this
+shadow profile, model proposals were not connected to the vehicle, and no lap
+or closed-loop controller-quality result is claimed.
+
 Camera and LaserScan subscriptions use ROS 2 Sensor Data QoS (best effort,
 volatile) so the V3 node can consume the native AWSIM publishers without a
 reliability-changing relay. Wheel Odometry and Steer Angle keep their existing
