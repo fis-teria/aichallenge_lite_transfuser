@@ -93,6 +93,37 @@ non-finite values, or negative speed fail closed before either message is
 published. These topics are model predictions only: the trajectory-only launch
 still has no nominal-control publisher and does not command the vehicle.
 
+Run the pure shape/unit/negative tests and ROS publisher-ownership contract
+with:
+
+```bash
+python3 -m pytest -q \
+  tests/test_runtime_v3.py \
+  ros2_ws/src/aic_e2e_runtime/test/test_safety_p0_v3.py
+```
+
+### 2026-09-03 Graneple speed-profile shadow verification
+
+Commit `304754a` passed all 318 repository tests in the WSL training
+environment. In `aichallenge-2025-dev:latest`, the 30 focused tests passed and
+the `aic_e2e_runtime` ROS 2 package built successfully. A subsequent 70-second
+direct observation of the native AWSIM graph recorded:
+
+- matching trajectory and speed-profile messages: 569 each (count delta 0)
+- trajectory shape: 569/569 flattened `[15,2]` messages
+- speed-profile shape: 569/569 `[15]` messages
+- non-finite trajectory or speed values: 0
+- speed profiles containing a negative value: 0
+- observed predicted-speed range: 0.0070 to 9.1246 m/s
+- relay used: no
+- `/v3_speed_profile/nominal_control_cmd` publisher: absent
+
+The observation JSON SHA-256 is
+`5b36a6efbddd0487e7c97c2421e4c5fce6e3dfd1581b06b4bc48e3c11f59a821`.
+This verifies the trajectory-plus-speed output interface only. The model did
+not own control authority, its predictions were not sent to the vehicle, and
+neither controller quality nor lap completion was tested.
+
 Camera and LaserScan subscriptions use ROS 2 Sensor Data QoS (best effort,
 volatile) so the V3 node can consume the native AWSIM publishers without a
 reliability-changing relay. Wheel Odometry and Steer Angle keep their existing
