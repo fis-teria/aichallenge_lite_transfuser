@@ -215,6 +215,9 @@ V3のfull-controlモデルは、4-frame Camera/LiDAR履歴、10-step ego/command
 15点の軌道・速度profileと現在の`[steering rad, speed m/s, acceleration m/s^2]`を
 同時に学習する。教師はnominal commandを優先し、欠ける場合だけ
 `final_fallback` provenance付きでfinal commandを使用する。
+Dataset V3のMCAP readerも同じ契約を使用し、V1凍結readerとは分離される。
+そのため`/nominal_control_cmd`が無いrunでも、topic profileの必須sensorが揃い、
+`/control/command/control_cmd`の型が一致すればfull-control label能力を保持する。
 
 Full Controlは状況判断を`aic_behavior_v1`の補助Headとしても学習する。
 

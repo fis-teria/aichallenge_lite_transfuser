@@ -19,7 +19,7 @@ from .data.canonical_converter_v3 import (
 from .data.clock_segments import ClockEpoch
 from .data.dataset_view_v3 import load_v1_compatibility_view_config
 from .data.dataset_view_v3 import load_temporal_training_batches_v3
-from .data.mcap_converter_v2 import read_run_messages_v2
+from .data.mcap_reader_v3 import read_run_messages_v3
 from .data.split_v3 import (
     SplitGroupKey,
     SplitRunRecord,
@@ -215,7 +215,7 @@ def _dataset_build(args: argparse.Namespace) -> int:
                 f"bag {record.bag_id} lacks conversion roles: {assessment.missing_for_conversion}"
             )
         bag_dir = _file_uri_to_path(record.source_path)
-        streams = read_run_messages_v2(bag_dir)
+        streams = read_run_messages_v3(bag_dir, profile=profile)
         stamps = [item.timestamp_ns for item in streams.images]
         if not stamps:
             raise ValueError(f"bag {record.bag_id} has no Camera samples")
