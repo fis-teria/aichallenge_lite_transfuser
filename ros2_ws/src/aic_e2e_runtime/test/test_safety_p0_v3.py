@@ -101,3 +101,15 @@ def test_v3_uses_settled_camera_buffer_instead_of_callback_latest_values() -> No
     assert '"runtime_sync_debug"' in source
     assert "runtime_clock_has_reached_observation" in source
     assert "self.ready_observations" in source
+
+
+def test_v3_publishes_matching_trajectory_and_speed_without_control_authority() -> None:
+    source = (
+        Path(__file__).parents[1] / "aic_e2e_runtime" / "inference_node_v3.py"
+    ).read_text()
+    assert '"predicted_trajectory"' in source
+    assert '"predicted_speed_profile"' in source
+    assert "trajectory_speed_publication(" in source
+    assert "output.trajectory_speed_mps" in source
+    assert "self.speed_profile_pub.publish" in source
+    assert '"nominal_control_cmd"' not in source

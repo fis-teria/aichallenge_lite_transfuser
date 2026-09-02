@@ -36,6 +36,7 @@ from aic_transfuser_lite.runtime.behavior_decode_v1 import decode_behavior_logit
 from aic_transfuser_lite.runtime.output_profiles import (
     output_profile,
     runtime_clock_has_reached_observation,
+    trajectory_speed_publication,
     validate_observation_timing,
 )
 from aic_transfuser_lite.runtime.sensor_sync import (
@@ -124,6 +125,9 @@ class InferenceNodeV3(Node):
         self.ready_observations: deque[ReadyObservation] = deque()
         self.ready_queue_size = sync_queue_size
         self.trajectory_pub = self.create_publisher(Float32MultiArray, "predicted_trajectory", 1)
+        self.speed_profile_pub = self.create_publisher(
+            Float32MultiArray, "predicted_speed_profile", 1
+        )
         self.status_pub = self.create_publisher(String, "runtime_status", 1)
         self.sync_debug_pub = self.create_publisher(
             Float64MultiArray, "runtime_sync_debug", 1
@@ -298,8 +302,16 @@ class InferenceNodeV3(Node):
             batch = self._make_batch(image, scan, velocity, steering, stamps)
             with torch.inference_mode():
                 output = self.model(batch)
-            xy = output.trajectory_xy[0, 0].detach().cpu().reshape(-1).tolist()
-            self.trajectory_pub.publish(Float32MultiArray(data=xy))
+            publication = trajectory_speed_publication(
+                output.trajectory_xy.detach().cpu().numpy(),
+                output.trajectory_speed_mps.detach().cpu().numpy(),
+            )
+            self.trajectory_pub.publish(
+                Float32MultiArray(data=list(publication.trajectory_xy_m))
+            )
+            self.speed_profile_pub.publish(
+                Float32MultiArray(data=list(publication.speed_profile_mps))
+            )
             if self.behavior_enabled:
                 self._publish_behavior(output)
             self.status_pub.publish(String(data="trajectory_published"))

@@ -9,6 +9,7 @@ from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3, s
 from aic_transfuser_lite.runtime.output_profiles import (
     output_profile,
     runtime_clock_has_reached_observation,
+    trajectory_speed_publication,
     validate_observation_timing,
 )
 
@@ -87,8 +88,52 @@ def test_v3_artifact_hash_mismatch_fails(tmp_path: Path, field: str) -> None:
 def test_trajectory_only_has_no_nominal_control_publisher() -> None:
     profile = output_profile("trajectory_only")
     assert "predicted_trajectory" in profile.publisher_topics
+    assert "predicted_speed_profile" in profile.publisher_topics
     assert "nominal_control_cmd" not in profile.publisher_topics
     assert not profile.nominal_control_authority
+
+
+def test_trajectory_speed_publication_selects_matching_candidate_zero() -> None:
+    trajectory = torch.arange(60, dtype=torch.float32).reshape(1, 2, 15, 2)
+    speeds = torch.arange(30, dtype=torch.float32).reshape(1, 2, 15) / 10.0
+    publication = trajectory_speed_publication(trajectory.numpy(), speeds.numpy())
+
+    assert publication.point_count == 15
+    assert publication.trajectory_xy_m == tuple(float(value) for value in range(30))
+    assert publication.speed_profile_mps == pytest.approx(
+        tuple(index / 10.0 for index in range(15))
+    )
+
+
+@pytest.mark.parametrize(
+    ("trajectory", "speeds", "message"),
+    [
+        (torch.zeros(2, 1, 15, 2), torch.zeros(2, 1, 15), r"\[1,K,N,2\]"),
+        (torch.zeros(1, 1, 15, 2), torch.zeros(1, 1, 14), "must match"),
+        (
+            torch.full((1, 1, 15, 2), float("nan")),
+            torch.zeros(1, 1, 15),
+            "trajectory_xy must be finite",
+        ),
+        (
+            torch.zeros(1, 1, 15, 2),
+            torch.full((1, 1, 15), float("inf")),
+            "trajectory_speed_mps must be finite",
+        ),
+        (
+            torch.zeros(1, 1, 15, 2),
+            -torch.ones(1, 1, 15),
+            "trajectory_speed_mps must be non-negative",
+        ),
+    ],
+)
+def test_trajectory_speed_publication_rejects_invalid_outputs(
+    trajectory: torch.Tensor,
+    speeds: torch.Tensor,
+    message: str,
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        trajectory_speed_publication(trajectory.numpy(), speeds.numpy())
 
 
 @pytest.mark.parametrize(
