@@ -42,6 +42,8 @@ def fit_lateral_calibration(
     *,
     wheelbase_m: float,
     max_abs_yaw_rate_rps: float = 5.0,
+    maximum_steering_nrmse: float = 0.7,
+    maximum_yaw_rate_nrmse: float = 0.8,
     config: DelayEstimationConfig | None = None,
 ) -> LateralCalibration:
     """Filter declared applicability outliers, then call the V1 delay fitter."""
@@ -62,6 +64,13 @@ def fit_lateral_calibration(
         raise ValueError("lateral calibration inputs must have equal length >= 3")
     if not np.isfinite(max_abs_yaw_rate_rps) or max_abs_yaw_rate_rps <= 0.0:
         raise ValueError("max_abs_yaw_rate_rps must be finite and positive")
+    if (
+        not np.isfinite(maximum_steering_nrmse)
+        or not np.isfinite(maximum_yaw_rate_nrmse)
+        or maximum_steering_nrmse <= 0.0
+        or maximum_yaw_rate_nrmse <= 0.0
+    ):
+        raise ValueError("lateral NRMSE gates must be finite and positive")
     finite = np.logical_and.reduce([np.isfinite(item) for item in values])
     applicable = finite & (np.abs(values[4]) <= max_abs_yaw_rate_rps) & (values[3] >= 0.0)
     if int(np.count_nonzero(applicable)) < 3:
@@ -78,6 +87,11 @@ def fit_lateral_calibration(
     )
     if fit.time_constant_sec is None or fit.steering_nrmse is None:
         raise AssertionError("steering delay fitter did not separate first-order lag")
+    reasons = list(fit.validity_reasons)
+    if fit.steering_nrmse >= maximum_steering_nrmse:
+        reasons.append(f"steering_nrmse>={maximum_steering_nrmse}")
+    if fit.yaw_rate_nrmse >= maximum_yaw_rate_nrmse:
+        reasons.append(f"yaw_rate_nrmse>={maximum_yaw_rate_nrmse}")
     return LateralCalibration(
         pure_delay_sec=fit.delay_sec,
         time_constant_sec=fit.time_constant_sec,
@@ -90,7 +104,7 @@ def fit_lateral_calibration(
         dynamic_sample_count=fit.dynamic_sample_count,
         total_sample_count=fit.total_sample_count,
         excluded_sample_count=int(len(values[0]) - np.count_nonzero(applicable)),
-        individually_valid=fit.individual_valid,
-        validity_reasons=fit.validity_reasons,
+        individually_valid=fit.individual_valid and not reasons,
+        validity_reasons=tuple(reasons),
         source_method=fit.method,
     )

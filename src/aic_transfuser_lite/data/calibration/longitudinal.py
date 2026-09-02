@@ -21,7 +21,8 @@ class LongitudinalFitConfig:
     mode_hysteresis_mps2: float = 0.1
     minimum_mode_samples: int = 150
     minimum_command_span_mps2: float = 0.25
-    minimum_correlation: float = 0.3
+    minimum_correlation: float = 0.5
+    maximum_nrmse: float = 0.8
     max_abs_actual_accel_mps2: float = 15.0
 
     def validate(self) -> None:
@@ -35,6 +36,7 @@ class LongitudinalFitConfig:
             self.mode_hysteresis_mps2,
             self.minimum_command_span_mps2,
             self.minimum_correlation,
+            self.maximum_nrmse,
             self.max_abs_actual_accel_mps2,
         )
         if not all(math.isfinite(value) for value in numeric):
@@ -55,6 +57,8 @@ class LongitudinalFitConfig:
             raise ValueError("minimum_command_span_mps2 must be non-negative")
         if not -1.0 <= self.minimum_correlation <= 1.0:
             raise ValueError("minimum_correlation must be in [-1,1]")
+        if self.maximum_nrmse <= 0.0:
+            raise ValueError("maximum_nrmse must be positive")
         if self.max_abs_actual_accel_mps2 <= 0.0:
             raise ValueError("max_abs_actual_accel_mps2 must be positive")
 
@@ -256,6 +260,8 @@ def fit_longitudinal_mode(
         reasons.append(f"command_span<{selected.minimum_command_span_mps2}")
     if correlation <= selected.minimum_correlation:
         reasons.append(f"correlation_peak<={selected.minimum_correlation}")
+    if nrmse >= selected.maximum_nrmse:
+        reasons.append(f"nrmse>={selected.maximum_nrmse}")
     if gain <= 0.0:
         reasons.append("gain<=0")
     return LongitudinalModeFit(

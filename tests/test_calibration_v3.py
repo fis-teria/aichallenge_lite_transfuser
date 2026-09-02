@@ -6,13 +6,17 @@ import json
 import numpy as np
 import pytest
 
+from aic_transfuser_lite.data.delay_estimation import DelayEstimationConfig
 from aic_transfuser_lite.data.calibration.artifact import (
     CalibrationPromotion,
     build_calibration_artifact,
     load_calibration_artifact,
     write_calibration_artifact,
 )
-from aic_transfuser_lite.data.calibration.lateral import LateralCalibration
+from aic_transfuser_lite.data.calibration.lateral import (
+    LateralCalibration,
+    fit_lateral_calibration,
+)
 from aic_transfuser_lite.data.calibration.longitudinal import (
     LongitudinalFitConfig,
     derive_actual_acceleration,
@@ -94,6 +98,69 @@ def test_acceleration_derivative_contract_and_negative_inputs() -> None:
         derive_actual_acceleration(timestamps, timestamps, smoothing_samples=2)
     with pytest.raises(ValueError, match="strictly increasing"):
         derive_actual_acceleration(timestamps[::-1], timestamps)
+
+
+def test_lateral_wrapper_preserves_delay_fitter_and_reports_exclusions() -> None:
+    timestamps = np.arange(0.0, 60.0, 0.1)
+    command = np.repeat(np.asarray([-0.25, 0.2, 0.0]), 200)
+    actual = _simulate(
+        timestamps,
+        command,
+        delay_sec=0.2,
+        time_constant_sec=0.3,
+        gain=1.0,
+        bias=0.0,
+    )
+    speed = np.full_like(timestamps, 4.0)
+    yaw_rate = speed * np.tan(actual) / 1.087
+    speed[0] = -1.0
+    yaw_rate[1] = 100.0
+    fit = fit_lateral_calibration(
+        timestamps,
+        command,
+        actual,
+        speed,
+        yaw_rate,
+        wheelbase_m=1.087,
+        config=DelayEstimationConfig(
+            tau_max_sec=0.4,
+            tau_step_sec=0.1,
+            time_constant_min_sec=0.1,
+            time_constant_max_sec=0.5,
+            time_constant_step_sec=0.1,
+            minimum_dynamic_samples=100,
+        ),
+    )
+
+    assert fit.source_method == "command_to_actual_first_order_and_yaw"
+    assert fit.pure_delay_sec == pytest.approx(0.2, abs=0.11)
+    assert fit.time_constant_sec == pytest.approx(0.3, abs=0.11)
+    assert fit.excluded_sample_count == 2
+    assert fit.individually_valid
+
+
+def test_longitudinal_quality_gate_rejects_uncorrelated_fit() -> None:
+    timestamps = np.arange(0.0, 40.0, 0.1)
+    command = 1.0 + 0.6 * np.sin(timestamps)
+    actual = np.random.default_rng(7).normal(0.0, 1.0, len(timestamps))
+    fit = fit_longitudinal_mode(
+        timestamps,
+        command,
+        actual,
+        np.full_like(timestamps, 3.0),
+        mode="drive",
+        config=LongitudinalFitConfig(
+            delay_max_sec=0.2,
+            delay_step_sec=0.1,
+            time_constant_min_sec=0.1,
+            time_constant_max_sec=0.3,
+            time_constant_step_sec=0.1,
+            minimum_mode_samples=100,
+        ),
+    )
+
+    assert not fit.individually_valid
+    assert any("correlation_peak" in reason or "nrmse" in reason for reason in fit.validity_reasons)
 
 
 def _fit(mode: str):

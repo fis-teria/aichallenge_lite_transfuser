@@ -22,6 +22,12 @@ rates beyond the declared vehicle-profile applicability limit before calling
 the existing estimator. Longitudinal fitting counts implausible derived
 acceleration samples as excluded rather than clipping them into the fit.
 
+Initial candidate-quality gates are explicit and provisional: steering NRMSE
+must be below 0.7, yaw-rate NRMSE below 0.8, and each longitudinal mode must
+have correlation above 0.5 and NRMSE below 0.8. Passing these gates would still
+not justify promotion; their purpose is to prevent visibly weak fits from being
+reported as individually valid while broader multi-run thresholds are pending.
+
 ## Candidate generation
 
 Run this in the WSL native environment, not under `/mnt/e`:
