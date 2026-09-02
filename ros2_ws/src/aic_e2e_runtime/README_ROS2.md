@@ -63,3 +63,24 @@ encode the fitted first-order steering time constant as pure delay.
 
 The legacy `transfuser_lite.launch.py`, `inference_node`, configuration, and
 `ckpt/best.pt` remain available for rollback and v0 comparison.
+
+## v3 ego input contract
+
+V3 inference builds its four ego features only from Wheel Odometry and Steer
+Angle reports. It does not subscribe to GNSS, map pose, or
+`/localization/kinematic_state`.
+
+| Model feature | ROS message field | Source |
+|---|---|---|
+| `longitudinal_speed_mps` | `VelocityReport.longitudinal_velocity` | Wheel Odometry |
+| `lateral_speed_mps` | `VelocityReport.lateral_velocity` | Wheel Odometry |
+| `yaw_rate_rps` | `VelocityReport.heading_rate` | Wheel Odometry |
+| `actual_steering_rad` | `SteeringReport.steering_tire_angle` | Steer Angle |
+
+The default topics are `/vehicle/status/velocity_status` and
+`/vehicle/status/steering_status`; the four model inputs use SI units.
+
+The shared Safety Supervisor keeps `ego_speed_source:=odometry` as its default
+so the frozen V1 launch and runtime behavior remain compatible. A V3 parameter
+file must explicitly select `ego_speed_source:=velocity_report`; unsupported
+source names are rejected during node construction.

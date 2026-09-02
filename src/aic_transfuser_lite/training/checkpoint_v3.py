@@ -9,6 +9,8 @@ from typing import Any
 import numpy as np
 import torch
 
+from aic_transfuser_lite.contracts.behavior_v1 import BEHAVIOR_ONTOLOGY_V1
+
 
 CHECKPOINT_FORMAT_V3 = "aic_training_checkpoint_v3"
 
@@ -49,6 +51,11 @@ def save_checkpoint_v3(
         "scheduler": scheduler.state_dict() if scheduler is not None else None,
         "sampler": sampler_state,
         "global_step": global_step,
+        "behavior_ontology": (
+            BEHAVIOR_ONTOLOGY_V1
+            if getattr(model, "behavior_head", None) is not None
+            else None
+        ),
         "rng": {
             "python": random.getstate(),
             "numpy": {
@@ -88,6 +95,11 @@ def load_checkpoint_v3(
     ]
     if mismatches:
         raise ValueError(f"checkpoint experiment identity mismatch: {mismatches}")
+    if (
+        getattr(model, "behavior_head", None) is not None
+        and payload.get("behavior_ontology") != BEHAVIOR_ONTOLOGY_V1
+    ):
+        raise ValueError("checkpoint behavior ontology mismatch")
     model.load_state_dict(payload["model"], strict=True)
     optimizer.load_state_dict(payload["optimizer"])
     if scheduler is not None:

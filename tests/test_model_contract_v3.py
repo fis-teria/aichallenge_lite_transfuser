@@ -92,3 +92,55 @@ def test_model_output_rejects_negative_speed_and_unrequested_head() -> None:
             trajectory_steps=15,
             requested_outputs=frozenset({"trajectory", "speed_profile"}),
         )
+
+
+def test_behavior_targets_and_outputs_have_fixed_ontology_shapes() -> None:
+    batch = _batch()
+    targets = TrainingTargetsV3(
+        **{
+            **batch.targets.__dict__,
+            "behavior_class": torch.tensor([0, 4]),
+            "behavior_mask": torch.tensor([True, True]),
+            "behavior_side": torch.tensor([0, 2]),
+            "behavior_side_mask": torch.tensor([True, True]),
+        }
+    )
+    targets.validate(batch_size=2)
+    output = ModelOutputV3(
+        trajectory_xy=torch.zeros(2, 1, 15, 2),
+        trajectory_speed_mps=torch.ones(2, 1, 15),
+        candidate_logits=torch.zeros(2, 1),
+        behavior_logits=torch.zeros(2, 5),
+        behavior_side_logits=torch.zeros(2, 3),
+    )
+    output.validate(
+        batch_size=2, candidates=1, trajectory_steps=15,
+        requested_outputs=frozenset({"trajectory", "speed_profile", "behavior", "behavior_side"}),
+    )
+
+    invalid_targets = TrainingTargetsV3(
+        **{
+            **targets.__dict__,
+            "behavior_class": torch.tensor([0, -1]),
+            "behavior_mask": torch.tensor([True, True]),
+        }
+    )
+    with pytest.raises(ValueError, match="outside"):
+        invalid_targets.validate(batch_size=2)
+
+    invalid_output = ModelOutputV3(
+        trajectory_xy=torch.zeros(2, 1, 15, 2),
+        trajectory_speed_mps=torch.ones(2, 1, 15),
+        candidate_logits=torch.zeros(2, 1),
+        behavior_logits=torch.zeros(2, 4),
+        behavior_side_logits=torch.zeros(2, 3),
+    )
+    with pytest.raises(ValueError, match=r"\[B,5\]"):
+        invalid_output.validate(
+            batch_size=2,
+            candidates=1,
+            trajectory_steps=15,
+            requested_outputs=frozenset(
+                {"trajectory", "speed_profile", "behavior", "behavior_side"}
+            ),
+        )

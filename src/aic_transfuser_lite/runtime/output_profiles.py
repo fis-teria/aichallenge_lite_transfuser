@@ -12,6 +12,7 @@ class RuntimeProfile(str, Enum):
     SHADOW_CONTROL = "shadow_control"
     BOUNDED_RESIDUAL = "bounded_residual"
     FULL_CONTROL = "full_control"
+    BEHAVIOR_DIAGNOSTIC = "behavior_diagnostic"
 
 
 @dataclass(frozen=True)
@@ -40,9 +41,22 @@ _PROFILES: Mapping[RuntimeProfile, OutputProfile] = {
         True,
     ),
     RuntimeProfile.FULL_CONTROL: OutputProfile(
-        frozenset({"trajectory", "speed_profile", "current_control", "control_sequence"}),
-        _BASE_TOPICS | {"nominal_control_cmd"},
+        frozenset({
+            "trajectory", "speed_profile", "current_control", "control_sequence",
+            "behavior", "behavior_side",
+        }),
+        _BASE_TOPICS | {
+            "nominal_control_cmd", "behavior_mode", "behavior_label",
+            "behavior_confidence", "behavior_side",
+        },
         True,
+    ),
+    RuntimeProfile.BEHAVIOR_DIAGNOSTIC: OutputProfile(
+        frozenset({"trajectory", "speed_profile", "behavior", "behavior_side"}),
+        _BASE_TOPICS | {
+            "behavior_mode", "behavior_label", "behavior_confidence", "behavior_side"
+        },
+        False,
     ),
 }
 

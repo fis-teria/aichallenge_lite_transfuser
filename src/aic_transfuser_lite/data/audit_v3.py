@@ -197,7 +197,11 @@ def audit_dataset_v3(dataset_root: str | Path) -> AuditReportV3:
         missingness={
             "future_invalid_fraction": future_invalid_fraction,
             "actual_steering_missing_fraction": actual_steering_missing,
-            "lidar_valid_fraction": _lidar_valid_fraction(root, frame),
+            # Do not parse an asset after the storage gate has already proven it
+            # missing or corrupt. The integrity failure remains authoritative.
+            "lidar_valid_fraction": (
+                None if storage["errors"] else _lidar_valid_fraction(root, frame)
+            ),
         },
         distributions={
             name: _distribution(frame, name)

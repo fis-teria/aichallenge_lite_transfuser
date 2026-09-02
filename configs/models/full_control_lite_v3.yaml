@@ -11,6 +11,9 @@ model:
   max_sensor_history: 4
   max_ego_history: 10
   control_head_enabled: true
+  behavior_head_enabled: true
+  behavior_classes: 5
+  behavior_sides: 3
   control_bounds:
     max_steering_rad: 0.6
     max_speed_mps: 12.0
@@ -26,14 +29,21 @@ data:
   lidar_points: 750
   lidar_min_range_m: 0.0
   lidar_max_range_m: 25.0
+  # Wheel Odometry: longitudinal_velocity, lateral_velocity, heading_rate;
+  # Steer Angle: SteeringReport.steering_tire_angle. All values are in SI units.
   ego_features: [longitudinal_speed_mps, lateral_speed_mps, yaw_rate_rps, actual_steering_rad]
 targets:
+  behavior_ontology: aic_behavior_v1
+  behavior_classes: [FORWARD_NORMAL, FORWARD_FOLLOW, FORWARD_AVOID, FORWARD_RETURN, RECOVERY]
+  behavior_sides: [NONE, LEFT, RIGHT]
   current_control_order: [steering_rad, speed_mps, acceleration_mps2]
   teacher_priority: [nominal, final_fallback]
 loss:
   trajectory: 1.0
   speed_profile: 0.5
   current_control: 0.2
+  behavior: 0.2
+  behavior_side: 0.1
   trajectory_regression_gate:
     metric: trajectory_ade_m
     max_relative_regression: 0.02

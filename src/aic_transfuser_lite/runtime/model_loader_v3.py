@@ -8,6 +8,8 @@ from typing import Any
 
 import torch
 
+from aic_transfuser_lite.contracts.behavior_v1 import BEHAVIOR_ONTOLOGY_V1
+
 from aic_transfuser_lite.models.full_control_lite_v3 import FullControlLiteV3
 
 
@@ -71,13 +73,19 @@ def load_runtime_model_v3(
         raise ValueError("runtime capabilities must be a string list")
     if not {"trajectory", "speed_profile"}.issubset(capabilities):
         raise ValueError("runtime artifact lacks trajectory capability")
+    if ("behavior" in capabilities) != ("behavior_side" in capabilities):
+        raise ValueError("behavior and behavior_side capabilities must be declared together")
     payload = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
     identity = payload.get("identity")
     if not isinstance(identity, dict) or identity.get("contract_hash") != contract_hash:
         raise ValueError("checkpoint embedded contract hash mismatch")
     if not isinstance(manifest["model_kwargs"], dict):
         raise ValueError("model_kwargs must be a mapping")
+    if "behavior" in capabilities and payload.get("behavior_ontology") != BEHAVIOR_ONTOLOGY_V1:
+        raise ValueError("behavior-capable checkpoint ontology mismatch")
     model = FullControlLiteV3(**manifest["model_kwargs"]).to(device)
+    if "behavior" in capabilities and model.behavior_head is None:
+        raise ValueError("behavior capability requires an enabled behavior head")
     model.load_state_dict(payload["model"], strict=True)
     model.eval()
     return LoadedRuntimeModelV3(

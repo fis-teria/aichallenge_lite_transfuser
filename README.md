@@ -216,6 +216,32 @@ V3のfull-controlモデルは、4-frame Camera/LiDAR履歴、10-step ego/command
 同時に学習する。教師はnominal commandを優先し、欠ける場合だけ
 `final_fallback` provenance付きでfinal commandを使用する。
 
+Full Controlは状況判断を`aic_behavior_v1`の補助Headとしても学習する。
+
+```text
+0 FORWARD_NORMAL   1 FORWARD_FOLLOW   2 FORWARD_AVOID
+3 FORWARD_RETURN   4 RECOVERY
+
+side: 0 NONE   1 LEFT   2 RIGHT
+```
+
+教師は`autoware.log`の`[speed.diag]`をMCAPの`/awsim/state`でwall timeから
+simulation timeへ変換したbehavior viewから読む。`Ready -> Start -> Finish`の外、
+診断間隔が500 msを超える箇所、ラベル遷移を挟む区間はmaskされる。旧形式の
+不完全な診断行を`none`として補完しない。Dataset V3を作成した後、学習前に
+次を実行する。複数runは`--run-source`を繰り返す。
+
+```bash
+.venv/bin/aic-e2e behavior build \
+  --dataset-root /home/thistle/e2e_autonomous/datasets/aic_dataset_v3 \
+  --run-source RUN_ID /path/to/autoware.log /path/to/rosbag2_autoware \
+  --output /home/thistle/e2e_autonomous/datasets/behavior_view_v1
+```
+
+behavior viewはDataset manifest、log、bag storage、ラベルCSVのSHA-256と、
+runごとのwall-to-sim offsetを記録する。`STOP`は意図的停止と開始前・スタック時の
+停止を現ログから区別できないため、このontologyには含めない。
+
 学習はLinux/CUDA環境でworkspace lockを保持して実行する。`--dry-run`はDataset、
 split、shape、full-control label能力を検証するが、run directoryやcheckpointを作らない。
 
@@ -225,6 +251,7 @@ tools/with_wsl_training_lock.sh .venv/bin/aic-e2e train \
   --dataset-root /home/thistle/e2e_autonomous/datasets/aic_dataset_v3 \
   --split-manifest /home/thistle/e2e_autonomous/datasets/aic_dataset_v3/split_manifest.json \
   --view-config configs/data/view_temporal_v3.yaml \
+  --behavior-view /home/thistle/e2e_autonomous/datasets/behavior_view_v1 \
   --output /home/thistle/e2e_autonomous/runs/full_control_lite_v3 \
   --dry-run
 
@@ -233,6 +260,7 @@ tools/with_wsl_training_lock.sh .venv/bin/aic-e2e train \
   --dataset-root /home/thistle/e2e_autonomous/datasets/aic_dataset_v3 \
   --split-manifest /home/thistle/e2e_autonomous/datasets/aic_dataset_v3/split_manifest.json \
   --view-config configs/data/view_temporal_v3.yaml \
+  --behavior-view /home/thistle/e2e_autonomous/datasets/behavior_view_v1 \
   --output /home/thistle/e2e_autonomous/runs/full_control_lite_v3
 ```
 
@@ -240,8 +268,19 @@ tools/with_wsl_training_lock.sh .venv/bin/aic-e2e train \
 contractのhashがcheckpointと異なる場合はresumeを拒否する。actual steeringをmodel入力に
 含めるconfigでは、その値が欠損したanchorを学習対象にしない。headを無効化したまま
 current-control lossを非zeroにした場合も開始前に失敗する。
+behavior class weightはtraining splitの有効ラベル数から算出し、通常学習で
+いずれかのclassまたはsideが0件なら開始前に失敗する。behavior viewのhashは
+checkpoint identityへ含まれるため、ラベルを変更したcheckpointへの`--resume`も拒否する。
+学習完了時の`runtime_artifact.json`にはbehavior capability、モデル構築引数、
+checkpoint SHA-256が記録され、そのままV3 runtimeのartifact manifestとして使える。
 `lidar_points`はDataset V3のnative geometryと一致必須で、既定値は現行AWSIM記録の
 750 beamsである。別geometryを黙ってresampleせず、configを明示的に変更する。
 
 ROS 2 trajectory-only profileはcontrol publisherを生成しない。AWSIM／ROS 2の実行試験は
 公式環境または指定された`graneple@192.168.3.10`で実行した結果だけを成功として扱う。
+behavior capabilityを持つV3 artifactでは、制御authorityを変えずに
+`behavior_mode`、`behavior_label`（JSON）、`behavior_confidence`、`behavior_side`を
+診断出力する。confidence閾値未満は`UNKNOWN`（mode/sideは`-1`）になる。
+confidenceは制御判断には使わず、必要に応じて検証データでtemperatureを校正する。
+通常走行・追従・復旧ではsideを必ず`NONE`にし、回避・復帰で左右confidenceが
+閾値未満または`NONE`の場合はsideだけを`UNKNOWN`にする。

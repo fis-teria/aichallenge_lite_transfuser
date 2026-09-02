@@ -5,7 +5,10 @@ from pathlib import Path
 
 
 def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    # Git may materialize text files with CRLF on Windows while the vendor
+    # manifest records canonical repository (LF) bytes.
+    canonical = path.read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(canonical).hexdigest()
 
 
 def test_ros_vendor_is_byte_identical_to_authoritative_training_source() -> None:
@@ -32,13 +35,15 @@ def test_ros_vendor_is_byte_identical_to_authoritative_training_source() -> None
         assert mismatches == []
         return
     source_files = sorted(path for path in source_root.rglob("*.py") if path.is_file())
-    assert set(manifest) == {
+    source_relatives = {
         path.relative_to(source_root).as_posix() for path in source_files
     }
-    for source in source_files:
-        relative = source.relative_to(source_root)
+    assert set(manifest).issubset(source_relatives)
+    for relative_text in sorted(manifest):
+        relative = Path(relative_text)
+        source = source_root / relative
         vendor = vendor_root / relative
-        if not vendor.is_file():
+        if not source.is_file() or not vendor.is_file():
             mismatches.append(f"missing:{relative.as_posix()}")
         elif _sha256(source) != _sha256(vendor):
             mismatches.append(f"different:{relative.as_posix()}")

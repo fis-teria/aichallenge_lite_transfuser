@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 
 from autoware_auto_control_msgs.msg import AckermannControlCommand
+from autoware_auto_vehicle_msgs.msg import VelocityReport
 from nav_msgs.msg import Odometry
 import numpy as np
 import rclpy
@@ -35,6 +36,7 @@ class SafetySupervisorNode(Node):
         for name, value in defaults.__dict__.items():
             self.declare_parameter(name, value)
         self.declare_parameter("publish_hz", 20.0)
+        self.declare_parameter("ego_speed_source", "odometry")
         self.config = SafetyConfig(
             **{
                 name: type(value)(self.get_parameter(name).value)
@@ -55,7 +57,22 @@ class SafetySupervisorNode(Node):
 
         self.create_subscription(Image, "image", self._on_image, qos_profile_sensor_data)
         self.create_subscription(LaserScan, "scan", self._on_scan, qos_profile_sensor_data)
-        self.create_subscription(Odometry, "odometry", self._on_odom, qos_profile_sensor_data)
+        ego_speed_source = str(self.get_parameter("ego_speed_source").value)
+        if ego_speed_source == "odometry":
+            self.create_subscription(
+                Odometry, "odometry", self._on_odom, qos_profile_sensor_data
+            )
+        elif ego_speed_source == "velocity_report":
+            self.create_subscription(
+                VelocityReport,
+                "velocity_status",
+                self._on_velocity,
+                qos_profile_sensor_data,
+            )
+        else:
+            raise ValueError(
+                "ego_speed_source must be 'odometry' or 'velocity_report'"
+            )
         self.create_subscription(Float32, "stop_probability", self._on_stop, 1)
         self.create_subscription(AckermannControlCommand, "nominal_control_cmd", self._on_nominal, 1)
         self.control_pub = self.create_publisher(AckermannControlCommand, "control_cmd", 1)
@@ -85,6 +102,16 @@ class SafetySupervisorNode(Node):
     def _on_odom(self, message: Odometry) -> None:
         linear = message.twist.twist.linear
         self.speed_mps = math.hypot(float(linear.x), float(linear.y))
+        try:
+            self.ego_stamp_sec = strict_message_stamp_to_seconds(message)
+        except ValueError:
+            self.ego_stamp_sec = -math.inf
+
+    def _on_velocity(self, message: VelocityReport) -> None:
+        self.speed_mps = math.hypot(
+            float(message.longitudinal_velocity),
+            float(message.lateral_velocity),
+        )
         try:
             self.ego_stamp_sec = strict_message_stamp_to_seconds(message)
         except ValueError:

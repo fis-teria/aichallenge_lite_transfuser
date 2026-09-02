@@ -15,6 +15,7 @@ from .fusion import TokenFusionTransformer
 from .heads.speed_profile import SpeedProfileHead
 from .heads.trajectory import TrajectoryHead
 from .heads.control_sequence import ControlSequenceHead
+from .heads.behavior import BehaviorHeadV1
 from .lidar_encoder import Lidar1DEncoder
 from .encoders.ego_history import EgoHistoryEncoder
 from .temporal.gru import MaskedGRUTemporalEncoder
@@ -54,6 +55,9 @@ class FullControlLiteV3(nn.Module):
         max_speed_mps: float = 12.0,
         min_acceleration_mps2: float = -4.0,
         max_acceleration_mps2: float = 2.0,
+        behavior_head_enabled: bool = False,
+        behavior_classes: int = 5,
+        behavior_sides: int = 3,
     ) -> None:
         super().__init__()
         if trajectory_steps != 15 or candidates != 1:
@@ -118,6 +122,11 @@ class FullControlLiteV3(nn.Module):
             if control_head_enabled
             else None
         )
+        self.behavior_head = (
+            BehaviorHeadV1(hidden_dim, classes=behavior_classes, sides=behavior_sides)
+            if behavior_head_enabled
+            else None
+        )
 
     def forward(self, batch: ModelBatchV3) -> ModelOutputV3:
         batch.validate(require_current=True)
@@ -164,11 +173,22 @@ class FullControlLiteV3(nn.Module):
             if self.control_head is None:
                 raise ValueError("current_control requested but control head is absent")
             current_control = self.control_head(pooled)
+        behavior_logits = behavior_side_logits = None
+        if "behavior" in batch.requested_outputs or "behavior_side" in batch.requested_outputs:
+            if self.behavior_head is None:
+                raise ValueError("behavior output requested but behavior head is absent")
+            predicted_behavior, predicted_side = self.behavior_head(pooled)
+            if "behavior" in batch.requested_outputs:
+                behavior_logits = predicted_behavior
+            if "behavior_side" in batch.requested_outputs:
+                behavior_side_logits = predicted_side
         output = ModelOutputV3(
             trajectory_xy=trajectory,
             trajectory_speed_mps=speed,
             candidate_logits=candidate_logits,
             current_control=current_control,
+            behavior_logits=behavior_logits,
+            behavior_side_logits=behavior_side_logits,
         )
         output.validate(
             batch_size=batch.batch_size,

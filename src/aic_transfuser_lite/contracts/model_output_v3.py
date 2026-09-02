@@ -14,6 +14,7 @@ class ModelOutputV3:
     stop_logit: torch.Tensor | None = None
     risk_logits: torch.Tensor | None = None
     behavior_logits: torch.Tensor | None = None
+    behavior_side_logits: torch.Tensor | None = None
     current_control: torch.Tensor | None = None
     control_sequence: torch.Tensor | None = None
 
@@ -46,6 +47,7 @@ class ModelOutputV3:
             "stop": self.stop_logit,
             "risk": self.risk_logits,
             "behavior": self.behavior_logits,
+            "behavior_side": self.behavior_side_logits,
             "current_control": self.current_control,
             "control_sequence": self.control_sequence,
         }
@@ -63,6 +65,10 @@ class ModelOutputV3:
                 raise ValueError("trajectory_log_sigma exceeds configured safety range")
         if self.current_control is not None and self.current_control.shape != (batch_size, candidates, 3):
             raise ValueError("current_control must be [B,K,3]")
+        if self.behavior_logits is not None and self.behavior_logits.shape != (batch_size, 5):
+            raise ValueError("behavior_logits must be [B,5]")
+        if self.behavior_side_logits is not None and self.behavior_side_logits.shape != (batch_size, 3):
+            raise ValueError("behavior_side_logits must be [B,3]")
         if self.control_sequence is not None and (
             self.control_sequence.ndim != 4
             or self.control_sequence.shape[:2] != (batch_size, candidates)

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 import torch
+from torch.nn import functional as F
 
 from aic_transfuser_lite.contracts.model_batch_v3 import TrainingTargetsV3
 from aic_transfuser_lite.contracts.model_output_v3 import ModelOutputV3
@@ -13,10 +15,26 @@ class LossWeightsV3:
     trajectory: float = 1.0
     speed_profile: float = 1.0
     current_control: float = 0.0
+    behavior: float = 0.0
+    behavior_side: float = 0.0
+    behavior_class_weights: tuple[float, ...] | None = None
+    behavior_side_class_weights: tuple[float, ...] | None = None
 
     def validate(self) -> None:
-        if self.trajectory < 0.0 or self.speed_profile < 0.0 or self.current_control < 0.0:
+        if any(value < 0.0 for value in (
+            self.trajectory, self.speed_profile, self.current_control,
+            self.behavior, self.behavior_side,
+        )):
             raise ValueError("loss weights must be non-negative")
+        for name, values, size in (
+            ("behavior", self.behavior_class_weights, 5),
+            ("behavior_side", self.behavior_side_class_weights, 3),
+        ):
+            if values is not None and (
+                len(values) != size
+                or any(not math.isfinite(value) or value <= 0.0 for value in values)
+            ):
+                raise ValueError(f"{name} class weights must contain {size} finite positive values")
 
 
 @dataclass(frozen=True)
@@ -81,6 +99,24 @@ def compute_losses_v3(
                 raw[f"current_control_{provenance}"] = _masked_mean(
                     element_loss, provenance_mask, f"current_control_{provenance}"
                 )
+    if weights.behavior > 0.0:
+        if output.behavior_logits is None or targets.behavior_class is None or targets.behavior_mask is None:
+            raise ValueError("behavior loss is nonzero but output/target is absent")
+        behavior = _masked_cross_entropy(
+            output.behavior_logits, targets.behavior_class, targets.behavior_mask,
+            weights.behavior_class_weights, "behavior",
+        )
+        raw["behavior"] = behavior
+        weighted["behavior"] = behavior * weights.behavior
+    if weights.behavior_side > 0.0:
+        if output.behavior_side_logits is None or targets.behavior_side is None or targets.behavior_side_mask is None:
+            raise ValueError("behavior_side loss is nonzero but output/target is absent")
+        side = _masked_cross_entropy(
+            output.behavior_side_logits, targets.behavior_side, targets.behavior_side_mask,
+            weights.behavior_side_class_weights, "behavior_side",
+        )
+        raw["behavior_side"] = side
+        weighted["behavior_side"] = side * weights.behavior_side
     total = sum(weighted.values())
     if not torch.isfinite(total):
         raise FloatingPointError("non-finite V3 loss")
@@ -112,3 +148,23 @@ def _masked_mean(values: torch.Tensor, mask: torch.Tensor, name: str) -> torch.T
     if not torch.isfinite(selected).all():
         raise FloatingPointError(f"non-finite raw {name} loss")
     return selected.mean()
+
+
+def _masked_cross_entropy(
+    logits: torch.Tensor,
+    target: torch.Tensor,
+    mask: torch.Tensor,
+    class_weights: tuple[float, ...] | None,
+    name: str,
+) -> torch.Tensor:
+    if logits.ndim != 2 or target.shape != mask.shape or target.shape != logits.shape[:1]:
+        raise ValueError(f"{name} logits/target/mask mismatch")
+    if mask.dtype != torch.bool:
+        raise ValueError(f"{name} mask must be boolean")
+    if not bool(mask.any()):
+        return logits.sum() * 0.0
+    weight = None if class_weights is None else logits.new_tensor(class_weights)
+    value = F.cross_entropy(logits[mask], target[mask], weight=weight)
+    if not torch.isfinite(value):
+        raise FloatingPointError(f"non-finite raw {name} loss")
+    return value

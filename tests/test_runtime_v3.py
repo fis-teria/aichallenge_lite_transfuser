@@ -1,4 +1,3 @@
-import hashlib
 import json
 from pathlib import Path
 
@@ -10,19 +9,27 @@ from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3, s
 from aic_transfuser_lite.runtime.output_profiles import output_profile, validate_observation_timing
 
 
-def _artifact(tmp_path: Path) -> tuple[Path, Path, str, str, str]:
+def _artifact(tmp_path: Path, *, behavior: bool = False) -> tuple[Path, Path, str, str, str]:
     contract = "c" * 64
     kwargs = dict(image_height=32, image_width=32, lidar_points=16, ego_dim=4,
                   hidden_dim=16, camera_tokens_hw=(1, 1), lidar_tokens=2,
                   fusion_depth=1, fusion_heads=4)
+    if behavior:
+        kwargs["behavior_head_enabled"] = True
     model = FullControlLiteV3(**kwargs)
     checkpoint = tmp_path / "model.pt"
-    torch.save({"model": model.state_dict(), "identity": {"contract_hash": contract}}, checkpoint)
+    torch.save({
+        "model": model.state_dict(), "identity": {"contract_hash": contract},
+        "behavior_ontology": "aic_behavior_v1" if behavior else None,
+    }, checkpoint)
     checkpoint_hash = sha256_file_v3(checkpoint)
     manifest = tmp_path / "artifact.json"
     manifest.write_text(json.dumps({
         "format": "aic_runtime_artifact_v3", "checkpoint_sha256": checkpoint_hash,
-        "contract_hash": contract, "capabilities": ["trajectory", "speed_profile"],
+        "contract_hash": contract, "capabilities": (
+            ["trajectory", "speed_profile", "behavior", "behavior_side"]
+            if behavior else ["trajectory", "speed_profile"]
+        ),
         "model_kwargs": kwargs,
     }, sort_keys=True), encoding="utf-8")
     return checkpoint, manifest, checkpoint_hash, sha256_file_v3(manifest), contract
@@ -34,6 +41,32 @@ def test_strict_v3_artifact_load(tmp_path: Path) -> None:
                                    expected_checkpoint_sha256=args[2],
                                    expected_manifest_sha256=args[3], expected_contract_hash=args[4])
     assert loaded.capabilities == frozenset({"trajectory", "speed_profile"})
+
+
+def test_behavior_artifact_requires_ontology_and_enabled_head(tmp_path: Path) -> None:
+    args = _artifact(tmp_path, behavior=True)
+    loaded = load_runtime_model_v3(
+        args[0], args[1], device=torch.device("cpu"), expected_checkpoint_sha256=args[2],
+        expected_manifest_sha256=args[3], expected_contract_hash=args[4],
+    )
+    assert {"behavior", "behavior_side"}.issubset(loaded.capabilities)
+    assert loaded.model.behavior_head is not None
+
+
+def test_behavior_artifact_rejects_partial_capability_pair(tmp_path: Path) -> None:
+    args = _artifact(tmp_path, behavior=True)
+    manifest = json.loads(args[1].read_text(encoding="utf-8"))
+    manifest["capabilities"].remove("behavior_side")
+    args[1].write_text(json.dumps(manifest, sort_keys=True), encoding="utf-8")
+    with pytest.raises(ValueError, match="declared together"):
+        load_runtime_model_v3(
+            args[0],
+            args[1],
+            device=torch.device("cpu"),
+            expected_checkpoint_sha256=args[2],
+            expected_manifest_sha256=sha256_file_v3(args[1]),
+            expected_contract_hash=args[4],
+        )
 
 
 @pytest.mark.parametrize("field", ["checkpoint", "manifest", "contract"])

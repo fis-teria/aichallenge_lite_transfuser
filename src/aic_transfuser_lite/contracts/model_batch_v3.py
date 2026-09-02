@@ -14,6 +14,7 @@ KNOWN_REQUESTED_OUTPUTS = frozenset(
         "stop",
         "risk",
         "behavior",
+        "behavior_side",
         "current_control",
         "control_sequence",
     }
@@ -29,6 +30,10 @@ class TrainingTargetsV3:
     current_control: torch.Tensor | None = None
     current_control_mask: torch.Tensor | None = None
     control_provenance: tuple[str, ...] | None = None
+    behavior_class: torch.Tensor | None = None
+    behavior_mask: torch.Tensor | None = None
+    behavior_side: torch.Tensor | None = None
+    behavior_side_mask: torch.Tensor | None = None
 
     def validate(self, *, batch_size: int) -> None:
         if self.trajectory_xy_m.ndim != 3 or self.trajectory_xy_m.shape[0] != batch_size or self.trajectory_xy_m.shape[-1] != 2:
@@ -53,6 +58,35 @@ class TrainingTargetsV3:
             _finite_where(self.current_control, self.current_control_mask, "current control target")
             if self.control_provenance is None or len(self.control_provenance) != batch_size:
                 raise ValueError("control provenance must contain one entry per batch item")
+        self._validate_class_target(
+            self.behavior_class, self.behavior_mask, batch_size=batch_size,
+            class_count=5, name="behavior",
+        )
+        self._validate_class_target(
+            self.behavior_side, self.behavior_side_mask, batch_size=batch_size,
+            class_count=3, name="behavior_side",
+        )
+
+    @staticmethod
+    def _validate_class_target(
+        value: torch.Tensor | None,
+        mask: torch.Tensor | None,
+        *,
+        batch_size: int,
+        class_count: int,
+        name: str,
+    ) -> None:
+        if value is None:
+            if mask is not None:
+                raise ValueError(f"{name} mask requires its target")
+            return
+        if value.shape != (batch_size,) or value.dtype != torch.long:
+            raise ValueError(f"{name} target must be long [B]")
+        if mask is None or mask.shape != (batch_size,) or mask.dtype != torch.bool:
+            raise ValueError(f"{name} mask must be bool [B]")
+        selected = value[mask]
+        if bool(((selected < 0) | (selected >= class_count)).any()):
+            raise ValueError(f"{name} valid target is outside [0,{class_count})")
 
 
 @dataclass(frozen=True)

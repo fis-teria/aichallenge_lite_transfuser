@@ -1,35 +1,36 @@
 from __future__ import annotations
 
-"""Trajectory-only V3 ROS adapter. This node never creates a control publisher."""
+"""Trajectory-authority V3 ROS adapter with optional behavior diagnostics."""
 
-import math
+import json
 from pathlib import Path
 from typing import Any
 
-from autoware_auto_vehicle_msgs.msg import SteeringReport
-from nav_msgs.msg import Odometry
+from autoware_auto_vehicle_msgs.msg import SteeringReport, VelocityReport
 import numpy as np
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image, LaserScan
-from std_msgs.msg import Float32MultiArray, String
+from std_msgs.msg import Float32, Float32MultiArray, Int32, String
 import torch
 
 from .canonical_source import prefer_canonical_source
 
 prefer_canonical_source()
 
+from aic_transfuser_lite.contracts.behavior_v1 import BEHAVIOR_ONTOLOGY_V1
 from aic_transfuser_lite.contracts.model_batch_v3 import ModelBatchV3
 from aic_transfuser_lite.data.image_preprocess import preprocess_image
 from aic_transfuser_lite.data.normalization import normalize_lidar_range_and_validity
 from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3
+from aic_transfuser_lite.runtime.behavior_decode_v1 import decode_behavior_logits_v1
 from aic_transfuser_lite.runtime.output_profiles import output_profile, validate_observation_timing
 
 from .runtime_adapter import image_message_to_rgb, strict_message_stamp_to_seconds
 
 
 class InferenceNodeV3(Node):
-    """Strict-stamp, fail-closed trajectory-only V3 inference."""
+    """Strict-stamp, fail-closed V3 inference without a control publisher."""
 
     def __init__(self) -> None:
         super().__init__("aic_transfuser_inference_v3")
@@ -38,6 +39,7 @@ class InferenceNodeV3(Node):
             "expected_manifest_sha256": "", "expected_contract_hash": "", "device": "auto",
             "input_timeout_sec": 0.35, "max_sensor_skew_ms": 30.0,
             "lidar_min_range_m": 0.0, "lidar_max_range_m": 25.0,
+            "behavior_confidence_threshold": 0.5, "behavior_temperature": 1.0,
         }
         for name, default in parameters.items():
             self.declare_parameter(name, default)
@@ -55,19 +57,50 @@ class InferenceNodeV3(Node):
             expected_contract_hash=str(self.get_parameter("expected_contract_hash").value),
         )
         self.model = loaded.model
+        self.behavior_enabled = "behavior" in loaded.capabilities
+        if self.behavior_enabled and "behavior_side" not in loaded.capabilities:
+            raise ValueError("behavior runtime capability requires behavior_side")
+        self.behavior_threshold = float(self.get_parameter("behavior_confidence_threshold").value)
+        self.behavior_temperature = float(self.get_parameter("behavior_temperature").value)
+        # The pure decoder performs the authoritative finite/range validation.
+        decode_behavior_logits_v1(
+            [0.0] * 5,
+            [0.0] * 3,
+            confidence_threshold=self.behavior_threshold,
+            temperature=self.behavior_temperature,
+        )
         self.model_kwargs = {
             "image_height": self.model.image_height, "image_width": self.model.image_width,
             "lidar_points": self.model.lidar_points, "ego_dim": self.model.ego_dim,
         }
         if self.model.ego_dim != 4:
-            raise ValueError("trajectory runtime requires ego_dim=4: vx, vy, yaw_rate, steering")
+            raise ValueError(
+                "trajectory runtime requires ego_dim=4: longitudinal_velocity, "
+                "lateral_velocity, heading_rate, steering_tire_angle"
+            )
         self.timeout_sec = float(self.get_parameter("input_timeout_sec").value)
         self.max_skew_sec = float(self.get_parameter("max_sensor_skew_ms").value) / 1000.0
         self.latest: dict[str, Any] = {}
         self.trajectory_pub = self.create_publisher(Float32MultiArray, "predicted_trajectory", 1)
         self.status_pub = self.create_publisher(String, "runtime_status", 1)
+        self.behavior_mode_pub = None
+        self.behavior_label_pub = None
+        self.behavior_confidence_pub = None
+        self.behavior_side_pub = None
+        if self.behavior_enabled:
+            self.behavior_mode_pub = self.create_publisher(Int32, "behavior_mode", 1)
+            self.behavior_label_pub = self.create_publisher(String, "behavior_label", 1)
+            self.behavior_confidence_pub = self.create_publisher(
+                Float32, "behavior_confidence", 1
+            )
+            self.behavior_side_pub = self.create_publisher(Int32, "behavior_side", 1)
         self.create_subscription(LaserScan, "scan", lambda msg: self._remember("lidar", msg), 10)
-        self.create_subscription(Odometry, "odometry", lambda msg: self._remember("odometry", msg), 10)
+        self.create_subscription(
+            VelocityReport,
+            "velocity_status",
+            lambda msg: self._remember("velocity", msg),
+            10,
+        )
         self.create_subscription(SteeringReport, "steering_status", lambda msg: self._remember("steering", msg), 10)
         self.create_subscription(Image, "image", self._on_image, 10)
 
@@ -81,7 +114,7 @@ class InferenceNodeV3(Node):
 
     def _on_image(self, image: Image) -> None:
         try:
-            missing = sorted({"lidar", "odometry", "steering"}.difference(self.latest))
+            missing = sorted({"lidar", "velocity", "steering"}.difference(self.latest))
             if missing:
                 raise ValueError("missing:" + ",".join(missing))
             camera_stamp = strict_message_stamp_to_seconds(image)
@@ -91,17 +124,29 @@ class InferenceNodeV3(Node):
                 now_sec=now_sec, camera_stamp_sec=camera_stamp, role_stamps_sec=stamps,
                 timeout_sec=self.timeout_sec, max_skew_sec=self.max_skew_sec,
             )
-            batch = self._make_batch(image, self.latest["lidar"], self.latest["odometry"], self.latest["steering"], stamps)
+            batch = self._make_batch(
+                image,
+                self.latest["lidar"],
+                self.latest["velocity"],
+                self.latest["steering"],
+                stamps,
+            )
             with torch.inference_mode():
                 output = self.model(batch)
             xy = output.trajectory_xy[0, 0].detach().cpu().reshape(-1).tolist()
             self.trajectory_pub.publish(Float32MultiArray(data=xy))
+            if self.behavior_enabled:
+                self._publish_behavior(output)
             self.status_pub.publish(String(data="trajectory_published"))
         except Exception as error:
             self.status_pub.publish(String(data=f"inference_rejected:{error}"))
 
     def _make_batch(
-        self, image: Image, scan: LaserScan, odometry: Odometry, steering: SteeringReport,
+        self,
+        image: Image,
+        scan: LaserScan,
+        velocity: VelocityReport,
+        steering: SteeringReport,
         stamps: dict[str, float],
     ) -> ModelBatchV3:
         rgb = image_message_to_rgb(image)
@@ -119,22 +164,67 @@ class InferenceNodeV3(Node):
             min_range_m=float(self.get_parameter("lidar_min_range_m").value),
             max_range_m=float(self.get_parameter("lidar_max_range_m").value),
         )).to(self.device)
-        twist = odometry.twist.twist
+        # Competition-legal ego inputs: Wheel Odometry (VelocityReport) and Steer Angle.
         ego = torch.tensor([
-            float(twist.linear.x), float(twist.linear.y), float(twist.angular.z),
+            float(velocity.longitudinal_velocity),
+            float(velocity.lateral_velocity),
+            float(velocity.heading_rate),
             float(steering.steering_tire_angle),
         ], dtype=torch.float32, device=self.device)
         if not torch.isfinite(ego).all():
             raise ValueError("non_finite_ego")
-        dt = torch.tensor([[[stamps["lidar"] - stamps["odometry"], stamps["steering"] - stamps["odometry"]]]], device=self.device)
+        dt = torch.tensor(
+            [[[
+                stamps["lidar"] - stamps["velocity"],
+                stamps["steering"] - stamps["velocity"],
+            ]]],
+            device=self.device,
+        )
+        requested = {"trajectory", "speed_profile"}
+        if self.behavior_enabled:
+            requested.update({"behavior", "behavior_side"})
         return ModelBatchV3(
             image=image_tensor[None, None], image_mask=torch.ones(1, 1, dtype=torch.bool, device=self.device),
             lidar=lidar[None, None], lidar_mask=torch.ones(1, 1, dtype=torch.bool, device=self.device),
             ego=ego[None, None], ego_feature_mask=torch.ones(1, 1, 4, dtype=torch.bool, device=self.device),
             command_history=torch.zeros(1, 1, 3, device=self.device),
             command_mask=torch.zeros(1, 1, dtype=torch.bool, device=self.device),
-            sensor_dt_sec=dt, requested_outputs=frozenset({"trajectory", "speed_profile"}),
+            sensor_dt_sec=dt, requested_outputs=frozenset(requested),
         )
+
+    def _publish_behavior(self, output: Any) -> None:
+        if output.behavior_logits is None or output.behavior_side_logits is None:
+            raise ValueError("behavior-capable artifact returned no behavior logits")
+        prediction = decode_behavior_logits_v1(
+            output.behavior_logits[0].detach().cpu().tolist(),
+            output.behavior_side_logits[0].detach().cpu().tolist(),
+            confidence_threshold=self.behavior_threshold,
+            temperature=self.behavior_temperature,
+        )
+        payload = {
+            "ontology": BEHAVIOR_ONTOLOGY_V1,
+            "label": prediction.behavior_label,
+            "side": prediction.behavior_side_label,
+            "confidence": prediction.behavior_confidence,
+            "side_confidence": prediction.behavior_side_confidence,
+            "source": "e2e_model",
+        }
+        if any(
+            publisher is None
+            for publisher in (
+                self.behavior_mode_pub,
+                self.behavior_label_pub,
+                self.behavior_confidence_pub,
+                self.behavior_side_pub,
+            )
+        ):
+            raise RuntimeError("behavior publishers are not initialized")
+        self.behavior_mode_pub.publish(Int32(data=prediction.behavior_class))
+        self.behavior_side_pub.publish(Int32(data=prediction.behavior_side))
+        self.behavior_confidence_pub.publish(
+            Float32(data=prediction.behavior_confidence)
+        )
+        self.behavior_label_pub.publish(String(data=json.dumps(payload, sort_keys=True)))
 
 
 def main(args: list[str] | None = None) -> None:

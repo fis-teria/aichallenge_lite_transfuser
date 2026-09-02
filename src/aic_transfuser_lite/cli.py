@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import asdict
 import hashlib
 import json
 from pathlib import Path
@@ -11,6 +10,7 @@ from urllib.parse import unquote, urlparse
 
 from .data.audit_v3 import audit_dataset
 from .data.bag_inventory import BagInventoryRecord, discover_bag_inventories
+from .data.behavior_view_v1 import build_behavior_view_v1
 from .data.canonical_converter_v3 import (
     convert_decoded_run_v3,
     load_dataset_v3_converter_config,
@@ -31,7 +31,8 @@ from .data.topic_profile_v3 import assess_topic_profile_v3, load_topic_profile_v
 from .training.checkpoint_v3 import ExperimentIdentityV3
 from .training.losses_v3 import LossWeightsV3
 from .training.train_v3 import (
-    TrainerV3, build_full_control_model_v3, load_full_control_config_v3, move_batch_v3,
+    TrainerV3, balanced_class_weights_v3, build_full_control_model_v3,
+    full_control_model_kwargs_v3, load_full_control_config_v3, move_batch_v3,
 )
 import torch
 import yaml
@@ -91,11 +92,23 @@ def build_parser() -> argparse.ArgumentParser:
     view_build.add_argument("--dry-run", action="store_true")
     view_build.add_argument("--resume", action="store_true")
 
+    behavior = domains.add_parser("behavior")
+    behavior_commands = behavior.add_subparsers(dest="command", required=True)
+    behavior_build = behavior_commands.add_parser("build")
+    behavior_build.add_argument("--dataset-root", required=True)
+    behavior_build.add_argument(
+        "--run-source", nargs=3, action="append", required=True,
+        metavar=("RUN_ID", "AUTOWARE_LOG", "BAG_DIRECTORY"),
+    )
+    behavior_build.add_argument("--output", required=True)
+    behavior_build.add_argument("--max-gap-ms", type=float, default=500.0)
+
     train = domains.add_parser("train")
     train.add_argument("--config", required=True)
     train.add_argument("--dataset-root", required=True)
     train.add_argument("--split-manifest", required=True)
     train.add_argument("--view-config", default="configs/data/view_temporal_v3.yaml")
+    train.add_argument("--behavior-view", required=True)
     train.add_argument("--output", required=True)
     train.add_argument("--epochs", type=int)
     train.add_argument("--batch-size", type=int)
@@ -121,6 +134,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _dataset_split(args)
         if args.domain == "view" and args.command == "build":
             return _view_build(args)
+        if args.domain == "behavior" and args.command == "build":
+            return _behavior_build(args)
         if args.domain == "train":
             return _train_v3(args)
         raise ValueError("unknown command")
@@ -289,6 +304,20 @@ def _view_build(args: argparse.Namespace) -> int:
     return EXIT_SUCCESS
 
 
+def _behavior_build(args: argparse.Namespace) -> int:
+    payload = build_behavior_view_v1(
+        dataset_root=args.dataset_root,
+        run_sources=tuple((item[0], item[1], item[2]) for item in args.run_source),
+        output_root=args.output,
+        max_gap_ms=float(args.max_gap_ms),
+    )
+    print(json.dumps({
+        "status": "COMPLETE", "ontology": payload["ontology"],
+        "valid_behavior_count": payload["valid_behavior_count"],
+    }))
+    return EXIT_SUCCESS
+
+
 def _train_v3(args: argparse.Namespace) -> int:
     config = load_full_control_config_v3(args.config)
     model_cfg, data_cfg, loss_cfg, training_cfg = (
@@ -308,7 +337,15 @@ def _train_v3(args: argparse.Namespace) -> int:
         ego_features=tuple(data_cfg["ego_features"]), trajectory_steps=int(model_cfg["trajectory_steps"]),
         camera_history_length=int(view["camera_history_length"]),
         ego_history_length=int(view["ego_history_length"]), batch_size=batch_size,
-        max_batches=args.max_batches,
+        max_batches=args.max_batches, behavior_view_root=args.behavior_view,
+    )
+    behavior_weights = balanced_class_weights_v3(
+        batches, target_name="behavior_class", mask_name="behavior_mask", class_count=5,
+        require_all_classes=args.max_batches is None,
+    )
+    side_weights = balanced_class_weights_v3(
+        batches, target_name="behavior_side", mask_name="behavior_side_mask", class_count=3,
+        require_all_classes=args.max_batches is None,
     )
     dataset_manifest = validate_complete_dataset(args.dataset_root)
     contract_hash = hashlib.sha256(
@@ -317,14 +354,21 @@ def _train_v3(args: argparse.Namespace) -> int:
     ).hexdigest()
     identity = ExperimentIdentityV3(
         dataset_hash=str(dataset_manifest["manifest_sha256"]),
-        split_hash=_sha256(Path(args.split_manifest)), view_hash=_sha256(Path(args.view_config)),
+        split_hash=_sha256(Path(args.split_manifest)),
+        view_hash=_combined_sha256(
+            Path(args.view_config), Path(args.behavior_view) / "manifest.json"
+        ),
         contract_hash=contract_hash, seed=42,
     )
     requested = args.device
     requested = ("cuda" if torch.cuda.is_available() else "cpu") if requested == "auto" else requested
     device = torch.device(requested)
     if args.dry_run:
-        print(json.dumps({"status": "DRY_RUN", "batches": len(batches), "device": str(device)}))
+        print(json.dumps({
+            "status": "DRY_RUN", "batches": len(batches), "device": str(device),
+            "behavior_class_weights": behavior_weights,
+            "behavior_side_class_weights": side_weights,
+        }))
         return EXIT_SUCCESS
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=args.resume)
@@ -335,7 +379,8 @@ def _train_v3(args: argparse.Namespace) -> int:
         identity=identity,
         loss_weights=LossWeightsV3(
             float(loss_cfg["trajectory"]), float(loss_cfg["speed_profile"]),
-            float(loss_cfg["current_control"]),
+            float(loss_cfg["current_control"]), float(loss_cfg["behavior"]),
+            float(loss_cfg["behavior_side"]), behavior_weights, side_weights,
         ),
     )
     checkpoint = output / "last.pt"
@@ -346,15 +391,39 @@ def _train_v3(args: argparse.Namespace) -> int:
     target_steps = epochs * len(batches)
     trainer.train_steps(max(0, target_steps - trainer.global_step))
     trainer.save(checkpoint)
+    runtime_artifact = output / "runtime_artifact.json"
+    runtime_artifact.write_text(
+        json.dumps(
+            {
+                "format": "aic_runtime_artifact_v3",
+                "checkpoint_sha256": _sha256(checkpoint),
+                "contract_hash": contract_hash,
+                "capabilities": [
+                    "trajectory", "speed_profile", "current_control", "behavior", "behavior_side",
+                ],
+                "model_kwargs": full_control_model_kwargs_v3(config),
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     run_manifest = {
         "format": "aic_full_control_training_run_v3", "global_step": trainer.global_step,
         "epochs": epochs, "batches_per_epoch": len(batches), "identity": identity.__dict__,
         "config_sha256": _sha256(Path(args.config)), "device": str(device), "last_log": trainer.logs[-1] if trainer.logs else None,
+        "behavior_ontology": "aic_behavior_v1",
+        "behavior_view_manifest_sha256": _sha256(Path(args.behavior_view) / "manifest.json"),
+        "runtime_artifact_manifest_sha256": _sha256(runtime_artifact),
     }
     (output / "run_manifest.json").write_text(
         json.dumps(run_manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
-    print(json.dumps({"status": "COMPLETE", "checkpoint": str(checkpoint), "global_step": trainer.global_step}))
+    print(json.dumps({
+        "status": "COMPLETE", "checkpoint": str(checkpoint),
+        "runtime_artifact": str(runtime_artifact), "global_step": trainer.global_step,
+    }))
     return EXIT_SUCCESS
 
 
@@ -402,6 +471,13 @@ def _sha256(path: Path) -> str:
     with path.open("rb") as stream:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _combined_sha256(*paths: Path) -> str:
+    digest = hashlib.sha256()
+    for path in paths:
+        digest.update(path.read_bytes())
     return digest.hexdigest()
 
 

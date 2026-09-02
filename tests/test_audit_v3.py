@@ -52,6 +52,7 @@ def test_storage_tamper_is_reported_as_fail(tmp_path: Path) -> None:
     lidar.write_bytes(b"tampered")
     report = audit_dataset(root)
     assert report.gates["storage_integrity"].status is AuditStatus.FAIL
+    assert report.missingness["lidar_valid_fraction"] is None
     assert any(error.startswith("sha256:") or error.startswith("size:") for error in report.storage["errors"])
 
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 import csv
 import json
 import math
@@ -13,6 +12,7 @@ import torch
 import yaml
 
 from .canonical_schema_v3 import CanonicalSampleV3
+from .behavior_view_v1 import load_behavior_view_v1
 from aic_transfuser_lite.contracts.model_batch_v3 import ModelBatchV3, TrainingTargetsV3
 from aic_transfuser_lite.models.temporal.gru import select_epoch_history
 from .storage_v3 import validate_complete_dataset
@@ -227,10 +227,19 @@ def load_temporal_training_batches_v3(
     ego_history_length: int,
     batch_size: int,
     max_batches: int | None = None,
+    behavior_view_root: str | Path | None = None,
 ) -> list[ModelBatchV3]:
     """Materialize leakage-safe temporal full-control batches from Dataset V3."""
     root = Path(dataset_root)
     dataset_manifest = validate_complete_dataset(root)
+    behavior_by_sample = (
+        None
+        if behavior_view_root is None
+        else load_behavior_view_v1(
+            behavior_view_root,
+            dataset_manifest_sha256=str(dataset_manifest["manifest_sha256"]),
+        )
+    )
     split_manifest = json.loads(Path(split_manifest_path).read_text(encoding="utf-8"))
     if split_manifest.get("dataset_manifest_sha256") != dataset_manifest["manifest_sha256"]:
         raise ValueError("split manifest targets a different Dataset V3 manifest")
@@ -289,6 +298,9 @@ def load_temporal_training_batches_v3(
             raise ValueError("dense trajectory asset shape mismatch")
         future = trajectory[:trajectory_steps]
         target_values, provenance = command
+        annotation = None if behavior_by_sample is None else behavior_by_sample.get(row["sample_id"])
+        behavior_valid = annotation is not None and _csv_bool(annotation["behavior_valid"])
+        side_valid = annotation is not None and _csv_bool(annotation["behavior_side_valid"])
         usable.append({
             "image": image, "image_mask": torch.tensor(sensor_selection.mask),
             "lidar": torch.stack(lidar_values), "lidar_mask": torch.tensor(sensor_selection.mask),
@@ -300,9 +312,19 @@ def load_temporal_training_batches_v3(
             "trajectory_mask": torch.from_numpy(future[:, 7].astype(bool)),
             "speed": torch.from_numpy(future[:, 4]).float(),
             "control": target_values, "provenance": provenance,
+            "behavior_class": torch.tensor(
+                int(annotation["behavior_class"]) if behavior_valid else -1, dtype=torch.long
+            ),
+            "behavior_mask": torch.tensor(behavior_valid),
+            "behavior_side": torch.tensor(
+                int(annotation["behavior_side"]) if side_valid else -1, dtype=torch.long
+            ),
+            "behavior_side_mask": torch.tensor(side_valid),
         })
     if not usable:
         raise ValueError("no full-control-capable samples in selected split")
+    if behavior_by_sample is not None and not any(bool(item["behavior_mask"]) for item in usable):
+        raise ValueError("behavior view has no valid behavior labels in selected split")
     batches: list[ModelBatchV3] = []
     for start in range(0, len(usable), batch_size):
         chunk = usable[start : start + batch_size]
@@ -313,14 +335,19 @@ def load_temporal_training_batches_v3(
             current_control=stack("control"),
             current_control_mask=torch.ones(len(chunk), 3, dtype=torch.bool),
             control_provenance=tuple(str(item["provenance"]) for item in chunk),
+            behavior_class=stack("behavior_class"), behavior_mask=stack("behavior_mask"),
+            behavior_side=stack("behavior_side"), behavior_side_mask=stack("behavior_side_mask"),
         )
+        requested_outputs = {"trajectory", "speed_profile", "current_control"}
+        if behavior_by_sample is not None:
+            requested_outputs.update({"behavior", "behavior_side"})
         batches.append(ModelBatchV3(
             image=stack("image"), image_mask=stack("image_mask"),
             lidar=stack("lidar"), lidar_mask=stack("lidar_mask"),
             ego=stack("ego"), ego_feature_mask=stack("ego_feature_mask"),
             command_history=stack("command_history"), command_mask=stack("command_mask"),
             sensor_dt_sec=stack("sensor_dt_sec"), targets=targets,
-            requested_outputs=frozenset({"trajectory", "speed_profile", "current_control"}),
+            requested_outputs=frozenset(requested_outputs),
         ))
         if max_batches is not None and len(batches) >= max_batches:
             break
@@ -357,3 +384,10 @@ def _ego_row(row: dict[str, str], features: tuple[str, ...]) -> tuple[torch.Tens
         values.append(value if is_valid else 0.0)
         valid.append(is_valid)
     return torch.tensor(values, dtype=torch.float32), torch.tensor(valid, dtype=torch.bool)
+
+
+def _csv_bool(value: str) -> bool:
+    normalized = str(value).strip().lower()
+    if normalized not in {"true", "false"}:
+        raise ValueError(f"invalid behavior view boolean: {value!r}")
+    return normalized == "true"

@@ -14,6 +14,12 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument("model_path"),
         DeclareLaunchArgument("artifact_manifest_path"),
         DeclareLaunchArgument("use_sim_time", default_value="true"),
+        DeclareLaunchArgument(
+            "velocity_topic", default_value="/vehicle/status/velocity_status"
+        ),
+        DeclareLaunchArgument(
+            "steering_topic", default_value="/vehicle/status/steering_status"
+        ),
     ]
     inference = Node(
         package="aic_e2e_runtime", executable="inference_node_v3",
@@ -25,8 +31,8 @@ def generate_launch_description() -> LaunchDescription:
         }],
         remappings=[
             ("image", "/sensing/camera/image_raw"), ("scan", "/sensing/lidar/scan"),
-            ("odometry", "/localization/kinematic_state"),
-            ("steering_status", "/vehicle/status/steering_status"),
+            ("velocity_status", LaunchConfiguration("velocity_topic")),
+            ("steering_status", LaunchConfiguration("steering_topic")),
         ],
     )
     return LaunchDescription(arguments + [inference])

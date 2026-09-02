@@ -18,7 +18,9 @@
         "ego_feature_mask": {"const": "[B,Te,Fe] bool"},
         "command_history": {"const": "[B,Tu,3]"},
         "command_mask": {"const": "[B,Tu] bool"},
-        "sensor_dt_sec": {"const": "[B,Tc,M]"}
+        "sensor_dt_sec": {"const": "[B,Tc,M]"},
+        "behavior_class": {"const": "[B] long with [B] bool mask"},
+        "behavior_side": {"const": "[B] long with [B] bool mask"}
       },
       "required": ["image", "image_mask", "lidar", "lidar_mask", "ego", "ego_feature_mask", "command_history", "command_mask", "sensor_dt_sec"]
     },
