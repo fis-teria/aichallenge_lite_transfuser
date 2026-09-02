@@ -85,9 +85,9 @@ publishes either message and reports success:
 
 | Output topic | Type / contract |
 |---|---|
-| `/v3_shadow/predicted_trajectory` | `Float32MultiArray`, flattened `[N,2]` `(x,y)` in metres |
-| `/v3_shadow/predicted_trajectory_path` | `nav_msgs/Path`, stamped `[N]` poses in `base_link` for RViz2 |
-| `/v3_shadow/predicted_speed_profile` | `Float32MultiArray`, `[N]` non-negative target speeds in m/s |
+| `/predicted_trajectory` | `Float32MultiArray`, flattened `[N,2]` `(x,y)` in metres |
+| `/predicted_trajectory_path` | `nav_msgs/Path`, stamped `[N]` poses in `base_link` for RViz2 |
+| `/predicted_speed_profile` | `Float32MultiArray`, `[N]` non-negative target speeds in m/s |
 
 The point counts must match and all values must be finite. Invalid shape,
 non-finite values, or negative speed fail closed before either message is
@@ -177,6 +177,30 @@ stamp, contains one pose per validated trajectory point, and is published only
 after trajectory/speed/path validation succeeds. RViz2 is optional and has no
 control publisher. On a remote desktop host, `DISPLAY` and `XAUTHORITY` must
 refer to the logged-in graphical session before launching.
+
+### 2026-09-03 Graneple RViz2 shadow verification
+
+Commit `8824a4a` passed the 40 focused unit/negative/ownership tests and the
+362-test combined WSL suite. In `aichallenge-2025-dev:latest`, the 46 focused
+tests passed and the ROS 2 package built successfully. With AWSIM running on
+Graneple and no Start request sent, the dedicated 1400 x 900 RViz2 window was
+confirmed on `DISPLAY=:1`. A 45-second direct observation recorded:
+
+- valid Camera-stamped `nav_msgs/Path` messages: 404
+- invalid Path messages: 0
+- pose count: 15 for all 404 messages
+- frame: `base_link` for all 404 messages
+- dedicated RViz2 node present: yes
+- V3 ownership of `/nominal_control_cmd`: absent
+
+The observation JSON SHA-256 is
+`c03a6f0e3e20a3e64c5dc1ebc6029220213fbe5262f64c52ad6935e145d2e2b4`.
+The container reported direct-rendering driver fallback warnings, but RViz2
+initialized OpenGL 4.5 and its X11 window remained alive throughout the
+observation. This check visualized the local predicted trajectory and native
+LaserScan only. The vehicle was not started, the shadow command was not
+connected to Safety Supervisor or vehicle control, and lap completion was not
+tested.
 
 Before any connection to Safety Supervisor or vehicle control, complete the V3
 calibration artifact, validate the controller against held-out scenarios, and
