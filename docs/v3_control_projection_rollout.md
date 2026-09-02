@@ -66,3 +66,17 @@ fixtures, but must not enable `full_control` from those fixtures.
 No ROS 2 runtime, Safety Supervisor connection, vehicle command, or AWSIM
 closed-loop test is part of this task. V3-021 and later authority changes must
 remain separate tasks.
+
+## Verification record
+
+Commit `7cb4aa1` passed the focused projection/rollout unit and negative suite
+in WSL (`26 passed`) and the combined repository plus ROS source suite
+(`388 passed`). The exact tracked archive, SHA-256
+`c2afba00742f73e25c0efeb17108ed645e4c7ff57bb1b7c31722c91746298341`,
+then passed the projection, rollout, and calibration tests in
+`aichallenge-2025-dev:latest` on Graneple (`33 passed`). The container's only
+warning was inability to write pytest cache because the snapshot was mounted
+read-only.
+
+No ROS graph or AWSIM test was executed for V3-020, and no closed-loop success
+is claimed.
