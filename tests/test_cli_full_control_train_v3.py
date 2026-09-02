@@ -8,6 +8,8 @@ import torch
 
 from aic_transfuser_lite.cli import EXIT_SUCCESS, main
 from aic_transfuser_lite.data.canonical_converter_v3 import write_prepared_dataset_v3
+from aic_transfuser_lite.data.dataset_view_v3 import load_temporal_training_batches_v3
+import aic_transfuser_lite.data.dataset_view_v3 as dataset_view_v3
 from aic_transfuser_lite.data.storage_v3 import validate_complete_dataset
 from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3, sha256_file_v3
 from test_dataset_v3_converter import _convert
@@ -117,3 +119,38 @@ def test_cli_full_control_dry_run_writes_nothing(tmp_path: Path) -> None:
         "--max-batches", "1", "--device", "cpu", "--dry-run",
     ]) == EXIT_SUCCESS
     assert not output.exists()
+
+
+def test_temporal_training_loader_defers_asset_reads_until_batch_access(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    dataset, split, _, behavior_view, _ = _training_fixture(tmp_path)
+    real_open = dataset_view_v3.Image.open
+    opened: list[Path] = []
+
+    def tracked_open(path, *args, **kwargs):
+        opened.append(Path(path))
+        return real_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(dataset_view_v3.Image, "open", tracked_open)
+    batches = load_temporal_training_batches_v3(
+        dataset,
+        split,
+        split="train",
+        image_height=32,
+        image_width=32,
+        lidar_points=4,
+        lidar_min_range_m=0.0,
+        lidar_max_range_m=25.0,
+        ego_features=("longitudinal_speed_mps", "lateral_speed_mps", "yaw_rate_rps"),
+        trajectory_steps=15,
+        camera_history_length=4,
+        ego_history_length=10,
+        batch_size=2,
+        behavior_view_root=behavior_view,
+    )
+    assert len(batches) > 1
+    assert opened == []
+    first = batches[0]
+    assert first.image.shape == (2, 4, 3, 32, 32)
+    assert len(opened) == 8

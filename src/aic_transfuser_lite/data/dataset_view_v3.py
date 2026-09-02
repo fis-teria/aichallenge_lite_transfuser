@@ -5,6 +5,7 @@ from pathlib import Path
 import csv
 import json
 import math
+from typing import Sequence
 
 import numpy as np
 from PIL import Image
@@ -211,6 +212,157 @@ def _exact_time_index(values: np.ndarray, target_sec: float) -> int:
     return int(matches[0])
 
 
+@dataclass(frozen=True)
+class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
+    root: Path
+    rows: list[dict[str, str]]
+    epoch_keys: tuple[tuple[str, str], ...]
+    usable_anchors: list[int]
+    behavior_by_sample: dict[str, dict[str, str]] | None
+    image_height: int
+    image_width: int
+    lidar_points: int
+    lidar_min_range_m: float
+    lidar_max_range_m: float
+    ego_features: tuple[str, ...]
+    trajectory_steps: int
+    camera_history_length: int
+    ego_history_length: int
+    batch_size: int
+    max_batches: int | None
+
+    def __len__(self) -> int:
+        count = math.ceil(len(self.usable_anchors) / self.batch_size)
+        return count if self.max_batches is None else min(count, self.max_batches)
+
+    def __getitem__(self, index: int) -> ModelBatchV3:
+        count = len(self)
+        normalized = index + count if index < 0 else index
+        if normalized < 0 or normalized >= count:
+            raise IndexError(index)
+        start = normalized * self.batch_size
+        anchors = self.usable_anchors[start : start + self.batch_size]
+        chunk = [self._materialize_sample(anchor) for anchor in anchors]
+        stack = lambda key: torch.stack([item[key] for item in chunk])  # noqa: E731
+        targets = TrainingTargetsV3(
+            trajectory_xy_m=stack("trajectory"),
+            trajectory_mask=stack("trajectory_mask"),
+            speed_mps=stack("speed"),
+            speed_mask=stack("trajectory_mask"),
+            current_control=stack("control"),
+            current_control_mask=torch.ones(len(chunk), 3, dtype=torch.bool),
+            control_provenance=tuple(str(item["provenance"]) for item in chunk),
+            behavior_class=stack("behavior_class"),
+            behavior_mask=stack("behavior_mask"),
+            behavior_side=stack("behavior_side"),
+            behavior_side_mask=stack("behavior_side_mask"),
+        )
+        requested_outputs = {"trajectory", "speed_profile", "current_control"}
+        if self.behavior_by_sample is not None:
+            requested_outputs.update({"behavior", "behavior_side"})
+        return ModelBatchV3(
+            image=stack("image"),
+            image_mask=stack("image_mask"),
+            lidar=stack("lidar"),
+            lidar_mask=stack("lidar_mask"),
+            ego=stack("ego"),
+            ego_feature_mask=stack("ego_feature_mask"),
+            command_history=stack("command_history"),
+            command_mask=stack("command_mask"),
+            sensor_dt_sec=stack("sensor_dt_sec"),
+            targets=targets,
+            requested_outputs=frozenset(requested_outputs),
+        )
+
+    def _materialize_sample(self, anchor: int) -> dict[str, torch.Tensor | str]:
+        row = self.rows[anchor]
+        sensor_selection = select_epoch_history(
+            self.epoch_keys, anchor_index=anchor, length=self.camera_history_length
+        )
+        ego_selection = select_epoch_history(
+            self.epoch_keys, anchor_index=anchor, length=self.ego_history_length
+        )
+        sensor_rows = [self.rows[index] for index in sensor_selection.indices]
+        ego_rows = [self.rows[index] for index in ego_selection.indices]
+        image = torch.stack([self._load_image(item) for item in sensor_rows])
+        lidar_values = [self._load_lidar(item) for item in sensor_rows]
+        ego_values, ego_masks, command_values, command_masks = [], [], [], []
+        for item in ego_rows:
+            values, mask = _ego_row(item, self.ego_features)
+            ego_values.append(values)
+            ego_masks.append(mask)
+            selected = _selected_command(item)
+            command_values.append(torch.zeros(3) if selected is None else selected[0])
+            command_masks.append(selected is not None)
+        trajectory = np.load(self.root / row["trajectory_path"], allow_pickle=False)
+        if (
+            trajectory.ndim != 2
+            or trajectory.shape[0] < self.trajectory_steps
+            or trajectory.shape[1] != 8
+        ):
+            raise ValueError("dense trajectory asset shape mismatch")
+        future = trajectory[: self.trajectory_steps]
+        command = _selected_command(row)
+        if command is None:
+            raise AssertionError("eligible anchor lost its full-control command")
+        target_values, provenance = command
+        annotation = (
+            None
+            if self.behavior_by_sample is None
+            else self.behavior_by_sample.get(row["sample_id"])
+        )
+        behavior_valid = annotation is not None and _csv_bool(annotation["behavior_valid"])
+        side_valid = annotation is not None and _csv_bool(annotation["behavior_side_valid"])
+        return {
+            "image": image,
+            "image_mask": torch.tensor(sensor_selection.mask),
+            "lidar": torch.stack(lidar_values),
+            "lidar_mask": torch.tensor(sensor_selection.mask),
+            "ego": torch.stack(ego_values),
+            "ego_feature_mask": torch.stack(ego_masks),
+            "command_history": torch.stack(command_values),
+            "command_mask": torch.tensor(command_masks) & torch.tensor(ego_selection.mask),
+            "sensor_dt_sec": torch.zeros(self.camera_history_length, 2),
+            "trajectory": torch.from_numpy(future[:, 1:3]).float(),
+            "trajectory_mask": torch.from_numpy(future[:, 7].astype(bool)),
+            "speed": torch.from_numpy(future[:, 4]).float(),
+            "control": target_values,
+            "provenance": provenance,
+            "behavior_class": torch.tensor(
+                int(annotation["behavior_class"]) if behavior_valid else -1,
+                dtype=torch.long,
+            ),
+            "behavior_mask": torch.tensor(behavior_valid),
+            "behavior_side": torch.tensor(
+                int(annotation["behavior_side"]) if side_valid else -1,
+                dtype=torch.long,
+            ),
+            "behavior_side_mask": torch.tensor(side_valid),
+        }
+
+    def _load_image(self, row: dict[str, str]) -> torch.Tensor:
+        with Image.open(self.root / row["image_path"]) as image:
+            return preprocess_image(
+                image,
+                height=self.image_height,
+                width=self.image_width,
+            )
+
+    def _load_lidar(self, row: dict[str, str]) -> torch.Tensor:
+        ranges = np.load(self.root / row["lidar_path"], allow_pickle=False)
+        valid = np.load(self.root / row["lidar_valid_path"], allow_pickle=False).astype(bool)
+        if ranges.shape != (self.lidar_points,) or valid.shape != ranges.shape:
+            raise ValueError("Dataset V3 LiDAR shape differs from model config")
+        return torch.from_numpy(
+            normalize_lidar_range_and_validity(
+                ranges,
+                valid,
+                min_range_m=self.lidar_min_range_m,
+                max_range_m=self.lidar_max_range_m,
+            )
+        ).float()
+
+
 def load_temporal_training_batches_v3(
     dataset_root: str | Path,
     split_manifest_path: str | Path,
@@ -228,8 +380,13 @@ def load_temporal_training_batches_v3(
     batch_size: int,
     max_batches: int | None = None,
     behavior_view_root: str | Path | None = None,
-) -> list[ModelBatchV3]:
-    """Materialize leakage-safe temporal full-control batches from Dataset V3."""
+) -> Sequence[ModelBatchV3]:
+    """Create leakage-safe lazy temporal batches from Dataset V3.
+
+    CSV rows and eligible anchor indices stay in memory, while image/LiDAR and
+    trajectory tensors are materialized only for the requested batch. This
+    bounds host memory independently of Dataset duration.
+    """
     root = Path(dataset_root)
     dataset_manifest = validate_complete_dataset(root)
     behavior_by_sample = (
@@ -253,105 +410,40 @@ def load_temporal_training_batches_v3(
     with (root / "samples.csv").open(newline="", encoding="utf-8") as stream:
         rows = [row for row in csv.DictReader(stream) if row["run_id"] in assigned]
     rows.sort(key=lambda row: (row["run_id"], row["segment_id"], int(row["grid_stamp_ns"])))
-    usable: list[dict[str, torch.Tensor | str]] = []
+    usable_anchors: list[int] = []
     for anchor, row in enumerate(rows):
-        command = _selected_command(row)
-        if command is None:
+        if _selected_command(row) is None:
             continue
-        sensor_selection = select_epoch_history(
-            [(item["run_id"], item["segment_id"]) for item in rows],
-            anchor_index=anchor,
-            length=camera_history_length,
-        )
-        ego_selection = select_epoch_history(
-            [(item["run_id"], item["segment_id"]) for item in rows],
-            anchor_index=anchor,
-            length=ego_history_length,
-        )
-        sensor_rows = [rows[index] for index in sensor_selection.indices]
-        ego_rows = [rows[index] for index in ego_selection.indices]
-        image = torch.stack([
-            preprocess_image(Image.open(root / item["image_path"]), height=image_height, width=image_width)
-            for item in sensor_rows
-        ])
-        lidar_values = []
-        for item in sensor_rows:
-            ranges = np.load(root / item["lidar_path"], allow_pickle=False)
-            valid = np.load(root / item["lidar_valid_path"], allow_pickle=False).astype(bool)
-            if ranges.shape != (lidar_points,) or valid.shape != ranges.shape:
-                raise ValueError("Dataset V3 LiDAR shape differs from model config")
-            lidar_values.append(torch.from_numpy(normalize_lidar_range_and_validity(
-                ranges, valid, min_range_m=lidar_min_range_m, max_range_m=lidar_max_range_m
-            )).float())
-        ego_values, ego_masks, command_values, command_masks = [], [], [], []
-        for item in ego_rows:
-            values, mask = _ego_row(item, ego_features)
-            ego_values.append(values)
-            ego_masks.append(mask)
-            selected = _selected_command(item)
-            command_values.append(torch.zeros(3) if selected is None else selected[0])
-            command_masks.append(selected is not None)
-        if not bool(ego_masks[-1].all()):
+        _, current_ego_mask = _ego_row(row, ego_features)
+        if not bool(current_ego_mask.all()):
             continue
-        trajectory = np.load(root / row["trajectory_path"], allow_pickle=False)
-        if trajectory.ndim != 2 or trajectory.shape[0] < trajectory_steps or trajectory.shape[1] != 8:
-            raise ValueError("dense trajectory asset shape mismatch")
-        future = trajectory[:trajectory_steps]
-        target_values, provenance = command
-        annotation = None if behavior_by_sample is None else behavior_by_sample.get(row["sample_id"])
-        behavior_valid = annotation is not None and _csv_bool(annotation["behavior_valid"])
-        side_valid = annotation is not None and _csv_bool(annotation["behavior_side_valid"])
-        usable.append({
-            "image": image, "image_mask": torch.tensor(sensor_selection.mask),
-            "lidar": torch.stack(lidar_values), "lidar_mask": torch.tensor(sensor_selection.mask),
-            "ego": torch.stack(ego_values), "ego_feature_mask": torch.stack(ego_masks),
-            "command_history": torch.stack(command_values),
-            "command_mask": torch.tensor(command_masks) & torch.tensor(ego_selection.mask),
-            "sensor_dt_sec": torch.zeros(camera_history_length, 2),
-            "trajectory": torch.from_numpy(future[:, 1:3]).float(),
-            "trajectory_mask": torch.from_numpy(future[:, 7].astype(bool)),
-            "speed": torch.from_numpy(future[:, 4]).float(),
-            "control": target_values, "provenance": provenance,
-            "behavior_class": torch.tensor(
-                int(annotation["behavior_class"]) if behavior_valid else -1, dtype=torch.long
-            ),
-            "behavior_mask": torch.tensor(behavior_valid),
-            "behavior_side": torch.tensor(
-                int(annotation["behavior_side"]) if side_valid else -1, dtype=torch.long
-            ),
-            "behavior_side_mask": torch.tensor(side_valid),
-        })
-    if not usable:
+        usable_anchors.append(anchor)
+    if not usable_anchors:
         raise ValueError("no full-control-capable samples in selected split")
-    if behavior_by_sample is not None and not any(bool(item["behavior_mask"]) for item in usable):
+    if behavior_by_sample is not None and not any(
+        (annotation := behavior_by_sample.get(rows[anchor]["sample_id"])) is not None
+        and _csv_bool(annotation["behavior_valid"])
+        for anchor in usable_anchors
+    ):
         raise ValueError("behavior view has no valid behavior labels in selected split")
-    batches: list[ModelBatchV3] = []
-    for start in range(0, len(usable), batch_size):
-        chunk = usable[start : start + batch_size]
-        stack = lambda key: torch.stack([item[key] for item in chunk])  # noqa: E731
-        targets = TrainingTargetsV3(
-            trajectory_xy_m=stack("trajectory"), trajectory_mask=stack("trajectory_mask"),
-            speed_mps=stack("speed"), speed_mask=stack("trajectory_mask"),
-            current_control=stack("control"),
-            current_control_mask=torch.ones(len(chunk), 3, dtype=torch.bool),
-            control_provenance=tuple(str(item["provenance"]) for item in chunk),
-            behavior_class=stack("behavior_class"), behavior_mask=stack("behavior_mask"),
-            behavior_side=stack("behavior_side"), behavior_side_mask=stack("behavior_side_mask"),
-        )
-        requested_outputs = {"trajectory", "speed_profile", "current_control"}
-        if behavior_by_sample is not None:
-            requested_outputs.update({"behavior", "behavior_side"})
-        batches.append(ModelBatchV3(
-            image=stack("image"), image_mask=stack("image_mask"),
-            lidar=stack("lidar"), lidar_mask=stack("lidar_mask"),
-            ego=stack("ego"), ego_feature_mask=stack("ego_feature_mask"),
-            command_history=stack("command_history"), command_mask=stack("command_mask"),
-            sensor_dt_sec=stack("sensor_dt_sec"), targets=targets,
-            requested_outputs=frozenset(requested_outputs),
-        ))
-        if max_batches is not None and len(batches) >= max_batches:
-            break
-    return batches
+    return _LazyTemporalTrainingBatchesV3(
+        root=root,
+        rows=rows,
+        epoch_keys=tuple((item["run_id"], item["segment_id"]) for item in rows),
+        usable_anchors=usable_anchors,
+        behavior_by_sample=behavior_by_sample,
+        image_height=image_height,
+        image_width=image_width,
+        lidar_points=lidar_points,
+        lidar_min_range_m=lidar_min_range_m,
+        lidar_max_range_m=lidar_max_range_m,
+        ego_features=ego_features,
+        trajectory_steps=trajectory_steps,
+        camera_history_length=camera_history_length,
+        ego_history_length=ego_history_length,
+        batch_size=batch_size,
+        max_batches=max_batches,
+    )
 
 
 def _selected_command(row: dict[str, str]) -> tuple[torch.Tensor, str] | None:

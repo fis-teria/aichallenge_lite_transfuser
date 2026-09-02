@@ -32,7 +32,7 @@ from .training.checkpoint_v3 import ExperimentIdentityV3
 from .training.losses_v3 import LossWeightsV3
 from .training.train_v3 import (
     TrainerV3, balanced_class_weights_v3, build_full_control_model_v3,
-    full_control_model_kwargs_v3, load_full_control_config_v3, move_batch_v3,
+    full_control_model_kwargs_v3, load_full_control_config_v3,
 )
 import torch
 import yaml
@@ -375,7 +375,7 @@ def _train_v3(args: argparse.Namespace) -> int:
     model = build_full_control_model_v3(config).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
     trainer = TrainerV3(
-        model=model, batches=[move_batch_v3(batch, device) for batch in batches], optimizer=optimizer,
+        model=model, batches=batches, optimizer=optimizer,
         identity=identity,
         loss_weights=LossWeightsV3(
             float(loss_cfg["trajectory"]), float(loss_cfg["speed_profile"]),

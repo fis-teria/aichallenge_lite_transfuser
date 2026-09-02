@@ -221,6 +221,9 @@ V3のfull-controlモデルは、4-frame Camera/LiDAR履歴、10-step ego/command
 Dataset V3のMCAP readerも同じ契約を使用し、V1凍結readerとは分離される。
 そのため`/nominal_control_cmd`が無いrunでも、topic profileの必須sensorが揃い、
 `/control/command/control_cmd`の型が一致すればfull-control label能力を保持する。
+学習batchはDataset全体をRAM/GPUへ一括展開せず、選択batchのassetだけを逐次読み込み、
+optimizer stepの直前にdeviceへ転送する。`--dry-run`も同じlazy batchを全件走査して
+class weightを検証する。
 
 Full Controlは状況判断を`aic_behavior_v1`の補助Headとしても学習する。
 

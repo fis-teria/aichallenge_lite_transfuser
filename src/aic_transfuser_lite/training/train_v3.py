@@ -71,6 +71,8 @@ class TrainerV3:
         self.identity = identity
         self.loss_weights = loss_weights
         self.scheduler = scheduler
+        first_parameter = next(iter(model.parameters()), None)
+        self.device = torch.device("cpu") if first_parameter is None else first_parameter.device
         self.sampler = DeterministicSamplerV3(len(batches), seed=identity.seed)
         self.global_step = 0
         self.logs: list[dict[str, float]] = []
@@ -81,7 +83,7 @@ class TrainerV3:
         self.model.train()
         produced: list[dict[str, float]] = []
         for _ in range(count):
-            batch = self.batches[self.sampler.next_index()]
+            batch = move_batch_v3(self.batches[self.sampler.next_index()], self.device)
             if batch.targets is None:
                 raise ValueError("training batch is missing targets")
             self.optimizer.zero_grad(set_to_none=True)
