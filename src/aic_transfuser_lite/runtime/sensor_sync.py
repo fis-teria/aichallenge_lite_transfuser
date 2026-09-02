@@ -7,6 +7,7 @@ from typing import Deque, Generic, Mapping, Sequence, TypeVar
 
 
 T = TypeVar("T")
+CameraT = TypeVar("CameraT")
 
 
 @dataclass(frozen=True)
@@ -23,6 +24,14 @@ class SyncDecision(Generic[T]):
     samples: Mapping[str, T]
     deltas_sec: Mapping[str, float]
     max_skew_sec: float
+
+
+@dataclass(frozen=True)
+class SettledSyncDecision(Generic[CameraT, T]):
+    """A Camera observation paired with a final nearest-sensor decision."""
+
+    camera: CameraT
+    decision: SyncDecision[T]
 
 
 class CameraMasterSynchronizer(Generic[T]):
@@ -133,4 +142,63 @@ class CameraMasterSynchronizer(Generic[T]):
             samples,
             deltas,
             max_skew,
+        )
+
+
+class SettledCameraSynchronizer(Generic[CameraT, T]):
+    """Wait for every sensor stream to cross a Camera stamp before matching.
+
+    ROS callback arrival order is not a synchronization policy. This wrapper
+    holds Camera observations in a bounded queue and finalizes each one only
+    after every required stream has observed that timestamp or a later one.
+    The wrapped nearest-sample matcher then selects and consumes each sensor
+    sample at most once.
+    """
+
+    def __init__(
+        self,
+        *,
+        required_roles: Sequence[str],
+        queue_size: int,
+        max_skew_sec: float,
+    ) -> None:
+        self._sensor_sync: CameraMasterSynchronizer[T] = CameraMasterSynchronizer(
+            required_roles=required_roles,
+            queue_size=queue_size,
+            max_skew_sec=max_skew_sec,
+        )
+        self.queue_size = self._sensor_sync.queue_size
+        self._cameras: Deque[TimedSample[CameraT]] = deque()
+        self._last_camera_stamp_sec = -math.inf
+
+    @property
+    def pending_camera_count(self) -> int:
+        return len(self._cameras)
+
+    def add_sensor(self, role: str, stamp_sec: float, value: T) -> None:
+        self._sensor_sync.add(role, stamp_sec, value)
+
+    def add_camera(
+        self, stamp_sec: float, value: CameraT
+    ) -> TimedSample[CameraT] | None:
+        stamp = self._sensor_sync._valid_stamp(stamp_sec)
+        if stamp <= self._last_camera_stamp_sec:
+            raise ValueError("camera timestamps must be strictly increasing")
+        self._last_camera_stamp_sec = stamp
+        dropped = None
+        if len(self._cameras) >= self.queue_size:
+            dropped = self._cameras.popleft()
+        self._cameras.append(TimedSample(stamp, value))
+        return dropped
+
+    def pop_ready(self) -> SettledSyncDecision[CameraT, T] | None:
+        if not self._cameras:
+            return None
+        camera = self._cameras[0]
+        if not self._sensor_sync.all_streams_reached(camera.stamp_sec):
+            return None
+        self._cameras.popleft()
+        return SettledSyncDecision(
+            camera=camera.value,
+            decision=self._sensor_sync.match(camera.stamp_sec),
         )

@@ -12,7 +12,13 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import Image, LaserScan
-from std_msgs.msg import Float32, Float32MultiArray, Int32, String
+from std_msgs.msg import (
+    Float32,
+    Float32MultiArray,
+    Float64MultiArray,
+    Int32,
+    String,
+)
 import torch
 
 from .canonical_source import prefer_canonical_source
@@ -26,6 +32,10 @@ from aic_transfuser_lite.data.normalization import normalize_lidar_range_and_val
 from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3
 from aic_transfuser_lite.runtime.behavior_decode_v1 import decode_behavior_logits_v1
 from aic_transfuser_lite.runtime.output_profiles import output_profile, validate_observation_timing
+from aic_transfuser_lite.runtime.sensor_sync import (
+    SettledCameraSynchronizer,
+    SyncDecision,
+)
 
 from .runtime_adapter import image_message_to_rgb, strict_message_stamp_to_seconds
 
@@ -33,12 +43,15 @@ from .runtime_adapter import image_message_to_rgb, strict_message_stamp_to_secon
 class InferenceNodeV3(Node):
     """Strict-stamp, fail-closed V3 inference without a control publisher."""
 
+    SYNC_ROLES = ("lidar", "velocity", "steering")
+
     def __init__(self) -> None:
         super().__init__("aic_transfuser_inference_v3")
         parameters = {
             "model_path": "", "artifact_manifest_path": "", "expected_checkpoint_sha256": "",
             "expected_manifest_sha256": "", "expected_contract_hash": "", "device": "auto",
-            "input_timeout_sec": 0.35, "max_sensor_skew_ms": 30.0,
+            "input_timeout_sec": 0.35, "sync_queue_size": 10,
+            "max_sensor_skew_ms": 30.0,
             "lidar_min_range_m": 0.0, "lidar_max_range_m": 25.0,
             "behavior_confidence_threshold": 0.5, "behavior_temperature": 1.0,
         }
@@ -81,9 +94,18 @@ class InferenceNodeV3(Node):
             )
         self.timeout_sec = float(self.get_parameter("input_timeout_sec").value)
         self.max_skew_sec = float(self.get_parameter("max_sensor_skew_ms").value) / 1000.0
-        self.latest: dict[str, Any] = {}
+        self.synchronizer: SettledCameraSynchronizer[Image, Any] = (
+            SettledCameraSynchronizer(
+                required_roles=self.SYNC_ROLES,
+                queue_size=int(self.get_parameter("sync_queue_size").value),
+                max_skew_sec=self.max_skew_sec,
+            )
+        )
         self.trajectory_pub = self.create_publisher(Float32MultiArray, "predicted_trajectory", 1)
         self.status_pub = self.create_publisher(String, "runtime_status", 1)
+        self.sync_debug_pub = self.create_publisher(
+            Float64MultiArray, "runtime_sync_debug", 1
+        )
         self.behavior_mode_pub = None
         self.behavior_label_pub = None
         self.behavior_confidence_pub = None
@@ -98,16 +120,21 @@ class InferenceNodeV3(Node):
         self.create_subscription(
             LaserScan,
             "scan",
-            lambda msg: self._remember("lidar", msg),
+            lambda msg: self._add_sensor("lidar", msg),
             qos_profile_sensor_data,
         )
         self.create_subscription(
             VelocityReport,
             "velocity_status",
-            lambda msg: self._remember("velocity", msg),
+            lambda msg: self._add_sensor("velocity", msg),
             10,
         )
-        self.create_subscription(SteeringReport, "steering_status", lambda msg: self._remember("steering", msg), 10)
+        self.create_subscription(
+            SteeringReport,
+            "steering_status",
+            lambda msg: self._add_sensor("steering", msg),
+            10,
+        )
         self.create_subscription(
             Image,
             "image",
@@ -115,33 +142,92 @@ class InferenceNodeV3(Node):
             qos_profile_sensor_data,
         )
 
-    def _remember(self, role: str, message: Any) -> None:
+    def _add_sensor(self, role: str, message: Any) -> None:
         try:
-            strict_message_stamp_to_seconds(message)
+            self.synchronizer.add_sensor(
+                role, strict_message_stamp_to_seconds(message), message
+            )
         except ValueError as error:
-            self.status_pub.publish(String(data=f"invalid_{role}_timestamp:{error}"))
+            self.status_pub.publish(String(data=f"invalid_{role}_sample:{error}"))
             return
-        self.latest[role] = message
+        self._drain_camera_queue()
 
     def _on_image(self, image: Image) -> None:
         try:
-            missing = sorted({"lidar", "velocity", "steering"}.difference(self.latest))
-            if missing:
-                raise ValueError("missing:" + ",".join(missing))
             camera_stamp = strict_message_stamp_to_seconds(image)
-            stamps = {name: strict_message_stamp_to_seconds(msg) for name, msg in self.latest.items()}
-            now_sec = self.get_clock().now().nanoseconds * 1e-9
-            validate_observation_timing(
-                now_sec=now_sec, camera_stamp_sec=camera_stamp, role_stamps_sec=stamps,
-                timeout_sec=self.timeout_sec, max_skew_sec=self.max_skew_sec,
-            )
-            batch = self._make_batch(
-                image,
-                self.latest["lidar"],
-                self.latest["velocity"],
-                self.latest["steering"],
+            dropped = self.synchronizer.add_camera(camera_stamp, image)
+            if dropped is not None:
+                self.status_pub.publish(
+                    String(data=f"camera_sync_queue_overflow:{dropped.stamp_sec:.9f}")
+                )
+        except ValueError as error:
+            self.status_pub.publish(String(data=f"invalid_camera_sample:{error}"))
+            return
+        self._drain_camera_queue()
+
+    def _drain_camera_queue(self) -> None:
+        while True:
+            settled = self.synchronizer.pop_ready()
+            if settled is None:
+                return
+            decision = settled.decision
+            self._publish_sync_debug(decision)
+            if not decision.accepted:
+                self.status_pub.publish(
+                    String(
+                        data=(
+                            "inference_rejected:sensor_skew:"
+                            f"{decision.max_skew_sec:.6f}"
+                        )
+                    )
+                )
+                continue
+            stamps = {
+                role: decision.camera_stamp_sec + decision.deltas_sec[role]
+                for role in self.SYNC_ROLES
+            }
+            self._process_observation(
+                settled.camera,
+                decision.samples["lidar"],
+                decision.samples["velocity"],
+                decision.samples["steering"],
                 stamps,
             )
+
+    def _publish_sync_debug(self, decision: SyncDecision[Any]) -> None:
+        self.sync_debug_pub.publish(
+            Float64MultiArray(
+                data=[
+                    decision.camera_stamp_sec,
+                    *(
+                        decision.deltas_sec.get(role, float("nan")) * 1000.0
+                        for role in self.SYNC_ROLES
+                    ),
+                    decision.max_skew_sec * 1000.0,
+                    1.0 if decision.accepted else 0.0,
+                ]
+            )
+        )
+
+    def _process_observation(
+        self,
+        image: Image,
+        scan: LaserScan,
+        velocity: VelocityReport,
+        steering: SteeringReport,
+        stamps: dict[str, float],
+    ) -> None:
+        try:
+            camera_stamp = strict_message_stamp_to_seconds(image)
+            now_sec = self.get_clock().now().nanoseconds * 1e-9
+            validate_observation_timing(
+                now_sec=now_sec,
+                camera_stamp_sec=camera_stamp,
+                role_stamps_sec=stamps,
+                timeout_sec=self.timeout_sec,
+                max_skew_sec=self.max_skew_sec,
+            )
+            batch = self._make_batch(image, scan, velocity, steering, stamps)
             with torch.inference_mode():
                 output = self.model(batch)
             xy = output.trajectory_xy[0, 0].detach().cpu().reshape(-1).tolist()

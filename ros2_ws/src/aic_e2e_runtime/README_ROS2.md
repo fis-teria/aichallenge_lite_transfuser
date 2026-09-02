@@ -123,6 +123,29 @@ the test was stopped after the bounded observation, and no lap-completion claim
 is made. The remaining sensor-skew rejection requires timestamp-buffered
 synchronization rather than a further QoS change.
 
+## v3 buffered timestamp synchronization
+
+V3 keeps the 30 ms cross-sensor span gate. A Camera callback is queued until
+LiDAR, Wheel Odometry, and Steer Angle have each observed the Camera timestamp
+or a later timestamp. Only then does the runtime choose the nearest sample per
+role, with past samples winning an equal-distance tie. Selected sensor samples
+are consumed once. Callback arrival order is therefore not treated as sensor
+time order.
+
+The bounded Camera queue is configured with `sync_queue_size`; overflow,
+non-increasing timestamps, final skew rejection, stale observations, and future
+timestamps remain explicit fail-closed status values. `runtime_sync_debug`
+publishes Camera stamp, the three signed sensor deltas in ms, the final true
+span in ms, and an accepted flag.
+
+Run the ROS-independent synchronization unit and negative tests with:
+
+```bash
+python3 -m pytest -q \
+  tests/test_sensor_sync_v1.py \
+  tests/test_sensor_sync_v3.py
+```
+
 The shared Safety Supervisor keeps `ego_speed_source:=odometry` as its default
 so the frozen V1 launch and runtime behavior remain compatible. A V3 parameter
 file must explicitly select `ego_speed_source:=velocity_report`; unsupported

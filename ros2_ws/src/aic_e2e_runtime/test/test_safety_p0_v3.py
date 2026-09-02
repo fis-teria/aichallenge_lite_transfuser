@@ -87,3 +87,15 @@ def test_v3_sensor_streams_do_not_regress_to_implicit_reliable_depth() -> None:
         qos = qos_by_message[message_type]
         assert isinstance(qos, ast.Constant)
         assert qos.value == 10
+
+
+def test_v3_uses_settled_camera_buffer_instead_of_callback_latest_values() -> None:
+    source = (
+        Path(__file__).parents[1] / "aic_e2e_runtime" / "inference_node_v3.py"
+    ).read_text()
+    assert "SettledCameraSynchronizer" in source
+    assert "self.synchronizer.add_camera" in source
+    assert "self.synchronizer.add_sensor" in source
+    assert "self.synchronizer.pop_ready" in source
+    assert "self.latest" not in source
+    assert '"runtime_sync_debug"' in source
