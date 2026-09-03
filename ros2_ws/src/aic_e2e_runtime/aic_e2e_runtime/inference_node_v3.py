@@ -150,6 +150,7 @@ class InferenceNodeV3(Node):
             "base_preview_sec": 0.35,
             "min_preview_sec": 0.5,
             "max_preview_sec": 1.2,
+            "minimum_lookahead_distance_m": 0.0,
             "wheelbase_m": 1.087,
             "max_steer_rad": 0.6,
             "min_accel_mps2": -4.0,
@@ -330,6 +331,9 @@ class InferenceNodeV3(Node):
                 base_preview_sec=float(self.get_parameter("base_preview_sec").value),
                 min_preview_sec=float(self.get_parameter("min_preview_sec").value),
                 max_preview_sec=float(self.get_parameter("max_preview_sec").value),
+                minimum_lookahead_distance_m=float(
+                    self.get_parameter("minimum_lookahead_distance_m").value
+                ),
                 wheelbase_m=float(self.get_parameter("wheelbase_m").value),
                 max_steer_rad=float(self.get_parameter("max_steer_rad").value),
                 min_accel_mps2=float(self.get_parameter("min_accel_mps2").value),
@@ -1052,6 +1056,7 @@ class InferenceNodeV3(Node):
                 "reference_id": result.reference_id,
                 "preview_time_sec": control.preview_time_sec,
                 "preview_target_xy_m": control.preview_target_xy_m.tolist(),
+                "lookahead_distance_m": control.lookahead_distance_m,
                 "commanded_speed_mps": command.speed_mps,
                 "steering_rad": command.steering_rad,
                 "acceleration_mps2": command.acceleration_mps2,

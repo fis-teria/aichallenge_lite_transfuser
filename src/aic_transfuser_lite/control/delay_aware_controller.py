@@ -16,6 +16,7 @@ class DelayAwareControllerConfig:
     base_preview_sec: float = 0.35
     min_preview_sec: float = 0.5
     max_preview_sec: float = 1.2
+    minimum_lookahead_distance_m: float = 0.0
     wheelbase_m: float = 1.087
     max_steer_rad: float = 0.6
     min_accel_mps2: float = -4.0
@@ -41,6 +42,11 @@ class DelayAwareControllerConfig:
             and 0.0 < self.min_preview_sec <= self.max_preview_sec
         ):
             raise ValueError("preview bounds must be finite, positive, and ordered")
+        if (
+            not math.isfinite(self.minimum_lookahead_distance_m)
+            or self.minimum_lookahead_distance_m < 0.0
+        ):
+            raise ValueError("minimum_lookahead_distance_m must be finite and non-negative")
         if not math.isfinite(self.wheelbase_m) or self.wheelbase_m <= 0.0:
             raise ValueError("wheelbase_m must be finite and positive")
         if not math.isfinite(self.max_steer_rad) or self.max_steer_rad <= 0.0:
@@ -62,6 +68,7 @@ class DelayAwareControlResult:
     delay_sec: float
     preview_time_sec: float
     preview_target_xy_m: np.ndarray
+    lookahead_distance_m: float
     projected_waypoints_m: np.ndarray
     curvature_per_m: float
     unlimited_steering_rad: float
@@ -138,6 +145,31 @@ def interpolate_waypoint(
     return target
 
 
+def interpolate_waypoint_by_arc_length(
+    waypoints: np.ndarray,
+    target_arc_length_m: float,
+) -> np.ndarray:
+    """Interpolate a waypoint by path arc length measured from ego origin."""
+
+    points = _finite_waypoints(waypoints)
+    target_arc = float(target_arc_length_m)
+    if not math.isfinite(target_arc) or target_arc < 0.0:
+        raise ValueError("target_arc_length_m must be finite and non-negative")
+    points_with_origin = np.concatenate(
+        (np.zeros((1, 2), dtype=np.float32), points), axis=0
+    )
+    segment_lengths = np.linalg.norm(np.diff(points_with_origin, axis=0), axis=1)
+    cumulative = np.concatenate(([0.0], np.cumsum(segment_lengths, dtype=np.float64)))
+    selected_arc = min(target_arc, float(cumulative[-1]))
+    return np.asarray(
+        [
+            np.interp(selected_arc, cumulative, points_with_origin[:, axis])
+            for axis in range(2)
+        ],
+        dtype=np.float32,
+    )
+
+
 def control_from_waypoints_delay_aware(
     waypoints: np.ndarray,
     *,
@@ -174,6 +206,14 @@ def control_from_waypoints_delay_aware(
         )
     )
     target = interpolate_waypoint(projected, config.waypoint_times_sec, preview)
+    if (
+        config.minimum_lookahead_distance_m > 0.0
+        and float(np.linalg.norm(target)) < config.minimum_lookahead_distance_m
+    ):
+        target = interpolate_waypoint_by_arc_length(
+            projected,
+            config.minimum_lookahead_distance_m,
+        )
     x, y = float(target[0]), float(target[1])
     if x <= config.minimum_target_x_m:
         raise ValueError(f"preview target must remain ahead of ego, got x={x}")
@@ -209,6 +249,7 @@ def control_from_waypoints_delay_aware(
         delay_sec=delay,
         preview_time_sec=preview,
         preview_target_xy_m=target,
+        lookahead_distance_m=math.sqrt(lookahead_sq),
         projected_waypoints_m=projected,
         curvature_per_m=curvature,
         unlimited_steering_rad=unlimited,

@@ -7,6 +7,7 @@ import pytest
 
 from aic_transfuser_lite.control.delay_aware_controller import (
     DelayAwareControllerConfig,
+    interpolate_waypoint_by_arc_length,
     control_from_waypoints_delay_aware,
     interpolate_waypoint,
     project_waypoints_to_future_ego,
@@ -107,7 +108,45 @@ def test_optional_rate_limit_is_anchored_to_measured_actual_steering() -> None:
     assert result.steering_rate_limited
 
 
+def test_minimum_arc_length_lookahead_avoids_near_point_noise_amplification() -> None:
+    waypoints = np.asarray(
+        [[0.1, 0.02], [0.2, 0.03], [0.6, 0.04], [1.0, 0.05], [1.4, 0.05], [1.8, 0.05]],
+        dtype=np.float32,
+    )
+    target = interpolate_waypoint_by_arc_length(waypoints, 1.0)
+    assert np.linalg.norm(target) == pytest.approx(1.0, abs=0.01)
+
+    near = control_from_waypoints_delay_aware(
+        waypoints,
+        target_speed_mps=0.75,
+        current_longitudinal_speed_mps=0.0,
+        yaw_rate_rps=0.0,
+        actual_steering_rad=0.0,
+        config=DelayAwareControllerConfig(waypoint_times_sec=WAYPOINT_TIMES),
+    )
+    bounded = control_from_waypoints_delay_aware(
+        waypoints,
+        target_speed_mps=0.75,
+        current_longitudinal_speed_mps=0.0,
+        yaw_rate_rps=0.0,
+        actual_steering_rad=0.0,
+        config=DelayAwareControllerConfig(
+            waypoint_times_sec=WAYPOINT_TIMES,
+            minimum_lookahead_distance_m=1.0,
+        ),
+    )
+    assert near.lookahead_distance_m < 0.2
+    assert near.command.steering_rad > 0.5
+    assert bounded.lookahead_distance_m == pytest.approx(1.0, abs=0.01)
+    assert 0.0 < bounded.command.steering_rad < 0.2
+
+
 def test_invalid_or_behind_preview_target_fails_closed() -> None:
+    with pytest.raises(ValueError, match="minimum_lookahead"):
+        DelayAwareControllerConfig(
+            waypoint_times_sec=WAYPOINT_TIMES,
+            minimum_lookahead_distance_m=-0.1,
+        )
     with pytest.raises(ValueError, match="ahead"):
         control_from_waypoints_delay_aware(
             np.asarray([[-1.0, 0.0]] * 6, dtype=np.float32),

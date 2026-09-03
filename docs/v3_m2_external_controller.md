@@ -23,6 +23,13 @@ If speed does not increase by 0.02 m/s within 1.0 s of a launch attempt, the
 response monitor latches `launch_response_missing` and commands a fail-closed
 zero-speed brake proposal through Safety.
 
+For lateral tracking, the limited-ODD profile combines the delay-aware preview
+time with a 1.0 m minimum arc-length lookahead. The farther of the time-selected
+point and the arc-length-selected point is used. This prevents a 0.37 m
+low-speed preview from converting centimetre-scale near-waypoint noise into a
+large Pure Pursuit steering command. The value is controller configuration, not
+a modification of the predicted trajectory.
+
 ## Environment preflight
 
 The runtime checks all of these immediately before every nominal command:

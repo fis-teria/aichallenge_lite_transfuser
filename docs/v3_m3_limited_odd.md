@@ -66,3 +66,9 @@ Left and right curve coverage may be accumulated across the independent trials.
 M4 remains blocked until repeated launch, tracking, curve coverage, speed cap,
 and collision evidence all pass. ROS/AWSIM outcomes not present in an analyzed
 artifact must remain reported as unverified.
+
+The checked-in M3 profile uses a 1.0 m minimum arc-length lookahead in addition
+to the time preview. The two pre-change Graneple trials used approximately
+0.37 m lookahead at 0.75 m/s and each stopped after only 6.6--6.7 m. They are
+diagnostic evidence, not M3 passes. Any post-change result must use a new commit
+and artifact identity.
