@@ -131,12 +131,15 @@ def test_collector_dry_run_builds_exact_recording_without_writes(
             "drive_run_01",
             "--scenario-id",
             "awsim_calibration_pad",
+            "--source-git-revision",
+            "a" * 40,
         ]
     )
     preview = json.loads(capsys.readouterr().out)
     assert result == 0
     assert preview["execute"] is False
     assert preview["target_mode"] == "drive"
+    assert preview["source_git_revision"] == "a" * 40
     assert "/vehicle/status/steering_status" in preview["record_command"]
     assert "/nominal_control_cmd" in preview["record_command"]
     assert "/control/command/control_cmd" in preview["record_command"]
