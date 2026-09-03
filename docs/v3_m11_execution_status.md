@@ -16,7 +16,7 @@ adaptation.
 | M7 | Same-run/same-clock future command labels with explicit tail masks | complete in source/tests |
 | M8 | CUDA training artifact, per-SI-field offline metrics, and trajectory non-regression boundary | in progress; train-only Dataset has no independent run split |
 | M9 | ROS shadow deployment with model trajectory/control diagnostics and RViz | pending execution on Graneple |
-| M10 | Authoritative projection, calibrated rollout consistency, same-trajectory fallback, and Safety wiring | implemented; ROS/container tests pending |
+| M10 | Authoritative projection, calibrated rollout consistency, same-trajectory fallback, and Safety wiring | complete: WSL tests plus official-container ROS build/launch parsing passed |
 | M11 | Stopped-start, 0.8 m/s limited-ODD full-control AWSIM trial and promotion report | pending M8/M9/M10 gates |
 
 ## M11 execution order

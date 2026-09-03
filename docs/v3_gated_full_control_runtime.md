@@ -52,3 +52,18 @@ ros2 launch aic_e2e_runtime transfuser_lite_v3_full_control_trial.launch.py \
 Do not report ROS 2, AWSIM, collision avoidance, or course completion as
 successful until those commands have actually run and the resulting logs are
 reviewed.
+
+## Build verification record
+
+Commit `aebee06` passed the focused WSL runtime suite (`84 passed`) and the
+complete repository suite (`435 passed, 32 warnings`). Its tracked source
+archive SHA-256
+`2d7e93f30299f03bc2c4ee8219f8b002026cde7039ed7aafbc1edd6acca15792`
+then passed the full-control focused suite in
+`aichallenge-2025-dev:latest` on Graneple (`55 passed`). In that same official
+container, `colcon build --packages-select aic_e2e_runtime` completed one
+package and `ros2 launch ... --show-args` loaded the new launch description.
+
+These checks verify source logic, package build, and launch-description
+parsing. They do not claim that a ROS graph was started against AWSIM or that
+the vehicle moved successfully.
