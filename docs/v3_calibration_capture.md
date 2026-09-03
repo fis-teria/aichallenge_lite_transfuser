@@ -84,9 +84,16 @@ PYTHONPATH=src python3 tools/collect_calibration_v3.py \
 
 Repeat with unique IDs for:
 
-- `configs/calibration/excitation_steering_low_speed_v1.yaml`
+- `configs/calibration/excitation_steering_low_speed_v2.yaml` (preferred;
+  maintains motion during steering steps)
 - `configs/calibration/excitation_drive_low_speed_v1.yaml`
-- `configs/calibration/excitation_brake_low_speed_v1.yaml`
+- `configs/calibration/excitation_brake_low_speed_v2.yaml` (preferred; reaches
+  sufficient speed before each brake step)
+
+The V1 steering and brake plans remain reproducible historical inputs, but the
+live `v3_0efecab` campaign showed that they do not provide enough moving
+steering/brake response for the current fit gates. Do not weaken those gates or
+count stationary command holds as added calibration evidence.
 
 Collect at least three independent runs per target mode. Stop and reset/reposition
 the scenario between runs rather than concatenating repetitions into one bag.

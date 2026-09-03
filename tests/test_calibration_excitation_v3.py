@@ -23,6 +23,8 @@ PLAN_PATHS = (
     ROOT / "configs/calibration/excitation_steering_low_speed_v1.yaml",
     ROOT / "configs/calibration/excitation_drive_low_speed_v1.yaml",
     ROOT / "configs/calibration/excitation_brake_low_speed_v1.yaml",
+    ROOT / "configs/calibration/excitation_steering_low_speed_v2.yaml",
+    ROOT / "configs/calibration/excitation_brake_low_speed_v2.yaml",
 )
 
 

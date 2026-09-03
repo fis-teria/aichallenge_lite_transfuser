@@ -1,0 +1,20 @@
+format_version: aic_calibration_excitation_v1
+plan_id: brake_low_speed_v2
+target_mode: brake
+publish_hz: 20.0
+preflight_hold_sec: 2.0
+telemetry_timeout_sec: 0.5
+max_observed_speed_mps: 3.0
+stop_speed_threshold_mps: 0.1
+stop_hold_sec: 5.0
+segments:
+  - {segment_id: settle, mode: settle, duration_sec: 3.0, steering_rad: 0.0, speed_mps: 0.0, acceleration_mps2: -1.0}
+  - {segment_id: reach_speed_a, mode: drive, duration_sec: 12.0, steering_rad: 0.0, speed_mps: 2.5, acceleration_mps2: 0.75}
+  - {segment_id: brake_050_a, mode: brake, duration_sec: 5.0, steering_rad: 0.0, speed_mps: 0.0, acceleration_mps2: -0.50}
+  - {segment_id: reach_speed_b, mode: drive, duration_sec: 12.0, steering_rad: 0.0, speed_mps: 2.5, acceleration_mps2: 0.75}
+  - {segment_id: brake_100, mode: brake, duration_sec: 5.0, steering_rad: 0.0, speed_mps: 0.0, acceleration_mps2: -1.00}
+  - {segment_id: reach_speed_c, mode: drive, duration_sec: 12.0, steering_rad: 0.0, speed_mps: 2.5, acceleration_mps2: 0.75}
+  - {segment_id: brake_150, mode: brake, duration_sec: 5.0, steering_rad: 0.0, speed_mps: 0.0, acceleration_mps2: -1.50}
+  - {segment_id: reach_speed_d, mode: drive, duration_sec: 12.0, steering_rad: 0.0, speed_mps: 2.5, acceleration_mps2: 0.75}
+  - {segment_id: brake_050_b, mode: brake, duration_sec: 5.0, steering_rad: 0.0, speed_mps: 0.0, acceleration_mps2: -0.50}
+  - {segment_id: final_stop, mode: stop, duration_sec: 5.0, steering_rad: 0.0, speed_mps: 0.0, acceleration_mps2: -1.0}

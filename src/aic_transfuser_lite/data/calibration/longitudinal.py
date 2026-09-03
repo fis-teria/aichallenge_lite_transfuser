@@ -26,6 +26,7 @@ class LongitudinalFitConfig:
     minimum_correlation: float = 0.5
     maximum_nrmse: float = 0.8
     max_abs_actual_accel_mps2: float = 15.0
+    minimum_active_brake_speed_mps: float = 0.1
 
     def validate(self) -> None:
         numeric = (
@@ -40,6 +41,7 @@ class LongitudinalFitConfig:
             self.minimum_correlation,
             self.maximum_nrmse,
             self.max_abs_actual_accel_mps2,
+            self.minimum_active_brake_speed_mps,
         )
         if not all(math.isfinite(value) for value in numeric):
             raise ValueError("longitudinal fit configuration must be finite")
@@ -63,6 +65,8 @@ class LongitudinalFitConfig:
             raise ValueError("maximum_nrmse must be positive")
         if self.max_abs_actual_accel_mps2 <= 0.0:
             raise ValueError("max_abs_actual_accel_mps2 must be positive")
+        if self.minimum_active_brake_speed_mps < 0.0:
+            raise ValueError("minimum_active_brake_speed_mps must be non-negative")
 
 
 @dataclass(frozen=True)
@@ -210,11 +214,15 @@ def fit_longitudinal_mode(
         speed_mps,
         segment_ids,
     )
-    mode_mask = (
-        command > selected.mode_hysteresis_mps2
-        if mode == "drive"
-        else command < -selected.mode_hysteresis_mps2
-    )
+    if mode == "drive":
+        mode_mask = command > selected.mode_hysteresis_mps2
+    else:
+        # Once the vehicle is stationary, a held negative command contains no
+        # brake-response information. Including that hold biases stronger
+        # commands toward zero measured acceleration because they stop sooner.
+        mode_mask = (command < -selected.mode_hysteresis_mps2) & (
+            speed >= selected.minimum_active_brake_speed_mps
+        )
     plausible_actual = np.abs(actual) <= selected.max_abs_actual_accel_mps2
     excluded = int(np.count_nonzero(mode_mask & ~plausible_actual))
     best: tuple[float, float, float, float, float, float, float] | None = None

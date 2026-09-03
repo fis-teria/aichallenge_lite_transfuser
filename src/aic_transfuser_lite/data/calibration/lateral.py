@@ -41,6 +41,7 @@ def fit_lateral_calibration(
     yaw_rate_rps: Sequence[float] | np.ndarray,
     *,
     wheelbase_m: float,
+    minimum_speed_mps: float = 0.1,
     max_abs_yaw_rate_rps: float = 5.0,
     maximum_steering_nrmse: float = 0.7,
     maximum_yaw_rate_nrmse: float = 0.8,
@@ -70,6 +71,8 @@ def fit_lateral_calibration(
             raise ValueError("segment_ids must match lateral calibration inputs")
     if not np.isfinite(max_abs_yaw_rate_rps) or max_abs_yaw_rate_rps <= 0.0:
         raise ValueError("max_abs_yaw_rate_rps must be finite and positive")
+    if not np.isfinite(minimum_speed_mps) or minimum_speed_mps < 0.0:
+        raise ValueError("minimum_speed_mps must be finite and non-negative")
     if (
         not np.isfinite(maximum_steering_nrmse)
         or not np.isfinite(maximum_yaw_rate_nrmse)
@@ -78,7 +81,11 @@ def fit_lateral_calibration(
     ):
         raise ValueError("lateral NRMSE gates must be finite and positive")
     finite = np.logical_and.reduce([np.isfinite(item) for item in values])
-    applicable = finite & (np.abs(values[4]) <= max_abs_yaw_rate_rps) & (values[3] >= 0.0)
+    applicable = (
+        finite
+        & (np.abs(values[4]) <= max_abs_yaw_rate_rps)
+        & (values[3] >= minimum_speed_mps)
+    )
     if int(np.count_nonzero(applicable)) < 3:
         raise ValueError("insufficient applicable lateral calibration samples")
     selected = [item[applicable] for item in values]

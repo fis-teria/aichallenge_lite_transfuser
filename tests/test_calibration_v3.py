@@ -210,6 +210,7 @@ def test_lateral_wrapper_preserves_delay_fitter_and_reports_exclusions() -> None
     speed = np.full_like(timestamps, 4.0)
     yaw_rate = speed * np.tan(actual) / 1.087
     speed[0] = -1.0
+    speed[2] = 0.0
     yaw_rate[1] = 100.0
     fit = fit_lateral_calibration(
         timestamps,
@@ -231,8 +232,58 @@ def test_lateral_wrapper_preserves_delay_fitter_and_reports_exclusions() -> None
     assert fit.source_method == "command_to_actual_first_order_and_yaw"
     assert fit.pure_delay_sec == pytest.approx(0.2, abs=0.11)
     assert fit.time_constant_sec == pytest.approx(0.3, abs=0.11)
-    assert fit.excluded_sample_count == 2
+    assert fit.excluded_sample_count == 3
     assert fit.individually_valid
+
+
+def test_brake_fit_excludes_stationary_command_hold() -> None:
+    timestamps = np.arange(0.0, 40.0, 0.1)
+    moving_count = len(timestamps) // 2
+    moving_command = -1.0 + 0.5 * np.sin(timestamps[:moving_count])
+    command = np.concatenate((moving_command, np.full(moving_count, -2.0)))
+    actual = np.concatenate((0.7 * moving_command, np.zeros(moving_count)))
+    speed = np.concatenate((np.ones(moving_count), np.zeros(moving_count)))
+    fit = fit_longitudinal_mode(
+        timestamps,
+        command,
+        actual,
+        speed,
+        mode="brake",
+        config=LongitudinalFitConfig(
+            delay_max_sec=0.0,
+            time_constant_min_sec=0.02,
+            time_constant_max_sec=0.02,
+            minimum_mode_samples=100,
+        ),
+    )
+
+    assert fit.mode_sample_count == moving_count
+    assert fit.gain > 0.0
+    assert fit.individually_valid
+
+
+def test_calibration_speed_gates_reject_invalid_thresholds() -> None:
+    timestamps = np.arange(0.0, 1.0, 0.1)
+    values = np.ones_like(timestamps)
+    with pytest.raises(ValueError, match="minimum_active_brake_speed_mps"):
+        fit_longitudinal_mode(
+            timestamps,
+            -values,
+            -values,
+            values,
+            mode="brake",
+            config=LongitudinalFitConfig(minimum_active_brake_speed_mps=-0.1),
+        )
+    with pytest.raises(ValueError, match="minimum_speed_mps"):
+        fit_lateral_calibration(
+            timestamps,
+            values,
+            values,
+            values,
+            values,
+            wheelbase_m=1.087,
+            minimum_speed_mps=-0.1,
+        )
 
 
 def test_longitudinal_quality_gate_rejects_uncorrelated_fit() -> None:
