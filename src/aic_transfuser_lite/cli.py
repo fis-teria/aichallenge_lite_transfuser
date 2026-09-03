@@ -114,6 +114,8 @@ def build_parser() -> argparse.ArgumentParser:
     train.add_argument("--batch-size", type=int)
     train.add_argument("--device", default="auto")
     train.add_argument("--max-batches", type=int)
+    train.add_argument("--init-checkpoint")
+    train.add_argument("--freeze-migrated", action="store_true")
     train.add_argument("--resume", action="store_true")
     train.add_argument("--dry-run", action="store_true")
     return parser
@@ -319,6 +321,10 @@ def _behavior_build(args: argparse.Namespace) -> int:
 
 
 def _train_v3(args: argparse.Namespace) -> int:
+    if args.resume and args.init_checkpoint:
+        raise ValueError("--resume and --init-checkpoint are mutually exclusive")
+    if args.freeze_migrated and not (args.init_checkpoint or args.resume):
+        raise ValueError("--freeze-migrated requires initialization or resume")
     config = load_full_control_config_v3(args.config)
     model_cfg, data_cfg, loss_cfg, training_cfg = (
         config["model"], config["data"], config["loss"], config["training"]
@@ -374,7 +380,31 @@ def _train_v3(args: argparse.Namespace) -> int:
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=args.resume)
     model = build_full_control_model_v3(config).to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
+    initialization = None
+    if args.init_checkpoint:
+        initialization_path = Path(args.init_checkpoint).expanduser().resolve()
+        payload = torch.load(initialization_path, map_location="cpu", weights_only=True)
+        if not isinstance(payload, dict) or not isinstance(payload.get("model"), dict):
+            raise ValueError("initial checkpoint has no model state mapping")
+        migration = model.migrate_v1_weights(payload["model"])
+        if not migration.loaded:
+            raise ValueError("initial checkpoint has no compatible model weights")
+        initialization = {
+            "checkpoint_sha256": _sha256(initialization_path),
+            "freeze_migrated": bool(args.freeze_migrated),
+            "loaded_key_count": len(migration.loaded),
+            "shape_mismatch": list(migration.shape_mismatch),
+            "unmapped_source": list(migration.unmapped_v1),
+            "new_key_count": len(migration.new_v3),
+        }
+    if args.freeze_migrated:
+        for name, parameter in model.named_parameters():
+            if not name.startswith("control_sequence_head."):
+                parameter.requires_grad_(False)
+    trainable = [parameter for parameter in model.parameters() if parameter.requires_grad]
+    if not trainable:
+        raise ValueError("training configuration froze every model parameter")
+    optimizer = torch.optim.AdamW(trainable, lr=1e-4)
     trainer = TrainerV3(
         model=model, batches=batches, optimizer=optimizer,
         identity=identity,
@@ -423,6 +453,7 @@ def _train_v3(args: argparse.Namespace) -> int:
         "behavior_ontology": "aic_behavior_v1",
         "behavior_view_manifest_sha256": _sha256(Path(args.behavior_view) / "manifest.json"),
         "runtime_artifact_manifest_sha256": _sha256(runtime_artifact),
+        "initialization": initialization,
     }
     (output / "run_manifest.json").write_text(
         json.dumps(run_manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"

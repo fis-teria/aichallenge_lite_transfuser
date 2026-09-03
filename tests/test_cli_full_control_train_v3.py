@@ -108,6 +108,18 @@ def test_cli_full_control_one_epoch_and_resume(tmp_path: Path) -> None:
     assert main([*args, "--resume"]) == EXIT_SUCCESS
     resumed = json.loads((output / "run_manifest.json").read_text())
     assert resumed["global_step"] == 1
+    initialized_output = tmp_path / "initialized_run"
+    initialized_args = [
+        *args[: args.index("--output")],
+        "--output", str(initialized_output),
+        *args[args.index("--output") + 2 :],
+        "--init-checkpoint", str(output / "last.pt"),
+        "--freeze-migrated",
+    ]
+    assert main(initialized_args) == EXIT_SUCCESS
+    initialized = json.loads((initialized_output / "run_manifest.json").read_text())
+    assert initialized["initialization"]["freeze_migrated"] is True
+    assert initialized["initialization"]["loaded_key_count"] > 0
 
 
 def test_cli_full_control_dry_run_writes_nothing(tmp_path: Path) -> None:
