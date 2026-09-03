@@ -18,7 +18,11 @@ from aic_transfuser_lite.data.dataset_view_v3 import (
 import aic_transfuser_lite.data.dataset_view_v3 as dataset_view_v3
 from aic_transfuser_lite.data.storage_v3 import validate_complete_dataset
 from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3, sha256_file_v3
-from aic_transfuser_lite.training.train_v3 import balanced_class_weights_v3
+from aic_transfuser_lite.training.train_v3 import (
+    TrainerV3,
+    balanced_class_weights_v3,
+    load_full_control_config_v3,
+)
 from test_dataset_v3_converter import _convert
 
 
@@ -160,6 +164,44 @@ def test_cli_full_control_dry_run_writes_nothing(tmp_path: Path) -> None:
         "--max-batches", "1", "--device", "cpu", "--dry-run",
     ]) == EXIT_SUCCESS
     assert not output.exists()
+
+
+def test_cli_full_control_saves_periodic_resumable_checkpoints(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    dataset, split, config, behavior_view, output = _training_fixture(tmp_path)
+    raw = yaml.safe_load(config.read_text(encoding="utf-8"))
+    raw["training"]["checkpoint_every_steps"] = 1
+    config.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    saved_steps: list[int] = []
+    original_save = TrainerV3.save
+
+    def tracked_save(trainer: TrainerV3, path: Path) -> None:
+        original_save(trainer, path)
+        saved_steps.append(trainer.global_step)
+
+    monkeypatch.setattr(TrainerV3, "save", tracked_save)
+    assert main([
+        "train", "--config", str(config), "--dataset-root", str(dataset),
+        "--split-manifest", str(split),
+        "--view-config", str(ROOT / "configs/data/view_temporal_v3.yaml"),
+        "--behavior-view", str(behavior_view), "--output", str(output),
+        "--epochs", "1", "--batch-size", "2", "--max-batches", "2",
+        "--device", "cpu",
+    ]) == EXIT_SUCCESS
+    assert saved_steps == [1, 2]
+    assert torch.load(output / "last.pt", map_location="cpu", weights_only=True)[
+        "global_step"
+    ] == 2
+
+
+def test_full_control_config_rejects_nonpositive_checkpoint_interval(tmp_path: Path) -> None:
+    raw = yaml.safe_load((ROOT / "configs/models/full_control_lite_v3.yaml").read_text())
+    raw["training"]["checkpoint_every_steps"] = 0
+    config = tmp_path / "invalid_checkpoint_interval.yaml"
+    config.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    with pytest.raises(ValueError, match="positive checkpoint_every_steps"):
+        load_full_control_config_v3(config)
 
 
 def test_temporal_training_loader_defers_asset_reads_until_batch_access(

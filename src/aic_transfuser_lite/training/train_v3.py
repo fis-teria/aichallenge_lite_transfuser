@@ -182,6 +182,8 @@ def load_full_control_config_v3(path: str | Path) -> dict[str, object]:
         raise ValueError("full-control config requires nonzero behavior loss")
     if float(raw["loss"].get("behavior_side", 0.0)) <= 0.0:
         raise ValueError("full-control config requires nonzero behavior_side loss")
+    if int(raw["training"].get("checkpoint_every_steps", 0)) <= 0:
+        raise ValueError("full-control training requires positive checkpoint_every_steps")
     targets = raw.get("targets")
     expected_targets = {
         "behavior_ontology": BEHAVIOR_ONTOLOGY_V1,

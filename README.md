@@ -295,8 +295,10 @@ tools/with_wsl_training_lock.sh .venv/bin/aic-e2e train \
   --output /home/thistle/e2e_autonomous/runs/full_control_lite_v3
 ```
 
+学習中は`training.checkpoint_every_steps`ごとに、再開可能な`last.pt`を原子的に更新する。
 中断後は同じcommandへ`--resume`を追加する。Dataset manifest、split、view、model
-contractのhashがcheckpointと異なる場合はresumeを拒否する。actual steeringをmodel入力に
+contractのhashがcheckpointと異なる場合はresumeを拒否する。間隔は正の整数が必須で、
+0以下は学習開始前に拒否する。actual steeringをmodel入力に
 含めるconfigでは、その値が欠損したanchorを学習対象にしない。headを無効化したまま
 current-control lossを非zeroにした場合も開始前に失敗する。
 

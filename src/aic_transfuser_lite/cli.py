@@ -446,8 +446,15 @@ def _train_v3(args: argparse.Namespace) -> int:
             raise FileNotFoundError(f"resume checkpoint missing: {checkpoint}")
         trainer.resume(checkpoint)
     target_steps = epochs * len(batches)
-    trainer.train_steps(max(0, target_steps - trainer.global_step))
-    trainer.save(checkpoint)
+    checkpoint_every_steps = int(training_cfg["checkpoint_every_steps"])
+    remaining_steps = max(0, target_steps - trainer.global_step)
+    if remaining_steps == 0:
+        trainer.save(checkpoint)
+    while remaining_steps > 0:
+        step_count = min(checkpoint_every_steps, remaining_steps)
+        trainer.train_steps(step_count)
+        trainer.save(checkpoint)
+        remaining_steps -= step_count
     runtime_artifact = output / "runtime_artifact.json"
     runtime_artifact.write_text(
         json.dumps(
