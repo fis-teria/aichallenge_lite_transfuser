@@ -313,7 +313,9 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
         target_values, provenance = command
         sequence_values: list[torch.Tensor] = []
         sequence_masks: list[torch.Tensor] = []
-        for offset in range(1, self.control_sequence_steps + 1):
+        # Step zero is the immediate teacher command. Later unavailable steps
+        # at a run/clock boundary remain masked instead of crossing epochs.
+        for offset in range(self.control_sequence_steps):
             future_index = anchor + offset
             future_command = None
             if (
@@ -439,10 +441,6 @@ def load_temporal_training_batches_v3(
     for anchor, row in enumerate(rows):
         if _selected_command(row) is None:
             continue
-        if not _has_complete_future_controls(
-            rows, epoch_keys, anchor=anchor, steps=control_sequence_steps,
-        ):
-            continue
         if int(row["future_valid_count"]) <= 0:
             continue
         _, current_ego_mask = _ego_row(row, ego_features)
@@ -488,27 +486,6 @@ def _selected_command(row: dict[str, str]) -> tuple[torch.Tensor, str] | None:
             if torch.isfinite(tensor).all():
                 return tensor, provenance
     return None
-
-
-def _has_complete_future_controls(
-    rows: Sequence[dict[str, str]],
-    epoch_keys: Sequence[tuple[str, str]],
-    *,
-    anchor: int,
-    steps: int,
-) -> bool:
-    """Require H valid future commands from the same run/clock segment."""
-
-    if steps <= 0 or anchor < 0 or anchor >= len(rows) or len(epoch_keys) != len(rows):
-        raise ValueError("invalid future-control selection request")
-    end = anchor + steps
-    if end >= len(rows):
-        return False
-    key = epoch_keys[anchor]
-    return all(
-        epoch_keys[index] == key and _selected_command(rows[index]) is not None
-        for index in range(anchor + 1, end + 1)
-    )
 
 
 def _ego_row(row: dict[str, str], features: tuple[str, ...]) -> tuple[torch.Tensor, torch.Tensor]:
