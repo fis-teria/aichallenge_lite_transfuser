@@ -3,12 +3,18 @@ import csv
 import hashlib
 from pathlib import Path
 
-import yaml
+import pytest
 import torch
+import yaml
 
 from aic_transfuser_lite.cli import EXIT_SUCCESS, main
 from aic_transfuser_lite.data.canonical_converter_v3 import write_prepared_dataset_v3
-from aic_transfuser_lite.data.dataset_view_v3 import load_temporal_training_batches_v3
+from aic_transfuser_lite.data.dataset_view_v3 import (
+    ControlTargetBoundsV3,
+    clip_control_target_v3,
+    load_temporal_training_batches_v3,
+    project_teacher_control_sequence_v3,
+)
 import aic_transfuser_lite.data.dataset_view_v3 as dataset_view_v3
 from aic_transfuser_lite.data.storage_v3 import validate_complete_dataset
 from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3, sha256_file_v3
@@ -17,6 +23,21 @@ from test_dataset_v3_converter import _convert
 
 
 ROOT = Path(__file__).parents[1]
+
+
+def _target_bounds(**overrides: float) -> ControlTargetBoundsV3:
+    values = {
+        "max_steering_rad": 0.6,
+        "max_steering_rate_radps": 0.8,
+        "max_speed_mps": 12.0,
+        "min_acceleration_mps2": -4.0,
+        "max_acceleration_mps2": 2.0,
+        "min_jerk_mps3": -8.0,
+        "max_jerk_mps3": 4.0,
+        "control_dt_sec": 0.1,
+    }
+    values.update(overrides)
+    return ControlTargetBoundsV3(**values)
 
 
 def _training_fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
@@ -167,6 +188,7 @@ def test_temporal_training_loader_defers_asset_reads_until_batch_access(
         control_sequence_steps=10,
         camera_history_length=4,
         ego_history_length=10,
+        control_target_bounds=_target_bounds(),
         batch_size=2,
         behavior_view_root=behavior_view,
     )
@@ -188,3 +210,82 @@ def test_temporal_training_loader_defers_asset_reads_until_batch_access(
     first = batches[0]
     assert first.image.shape == (2, 4, 3, 32, 32)
     assert len(opened) == 8
+
+
+def test_teacher_control_projection_matches_head_absolute_rate_and_jerk_limits() -> None:
+    commands = torch.tensor(
+        [[1.0, 20.0, 10.0], [-1.0, -2.0, -10.0], [0.2, 3.0, 0.0]]
+    )
+    mask = torch.tensor(
+        [[True, True, True], [True, True, True], [False, False, False]]
+    )
+
+    projected = project_teacher_control_sequence_v3(
+        commands,
+        mask,
+        initial_steering_rad=0.0,
+        initial_acceleration_mps2=2.0,
+        bounds=_target_bounds(),
+    )
+
+    torch.testing.assert_close(
+        projected,
+        torch.tensor([[0.08, 12.0, 2.0], [0.0, 0.0, 1.2], [0.0, 0.0, 0.0]]),
+    )
+    steering_steps = torch.diff(
+        torch.cat((torch.tensor([0.0]), projected[:2, 0]))
+    )
+    assert torch.max(torch.abs(steering_steps)) <= 0.08
+    acceleration_steps = torch.diff(
+        torch.cat((torch.tensor([2.0]), projected[:2, 2]))
+    )
+    assert torch.min(acceleration_steps) >= -0.8
+    assert torch.max(acceleration_steps) <= 0.4
+
+
+def test_current_teacher_control_is_clipped_to_head_absolute_limits() -> None:
+    clipped = clip_control_target_v3(
+        torch.tensor([1.0, -2.0, 10.0]), bounds=_target_bounds()
+    )
+    torch.testing.assert_close(clipped, torch.tensor([0.6, 0.0, 2.0]))
+
+
+def test_teacher_control_projection_rejects_invalid_bounds_shape_and_mask() -> None:
+    commands = torch.zeros(2, 3)
+    mask = torch.ones(2, 3, dtype=torch.bool)
+    with pytest.raises(ValueError, match="speed and time step"):
+        project_teacher_control_sequence_v3(
+            commands,
+            mask,
+            initial_steering_rad=0.0,
+            initial_acceleration_mps2=0.0,
+            bounds=_target_bounds(max_speed_mps=0.0),
+        )
+    with pytest.raises(ValueError, match=r"\[H,3\]"):
+        project_teacher_control_sequence_v3(
+            torch.zeros(2, 2),
+            mask,
+            initial_steering_rad=0.0,
+            initial_acceleration_mps2=0.0,
+            bounds=_target_bounds(),
+        )
+    with pytest.raises(ValueError, match=r"\[3\]"):
+        clip_control_target_v3(torch.zeros(1, 3), bounds=_target_bounds())
+    with pytest.raises(ValueError, match="mask must be boolean"):
+        project_teacher_control_sequence_v3(
+            commands,
+            torch.ones(2, 3),
+            initial_steering_rad=0.0,
+            initial_acceleration_mps2=0.0,
+            bounds=_target_bounds(),
+        )
+    partial_mask = mask.clone()
+    partial_mask[0, 0] = False
+    with pytest.raises(ValueError, match="all-valid or all-invalid"):
+        project_teacher_control_sequence_v3(
+            commands,
+            partial_mask,
+            initial_steering_rad=0.0,
+            initial_acceleration_mps2=0.0,
+            bounds=_target_bounds(),
+        )

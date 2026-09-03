@@ -299,6 +299,12 @@ tools/with_wsl_training_lock.sh .venv/bin/aic-e2e train \
 contractのhashがcheckpointと異なる場合はresumeを拒否する。actual steeringをmodel入力に
 含めるconfigでは、その値が欠損したanchorを学習対象にしない。headを無効化したまま
 current-control lossを非zeroにした場合も開始前に失敗する。
+
+学習viewはcanonical Datasetのraw commandを変更せず、current-control教師をmodel
+configのsteering rad、speed m/s、acceleration m/s^2の範囲へclipする。未来control系列は
+さらに同じ`control_dt_sec`、steering rate rad/s、jerk m/s^3制約へ投影し、Headが物理的に
+到達できない教師値をlossへ渡さない。範囲またはshapeが不正なconfig/教師系列は学習開始前に
+明示的に拒否する。
 behavior class weightはtraining splitの有効ラベル数から算出し、通常学習で
 いずれかのclassまたはsideが0件なら開始前に失敗する。behavior viewのhashは
 checkpoint identityへ含まれるため、ラベルを変更したcheckpointへの`--resume`も拒否する。

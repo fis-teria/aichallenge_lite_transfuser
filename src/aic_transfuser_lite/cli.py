@@ -17,8 +17,11 @@ from .data.canonical_converter_v3 import (
     write_prepared_dataset_v3,
 )
 from .data.clock_segments import ClockEpoch
-from .data.dataset_view_v3 import load_v1_compatibility_view_config
-from .data.dataset_view_v3 import load_temporal_training_batches_v3
+from .data.dataset_view_v3 import (
+    ControlTargetBoundsV3,
+    load_temporal_training_batches_v3,
+    load_v1_compatibility_view_config,
+)
 from .data.mcap_reader_v3 import read_run_messages_v3
 from .data.split_v3 import (
     SplitGroupKey,
@@ -343,7 +346,24 @@ def _train_v3(args: argparse.Namespace) -> int:
         ego_features=tuple(data_cfg["ego_features"]), trajectory_steps=int(model_cfg["trajectory_steps"]),
         control_sequence_steps=int(model_cfg["control_sequence_steps"]),
         camera_history_length=int(view["camera_history_length"]),
-        ego_history_length=int(view["ego_history_length"]), batch_size=batch_size,
+        ego_history_length=int(view["ego_history_length"]),
+        control_target_bounds=ControlTargetBoundsV3(
+            max_steering_rad=float(model_cfg["control_bounds"]["max_steering_rad"]),
+            max_steering_rate_radps=float(
+                model_cfg["control_bounds"]["max_steering_rate_radps"]
+            ),
+            max_speed_mps=float(model_cfg["control_bounds"]["max_speed_mps"]),
+            min_acceleration_mps2=float(
+                model_cfg["control_bounds"]["min_acceleration_mps2"]
+            ),
+            max_acceleration_mps2=float(
+                model_cfg["control_bounds"]["max_acceleration_mps2"]
+            ),
+            min_jerk_mps3=float(model_cfg["control_bounds"]["min_jerk_mps3"]),
+            max_jerk_mps3=float(model_cfg["control_bounds"]["max_jerk_mps3"]),
+            control_dt_sec=float(model_cfg["control_dt_sec"]),
+        ),
+        batch_size=batch_size,
         max_batches=args.max_batches, behavior_view_root=args.behavior_view,
     )
     behavior_weights = balanced_class_weights_v3(

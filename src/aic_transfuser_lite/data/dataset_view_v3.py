@@ -30,6 +30,127 @@ V1_COMPAT_VIEW_FORMAT = "aic_model_view_v1_compat_v1"
 
 
 @dataclass(frozen=True)
+class ControlTargetBoundsV3:
+    """SI-unit bounds used to make teacher controls reachable by the V3 head."""
+
+    max_steering_rad: float
+    max_steering_rate_radps: float
+    max_speed_mps: float
+    min_acceleration_mps2: float
+    max_acceleration_mps2: float
+    min_jerk_mps3: float
+    max_jerk_mps3: float
+    control_dt_sec: float
+
+    def validate(self) -> None:
+        values = tuple(float(value) for value in self.__dict__.values())
+        if not all(math.isfinite(value) for value in values):
+            raise ValueError("control target bounds must be finite")
+        if self.max_steering_rad <= 0.0 or self.max_steering_rate_radps <= 0.0:
+            raise ValueError("control target steering bounds must be positive")
+        if self.max_speed_mps <= 0.0 or self.control_dt_sec <= 0.0:
+            raise ValueError("control target speed and time step must be positive")
+        if not self.min_acceleration_mps2 < 0.0 < self.max_acceleration_mps2:
+            raise ValueError("control target acceleration bounds must straddle zero")
+        if not self.min_jerk_mps3 < 0.0 < self.max_jerk_mps3:
+            raise ValueError("control target jerk bounds must straddle zero")
+
+
+def clip_control_target_v3(
+    control: torch.Tensor, *, bounds: ControlTargetBoundsV3
+) -> torch.Tensor:
+    """Clip one ``[steering rad, speed m/s, acceleration m/s^2]`` teacher."""
+
+    bounds.validate()
+    if control.shape != (3,):
+        raise ValueError("current teacher control must be [3]")
+    if not torch.isfinite(control).all():
+        raise ValueError("current teacher control must be finite")
+    return torch.stack(
+        (
+            control[0].clamp(-bounds.max_steering_rad, bounds.max_steering_rad),
+            control[1].clamp(0.0, bounds.max_speed_mps),
+            control[2].clamp(
+                bounds.min_acceleration_mps2, bounds.max_acceleration_mps2
+            ),
+        )
+    )
+
+
+def project_teacher_control_sequence_v3(
+    commands: torch.Tensor,
+    mask: torch.Tensor,
+    *,
+    initial_steering_rad: float,
+    initial_acceleration_mps2: float,
+    bounds: ControlTargetBoundsV3,
+) -> torch.Tensor:
+    """Project teacher ``[H,3]`` controls onto the V3 head's reachable set.
+
+    Steering is in rad, speed in m/s, acceleration in m/s^2, steering rate in
+    rad/s, jerk in m/s^3, and ``control_dt_sec`` in seconds. Masked steps remain
+    zero and do not advance the projected state.
+    """
+
+    bounds.validate()
+    if commands.ndim != 2 or commands.shape[1] != 3 or mask.shape != commands.shape:
+        raise ValueError("teacher controls and mask must both be [H,3]")
+    if mask.dtype != torch.bool:
+        raise ValueError("teacher control mask must be boolean")
+    row_valid = mask.all(dim=1)
+    if not torch.equal(mask, row_valid.unsqueeze(1).expand_as(mask)):
+        raise ValueError("teacher control mask rows must be all-valid or all-invalid")
+    if not torch.isfinite(commands[mask]).all():
+        raise ValueError("valid teacher controls must be finite")
+    initial = commands.new_tensor([initial_steering_rad, initial_acceleration_mps2])
+    if not torch.isfinite(initial).all():
+        raise ValueError("initial teacher control state must be finite")
+    projected = torch.zeros_like(commands)
+    steering = float(
+        max(
+            -bounds.max_steering_rad,
+            min(bounds.max_steering_rad, initial_steering_rad),
+        )
+    )
+    acceleration = float(
+        max(
+            bounds.min_acceleration_mps2,
+            min(bounds.max_acceleration_mps2, initial_acceleration_mps2),
+        )
+    )
+    steering_step = bounds.max_steering_rate_radps * bounds.control_dt_sec
+    minimum_acceleration_step = bounds.min_jerk_mps3 * bounds.control_dt_sec
+    maximum_acceleration_step = bounds.max_jerk_mps3 * bounds.control_dt_sec
+    for index in range(commands.shape[0]):
+        if not bool(mask[index].all()):
+            continue
+        proposal = commands[index]
+        target_steering = float(
+            proposal[0].clamp(-bounds.max_steering_rad, bounds.max_steering_rad)
+        )
+        target_acceleration = float(
+            proposal[2].clamp(
+                bounds.min_acceleration_mps2, bounds.max_acceleration_mps2
+            )
+        )
+        steering += max(
+            -steering_step, min(steering_step, target_steering - steering)
+        )
+        acceleration += max(
+            minimum_acceleration_step,
+            min(maximum_acceleration_step, target_acceleration - acceleration),
+        )
+        projected[index] = commands.new_tensor(
+            [
+                steering,
+                float(proposal[1].clamp(0.0, bounds.max_speed_mps)),
+                acceleration,
+            ],
+        )
+    return projected
+
+
+@dataclass(frozen=True)
 class V1CompatibilityViewConfig:
     view_id: str
     image_height: int
@@ -229,6 +350,7 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
     control_sequence_steps: int
     camera_history_length: int
     ego_history_length: int
+    control_target_bounds: ControlTargetBoundsV3
     batch_size: int
     max_batches: int | None
 
@@ -322,7 +444,7 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
             values, mask = _ego_row(item, self.ego_features)
             ego_values.append(values)
             ego_masks.append(mask)
-            selected = _selected_command(item)
+            selected = _selected_command(item, bounds=self.control_target_bounds)
             command_values.append(torch.zeros(3) if selected is None else selected[0])
             command_masks.append(selected is not None)
         trajectory = np.load(self.root / row["trajectory_path"], allow_pickle=False)
@@ -333,7 +455,7 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
         ):
             raise ValueError("dense trajectory asset shape mismatch")
         future = trajectory[: self.trajectory_steps]
-        command = _selected_command(row)
+        command = _selected_command(row, bounds=self.control_target_bounds)
         if command is None:
             raise AssertionError("eligible anchor lost its full-control command")
         target_values, provenance = command
@@ -348,13 +470,32 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
                 future_index < len(self.rows)
                 and self.epoch_keys[future_index] == self.epoch_keys[anchor]
             ):
-                future_command = _selected_command(self.rows[future_index])
+                future_command = _selected_command(
+                    self.rows[future_index], bounds=self.control_target_bounds
+                )
             sequence_values.append(
                 torch.zeros(3) if future_command is None else future_command[0]
             )
             sequence_masks.append(
                 torch.full((3,), future_command is not None, dtype=torch.bool)
             )
+        sequence = torch.stack(sequence_values)
+        sequence_mask = torch.stack(sequence_masks)
+        steering_index = (
+            self.ego_features.index("actual_steering_rad")
+            if "actual_steering_rad" in self.ego_features
+            else None
+        )
+        initial_steering = (
+            float(ego_values[-1][steering_index]) if steering_index is not None else 0.0
+        )
+        sequence = project_teacher_control_sequence_v3(
+            sequence,
+            sequence_mask,
+            initial_steering_rad=initial_steering,
+            initial_acceleration_mps2=float(target_values[2]),
+            bounds=self.control_target_bounds,
+        )
         annotation = (
             None
             if self.behavior_by_sample is None
@@ -377,8 +518,8 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
             "speed": torch.from_numpy(future[:, 4]).float(),
             "control": target_values,
             "provenance": provenance,
-            "control_sequence": torch.stack(sequence_values),
-            "control_sequence_mask": torch.stack(sequence_masks),
+            "control_sequence": sequence,
+            "control_sequence_mask": sequence_mask,
             "behavior_class": torch.tensor(
                 int(annotation["behavior_class"]) if behavior_valid else -1,
                 dtype=torch.long,
@@ -429,6 +570,7 @@ def load_temporal_training_batches_v3(
     control_sequence_steps: int,
     camera_history_length: int,
     ego_history_length: int,
+    control_target_bounds: ControlTargetBoundsV3,
     batch_size: int,
     max_batches: int | None = None,
     behavior_view_root: str | Path | None = None,
@@ -465,7 +607,7 @@ def load_temporal_training_batches_v3(
     epoch_keys = tuple((item["run_id"], item["segment_id"]) for item in rows)
     usable_anchors: list[int] = []
     for anchor, row in enumerate(rows):
-        if _selected_command(row) is None:
+        if _selected_command(row, bounds=control_target_bounds) is None:
             continue
         if int(row["future_valid_count"]) <= 0:
             continue
@@ -497,12 +639,15 @@ def load_temporal_training_batches_v3(
         control_sequence_steps=control_sequence_steps,
         camera_history_length=camera_history_length,
         ego_history_length=ego_history_length,
+        control_target_bounds=control_target_bounds,
         batch_size=batch_size,
         max_batches=max_batches,
     )
 
 
-def _selected_command(row: dict[str, str]) -> tuple[torch.Tensor, str] | None:
+def _selected_command(
+    row: dict[str, str], *, bounds: ControlTargetBoundsV3 | None = None
+) -> tuple[torch.Tensor, str] | None:
     for field, provenance in (("nominal_command", "nominal"), ("final_command", "final_fallback")):
         value = json.loads(row[field])
         if bool(value.get("valid")):
@@ -510,6 +655,8 @@ def _selected_command(row: dict[str, str]) -> tuple[torch.Tensor, str] | None:
                 value["steering_rad"], value["speed_mps"], value["acceleration_mps2"]
             ], dtype=torch.float32)
             if torch.isfinite(tensor).all():
+                if bounds is not None:
+                    tensor = clip_control_target_v3(tensor, bounds=bounds)
                 return tensor, provenance
     return None
 
