@@ -211,4 +211,7 @@ def main(args=None) -> None:
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        # ros2 launch may already have shut down this context while delivering
+        # SIGINT.  Humble raises RCLError if shutdown is called a second time.
+        if rclpy.ok():
+            rclpy.shutdown()

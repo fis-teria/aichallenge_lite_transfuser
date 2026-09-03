@@ -7,6 +7,7 @@ def test_safety_node_uses_strict_stamps_and_deadline() -> None:
     assert "from .runtime_adapter import stamp_to_seconds" not in source
     assert "strict_message_stamp_to_seconds" in source
     assert "now > self.nominal_valid_until_sec" in source
+    assert "if rclpy.ok():" in source
 
 
 def test_v3_uses_velocity_report_without_map_odometry() -> None:
