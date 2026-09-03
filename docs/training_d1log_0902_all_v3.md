@@ -126,9 +126,33 @@ shadow 20秒ではtrajectory / shadow-controlを各189 sample観測したが、�
   action前に失敗したため、実行中の公式simulator containerから同じ
   `/admin/awsim/reset`を一度publishし、admin `WaitStart`を確認した
 
-試験中はSafety SupervisorがLiDARを無効と判定して全commandを停止へ置換したため、
-モデルによる走行は成立していない。ROS 2起動とfail-closed動作は確認できたが、完走、
-障害物回避、正常なLiDAR入力でのfull-control走行は未確認である。
+この最初の試験中はSafety SupervisorがLiDARを無効と判定して全commandを停止へ置換したため、
+モデルによる走行は成立しなかった。その後、AWSIMが`WaitStart`のままだったことを画面と
+topicで再確認し、Startを明示して再試験した。
+
+### AWSIM Start後の継続試験
+
+V3 full-controlとSafetyを先に起動し、final command publisherが1であることを確認した。
+公式`request_awsim_start.bash`はvehicle `grounded`、initialization ready `false`のため
+45秒でfail-closeし、Startを送らなかった。ユーザー指定の手動StartとしてDomain 0から
+`/admin/awsim/start=true`を一度だけpublishし、admin stateが`Start`へ遷移した。
+
+最初の15秒で`0.229944 m`、次の15秒で`0.486998 m`移動した。その後、model brake speed
+`0.800000 m/s`がcalibration上限`0.798115 m/s`をわずかに超えて推論がfail-closeしたため、
+trial speed capとSafety max speedを安全側の`0.75 m/s`へ下げてV3ノードだけを再起動した。
+
+0.75 m/s設定での15秒観測結果は次のとおり。
+
+- displacement: `0.271389 m`
+- speed mean / max / final: `0.018098 / 0.065256 / 0.028215 m/s`
+- Safety: `normal` 300、`lidar_future_timestamp` 1
+- runtime: model control 102、trajectory fallback 38、trajectory publish 140
+- final steering absolute max: `0.118169 rad`
+- probe SHA-256: `f17b08ed7417709250f1fe18b7005f5e849dbbd574d189ee5d5ecbca21acdfe9`
+- runtime config SHA-256: `b28370e122b0598289e1770a37a69a85061b332beb22c7613bf2b18bd7e35f6f`
+
+この観測時点ではSafety `normal`、full-control command publish継続、AWSIM `Start`である。
+発進と短距離移動は確認したが、速度が極端に低く、完走または安定走行の合格とはしない。
 
 実行に用いた主要commandは次のとおり。
 
@@ -154,7 +178,7 @@ ros2 launch aic_e2e_runtime transfuser_lite_v3_full_control_trial.launch.py \
 
 ## 未確認境界
 
-この記録はoffline学習、独立test評価、GranepleでのROS 2起動、shadow観測、
-Safetyが停止させた15秒trialまでを証明する。閉ループ完走、障害物回避、正常LiDARでの
+この記録はoffline学習、独立test評価、GranepleでのROS 2起動、shadow観測、Safetyの
+fail-close、手動Start後の短距離移動までを証明する。閉ループ完走、障害物回避、目標速度での
 vehicle dynamics整合、長時間安定性は証明しない。未実行のROS 2／AWSIM試験は成功として
 扱わない。
