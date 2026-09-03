@@ -217,3 +217,38 @@ the ROS bag database SHA-256 was
 M3 therefore remains failed: the new checkpoint launches and tracks the
 executed reference, but its closed-loop path reaches the front-obstacle stop
 after only 15 m. Training continues; M4 and M5 remain blocked.
+
+Epoch 3 improved the validation-primary metric again: trajectory ADE
+`0.193207 m` (epoch 2: `0.198744 m`), while speed MAE regressed to
+`0.165734 m/s` (epoch 2: `0.155845 m/s`). Because trajectory ADE is the declared
+primary metric, `epoch_003.pt` was promoted. Its SHA-256 was
+`1201609dabdb596b8e99b95c7ad25f5ecfebdece8c7b3d6d0c2d258213c67fb0`;
+the per-epoch runtime artifact SHA-256 was
+`75e9f9c672a72b6d06a6684a9aeee713e6b33f0710af1c2a45b0b2cc0dece425`.
+
+The GPU-backed `m3_epoch3_trial1_gpu_44670a4` result was materially better but
+still did not pass M3:
+
+- displacement 36.24 m; reconstructed path length 36.68 m;
+- maximum measured speed 0.8041 m/s, below the 0.85 m/s tolerance limit;
+- left/right/straight sample counts 89/18/4180;
+- Safety `normal` 2996/3001 samples and no Plan rejection or controller fault;
+- Executable Reference tracking p95 0.1338 m;
+- reported launch latency 3.036 s, 0.036 s above the 3.0 s gate;
+- collision topic absent, so collision state remains unverified.
+
+The vehicle ended 2.32 m from the official debug raceline and reached a maximum
+2.60 m nearest-raceline separation. The prior checkpoint reached a larger
+3.78 m separation, so the recovery training is moving in the intended
+direction, but the final near-zero vehicle speed under otherwise-normal Safety
+is consistent with physical blocking after leaving the drivable corridor. This
+is an inference from localization/raceline evidence; collision remains
+unconfirmed because AWSIM did not publish the configured collision topic.
+
+Evidence SHA-256 values: analyzer JSON
+`79be6f082169d31ddae5a09f92b2fcd43dfeea2d2129a2c31808118dbfd7e400`,
+path/raceline JSON
+`d65accda861c9910e4f844671c2ab56a19516f7734a8bfb3ba32770f088b2240`,
+and ROS bag database
+`6f70a1e4308af76c6834bff76bb9e8bd868ba22ab7969412b21138b264c985e5`.
+M4 and M5 remain blocked while later training epochs are evaluated.
