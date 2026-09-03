@@ -20,6 +20,9 @@ class TimedPlanDiagnosticV3:
     acceleration_mps2: float
     controller_state: str
     fault_reason: str | None
+    stop_required: bool
+    decision_reasons: tuple[str, ...]
+    preflight_reasons: tuple[str, ...]
 
 
 def _validate_timed_scalars(samples: Sequence[TimedScalarV3]) -> None:
@@ -117,6 +120,12 @@ def summarize_m3_interval_v3(
     controller_state_counts = Counter(
         sample.controller_state for sample in interval_plans
     )
+    decision_reason_counts = Counter(
+        reason for sample in interval_plans for reason in sample.decision_reasons
+    )
+    preflight_reason_counts = Counter(
+        reason for sample in interval_plans for reason in sample.preflight_reasons
+    )
     safety_counts = Counter(str(reason) for reason in safety_reasons)
     safety_total = sum(safety_counts.values())
     safety_normal_ratio = (
@@ -144,6 +153,12 @@ def summarize_m3_interval_v3(
         "preflight_ready_ratio": preflight_ready_ratio,
         "controller_fault_counts": dict(sorted(fault_counts.items())),
         "controller_state_counts": dict(sorted(controller_state_counts.items())),
+        "stop_required_count": sum(sample.stop_required for sample in interval_plans),
+        "decision_reason_counts": dict(sorted(decision_reason_counts.items())),
+        "preflight_reason_counts": dict(sorted(preflight_reason_counts.items())),
+        "zero_commanded_speed_count": sum(
+            sample.commanded_speed_mps <= 1e-6 for sample in interval_plans
+        ),
         "maximum_commanded_speed_mps": max(
             sample.commanded_speed_mps for sample in interval_plans
         ),

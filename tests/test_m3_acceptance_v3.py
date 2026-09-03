@@ -24,8 +24,12 @@ def _summary(**overrides):
             TimedScalarV3(12.0, -0.1),
         ],
         "plans": [
-            TimedPlanDiagnosticV3(10.1, True, 0.75, 0.4, "launching", None),
-            TimedPlanDiagnosticV3(13.9, True, 0.75, 0.1, "moving", None),
+            TimedPlanDiagnosticV3(
+                10.1, True, 0.75, 0.4, "launching", None, False, (), ()
+            ),
+            TimedPlanDiagnosticV3(
+                13.9, True, 0.75, 0.1, "moving", None, False, (), ()
+            ),
         ],
         "safety_reasons": ["normal", "normal"],
         "displacement_m": 2.5,
@@ -59,7 +63,15 @@ def test_m3_summary_reports_launch_timeout_cap_and_fault() -> None:
         velocity_mps=[TimedScalarV3(10.0, 0.0), TimedScalarV3(14.0, 0.9)],
         plans=[
             TimedPlanDiagnosticV3(
-                10.1, True, 0.75, -4.0, "response_fault", "launch_response_missing"
+                10.1,
+                True,
+                0.75,
+                -4.0,
+                "response_fault",
+                "launch_response_missing",
+                True,
+                ("trajectory_invalid",),
+                (),
             )
         ],
         collision_true_count=1,
@@ -68,6 +80,8 @@ def test_m3_summary_reports_launch_timeout_cap_and_fault() -> None:
     assert result["speed_cap_pass"] is False
     assert result["collision_clear"] is False
     assert result["controller_fault_counts"] == {"launch_response_missing": 1}
+    assert result["stop_required_count"] == 1
+    assert result["decision_reason_counts"] == {"trajectory_invalid": 1}
 
 
 @pytest.mark.parametrize(

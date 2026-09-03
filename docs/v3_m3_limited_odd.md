@@ -40,7 +40,8 @@ matched publisher is **unverified**, not proof of zero collisions.
 Analyze the bag in the official ROS container:
 
 ```bash
-PYTHONPATH=/work/src python3 /work/tools/analyze_m3_rosbag.py \
+export PYTHONPATH=/work/src:${PYTHONPATH}
+/usr/bin/python3 /work/tools/analyze_m3_rosbag.py \
   /artifacts/m3_trial --speed-cap-mps 0.75
 ```
 

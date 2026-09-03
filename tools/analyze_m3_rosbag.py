@@ -68,6 +68,7 @@ def main() -> int:
             control = payload.get("external_controller")
             if isinstance(control, dict):
                 longitudinal = control.get("longitudinal", {})
+                decision = payload.get("decision", {})
                 plans.append(TimedPlanDiagnosticV3(
                     time_sec=time_sec,
                     preflight_ready=bool(control.get("preflight_ready", False)),
@@ -77,6 +78,13 @@ def main() -> int:
                     fault_reason=(
                         None if longitudinal.get("fault_reason") is None
                         else str(longitudinal["fault_reason"])
+                    ),
+                    stop_required=bool(decision.get("stop_required", False)),
+                    decision_reasons=tuple(
+                        str(reason) for reason in decision.get("reasons", [])
+                    ),
+                    preflight_reasons=tuple(
+                        str(reason) for reason in control.get("preflight_reasons", [])
                     ),
                 ))
         elif topic == "/safety_reason":
