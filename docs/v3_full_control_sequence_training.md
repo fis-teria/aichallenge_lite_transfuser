@@ -3,9 +3,11 @@
 The full-control model keeps trajectory and speed-profile outputs mandatory and
 adds a ten-step physical control sequence at 0.1 s intervals. Each item is
 ordered as steering (rad), speed (m/s), and acceleration (m/s2). The decoder
-predicts steering-rate and jerk internally, integrates them from measured ego
-state/current command, and applies the configured absolute and rate limits at
-every step.
+predicts steering-rate, bounded speed setpoint, and jerk internally. It
+integrates steering and acceleration from measured ego state/current command
+and applies the configured absolute and rate limits at every step. Speed is
+decoded as an Ackermann command setpoint; it is not incorrectly integrated as
+if it were measured vehicle speed.
 
 Dataset targets use the immediate teacher command followed by commands from
 the same run and clock segment. Missing tail steps are explicitly masked. A

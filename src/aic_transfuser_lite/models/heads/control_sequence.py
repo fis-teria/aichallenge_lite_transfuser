@@ -136,7 +136,11 @@ class FutureControlSequenceHead(nn.Module):
         self.max_acceleration_mps2 = max_acceleration_mps2
         self.min_jerk_mps3 = min_jerk_mps3
         self.max_jerk_mps3 = max_jerk_mps3
-        self.projection = nn.Linear(input_dim, candidates * steps * 2)
+        # Raw order is steering-rate, speed setpoint, and jerk. Ackermann
+        # command speed is a setpoint, not measured speed integrated from the
+        # acceleration field; treating it as the latter makes valid teacher
+        # commands unreachable.
+        self.projection = nn.Linear(input_dim, candidates * steps * 3)
 
     def forward(self, feature: torch.Tensor, initial_control: torch.Tensor) -> torch.Tensor:
         if feature.ndim != 2 or initial_control.shape != (feature.shape[0], 3):
@@ -144,19 +148,17 @@ class FutureControlSequenceHead(nn.Module):
         if not torch.isfinite(initial_control).all():
             raise ValueError("initial control must be finite")
         raw = self.projection(feature).view(
-            feature.shape[0], self.candidates, self.steps, 2
+            feature.shape[0], self.candidates, self.steps, 3
         )
         steering_rate = torch.tanh(raw[..., 0]) * self.max_steering_rate_radps
-        jerk_unit = torch.tanh(raw[..., 1])
+        speed_setpoint = torch.sigmoid(raw[..., 1]) * self.max_speed_mps
+        jerk_unit = torch.tanh(raw[..., 2])
         jerk = torch.where(
             jerk_unit >= 0.0,
             jerk_unit * self.max_jerk_mps3,
             -jerk_unit.abs() * abs(self.min_jerk_mps3),
         )
         steering = initial_control[:, None, 0].expand(-1, self.candidates)
-        speed = initial_control[:, None, 1].clamp(0.0, self.max_speed_mps).expand(
-            -1, self.candidates
-        )
         acceleration = initial_control[:, None, 2].clamp(
             self.min_acceleration_mps2, self.max_acceleration_mps2
         ).expand(-1, self.candidates)
@@ -172,10 +174,7 @@ class FutureControlSequenceHead(nn.Module):
                 self.min_acceleration_mps2,
                 self.max_acceleration_mps2,
             )
-            speed = torch.clamp(
-                speed + acceleration * self.control_dt_sec,
-                0.0,
-                self.max_speed_mps,
+            sequence.append(
+                torch.stack((steering, speed_setpoint[..., step], acceleration), dim=-1)
             )
-            sequence.append(torch.stack((steering, speed, acceleration), dim=-1))
         return torch.stack(sequence, dim=2)
