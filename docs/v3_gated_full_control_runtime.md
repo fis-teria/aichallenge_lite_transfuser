@@ -107,3 +107,13 @@ reached only `0.012603 m/s` maximum speed and `0.039785 m` displacement.
 Therefore ROS wiring and the attempted trial are verified, but successful
 launch, route progress, collision avoidance, and course completion are not.
 The exact evidence and hashes are in `docs/v3_m11_limited_odd_report.md`.
+
+RViz display correction commit `87cee88` was exported as a tracked archive
+with SHA-256
+`9472b42cc47e04c0a6460261a10519b88226c06eab6a68361bb373027b761166`.
+On Graneple, its official-container static ROS test passed `12` tests and
+`colcon build --packages-select aic_e2e_runtime` completed one package. RViz
+then started on display `:1` with OpenGL 4.6 and no error log, subscribed to the
+map marker, localization pose, LiDAR, and predicted-path topics, and rendered
+the map-fixed course view. This was a display-only verification: no inference,
+control publisher, or AWSIM driving trial was started.
