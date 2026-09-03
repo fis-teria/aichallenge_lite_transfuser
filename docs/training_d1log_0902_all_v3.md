@@ -195,3 +195,47 @@ ros2 launch aic_e2e_runtime transfuser_lite_v3_full_control_trial.launch.py \
 fail-close、手動Start後の短距離移動までを証明する。閉ループ完走、障害物回避、目標速度での
 vehicle dynamics整合、長時間安定性は証明しない。未実行のROS 2／AWSIM試験は成功として
 扱わない。
+
+## causal history修正版の再学習・限定走行（2026-09-03）
+
+`causal_previous_only`契約を導入したcommit `1b7d298`から、旧runとは別の
+`/home/thistle/e2e_autonomous/runs/d1log_0902_all_full_control_v3_causal_1b7d298`
+へ全11 runを5 epoch再学習した。公開データ事前学習checkpointは初期値としてのみ使用した。
+
+- 完了: `77,330 / 77,330` optimizer step
+- checkpoint SHA-256:
+  `6e8fc01b55ba438f299731a01fd1e35ef7f853c2399f5514454eefab30f93d0e`
+- runtime artifact SHA-256:
+  `25acef141e5292779cc585d0cd80d699c27d63164afdbd2d0bb736382b399fb0`
+- run manifest SHA-256:
+  `e4e329e4fc559ce68c43848b97a455619ab968d6fef0366d13e4d26037524f40`
+- model contract hash:
+  `33053caf8564e37f56079e9493193dfd2e2698f91731dd0b20159645132e90ef`
+
+走行前preflightで、停止時の計測速度ノイズ`-7.4e-8 m/s`が負速度として拒否される
+問題を実測した。commit `9295ba9`で`1e-4 m/s`以内の負値だけを0へ正規化し、
+それを超える実後退はfail-closeするunit/negative testを追加した。
+WSL全suiteは`465 passed, 34 warnings`、Graneple公式containerのfocused suiteは
+`34 passed`、`colcon build --packages-select aic_e2e_runtime`は1 package成功した。
+Graneple source archive SHA-256は
+`30a53d662fb286069ae4cfc053b112de13743ddeb08778b07c7769e783e113a2`である。
+
+修正後preflight 10秒はSafety `normal` 200/200、model command 93件、
+`previous speed exceeds authoritative limit` 0件だった。AWSIMを`WaitStart`から
+`Start`へ明示的に遷移させ、0.75 m/s上限で30秒の限定走行を実行した。
+
+- Safety: `normal` 600/600
+- model decision: 270件すべてsame-trajectory external fallback
+- fallback理由: `max_position_error_m>0.75`かつ`endpoint_error_m>0.75`
+- final speed command mean / max: `0.239232 / 0.245674 m/s`
+- final acceleration command mean / max: `0.237130 / 0.243511 m/s^2`
+- vehicle speed mean / max / final: `0.002102 / 0.002166 / 0.002059 m/s`
+- global displacement: `0.029100 m`
+- trajectory endpoint mean: `[1.001813, -0.233156] m`
+- measurement JSON SHA-256:
+  `69a7bda15b7d7f1612218d0c347047cc1c175938366115b6c5995f143f722ff6`
+
+Safety wiringは正常だったが、rollout整合gateがmodel control sequenceを全件拒否し、
+fallback加速度もAWSIMの発進deadzoneを越えなかった。この試験は完走・発進成功ではない。
+試験後はfull-control graphを停止し、final command publisher 0、AWSIM `WaitStart`、
+longitudinal velocity `0.0 m/s`を実測確認した。

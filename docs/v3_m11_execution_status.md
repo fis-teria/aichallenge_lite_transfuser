@@ -17,7 +17,7 @@ adaptation.
 | M8 | CUDA training artifact, per-SI-field offline metrics, and trajectory non-regression boundary | complete with boundary: artifact and metrics retained; the one-run Dataset has no independent run split |
 | M9 | ROS shadow deployment with model trajectory/control diagnostics and RViz | complete: actual Graneple ROS graph published trajectory/control diagnostics at about 9 Hz with RViz and zero final-command publishers |
 | M10 | Authoritative projection, calibrated rollout consistency, same-trajectory fallback, and Safety wiring | complete: WSL tests, official-container ROS build, and live Safety-owned command wiring passed |
-| M11 | Stopped-start, 0.8 m/s limited-ODD full-control AWSIM trial and promotion report | attempted, incomplete: bounded trial did not establish launch or route progress; artifact remains `shadow` |
+| M11 | Stopped-start limited-ODD full-control AWSIM trial and promotion report | attempted again with causal-history checkpoint, incomplete: Safety stayed normal but rollout gate used fallback for every decision and did not establish launch or route progress; artifact remains `shadow` |
 
 ## M11 execution order
 
@@ -62,6 +62,16 @@ or contact topic/file was available in the observed ROS graph, so collision
 avoidance is `NOT_EVALUATED`, not successful. See
 `docs/v3_m11_limited_odd_report.md` for commands, hashes, and the remaining
 training-data gate. V3-024 was not started.
+
+A later `causal_previous_only` checkpoint (`6e8fc01b...`) removed the learned
+maximum-brake lock and produced a forward shadow trajectory. During the actual
+30 s Graneple re-trial at a 0.75 m/s cap, Safety was `normal` for all 600
+samples, but all 270 model decisions failed rollout position/endpoint
+consistency and used the same-trajectory fallback. Maximum vehicle speed was
+only `0.002166 m/s` and displacement was `0.029100 m`. The graph was stopped,
+the final-command publisher returned to zero, and AWSIM was reset to
+`WaitStart`. Therefore M11 remains incomplete; this is not a launch or course
+completion pass.
 
 ## Explicit evidence boundary
 
