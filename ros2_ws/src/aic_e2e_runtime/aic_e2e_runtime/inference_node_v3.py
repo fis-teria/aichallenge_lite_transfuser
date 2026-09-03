@@ -9,13 +9,24 @@ from pathlib import Path
 from typing import Any
 
 from autoware_auto_control_msgs.msg import AckermannControlCommand
-from autoware_auto_vehicle_msgs.msg import SteeringReport, VelocityReport
+from autoware_auto_vehicle_msgs.msg import (
+    ControlModeReport,
+    GearReport,
+    SteeringReport,
+    VelocityReport,
+)
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Path as PathMessage
 import numpy as np
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import qos_profile_sensor_data
+from rclpy.qos import (
+    DurabilityPolicy,
+    HistoryPolicy,
+    QoSProfile,
+    ReliabilityPolicy,
+    qos_profile_sensor_data,
+)
 from sensor_msgs.msg import Image, LaserScan
 from std_msgs.msg import (
     Float32,
@@ -46,6 +57,10 @@ from aic_transfuser_lite.control.trajectory_authoritative_controller import (
     control_from_executable_reference_v3,
     fail_closed_stop_control_v3,
 )
+from aic_transfuser_lite.control.longitudinal_controller_v3 import (
+    LongitudinalControllerConfigV3,
+    LongitudinalControllerV3,
+)
 from aic_transfuser_lite.control.shadow_trajectory_controller import (
     shadow_control_from_trajectory_speed_profile,
 )
@@ -59,6 +74,10 @@ from aic_transfuser_lite.runtime.control_projection import (
     apply_stopped_launch_acceleration_floor,
     normalize_measured_speed_for_projection,
     project_model_control_sequence,
+)
+from aic_transfuser_lite.runtime.control_preflight import (
+    ControlPreflightV3,
+    evaluate_control_preflight_v3,
 )
 from aic_transfuser_lite.runtime.full_control_gate import (
     ControlAuthorityMode,
@@ -135,8 +154,26 @@ class InferenceNodeV3(Node):
             "min_accel_mps2": -4.0,
             "max_accel_mps2": 2.0,
             "speed_kp": 1.0,
+            "speed_ki": 0.3,
+            "longitudinal_reference_horizon_sec": 0.5,
+            "longitudinal_integral_limit_mps_sec": 1.0,
+            "longitudinal_acceleration_gain": 1.0,
+            "longitudinal_acceleration_bias_mps2": 0.0,
             "max_steering_rate_radps": 0.0,
             "control_period_sec": 0.1,
+            "launch_moving_speed_mps": 0.15,
+            "launch_timeout_sec": 3.0,
+            "launch_response_timeout_sec": 1.0,
+            "launch_minimum_speed_delta_mps": 0.02,
+            "gear_status_topic": "/vehicle/status/gear_status",
+            "control_mode_topic": "/vehicle/status/control_mode",
+            "awsim_state_topic": "/awsim/state",
+            "nominal_control_topic": "/nominal_control_cmd",
+            "final_control_topic": "/control/command/control_cmd",
+            "expected_drive_gear": 2,
+            "expected_autonomous_mode": 1,
+            "required_awsim_state": "Start",
+            "preflight_maximum_status_age_sec": 0.5,
             "calibration_artifact_path": "",
             "full_control_deployment_stage": "limited_odd_trial",
             "full_control_evidence_sha256": "",
@@ -266,6 +303,7 @@ class InferenceNodeV3(Node):
         ):
             raise ValueError("plan_consistency_speed_scale_mps must be positive")
         self.controller_config: DelayAwareControllerConfig | None = None
+        self.longitudinal_controller: LongitudinalControllerV3 | None = None
         if self.runtime_profile in {
             RuntimeProfile.EXTERNAL_CONTROLLER,
             RuntimeProfile.TRAJECTORY_AUTHORITATIVE,
@@ -302,6 +340,75 @@ class InferenceNodeV3(Node):
                     self.get_parameter("control_period_sec").value
                 ),
             )
+            if self.runtime_profile is RuntimeProfile.TRAJECTORY_AUTHORITATIVE:
+                self.longitudinal_controller = LongitudinalControllerV3(
+                    LongitudinalControllerConfigV3(
+                        control_dt_sec=float(
+                            self.get_parameter("control_period_sec").value
+                        ),
+                        reference_horizon_sec=float(
+                            self.get_parameter(
+                                "longitudinal_reference_horizon_sec"
+                            ).value
+                        ),
+                        speed_kp=float(self.get_parameter("speed_kp").value),
+                        speed_ki=float(self.get_parameter("speed_ki").value),
+                        integral_limit_mps_sec=float(
+                            self.get_parameter(
+                                "longitudinal_integral_limit_mps_sec"
+                            ).value
+                        ),
+                        acceleration_gain=float(
+                            self.get_parameter("longitudinal_acceleration_gain").value
+                        ),
+                        acceleration_bias_mps2=float(
+                            self.get_parameter(
+                                "longitudinal_acceleration_bias_mps2"
+                            ).value
+                        ),
+                        min_acceleration_mps2=float(
+                            self.get_parameter("min_accel_mps2").value
+                        ),
+                        max_acceleration_mps2=float(
+                            self.get_parameter("max_accel_mps2").value
+                        ),
+                        min_jerk_mps3=float(
+                            self.get_parameter("min_jerk_mps3").value
+                        ),
+                        max_jerk_mps3=float(
+                            self.get_parameter("max_jerk_mps3").value
+                        ),
+                        stopped_speed_mps=float(
+                            self.get_parameter(
+                                "launch_assist_stopped_speed_mps"
+                            ).value
+                        ),
+                        moving_speed_mps=float(
+                            self.get_parameter("launch_moving_speed_mps").value
+                        ),
+                        launch_min_reference_speed_mps=float(
+                            self.get_parameter(
+                                "launch_assist_min_commanded_speed_mps"
+                            ).value
+                        ),
+                        launch_acceleration_floor_mps2=float(
+                            self.get_parameter(
+                                "launch_assist_acceleration_floor_mps2"
+                            ).value
+                        ),
+                        launch_timeout_sec=float(
+                            self.get_parameter("launch_timeout_sec").value
+                        ),
+                        response_timeout_sec=float(
+                            self.get_parameter("launch_response_timeout_sec").value
+                        ),
+                        minimum_launch_speed_delta_mps=float(
+                            self.get_parameter(
+                                "launch_minimum_speed_delta_mps"
+                            ).value
+                        ),
+                    )
+                )
         self.full_control_readiness = None
         self.full_control_limits = None
         self.full_control_calibration = None
@@ -429,6 +536,12 @@ class InferenceNodeV3(Node):
             Float64MultiArray, "runtime_sync_debug", 1
         )
         self.plan_diagnostics_pub = self.create_publisher(String, "plan_diagnostics", 1)
+        self.preflight_gear_report: int | None = None
+        self.preflight_control_mode_report: int | None = None
+        self.preflight_awsim_state: str | None = None
+        self.gear_report_received_sec: float | None = None
+        self.control_mode_received_sec: float | None = None
+        self.awsim_state_received_sec: float | None = None
         self.behavior_mode_pub = None
         self.behavior_label_pub = None
         self.behavior_confidence_pub = None
@@ -446,6 +559,30 @@ class InferenceNodeV3(Node):
             lambda msg: self._add_sensor("lidar", msg),
             qos_profile_sensor_data,
         )
+        if self.runtime_profile is RuntimeProfile.TRAJECTORY_AUTHORITATIVE:
+            self.create_subscription(
+                GearReport,
+                str(self.get_parameter("gear_status_topic").value),
+                self._on_gear_report,
+                10,
+            )
+            self.create_subscription(
+                ControlModeReport,
+                str(self.get_parameter("control_mode_topic").value),
+                self._on_control_mode_report,
+                10,
+            )
+            self.create_subscription(
+                String,
+                str(self.get_parameter("awsim_state_topic").value),
+                self._on_awsim_state,
+                QoSProfile(
+                    history=HistoryPolicy.KEEP_LAST,
+                    depth=1,
+                    reliability=ReliabilityPolicy.RELIABLE,
+                    durability=DurabilityPolicy.TRANSIENT_LOCAL,
+                ),
+            )
         self.create_subscription(
             VelocityReport,
             "velocity_status",
@@ -466,6 +603,54 @@ class InferenceNodeV3(Node):
         )
         self.sync_clock_timer = self.create_timer(
             sync_clock_poll_sec, self._drain_ready_observations
+        )
+
+    def _receipt_time_sec(self) -> float:
+        return self.get_clock().now().nanoseconds * 1e-9
+
+    def _on_gear_report(self, message: GearReport) -> None:
+        self.preflight_gear_report = int(message.report)
+        self.gear_report_received_sec = self._receipt_time_sec()
+
+    def _on_control_mode_report(self, message: ControlModeReport) -> None:
+        self.preflight_control_mode_report = int(message.mode)
+        self.control_mode_received_sec = self._receipt_time_sec()
+
+    def _on_awsim_state(self, message: String) -> None:
+        self.preflight_awsim_state = str(message.data).strip()
+        self.awsim_state_received_sec = self._receipt_time_sec()
+
+    def _control_preflight(self) -> ControlPreflightV3:
+        now_sec = self._receipt_time_sec()
+
+        def age(received_sec: float | None) -> float | None:
+            return None if received_sec is None else now_sec - received_sec
+
+        nominal_topic = str(self.get_parameter("nominal_control_topic").value)
+        final_topic = str(self.get_parameter("final_control_topic").value)
+        return evaluate_control_preflight_v3(
+            gear_report=self.preflight_gear_report,
+            control_mode_report=self.preflight_control_mode_report,
+            awsim_state=self.preflight_awsim_state,
+            gear_age_sec=age(self.gear_report_received_sec),
+            control_mode_age_sec=age(self.control_mode_received_sec),
+            awsim_state_age_sec=age(self.awsim_state_received_sec),
+            maximum_status_age_sec=float(
+                self.get_parameter("preflight_maximum_status_age_sec").value
+            ),
+            expected_drive_gear=int(
+                self.get_parameter("expected_drive_gear").value
+            ),
+            expected_autonomous_mode=int(
+                self.get_parameter("expected_autonomous_mode").value
+            ),
+            required_awsim_state=str(
+                self.get_parameter("required_awsim_state").value
+            ),
+            nominal_publishers=self.count_publishers(nominal_topic),
+            nominal_subscribers=self.count_subscribers(nominal_topic),
+            final_publishers=self.count_publishers(final_topic),
+            final_subscribers=self.count_subscribers(final_topic),
         )
 
     def _add_sensor(self, role: str, message: Any) -> None:
@@ -784,8 +969,11 @@ class InferenceNodeV3(Node):
     ) -> dict[str, Any]:
         if self.trajectory_authoritative_pub is None or self.controller_config is None:
             raise RuntimeError("trajectory-authoritative controller is not initialized")
+        if self.longitudinal_controller is None:
+            raise RuntimeError("trajectory longitudinal controller is not initialized")
         if decision is None:
             raise RuntimeError("executable reference decision is unavailable")
+        preflight = self._control_preflight()
         if decision.stop_required:
             stop = fail_closed_stop_control_v3(
                 actual_steering_rad=float(steering.steering_tire_angle),
@@ -805,6 +993,8 @@ class InferenceNodeV3(Node):
                 "commanded_speed_mps": command.speed_mps,
                 "steering_rad": command.steering_rad,
                 "acceleration_mps2": command.acceleration_mps2,
+                "preflight_ready": preflight.ready,
+                "preflight_reasons": list(preflight.reasons),
             }
         else:
             if decision.reference is None:
@@ -819,11 +1009,20 @@ class InferenceNodeV3(Node):
                 yaw_rate_rps=float(velocity.heading_rate),
                 actual_steering_rad=float(steering.steering_tire_angle),
                 config=self.controller_config,
+                longitudinal_controller=self.longitudinal_controller,
+                drive_preflight_ready=preflight.ready,
             )
             control = result.control
+            if result.longitudinal is None:
+                raise RuntimeError("longitudinal controller returned no diagnostics")
+            commanded_speed_mps = (
+                control.commanded_speed_mps
+                if preflight.ready and result.longitudinal.fault_reason is None
+                else 0.0
+            )
             command = ExternalControllerCommand(
                 control.command.steering_rad,
-                control.commanded_speed_mps,
+                commanded_speed_mps,
                 control.command.acceleration_mps2,
             )
             diagnostic = {
@@ -835,6 +1034,27 @@ class InferenceNodeV3(Node):
                 "steering_rad": command.steering_rad,
                 "acceleration_mps2": command.acceleration_mps2,
                 "curvature_per_m": control.curvature_per_m,
+                "preflight_ready": preflight.ready,
+                "preflight_reasons": list(preflight.reasons),
+                "longitudinal": {
+                    "state": result.longitudinal.state.value,
+                    "reference_acceleration_mps2": (
+                        result.longitudinal.reference_acceleration_mps2
+                    ),
+                    "feedforward_acceleration_mps2": (
+                        result.longitudinal.feedforward_acceleration_mps2
+                    ),
+                    "feedback_acceleration_mps2": (
+                        result.longitudinal.feedback_acceleration_mps2
+                    ),
+                    "integral_speed_error_mps_sec": (
+                        result.longitudinal.integral_speed_error_mps_sec
+                    ),
+                    "saturated": result.longitudinal.saturated,
+                    "jerk_limited": result.longitudinal.jerk_limited,
+                    "launch_elapsed_sec": result.longitudinal.launch_elapsed_sec,
+                    "fault_reason": result.longitudinal.fault_reason,
+                },
             }
         message = AckermannControlCommand()
         message.stamp = image.header.stamp

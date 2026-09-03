@@ -11,6 +11,10 @@ from .delay_aware_controller import (
     control_from_waypoints_delay_aware,
 )
 from .executable_reference import ExecutableReferenceV3
+from .longitudinal_controller_v3 import (
+    LongitudinalControllerV3,
+    LongitudinalControlResultV3,
+)
 from .waypoint_controller import ControlCommand
 
 
@@ -20,6 +24,7 @@ class TrajectoryAuthoritativeControlV3:
 
     control: DelayAwareControlResult
     reference_id: str
+    longitudinal: LongitudinalControlResultV3 | None = None
     authority: str = "trajectory_authoritative"
 
 
@@ -39,6 +44,8 @@ def control_from_executable_reference_v3(
     yaw_rate_rps: float,
     actual_steering_rad: float,
     config: DelayAwareControllerConfig,
+    longitudinal_controller: LongitudinalControllerV3 | None = None,
+    drive_preflight_ready: bool = True,
 ) -> TrajectoryAuthoritativeControlV3:
     """Track the cap-applied, retimed reference; raw Plan timing is never used."""
 
@@ -72,9 +79,24 @@ def control_from_executable_reference_v3(
         actual_steering_rad=actual_steering_rad,
         config=controller_config,
     )
+    longitudinal = None
+    if longitudinal_controller is not None:
+        longitudinal = longitudinal_controller.step(
+            executable_speed_mps=target_speed_mps,
+            measured_speed_mps=current_longitudinal_speed_mps,
+            drive_preflight_ready=drive_preflight_ready,
+        )
+        control = replace(
+            control,
+            command=ControlCommand(
+                control.command.steering_rad,
+                longitudinal.acceleration_mps2,
+            ),
+        )
     return TrajectoryAuthoritativeControlV3(
         control=control,
         reference_id=reference.reference_id,
+        longitudinal=longitudinal,
     )
 
 

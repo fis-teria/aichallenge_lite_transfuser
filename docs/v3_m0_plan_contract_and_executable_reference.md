@@ -82,9 +82,10 @@ experiment identity hash, a checkpoint produced with the former next-row
 semantics cannot be resumed silently. Existing runtime artifact contract hashes
 remain unchanged.
 
-Exact AWSIM command semantics, gear/autonomous state, and final command routing
-remain M0 environment gates. They must be checked on Graneple before launch
-assist or trajectory-authoritative control is enabled.
+The read-only Graneple M0 graph check confirmed the installed Drive value `2`,
+Autonomous value `1`, AWSIM's direct final-command subscription, and the official
+Start/control-mode request path. See `docs/v3_m2_external_controller.md` for the
+observed commands and remaining dynamic-response boundary.
 
 ## Example
 

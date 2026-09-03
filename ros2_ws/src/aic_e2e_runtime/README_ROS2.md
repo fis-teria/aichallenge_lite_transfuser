@@ -157,6 +157,13 @@ ros2 launch aic_e2e_runtime \
 See `docs/v3_m1_trajectory_authoritative_runtime.md`. Source/unit verification
 does not establish ROS build, gear/enable/routing, AWSIM launch, or lap completion.
 
+M2 adds feedforward plus PI longitudinal control, conditional anti-windup,
+acceleration/jerk bounds, a bounded launch state, and launch-response fault
+monitoring. Before a positive launch command, the node requires fresh Drive and
+Autonomous reports, AWSIM state `Start`, and exactly one endpoint at each side of
+both the nominal and final command routes. All preflight/controller state is
+included in `/plan_diagnostics`. See `docs/v3_m2_external_controller.md`.
+
 ## v3 external-controller shadow
 
 The separate `external_controller` runtime profile passes candidate-zero

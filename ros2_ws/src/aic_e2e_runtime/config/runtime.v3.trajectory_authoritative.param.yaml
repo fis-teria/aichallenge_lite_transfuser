@@ -27,9 +27,32 @@
     max_steer_rad: 0.6
     min_accel_mps2: -4.0
     max_accel_mps2: 2.0
-    speed_kp: 1.0
+    speed_kp: 0.8
+    speed_ki: 0.3
+    longitudinal_reference_horizon_sec: 0.5
+    longitudinal_integral_limit_mps_sec: 1.0
+    longitudinal_acceleration_gain: 1.0
+    longitudinal_acceleration_bias_mps2: 0.0
     max_steering_rate_radps: 0.8
     control_period_sec: 0.1
+    min_jerk_mps3: -8.0
+    max_jerk_mps3: 4.0
+    launch_assist_stopped_speed_mps: 0.05
+    launch_moving_speed_mps: 0.15
+    launch_assist_min_commanded_speed_mps: 0.2
+    launch_assist_acceleration_floor_mps2: 0.5
+    launch_timeout_sec: 3.0
+    launch_response_timeout_sec: 1.0
+    launch_minimum_speed_delta_mps: 0.02
+    gear_status_topic: /vehicle/status/gear_status
+    control_mode_topic: /vehicle/status/control_mode
+    awsim_state_topic: /awsim/state
+    nominal_control_topic: /nominal_control_cmd
+    final_control_topic: /control/command/control_cmd
+    expected_drive_gear: 2
+    expected_autonomous_mode: 1
+    required_awsim_state: Start
+    preflight_maximum_status_age_sec: 0.5
     expected_checkpoint_sha256: REPLACE_WITH_64_HEX_CHECKPOINT_SHA256
     expected_manifest_sha256: REPLACE_WITH_64_HEX_MANIFEST_SHA256
     expected_contract_hash: REPLACE_WITH_64_HEX_MODEL_CONTRACT_SHA256

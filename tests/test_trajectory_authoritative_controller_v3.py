@@ -15,6 +15,11 @@ from aic_transfuser_lite.control.trajectory_authoritative_controller import (
     control_from_executable_reference_v3,
     fail_closed_stop_control_v3,
 )
+from aic_transfuser_lite.control.longitudinal_controller_v3 import (
+    LongitudinalControllerConfigV3,
+    LongitudinalControllerV3,
+    LongitudinalStateV3,
+)
 
 
 def _reference():
@@ -72,3 +77,26 @@ def test_invalid_plan_stop_never_becomes_direct_model_control() -> None:
             max_abs_steering_rad=0.6,
             braking_acceleration_mps2=0.0,
         )
+
+
+def test_authoritative_controller_uses_stateful_longitudinal_output() -> None:
+    reference = _reference()
+    longitudinal = LongitudinalControllerV3(
+        LongitudinalControllerConfigV3(response_timeout_sec=2.0)
+    )
+    result = control_from_executable_reference_v3(
+        reference,
+        current_longitudinal_speed_mps=0.0,
+        yaw_rate_rps=0.0,
+        actual_steering_rad=0.0,
+        config=DelayAwareControllerConfig(
+            waypoint_times_sec=(0.1, 0.2, 0.3),
+            min_preview_sec=0.1,
+            max_preview_sec=1.0,
+        ),
+        longitudinal_controller=longitudinal,
+        drive_preflight_ready=True,
+    )
+    assert result.longitudinal is not None
+    assert result.longitudinal.state is LongitudinalStateV3.LAUNCHING
+    assert result.control.command.acceleration_mps2 == pytest.approx(0.4)
