@@ -1,0 +1,26 @@
+format: aic_calibration_stability_gate_v1
+steering:
+  maximum_delay_span_sec: 0.02
+  maximum_lag_span_sec: 0.05
+  maximum_relative_gain_span: 0.20
+  maximum_bias_span_rad: 0.10
+  minimum_correlation: 0.90
+  maximum_nrmse: 0.70
+  maximum_yaw_rate_nrmse: 0.80
+  minimum_dynamic_samples_per_cohort: 200
+drive:
+  maximum_delay_span_sec: 0.02
+  maximum_lag_span_sec: 0.02
+  maximum_relative_gain_span: 0.05
+  maximum_bias_span_mps2: 0.05
+  minimum_correlation: 0.80
+  maximum_nrmse: 0.60
+  minimum_mode_samples_per_cohort: 100
+brake:
+  maximum_delay_span_sec: 0.02
+  maximum_lag_span_sec: 0.05
+  maximum_relative_gain_span: 0.20
+  maximum_bias_span_mps2: 0.10
+  minimum_correlation: 0.80
+  maximum_nrmse: 0.60
+  minimum_mode_samples_per_cohort: 50
