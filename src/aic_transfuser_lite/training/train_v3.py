@@ -90,9 +90,23 @@ class TrainerV3:
         self.global_step = 0
         self.logs: list[dict[str, float]] = []
 
-    def train_steps(self, count: int) -> list[dict[str, float]]:
+    def train_steps(
+        self,
+        count: int,
+        *,
+        micro_batches_per_optimizer_step: int | None = None,
+    ) -> list[dict[str, float]]:
         if count < 0:
             raise ValueError("training step count must be non-negative")
+        micro_batch_count = (
+            self.gradient_accumulation_steps
+            if micro_batches_per_optimizer_step is None
+            else micro_batches_per_optimizer_step
+        )
+        if not 0 < micro_batch_count <= self.gradient_accumulation_steps:
+            raise ValueError(
+                "micro_batches_per_optimizer_step must be within gradient accumulation"
+            )
         if bool(getattr(self.model, "freeze_except_control_sequence", False)):
             self.model.eval()
             sequence_head = getattr(self.model, "control_sequence_head", None)
@@ -105,7 +119,7 @@ class TrainerV3:
         for _ in range(count):
             self.optimizer.zero_grad(set_to_none=True)
             accumulated: dict[str, float] = {}
-            for _micro_step in range(self.gradient_accumulation_steps):
+            for _micro_step in range(micro_batch_count):
                 batch = move_batch_v3(
                     self.batches[self.sampler.next_index()], self.device
                 )
@@ -115,7 +129,7 @@ class TrainerV3:
                 report = compute_losses_v3(output, batch.targets, self.loss_weights)
                 if not torch.isfinite(report.total):
                     raise FloatingPointError("non-finite V3 loss before backward")
-                (report.total / self.gradient_accumulation_steps).backward()
+                (report.total / micro_batch_count).backward()
                 micro_log = report.scalar_log()
                 if (
                     output.behavior_logits is not None
@@ -148,7 +162,7 @@ class TrainerV3:
             row = {
                 "step": float(self.global_step),
                 **{
-                    key: value / self.gradient_accumulation_steps
+                    key: value / micro_batch_count
                     for key, value in accumulated.items()
                 },
             }
@@ -176,6 +190,90 @@ class TrainerV3:
             scheduler=self.scheduler,
         )
         self.sampler.load_state_dict(sampler_state)
+
+
+def evaluate_trajectory_speed_v3(
+    model: torch.nn.Module,
+    batches: Sequence[ModelBatchV3],
+) -> dict[str, float]:
+    """Evaluate authoritative trajectory/speed heads on a held-out split.
+
+    ``trajectory_ade_m`` is the mean Euclidean waypoint error in metres and
+    ``speed_profile_mae_mps`` is the mean absolute speed error in m/s. Masks
+    are counted element-wise, so a short final batch cannot bias the result.
+    The model's prior train/eval state is restored before returning.
+    """
+
+    if not batches:
+        raise ValueError("V3 validation requires at least one batch")
+    first_parameter = next(iter(model.parameters()), None)
+    device = torch.device("cpu") if first_parameter is None else first_parameter.device
+    was_training = model.training
+    trajectory_error_sum = 0.0
+    trajectory_count = 0
+    speed_error_sum = 0.0
+    speed_count = 0
+    model.eval()
+    try:
+        with torch.no_grad():
+            for source_batch in batches:
+                batch = move_batch_v3(source_batch, device)
+                if batch.targets is None:
+                    raise ValueError("V3 validation batch is missing targets")
+                output = model(batch)
+                if output.trajectory_xy.shape[1] != 1:
+                    raise ValueError("V3 validation supports candidates K=1")
+                predicted_xy = output.trajectory_xy[:, 0]
+                predicted_speed = output.trajectory_speed_mps[:, 0]
+                if predicted_xy.shape != batch.targets.trajectory_xy_m.shape:
+                    raise ValueError("validation trajectory prediction/target shape mismatch")
+                if predicted_speed.shape != batch.targets.speed_mps.shape:
+                    raise ValueError("validation speed prediction/target shape mismatch")
+                trajectory_error = torch.linalg.vector_norm(
+                    predicted_xy - batch.targets.trajectory_xy_m, dim=-1
+                )
+                speed_error = torch.abs(predicted_speed - batch.targets.speed_mps)
+                trajectory_values = trajectory_error[batch.targets.trajectory_mask]
+                speed_values = speed_error[batch.targets.speed_mask]
+                if not torch.isfinite(trajectory_values).all():
+                    raise FloatingPointError("non-finite trajectory validation error")
+                if not torch.isfinite(speed_values).all():
+                    raise FloatingPointError("non-finite speed validation error")
+                trajectory_error_sum += float(trajectory_values.sum().cpu())
+                trajectory_count += int(trajectory_values.numel())
+                speed_error_sum += float(speed_values.sum().cpu())
+                speed_count += int(speed_values.numel())
+    finally:
+        model.train(was_training)
+    if trajectory_count == 0 or speed_count == 0:
+        raise ValueError("V3 validation split has no valid trajectory/speed targets")
+    return {
+        "trajectory_ade_m": trajectory_error_sum / trajectory_count,
+        "speed_profile_mae_mps": speed_error_sum / speed_count,
+        "trajectory_valid_waypoints": float(trajectory_count),
+        "speed_valid_waypoints": float(speed_count),
+    }
+
+
+def is_better_trajectory_checkpoint_v3(
+    candidate: dict[str, float], best: dict[str, float] | None
+) -> bool:
+    """Order checkpoints by trajectory ADE, then speed MAE as a tie-break."""
+
+    keys = ("trajectory_ade_m", "speed_profile_mae_mps")
+    for name in keys:
+        value = float(candidate[name])
+        if not math.isfinite(value) or value < 0.0:
+            raise ValueError(f"candidate {name} must be finite and non-negative")
+    if best is None:
+        return True
+    for name in keys:
+        value = float(best[name])
+        if not math.isfinite(value) or value < 0.0:
+            raise ValueError(f"best {name} must be finite and non-negative")
+    return tuple(float(candidate[name]) for name in keys) < tuple(
+        float(best[name]) for name in keys
+    )
 
 
 def load_full_control_config_v3(path: str | Path) -> dict[str, object]:

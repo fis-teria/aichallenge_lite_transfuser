@@ -147,6 +147,17 @@ one optimizer step over that many micro-batches. The model config bytes are part
 of the experiment contract hash, so changing loss weights, accumulation, or
 model settings cannot silently resume an incompatible run.
 
+For a full run (without the smoke-only `--max-batches` option), the trainer also
+loads the run-separated `validation` split. It stops each training chunk at the
+exact epoch boundary, records SI-unit `trajectory_ade_m` and
+`speed_profile_mae_mps`, writes immutable `epoch_NNN.pt` snapshots, and promotes
+`best_trajectory.pt` by lowest trajectory ADE with speed MAE as the tie-breaker.
+`validation_history.json` binds those decisions to the experiment identity and
+epoch size. Resume rejects mismatched or ahead-of-checkpoint history. The
+runtime artifact points to the promoted checkpoint; `last.pt` remains the exact
+resume state. A `--max-batches` smoke run deliberately skips validation and
+promotion and therefore cannot be used as M3 evidence.
+
 Run in WSL under the shared training lock and write a new output directory:
 
 ```bash

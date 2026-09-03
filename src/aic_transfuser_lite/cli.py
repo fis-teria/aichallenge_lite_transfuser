@@ -4,7 +4,9 @@ import argparse
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
+import shutil
 import sys
 from typing import Any, Sequence
 from urllib.parse import unquote, urlparse
@@ -40,7 +42,8 @@ from .training.checkpoint_v3 import ExperimentIdentityV3
 from .training.losses_v3 import LossWeightsV3
 from .training.train_v3 import (
     TrainerV3, balanced_class_weights_v3, build_full_control_model_v3,
-    full_control_model_kwargs_v3, load_full_control_config_v3,
+    evaluate_trajectory_speed_v3, full_control_model_kwargs_v3,
+    is_better_trajectory_checkpoint_v3, load_full_control_config_v3,
 )
 import torch
 import yaml
@@ -353,36 +356,50 @@ def _train_v3(args: argparse.Namespace) -> int:
     epochs = int(args.epochs or training_cfg["epochs"])
     if epochs <= 0 or batch_size <= 0:
         raise ValueError("epochs and batch size must be positive")
+    control_target_bounds = ControlTargetBoundsV3(
+        max_steering_rad=float(model_cfg["control_bounds"]["max_steering_rad"]),
+        max_steering_rate_radps=float(
+            model_cfg["control_bounds"]["max_steering_rate_radps"]
+        ),
+        max_speed_mps=float(model_cfg["control_bounds"]["max_speed_mps"]),
+        min_acceleration_mps2=float(
+            model_cfg["control_bounds"]["min_acceleration_mps2"]
+        ),
+        max_acceleration_mps2=float(
+            model_cfg["control_bounds"]["max_acceleration_mps2"]
+        ),
+        min_jerk_mps3=float(model_cfg["control_bounds"]["min_jerk_mps3"]),
+        max_jerk_mps3=float(model_cfg["control_bounds"]["max_jerk_mps3"]),
+        control_dt_sec=float(model_cfg["control_dt_sec"]),
+    )
+    batch_loader_arguments = {
+        "image_height": int(data_cfg["image_height"]),
+        "image_width": int(data_cfg["image_width"]),
+        "lidar_points": int(data_cfg["lidar_points"]),
+        "lidar_min_range_m": float(data_cfg["lidar_min_range_m"]),
+        "lidar_max_range_m": float(data_cfg["lidar_max_range_m"]),
+        "ego_features": tuple(data_cfg["ego_features"]),
+        "trajectory_steps": int(model_cfg["trajectory_steps"]),
+        "control_sequence_steps": int(model_cfg["control_sequence_steps"]),
+        "camera_history_length": int(view["camera_history_length"]),
+        "ego_history_length": int(view["ego_history_length"]),
+        "command_history_length": int(view["command_history_length"]),
+        "control_target_bounds": control_target_bounds,
+        "batch_size": batch_size,
+        "behavior_view_root": args.behavior_view,
+    }
     batches = load_temporal_training_batches_v3(
         args.dataset_root, args.split_manifest, split="train",
-        image_height=int(data_cfg["image_height"]), image_width=int(data_cfg["image_width"]),
-        lidar_points=int(data_cfg["lidar_points"]),
-        lidar_min_range_m=float(data_cfg["lidar_min_range_m"]),
-        lidar_max_range_m=float(data_cfg["lidar_max_range_m"]),
-        ego_features=tuple(data_cfg["ego_features"]), trajectory_steps=int(model_cfg["trajectory_steps"]),
-        control_sequence_steps=int(model_cfg["control_sequence_steps"]),
-        camera_history_length=int(view["camera_history_length"]),
-        ego_history_length=int(view["ego_history_length"]),
-        command_history_length=int(view["command_history_length"]),
-        control_target_bounds=ControlTargetBoundsV3(
-            max_steering_rad=float(model_cfg["control_bounds"]["max_steering_rad"]),
-            max_steering_rate_radps=float(
-                model_cfg["control_bounds"]["max_steering_rate_radps"]
-            ),
-            max_speed_mps=float(model_cfg["control_bounds"]["max_speed_mps"]),
-            min_acceleration_mps2=float(
-                model_cfg["control_bounds"]["min_acceleration_mps2"]
-            ),
-            max_acceleration_mps2=float(
-                model_cfg["control_bounds"]["max_acceleration_mps2"]
-            ),
-            min_jerk_mps3=float(model_cfg["control_bounds"]["min_jerk_mps3"]),
-            max_jerk_mps3=float(model_cfg["control_bounds"]["max_jerk_mps3"]),
-            control_dt_sec=float(model_cfg["control_dt_sec"]),
-        ),
-        batch_size=batch_size,
-        max_batches=args.max_batches, behavior_view_root=args.behavior_view,
+        max_batches=args.max_batches, **batch_loader_arguments,
     )
+    validation_batches = None
+    if args.max_batches is None:
+        validation_batches = load_temporal_training_batches_v3(
+            args.dataset_root,
+            args.split_manifest,
+            split="validation",
+            **batch_loader_arguments,
+        )
     behavior_weights = balanced_class_weights_v3(
         batches, target_name="behavior_class", mask_name="behavior_mask", class_count=5,
         require_all_classes=args.max_batches is None,
@@ -413,6 +430,9 @@ def _train_v3(args: argparse.Namespace) -> int:
     if args.dry_run:
         print(json.dumps({
             "status": "DRY_RUN", "batches": len(batches), "device": str(device),
+            "validation_batches": (
+                None if validation_batches is None else len(validation_batches)
+            ),
             "behavior_class_weights": behavior_weights,
             "behavior_side_class_weights": side_weights,
         }))
@@ -478,20 +498,123 @@ def _train_v3(args: argparse.Namespace) -> int:
     )
     target_steps = epochs * optimizer_steps_per_epoch
     checkpoint_every_steps = int(training_cfg["checkpoint_every_steps"])
-    remaining_steps = max(0, target_steps - trainer.global_step)
-    if remaining_steps == 0:
+    validation_history_path = output / "validation_history.json"
+    validation_history: list[dict[str, Any]] = []
+    best_metrics: dict[str, float] | None = None
+    if args.resume and validation_history_path.is_file():
+        prior_validation = json.loads(
+            validation_history_path.read_text(encoding="utf-8")
+        )
+        if prior_validation.get("identity") != identity.__dict__:
+            raise ValueError("validation history experiment identity mismatch")
+        if int(prior_validation.get("optimizer_steps_per_epoch", -1)) != (
+            optimizer_steps_per_epoch
+        ):
+            raise ValueError("validation history epoch size mismatch")
+        validation_history = list(prior_validation.get("epochs", []))
+        if validation_history and int(validation_history[-1]["global_step"]) > trainer.global_step:
+            raise ValueError("validation history is ahead of the resume checkpoint")
+        selected = prior_validation.get("best")
+        if selected is not None:
+            if not (output / "best_trajectory.pt").is_file():
+                raise FileNotFoundError(
+                    "validation history selects a missing best_trajectory.pt"
+                )
+            best_metrics = {
+                "trajectory_ade_m": float(selected["trajectory_ade_m"]),
+                "speed_profile_mae_mps": float(selected["speed_profile_mae_mps"]),
+            }
+
+    def validate_epoch_boundary() -> None:
+        nonlocal best_metrics
+        if validation_batches is None:
+            return
+        if trainer.sampler.offset != len(batches):
+            raise RuntimeError("validation requested outside an exact sampler epoch boundary")
+        epoch = trainer.sampler.epoch + 1
+        if any(int(row["epoch"]) == epoch for row in validation_history):
+            return
+        metrics = evaluate_trajectory_speed_v3(model, validation_batches)
+        row: dict[str, Any] = {
+            "epoch": epoch,
+            "global_step": trainer.global_step,
+            **metrics,
+        }
+        epoch_checkpoint = output / f"epoch_{epoch:03d}.pt"
+        _atomic_copy(checkpoint, epoch_checkpoint)
+        row["checkpoint"] = epoch_checkpoint.name
+        if is_better_trajectory_checkpoint_v3(metrics, best_metrics):
+            best_metrics = {
+                "trajectory_ade_m": float(metrics["trajectory_ade_m"]),
+                "speed_profile_mae_mps": float(metrics["speed_profile_mae_mps"]),
+            }
+            _atomic_copy(checkpoint, output / "best_trajectory.pt")
+            row["promoted"] = True
+        else:
+            row["promoted"] = False
+        validation_history.append(row)
+        best_row = min(
+            validation_history,
+            key=lambda item: (
+                float(item["trajectory_ade_m"]),
+                float(item["speed_profile_mae_mps"]),
+            ),
+        )
+        _write_json_atomic(
+            validation_history_path,
+            {
+                "format": "aic_v3_validation_history_v1",
+                "identity": identity.__dict__,
+                "optimizer_steps_per_epoch": optimizer_steps_per_epoch,
+                "selection": ["trajectory_ade_m", "speed_profile_mae_mps"],
+                "epochs": validation_history,
+                "best": best_row,
+            },
+        )
+
+    completed_epochs = trainer.sampler.epoch + int(
+        trainer.sampler.offset == len(batches)
+    )
+    if completed_epochs > epochs or trainer.global_step > target_steps:
+        raise ValueError("resume checkpoint is ahead of requested training epochs")
+    if trainer.sampler.offset == len(batches) and completed_epochs > 0:
+        validate_epoch_boundary()
+    if completed_epochs == epochs:
         trainer.save(checkpoint)
-    while remaining_steps > 0:
-        step_count = min(checkpoint_every_steps, remaining_steps)
-        trainer.train_steps(step_count)
+    while completed_epochs < epochs:
+        micro_batches_remaining = (
+            len(batches)
+            if trainer.sampler.offset == len(batches)
+            else len(batches) - trainer.sampler.offset
+        )
+        full_optimizer_steps = (
+            micro_batches_remaining // gradient_accumulation_steps
+        )
+        if full_optimizer_steps > 0:
+            step_count = min(checkpoint_every_steps, full_optimizer_steps)
+            trainer.train_steps(step_count)
+        else:
+            trainer.train_steps(
+                1,
+                micro_batches_per_optimizer_step=micro_batches_remaining,
+            )
         trainer.save(checkpoint)
-        remaining_steps -= step_count
+        if trainer.sampler.offset == len(batches):
+            validate_epoch_boundary()
+            completed_epochs = trainer.sampler.epoch + 1
+    if trainer.global_step != target_steps:
+        raise RuntimeError("training step count does not match exact epoch contract")
+    selected_checkpoint = (
+        output / "best_trajectory.pt"
+        if (output / "best_trajectory.pt").is_file()
+        else checkpoint
+    )
     runtime_artifact = output / "runtime_artifact.json"
     runtime_artifact.write_text(
         json.dumps(
             {
                 "format": "aic_runtime_artifact_v3",
-                "checkpoint_sha256": _sha256(checkpoint),
+                "checkpoint_sha256": _sha256(selected_checkpoint),
                 "contract_hash": contract_hash,
                 "capabilities": [
                     "trajectory", "speed_profile", "current_control", "control_sequence",
@@ -516,6 +639,21 @@ def _train_v3(args: argparse.Namespace) -> int:
         "behavior_ontology": "aic_behavior_v1",
         "behavior_view_manifest_sha256": _sha256(Path(args.behavior_view) / "manifest.json"),
         "runtime_artifact_manifest_sha256": _sha256(runtime_artifact),
+        "selected_checkpoint": selected_checkpoint.name,
+        "validation_history": (
+            None if validation_batches is None else validation_history_path.name
+        ),
+        "best_validation": (
+            None
+            if not validation_history
+            else min(
+                validation_history,
+                key=lambda item: (
+                    float(item["trajectory_ade_m"]),
+                    float(item["speed_profile_mae_mps"]),
+                ),
+            )
+        ),
         "initialization": initialization,
     }
     if args.resume and initialization is None:
@@ -527,7 +665,7 @@ def _train_v3(args: argparse.Namespace) -> int:
         json.dumps(run_manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     print(json.dumps({
-        "status": "COMPLETE", "checkpoint": str(checkpoint),
+        "status": "COMPLETE", "checkpoint": str(selected_checkpoint),
         "runtime_artifact": str(runtime_artifact), "global_step": trainer.global_step,
     }))
     return EXIT_SUCCESS
@@ -560,6 +698,29 @@ def _write_json(path: Path, value: Any, *, resume: bool) -> None:
             return
         raise FileExistsError(f"output already exists: {path}")
     path.write_text(text, encoding="utf-8")
+
+
+def _write_json_atomic(path: Path, value: Any) -> None:
+    """Atomically replace a small generated JSON state file."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(
+        json.dumps(value, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    os.replace(temporary, path)
+
+
+def _atomic_copy(source: Path, destination: Path) -> None:
+    """Publish an immutable checkpoint copy without exposing partial bytes."""
+
+    if not source.is_file():
+        raise FileNotFoundError(f"checkpoint copy source missing: {source}")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_suffix(destination.suffix + ".tmp")
+    shutil.copy2(source, temporary)
+    os.replace(temporary, destination)
 
 
 def _file_uri_to_path(uri: str) -> Path:

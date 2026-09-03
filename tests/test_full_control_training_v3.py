@@ -1,3 +1,4 @@
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -11,7 +12,11 @@ from aic_transfuser_lite.training.checkpoint_v3 import ExperimentIdentityV3
 from aic_transfuser_lite.training.losses_v3 import (
     LossWeightsV3, compute_losses_v3, enforce_trajectory_regression_gate,
 )
-from aic_transfuser_lite.training.train_v3 import TrainerV3
+from aic_transfuser_lite.training.train_v3 import (
+    TrainerV3,
+    evaluate_trajectory_speed_v3,
+    is_better_trajectory_checkpoint_v3,
+)
 
 
 def _full_batch() -> ModelBatchV3:
@@ -193,4 +198,60 @@ def test_gradient_accumulation_advances_micro_batches_per_optimizer_step() -> No
             optimizer=torch.optim.Adam(model.parameters(), lr=1e-4),
             identity=trainer.identity,
             gradient_accumulation_steps=0,
+        )
+    trainer.train_steps(1, micro_batches_per_optimizer_step=1)
+    assert trainer.sampler.epoch == 1
+    assert trainer.sampler.offset == 1
+    with pytest.raises(ValueError, match="within gradient accumulation"):
+        trainer.train_steps(1, micro_batches_per_optimizer_step=3)
+
+
+class _FixedValidationModel(torch.nn.Module):
+    def __init__(self, *, xy_offset: tuple[float, float], speed_offset: float) -> None:
+        super().__init__()
+        self.anchor = torch.nn.Parameter(torch.zeros(()))
+        self.xy_offset = xy_offset
+        self.speed_offset = speed_offset
+
+    def forward(self, batch: ModelBatchV3) -> ModelOutputV3:
+        assert batch.targets is not None
+        xy = batch.targets.trajectory_xy_m + batch.targets.trajectory_xy_m.new_tensor(
+            self.xy_offset
+        )
+        speed = batch.targets.speed_mps + self.speed_offset
+        return ModelOutputV3(
+            trajectory_xy=xy.unsqueeze(1),
+            trajectory_speed_mps=speed.unsqueeze(1),
+            candidate_logits=torch.zeros(
+                batch.batch_size, 1, device=batch.image.device
+            ),
+        )
+
+
+def test_validation_metrics_use_si_units_and_restore_train_state() -> None:
+    model = _FixedValidationModel(xy_offset=(3.0, 4.0), speed_offset=0.25)
+    model.train()
+    metrics = evaluate_trajectory_speed_v3(model, [_full_batch()])
+    assert metrics["trajectory_ade_m"] == pytest.approx(5.0)
+    assert metrics["speed_profile_mae_mps"] == pytest.approx(0.25)
+    assert metrics["trajectory_valid_waypoints"] == 30
+    assert metrics["speed_valid_waypoints"] == 30
+    assert model.training is True
+
+
+def test_validation_and_checkpoint_order_fail_closed_on_invalid_input() -> None:
+    model = _FixedValidationModel(xy_offset=(0.0, 0.0), speed_offset=0.0)
+    with pytest.raises(ValueError, match="missing targets"):
+        evaluate_trajectory_speed_v3(model, [replace(_full_batch(), targets=None)])
+    assert is_better_trajectory_checkpoint_v3(
+        {"trajectory_ade_m": 1.0, "speed_profile_mae_mps": 0.2}, None
+    )
+    assert is_better_trajectory_checkpoint_v3(
+        {"trajectory_ade_m": 1.0, "speed_profile_mae_mps": 0.1},
+        {"trajectory_ade_m": 1.0, "speed_profile_mae_mps": 0.2},
+    )
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        is_better_trajectory_checkpoint_v3(
+            {"trajectory_ade_m": float("nan"), "speed_profile_mae_mps": 0.1},
+            None,
         )

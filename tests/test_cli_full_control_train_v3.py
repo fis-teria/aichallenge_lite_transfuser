@@ -1,6 +1,7 @@
 import json
 import csv
 import hashlib
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,7 @@ import yaml
 from aic_transfuser_lite.cli import EXIT_SUCCESS, main
 from aic_transfuser_lite.data.canonical_converter_v3 import write_prepared_dataset_v3
 from aic_transfuser_lite.data.canonical_converter_v3 import PreparedRunV3
+from aic_transfuser_lite.data.canonical_schema_v3 import make_sample_id
 from aic_transfuser_lite.data.dataset_view_v3 import (
     ControlTargetBoundsV3,
     clip_control_target_v3,
@@ -48,12 +50,44 @@ def _target_bounds(**overrides: float) -> ControlTargetBoundsV3:
 
 
 def _training_fixture(
-    tmp_path: Path, *, prepared_run: PreparedRunV3 | None = None
+    tmp_path: Path,
+    *,
+    prepared_run: PreparedRunV3 | None = None,
+    include_validation: bool = False,
 ) -> tuple[Path, Path, Path, Path, Path]:
     dataset = tmp_path / "dataset"
+    train_run = _convert() if prepared_run is None else prepared_run
+    runs = (train_run,)
+    if include_validation:
+        validation_run_id = "run02"
+        validation_run = PreparedRunV3(
+            run=replace(
+                train_run.run,
+                run_id=validation_run_id,
+                scenario_id="scenario02",
+                source_uri="file:///validation/run02",
+            ),
+            samples=tuple(
+                replace(
+                    item,
+                    sample=replace(
+                        item.sample,
+                        sample_id=make_sample_id(
+                            validation_run_id,
+                            item.sample.segment_id,
+                            item.sample.grid_stamp_ns,
+                        ),
+                        run_id=validation_run_id,
+                        scenario_id="scenario02",
+                    ),
+                )
+                for item in train_run.samples
+            ),
+        )
+        runs = (train_run, validation_run)
     write_prepared_dataset_v3(
         dataset, dataset_id="dataset01", topic_profile_id="default",
-        runs=(_convert() if prepared_run is None else prepared_run,), jpeg_quality=90,
+        runs=runs, jpeg_quality=90,
     )
     manifest = validate_complete_dataset(dataset)
     behavior_view = tmp_path / "behavior_view"
@@ -93,9 +127,12 @@ def _training_fixture(
         "valid_side_count": len(sample_rows),
     }), encoding="utf-8")
     split = tmp_path / "split.json"
+    assignments = [{"run_id": "run01", "split": "train"}]
+    if include_validation:
+        assignments.append({"run_id": "run02", "split": "validation"})
     split.write_text(json.dumps({
         "dataset_manifest_sha256": manifest["manifest_sha256"],
-        "assignments": [{"run_id": "run01", "split": "train"}],
+        "assignments": assignments,
     }), encoding="utf-8")
     config = yaml.safe_load((ROOT / "configs/models/full_control_lite_v3.yaml").read_text())
     config["model"].update({
@@ -202,6 +239,34 @@ def test_cli_full_control_saves_periodic_resumable_checkpoints(
     assert torch.load(output / "last.pt", map_location="cpu", weights_only=True)[
         "global_step"
     ] == 2
+
+
+def test_cli_promotes_best_trajectory_checkpoint_from_validation_split(
+    tmp_path: Path,
+) -> None:
+    dataset, split, config, behavior_view, output = _training_fixture(
+        tmp_path, include_validation=True
+    )
+    assert main([
+        "train", "--config", str(config), "--dataset-root", str(dataset),
+        "--split-manifest", str(split),
+        "--view-config", str(ROOT / "configs/data/view_temporal_v3.yaml"),
+        "--behavior-view", str(behavior_view), "--output", str(output),
+        "--epochs", "1", "--batch-size", "2", "--device", "cpu",
+    ]) == EXIT_SUCCESS
+    assert (output / "epoch_001.pt").is_file()
+    assert (output / "best_trajectory.pt").is_file()
+    history = json.loads((output / "validation_history.json").read_text())
+    assert history["selection"] == [
+        "trajectory_ade_m", "speed_profile_mae_mps"
+    ]
+    assert history["epochs"][0]["promoted"] is True
+    manifest = json.loads((output / "run_manifest.json").read_text())
+    assert manifest["selected_checkpoint"] == "best_trajectory.pt"
+    artifact = json.loads((output / "runtime_artifact.json").read_text())
+    assert artifact["checkpoint_sha256"] == sha256_file_v3(
+        output / "best_trajectory.pt"
+    )
 
 
 def test_full_control_config_rejects_nonpositive_checkpoint_interval(tmp_path: Path) -> None:
