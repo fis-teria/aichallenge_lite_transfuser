@@ -398,6 +398,7 @@ def _train_v3(args: argparse.Namespace) -> int:
             "new_key_count": len(migration.new_v3),
         }
     if args.freeze_migrated:
+        model.freeze_except_control_sequence = True
         for name, parameter in model.named_parameters():
             if not name.startswith("control_sequence_head."):
                 parameter.requires_grad_(False)

@@ -120,6 +120,13 @@ def test_cli_full_control_one_epoch_and_resume(tmp_path: Path) -> None:
     initialized = json.loads((initialized_output / "run_manifest.json").read_text())
     assert initialized["initialization"]["freeze_migrated"] is True
     assert initialized["initialization"]["loaded_key_count"] > 0
+    source_state = torch.load(output / "last.pt", map_location="cpu", weights_only=True)["model"]
+    trained_state = torch.load(
+        initialized_output / "last.pt", map_location="cpu", weights_only=True
+    )["model"]
+    for name, source_value in source_state.items():
+        if not name.startswith("control_sequence_head."):
+            torch.testing.assert_close(trained_state[name], source_value, rtol=0.0, atol=0.0)
 
 
 def test_cli_full_control_dry_run_writes_nothing(tmp_path: Path) -> None:

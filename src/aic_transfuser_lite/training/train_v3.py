@@ -84,7 +84,14 @@ class TrainerV3:
     def train_steps(self, count: int) -> list[dict[str, float]]:
         if count < 0:
             raise ValueError("training step count must be non-negative")
-        self.model.train()
+        if bool(getattr(self.model, "freeze_except_control_sequence", False)):
+            self.model.eval()
+            sequence_head = getattr(self.model, "control_sequence_head", None)
+            if sequence_head is None:
+                raise ValueError("frozen-backbone training requires a control sequence head")
+            sequence_head.train()
+        else:
+            self.model.train()
         produced: list[dict[str, float]] = []
         for _ in range(count):
             batch = move_batch_v3(self.batches[self.sampler.next_index()], self.device)
