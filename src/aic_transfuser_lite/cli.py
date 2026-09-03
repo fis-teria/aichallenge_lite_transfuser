@@ -455,6 +455,11 @@ def _train_v3(args: argparse.Namespace) -> int:
         "runtime_artifact_manifest_sha256": _sha256(runtime_artifact),
         "initialization": initialization,
     }
+    if args.resume and initialization is None:
+        previous_manifest_path = output / "run_manifest.json"
+        if previous_manifest_path.is_file():
+            previous_manifest = json.loads(previous_manifest_path.read_text(encoding="utf-8"))
+            run_manifest["initialization"] = previous_manifest.get("initialization")
     (output / "run_manifest.json").write_text(
         json.dumps(run_manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
