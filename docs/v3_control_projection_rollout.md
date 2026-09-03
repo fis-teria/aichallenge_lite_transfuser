@@ -47,6 +47,12 @@ speed error, and endpoint error. Every threshold is explicit, finite, and
 positive. Failed metrics are returned as ordered structured reason strings;
 the evaluator never switches to another candidate.
 
+Heading error is applied only where the model speed profile meets the explicit
+minimum heading-observability speed. A stationary or near-stationary path has
+no reliable tangent direction, but it still must pass all position, lateral,
+speed, and endpoint checks. A moving backwards-oriented trajectory still
+fails the heading gate.
+
 Run unit and negative tests with:
 
 ```bash
@@ -55,7 +61,7 @@ python3 -m pytest -q \
   tests/test_rollout_consistency_v3.py
 ```
 
-## Current promotion boundary
+## Historical V3-020 boundary
 
 The recorded `d1log_0902` calibration candidate is not individually valid for
 steering, drive, or brake, and therefore is rejected by the rollout entry
@@ -66,6 +72,15 @@ fixtures, but must not enable `full_control` from those fixtures.
 No ROS 2 runtime, Safety Supervisor connection, vehicle command, or AWSIM
 closed-loop test is part of this task. V3-021 and later authority changes must
 remain separate tasks.
+
+## Current promotion boundary
+
+Subsequent tasks produced a stable calibration artifact and advanced it to
+`shadow`, then actually ran both the ROS shadow graph and an M11 limited
+full-control attempt. The trial did not establish forward motion, so the
+artifact remains `shadow`; successful launch, route progress, collision
+avoidance, and finish are not claimed. See
+`docs/v3_m11_limited_odd_report.md` for the current evidence.
 
 ## Verification record
 

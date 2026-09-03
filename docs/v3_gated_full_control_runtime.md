@@ -22,6 +22,21 @@ consistency check selects the external controller computed from that exact
 trajectory; it never switches trajectory candidates. Safety remains the final
 authority for either source.
 
+Heading consistency is gated only at trajectory samples whose predicted speed
+is at least `consistency_min_heading_speed_mps`; tangent heading is not
+observable on a near-stationary path. Position, lateral, speed, and endpoint
+checks remain active at every sample. The previous published nominal command
+is fed back as the next one-step command history and as the projection's prior
+acceleration, so receding-horizon execution does not restart from zero on every
+observation.
+
+The trial profile also contains an explicitly authorized stopped-launch
+assist. Before authoritative projection, it can raise the model sequence's
+acceleration proposals to a bounded floor only while actual speed is at or
+below `0.1 m/s`, the model commands at least `0.2 m/s`, and the assist has not
+previously observed the vehicle moving. All normal acceleration and jerk
+limits still apply. It does not alter an external fallback command.
+
 The checked-in parameter file contains replacement markers and cannot be used
 unchanged. Create a deployment copy outside Git and replace the checkpoint,
 runtime manifest, calibration, and trial authorization paths/hashes. The
@@ -53,7 +68,7 @@ Do not report ROS 2, AWSIM, collision avoidance, or course completion as
 successful until those commands have actually run and the resulting logs are
 reviewed.
 
-## Build verification record
+## Build and execution verification record
 
 Commit `aebee06` passed the focused WSL runtime suite (`84 passed`) and the
 complete repository suite (`435 passed, 32 warnings`). Its tracked source
@@ -64,6 +79,13 @@ then passed the full-control focused suite in
 container, `colcon build --packages-select aic_e2e_runtime` completed one
 package and `ros2 launch ... --show-args` loaded the new launch description.
 
-These checks verify source logic, package build, and launch-description
-parsing. They do not claim that a ROS graph was started against AWSIM or that
-the vehicle moved successfully.
+Later commit `9abdf7e` passed the complete WSL suite (`447 passed, 32
+warnings`), a focused official-container unit/negative suite (`70 passed`), and
+an official-container one-package ROS build. Its ROS shadow graph and RViz were
+actually run against AWSIM. A limited full-control graph was also run with
+Safety as the sole final-command publisher, but the 30 s stopped-start probe
+reached only `0.012603 m/s` maximum speed and `0.039785 m` displacement.
+
+Therefore ROS wiring and the attempted trial are verified, but successful
+launch, route progress, collision avoidance, and course completion are not.
+The exact evidence and hashes are in `docs/v3_m11_limited_odd_report.md`.

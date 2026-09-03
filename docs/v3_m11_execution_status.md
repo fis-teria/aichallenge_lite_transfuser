@@ -14,10 +14,10 @@ adaptation.
 | M5 | Cross-run stability gate and rejected-cohort negative evidence | complete; calibration remains candidate until shadow |
 | M6 | Ten-step physical control-sequence contract and bounded decoder | complete in source/tests |
 | M7 | Same-run/same-clock future command labels with explicit tail masks | complete in source/tests |
-| M8 | CUDA training artifact, per-SI-field offline metrics, and trajectory non-regression boundary | in progress; train-only Dataset has no independent run split |
-| M9 | ROS shadow deployment with model trajectory/control diagnostics and RViz | pending execution on Graneple |
-| M10 | Authoritative projection, calibrated rollout consistency, same-trajectory fallback, and Safety wiring | complete: WSL tests plus official-container ROS build/launch parsing passed |
-| M11 | Stopped-start, 0.8 m/s limited-ODD full-control AWSIM trial and promotion report | pending M8/M9/M10 gates |
+| M8 | CUDA training artifact, per-SI-field offline metrics, and trajectory non-regression boundary | complete with boundary: artifact and metrics retained; the one-run Dataset has no independent run split |
+| M9 | ROS shadow deployment with model trajectory/control diagnostics and RViz | complete: actual Graneple ROS graph published trajectory/control diagnostics at about 9 Hz with RViz and zero final-command publishers |
+| M10 | Authoritative projection, calibrated rollout consistency, same-trajectory fallback, and Safety wiring | complete: WSL tests, official-container ROS build, and live Safety-owned command wiring passed |
+| M11 | Stopped-start, 0.8 m/s limited-ODD full-control AWSIM trial and promotion report | attempted, incomplete: bounded trial did not establish launch or route progress; artifact remains `shadow` |
 
 ## M11 execution order
 
@@ -46,9 +46,27 @@ adaptation.
     an unexecuted or failed trial leaves M11 incomplete and the artifact no
     higher than `shadow`.
 
+## Execution result
+
+M8-M10 are complete under the evidence boundaries above. The M11 launch was
+actually run against AWSIM on `graneple@192.168.3.10` with RViz and Safety as
+the sole final-command publisher. The final 30 s observation recorded a
+maximum speed of `0.012603 m/s`, mean speed of `0.002424 m/s`, and displacement
+of `0.039785 m`. Safety was `normal` for all 600 sampled states, but the
+longitudinal command did not continuously overcome the vehicle's launch
+deadzone. The trial was stopped by the operator; final command publisher count
+returned to zero and measured speed returned to `0.001570 m/s`.
+
+This is not a route-progress or course-completion pass. No result, collision,
+or contact topic/file was available in the observed ROS graph, so collision
+avoidance is `NOT_EVALUATED`, not successful. See
+`docs/v3_m11_limited_odd_report.md` for commands, hashes, and the remaining
+training-data gate. V3-024 was not started.
+
 ## Explicit evidence boundary
 
-The current source-level implementation and unit tests do not by themselves
-prove ROS 2 graph correctness, AWSIM motion, collision avoidance, or course
-completion. Those results are added here only after their commands have
-actually run and their logs have been retained.
+The ROS shadow and limited full-control graphs were actually started against
+AWSIM. They prove topic wiring, inference publication, Safety ownership, and
+the failed stopped-start attempt described above. They do not prove meaningful
+AWSIM motion, collision avoidance, route completion, or generalization beyond
+the single training run.
