@@ -58,5 +58,8 @@
     ego_timeout_sec: 0.2
     future_tolerance_sec: 0.001
     max_speed_mps: 0.8
-    max_command_validity_sec: 0.15
-    nominal_timeout_sec: 0.3
+    # Measured Graneple p99-like source age plus inference interval is below
+    # 0.40 s. Keep a 0.45 s fail-closed lease for this 0.8 m/s trial only;
+    # camera/LiDAR/ego timeouts below remain independently stricter.
+    max_command_validity_sec: 0.45
+    nominal_timeout_sec: 0.45

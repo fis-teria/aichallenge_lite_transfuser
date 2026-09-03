@@ -26,6 +26,11 @@ def test_full_control_launch_keeps_safety_as_only_final_publisher() -> None:
     assert params["max_speed_mps"] == 0.8
     assert params["trial_speed_cap_mps"] == 0.8
     assert params["consistency_min_heading_speed_mps"] == 0.2
+    assert params["max_command_validity_sec"] == 0.45
+    assert params["nominal_timeout_sec"] == 0.45
+    assert params["camera_timeout_sec"] < params["nominal_timeout_sec"]
+    assert params["lidar_timeout_sec"] < params["nominal_timeout_sec"]
+    assert params["ego_timeout_sec"] < params["nominal_timeout_sec"]
     assert params["safety_supervisor_ready"] is True
 
 
