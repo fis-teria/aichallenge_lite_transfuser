@@ -113,7 +113,8 @@ def test_v3_publishes_matching_trajectory_and_speed_without_control_authority() 
     assert "trajectory_speed_publication(" in source
     assert "output.trajectory_speed_mps" in source
     assert "self.speed_profile_pub.publish" in source
-    assert '"nominal_control_cmd"' not in source
+    assert "self.full_control_pub = None" in source
+    assert "if self.runtime_profile is RuntimeProfile.FULL_CONTROL:" in source
 
 
 def test_v3_publishes_stamped_base_link_path_for_map_fixed_rviz_without_authority() -> None:
@@ -146,7 +147,8 @@ def test_v3_publishes_stamped_base_link_path_for_map_fixed_rviz_without_authorit
     assert "Value: /map/vector_map_marker" in rviz
     assert "Value: /predicted_trajectory_path" in rviz
     assert "Reliability Policy: Best Effort" in rviz
-    assert '"nominal_control_cmd"' not in source
+    assert "self.full_control_pub = None" in source
+    assert "if self.runtime_profile is RuntimeProfile.FULL_CONTROL:" in source
 
 
 def test_v3_external_controller_profile_is_explicitly_shadow_only() -> None:
@@ -162,7 +164,8 @@ def test_v3_external_controller_profile_is_explicitly_shadow_only() -> None:
     assert '"shadow_external_control"' in source
     assert "shadow_control_from_trajectory_speed_profile(" in source
     assert "if result.nominal_control_eligible" in source
-    assert '"nominal_control_cmd"' not in source
+    assert "self.full_control_pub = None" in source
+    assert "if self.runtime_profile is RuntimeProfile.FULL_CONTROL:" in source
     assert "runtime.v3.external_controller_shadow.param.yaml" in launch
     assert "runtime_profile: external_controller" in params
     assert "controller_calibration_status: unverified" in params
