@@ -47,6 +47,7 @@ from aic_transfuser_lite.runtime.control_projection import (
     PreviousControlState,
     ProjectionTiming,
     apply_stopped_launch_acceleration_floor,
+    normalize_measured_speed_for_projection,
     project_model_control_sequence,
 )
 from aic_transfuser_lite.runtime.full_control_gate import (
@@ -701,7 +702,9 @@ class InferenceNodeV3(Node):
         )
         previous = PreviousControlState(
             steering_rad=float(steering.steering_tire_angle),
-            speed_mps=float(velocity.longitudinal_velocity),
+            speed_mps=normalize_measured_speed_for_projection(
+                float(velocity.longitudinal_velocity)
+            ),
             acceleration_mps2=previous_acceleration_mps2,
         )
         proposals = sequence_values[0, 0]

@@ -8,6 +8,7 @@ from aic_transfuser_lite.runtime.control_projection import (
     PreviousControlState,
     ProjectionTiming,
     apply_stopped_launch_acceleration_floor,
+    normalize_measured_speed_for_projection,
     project_model_control_sequence,
     project_control_sequence,
     validate_model_control_sequence,
@@ -75,6 +76,30 @@ def test_zero_raw_sequence_preserves_stationary_control_state() -> None:
     np.testing.assert_allclose(result.commands, [[0.1, 2.0, 0.0]] * 3)
     np.testing.assert_allclose(result.steering_rate_radps, 0.0)
     np.testing.assert_allclose(result.jerk_mps3, 0.0)
+
+
+def test_stationary_negative_speed_noise_is_clamped_without_hiding_reverse_motion() -> None:
+    assert normalize_measured_speed_for_projection(-7.4e-8) == 0.0
+    assert normalize_measured_speed_for_projection(0.2) == pytest.approx(0.2)
+    with pytest.raises(ValueError, match="reverse speed"):
+        normalize_measured_speed_for_projection(-0.01)
+
+
+@pytest.mark.parametrize(
+    ("speed", "tolerance", "message"),
+    [
+        (float("nan"), 1e-4, "finite"),
+        (0.0, float("inf"), "finite"),
+        (0.0, -1e-4, "non-negative"),
+    ],
+)
+def test_stationary_speed_normalization_rejects_invalid_values(
+    speed: float, tolerance: float, message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        normalize_measured_speed_for_projection(
+            speed, stationary_noise_tolerance_mps=tolerance
+        )
 
 
 @pytest.mark.parametrize(

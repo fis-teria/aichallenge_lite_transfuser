@@ -112,6 +112,22 @@ class ProjectedControlSequence:
     initial_state: PreviousControlState
 
 
+def normalize_measured_speed_for_projection(
+    speed_mps: float, *, stationary_noise_tolerance_mps: float = 1e-4
+) -> float:
+    """Clamp only numerical negative noise at standstill to zero in m/s."""
+
+    if not math.isfinite(speed_mps) or not math.isfinite(
+        stationary_noise_tolerance_mps
+    ):
+        raise ValueError("measured speed and stationary tolerance must be finite")
+    if stationary_noise_tolerance_mps < 0.0:
+        raise ValueError("stationary speed tolerance must be non-negative")
+    if speed_mps < -stationary_noise_tolerance_mps:
+        raise ValueError("measured reverse speed exceeds stationary noise tolerance")
+    return max(0.0, speed_mps)
+
+
 def apply_stopped_launch_acceleration_floor(
     commands: np.ndarray,
     *,
