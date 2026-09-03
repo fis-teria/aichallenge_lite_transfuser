@@ -68,8 +68,10 @@ ros2 launch aic_e2e_runtime transfuser_lite_v3_full_control_trial.launch.py \
 
 The V3 RViz profile uses `map` as its Fixed Frame and opens the `AWSIM Map
 Fixed` top-down view near the course start. It displays the transient-local
-`/map/vector_map_marker`, TF tree, `/robot_description` vehicle model,
-`/localization/pose`, best-effort LiDAR, and the predicted trajectory path.
+`/map/vector_map_marker`, TF tree, `base_link` axes, `/localization/pose`,
+best-effort LiDAR, and the predicted trajectory path. The axes are used instead
+of `RobotModel` because the V3 runtime image does not install the external
+`racing_kart_description` mesh.
 The predicted path remains correctly stamped in `base_link`; RViz transforms
 it into `map` using the live `map -> base_link` transform.
 

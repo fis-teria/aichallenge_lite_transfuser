@@ -81,7 +81,7 @@ That run used an ego-fixed RViz view (`Fixed Frame` and view target both
 underlying `/localization/kinematic_state` was nevertheless `map -> base_link`
 at about 50 Hz, and the M11 motion measurements below came from global pose and
 vehicle velocity rather than screen motion. The RViz profile was subsequently
-changed to a map-fixed view with TF, vehicle model, localization pose, and
+changed to a map-fixed view with TF, `base_link` axes, localization pose, and
 vector-map displays; this display correction does not change the failed-launch
 decision below.
 

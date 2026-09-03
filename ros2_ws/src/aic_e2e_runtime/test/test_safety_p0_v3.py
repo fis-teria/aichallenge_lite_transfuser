@@ -139,8 +139,9 @@ def test_v3_publishes_stamped_base_link_path_for_map_fixed_rviz_without_authorit
     assert "Name: Ego Chase" in rviz
     assert "Target Frame: base_link" in rviz
     assert "Class: rviz_default_plugins/TF" in rviz
-    assert "Class: rviz_default_plugins/RobotModel" in rviz
-    assert "Value: /robot_description" in rviz
+    assert "Class: rviz_default_plugins/Axes" in rviz
+    assert "Name: base_link Axes" in rviz
+    assert "Reference Frame: base_link" in rviz
     assert "Class: rviz_default_plugins/Pose" in rviz
     assert "Value: /localization/pose" in rviz
     assert "Class: rviz_default_plugins/MarkerArray" in rviz
