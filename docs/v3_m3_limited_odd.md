@@ -103,3 +103,32 @@ The installed AWSIM graph exposed no publisher for
 is **unverified**, even though no collision message was recorded. A new immutable
 commit and independent trials are required after origin normalization. M4 is
 still blocked.
+
+## Bounded origin normalization result
+
+Commit `da0ccfd` passed the full WSL suite (`534 passed, 34 warnings`) and the
+official Graneple ROS package build. The 1.0 m lookahead trial
+`m3_origin_trim_trial1_da0ccfd` proved that the normalization removed the former
+Plan rejection (`stop_required_count=0`) but did not pass M3:
+
+- duration 112.20 s; launch 2.05 s; maximum speed 0.7322 m/s;
+- displacement 24.89 m; right-turn samples 104; left-turn samples 0;
+- Executable Reference tracking p95 0.0679 m over matched predictions;
+- `front_obstacle_inside_stopping_distance` 623 samples and final speed
+  0.0034 m/s;
+- collision topic publisher absent, so collision state unverified.
+
+A single-variable 1.25 m lookahead A/B artifact, SHA-256
+`1aed4e2052be7d617c3779b7d74d31ef35b057424383e1d5d2525963354f3268`,
+was also run with the same source, model, Safety settings, and 0.75 m/s cap.
+`m3_lookahead1p25_trial2_da0ccfd` stopped after 13.37 m and reported 801
+front-obstacle samples. It was worse than 1.0 m and was rejected; the runtime
+was restored to the checked-in 1.0 m setting.
+
+The official debug raceline is not an inference input. A read-only comparison
+showed the closed-loop localization path departing by up to 3.78 m from that
+line before the obstacle stop. Because the controller's short-horizon measured
+tracking error remained small, this is treated as a Trajectory/Speed model
+closed-loop generalization failure rather than a Safety or coordinate-sign
+failure. M3 remains failed, so M4 speed escalation and lap testing have not
+started.
