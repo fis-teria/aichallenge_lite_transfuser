@@ -327,3 +327,12 @@ behavior capabilityを持つV3 artifactでは、制御authorityを変えずに
 confidenceは制御判断には使わず、必要に応じて検証データでtemperatureを校正する。
 通常走行・追従・復旧ではsideを必ず`NONE`にし、回避・復帰で左右confidenceが
 閾値未満または`NONE`の場合はsideだけを`UNKNOWN`にする。
+
+## 復帰データのReferenceと自動収録
+
+Dataset V3へ同じ周回を追加するだけでなく、停止・発進、Referenceからの左右横ずれ、
+headingずれ、復帰成功をrun/episode単位で判定する基準を追加した。コースReference取得、
+profile駆動の収録preflight/実行、raw bagの軽量coverage audit、不足ケースJSON生成までの
+手順と安全境界は
+[`docs/v3_recovery_data_reference.md`](docs/v3_recovery_data_reference.md)を参照する。
+Referenceとglobal poseはteacher/debug-onlyであり、推論入力には含めない。

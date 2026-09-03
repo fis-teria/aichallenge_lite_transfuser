@@ -1,0 +1,32 @@
+format_version: aic_collection_coverage_criteria_v1
+sample_rate_hz: 10.0
+
+# Initial engineering gates. These are versioned collection targets, not a
+# claim that this sample count is sufficient for model quality.
+thresholds:
+  stopped_speed_mps: 0.05
+  moving_speed_mps: 0.20
+  curve_curvature_inv_m: 0.02
+  lateral_offset_min_m: 0.25
+  lateral_offset_far_m: 0.50
+  heading_error_min_rad: 0.0872664626  # 5 deg
+  launch_horizon_sec: 1.5
+  recovery_horizon_sec: 3.0
+  recovery_improvement_m: 0.15
+  episode_gap_sec: 0.5
+
+requirements:
+  stopped: {min_samples: 1000, min_runs: 3, min_episodes: 10}
+  launch: {min_samples: 600, min_runs: 3, min_episodes: 20}
+  stop_approach: {min_samples: 600, min_runs: 3, min_episodes: 20}
+  straight: {min_samples: 3000, min_runs: 5, min_episodes: 10}
+  left_curve: {min_samples: 3000, min_runs: 5, min_episodes: 10}
+  right_curve: {min_samples: 3000, min_runs: 5, min_episodes: 10}
+  offset_left_near: {min_samples: 1000, min_runs: 5, min_episodes: 20}
+  offset_right_near: {min_samples: 1000, min_runs: 5, min_episodes: 20}
+  offset_left_far: {min_samples: 500, min_runs: 5, min_episodes: 20}
+  offset_right_far: {min_samples: 500, min_runs: 5, min_episodes: 20}
+  heading_left: {min_samples: 500, min_runs: 5, min_episodes: 20}
+  heading_right: {min_samples: 500, min_runs: 5, min_episodes: 20}
+  recovery_left: {min_samples: 500, min_runs: 5, min_episodes: 20}
+  recovery_right: {min_samples: 500, min_runs: 5, min_episodes: 20}

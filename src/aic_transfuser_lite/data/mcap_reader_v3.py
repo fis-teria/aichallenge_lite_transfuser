@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -32,6 +33,14 @@ _STREAM_ROLES = (
     "nominal_command",
     "final_command",
 )
+
+
+@dataclass(frozen=True)
+class TeacherStateStreamsV3:
+    """Pose and velocity streams used only for offline collection auditing."""
+
+    poses: tuple[TimedPose, ...]
+    velocities: tuple[TimedVelocity, ...]
 
 
 def select_reader_topics_v3(
@@ -173,4 +182,68 @@ def read_run_messages_v3(bag_dir: Path, *, profile: TopicProfileV3) -> RunStream
         gears=_deduplicate_sorted(buckets["gear"]),
         topic_types=topic_types,
         timestamp_fallback_counts=fallback_counts,
+    )
+
+
+def read_teacher_state_streams_v3(
+    bag_dir: Path, *, profile: TopicProfileV3
+) -> TeacherStateStreamsV3:
+    """Read only global pose and ego velocity without decoding Camera/LiDAR.
+
+    This path is intentionally teacher/debug-only and is suitable for coverage
+    audits of large raw bags. Timestamps are nanoseconds, position is metres in
+    the pose frame, yaw is radians, velocity is m/s, and yaw rate is rad/s.
+    """
+
+    from rosbags.highlevel import AnyReader
+
+    metadata = bag_dir / "metadata.yaml"
+    if not metadata.is_file():
+        raise FileNotFoundError(f"rosbag2 metadata not found: {metadata}")
+    role_specs = {role: profile.roles[role] for role in ("pose", "velocity")}
+    buckets: dict[str, list[Any]] = {role: [] for role in role_specs}
+    with AnyReader([bag_dir]) as reader:
+        available = {connection.topic: connection.msgtype for connection in reader.connections}
+        missing = [spec.name for spec in role_specs.values() if spec.name not in available]
+        if missing:
+            raise ValueError(f"missing teacher-state topics: {sorted(missing)}")
+        for spec in role_specs.values():
+            observed_type = available[spec.name]
+            if observed_type != spec.message_type:
+                raise ValueError(
+                    f"topic type mismatch for {spec.name}: observed={observed_type!r}, "
+                    f"expected={spec.message_type!r}"
+                )
+        topic_roles = {spec.name: role for role, spec in role_specs.items()}
+        connections = [
+            connection for connection in reader.connections if connection.topic in topic_roles
+        ]
+        for connection, bag_timestamp_ns, rawdata in reader.messages(connections=connections):
+            role = topic_roles[connection.topic]
+            message = reader.deserialize(rawdata, connection.msgtype)
+            timestamp_ns, timestamp_source = _stamp_ns(message, int(bag_timestamp_ns))
+            if role == "pose":
+                item = TimedPose(
+                    timestamp_ns=timestamp_ns,
+                    x_world_m=float(message.pose.pose.position.x),
+                    y_world_m=float(message.pose.pose.position.y),
+                    yaw_world_rad=_yaw_from_quaternion(message.pose.pose.orientation),
+                    frame_id=str(message.header.frame_id),
+                    child_frame_id=str(message.child_frame_id),
+                    bag_timestamp_ns=int(bag_timestamp_ns),
+                    timestamp_source=timestamp_source,
+                )
+            else:
+                item = TimedVelocity(
+                    timestamp_ns=timestamp_ns,
+                    longitudinal_mps=float(message.longitudinal_velocity),
+                    lateral_mps=float(message.lateral_velocity),
+                    yaw_rate_rps=float(message.heading_rate),
+                    bag_timestamp_ns=int(bag_timestamp_ns),
+                    timestamp_source=timestamp_source,
+                )
+            buckets[role].append(item)
+    return TeacherStateStreamsV3(
+        poses=_deduplicate_sorted(buckets["pose"]),
+        velocities=_deduplicate_sorted(buckets["velocity"]),
     )
