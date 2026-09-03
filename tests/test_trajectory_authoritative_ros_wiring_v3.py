@@ -1,0 +1,39 @@
+from pathlib import Path
+
+import yaml
+
+from aic_transfuser_lite.runtime.output_profiles import output_profile
+
+
+def test_trajectory_authoritative_profile_demotes_model_sequence_to_shadow() -> None:
+    profile = output_profile("trajectory_authoritative")
+    assert profile.nominal_control_authority
+    assert {"trajectory", "speed_profile"}.issubset(profile.requested_outputs)
+    assert "nominal_control_cmd" in profile.publisher_topics
+    assert "shadow_model_control_sequence" in profile.publisher_topics
+    assert "control_sequence" in profile.requested_outputs
+
+
+def test_trajectory_authoritative_launch_keeps_safety_as_sole_final_publisher() -> None:
+    root = Path(__file__).parents[1]
+    package = root / "ros2_ws/src/aic_e2e_runtime"
+    source = (package / "aic_e2e_runtime/inference_node_v3.py").read_text()
+    launch = (
+        package / "launch/transfuser_lite_v3_trajectory_authoritative.launch.py"
+    ).read_text()
+    params = yaml.safe_load(
+        (package / "config/runtime.v3.trajectory_authoritative.param.yaml").read_text()
+    )["/**"]["ros__parameters"]
+
+    assert params["runtime_profile"] == "trajectory_authoritative"
+    assert params["executable_reference_odd_speed_cap_mps"] == 0.75
+    assert params["max_speed_mps"] == 0.75
+    assert params["executable_reference_require_stop_probability"] is False
+    assert 'executable="inference_node_v3"' in launch
+    assert 'executable="safety_supervisor_node"' in launch
+    assert '("control_cmd", "/control/command/control_cmd")' in launch
+    assert 'executable="rviz2"' in launch
+    assert "build_executable_reference_v3(" in source
+    assert "control_from_executable_reference_v3(" in source
+    assert "fail_closed_stop_control_v3(" in source
+    assert "full_control authority is disabled" in source

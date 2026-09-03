@@ -131,6 +131,32 @@ This verifies the trajectory-plus-speed output interface only. The model did
 not own control authority, its predictions were not sent to the vehicle, and
 neither controller quality nor lap completion was tested.
 
+## v3 trajectory-authoritative runtime (M1)
+
+The `trajectory_authoritative` profile is the A-prime nominal path. It validates
+and retimes the predicted Trajectory/Speed Plan, applies the 0.75 m/s limited-ODD
+and curvature caps, then feeds that same executable reference to the external
+delay-aware controller. The inference node owns only `/nominal_control_cmd`; the
+separate Safety Supervisor remains the sole publisher of
+`/control/command/control_cmd`.
+
+Future Control Sequence is published on `/shadow_model_control_sequence` only.
+The legacy `full_control` runtime mode is rejected at node construction so a
+rollout-consistency threshold cannot restore direct model-control authority.
+Invalid or stopping executable-reference decisions issue a zero-speed braking
+proposal to Safety and never fall back to either direct-control Head.
+
+```bash
+ros2 launch aic_e2e_runtime \
+  transfuser_lite_v3_trajectory_authoritative.launch.py \
+  model_path:=/absolute/path/to/checkpoint.pt \
+  artifact_manifest_path:=/absolute/path/to/runtime_artifact.json \
+  launch_rviz:=true
+```
+
+See `docs/v3_m1_trajectory_authoritative_runtime.md`. Source/unit verification
+does not establish ROS build, gear/enable/routing, AWSIM launch, or lap completion.
+
 ## v3 external-controller shadow
 
 The separate `external_controller` runtime profile passes candidate-zero

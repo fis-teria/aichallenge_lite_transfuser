@@ -39,6 +39,12 @@ from aic_transfuser_lite.control.delay_aware_controller import (
 from aic_transfuser_lite.control.executable_reference import (
     AuthoritativePlanV3,
     ExecutableReferenceConfigV3,
+    ExecutableReferenceDecisionV3,
+    build_executable_reference_v3,
+)
+from aic_transfuser_lite.control.trajectory_authoritative_controller import (
+    control_from_executable_reference_v3,
+    fail_closed_stop_control_v3,
 )
 from aic_transfuser_lite.control.shadow_trajectory_controller import (
     shadow_control_from_trajectory_speed_profile,
@@ -158,20 +164,24 @@ class InferenceNodeV3(Node):
         self.runtime_profile = RuntimeProfile(
             str(self.get_parameter("runtime_profile").value)
         )
+        if self.runtime_profile is RuntimeProfile.FULL_CONTROL:
+            raise ValueError(
+                "full_control authority is disabled; use trajectory_authoritative"
+            )
         if self.runtime_profile not in {
             RuntimeProfile.TRAJECTORY_ONLY,
+            RuntimeProfile.TRAJECTORY_AUTHORITATIVE,
             RuntimeProfile.EXTERNAL_CONTROLLER,
             RuntimeProfile.SHADOW_CONTROL,
-            RuntimeProfile.FULL_CONTROL,
         }:
             raise ValueError(
                 "inference_node_v3 supports only trajectory_only, external_controller, "
-                "shadow_control, or full_control"
+                "shadow_control, or trajectory_authoritative"
             )
         selected_profile = output_profile(self.runtime_profile)
         if (
             selected_profile.nominal_control_authority
-            and self.runtime_profile is not RuntimeProfile.FULL_CONTROL
+            and self.runtime_profile is not RuntimeProfile.TRAJECTORY_AUTHORITATIVE
         ):
             raise RuntimeError("V3 trajectory adapter unexpectedly has control authority")
         self.trajectory_frame_id = str(
@@ -258,6 +268,7 @@ class InferenceNodeV3(Node):
         self.controller_config: DelayAwareControllerConfig | None = None
         if self.runtime_profile in {
             RuntimeProfile.EXTERNAL_CONTROLLER,
+            RuntimeProfile.TRAJECTORY_AUTHORITATIVE,
             RuntimeProfile.FULL_CONTROL,
         }:
             calibration_status = str(
@@ -393,7 +404,11 @@ class InferenceNodeV3(Node):
             )
         self.shadow_model_sequence_pub = None
         if (
-            self.runtime_profile is RuntimeProfile.SHADOW_CONTROL
+            self.runtime_profile
+            in {
+                RuntimeProfile.SHADOW_CONTROL,
+                RuntimeProfile.TRAJECTORY_AUTHORITATIVE,
+            }
             and "control_sequence" in self.model_capabilities
         ):
             self.shadow_model_sequence_pub = self.create_publisher(
@@ -402,6 +417,11 @@ class InferenceNodeV3(Node):
         self.full_control_pub = None
         if self.runtime_profile is RuntimeProfile.FULL_CONTROL:
             self.full_control_pub = self.create_publisher(
+                AckermannControlCommand, "nominal_control_cmd", 1
+            )
+        self.trajectory_authoritative_pub = None
+        if self.runtime_profile is RuntimeProfile.TRAJECTORY_AUTHORITATIVE:
+            self.trajectory_authoritative_pub = self.create_publisher(
                 AckermannControlCommand, "nominal_control_cmd", 1
             )
         self.status_pub = self.create_publisher(String, "runtime_status", 1)
@@ -606,6 +626,7 @@ class InferenceNodeV3(Node):
                 path_message.poses.append(pose)
             self.trajectory_path_pub.publish(path_message)
             diagnostic: dict[str, Any] | None = None
+            reference_decision: ExecutableReferenceDecisionV3 | None = None
             try:
                 plan = AuthoritativePlanV3(
                     trajectory_xy_m=np.asarray(
@@ -618,6 +639,13 @@ class InferenceNodeV3(Node):
                     observation_stamp_sec=camera_stamp,
                     frame_id=self.trajectory_frame_id,
                     stop_probability=None,
+                )
+                reference_decision = build_executable_reference_v3(
+                    plan,
+                    current_speed_mps=normalize_measured_speed_for_projection(
+                        float(velocity.longitudinal_velocity)
+                    ),
+                    config=self.executable_reference_config,
                 )
                 diagnostic = plan_diagnostics_payload_v3(
                     plan,
@@ -661,6 +689,20 @@ class InferenceNodeV3(Node):
                         }
                     self.status_pub.publish(
                         String(data=f"shadow_control_rejected:{error}")
+                    )
+            if self.trajectory_authoritative_pub is not None:
+                try:
+                    controller_diagnostic = self._publish_trajectory_authoritative(
+                        reference_decision,
+                        image=image,
+                        velocity=velocity,
+                        steering=steering,
+                    )
+                    if diagnostic is not None:
+                        diagnostic["external_controller"] = controller_diagnostic
+                except Exception as error:
+                    self.status_pub.publish(
+                        String(data=f"trajectory_authority_rejected:{error}")
                     )
             if diagnostic is not None:
                 self.plan_diagnostics_pub.publish(
@@ -731,6 +773,81 @@ class InferenceNodeV3(Node):
         message.lateral.steering_tire_angle = result.control.command.steering_rad
         self.shadow_control_pub.publish(message)
         return result
+
+    def _publish_trajectory_authoritative(
+        self,
+        decision: ExecutableReferenceDecisionV3 | None,
+        *,
+        image: Image,
+        velocity: VelocityReport,
+        steering: SteeringReport,
+    ) -> dict[str, Any]:
+        if self.trajectory_authoritative_pub is None or self.controller_config is None:
+            raise RuntimeError("trajectory-authoritative controller is not initialized")
+        if decision is None:
+            raise RuntimeError("executable reference decision is unavailable")
+        if decision.stop_required:
+            stop = fail_closed_stop_control_v3(
+                actual_steering_rad=float(steering.steering_tire_angle),
+                max_abs_steering_rad=float(self.get_parameter("max_steer_rad").value),
+                braking_acceleration_mps2=float(
+                    self.get_parameter("min_accel_mps2").value
+                ),
+            )
+            command = ExternalControllerCommand(
+                stop.command.steering_rad,
+                stop.commanded_speed_mps,
+                stop.command.acceleration_mps2,
+            )
+            diagnostic: dict[str, Any] = {
+                "authority": stop.authority,
+                "stop_reasons": list(decision.reasons),
+                "commanded_speed_mps": command.speed_mps,
+                "steering_rad": command.steering_rad,
+                "acceleration_mps2": command.acceleration_mps2,
+            }
+        else:
+            if decision.reference is None:
+                raise RuntimeError("drive decision has no executable reference")
+            result = control_from_executable_reference_v3(
+                decision.reference,
+                current_longitudinal_speed_mps=(
+                    normalize_measured_speed_for_projection(
+                        float(velocity.longitudinal_velocity)
+                    )
+                ),
+                yaw_rate_rps=float(velocity.heading_rate),
+                actual_steering_rad=float(steering.steering_tire_angle),
+                config=self.controller_config,
+            )
+            control = result.control
+            command = ExternalControllerCommand(
+                control.command.steering_rad,
+                control.commanded_speed_mps,
+                control.command.acceleration_mps2,
+            )
+            diagnostic = {
+                "authority": result.authority,
+                "reference_id": result.reference_id,
+                "preview_time_sec": control.preview_time_sec,
+                "preview_target_xy_m": control.preview_target_xy_m.tolist(),
+                "commanded_speed_mps": command.speed_mps,
+                "steering_rad": command.steering_rad,
+                "acceleration_mps2": command.acceleration_mps2,
+                "curvature_per_m": control.curvature_per_m,
+            }
+        message = AckermannControlCommand()
+        message.stamp = image.header.stamp
+        message.longitudinal.speed = command.speed_mps
+        message.longitudinal.acceleration = command.acceleration_mps2
+        message.lateral.steering_tire_angle = command.steering_rad
+        self.trajectory_authoritative_pub.publish(message)
+        self.nominal_command_history.append(command)
+        self.previous_nominal_command = command
+        self.status_pub.publish(
+            String(data=f"nominal_control_published:{diagnostic['authority']}")
+        )
+        return diagnostic
         self.status_pub.publish(String(data="shadow_control_published:unverified"))
 
     def _external_control_from_trajectory(
@@ -951,7 +1068,11 @@ class InferenceNodeV3(Node):
         if self.runtime_profile in {RuntimeProfile.SHADOW_CONTROL, RuntimeProfile.FULL_CONTROL}:
             requested.add("current_control")
         if (
-            self.runtime_profile is RuntimeProfile.SHADOW_CONTROL
+            self.runtime_profile
+            in {
+                RuntimeProfile.SHADOW_CONTROL,
+                RuntimeProfile.TRAJECTORY_AUTHORITATIVE,
+            }
             and "control_sequence" in self.model_capabilities
         ):
             requested.add("control_sequence")

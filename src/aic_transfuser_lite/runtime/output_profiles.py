@@ -10,6 +10,7 @@ import numpy as np
 
 class RuntimeProfile(str, Enum):
     TRAJECTORY_ONLY = "trajectory_only"
+    TRAJECTORY_AUTHORITATIVE = "trajectory_authoritative"
     EXTERNAL_CONTROLLER = "external_controller"
     SHADOW_CONTROL = "shadow_control"
     BOUNDED_RESIDUAL = "bounded_residual"
@@ -58,6 +59,11 @@ _PROFILES: Mapping[RuntimeProfile, OutputProfile] = {
         _BASE_TOPICS | {"shadow_external_control"},
         False,
     ),
+    RuntimeProfile.TRAJECTORY_AUTHORITATIVE: OutputProfile(
+        frozenset({"trajectory", "speed_profile", "control_sequence"}),
+        _BASE_TOPICS | {"nominal_control_cmd", "shadow_model_control_sequence"},
+        True,
+    ),
     RuntimeProfile.SHADOW_CONTROL: OutputProfile(
         frozenset({"trajectory", "speed_profile", "current_control"}),
         _BASE_TOPICS | {"shadow_model_control", "shadow_model_control_sequence"},
@@ -69,15 +75,9 @@ _PROFILES: Mapping[RuntimeProfile, OutputProfile] = {
         True,
     ),
     RuntimeProfile.FULL_CONTROL: OutputProfile(
-        frozenset({
-            "trajectory", "speed_profile", "current_control", "control_sequence",
-            "behavior", "behavior_side",
-        }),
-        _BASE_TOPICS | {
-            "nominal_control_cmd", "behavior_mode", "behavior_label",
-            "behavior_confidence", "behavior_side",
-        },
-        True,
+        frozenset({"trajectory", "speed_profile", "control_sequence"}),
+        _BASE_TOPICS | {"shadow_model_control_sequence"},
+        False,
     ),
     RuntimeProfile.BEHAVIOR_DIAGNOSTIC: OutputProfile(
         frozenset({"trajectory", "speed_profile", "behavior", "behavior_side"}),
