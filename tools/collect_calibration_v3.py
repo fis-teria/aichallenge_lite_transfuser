@@ -363,17 +363,20 @@ def _git_state(repository_root: Path) -> tuple[str, bool]:
 def _source_state(
     repository_root: Path, *, explicit_revision: str | None
 ) -> tuple[str, bool]:
-    if explicit_revision is not None:
+    try:
+        revision, dirty = _git_state(repository_root)
+    except (FileNotFoundError, subprocess.CalledProcessError) as error:
+        if explicit_revision is None:
+            raise RuntimeError(
+                "source Git revision is unavailable; pass --source-git-revision for "
+                "an immutable archive"
+            ) from error
         if not re.fullmatch(r"[0-9a-f]{40}", explicit_revision):
             raise ValueError("source-git-revision must be lowercase 40-hex")
         return explicit_revision, False
-    try:
-        return _git_state(repository_root)
-    except (FileNotFoundError, subprocess.CalledProcessError) as error:
-        raise RuntimeError(
-            "source Git revision is unavailable; pass --source-git-revision for "
-            "an immutable archive"
-        ) from error
+    if explicit_revision is not None and explicit_revision != revision:
+        raise ValueError("source-git-revision does not match checkout HEAD")
+    return revision, dirty
 
 
 def _utc_now() -> str:

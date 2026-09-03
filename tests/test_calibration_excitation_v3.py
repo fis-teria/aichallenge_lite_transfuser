@@ -118,6 +118,10 @@ def test_collector_dry_run_builds_exact_recording_without_writes(
     tmp_path, capsys
 ) -> None:
     collector = _collector_module()
+    try:
+        source_revision, _ = collector._git_state(ROOT)
+    except Exception:
+        source_revision = "a" * 40
     output = tmp_path / "capture"
     result = collector.main(
         [
@@ -132,14 +136,14 @@ def test_collector_dry_run_builds_exact_recording_without_writes(
             "--scenario-id",
             "awsim_calibration_pad",
             "--source-git-revision",
-            "a" * 40,
+            source_revision,
         ]
     )
     preview = json.loads(capsys.readouterr().out)
     assert result == 0
     assert preview["execute"] is False
     assert preview["target_mode"] == "drive"
-    assert preview["source_git_revision"] == "a" * 40
+    assert preview["source_git_revision"] == source_revision
     assert "/vehicle/status/steering_status" in preview["record_command"]
     assert "/nominal_control_cmd" in preview["record_command"]
     assert "/control/command/control_cmd" in preview["record_command"]
@@ -164,10 +168,21 @@ def test_collector_topic_and_publisher_parsers_reject_bad_graph() -> None:
         collector.parse_publisher_count("Subscription count: 1\n")
 
 
-def test_collector_requires_valid_explicit_archive_revision() -> None:
+def test_collector_requires_valid_explicit_archive_revision(tmp_path) -> None:
     collector = _collector_module()
     assert collector._source_state(
-        ROOT, explicit_revision="a" * 40
+        tmp_path, explicit_revision="a" * 40
     ) == ("a" * 40, False)
     with pytest.raises(ValueError, match="lowercase 40-hex"):
-        collector._source_state(ROOT, explicit_revision="NOT_A_SHA")
+        collector._source_state(tmp_path, explicit_revision="NOT_A_SHA")
+
+
+def test_collector_explicit_revision_cannot_bypass_checkout_head() -> None:
+    collector = _collector_module()
+    try:
+        revision, _ = collector._git_state(ROOT)
+    except Exception:
+        pytest.skip("immutable archive has no checkout HEAD")
+    mismatch = ("0" if revision[0] != "0" else "1") + revision[1:]
+    with pytest.raises(ValueError, match="does not match checkout HEAD"):
+        collector._source_state(ROOT, explicit_revision=mismatch)
