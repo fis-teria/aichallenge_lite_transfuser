@@ -108,6 +108,27 @@ def _discover_nodes(env: Mapping[str, str]) -> tuple[str, ...]:
     return tuple(line.strip() for line in result.stdout.splitlines() if line.strip().startswith("/"))
 
 
+def parse_publisher_count(output: str) -> int:
+    match = re.search(r"^Publisher count:\s*(\d+)\s*$", output, re.MULTILINE)
+    if match is None:
+        raise ValueError("ros2 topic info output lacks Publisher count")
+    return int(match.group(1))
+
+
+def _publisher_count(topic: str, env: Mapping[str, str]) -> int:
+    result = subprocess.run(
+        ["ros2", "topic", "info", "--verbose", topic],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=10.0,
+        env=dict(env),
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"failed to inspect teacher topic publisher: {topic}")
+    return parse_publisher_count(result.stdout)
+
+
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -122,6 +143,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--scenario-id", required=True)
     parser.add_argument("--collection-case-id", required=True)
     parser.add_argument("--reference", type=Path, required=True)
+    parser.add_argument("--teacher-controller-id", required=True)
+    parser.add_argument(
+        "--teacher-command-role",
+        choices=("nominal_command", "final_command"),
+        required=True,
+    )
     parser.add_argument("--duration-sec", type=float, required=True)
     parser.add_argument("--ros-domain-id", type=int, default=101)
     parser.add_argument("--forbidden-node-pattern", default=DEFAULT_FORBIDDEN_NODE_PATTERN)
@@ -134,6 +161,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     run_id = _safe_id(args.run_id, "run-id")
     scenario_id = _safe_id(args.scenario_id, "scenario-id")
     case_id = _safe_id(args.collection_case_id, "collection-case-id")
+    teacher_controller_id = _safe_id(args.teacher_controller_id, "teacher-controller-id")
     if not 0 <= args.ros_domain_id <= 232:
         raise ValueError("ros-domain-id must be in [0, 232]")
     if args.duration_sec <= 0.0:
@@ -149,6 +177,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     }
     discovered = discover_topic_types(required_names=required_names, env=environment)
     topics = select_recording_topics(profile, discovered)
+    teacher_spec = profile.roles[args.teacher_command_role]
+    if teacher_spec.name not in topics:
+        raise ValueError(
+            f"selected teacher command role is unavailable: {args.teacher_command_role}"
+        )
+    teacher_publisher_count = _publisher_count(teacher_spec.name, environment)
+    if teacher_publisher_count != 1:
+        raise RuntimeError(
+            f"teacher command topic must have exactly one publisher: "
+            f"topic={teacher_spec.name}, count={teacher_publisher_count}"
+        )
     nodes = _discover_nodes(environment)
     blocked = sorted(node for node in nodes if re.search(args.forbidden_node_pattern, node))
     if blocked:
@@ -165,6 +204,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         "run_id": run_id,
         "scenario_id": scenario_id,
         "collection_case_id": case_id,
+        "teacher_controller_id": teacher_controller_id,
+        "teacher_command_role": args.teacher_command_role,
+        "teacher_command_topic": teacher_spec.name,
+        "teacher_publisher_count": teacher_publisher_count,
         "duration_sec": args.duration_sec,
         "topics": list(topics),
         "command": command,
@@ -181,6 +224,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         "run_id": run_id,
         "scenario_id": scenario_id,
         "collection_case_id": case_id,
+        "teacher_controller_id": teacher_controller_id,
+        "teacher_command_role": args.teacher_command_role,
+        "teacher_command_topic": teacher_spec.name,
+        "teacher_publisher_count": teacher_publisher_count,
         "ros_domain_id": args.ros_domain_id,
         "started_utc": _utc_now(),
         "finished_utc": None,

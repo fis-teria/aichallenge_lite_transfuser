@@ -74,13 +74,19 @@ train under `/mnt/e`.
      --scenario-id d1_sim_recovery_left_far \
      --collection-case-id offset_left_far \
      --reference /home/thistle/e2e_autonomous/references/aic_course_v1.csv \
+     --teacher-controller-id official_pure_pursuit \
+     --teacher-command-role final_command \
      --duration-sec 120
    ```
 
 3. After checking exclusive control authority and the requested expert/baseline
    controller, repeat with `--execute`. Each bag gets a sidecar manifest with
    `scenario_id`, `collection_case_id`, exact topics, and Reference hash. The
-   path is never overwritten.
+   path is never overwritten. Official MPC/Pure Pursuit publish directly to
+   `final_command`; select `final_command` for those runs. When an expert is
+   explicitly routed through the independent Safety Supervisor, select the
+   pre-Safety `nominal_command`. The selected teacher topic must have exactly
+   one publisher or preflight fails.
 
 4. Audit all raw bags without decoding Camera/LiDAR payloads:
 

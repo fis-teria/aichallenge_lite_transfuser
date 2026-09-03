@@ -47,7 +47,9 @@ roles:
   nominal_command:
     topic: /nominal_control_cmd
     type: autoware_auto_control_msgs/msg/AckermannControlCommand
-    required_for_recording: true
+    # Official MPC/Pure Pursuit publish directly to final_command. When a
+    # separate Safety Supervisor is used this role becomes the expert label.
+    required_for_recording: false
     required_for_conversion: false
     timestamp_policy: stamp_required
     synchronization: {policy: causal_previous, tolerance_ms: 50.0}
