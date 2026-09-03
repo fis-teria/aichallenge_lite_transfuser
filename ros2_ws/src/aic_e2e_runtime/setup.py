@@ -38,6 +38,7 @@ setup(
             "inference_node_v1 = aic_e2e_runtime.inference_node_v1:main",
             "inference_node_v3 = aic_e2e_runtime.inference_node_v3:main",
             "safety_supervisor_node = aic_e2e_runtime.safety_supervisor_node:main",
+            "calibration_excitation_node = aic_e2e_runtime.calibration_excitation_node:main",
         ],
     },
 )

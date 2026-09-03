@@ -30,6 +30,11 @@ reported as individually valid while broader multi-run thresholds are pending.
 
 ## Candidate generation
 
+For new calibration data, use the hash-armed, fail-closed one-run collector in
+[`docs/v3_calibration_capture.md`](v3_calibration_capture.md). Keep steering,
+drive, and brake repetitions as independent run IDs; do not inject excitation
+during normal racing or merge repeated trials into one synthetic run.
+
 Run this in the WSL native environment, not under `/mnt/e`:
 
 ```bash

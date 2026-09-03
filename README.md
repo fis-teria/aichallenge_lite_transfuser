@@ -212,6 +212,27 @@ V3 converterはpose、velocity、LiDAR、controlのtimestamp indexをrunごと�
 index作成時に明示的に拒否する。
 raw bag、Dataset、checkpoint、run artifactはGitへ追加しないこと。
 
+## V3自動校正データ収集
+
+AWSIMのsteering、drive、brake励起を、dry-run優先かつplan SHA-256でarm
+されるcollectorで1 runずつ記録できる。競合するnominal/final command
+publisherが存在すれば拒否し、実行時の指令は独立したSafety Supervisorを
+通す。
+
+```bash
+PYTHONPATH=src python3 tools/collect_calibration_v3.py \
+  --plan configs/calibration/excitation_steering_low_speed_v1.yaml \
+  --topic-profile configs/data/topic_profile_v3.yaml \
+  --output-root /absolute/native/linux/path/calibration_bags/v3 \
+  --run-id steering_r01 \
+  --scenario-id awsim_calibration_pad
+```
+
+上記はdry-runであり、ROS processや出力directoryを作らない。Granepleで
+排他的な制御経路と停止状態を確認した後だけ`--execute`を付ける。必要な
+environment、run反復、変換、fit、未検証境界は
+[`docs/v3_calibration_capture.md`](docs/v3_calibration_capture.md)を参照。
+
 ## V3 full-control学習（V3-018到達点）
 
 V3のfull-controlモデルは、4-frame Camera/LiDAR履歴、10-step ego/command履歴から、

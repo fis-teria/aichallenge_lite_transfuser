@@ -1,0 +1,23 @@
+format_version: aic_calibration_excitation_v1
+plan_id: steering_low_speed_v1
+target_mode: steering
+publish_hz: 20.0
+telemetry_timeout_sec: 0.25
+preflight_hold_sec: 2.0
+stop_speed_threshold_mps: 0.10
+stop_hold_sec: 5.0
+max_observed_speed_mps: 2.0
+segments:
+  - {segment_id: settle, mode: settle, duration_sec: 3.0, steering_rad: 0.0, speed_mps: 0.0, acceleration_mps2: -1.0}
+  - {segment_id: reach_speed, mode: drive, duration_sec: 6.0, steering_rad: 0.0, speed_mps: 1.5, acceleration_mps2: 0.5}
+  - {segment_id: steer_zero_1, mode: steering, duration_sec: 2.0, steering_rad: 0.0, speed_mps: 1.5, acceleration_mps2: 0.0}
+  - {segment_id: steer_left_small_1, mode: steering, duration_sec: 2.0, steering_rad: 0.06, speed_mps: 1.5, acceleration_mps2: 0.0}
+  - {segment_id: steer_right_small_1, mode: steering, duration_sec: 2.0, steering_rad: -0.06, speed_mps: 1.5, acceleration_mps2: 0.0}
+  - {segment_id: steer_left_large_1, mode: steering, duration_sec: 2.0, steering_rad: 0.12, speed_mps: 1.5, acceleration_mps2: 0.0}
+  - {segment_id: steer_right_large_1, mode: steering, duration_sec: 2.0, steering_rad: -0.12, speed_mps: 1.5, acceleration_mps2: 0.0}
+  - {segment_id: steer_zero_2, mode: steering, duration_sec: 2.0, steering_rad: 0.0, speed_mps: 1.5, acceleration_mps2: 0.0}
+  - {segment_id: steer_right_small_2, mode: steering, duration_sec: 2.0, steering_rad: -0.06, speed_mps: 1.5, acceleration_mps2: 0.0}
+  - {segment_id: steer_left_small_2, mode: steering, duration_sec: 2.0, steering_rad: 0.06, speed_mps: 1.5, acceleration_mps2: 0.0}
+  - {segment_id: steer_right_large_2, mode: steering, duration_sec: 2.0, steering_rad: -0.12, speed_mps: 1.5, acceleration_mps2: 0.0}
+  - {segment_id: steer_left_large_2, mode: steering, duration_sec: 2.0, steering_rad: 0.12, speed_mps: 1.5, acceleration_mps2: 0.0}
+  - {segment_id: final_stop, mode: stop, duration_sec: 5.0, steering_rad: 0.0, speed_mps: 0.0, acceleration_mps2: -1.0}

@@ -391,3 +391,29 @@ The shared Safety Supervisor keeps `ego_speed_source:=odometry` as its default
 so the frozen V1 launch and runtime behavior remain compatible. A V3 parameter
 file must explicitly select `ego_speed_source:=velocity_report`; unsupported
 source names are rejected during node construction.
+
+## V3 automated calibration capture
+
+`calibration_capture_v3.launch.py` starts only the hash-armed excitation node
+and an independent Safety Supervisor. The intended entry point is the
+dry-run-first collector, which also records the exact V3 calibration topics and
+writes machine-readable result/provenance manifests:
+
+```bash
+PYTHONPATH=src python3 tools/collect_calibration_v3.py \
+  --plan configs/calibration/excitation_steering_low_speed_v1.yaml \
+  --topic-profile configs/data/topic_profile_v3.yaml \
+  --output-root /absolute/native/linux/path/calibration_bags/v3 \
+  --run-id steering_r01 \
+  --scenario-id awsim_calibration_pad
+```
+
+The collector creates no ROS process unless `--execute` is supplied. Execution
+requires zero pre-existing publishers on both command topics. The launch then
+requires the excitation node to be the sole nominal publisher and Safety to be
+the sole final publisher; stale telemetry, unsafe speed, a non-normal Safety
+reason, publisher drift, or subscriber loss aborts to a held stop command.
+
+See `docs/v3_calibration_capture.md` for the environment, plan bounds, repeated
+run procedure, Dataset conversion, and promotion boundary. No AWSIM excitation
+or completed calibration capture is implied by source/unit verification alone.
