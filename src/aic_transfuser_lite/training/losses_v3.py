@@ -20,14 +20,19 @@ class LossWeightsV3:
     behavior_class_weights: tuple[float, ...] | None = None
     behavior_side_class_weights: tuple[float, ...] | None = None
     control_sequence: float = 0.0
+    plan_consistency: float = 0.0
+    plan_step_sec: float = 0.1
 
     def validate(self) -> None:
         if any(value < 0.0 for value in (
             self.trajectory, self.speed_profile, self.current_control,
             self.control_sequence,
             self.behavior, self.behavior_side,
+            self.plan_consistency,
         )):
             raise ValueError("loss weights must be non-negative")
+        if not math.isfinite(self.plan_step_sec) or self.plan_step_sec <= 0.0:
+            raise ValueError("plan_step_sec must be finite and positive")
         for name, values, size in (
             ("behavior", self.behavior_class_weights, 5),
             ("behavior_side", self.behavior_side_class_weights, 3),
@@ -78,6 +83,38 @@ def compute_losses_v3(
         "trajectory": trajectory * weights.trajectory,
         "speed_profile": speed * weights.speed_profile,
     }
+    if weights.plan_consistency > 0.0:
+        origin = torch.zeros_like(predicted_xy[:, :1])
+        segment = torch.diff(
+            torch.cat((origin, predicted_xy), dim=1), dim=1
+        )
+        geometric_speed = torch.linalg.vector_norm(segment, dim=-1) / weights.plan_step_sec
+        previous_trajectory_valid = torch.cat(
+            (
+                torch.ones_like(targets.trajectory_mask[:, :1]),
+                targets.trajectory_mask[:, :-1],
+            ),
+            dim=1,
+        )
+        consistency_mask = (
+            targets.trajectory_mask
+            & previous_trajectory_valid
+            & targets.speed_mask
+        )
+        plan_consistency = _masked_mean(
+            F.smooth_l1_loss(
+                predicted_speed,
+                geometric_speed,
+                reduction="none",
+                beta=1.0,
+            ),
+            consistency_mask,
+            "plan_consistency",
+        )
+        raw["plan_consistency"] = plan_consistency
+        weighted["plan_consistency"] = (
+            plan_consistency * weights.plan_consistency
+        )
     if weights.current_control > 0.0:
         if output.current_control is None:
             raise ValueError("current_control loss weight is nonzero but head output is absent")

@@ -181,9 +181,11 @@ ros2 launch aic_e2e_runtime transfuser_lite_v3_full_control_trial.launch.py \
   新規output directoryへ再学習し、offline選定とGranepleでのshadow/限定走行を
   やり直す必要がある。
 
-- `full_control_lite_v3.yaml`の`gradient_accumulation_steps: 8`を現行V3 trainerが
-  消費しておらず、今回のeffective batch sizeは2だった。次回学習前にtrainer実装と
-  resume identityへ追加し、unit / negative testで固定する必要がある。
+- `48dee900...`および`6e8fc01b...`の学習時点では
+  `gradient_accumulation_steps: 8`をtrainerが消費しておらず、effective batch sizeは2
+  だった。M3 recovery実装以降は1 optimizer stepで8 micro-batchを累積し、model config
+  bytesもexperiment contract hashへ含める。旧checkpointは新runの初期値には使えるが、
+  新契約へresumeはできない。
 - GranepleのLiDAR topic自体は受信できるが、Safety前方beam抽出が全sampleを無効とした。
   LaserScanの角度範囲、front angle、NaN/inf/range filterを実値で照合する必要がある。
 - 停止例は全split合計1,099 frameに限られ、停止時のtrajectory / control Head整合が弱い。

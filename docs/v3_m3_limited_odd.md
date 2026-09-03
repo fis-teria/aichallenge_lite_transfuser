@@ -132,3 +132,36 @@ tracking error remained small, this is treated as a Trajectory/Speed model
 closed-loop generalization failure rather than a Safety or coordinate-sign
 failure. M3 remains failed, so M4 speed escalation and lap testing have not
 started.
+
+## Model recovery training gate
+
+`configs/models/trajectory_authoritative_finetune_v3.yaml` defines a separate,
+non-destructive M3 recovery artifact. It initializes from the retained causal
+checkpoint, makes Trajectory and Speed the dominant losses, and adds a
+differentiable SI-unit Huber loss between each predicted trajectory segment's
+geometric speed and its paired Speed Head value. Control and behavior heads stay
+load-compatible at low auxiliary weight but remain non-authoritative at runtime.
+
+The trainer now consumes `gradient_accumulation_steps`; one logged global step is
+one optimizer step over that many micro-batches. The model config bytes are part
+of the experiment contract hash, so changing loss weights, accumulation, or
+model settings cannot silently resume an incompatible run.
+
+Run in WSL under the shared training lock and write a new output directory:
+
+```bash
+tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
+  -m aic_transfuser_lite.cli train \
+  --config configs/models/trajectory_authoritative_finetune_v3.yaml \
+  --dataset-root /home/thistle/e2e_autonomous/datasets/d1log_0902_all_v3 \
+  --split-manifest /home/thistle/e2e_autonomous/datasets/d1log_0902_all_v3/split_manifest.json \
+  --view-config configs/data/view_temporal_v3.yaml \
+  --behavior-view /home/thistle/e2e_autonomous/datasets/d1log_0902_all_behavior_v1 \
+  --output /home/thistle/e2e_autonomous/runs/m3_trajectory_authoritative_finetune_v3 \
+  --epochs 5 --batch-size 2 --device cuda \
+  --init-checkpoint /home/thistle/e2e_autonomous/runs/d1log_0902_all_full_control_v3_causal_1b7d298/last.pt
+```
+
+Training completion alone does not pass M3. The candidate must first pass
+held-out Trajectory ADE, Speed MAE, and Plan-consistency comparison without
+regression, then repeat the bounded Graneple launch/curve/tracking trials.

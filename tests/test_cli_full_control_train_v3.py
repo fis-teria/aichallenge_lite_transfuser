@@ -106,6 +106,7 @@ def _training_fixture(
         "image_height": 32, "image_width": 32, "lidar_points": 4,
         "ego_features": ["longitudinal_speed_mps", "lateral_speed_mps", "yaw_rate_rps"],
     })
+    config["training"]["gradient_accumulation_steps"] = 1
     config_path = tmp_path / "full_control.yaml"
     config_path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
     output = tmp_path / "run"
@@ -209,6 +210,23 @@ def test_full_control_config_rejects_nonpositive_checkpoint_interval(tmp_path: P
     config = tmp_path / "invalid_checkpoint_interval.yaml"
     config.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
     with pytest.raises(ValueError, match="positive checkpoint_every_steps"):
+        load_full_control_config_v3(config)
+
+
+def test_full_control_config_rejects_invalid_plan_loss_and_accumulation(
+    tmp_path: Path,
+) -> None:
+    raw = yaml.safe_load((ROOT / "configs/models/full_control_lite_v3.yaml").read_text())
+    raw["loss"]["plan_step_sec"] = 0.0
+    config = tmp_path / "invalid_plan_step.yaml"
+    config.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    with pytest.raises(ValueError, match="plan_step_sec"):
+        load_full_control_config_v3(config)
+
+    raw["loss"]["plan_step_sec"] = 0.1
+    raw["training"]["gradient_accumulation_steps"] = 0
+    config.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    with pytest.raises(ValueError, match="gradient_accumulation_steps"):
         load_full_control_config_v3(config)
 
 

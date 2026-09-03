@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Sequence
+import math
 
 import torch
 import yaml
@@ -69,6 +70,7 @@ class TrainerV3:
         optimizer: torch.optim.Optimizer,
         identity: ExperimentIdentityV3,
         loss_weights: LossWeightsV3 = LossWeightsV3(),
+        gradient_accumulation_steps: int = 1,
         scheduler: object | None = None,
     ) -> None:
         if not batches:
@@ -78,6 +80,9 @@ class TrainerV3:
         self.optimizer = optimizer
         self.identity = identity
         self.loss_weights = loss_weights
+        if gradient_accumulation_steps <= 0:
+            raise ValueError("gradient_accumulation_steps must be positive")
+        self.gradient_accumulation_steps = gradient_accumulation_steps
         self.scheduler = scheduler
         first_parameter = next(iter(model.parameters()), None)
         self.device = torch.device("cpu") if first_parameter is None else first_parameter.device
@@ -98,30 +103,55 @@ class TrainerV3:
             self.model.train()
         produced: list[dict[str, float]] = []
         for _ in range(count):
-            batch = move_batch_v3(self.batches[self.sampler.next_index()], self.device)
-            if batch.targets is None:
-                raise ValueError("training batch is missing targets")
             self.optimizer.zero_grad(set_to_none=True)
-            output = self.model(batch)
-            report = compute_losses_v3(output, batch.targets, self.loss_weights)
-            if not torch.isfinite(report.total):
-                raise FloatingPointError("non-finite V3 loss before backward")
-            report.total.backward()
+            accumulated: dict[str, float] = {}
+            for _micro_step in range(self.gradient_accumulation_steps):
+                batch = move_batch_v3(
+                    self.batches[self.sampler.next_index()], self.device
+                )
+                if batch.targets is None:
+                    raise ValueError("training batch is missing targets")
+                output = self.model(batch)
+                report = compute_losses_v3(output, batch.targets, self.loss_weights)
+                if not torch.isfinite(report.total):
+                    raise FloatingPointError("non-finite V3 loss before backward")
+                (report.total / self.gradient_accumulation_steps).backward()
+                micro_log = report.scalar_log()
+                if (
+                    output.behavior_logits is not None
+                    and batch.targets.behavior_class is not None
+                ):
+                    _add_masked_accuracy(
+                        micro_log,
+                        "behavior",
+                        output.behavior_logits,
+                        batch.targets.behavior_class,
+                        batch.targets.behavior_mask,
+                    )
+                if (
+                    output.behavior_side_logits is not None
+                    and batch.targets.behavior_side is not None
+                ):
+                    _add_masked_accuracy(
+                        micro_log,
+                        "behavior_side",
+                        output.behavior_side_logits,
+                        batch.targets.behavior_side,
+                        batch.targets.behavior_side_mask,
+                    )
+                for key, value in micro_log.items():
+                    accumulated[key] = accumulated.get(key, 0.0) + value
             self.optimizer.step()
             if self.scheduler is not None:
                 self.scheduler.step()
             self.global_step += 1
-            row = {"step": float(self.global_step), **report.scalar_log()}
-            if output.behavior_logits is not None and batch.targets.behavior_class is not None:
-                _add_masked_accuracy(
-                    row, "behavior", output.behavior_logits,
-                    batch.targets.behavior_class, batch.targets.behavior_mask,
-                )
-            if output.behavior_side_logits is not None and batch.targets.behavior_side is not None:
-                _add_masked_accuracy(
-                    row, "behavior_side", output.behavior_side_logits,
-                    batch.targets.behavior_side, batch.targets.behavior_side_mask,
-                )
+            row = {
+                "step": float(self.global_step),
+                **{
+                    key: value / self.gradient_accumulation_steps
+                    for key, value in accumulated.items()
+                },
+            }
             self.logs.append(row)
             produced.append(row)
         return produced
@@ -188,6 +218,14 @@ def load_full_control_config_v3(path: str | Path) -> dict[str, object]:
         raise ValueError("full-control config requires nonzero behavior_side loss")
     if int(raw["training"].get("checkpoint_every_steps", 0)) <= 0:
         raise ValueError("full-control training requires positive checkpoint_every_steps")
+    if int(raw["training"].get("gradient_accumulation_steps", 1)) <= 0:
+        raise ValueError("gradient_accumulation_steps must be positive")
+    plan_consistency_weight = float(raw["loss"].get("plan_consistency", 0.0))
+    plan_step_sec = float(raw["loss"].get("plan_step_sec", 0.1))
+    if plan_consistency_weight < 0.0:
+        raise ValueError("plan_consistency loss weight must be non-negative")
+    if not math.isfinite(plan_step_sec) or plan_step_sec <= 0.0:
+        raise ValueError("plan_step_sec must be finite and positive")
     targets = raw.get("targets")
     expected_targets = {
         "behavior_ontology": BEHAVIOR_ONTOLOGY_V1,

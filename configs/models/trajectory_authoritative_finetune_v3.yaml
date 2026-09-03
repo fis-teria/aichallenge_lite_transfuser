@@ -1,0 +1,70 @@
+format: aic_model_config_v3
+model:
+  name: full_control_lite_v3
+  candidates: 1
+  trajectory_steps: 15
+  hidden_dim: 128
+  camera_tokens_hw: [4, 4]
+  lidar_tokens: 32
+  fusion_depth: 2
+  fusion_heads: 4
+  max_sensor_history: 4
+  max_ego_history: 10
+  control_head_enabled: true
+  control_sequence_head_enabled: true
+  control_sequence_steps: 10
+  control_dt_sec: 0.1
+  behavior_head_enabled: true
+  behavior_classes: 5
+  behavior_sides: 3
+  control_bounds:
+    max_steering_rad: 0.6
+    max_speed_mps: 12.0
+    min_acceleration_mps2: -4.0
+    max_acceleration_mps2: 2.0
+    max_steering_rate_radps: 0.8
+    min_jerk_mps3: -8.0
+    max_jerk_mps3: 4.0
+data:
+  image_history_length: 4
+  lidar_history_length: 4
+  ego_history_length: 10
+  command_history_length: 10
+  image_height: 224
+  image_width: 384
+  lidar_points: 750
+  lidar_min_range_m: 0.0
+  lidar_max_range_m: 25.0
+  ego_features: [longitudinal_speed_mps, lateral_speed_mps, yaw_rate_rps, actual_steering_rad]
+targets:
+  command_history_alignment: causal_previous_only
+  control_sequence_alignment: exact_grid_timestamp_only
+  behavior_ontology: aic_behavior_v1
+  behavior_classes: [FORWARD_NORMAL, FORWARD_FOLLOW, FORWARD_AVOID, FORWARD_RETURN, RECOVERY]
+  behavior_sides: [NONE, LEFT, RIGHT]
+  current_control_order: [steering_rad, speed_mps, acceleration_mps2]
+  control_sequence_order: [steering_rad, speed_mps, acceleration_mps2]
+  control_sequence_steps: 10
+  control_dt_sec: 0.1
+  teacher_priority: [nominal, final_fallback]
+loss:
+  # M3 recovery fine-tune keeps Trajectory/Speed authoritative. Auxiliary
+  # heads remain trainable at low weight so the existing artifact contract is
+  # load-compatible, but they are not runtime control authorities.
+  trajectory: 2.0
+  speed_profile: 1.0
+  plan_consistency: 0.25
+  plan_step_sec: 0.1
+  current_control: 0.02
+  control_sequence: 0.02
+  behavior: 0.02
+  behavior_side: 0.01
+  trajectory_regression_gate:
+    metric: trajectory_ade_m
+    max_relative_regression: 0.0
+training:
+  epochs: 5
+  target_vram_gb: 8
+  micro_batch_size: 2
+  gradient_accumulation_steps: 8
+  checkpoint_every_steps: 100

@@ -4,6 +4,7 @@ import pytest
 import torch
 
 from aic_transfuser_lite.contracts.model_batch_v3 import ModelBatchV3, TrainingTargetsV3
+from aic_transfuser_lite.contracts.model_output_v3 import ModelOutputV3
 from aic_transfuser_lite.models.full_control_lite_v3 import FullControlLiteV3
 from aic_transfuser_lite.models.heads.control_sequence import select_current_control_targets
 from aic_transfuser_lite.training.checkpoint_v3 import ExperimentIdentityV3
@@ -108,6 +109,42 @@ def test_trajectory_regression_gate() -> None:
         enforce_trajectory_regression_gate(candidate_ade_m=1.03, baseline_ade_m=1.0, max_relative_regression=0.02)
 
 
+def test_plan_consistency_loss_matches_trajectory_geometric_speed() -> None:
+    batch = _full_batch()
+    assert batch.targets is not None
+    x = torch.arange(1, 16, dtype=torch.float32) * 0.1
+    trajectory = torch.stack((x, torch.zeros_like(x)), dim=-1)
+    trajectory = trajectory.unsqueeze(0).unsqueeze(0).repeat(2, 1, 1, 1)
+    output = ModelOutputV3(
+        trajectory_xy=trajectory,
+        trajectory_speed_mps=torch.ones(2, 1, 15),
+        candidate_logits=torch.zeros(2, 1),
+    )
+    report = compute_losses_v3(
+        output,
+        batch.targets,
+        LossWeightsV3(plan_consistency=1.0, plan_step_sec=0.1),
+    )
+    assert report.raw["plan_consistency"].item() == pytest.approx(0.0, abs=1e-6)
+
+    inconsistent = ModelOutputV3(
+        trajectory_xy=trajectory,
+        trajectory_speed_mps=torch.zeros(2, 1, 15),
+        candidate_logits=torch.zeros(2, 1),
+    )
+    bad = compute_losses_v3(
+        inconsistent,
+        batch.targets,
+        LossWeightsV3(plan_consistency=1.0, plan_step_sec=0.1),
+    )
+    assert bad.raw["plan_consistency"].item() == pytest.approx(0.5, abs=1e-6)
+
+
+def test_plan_consistency_rejects_invalid_step() -> None:
+    with pytest.raises(ValueError, match="plan_step_sec"):
+        LossWeightsV3(plan_consistency=1.0, plan_step_sec=0.0).validate()
+
+
 def test_one_epoch_smoke_and_resume(tmp_path: Path) -> None:
     model = _model()
     trainer = TrainerV3(
@@ -132,3 +169,28 @@ def test_one_epoch_smoke_and_resume(tmp_path: Path) -> None:
     assert resumed.global_step == 1
     resumed.train_steps(1)
     assert resumed.global_step == 2
+
+
+def test_gradient_accumulation_advances_micro_batches_per_optimizer_step() -> None:
+    model = _model()
+    trainer = TrainerV3(
+        model=model,
+        batches=[_full_batch(), _full_batch()],
+        optimizer=torch.optim.Adam(model.parameters(), lr=1e-4),
+        identity=ExperimentIdentityV3("dataset", "split", "view", "contract", 1),
+        loss_weights=LossWeightsV3(1.0, 0.5, 0.2, 0.2, 0.1),
+        gradient_accumulation_steps=2,
+    )
+    trainer.train_steps(1)
+    assert trainer.global_step == 1
+    assert trainer.sampler.offset == 2
+    assert len(trainer.logs) == 1
+
+    with pytest.raises(ValueError, match="gradient_accumulation_steps"):
+        TrainerV3(
+            model=model,
+            batches=[_full_batch()],
+            optimizer=torch.optim.Adam(model.parameters(), lr=1e-4),
+            identity=trainer.identity,
+            gradient_accumulation_steps=0,
+        )

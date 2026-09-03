@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import sys
 from typing import Any, Sequence
@@ -392,8 +393,11 @@ def _train_v3(args: argparse.Namespace) -> int:
     )
     dataset_manifest = validate_complete_dataset(args.dataset_root)
     contract_hash = hashlib.sha256(
-        (Path("schemas/model_batch_v3.schema.json").read_bytes()
-         + Path("schemas/model_output_v3.schema.json").read_bytes())
+        (
+            Path("schemas/model_batch_v3.schema.json").read_bytes()
+            + Path("schemas/model_output_v3.schema.json").read_bytes()
+            + Path(args.config).read_bytes()
+        )
     ).hexdigest()
     identity = ExperimentIdentityV3(
         dataset_hash=str(dataset_manifest["manifest_sha256"]),
@@ -454,6 +458,11 @@ def _train_v3(args: argparse.Namespace) -> int:
             behavior_class_weights=behavior_weights,
             behavior_side_class_weights=side_weights,
             control_sequence=float(loss_cfg["control_sequence"]),
+            plan_consistency=float(loss_cfg.get("plan_consistency", 0.0)),
+            plan_step_sec=float(loss_cfg.get("plan_step_sec", 0.1)),
+        ),
+        gradient_accumulation_steps=int(
+            training_cfg.get("gradient_accumulation_steps", 1)
         ),
     )
     checkpoint = output / "last.pt"
@@ -461,7 +470,13 @@ def _train_v3(args: argparse.Namespace) -> int:
         if not checkpoint.is_file():
             raise FileNotFoundError(f"resume checkpoint missing: {checkpoint}")
         trainer.resume(checkpoint)
-    target_steps = epochs * len(batches)
+    gradient_accumulation_steps = int(
+        training_cfg.get("gradient_accumulation_steps", 1)
+    )
+    optimizer_steps_per_epoch = math.ceil(
+        len(batches) / gradient_accumulation_steps
+    )
+    target_steps = epochs * optimizer_steps_per_epoch
     checkpoint_every_steps = int(training_cfg["checkpoint_every_steps"])
     remaining_steps = max(0, target_steps - trainer.global_step)
     if remaining_steps == 0:
@@ -492,7 +507,11 @@ def _train_v3(args: argparse.Namespace) -> int:
     )
     run_manifest = {
         "format": "aic_full_control_training_run_v3", "global_step": trainer.global_step,
-        "epochs": epochs, "batches_per_epoch": len(batches), "identity": identity.__dict__,
+        "epochs": epochs,
+        "micro_batches_per_epoch": len(batches),
+        "gradient_accumulation_steps": gradient_accumulation_steps,
+        "optimizer_steps_per_epoch": optimizer_steps_per_epoch,
+        "identity": identity.__dict__,
         "config_sha256": _sha256(Path(args.config)), "device": str(device), "last_log": trainer.logs[-1] if trainer.logs else None,
         "behavior_ontology": "aic_behavior_v1",
         "behavior_view_manifest_sha256": _sha256(Path(args.behavior_view) / "manifest.json"),
