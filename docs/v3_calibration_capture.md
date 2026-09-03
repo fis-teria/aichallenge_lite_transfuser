@@ -63,6 +63,10 @@ PYTHONPATH=src python3 tools/collect_calibration_v3.py \
 Use the actual checkout path on Graneple if it differs. Dry-run output paths are
 resolved absolutely, so review them before execution.
 
+When validating an immutable `git archive` without a `.git` directory, pass its
+known 40-hex commit as `--source-git-revision`. A normal checkout records its
+own HEAD and refuses `--execute` while tracked files are dirty.
+
 ## Execute one run
 
 Use a new run ID for every attempt. Existing bags, manifests, and result files

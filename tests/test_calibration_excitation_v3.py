@@ -159,3 +159,12 @@ def test_collector_topic_and_publisher_parsers_reject_bad_graph() -> None:
     assert collector.parse_publisher_count("Publisher count: 0\nSubscription count: 1\n") == 0
     with pytest.raises(ValueError, match="Publisher count"):
         collector.parse_publisher_count("Subscription count: 1\n")
+
+
+def test_collector_requires_valid_explicit_archive_revision() -> None:
+    collector = _collector_module()
+    assert collector._source_state(
+        ROOT, explicit_revision="a" * 40
+    ) == ("a" * 40, False)
+    with pytest.raises(ValueError, match="lowercase 40-hex"):
+        collector._source_state(ROOT, explicit_revision="NOT_A_SHA")

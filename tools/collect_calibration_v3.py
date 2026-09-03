@@ -133,6 +133,10 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--scenario-id", required=True)
     parser.add_argument("--ros-domain-id", type=int, default=101)
+    parser.add_argument(
+        "--source-git-revision",
+        help="Required 40-hex source revision when running from an archive without .git",
+    )
     parser.add_argument("--execute", action="store_true")
     return parser.parse_args(argv)
 
@@ -151,7 +155,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     plan_sha = excitation_plan_sha256(plan)
     _capture_topics(profile)
     repository_root = Path(__file__).resolve().parents[1]
-    git_revision, git_dirty = _git_state(repository_root)
+    git_revision, git_dirty = _source_state(
+        repository_root, explicit_revision=args.source_git_revision
+    )
 
     bag_path = output_root / run_id
     manifest_path = output_root / f"{run_id}.calibration_capture.json"
@@ -352,6 +358,22 @@ def _git_state(repository_root: Path) -> tuple[str, bool]:
         timeout=10.0,
     ).stdout
     return revision, bool(status.strip())
+
+
+def _source_state(
+    repository_root: Path, *, explicit_revision: str | None
+) -> tuple[str, bool]:
+    if explicit_revision is not None:
+        if not re.fullmatch(r"[0-9a-f]{40}", explicit_revision):
+            raise ValueError("source-git-revision must be lowercase 40-hex")
+        return explicit_revision, False
+    try:
+        return _git_state(repository_root)
+    except (FileNotFoundError, subprocess.CalledProcessError) as error:
+        raise RuntimeError(
+            "source Git revision is unavailable; pass --source-git-revision for "
+            "an immutable archive"
+        ) from error
 
 
 def _utc_now() -> str:
