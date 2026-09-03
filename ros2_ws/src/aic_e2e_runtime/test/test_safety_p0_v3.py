@@ -116,7 +116,7 @@ def test_v3_publishes_matching_trajectory_and_speed_without_control_authority() 
     assert '"nominal_control_cmd"' not in source
 
 
-def test_v3_publishes_stamped_base_link_path_for_rviz_without_authority() -> None:
+def test_v3_publishes_stamped_base_link_path_for_map_fixed_rviz_without_authority() -> None:
     root = Path(__file__).parents[1]
     source = (root / "aic_e2e_runtime" / "inference_node_v3.py").read_text()
     launch = (
@@ -133,7 +133,17 @@ def test_v3_publishes_stamped_base_link_path_for_rviz_without_authority() -> Non
     assert 'DeclareLaunchArgument("launch_rviz", default_value="false")' in launch
     assert 'condition=IfCondition(LaunchConfiguration("launch_rviz"))' in launch
     assert "v3_external_controller_shadow.rviz" in launch
-    assert "Fixed Frame: base_link" in rviz
+    assert "Fixed Frame: map" in rviz
+    assert "Target Frame: map" in rviz
+    assert "Name: Ego Chase" in rviz
+    assert "Target Frame: base_link" in rviz
+    assert "Class: rviz_default_plugins/TF" in rviz
+    assert "Class: rviz_default_plugins/RobotModel" in rviz
+    assert "Value: /robot_description" in rviz
+    assert "Class: rviz_default_plugins/Pose" in rviz
+    assert "Value: /localization/pose" in rviz
+    assert "Class: rviz_default_plugins/MarkerArray" in rviz
+    assert "Value: /map/vector_map_marker" in rviz
     assert "Value: /predicted_trajectory_path" in rviz
     assert "Reliability Policy: Best Effort" in rviz
     assert '"nominal_control_cmd"' not in source

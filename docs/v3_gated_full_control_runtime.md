@@ -64,6 +64,22 @@ ros2 launch aic_e2e_runtime transfuser_lite_v3_full_control_trial.launch.py \
   launch_rviz:=true use_sim_time:=true
 ```
 
+## RViz frames and views
+
+The V3 RViz profile uses `map` as its Fixed Frame and opens the `AWSIM Map
+Fixed` top-down view near the course start. It displays the transient-local
+`/map/vector_map_marker`, TF tree, `/robot_description` vehicle model,
+`/localization/pose`, best-effort LiDAR, and the predicted trajectory path.
+The predicted path remains correctly stamped in `base_link`; RViz transforms
+it into `map` using the live `map -> base_link` transform.
+
+The saved `Ego Chase` view targets `base_link` for sensor-relative inspection.
+In that view the vehicle intentionally remains centered, so use `AWSIM Map
+Fixed` when checking whether the localization pose and vehicle actually move
+through the course. The map view starts around `x=89631 m`, `y=43128 m`, which
+is the observed AWSIM course start; use RViz's Focus Camera tool if a different
+scenario starts elsewhere.
+
 Do not report ROS 2, AWSIM, collision avoidance, or course completion as
 successful until those commands have actually run and the resulting logs are
 reviewed.

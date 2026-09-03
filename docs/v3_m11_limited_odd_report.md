@@ -76,6 +76,15 @@ The preceding M9 shadow run published the predicted trajectory and model
 control diagnostics at about 9 Hz, started RViz2 with OpenGL 4.6, and retained
 zero publishers on `/control/command/control_cmd`.
 
+That run used an ego-fixed RViz view (`Fixed Frame` and view target both
+`base_link`), so it could not visually demonstrate global vehicle motion. The
+underlying `/localization/kinematic_state` was nevertheless `map -> base_link`
+at about 50 Hz, and the M11 motion measurements below came from global pose and
+vehicle velocity rather than screen motion. The RViz profile was subsequently
+changed to a map-fixed view with TF, vehicle model, localization pose, and
+vector-map displays; this display correction does not change the failed-launch
+decision below.
+
 During M11, the inference node published nominal commands and the independent
 Safety Supervisor was the sole publisher of
 `/control/command/control_cmd`. The final 30 s observation produced:
