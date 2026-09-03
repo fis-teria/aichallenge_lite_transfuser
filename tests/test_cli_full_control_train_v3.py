@@ -73,7 +73,10 @@ def _training_fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
     })
     config["data"].update({
         "image_height": 32, "image_width": 32, "lidar_points": 4,
-        "ego_features": ["longitudinal_speed_mps", "lateral_speed_mps", "yaw_rate_rps"],
+        "ego_features": [
+            "longitudinal_speed_mps", "lateral_speed_mps", "yaw_rate_rps",
+            "actual_steering_rad",
+        ],
     })
     config_path = tmp_path / "full_control.yaml"
     config_path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
@@ -93,7 +96,7 @@ def test_cli_full_control_one_epoch_and_resume(tmp_path: Path) -> None:
     assert main(args) == EXIT_SUCCESS
     assert (output / "last.pt").is_file()
     artifact = json.loads((output / "runtime_artifact.json").read_text())
-    assert artifact["capabilities"][-2:] == ["behavior", "behavior_side"]
+    assert "control_sequence" in artifact["capabilities"]
     assert artifact["model_kwargs"]["behavior_head_enabled"] is True
     loaded = load_runtime_model_v3(
         output / "last.pt", output / "runtime_artifact.json", device=torch.device("cpu"),
@@ -144,6 +147,7 @@ def test_temporal_training_loader_defers_asset_reads_until_batch_access(
         lidar_max_range_m=25.0,
         ego_features=("longitudinal_speed_mps", "lateral_speed_mps", "yaw_rate_rps"),
         trajectory_steps=15,
+        control_sequence_steps=10,
         camera_history_length=4,
         ego_history_length=10,
         batch_size=2,

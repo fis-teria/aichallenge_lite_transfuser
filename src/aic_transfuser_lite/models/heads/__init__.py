@@ -48,9 +48,13 @@ class MultiTaskHeads(nn.Module):
 
 from .speed_profile import SpeedProfileHead
 from .trajectory import TrajectoryHead
-from .control_sequence import ControlSequenceHead, select_current_control_targets
+from .control_sequence import (
+    ControlSequenceHead,
+    FutureControlSequenceHead,
+    select_current_control_targets,
+)
 
 __all__ = [
     "MultiTaskHeads", "SpeedProfileHead", "TrajectoryHead",
-    "ControlSequenceHead", "select_current_control_targets",
+    "ControlSequenceHead", "FutureControlSequenceHead", "select_current_control_targets",
 ]

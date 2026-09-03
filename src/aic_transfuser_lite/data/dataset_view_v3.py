@@ -226,6 +226,7 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
     lidar_max_range_m: float
     ego_features: tuple[str, ...]
     trajectory_steps: int
+    control_sequence_steps: int
     camera_history_length: int
     ego_history_length: int
     batch_size: int
@@ -252,12 +253,16 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
             current_control=stack("control"),
             current_control_mask=torch.ones(len(chunk), 3, dtype=torch.bool),
             control_provenance=tuple(str(item["provenance"]) for item in chunk),
+            control_sequence=stack("control_sequence"),
+            control_sequence_mask=stack("control_sequence_mask"),
             behavior_class=stack("behavior_class"),
             behavior_mask=stack("behavior_mask"),
             behavior_side=stack("behavior_side"),
             behavior_side_mask=stack("behavior_side_mask"),
         )
-        requested_outputs = {"trajectory", "speed_profile", "current_control"}
+        requested_outputs = {
+            "trajectory", "speed_profile", "current_control", "control_sequence"
+        }
         if self.behavior_by_sample is not None:
             requested_outputs.update({"behavior", "behavior_side"})
         return ModelBatchV3(
@@ -306,6 +311,22 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
         if command is None:
             raise AssertionError("eligible anchor lost its full-control command")
         target_values, provenance = command
+        sequence_values: list[torch.Tensor] = []
+        sequence_masks: list[torch.Tensor] = []
+        for offset in range(1, self.control_sequence_steps + 1):
+            future_index = anchor + offset
+            future_command = None
+            if (
+                future_index < len(self.rows)
+                and self.epoch_keys[future_index] == self.epoch_keys[anchor]
+            ):
+                future_command = _selected_command(self.rows[future_index])
+            sequence_values.append(
+                torch.zeros(3) if future_command is None else future_command[0]
+            )
+            sequence_masks.append(
+                torch.full((3,), future_command is not None, dtype=torch.bool)
+            )
         annotation = (
             None
             if self.behavior_by_sample is None
@@ -328,6 +349,8 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
             "speed": torch.from_numpy(future[:, 4]).float(),
             "control": target_values,
             "provenance": provenance,
+            "control_sequence": torch.stack(sequence_values),
+            "control_sequence_mask": torch.stack(sequence_masks),
             "behavior_class": torch.tensor(
                 int(annotation["behavior_class"]) if behavior_valid else -1,
                 dtype=torch.long,
@@ -375,6 +398,7 @@ def load_temporal_training_batches_v3(
     lidar_max_range_m: float,
     ego_features: tuple[str, ...],
     trajectory_steps: int,
+    control_sequence_steps: int,
     camera_history_length: int,
     ego_history_length: int,
     batch_size: int,
@@ -405,14 +429,19 @@ def load_temporal_training_batches_v3(
     }
     if not assigned:
         raise ValueError(f"split {split!r} contains no runs")
-    if batch_size <= 0 or trajectory_steps <= 0:
-        raise ValueError("batch_size and trajectory_steps must be positive")
+    if batch_size <= 0 or trajectory_steps <= 0 or control_sequence_steps <= 0:
+        raise ValueError("batch size and trajectory/control steps must be positive")
     with (root / "samples.csv").open(newline="", encoding="utf-8") as stream:
         rows = [row for row in csv.DictReader(stream) if row["run_id"] in assigned]
     rows.sort(key=lambda row: (row["run_id"], row["segment_id"], int(row["grid_stamp_ns"])))
+    epoch_keys = tuple((item["run_id"], item["segment_id"]) for item in rows)
     usable_anchors: list[int] = []
     for anchor, row in enumerate(rows):
         if _selected_command(row) is None:
+            continue
+        if not _has_complete_future_controls(
+            rows, epoch_keys, anchor=anchor, steps=control_sequence_steps,
+        ):
             continue
         if int(row["future_valid_count"]) <= 0:
             continue
@@ -431,7 +460,7 @@ def load_temporal_training_batches_v3(
     return _LazyTemporalTrainingBatchesV3(
         root=root,
         rows=rows,
-        epoch_keys=tuple((item["run_id"], item["segment_id"]) for item in rows),
+        epoch_keys=epoch_keys,
         usable_anchors=usable_anchors,
         behavior_by_sample=behavior_by_sample,
         image_height=image_height,
@@ -441,6 +470,7 @@ def load_temporal_training_batches_v3(
         lidar_max_range_m=lidar_max_range_m,
         ego_features=ego_features,
         trajectory_steps=trajectory_steps,
+        control_sequence_steps=control_sequence_steps,
         camera_history_length=camera_history_length,
         ego_history_length=ego_history_length,
         batch_size=batch_size,
@@ -458,6 +488,27 @@ def _selected_command(row: dict[str, str]) -> tuple[torch.Tensor, str] | None:
             if torch.isfinite(tensor).all():
                 return tensor, provenance
     return None
+
+
+def _has_complete_future_controls(
+    rows: Sequence[dict[str, str]],
+    epoch_keys: Sequence[tuple[str, str]],
+    *,
+    anchor: int,
+    steps: int,
+) -> bool:
+    """Require H valid future commands from the same run/clock segment."""
+
+    if steps <= 0 or anchor < 0 or anchor >= len(rows) or len(epoch_keys) != len(rows):
+        raise ValueError("invalid future-control selection request")
+    end = anchor + steps
+    if end >= len(rows):
+        return False
+    key = epoch_keys[anchor]
+    return all(
+        epoch_keys[index] == key and _selected_command(rows[index]) is not None
+        for index in range(anchor + 1, end + 1)
+    )
 
 
 def _ego_row(row: dict[str, str], features: tuple[str, ...]) -> tuple[torch.Tensor, torch.Tensor]:

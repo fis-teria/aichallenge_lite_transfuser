@@ -14,7 +14,7 @@ from .ego_encoder import EgoEncoder
 from .fusion import TokenFusionTransformer
 from .heads.speed_profile import SpeedProfileHead
 from .heads.trajectory import TrajectoryHead
-from .heads.control_sequence import ControlSequenceHead
+from .heads.control_sequence import ControlSequenceHead, FutureControlSequenceHead
 from .heads.behavior import BehaviorHeadV1
 from .lidar_encoder import Lidar1DEncoder
 from .encoders.ego_history import EgoHistoryEncoder
@@ -51,10 +51,16 @@ class FullControlLiteV3(nn.Module):
         max_sensor_history: int = 4,
         max_ego_history: int = 10,
         control_head_enabled: bool = False,
+        control_sequence_head_enabled: bool = False,
+        control_sequence_steps: int = 10,
+        control_dt_sec: float = 0.1,
         max_steering_rad: float = 0.6,
+        max_steering_rate_radps: float = 0.8,
         max_speed_mps: float = 12.0,
         min_acceleration_mps2: float = -4.0,
         max_acceleration_mps2: float = 2.0,
+        min_jerk_mps3: float = -8.0,
+        max_jerk_mps3: float = 4.0,
         behavior_head_enabled: bool = False,
         behavior_classes: int = 5,
         behavior_sides: int = 3,
@@ -73,6 +79,8 @@ class FullControlLiteV3(nn.Module):
         self.trajectory_steps = trajectory_steps
         self.candidates = candidates
         self.control_head_enabled = control_head_enabled
+        self.control_sequence_head_enabled = control_sequence_head_enabled
+        self.control_sequence_steps = control_sequence_steps
         self.max_sensor_history = max_sensor_history
         self.max_ego_history = max_ego_history
         self.camera = CameraEncoder(
@@ -120,6 +128,23 @@ class FullControlLiteV3(nn.Module):
                 max_acceleration_mps2=max_acceleration_mps2,
             )
             if control_head_enabled
+            else None
+        )
+        self.control_sequence_head = (
+            FutureControlSequenceHead(
+                hidden_dim,
+                steps=control_sequence_steps,
+                candidates=candidates,
+                control_dt_sec=control_dt_sec,
+                max_steering_rad=max_steering_rad,
+                max_steering_rate_radps=max_steering_rate_radps,
+                max_speed_mps=max_speed_mps,
+                min_acceleration_mps2=min_acceleration_mps2,
+                max_acceleration_mps2=max_acceleration_mps2,
+                min_jerk_mps3=min_jerk_mps3,
+                max_jerk_mps3=max_jerk_mps3,
+            )
+            if control_sequence_head_enabled
             else None
         )
         self.behavior_head = (
@@ -173,6 +198,20 @@ class FullControlLiteV3(nn.Module):
             if self.control_head is None:
                 raise ValueError("current_control requested but control head is absent")
             current_control = self.control_head(pooled)
+        control_sequence = None
+        if "control_sequence" in batch.requested_outputs:
+            if self.control_sequence_head is None:
+                raise ValueError("control_sequence requested but sequence head is absent")
+            latest_command = batch.command_history[:, -1]
+            initial_acceleration = torch.where(
+                batch.command_mask[:, -1],
+                latest_command[:, 2],
+                torch.zeros_like(latest_command[:, 2]),
+            )
+            initial_control = torch.stack(
+                (ego[:, 3], ego[:, 0], initial_acceleration), dim=-1
+            )
+            control_sequence = self.control_sequence_head(pooled, initial_control)
         behavior_logits = behavior_side_logits = None
         if "behavior" in batch.requested_outputs or "behavior_side" in batch.requested_outputs:
             if self.behavior_head is None:
@@ -187,6 +226,7 @@ class FullControlLiteV3(nn.Module):
             trajectory_speed_mps=speed,
             candidate_logits=candidate_logits,
             current_control=current_control,
+            control_sequence=control_sequence,
             behavior_logits=behavior_logits,
             behavior_side_logits=behavior_side_logits,
         )

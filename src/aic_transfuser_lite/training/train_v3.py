@@ -144,10 +144,21 @@ def load_full_control_config_v3(path: str | Path) -> dict[str, object]:
     data = raw["data"]
     if model.get("name") != "full_control_lite_v3" or not bool(model.get("control_head_enabled")):
         raise ValueError("full-control training requires enabled FullControlLiteV3 control head")
-    if list(data.get("ego_features", [])) == []:
-        raise ValueError("full-control config requires explicit ego_features")
+    if list(data.get("ego_features", [])) != [
+        "longitudinal_speed_mps",
+        "lateral_speed_mps",
+        "yaw_rate_rps",
+        "actual_steering_rad",
+    ]:
+        raise ValueError("full-control config requires the explicit four-feature ego order")
     if float(raw["loss"].get("current_control", 0.0)) <= 0.0:
         raise ValueError("full-control config requires nonzero current_control loss")
+    if not bool(model.get("control_sequence_head_enabled")):
+        raise ValueError("full-control training requires enabled control_sequence head")
+    if int(model.get("control_sequence_steps", 0)) <= 0:
+        raise ValueError("full-control training requires positive control_sequence_steps")
+    if float(raw["loss"].get("control_sequence", 0.0)) <= 0.0:
+        raise ValueError("full-control config requires nonzero control_sequence loss")
     if not bool(model.get("behavior_head_enabled")):
         raise ValueError("full-control config requires enabled behavior head")
     if int(model.get("behavior_classes", 0)) != 5 or int(model.get("behavior_sides", 0)) != 3:
@@ -192,10 +203,16 @@ def full_control_model_kwargs_v3(config: dict[str, object]) -> dict[str, object]
         "max_sensor_history": int(model["max_sensor_history"]),
         "max_ego_history": int(model["max_ego_history"]),
         "control_head_enabled": True,
+        "control_sequence_head_enabled": True,
+        "control_sequence_steps": int(model["control_sequence_steps"]),
+        "control_dt_sec": float(model["control_dt_sec"]),
         "max_steering_rad": float(bounds["max_steering_rad"]),
+        "max_steering_rate_radps": float(bounds["max_steering_rate_radps"]),
         "max_speed_mps": float(bounds["max_speed_mps"]),
         "min_acceleration_mps2": float(bounds["min_acceleration_mps2"]),
         "max_acceleration_mps2": float(bounds["max_acceleration_mps2"]),
+        "min_jerk_mps3": float(bounds["min_jerk_mps3"]),
+        "max_jerk_mps3": float(bounds["max_jerk_mps3"]),
         "behavior_head_enabled": bool(model["behavior_head_enabled"]),
         "behavior_classes": int(model["behavior_classes"]),
         "behavior_sides": int(model["behavior_sides"]),
@@ -213,6 +230,8 @@ def move_batch_v3(batch: ModelBatchV3, device: torch.device) -> ModelBatchV3:
             current_control=None if targets.current_control is None else targets.current_control.to(device),
             current_control_mask=None if targets.current_control_mask is None else targets.current_control_mask.to(device),
             control_provenance=targets.control_provenance,
+            control_sequence=None if targets.control_sequence is None else targets.control_sequence.to(device),
+            control_sequence_mask=None if targets.control_sequence_mask is None else targets.control_sequence_mask.to(device),
             behavior_class=None if targets.behavior_class is None else targets.behavior_class.to(device),
             behavior_mask=None if targets.behavior_mask is None else targets.behavior_mask.to(device),
             behavior_side=None if targets.behavior_side is None else targets.behavior_side.to(device),

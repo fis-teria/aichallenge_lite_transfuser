@@ -88,6 +88,8 @@ def load_runtime_model_v3(
         raise ValueError("behavior capability requires an enabled behavior head")
     if "current_control" in capabilities and model.control_head is None:
         raise ValueError("current_control capability requires an enabled control head")
+    if "control_sequence" in capabilities and model.control_sequence_head is None:
+        raise ValueError("control_sequence capability requires an enabled sequence head")
     model.load_state_dict(payload["model"], strict=True)
     model.eval()
     return LoadedRuntimeModelV3(

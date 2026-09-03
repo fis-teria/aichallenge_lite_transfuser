@@ -19,10 +19,12 @@ class LossWeightsV3:
     behavior_side: float = 0.0
     behavior_class_weights: tuple[float, ...] | None = None
     behavior_side_class_weights: tuple[float, ...] | None = None
+    control_sequence: float = 0.0
 
     def validate(self) -> None:
         if any(value < 0.0 for value in (
             self.trajectory, self.speed_profile, self.current_control,
+            self.control_sequence,
             self.behavior, self.behavior_side,
         )):
             raise ValueError("loss weights must be non-negative")
@@ -99,6 +101,21 @@ def compute_losses_v3(
                 raw[f"current_control_{provenance}"] = _masked_mean(
                     element_loss, provenance_mask, f"current_control_{provenance}"
                 )
+    if weights.control_sequence > 0.0:
+        if output.control_sequence is None:
+            raise ValueError("control_sequence loss weight is nonzero but head output is absent")
+        if targets.control_sequence is None or targets.control_sequence_mask is None:
+            raise ValueError("control_sequence loss weight is nonzero but target is absent")
+        prediction = output.control_sequence[:, 0]
+        if prediction.shape != targets.control_sequence.shape:
+            raise ValueError("control_sequence prediction/target shape mismatch")
+        sequence = _masked_mean(
+            torch.abs(prediction - targets.control_sequence),
+            targets.control_sequence_mask,
+            "control_sequence",
+        )
+        raw["control_sequence"] = sequence
+        weighted["control_sequence"] = sequence * weights.control_sequence
     if weights.behavior > 0.0:
         if output.behavior_logits is None or targets.behavior_class is None or targets.behavior_mask is None:
             raise ValueError("behavior loss is nonzero but output/target is absent")

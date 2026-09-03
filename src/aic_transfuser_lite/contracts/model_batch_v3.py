@@ -30,6 +30,8 @@ class TrainingTargetsV3:
     current_control: torch.Tensor | None = None
     current_control_mask: torch.Tensor | None = None
     control_provenance: tuple[str, ...] | None = None
+    control_sequence: torch.Tensor | None = None
+    control_sequence_mask: torch.Tensor | None = None
     behavior_class: torch.Tensor | None = None
     behavior_mask: torch.Tensor | None = None
     behavior_side: torch.Tensor | None = None
@@ -58,6 +60,27 @@ class TrainingTargetsV3:
             _finite_where(self.current_control, self.current_control_mask, "current control target")
             if self.control_provenance is None or len(self.control_provenance) != batch_size:
                 raise ValueError("control provenance must contain one entry per batch item")
+        if self.control_sequence is None:
+            if self.control_sequence_mask is not None:
+                raise ValueError("control_sequence_mask requires its target")
+        else:
+            if (
+                self.control_sequence.ndim != 3
+                or self.control_sequence.shape[0] != batch_size
+                or self.control_sequence.shape[-1] != 3
+            ):
+                raise ValueError("control_sequence target must be [B,H,3]")
+            if (
+                self.control_sequence_mask is None
+                or self.control_sequence_mask.shape != self.control_sequence.shape
+                or self.control_sequence_mask.dtype != torch.bool
+            ):
+                raise ValueError("control_sequence_mask must be bool [B,H,3]")
+            _finite_where(
+                self.control_sequence,
+                self.control_sequence_mask,
+                "control sequence target",
+            )
         self._validate_class_target(
             self.behavior_class, self.behavior_mask, batch_size=batch_size,
             class_count=5, name="behavior",

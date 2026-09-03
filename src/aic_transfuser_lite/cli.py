@@ -335,6 +335,7 @@ def _train_v3(args: argparse.Namespace) -> int:
         lidar_min_range_m=float(data_cfg["lidar_min_range_m"]),
         lidar_max_range_m=float(data_cfg["lidar_max_range_m"]),
         ego_features=tuple(data_cfg["ego_features"]), trajectory_steps=int(model_cfg["trajectory_steps"]),
+        control_sequence_steps=int(model_cfg["control_sequence_steps"]),
         camera_history_length=int(view["camera_history_length"]),
         ego_history_length=int(view["ego_history_length"]), batch_size=batch_size,
         max_batches=args.max_batches, behavior_view_root=args.behavior_view,
@@ -378,9 +379,14 @@ def _train_v3(args: argparse.Namespace) -> int:
         model=model, batches=batches, optimizer=optimizer,
         identity=identity,
         loss_weights=LossWeightsV3(
-            float(loss_cfg["trajectory"]), float(loss_cfg["speed_profile"]),
-            float(loss_cfg["current_control"]), float(loss_cfg["behavior"]),
-            float(loss_cfg["behavior_side"]), behavior_weights, side_weights,
+            trajectory=float(loss_cfg["trajectory"]),
+            speed_profile=float(loss_cfg["speed_profile"]),
+            current_control=float(loss_cfg["current_control"]),
+            behavior=float(loss_cfg["behavior"]),
+            behavior_side=float(loss_cfg["behavior_side"]),
+            behavior_class_weights=behavior_weights,
+            behavior_side_class_weights=side_weights,
+            control_sequence=float(loss_cfg["control_sequence"]),
         ),
     )
     checkpoint = output / "last.pt"
@@ -399,7 +405,8 @@ def _train_v3(args: argparse.Namespace) -> int:
                 "checkpoint_sha256": _sha256(checkpoint),
                 "contract_hash": contract_hash,
                 "capabilities": [
-                    "trajectory", "speed_profile", "current_control", "behavior", "behavior_side",
+                    "trajectory", "speed_profile", "current_control", "control_sequence",
+                    "behavior", "behavior_side",
                 ],
                 "model_kwargs": full_control_model_kwargs_v3(config),
             },
