@@ -53,6 +53,7 @@ from aic_transfuser_lite.runtime.full_control_gate import (
     FullControlReadiness,
     authority_change_allowed,
     choose_full_control_or_same_trajectory_fallback,
+    previous_nominal_command_history,
 )
 from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3, sha256_file_v3
 from aic_transfuser_lite.runtime.residual_control import ExternalControllerCommand
@@ -253,7 +254,7 @@ class InferenceNodeV3(Node):
         self.full_control_limits = None
         self.full_control_calibration = None
         self.consistency_thresholds = None
-        self.previous_nominal_acceleration_mps2 = 0.0
+        self.previous_nominal_command: ExternalControllerCommand | None = None
         if self.runtime_profile is RuntimeProfile.FULL_CONTROL:
             calibration_path = Path(
                 str(self.get_parameter("calibration_artifact_path").value)
@@ -684,10 +685,15 @@ class InferenceNodeV3(Node):
             raise ValueError("full-control sequence must be [1,1,H,3]")
         camera_stamp = strict_message_stamp_to_seconds(image)
         now_sec = self.get_clock().now().nanoseconds * 1e-9
+        previous_acceleration_mps2 = (
+            0.0
+            if self.previous_nominal_command is None
+            else self.previous_nominal_command.acceleration_mps2
+        )
         previous = PreviousControlState(
             steering_rad=float(steering.steering_tire_angle),
             speed_mps=float(velocity.longitudinal_velocity),
-            acceleration_mps2=self.previous_nominal_acceleration_mps2,
+            acceleration_mps2=previous_acceleration_mps2,
         )
         projected = project_model_control_sequence(
             sequence_values[0, 0],
@@ -708,9 +714,9 @@ class InferenceNodeV3(Node):
             wheelbase_m=float(self.get_parameter("wheelbase_m").value),
             initial=RolloutInitialState(
                 actual_steering_rad=float(steering.steering_tire_angle),
-                actual_acceleration_mps2=self.previous_nominal_acceleration_mps2,
+                actual_acceleration_mps2=previous_acceleration_mps2,
                 longitudinal_mode=(
-                    "brake" if self.previous_nominal_acceleration_mps2 < -0.1 else "drive"
+                    "brake" if previous_acceleration_mps2 < -0.1 else "drive"
                 ),
             ),
         )
@@ -753,7 +759,7 @@ class InferenceNodeV3(Node):
         message.longitudinal.speed = decision.command.speed_mps
         message.longitudinal.acceleration = decision.command.acceleration_mps2
         self.full_control_pub.publish(message)
-        self.previous_nominal_acceleration_mps2 = decision.command.acceleration_mps2
+        self.previous_nominal_command = decision.command
         reasons = ",".join(decision.consistency_reasons) or "consistent"
         self.status_pub.publish(String(data=f"full_control_published:{decision.source}:{reasons}"))
 
@@ -826,12 +832,19 @@ class InferenceNodeV3(Node):
             requested.add("control_sequence")
         if self.behavior_enabled:
             requested.update({"behavior", "behavior_side"})
+        command_values, command_valid = previous_nominal_command_history(
+            self.previous_nominal_command
+        )
         return ModelBatchV3(
             image=image_tensor[None, None], image_mask=torch.ones(1, 1, dtype=torch.bool, device=self.device),
             lidar=lidar[None, None], lidar_mask=torch.ones(1, 1, dtype=torch.bool, device=self.device),
             ego=ego[None, None], ego_feature_mask=torch.ones(1, 1, 4, dtype=torch.bool, device=self.device),
-            command_history=torch.zeros(1, 1, 3, device=self.device),
-            command_mask=torch.zeros(1, 1, dtype=torch.bool, device=self.device),
+            command_history=torch.tensor(
+                command_values, dtype=torch.float32, device=self.device
+            )[None, None],
+            command_mask=torch.tensor(
+                [[command_valid]], dtype=torch.bool, device=self.device
+            ),
             sensor_dt_sec=dt, requested_outputs=frozenset(requested),
         )
 

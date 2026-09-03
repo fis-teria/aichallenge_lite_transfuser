@@ -10,6 +10,7 @@ from aic_transfuser_lite.runtime.full_control_gate import (
     FullControlReadiness,
     authority_change_allowed,
     choose_full_control_or_same_trajectory_fallback,
+    previous_nominal_command_history,
 )
 from aic_transfuser_lite.runtime.residual_control import ExternalControllerCommand
 from aic_transfuser_lite.runtime.rollout_consistency import ConsistencyMetrics
@@ -118,3 +119,27 @@ def test_authority_changes_require_inactive_or_stopped_state() -> None:
         ControlAuthorityMode.SHADOW, ControlAuthorityMode.FULL_CONTROL,
         lifecycle_inactive=True, longitudinal_speed_mps=3.0,
     )
+
+
+def test_previous_nominal_command_is_fed_to_next_receding_horizon() -> None:
+    values, valid = previous_nominal_command_history(
+        ExternalControllerCommand(0.1, 0.8, 0.4)
+    )
+    assert values == (0.1, 0.8, 0.4)
+    assert valid
+    assert previous_nominal_command_history(None) == ((0.0, 0.0, 0.0), False)
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        ExternalControllerCommand(float("nan"), 0.8, 0.0),
+        ExternalControllerCommand(0.0, -0.1, 0.0),
+        ExternalControllerCommand(0.0, 0.8, float("inf")),
+    ],
+)
+def test_invalid_previous_nominal_command_is_rejected(
+    command: ExternalControllerCommand,
+) -> None:
+    with pytest.raises(ValueError, match="previous nominal"):
+        previous_nominal_command_history(command)

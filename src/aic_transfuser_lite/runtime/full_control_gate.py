@@ -63,6 +63,25 @@ class FullControlDecision:
     requires_safety_supervisor: bool = True
 
 
+def previous_nominal_command_history(
+    previous: ExternalControllerCommand | None,
+) -> tuple[tuple[float, float, float], bool]:
+    """Encode the last issued nominal command for the next receding horizon."""
+
+    if previous is None:
+        return (0.0, 0.0, 0.0), False
+    values = (
+        previous.steering_rad,
+        previous.speed_mps,
+        previous.acceleration_mps2,
+    )
+    if not all(math.isfinite(value) for value in values):
+        raise ValueError("previous nominal command must be finite")
+    if previous.speed_mps < 0.0:
+        raise ValueError("previous nominal speed must be non-negative")
+    return values, True
+
+
 def authority_change_allowed(
     current: ControlAuthorityMode,
     target: ControlAuthorityMode,
