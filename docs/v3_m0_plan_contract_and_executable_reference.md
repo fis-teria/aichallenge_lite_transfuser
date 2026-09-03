@@ -40,7 +40,8 @@ horizon, calibration uncertainty, and track clearance.
 `build_executable_reference_v3` performs these pure transformations:
 
 1. validate shape, units, finite values, time order, frame, and Stop Probability;
-2. require the initial waypoint to be ahead of ego and the path to have length;
+2. trim only leading non-forward points contained within a 0.05 m radius of
+   ego when at least two forward points remain, then require path length;
 3. convert the trajectory polyline to cumulative arc length;
 4. estimate discrete absolute curvature;
 5. apply ODD, curvature, and optional upstream safety speed caps;
@@ -51,6 +52,11 @@ The builder does not apply a hidden launch-speed floor. A non-zero path whose
 trapezoidal speed is below `minimum_retime_speed_mps` returns a STOP decision with
 `non_executable_speed`. Invalid plan data and an asserted model stop also return a
 structured STOP decision and never yield a controller reference.
+
+The bounded trim is an executable-reference normalization, not a Safety bypass.
+It is reported as `trimmed_initial_nonforward_noise`. A leading point outside
+the configured radius, no later forward point, or fewer than two retained points
+still returns `initial_waypoint_not_forward` and STOP.
 
 ## Shadow runtime diagnostic
 

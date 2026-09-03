@@ -74,6 +74,7 @@ class ExecutableReferenceConfigV3:
     safety_speed_cap_mps: float | None = None
     require_stop_probability: bool = False
     minimum_initial_forward_m: float = 1e-3
+    maximum_initial_noise_radius_m: float = 0.05
     minimum_path_length_m: float = 1e-3
     minimum_retime_speed_mps: float = 1e-3
 
@@ -82,6 +83,7 @@ class ExecutableReferenceConfigV3:
             self.odd_speed_cap_mps,
             self.max_lateral_acceleration_mps2,
             self.minimum_initial_forward_m,
+            self.maximum_initial_noise_radius_m,
             self.minimum_path_length_m,
             self.minimum_retime_speed_mps,
         )
@@ -242,14 +244,32 @@ def build_executable_reference_v3(
         return result
 
     trajectory = np.asarray(plan.trajectory_xy_m, dtype=np.float64)
+    predicted_speed = np.asarray(plan.speed_profile_mps, dtype=np.float64)
+    source_times = np.asarray(plan.waypoint_times_sec, dtype=np.float64)
+    transformations: list[str] = []
     if float(trajectory[0, 0]) <= config.minimum_initial_forward_m:
-        result = ExecutableReferenceDecisionV3(
-            reference=None,
-            stop_required=True,
-            reasons=("initial_waypoint_not_forward",),
+        forward_indexes = np.flatnonzero(
+            trajectory[:, 0] > config.minimum_initial_forward_m
         )
-        result.validate()
-        return result
+        trim_count = int(forward_indexes[0]) if len(forward_indexes) else len(trajectory)
+        leading_radius = np.linalg.norm(trajectory[:trim_count], axis=1)
+        recoverable = (
+            trim_count > 0
+            and len(trajectory) - trim_count >= 2
+            and bool((leading_radius <= config.maximum_initial_noise_radius_m).all())
+        )
+        if not recoverable:
+            result = ExecutableReferenceDecisionV3(
+                reference=None,
+                stop_required=True,
+                reasons=("initial_waypoint_not_forward",),
+            )
+            result.validate()
+            return result
+        trajectory = trajectory[trim_count:]
+        predicted_speed = predicted_speed[trim_count:]
+        source_times = source_times[trim_count:]
+        transformations.append("trimmed_initial_nonforward_noise")
 
     segment_length, arc_length = polyline_arc_length_m(trajectory)
     if float(arc_length[-1]) < config.minimum_path_length_m:
@@ -268,8 +288,6 @@ def build_executable_reference_v3(
         config.max_lateral_acceleration_mps2 / curvature[curved]
     )
     cap = np.minimum(curvature_speed_cap, config.odd_speed_cap_mps)
-    transformations: list[str] = []
-    predicted_speed = np.asarray(plan.speed_profile_mps, dtype=np.float64)
     if bool((predicted_speed > config.odd_speed_cap_mps).any()):
         transformations.append("odd_speed_cap")
     if bool((curvature_speed_cap < np.minimum(predicted_speed, config.odd_speed_cap_mps)).any()):
@@ -282,7 +300,6 @@ def build_executable_reference_v3(
     if plan.stop_probability is None:
         transformations.append("stop_probability_unavailable")
 
-    source_times = np.asarray(plan.waypoint_times_sec, dtype=np.float64)
     source_step_times = np.diff(np.concatenate(([0.0], source_times)))
     executable_step_times = np.empty(len(trajectory), dtype=np.float64)
     previous_speed = current_speed

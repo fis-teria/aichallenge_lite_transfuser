@@ -48,6 +48,11 @@ export PYTHONPATH=/work/src:${PYTHONPATH}
 The analyzer reports launch latency, measured maximum/final speed, commanded
 speed and acceleration bounds, preflight ratio, controller faults, Safety
 states, displacement, signed yaw-rate coverage, and collision evidence state.
+It also compares 1.0 s future odometry in the observation-time ego frame with
+both the raw fixed-time Trajectory Head and the speed-capped, arc-length-retimed
+Executable Reference. These are separate metrics: M3 controller tracking is
+judged against the reference that was actually executed; the raw result remains
+visible as Head-consistency evidence.
 
 ## M3 gates
 
@@ -72,3 +77,29 @@ to the time preview. The two pre-change Graneple trials used approximately
 0.37 m lookahead at 0.75 m/s and each stopped after only 6.6--6.7 m. They are
 diagnostic evidence, not M3 passes. Any post-change result must use a new commit
 and artifact identity.
+
+## Graneple evidence before bounded origin normalization
+
+Commit `7a856818718878156347bab158b14d988af5f1df` was run on the designated
+Graneple environment. These artifacts are diagnostic and do not pass M3:
+
+- `m3_lookahead_trial1_7a85681`: 37.39 s, 24.36 m displacement, launch in
+  1.92 s, maximum measured speed 0.7345 m/s, Safety `normal` 745/745, and
+  Executable Reference tracking p95 0.0713 m. It contained straight samples
+  only.
+- `m3_curve_trial2_7a85681`: 92.23 s, 29.72 m displacement, launch in 2.06 s,
+  maximum measured speed 0.7484 m/s, right-turn samples 93, and Executable
+  Reference tracking p95 0.0804 m for matched references. It then produced
+  `initial_waypoint_not_forward` for 427 frames and stopped.
+
+Inspection of that stop episode found a leading point only 4--9 mm behind ego,
+followed by forward points at 47--71 mm and endpoints 0.65--1.16 m ahead. The
+Executable Reference therefore performs the bounded 0.05 m leading-noise trim
+documented in `v3_m0_plan_contract_and_executable_reference.md`; larger or
+nonrecoverable reverse paths remain fail-closed.
+
+The installed AWSIM graph exposed no publisher for
+`/awsim/ground_truth/on_collision` in either run. Consequently collision absence
+is **unverified**, even though no collision message was recorded. A new immutable
+commit and independent trials are required after origin normalization. M4 is
+still blocked.

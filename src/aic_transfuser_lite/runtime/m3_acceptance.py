@@ -25,6 +25,156 @@ class TimedPlanDiagnosticV3:
     preflight_reasons: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class TimedPose2DV3:
+    """Planar pose in the map frame at a ROS timestamp (m, rad, s)."""
+
+    time_sec: float
+    x_m: float
+    y_m: float
+    yaw_rad: float
+
+
+@dataclass(frozen=True)
+class TimedTrajectoryPredictionV3:
+    """Trajectory Head output expressed in the observation-time ego frame."""
+
+    observation_time_sec: float
+    waypoint_times_sec: tuple[float, ...]
+    trajectory_xy_m: tuple[tuple[float, float], ...]
+
+
+def _percentile(values: Sequence[float], percentile: float) -> float | None:
+    if not values:
+        return None
+    ordered = sorted(float(value) for value in values)
+    rank = (len(ordered) - 1) * percentile
+    lower = int(math.floor(rank))
+    upper = int(math.ceil(rank))
+    if lower == upper:
+        return ordered[lower]
+    fraction = rank - lower
+    return ordered[lower] * (1.0 - fraction) + ordered[upper] * fraction
+
+
+def _interpolate_pose(
+    poses: Sequence[TimedPose2DV3], target_time_sec: float
+) -> TimedPose2DV3 | None:
+    if not poses or target_time_sec < poses[0].time_sec or target_time_sec > poses[-1].time_sec:
+        return None
+    for index, right in enumerate(poses):
+        if right.time_sec < target_time_sec:
+            continue
+        if index == 0 or math.isclose(right.time_sec, target_time_sec, abs_tol=1e-9):
+            return right
+        left = poses[index - 1]
+        width = right.time_sec - left.time_sec
+        if width <= 0.0:
+            return right
+        fraction = (target_time_sec - left.time_sec) / width
+        yaw_delta = math.atan2(
+            math.sin(right.yaw_rad - left.yaw_rad),
+            math.cos(right.yaw_rad - left.yaw_rad),
+        )
+        return TimedPose2DV3(
+            time_sec=target_time_sec,
+            x_m=left.x_m + fraction * (right.x_m - left.x_m),
+            y_m=left.y_m + fraction * (right.y_m - left.y_m),
+            yaw_rad=left.yaw_rad + fraction * yaw_delta,
+        )
+    return None
+
+
+def summarize_trajectory_tracking_v3(
+    *,
+    predictions: Sequence[TimedTrajectoryPredictionV3],
+    poses: Sequence[TimedPose2DV3],
+    horizon_sec: float = 1.0,
+) -> dict[str, object]:
+    """Compare a fixed-horizon Trajectory Head point with future odometry.
+
+    Predicted points and the measured displacement are both expressed in the
+    ego frame at ``observation_time_sec``.  Records without bracketing odometry
+    or without the requested horizon are excluded and reported as coverage.
+    """
+
+    if not math.isfinite(horizon_sec) or horizon_sec <= 0.0:
+        raise ValueError("tracking horizon_sec must be finite and positive")
+    previous_pose_time = -math.inf
+    for pose in poses:
+        values = (pose.time_sec, pose.x_m, pose.y_m, pose.yaw_rad)
+        if not all(math.isfinite(value) for value in values):
+            raise ValueError("tracking poses must be finite")
+        if pose.time_sec < previous_pose_time:
+            raise ValueError("tracking poses must be time ordered")
+        previous_pose_time = pose.time_sec
+
+    longitudinal_errors: list[float] = []
+    lateral_errors: list[float] = []
+    euclidean_errors: list[float] = []
+    for prediction in predictions:
+        if not math.isfinite(prediction.observation_time_sec):
+            raise ValueError("prediction observation time must be finite")
+        times = prediction.waypoint_times_sec
+        points = prediction.trajectory_xy_m
+        if len(times) != len(points) or len(times) < 2:
+            raise ValueError("prediction times and points must have equal length >= 2")
+        if any(not math.isfinite(value) for value in times):
+            raise ValueError("prediction waypoint times must be finite")
+        if any(right <= left for left, right in zip(times, times[1:])):
+            raise ValueError("prediction waypoint times must be strictly increasing")
+        if any(
+            len(point) != 2 or not all(math.isfinite(value) for value in point)
+            for point in points
+        ):
+            raise ValueError("prediction trajectory points must be finite xy pairs")
+        if horizon_sec < times[0] or horizon_sec > times[-1]:
+            continue
+        right_index = next(index for index, value in enumerate(times) if value >= horizon_sec)
+        if right_index == 0:
+            predicted_x, predicted_y = points[0]
+        else:
+            left_time = times[right_index - 1]
+            right_time = times[right_index]
+            fraction = (horizon_sec - left_time) / (right_time - left_time)
+            predicted_x = points[right_index - 1][0] + fraction * (
+                points[right_index][0] - points[right_index - 1][0]
+            )
+            predicted_y = points[right_index - 1][1] + fraction * (
+                points[right_index][1] - points[right_index - 1][1]
+            )
+        start = _interpolate_pose(poses, prediction.observation_time_sec)
+        end = _interpolate_pose(poses, prediction.observation_time_sec + horizon_sec)
+        if start is None or end is None:
+            continue
+        delta_x = end.x_m - start.x_m
+        delta_y = end.y_m - start.y_m
+        cosine = math.cos(start.yaw_rad)
+        sine = math.sin(start.yaw_rad)
+        actual_x = cosine * delta_x + sine * delta_y
+        actual_y = -sine * delta_x + cosine * delta_y
+        longitudinal = actual_x - predicted_x
+        lateral = actual_y - predicted_y
+        longitudinal_errors.append(abs(longitudinal))
+        lateral_errors.append(abs(lateral))
+        euclidean_errors.append(math.hypot(longitudinal, lateral))
+
+    total = len(predictions)
+    matched = len(euclidean_errors)
+    return {
+        "tracking_horizon_sec": horizon_sec,
+        "tracking_prediction_count": total,
+        "tracking_matched_count": matched,
+        "tracking_coverage_ratio": None if total == 0 else matched / total,
+        "tracking_longitudinal_abs_error_p50_m": _percentile(longitudinal_errors, 0.50),
+        "tracking_longitudinal_abs_error_p95_m": _percentile(longitudinal_errors, 0.95),
+        "tracking_lateral_abs_error_p50_m": _percentile(lateral_errors, 0.50),
+        "tracking_lateral_abs_error_p95_m": _percentile(lateral_errors, 0.95),
+        "tracking_euclidean_error_p50_m": _percentile(euclidean_errors, 0.50),
+        "tracking_euclidean_error_p95_m": _percentile(euclidean_errors, 0.95),
+    }
+
+
 def _validate_timed_scalars(samples: Sequence[TimedScalarV3]) -> None:
     previous = -math.inf
     for sample in samples:

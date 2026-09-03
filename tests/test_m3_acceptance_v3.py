@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import math
+
 import pytest
 
 from aic_transfuser_lite.runtime.m3_acceptance import (
     TimedPlanDiagnosticV3,
+    TimedPose2DV3,
     TimedScalarV3,
+    TimedTrajectoryPredictionV3,
     summarize_m3_interval_v3,
+    summarize_trajectory_tracking_v3,
 )
 
 
@@ -103,3 +108,72 @@ def test_m3_summary_reports_launch_timeout_cap_and_fault() -> None:
 def test_m3_summary_rejects_invalid_or_missing_evidence(overrides) -> None:
     with pytest.raises(ValueError):
         _summary(**overrides)
+
+
+def test_tracking_compares_prediction_in_observation_ego_frame() -> None:
+    result = summarize_trajectory_tracking_v3(
+        predictions=[TimedTrajectoryPredictionV3(
+            observation_time_sec=1.0,
+            waypoint_times_sec=(0.5, 1.0, 1.5),
+            trajectory_xy_m=((0.5, 0.0), (1.0, 0.0), (1.5, 0.0)),
+        )],
+        poses=[
+            TimedPose2DV3(1.0, 10.0, 20.0, math.pi / 2.0),
+            TimedPose2DV3(2.0, 10.0, 21.0, math.pi / 2.0),
+        ],
+        horizon_sec=1.0,
+    )
+    assert result["tracking_matched_count"] == 1
+    assert result["tracking_coverage_ratio"] == pytest.approx(1.0)
+    assert result["tracking_euclidean_error_p95_m"] == pytest.approx(0.0)
+
+
+def test_tracking_interpolates_pose_and_prediction() -> None:
+    result = summarize_trajectory_tracking_v3(
+        predictions=[TimedTrajectoryPredictionV3(
+            observation_time_sec=0.5,
+            waypoint_times_sec=(0.5, 1.5),
+            trajectory_xy_m=((0.5, 0.0), (1.5, 0.0)),
+        )],
+        poses=[
+            TimedPose2DV3(0.0, 0.0, 0.0, 0.0),
+            TimedPose2DV3(1.0, 1.0, 0.0, 0.0),
+            TimedPose2DV3(2.0, 2.0, 0.0, 0.0),
+        ],
+    )
+    assert result["tracking_euclidean_error_p50_m"] == pytest.approx(0.0)
+
+
+def test_tracking_reports_unmatched_future_pose_as_coverage_gap() -> None:
+    result = summarize_trajectory_tracking_v3(
+        predictions=[TimedTrajectoryPredictionV3(
+            observation_time_sec=2.0,
+            waypoint_times_sec=(0.5, 1.0),
+            trajectory_xy_m=((0.5, 0.0), (1.0, 0.0)),
+        )],
+        poses=[TimedPose2DV3(2.0, 0.0, 0.0, 0.0)],
+    )
+    assert result["tracking_matched_count"] == 0
+    assert result["tracking_coverage_ratio"] == 0.0
+    assert result["tracking_euclidean_error_p95_m"] is None
+
+
+@pytest.mark.parametrize(
+    "predictions,poses,horizon",
+    [
+        ([], [], 0.0),
+        ([TimedTrajectoryPredictionV3(0.0, (1.0,), ((1.0, 0.0),))], [], 1.0),
+        ([TimedTrajectoryPredictionV3(0.0, (1.0, 0.5), ((1.0, 0.0), (0.5, 0.0)))], [], 1.0),
+        ([], [TimedPose2DV3(1.0, float("nan"), 0.0, 0.0)], 1.0),
+        ([], [TimedPose2DV3(2.0, 0.0, 0.0, 0.0), TimedPose2DV3(1.0, 0.0, 0.0, 0.0)], 1.0),
+    ],
+)
+def test_tracking_rejects_invalid_timing_shape_and_pose(
+    predictions, poses, horizon
+) -> None:
+    with pytest.raises(ValueError):
+        summarize_trajectory_tracking_v3(
+            predictions=predictions,
+            poses=poses,
+            horizon_sec=horizon,
+        )
