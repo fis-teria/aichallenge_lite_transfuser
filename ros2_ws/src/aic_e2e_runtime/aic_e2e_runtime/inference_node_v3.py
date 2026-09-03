@@ -134,6 +134,7 @@ class InferenceNodeV3(Node):
             "consistency_max_heading_error_rad": 0.7,
             "consistency_max_speed_error_mps": 1.5,
             "consistency_max_endpoint_error_m": 0.75,
+            "consistency_min_heading_speed_mps": 0.2,
         }
         for name, default in parameters.items():
             self.declare_parameter(name, default)
@@ -308,6 +309,9 @@ class InferenceNodeV3(Node):
                 max_heading_error_rad=float(self.get_parameter("consistency_max_heading_error_rad").value),
                 max_speed_error_mps=float(self.get_parameter("consistency_max_speed_error_mps").value),
                 max_endpoint_error_m=float(self.get_parameter("consistency_max_endpoint_error_m").value),
+                min_heading_speed_mps=float(
+                    self.get_parameter("consistency_min_heading_speed_mps").value
+                ),
             )
         self.timeout_sec = float(self.get_parameter("input_timeout_sec").value)
         self.max_skew_sec = float(self.get_parameter("max_sensor_skew_ms").value) / 1000.0
@@ -721,18 +725,20 @@ class InferenceNodeV3(Node):
             rollout,
             thresholds=self.consistency_thresholds,
         )
-        fallback_result = self._external_control_from_trajectory(
-            trajectory_xy_m,
-            speed_profile_mps,
-            current_longitudinal_speed_mps=float(velocity.longitudinal_velocity),
-            yaw_rate_rps=float(velocity.heading_rate),
-            actual_steering_rad=float(steering.steering_tire_angle),
-        )
-        fallback = ExternalControllerCommand(
-            fallback_result.control.command.steering_rad,
-            fallback_result.control.commanded_speed_mps,
-            fallback_result.control.command.acceleration_mps2,
-        )
+        fallback = None
+        if not consistency.consistent:
+            fallback_result = self._external_control_from_trajectory(
+                trajectory_xy_m,
+                speed_profile_mps,
+                current_longitudinal_speed_mps=float(velocity.longitudinal_velocity),
+                yaw_rate_rps=float(velocity.heading_rate),
+                actual_steering_rad=float(steering.steering_tire_angle),
+            )
+            fallback = ExternalControllerCommand(
+                fallback_result.control.command.steering_rad,
+                fallback_result.control.commanded_speed_mps,
+                fallback_result.control.command.acceleration_mps2,
+            )
         decision = choose_full_control_or_same_trajectory_fallback(
             projected,
             consistency,

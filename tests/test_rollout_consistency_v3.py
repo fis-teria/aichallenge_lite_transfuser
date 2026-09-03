@@ -195,6 +195,32 @@ def test_inconsistency_returns_structured_metric_reasons() -> None:
     )
 
 
+def test_stationary_waypoint_jitter_does_not_invent_heading_failure() -> None:
+    trajectory = np.array(
+        [[-0.02, -0.01], [-0.08, 0.01], [-0.04, 0.05]], dtype=np.float64
+    )
+    result = evaluate_rollout_consistency(
+        trajectory,
+        np.zeros(3),
+        _rollout(trajectory, np.zeros(3), np.zeros(3)),
+        thresholds=_thresholds(),
+    )
+    assert result.consistent
+    assert result.max_heading_error_rad == 0.0
+
+
+def test_moving_backward_trajectory_still_fails_heading_gate() -> None:
+    trajectory = np.array([[-0.2, 0.0], [-0.4, 0.0], [-0.6, 0.0]])
+    result = evaluate_rollout_consistency(
+        trajectory,
+        np.ones(3),
+        _rollout(trajectory, np.zeros(3), np.ones(3)),
+        thresholds=_thresholds(),
+    )
+    assert not result.consistent
+    assert result.reasons == ("max_heading_error_rad>0.200000",)
+
+
 @pytest.mark.parametrize(
     ("trajectory", "speeds", "message"),
     [

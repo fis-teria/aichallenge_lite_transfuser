@@ -43,6 +43,7 @@ class ConsistencyThresholds:
     max_heading_error_rad: float
     max_speed_error_mps: float
     max_endpoint_error_m: float
+    min_heading_speed_mps: float = 0.2
 
     def validate(self) -> None:
         values = (
@@ -54,6 +55,8 @@ class ConsistencyThresholds:
         )
         if not all(math.isfinite(value) and value > 0.0 for value in values):
             raise ValueError("consistency thresholds must be finite and positive")
+        if not math.isfinite(self.min_heading_speed_mps) or self.min_heading_speed_mps < 0.0:
+            raise ValueError("minimum heading speed must be finite and non-negative")
 
 
 @dataclass(frozen=True)
@@ -321,12 +324,21 @@ def evaluate_rollout_consistency(
     heading_error = np.abs(
         _wrapped_angle_difference(rollout.heading_rad, reference_heading)
     )
+    # A path tangent is not observable while the trajectory speed is near zero:
+    # centimetre-scale waypoint noise can otherwise look like a 180-degree turn.
+    # Position, lateral, speed, and endpoint gates remain active at every step.
+    heading_observable = model_speeds >= thresholds.min_heading_speed_mps
+    max_heading_error = (
+        float(np.max(heading_error[heading_observable]))
+        if bool(heading_observable.any())
+        else 0.0
+    )
     speed_error = np.abs(rollout.speed_mps - model_speeds)
     endpoint_error = float(position_error[-1])
     metrics = {
         "max_position_error_m": float(np.max(position_error)),
         "max_lateral_error_m": float(np.max(lateral_error)),
-        "max_heading_error_rad": float(np.max(heading_error)),
+        "max_heading_error_rad": max_heading_error,
         "max_speed_error_mps": float(np.max(speed_error)),
         "endpoint_error_m": endpoint_error,
     }

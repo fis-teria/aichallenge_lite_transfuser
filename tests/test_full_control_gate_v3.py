@@ -51,7 +51,7 @@ def _readiness(**changes: object) -> FullControlReadiness:
 
 def test_limited_odd_model_command_is_speed_capped_and_safety_owned() -> None:
     result = choose_full_control_or_same_trajectory_fallback(
-        _sequence(), _consistency(True), ExternalControllerCommand(0.0, 0.5, 0.0),
+        _sequence(), _consistency(True), None,
         readiness=_readiness(), selected_trajectory_id="candidate0", fallback_trajectory_id="candidate0",
     )
     assert result.source == "model_control_sequence"
@@ -68,6 +68,14 @@ def test_inconsistency_uses_exact_same_trajectory_fallback() -> None:
     assert result.command is fallback
     assert result.source == "same_trajectory_external_fallback"
     assert result.consistency_reasons
+
+
+def test_inconsistency_without_usable_same_trajectory_fallback_fails_closed() -> None:
+    with pytest.raises(ValueError, match="requires a same-trajectory fallback"):
+        choose_full_control_or_same_trajectory_fallback(
+            _sequence(), _consistency(False), None, readiness=_readiness(),
+            selected_trajectory_id="candidate0", fallback_trajectory_id="candidate0",
+        )
 
 
 @pytest.mark.parametrize(

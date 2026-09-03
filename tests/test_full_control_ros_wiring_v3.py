@@ -25,6 +25,7 @@ def test_full_control_launch_keeps_safety_as_only_final_publisher() -> None:
     assert params["runtime_profile"] == "full_control"
     assert params["max_speed_mps"] == 0.8
     assert params["trial_speed_cap_mps"] == 0.8
+    assert params["consistency_min_heading_speed_mps"] == 0.2
     assert params["safety_supervisor_ready"] is True
 
 

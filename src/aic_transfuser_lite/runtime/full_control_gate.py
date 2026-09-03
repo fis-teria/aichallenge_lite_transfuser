@@ -85,7 +85,7 @@ def authority_change_allowed(
 def choose_full_control_or_same_trajectory_fallback(
     sequence: ProjectedControlSequence,
     consistency: ConsistencyMetrics,
-    fallback: ExternalControllerCommand,
+    fallback: ExternalControllerCommand | None,
     *,
     readiness: FullControlReadiness,
     selected_trajectory_id: str,
@@ -94,15 +94,8 @@ def choose_full_control_or_same_trajectory_fallback(
     """Use model control only when consistent, otherwise the same-trajectory controller."""
 
     readiness.validate()
-    if not selected_trajectory_id or fallback_trajectory_id != selected_trajectory_id:
-        raise ValueError("full-control fallback must use the same selected trajectory")
-    fallback_values = (
-        fallback.steering_rad,
-        fallback.speed_mps,
-        fallback.acceleration_mps2,
-    )
-    if not all(math.isfinite(value) for value in fallback_values) or fallback.speed_mps < 0.0:
-        raise ValueError("full-control fallback command is invalid")
+    if not selected_trajectory_id:
+        raise ValueError("full-control selected trajectory ID must not be empty")
     if sequence.commands.ndim != 2 or sequence.commands.shape[1] != 3:
         raise ValueError("validated model sequence must be [H,3]")
     if consistency.consistent:
@@ -116,6 +109,17 @@ def choose_full_control_or_same_trajectory_fallback(
             selected_trajectory_id=selected_trajectory_id,
             consistency_reasons=(),
         )
+    if fallback is None:
+        raise ValueError("inconsistent model sequence requires a same-trajectory fallback")
+    if fallback_trajectory_id != selected_trajectory_id:
+        raise ValueError("full-control fallback must use the same selected trajectory")
+    fallback_values = (
+        fallback.steering_rad,
+        fallback.speed_mps,
+        fallback.acceleration_mps2,
+    )
+    if not all(math.isfinite(value) for value in fallback_values) or fallback.speed_mps < 0.0:
+        raise ValueError("full-control fallback command is invalid")
     fallback_command = fallback
     if (
         readiness.trial_speed_cap_mps is not None
