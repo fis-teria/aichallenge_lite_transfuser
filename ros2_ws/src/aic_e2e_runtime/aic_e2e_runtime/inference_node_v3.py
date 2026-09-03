@@ -41,7 +41,27 @@ from aic_transfuser_lite.control.shadow_trajectory_controller import (
 )
 from aic_transfuser_lite.data.image_preprocess import preprocess_image
 from aic_transfuser_lite.data.normalization import normalize_lidar_range_and_validity
-from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3
+from aic_transfuser_lite.data.calibration.artifact import load_calibration_artifact
+from aic_transfuser_lite.runtime.control_projection import (
+    ControlLimits,
+    PreviousControlState,
+    ProjectionTiming,
+    project_model_control_sequence,
+)
+from aic_transfuser_lite.runtime.full_control_gate import (
+    ControlAuthorityMode,
+    FullControlReadiness,
+    authority_change_allowed,
+    choose_full_control_or_same_trajectory_fallback,
+)
+from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3, sha256_file_v3
+from aic_transfuser_lite.runtime.residual_control import ExternalControllerCommand
+from aic_transfuser_lite.runtime.rollout_consistency import (
+    ConsistencyThresholds,
+    RolloutInitialState,
+    evaluate_rollout_consistency,
+    rollout_actuator_bicycle,
+)
 from aic_transfuser_lite.runtime.behavior_decode_v1 import decode_behavior_logits_v1
 from aic_transfuser_lite.runtime.output_profiles import (
     RuntimeProfile,
@@ -98,6 +118,22 @@ class InferenceNodeV3(Node):
             "speed_kp": 1.0,
             "max_steering_rate_radps": 0.0,
             "control_period_sec": 0.1,
+            "calibration_artifact_path": "",
+            "full_control_deployment_stage": "limited_odd_trial",
+            "full_control_evidence_sha256": "",
+            "full_control_evidence_path": "",
+            "full_control_evidence_passed": False,
+            "safety_supervisor_ready": False,
+            "trial_speed_cap_mps": 0.8,
+            "command_valid_for_sec": 0.2,
+            "max_observation_age_sec": 0.15,
+            "min_jerk_mps3": -8.0,
+            "max_jerk_mps3": 4.0,
+            "consistency_max_position_error_m": 0.75,
+            "consistency_max_lateral_error_m": 0.5,
+            "consistency_max_heading_error_rad": 0.7,
+            "consistency_max_speed_error_mps": 1.5,
+            "consistency_max_endpoint_error_m": 0.75,
         }
         for name, default in parameters.items():
             self.declare_parameter(name, default)
@@ -108,13 +144,17 @@ class InferenceNodeV3(Node):
             RuntimeProfile.TRAJECTORY_ONLY,
             RuntimeProfile.EXTERNAL_CONTROLLER,
             RuntimeProfile.SHADOW_CONTROL,
+            RuntimeProfile.FULL_CONTROL,
         }:
             raise ValueError(
                 "inference_node_v3 supports only trajectory_only, external_controller, "
-                "or shadow_control"
+                "shadow_control, or full_control"
             )
         selected_profile = output_profile(self.runtime_profile)
-        if selected_profile.nominal_control_authority:
+        if (
+            selected_profile.nominal_control_authority
+            and self.runtime_profile is not RuntimeProfile.FULL_CONTROL
+        ):
             raise RuntimeError("V3 trajectory adapter unexpectedly has control authority")
         self.trajectory_frame_id = str(
             self.get_parameter("trajectory_frame_id").value
@@ -138,6 +178,10 @@ class InferenceNodeV3(Node):
             and "current_control" not in self.model_capabilities
         ):
             raise ValueError("shadow_control requires current_control artifact capability")
+        if self.runtime_profile is RuntimeProfile.FULL_CONTROL and not {
+            "trajectory", "control_sequence"
+        }.issubset(self.model_capabilities):
+            raise ValueError("full_control requires trajectory and control_sequence capabilities")
         self.behavior_enabled = "behavior" in loaded.capabilities
         if self.behavior_enabled and "behavior_side" not in loaded.capabilities:
             raise ValueError("behavior runtime capability requires behavior_side")
@@ -160,11 +204,17 @@ class InferenceNodeV3(Node):
                 "lateral_velocity, heading_rate, steering_tire_angle"
             )
         self.controller_config: DelayAwareControllerConfig | None = None
-        if self.runtime_profile is RuntimeProfile.EXTERNAL_CONTROLLER:
+        if self.runtime_profile in {
+            RuntimeProfile.EXTERNAL_CONTROLLER,
+            RuntimeProfile.FULL_CONTROL,
+        }:
             calibration_status = str(
                 self.get_parameter("controller_calibration_status").value
             )
-            if calibration_status != "unverified":
+            if (
+                self.runtime_profile is RuntimeProfile.EXTERNAL_CONTROLLER
+                and calibration_status != "unverified"
+            ):
                 raise ValueError(
                     "external controller shadow requires calibration_status=unverified "
                     "until a verified V3 calibration artifact is implemented"
@@ -198,6 +248,67 @@ class InferenceNodeV3(Node):
                     self.get_parameter("control_period_sec").value
                 ),
             )
+        self.full_control_readiness = None
+        self.full_control_limits = None
+        self.full_control_calibration = None
+        self.consistency_thresholds = None
+        self.previous_nominal_acceleration_mps2 = 0.0
+        if self.runtime_profile is RuntimeProfile.FULL_CONTROL:
+            calibration_path = Path(
+                str(self.get_parameter("calibration_artifact_path").value)
+            ).expanduser()
+            self.full_control_calibration = load_calibration_artifact(calibration_path)
+            stage = str(self.get_parameter("full_control_deployment_stage").value)
+            trial_cap = float(self.get_parameter("trial_speed_cap_mps").value)
+            self.full_control_readiness = FullControlReadiness(
+                capabilities=self.model_capabilities,
+                calibration_state=self.full_control_calibration.promotion.state,
+                deployment_stage=stage,
+                safety_supervisor_ready=bool(
+                    self.get_parameter("safety_supervisor_ready").value
+                ),
+                evidence_sha256=str(
+                    self.get_parameter("full_control_evidence_sha256").value
+                ),
+                evidence_passed=bool(
+                    self.get_parameter("full_control_evidence_passed").value
+                ),
+                trial_speed_cap_mps=trial_cap if stage == "limited_odd_trial" else None,
+            )
+            self.full_control_readiness.validate()
+            evidence_path = Path(
+                str(self.get_parameter("full_control_evidence_path").value)
+            ).expanduser()
+            if sha256_file_v3(evidence_path) != self.full_control_readiness.evidence_sha256:
+                raise ValueError("full-control evidence file SHA-256 mismatch")
+            if not authority_change_allowed(
+                ControlAuthorityMode.SHADOW,
+                ControlAuthorityMode.FULL_CONTROL,
+                lifecycle_inactive=True,
+                longitudinal_speed_mps=0.0,
+            ):
+                raise RuntimeError("full-control authority transition was rejected")
+            self.full_control_limits = ControlLimits(
+                max_abs_steering_rad=float(self.get_parameter("max_steer_rad").value),
+                max_steering_rate_radps=float(
+                    self.get_parameter("max_steering_rate_radps").value
+                ),
+                min_acceleration_mps2=float(self.get_parameter("min_accel_mps2").value),
+                max_acceleration_mps2=float(self.get_parameter("max_accel_mps2").value),
+                min_jerk_mps3=float(self.get_parameter("min_jerk_mps3").value),
+                max_jerk_mps3=float(self.get_parameter("max_jerk_mps3").value),
+                max_speed_mps=trial_cap,
+                dt_sec=float(self.get_parameter("control_period_sec").value),
+                authoritative=True,
+                source=self.full_control_calibration.vehicle_profile_sha256,
+            )
+            self.consistency_thresholds = ConsistencyThresholds(
+                max_position_error_m=float(self.get_parameter("consistency_max_position_error_m").value),
+                max_lateral_error_m=float(self.get_parameter("consistency_max_lateral_error_m").value),
+                max_heading_error_rad=float(self.get_parameter("consistency_max_heading_error_rad").value),
+                max_speed_error_mps=float(self.get_parameter("consistency_max_speed_error_mps").value),
+                max_endpoint_error_m=float(self.get_parameter("consistency_max_endpoint_error_m").value),
+            )
         self.timeout_sec = float(self.get_parameter("input_timeout_sec").value)
         self.max_skew_sec = float(self.get_parameter("max_sensor_skew_ms").value) / 1000.0
         sync_queue_size = int(self.get_parameter("sync_queue_size").value)
@@ -229,6 +340,19 @@ class InferenceNodeV3(Node):
         if self.runtime_profile is RuntimeProfile.SHADOW_CONTROL:
             self.shadow_model_control_pub = self.create_publisher(
                 AckermannControlCommand, "shadow_model_control", 1
+            )
+        self.shadow_model_sequence_pub = None
+        if (
+            self.runtime_profile is RuntimeProfile.SHADOW_CONTROL
+            and "control_sequence" in self.model_capabilities
+        ):
+            self.shadow_model_sequence_pub = self.create_publisher(
+                Float32MultiArray, "shadow_model_control_sequence", 1
+            )
+        self.full_control_pub = None
+        if self.runtime_profile is RuntimeProfile.FULL_CONTROL:
+            self.full_control_pub = self.create_publisher(
+                AckermannControlCommand, "nominal_control_cmd", 1
             )
         self.status_pub = self.create_publisher(String, "runtime_status", 1)
         self.sync_debug_pub = self.create_publisher(
@@ -450,6 +574,32 @@ class InferenceNodeV3(Node):
                     self.status_pub.publish(
                         String(data=f"shadow_model_control_rejected:{error}")
                     )
+            if self.shadow_model_sequence_pub is not None:
+                if output.control_sequence is None:
+                    self.status_pub.publish(String(data="shadow_model_sequence_rejected:absent"))
+                else:
+                    sequence = output.control_sequence.detach().cpu().numpy()
+                    if sequence.shape != (1, 1, self.model.control_sequence_steps, 3):
+                        self.status_pub.publish(
+                            String(data=f"shadow_model_sequence_rejected:shape:{sequence.shape}")
+                        )
+                    elif not np.isfinite(sequence).all():
+                        self.status_pub.publish(
+                            String(data="shadow_model_sequence_rejected:non_finite")
+                        )
+                    else:
+                        self.shadow_model_sequence_pub.publish(
+                            Float32MultiArray(data=sequence[0, 0].reshape(-1).tolist())
+                        )
+            if self.full_control_pub is not None:
+                self._publish_gated_full_control(
+                    output,
+                    publication.trajectory_xy_m,
+                    publication.speed_profile_mps,
+                    image,
+                    velocity,
+                    steering,
+                )
             if self.behavior_enabled:
                 self._publish_behavior(output)
             self.status_pub.publish(String(data="trajectory_published"))
@@ -466,15 +616,12 @@ class InferenceNodeV3(Node):
     ) -> None:
         if self.controller_config is None or self.shadow_control_pub is None:
             raise RuntimeError("external controller shadow is not initialized")
-        trajectory = np.asarray(trajectory_xy_m, dtype=np.float32).reshape(-1, 2)
-        speeds = np.asarray(speed_profile_mps, dtype=np.float32)
-        result = shadow_control_from_trajectory_speed_profile(
-            trajectory,
-            speeds,
+        result = self._external_control_from_trajectory(
+            trajectory_xy_m,
+            speed_profile_mps,
             current_longitudinal_speed_mps=float(velocity.longitudinal_velocity),
             yaw_rate_rps=float(velocity.heading_rate),
             actual_steering_rad=float(steering.steering_tire_angle),
-            config=self.controller_config,
         )
         if result.nominal_control_eligible:
             raise RuntimeError("unverified shadow proposal became authority-eligible")
@@ -485,6 +632,124 @@ class InferenceNodeV3(Node):
         message.lateral.steering_tire_angle = result.control.command.steering_rad
         self.shadow_control_pub.publish(message)
         self.status_pub.publish(String(data="shadow_control_published:unverified"))
+
+    def _external_control_from_trajectory(
+        self,
+        trajectory_xy_m: tuple[float, ...],
+        speed_profile_mps: tuple[float, ...],
+        *,
+        current_longitudinal_speed_mps: float,
+        yaw_rate_rps: float,
+        actual_steering_rad: float,
+    ) -> Any:
+        if self.controller_config is None:
+            raise RuntimeError("same-trajectory fallback controller is not initialized")
+        return shadow_control_from_trajectory_speed_profile(
+            np.asarray(trajectory_xy_m, dtype=np.float32).reshape(-1, 2),
+            np.asarray(speed_profile_mps, dtype=np.float32),
+            current_longitudinal_speed_mps=current_longitudinal_speed_mps,
+            yaw_rate_rps=yaw_rate_rps,
+            actual_steering_rad=actual_steering_rad,
+            config=self.controller_config,
+        )
+
+    def _publish_gated_full_control(
+        self,
+        output: Any,
+        trajectory_xy_m: tuple[float, ...],
+        speed_profile_mps: tuple[float, ...],
+        image: Image,
+        velocity: VelocityReport,
+        steering: SteeringReport,
+    ) -> None:
+        if any(
+            item is None
+            for item in (
+                self.full_control_pub,
+                self.full_control_readiness,
+                self.full_control_limits,
+                self.full_control_calibration,
+                self.consistency_thresholds,
+            )
+        ):
+            raise RuntimeError("full-control runtime is not initialized")
+        if output.control_sequence is None:
+            raise ValueError("full-control model returned no control_sequence")
+        sequence_values = output.control_sequence.detach().cpu().numpy()
+        if sequence_values.ndim != 4 or sequence_values.shape[:2] != (1, 1):
+            raise ValueError("full-control sequence must be [1,1,H,3]")
+        camera_stamp = strict_message_stamp_to_seconds(image)
+        now_sec = self.get_clock().now().nanoseconds * 1e-9
+        previous = PreviousControlState(
+            steering_rad=float(steering.steering_tire_angle),
+            speed_mps=float(velocity.longitudinal_velocity),
+            acceleration_mps2=self.previous_nominal_acceleration_mps2,
+        )
+        projected = project_model_control_sequence(
+            sequence_values[0, 0],
+            previous=previous,
+            limits=self.full_control_limits,
+            timing=ProjectionTiming(
+                observation_stamp_sec=camera_stamp,
+                now_sec=now_sec,
+                valid_for_sec=float(self.get_parameter("command_valid_for_sec").value),
+                max_observation_age_sec=float(
+                    self.get_parameter("max_observation_age_sec").value
+                ),
+            ),
+        )
+        rollout = rollout_actuator_bicycle(
+            projected,
+            calibration=self.full_control_calibration,
+            wheelbase_m=float(self.get_parameter("wheelbase_m").value),
+            initial=RolloutInitialState(
+                actual_steering_rad=float(steering.steering_tire_angle),
+                actual_acceleration_mps2=self.previous_nominal_acceleration_mps2,
+                longitudinal_mode=(
+                    "brake" if self.previous_nominal_acceleration_mps2 < -0.1 else "drive"
+                ),
+            ),
+        )
+        horizon = projected.commands.shape[0]
+        trajectory = np.asarray(trajectory_xy_m, dtype=np.float64).reshape(-1, 2)
+        speeds = np.asarray(speed_profile_mps, dtype=np.float64)
+        if trajectory.shape[0] < horizon:
+            raise ValueError("model trajectory is shorter than control sequence")
+        consistency = evaluate_rollout_consistency(
+            trajectory[:horizon],
+            speeds[:horizon],
+            rollout,
+            thresholds=self.consistency_thresholds,
+        )
+        fallback_result = self._external_control_from_trajectory(
+            trajectory_xy_m,
+            speed_profile_mps,
+            current_longitudinal_speed_mps=float(velocity.longitudinal_velocity),
+            yaw_rate_rps=float(velocity.heading_rate),
+            actual_steering_rad=float(steering.steering_tire_angle),
+        )
+        fallback = ExternalControllerCommand(
+            fallback_result.control.command.steering_rad,
+            fallback_result.control.commanded_speed_mps,
+            fallback_result.control.command.acceleration_mps2,
+        )
+        decision = choose_full_control_or_same_trajectory_fallback(
+            projected,
+            consistency,
+            fallback,
+            readiness=self.full_control_readiness,
+            selected_trajectory_id="candidate0",
+            fallback_trajectory_id="candidate0",
+        )
+        message = AckermannControlCommand()
+        message.stamp = image.header.stamp
+        message.lateral.steering_tire_angle = decision.command.steering_rad
+        message.longitudinal.speed = decision.command.speed_mps
+        message.longitudinal.acceleration = decision.command.acceleration_mps2
+        self.full_control_pub.publish(message)
+        self.previous_nominal_acceleration_mps2 = decision.command.acceleration_mps2
+        reasons = ",".join(decision.consistency_reasons) or "consistent"
+        self.status_pub.publish(String(data=f"full_control_published:{decision.source}:{reasons}"))
 
     def _publish_shadow_model_control(self, current_control: Any, image: Image) -> None:
         if self.shadow_model_control_pub is None:
@@ -544,8 +809,15 @@ class InferenceNodeV3(Node):
             device=self.device,
         )
         requested = {"trajectory", "speed_profile"}
-        if self.runtime_profile is RuntimeProfile.SHADOW_CONTROL:
+        if self.runtime_profile in {RuntimeProfile.SHADOW_CONTROL, RuntimeProfile.FULL_CONTROL}:
             requested.add("current_control")
+        if (
+            self.runtime_profile is RuntimeProfile.SHADOW_CONTROL
+            and "control_sequence" in self.model_capabilities
+        ):
+            requested.add("control_sequence")
+        if self.runtime_profile is RuntimeProfile.FULL_CONTROL:
+            requested.add("control_sequence")
         if self.behavior_enabled:
             requested.update({"behavior", "behavior_side"})
         return ModelBatchV3(

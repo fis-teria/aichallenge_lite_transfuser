@@ -1,0 +1,16 @@
+format: aic_full_control_trial_authorization_v1
+scope:
+  environment: AWSIM
+  host: graneple@192.168.3.10
+  deployment_stage: limited_odd_trial
+  maximum_speed_mps: 0.8
+  route: d1
+requirements:
+  safety_supervisor_final_authority: true
+  same_trajectory_fallback: true
+  rollout_consistency_gate: true
+  rviz_enabled: true
+  start_from_stopped: true
+  abort_on_sensor_timeout: true
+authorization_basis: user_requested_execution_to_m11
+status: approved_for_limited_trial

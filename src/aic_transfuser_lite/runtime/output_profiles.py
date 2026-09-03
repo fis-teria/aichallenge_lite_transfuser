@@ -59,7 +59,7 @@ _PROFILES: Mapping[RuntimeProfile, OutputProfile] = {
     ),
     RuntimeProfile.SHADOW_CONTROL: OutputProfile(
         frozenset({"trajectory", "speed_profile", "current_control"}),
-        _BASE_TOPICS | {"shadow_model_control"},
+        _BASE_TOPICS | {"shadow_model_control", "shadow_model_control_sequence"},
         False,
     ),
     RuntimeProfile.BOUNDED_RESIDUAL: OutputProfile(

@@ -210,3 +210,121 @@ def project_control_sequence(
         dt_sec=limits.dt_sec,
         initial_state=previous,
     )
+
+
+def validate_model_control_sequence(
+    commands: np.ndarray,
+    *,
+    previous: PreviousControlState,
+    limits: ControlLimits,
+    timing: ProjectionTiming,
+) -> ProjectedControlSequence:
+    """Revalidate a model-decoded physical ``[H,3]`` sequence fail-closed."""
+
+    limits.validate_for_full_control()
+    _validate_previous(previous, limits)
+    valid_until_sec = timing.valid_until_sec()
+    values = np.asarray(commands, dtype=np.float64)
+    if values.ndim != 2 or values.shape[0] < 1 or values.shape[1] != 3:
+        raise ValueError(f"model control sequence must be [H,3], got {values.shape}")
+    if not np.isfinite(values).all():
+        raise ValueError("model control sequence must be finite")
+    tolerance = 1e-8
+    if bool((np.abs(values[:, 0]) > limits.max_abs_steering_rad + tolerance).any()):
+        raise ValueError("model steering exceeds authoritative limit")
+    if bool(((values[:, 1] < -tolerance) | (values[:, 1] > limits.max_speed_mps + tolerance)).any()):
+        raise ValueError("model speed exceeds authoritative limit")
+    if bool(
+        (
+            (values[:, 2] < limits.min_acceleration_mps2 - tolerance)
+            | (values[:, 2] > limits.max_acceleration_mps2 + tolerance)
+        ).any()
+    ):
+        raise ValueError("model acceleration exceeds authoritative limit")
+    steering = np.concatenate(([previous.steering_rad], values[:, 0]))
+    acceleration = np.concatenate(([previous.acceleration_mps2], values[:, 2]))
+    rates = np.diff(steering) / limits.dt_sec
+    jerk = np.diff(acceleration) / limits.dt_sec
+    if bool((np.abs(rates) > limits.max_steering_rate_radps + tolerance).any()):
+        raise ValueError("model steering rate exceeds authoritative limit")
+    if bool(
+        (
+            (jerk < limits.min_jerk_mps3 - tolerance)
+            | (jerk > limits.max_jerk_mps3 + tolerance)
+        ).any()
+    ):
+        raise ValueError("model jerk exceeds authoritative limit")
+    return ProjectedControlSequence(
+        commands=values.copy(),
+        steering_rate_radps=rates,
+        jerk_mps3=jerk,
+        source_stamp_sec=timing.observation_stamp_sec,
+        valid_until_sec=valid_until_sec,
+        limits_source=limits.source,
+        dt_sec=limits.dt_sec,
+        initial_state=previous,
+    )
+
+
+def project_model_control_sequence(
+    commands: np.ndarray,
+    *,
+    previous: PreviousControlState,
+    limits: ControlLimits,
+    timing: ProjectionTiming,
+) -> ProjectedControlSequence:
+    """Apply authoritative absolute/rate bounds to physical model proposals."""
+
+    limits.validate_for_full_control()
+    _validate_previous(previous, limits)
+    valid_until_sec = timing.valid_until_sec()
+    requested = np.asarray(commands, dtype=np.float64)
+    if requested.ndim != 2 or requested.shape[0] < 1 or requested.shape[1] != 3:
+        raise ValueError(f"model control sequence must be [H,3], got {requested.shape}")
+    if not np.isfinite(requested).all():
+        raise ValueError("model control sequence must be finite")
+    projected = np.empty_like(requested)
+    rates = np.empty(requested.shape[0], dtype=np.float64)
+    jerk = np.empty(requested.shape[0], dtype=np.float64)
+    steering = previous.steering_rad
+    acceleration = previous.acceleration_mps2
+    for index, proposal in enumerate(requested):
+        target_steering = float(
+            np.clip(proposal[0], -limits.max_abs_steering_rad, limits.max_abs_steering_rad)
+        )
+        steering_delta = float(
+            np.clip(
+                target_steering - steering,
+                -limits.max_steering_rate_radps * limits.dt_sec,
+                limits.max_steering_rate_radps * limits.dt_sec,
+            )
+        )
+        target_acceleration = float(
+            np.clip(proposal[2], limits.min_acceleration_mps2, limits.max_acceleration_mps2)
+        )
+        acceleration_delta = float(
+            np.clip(
+                target_acceleration - acceleration,
+                limits.min_jerk_mps3 * limits.dt_sec,
+                limits.max_jerk_mps3 * limits.dt_sec,
+            )
+        )
+        steering += steering_delta
+        acceleration += acceleration_delta
+        projected[index] = (
+            steering,
+            float(np.clip(proposal[1], 0.0, limits.max_speed_mps)),
+            acceleration,
+        )
+        rates[index] = steering_delta / limits.dt_sec
+        jerk[index] = acceleration_delta / limits.dt_sec
+    return ProjectedControlSequence(
+        commands=projected,
+        steering_rate_radps=rates,
+        jerk_mps3=jerk,
+        source_stamp_sec=timing.observation_stamp_sec,
+        valid_until_sec=valid_until_sec,
+        limits_source=limits.source,
+        dt_sec=limits.dt_sec,
+        initial_state=previous,
+    )

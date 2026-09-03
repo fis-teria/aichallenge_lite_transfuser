@@ -84,6 +84,7 @@ def test_shadow_output_profile_has_debug_model_control_without_nominal_authority
     profile = output_profile("shadow_control")
     assert "current_control" in profile.requested_outputs
     assert "shadow_model_control" in profile.publisher_topics
+    assert "shadow_model_control_sequence" in profile.publisher_topics
     assert "nominal_control_cmd" not in profile.publisher_topics
     assert not profile.nominal_control_authority
 
@@ -100,7 +101,8 @@ def test_ros_shadow_launch_and_node_remain_debug_only() -> None:
     assert '"shadow_model_control"' in source
     assert 'requested.add("current_control")' in source
     assert "model_control_debug_publication(" in source
-    assert '"nominal_control_cmd"' not in source
+    assert 'if self.runtime_profile is RuntimeProfile.FULL_CONTROL' in source
+    assert 'self.full_control_pub = None' in source
     assert "runtime.v3.shadow.param.yaml" in launch
     assert 'DeclareLaunchArgument("launch_rviz", default_value="false")' in launch
     assert 'condition=IfCondition(LaunchConfiguration("launch_rviz"))' in launch

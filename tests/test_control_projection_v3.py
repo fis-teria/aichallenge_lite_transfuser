@@ -7,7 +7,9 @@ from aic_transfuser_lite.runtime.control_projection import (
     ControlLimits,
     PreviousControlState,
     ProjectionTiming,
+    project_model_control_sequence,
     project_control_sequence,
+    validate_model_control_sequence,
 )
 
 
@@ -139,3 +141,55 @@ def test_projection_rejects_invalid_shape_values_and_previous_state(
 ) -> None:
     with pytest.raises(ValueError, match=message):
         project_control_sequence(raw, previous=previous, limits=_limits(), timing=_timing())
+
+
+def test_model_sequence_revalidation_preserves_speed_setpoints_and_checks_rates() -> None:
+    commands = np.array(
+        [[0.02, 8.0, 0.2], [0.04, 3.0, -0.1], [0.01, 6.0, -0.5]],
+        dtype=np.float64,
+    )
+    result = validate_model_control_sequence(
+        commands,
+        previous=PreviousControlState(0.0, 1.0, 0.0),
+        limits=_limits(),
+        timing=_timing(),
+    )
+    np.testing.assert_array_equal(result.commands[:, 1], commands[:, 1])
+    np.testing.assert_allclose(result.steering_rate_radps, [0.2, 0.2, -0.3])
+    np.testing.assert_allclose(result.jerk_mps3, [2.0, -3.0, -4.0])
+
+
+def test_model_sequence_projection_clips_trial_speed_and_rate() -> None:
+    result = project_model_control_sequence(
+        np.array([[0.6, 8.0, 2.0], [-0.6, -1.0, -4.0]]),
+        previous=PreviousControlState(0.0, 0.0, 0.0),
+        limits=_limits(max_speed_mps=0.8),
+        timing=_timing(),
+    )
+    np.testing.assert_allclose(result.commands[:, 0], [0.05, 0.0])
+    np.testing.assert_allclose(result.commands[:, 1], [0.8, 0.0])
+    np.testing.assert_allclose(result.commands[:, 2], [0.3, -0.3])
+    np.testing.assert_allclose(result.steering_rate_radps, [0.5, -0.5])
+    np.testing.assert_allclose(result.jerk_mps3, [3.0, -6.0])
+
+
+@pytest.mark.parametrize(
+    ("commands", "message"),
+    [
+        (np.zeros((2, 2)), r"\[H,3\]"),
+        (np.array([[0.0, np.nan, 0.0]]), "finite"),
+        (np.array([[0.1, 1.0, 0.0]]), "steering rate"),
+        (np.array([[0.0, 13.0, 0.0]]), "speed"),
+        (np.array([[0.0, 1.0, -1.0]]), "jerk"),
+    ],
+)
+def test_model_sequence_revalidation_rejects_shape_range_and_rate(
+    commands: np.ndarray, message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        validate_model_control_sequence(
+            commands,
+            previous=PreviousControlState(0.0, 1.0, 0.0),
+            limits=_limits(),
+            timing=_timing(),
+        )
