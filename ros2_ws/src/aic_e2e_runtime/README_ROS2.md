@@ -88,11 +88,17 @@ publishes either message and reports success:
 | `/predicted_trajectory` | `Float32MultiArray`, flattened `[N,2]` `(x,y)` in metres |
 | `/predicted_trajectory_path` | `nav_msgs/Path`, stamped `[N]` poses in `base_link` for RViz2 |
 | `/predicted_speed_profile` | `Float32MultiArray`, `[N]` non-negative target speeds in m/s |
+| `/plan_diagnostics` | `std_msgs/msg/String`, JSON raw Plan + `E_plan` + retimed executable reference; shadow-only |
 
 The point counts must match and all values must be finite. Invalid shape,
 non-finite values, or negative speed fail closed before either message is
 published. These topics are model predictions only: the trajectory-only launch
 still has no nominal-control publisher and does not command the vehicle.
+
+`/plan_diagnostics` uses the same Camera observation stamp inside its JSON
+payload. For the external-controller shadow profile it also records the preview
+time/target and controller command from that sample. The record is diagnostic
+only and cannot bypass the Safety Supervisor or acquire nominal authority.
 
 Run the pure shape/unit/negative tests and ROS publisher-ownership contract
 with:

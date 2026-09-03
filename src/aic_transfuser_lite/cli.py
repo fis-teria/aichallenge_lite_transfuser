@@ -17,7 +17,10 @@ from .data.canonical_converter_v3 import (
     write_prepared_dataset_v3,
 )
 from .data.clock_segments import ClockEpoch
-from .contracts.model_batch_v3 import COMMAND_HISTORY_ALIGNMENT_V3
+from .contracts.model_batch_v3 import (
+    COMMAND_HISTORY_ALIGNMENT_V3,
+    CONTROL_SEQUENCE_ALIGNMENT_V3,
+)
 from .data.dataset_view_v3 import (
     ControlTargetBoundsV3,
     load_temporal_training_batches_v3,
@@ -339,6 +342,8 @@ def _train_v3(args: argparse.Namespace) -> int:
         or view.get("command_history_alignment") != COMMAND_HISTORY_ALIGNMENT_V3
     ):
         raise ValueError("temporal view requires causal command history alignment")
+    if view.get("control_sequence_alignment") != CONTROL_SEQUENCE_ALIGNMENT_V3:
+        raise ValueError("temporal view requires exact-grid control sequence alignment")
     if int(view.get("command_history_length", 0)) != int(
         data_cfg["command_history_length"]
     ):

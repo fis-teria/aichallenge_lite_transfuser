@@ -341,6 +341,7 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
     root: Path
     rows: list[dict[str, str]]
     epoch_keys: tuple[tuple[str, str], ...]
+    row_index_by_epoch_stamp: dict[tuple[str, str, int], int]
     usable_anchors: list[int]
     behavior_by_sample: dict[str, dict[str, str]] | None
     image_height: int
@@ -407,6 +408,11 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
             control_provenance=tuple(str(item["provenance"]) for item in chunk),
             control_sequence=stack("control_sequence"),
             control_sequence_mask=stack("control_sequence_mask"),
+            control_sequence_provenance=tuple(
+                tuple(str(value) for value in item["control_sequence_provenance"])
+                for item in chunk
+            ),
+            control_sequence_time_sec=stack("control_sequence_time_sec"),
             behavior_class=stack("behavior_class"),
             behavior_mask=stack("behavior_mask"),
             behavior_side=stack("behavior_side"),
@@ -473,15 +479,19 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
         target_values, provenance = command
         sequence_values: list[torch.Tensor] = []
         sequence_masks: list[torch.Tensor] = []
+        sequence_provenance: list[str] = []
         # Step zero is the immediate teacher command. Later unavailable steps
-        # at a run/clock boundary remain masked instead of crossing epochs.
-        for offset in range(self.control_sequence_steps):
-            future_index = anchor + offset
+        # on the exact time grid remain masked instead of compressing time.
+        sequence_indices = select_control_sequence_row_indices_v3(
+            self.rows,
+            self.row_index_by_epoch_stamp,
+            anchor_index=anchor,
+            steps=self.control_sequence_steps,
+            control_dt_sec=self.control_target_bounds.control_dt_sec,
+        )
+        for future_index in sequence_indices:
             future_command = None
-            if (
-                future_index < len(self.rows)
-                and self.epoch_keys[future_index] == self.epoch_keys[anchor]
-            ):
+            if future_index is not None:
                 future_command = _selected_command(
                     self.rows[future_index], bounds=self.control_target_bounds
                 )
@@ -490,6 +500,11 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
             )
             sequence_masks.append(
                 torch.full((3,), future_command is not None, dtype=torch.bool)
+            )
+            sequence_provenance.append(
+                "missing_exact_timestamp"
+                if future_command is None
+                else future_command[1]
             )
         sequence = torch.stack(sequence_values)
         sequence_mask = torch.stack(sequence_masks)
@@ -538,6 +553,11 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
             "provenance": provenance,
             "control_sequence": sequence,
             "control_sequence_mask": sequence_mask,
+            "control_sequence_provenance": tuple(sequence_provenance),
+            "control_sequence_time_sec": torch.arange(
+                self.control_sequence_steps, dtype=torch.float32
+            )
+            * self.control_target_bounds.control_dt_sec,
             "behavior_class": torch.tensor(
                 int(annotation["behavior_class"]) if behavior_valid else -1,
                 dtype=torch.long,
@@ -631,6 +651,12 @@ def load_temporal_training_batches_v3(
         rows = [row for row in csv.DictReader(stream) if row["run_id"] in assigned]
     rows.sort(key=lambda row: (row["run_id"], row["segment_id"], int(row["grid_stamp_ns"])))
     epoch_keys = tuple((item["run_id"], item["segment_id"]) for item in rows)
+    row_index_by_epoch_stamp: dict[tuple[str, str, int], int] = {}
+    for index, row in enumerate(rows):
+        key = (row["run_id"], row["segment_id"], int(row["grid_stamp_ns"]))
+        if key in row_index_by_epoch_stamp:
+            raise ValueError("duplicate run/segment/grid timestamp in Dataset V3")
+        row_index_by_epoch_stamp[key] = index
     usable_anchors: list[int] = []
     for anchor, row in enumerate(rows):
         if _selected_command(row, bounds=control_target_bounds) is None:
@@ -653,6 +679,7 @@ def load_temporal_training_batches_v3(
         root=root,
         rows=rows,
         epoch_keys=epoch_keys,
+        row_index_by_epoch_stamp=row_index_by_epoch_stamp,
         usable_anchors=usable_anchors,
         behavior_by_sample=behavior_by_sample,
         image_height=image_height,
@@ -669,6 +696,34 @@ def load_temporal_training_batches_v3(
         control_target_bounds=control_target_bounds,
         batch_size=batch_size,
         max_batches=max_batches,
+    )
+
+
+def select_control_sequence_row_indices_v3(
+    rows: Sequence[dict[str, str]],
+    row_index_by_epoch_stamp: dict[tuple[str, str, int], int],
+    *,
+    anchor_index: int,
+    steps: int,
+    control_dt_sec: float,
+) -> tuple[int | None, ...]:
+    """Select exact ``t + k*dt`` rows without crossing a run/segment epoch."""
+
+    if not 0 <= anchor_index < len(rows):
+        raise IndexError("control sequence anchor is outside Dataset V3 rows")
+    if steps <= 0 or not math.isfinite(control_dt_sec) or control_dt_sec <= 0.0:
+        raise ValueError("control sequence steps and dt must be positive")
+    anchor = rows[anchor_index]
+    anchor_stamp_ns = int(anchor["grid_stamp_ns"])
+    dt_ns = int(round(control_dt_sec * 1_000_000_000.0))
+    if dt_ns <= 0:
+        raise ValueError("control sequence dt rounds to zero nanoseconds")
+    epoch = (anchor["run_id"], anchor["segment_id"])
+    return tuple(
+        row_index_by_epoch_stamp.get(
+            (epoch[0], epoch[1], anchor_stamp_ns + offset * dt_ns)
+        )
+        for offset in range(steps)
     )
 
 

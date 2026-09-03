@@ -125,6 +125,7 @@ def test_trajectory_only_has_no_nominal_control_publisher() -> None:
     assert "predicted_trajectory" in profile.publisher_topics
     assert "predicted_speed_profile" in profile.publisher_topics
     assert "predicted_trajectory_path" in profile.publisher_topics
+    assert "plan_diagnostics" in profile.publisher_topics
     assert "nominal_control_cmd" not in profile.publisher_topics
     assert not profile.nominal_control_authority
 

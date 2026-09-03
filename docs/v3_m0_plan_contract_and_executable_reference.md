@@ -2,9 +2,9 @@
 
 ## Scope
 
-This M0 patch adds ROS-independent contracts and diagnostics for the A-prime
-trajectory-authoritative design. It does **not** change runtime control authority,
-Safety Supervisor behavior, ROS topics, launch files, checkpoints, or V1 code.
+This M0 patch adds ROS-independent contracts and shadow diagnostics for the
+A-prime trajectory-authoritative design. It does **not** change runtime control
+authority, Safety Supervisor behavior, checkpoints, or V1 code.
 
 The model motion intent is represented by
 `AuthoritativePlanV3`:
@@ -52,10 +52,39 @@ trapezoidal speed is below `minimum_retime_speed_mps` returns a STOP decision wi
 `non_executable_speed`. Invalid plan data and an asserted model stop also return a
 structured STOP decision and never yield a controller reference.
 
-The current implementation is deliberately not wired into
-`inference_node_v3.py`. Runtime wiring belongs to M1 after M0 confirms the exact
-AWSIM command semantics, gear/autonomous state, command routing, and timestamp
-alignment.
+## Shadow runtime diagnostic
+
+Every V3 runtime profile publishes a compact JSON record on
+`plan_diagnostics`. It contains the raw Plan, `E_plan`, executable-reference
+decision, transformations, and retimed reference. The external-controller shadow
+profile also includes its preview target and command in the same observation
+record. This topic is explicitly `shadow_diagnostic_only`; it neither publishes
+nominal control nor changes Safety behavior.
+
+The ROS-independent payload is implemented in
+`src/aic_transfuser_lite/runtime/plan_diagnostics.py`. Invalid plan diagnostics
+are reported on `runtime_status` and do not interrupt the existing inference
+status path.
+
+## Exact control-sequence teacher time grid
+
+The full-control training view now selects each sequence target by the exact key
+`(run_id, segment_id, anchor_grid_stamp_ns + k * control_dt_ns)`. A later CSV row
+is never shifted into a missing 100 ms slot. Missing timestamps are zero-filled,
+masked on all three control fields, and marked
+`missing_exact_timestamp`. Each batch carries `[B,H]` target times in seconds and
+`[B][H]` provenance.
+
+The required alignment identity is
+`control_sequence_alignment: exact_grid_timestamp_only` in both the temporal view
+and full-control model config. Because the temporal view file is part of the
+experiment identity hash, a checkpoint produced with the former next-row
+semantics cannot be resumed silently. Existing runtime artifact contract hashes
+remain unchanged.
+
+Exact AWSIM command semantics, gear/autonomous state, and final command routing
+remain M0 environment gates. They must be checked on Graneple before launch
+assist or trajectory-authoritative control is enabled.
 
 ## Example
 
@@ -97,7 +126,9 @@ Focused unit and negative tests:
 ```bash
 PYTHONPATH=src python -m pytest -q \
   tests/test_executable_reference_v3.py \
-  tests/test_plan_consistency_v3.py
+  tests/test_plan_consistency_v3.py \
+  tests/test_plan_diagnostics_v3.py \
+  tests/test_cli_full_control_train_v3.py
 ```
 
 WSL validation must hold the shared worktree lock. After committing and syncing the
@@ -107,5 +138,5 @@ Windows source according to `docs/windows_codex_wsl_training_workflow.md`, run:
 tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q
 ```
 
-ROS 2 and AWSIM tests are not part of this M0 patch. They must not be reported as
-successful until run in the designated official environment.
+ROS 2 and AWSIM execution have not been performed for this patch. They must not
+be reported as successful until run in the designated official environment.

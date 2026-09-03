@@ -31,6 +31,8 @@ def _full_batch() -> ModelBatchV3:
         control_provenance=selected.provenance,
         control_sequence=torch.zeros(batch, 10, 3),
         control_sequence_mask=torch.ones(batch, 10, 3, dtype=torch.bool),
+        control_sequence_provenance=tuple(("nominal",) * 10 for _ in range(batch)),
+        control_sequence_time_sec=torch.arange(10).repeat(batch, 1).float() * 0.1,
         behavior_class=torch.tensor([2, 4]), behavior_mask=torch.ones(batch, dtype=torch.bool),
         behavior_side=torch.tensor([2, 0]), behavior_side_mask=torch.ones(batch, dtype=torch.bool),
     )

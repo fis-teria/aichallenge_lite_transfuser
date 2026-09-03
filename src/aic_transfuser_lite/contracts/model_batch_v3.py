@@ -6,6 +6,7 @@ import torch
 
 
 COMMAND_HISTORY_ALIGNMENT_V3 = "causal_previous_only"
+CONTROL_SEQUENCE_ALIGNMENT_V3 = "exact_grid_timestamp_only"
 
 
 MODEL_BATCH_FORMAT_V3 = "aic_model_batch_v3"
@@ -35,6 +36,8 @@ class TrainingTargetsV3:
     control_provenance: tuple[str, ...] | None = None
     control_sequence: torch.Tensor | None = None
     control_sequence_mask: torch.Tensor | None = None
+    control_sequence_provenance: tuple[tuple[str, ...], ...] | None = None
+    control_sequence_time_sec: torch.Tensor | None = None
     behavior_class: torch.Tensor | None = None
     behavior_mask: torch.Tensor | None = None
     behavior_side: torch.Tensor | None = None
@@ -64,8 +67,15 @@ class TrainingTargetsV3:
             if self.control_provenance is None or len(self.control_provenance) != batch_size:
                 raise ValueError("control provenance must contain one entry per batch item")
         if self.control_sequence is None:
-            if self.control_sequence_mask is not None:
-                raise ValueError("control_sequence_mask requires its target")
+            if any(
+                value is not None
+                for value in (
+                    self.control_sequence_mask,
+                    self.control_sequence_provenance,
+                    self.control_sequence_time_sec,
+                )
+            ):
+                raise ValueError("control sequence metadata requires its target")
         else:
             if (
                 self.control_sequence.ndim != 3
@@ -84,6 +94,40 @@ class TrainingTargetsV3:
                 self.control_sequence_mask,
                 "control sequence target",
             )
+            horizon = int(self.control_sequence.shape[1])
+            if (
+                self.control_sequence_provenance is None
+                or len(self.control_sequence_provenance) != batch_size
+                or any(
+                    len(item) != horizon
+                    for item in self.control_sequence_provenance
+                )
+            ):
+                raise ValueError(
+                    "control_sequence_provenance must contain [B][H] entries"
+                )
+            if any(
+                not isinstance(value, str) or not value
+                for item in self.control_sequence_provenance
+                for value in item
+            ):
+                raise ValueError("control sequence provenance entries must be non-empty")
+            if (
+                self.control_sequence_time_sec is None
+                or self.control_sequence_time_sec.shape != (batch_size, horizon)
+            ):
+                raise ValueError("control_sequence_time_sec must be [B,H]")
+            if not torch.isfinite(self.control_sequence_time_sec).all():
+                raise ValueError("control sequence times must be finite")
+            if bool((self.control_sequence_time_sec < 0.0).any()):
+                raise ValueError("control sequence times must be non-negative")
+            if horizon > 1 and not bool(
+                (
+                    self.control_sequence_time_sec[:, 1:]
+                    > self.control_sequence_time_sec[:, :-1]
+                ).all()
+            ):
+                raise ValueError("control sequence times must be strictly increasing")
         self._validate_class_target(
             self.behavior_class, self.behavior_mask, batch_size=batch_size,
             class_count=5, name="behavior",

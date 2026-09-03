@@ -36,6 +36,34 @@ def test_model_batch_v3_validates_all_temporal_shapes_and_masks() -> None:
     assert batch.batch_size == 2
 
 
+def test_control_sequence_requires_timestamp_and_provenance_metadata() -> None:
+    base = _batch().targets
+    assert base is not None
+    target = TrainingTargetsV3(
+        **{
+            **base.__dict__,
+            "control_sequence": torch.zeros(2, 3, 3),
+            "control_sequence_mask": torch.ones(2, 3, 3, dtype=torch.bool),
+        }
+    )
+    with pytest.raises(ValueError, match="control_sequence_provenance"):
+        target.validate(batch_size=2)
+
+    target = TrainingTargetsV3(
+        **{
+            **target.__dict__,
+            "control_sequence_provenance": (
+                ("nominal", "nominal", "missing_exact_timestamp"),
+                ("final_fallback", "final_fallback", "final_fallback"),
+            ),
+            "control_sequence_time_sec": torch.tensor(
+                [[0.0, 0.1, 0.2], [0.0, 0.1, 0.2]]
+            ),
+        }
+    )
+    target.validate(batch_size=2)
+
+
 def test_batch_rejects_shape_mask_nonfinite_and_current_invalid() -> None:
     batch = _batch()
     with pytest.raises(ValueError, match="image_mask"):

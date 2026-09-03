@@ -15,6 +15,7 @@ from aic_transfuser_lite.data.dataset_view_v3 import (
     clip_control_target_v3,
     load_temporal_training_batches_v3,
     project_teacher_control_sequence_v3,
+    select_control_sequence_row_indices_v3,
 )
 import aic_transfuser_lite.data.dataset_view_v3 as dataset_view_v3
 from aic_transfuser_lite.data.storage_v3 import validate_complete_dataset
@@ -318,6 +319,31 @@ def test_training_command_history_is_past_only_and_projection_uses_previous_stat
     assert batch.targets is not None
     assert batch.targets.current_control[1, 2].item() == pytest.approx(2.0)
     assert batch.targets.control_sequence[1, 0, 2].item() == pytest.approx(-0.6)
+    assert batch.targets.control_sequence_time_sec[1].tolist() == pytest.approx(
+        [index * 0.1 for index in range(10)]
+    )
+    assert len(batch.targets.control_sequence_provenance[1]) == 10
+
+
+def test_control_sequence_selection_uses_exact_grid_timestamps_without_compression() -> None:
+    rows = [
+        {"run_id": "run-a", "segment_id": "segment-0", "grid_stamp_ns": stamp}
+        for stamp in (0, 100_000_000, 300_000_000)
+    ]
+    index = {
+        (row["run_id"], row["segment_id"], int(row["grid_stamp_ns"])): offset
+        for offset, row in enumerate(rows)
+    }
+
+    selected = select_control_sequence_row_indices_v3(
+        rows,
+        index,
+        anchor_index=0,
+        steps=4,
+        control_dt_sec=0.1,
+    )
+
+    assert selected == (0, 1, None, 2)
 
 
 def test_full_control_config_rejects_noncausal_command_history(tmp_path: Path) -> None:
@@ -326,6 +352,17 @@ def test_full_control_config_rejects_noncausal_command_history(tmp_path: Path) -
     config = tmp_path / "leaking_history.yaml"
     config.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
     with pytest.raises(ValueError, match="causal command history"):
+        load_full_control_config_v3(config)
+
+
+def test_full_control_config_rejects_row_order_control_sequence_alignment(
+    tmp_path: Path,
+) -> None:
+    raw = yaml.safe_load((ROOT / "configs/models/full_control_lite_v3.yaml").read_text())
+    raw["targets"]["control_sequence_alignment"] = "next_row"
+    config = tmp_path / "compressed_sequence.yaml"
+    config.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    with pytest.raises(ValueError, match="exact-grid control sequence"):
         load_full_control_config_v3(config)
 
 

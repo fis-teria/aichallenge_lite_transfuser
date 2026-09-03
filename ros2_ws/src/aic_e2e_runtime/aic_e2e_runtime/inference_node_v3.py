@@ -36,6 +36,10 @@ from aic_transfuser_lite.runtime.authority import model_control_debug_publicatio
 from aic_transfuser_lite.control.delay_aware_controller import (
     DelayAwareControllerConfig,
 )
+from aic_transfuser_lite.control.executable_reference import (
+    AuthoritativePlanV3,
+    ExecutableReferenceConfigV3,
+)
 from aic_transfuser_lite.control.shadow_trajectory_controller import (
     shadow_control_from_trajectory_speed_profile,
 )
@@ -74,6 +78,7 @@ from aic_transfuser_lite.runtime.output_profiles import (
     trajectory_speed_publication,
     validate_observation_timing,
 )
+from aic_transfuser_lite.runtime.plan_diagnostics import plan_diagnostics_payload_v3
 from aic_transfuser_lite.runtime.sensor_sync import (
     SettledCameraSynchronizer,
     SyncDecision,
@@ -110,6 +115,11 @@ class InferenceNodeV3(Node):
             "behavior_confidence_threshold": 0.5, "behavior_temperature": 1.0,
             "controller_calibration_status": "unverified",
             "trajectory_step_sec": 0.1,
+            "executable_reference_odd_speed_cap_mps": 0.75,
+            "executable_reference_max_lateral_acceleration_mps2": 1.0,
+            "executable_reference_safety_speed_cap_mps": 0.0,
+            "executable_reference_require_stop_probability": False,
+            "plan_consistency_speed_scale_mps": 1.0,
             "estimated_delay_sec": 0.0,
             "base_preview_sec": 0.35,
             "min_preview_sec": 0.5,
@@ -211,6 +221,40 @@ class InferenceNodeV3(Node):
                 "trajectory runtime requires ego_dim=4: longitudinal_velocity, "
                 "lateral_velocity, heading_rate, steering_tire_angle"
             )
+        trajectory_step_sec = float(self.get_parameter("trajectory_step_sec").value)
+        if not np.isfinite(trajectory_step_sec) or trajectory_step_sec <= 0.0:
+            raise ValueError("trajectory_step_sec must be finite and positive")
+        self.plan_waypoint_times_sec = np.arange(
+            1, self.model.trajectory_steps + 1, dtype=np.float64
+        ) * trajectory_step_sec
+        safety_speed_cap = float(
+            self.get_parameter("executable_reference_safety_speed_cap_mps").value
+        )
+        self.executable_reference_config = ExecutableReferenceConfigV3(
+            odd_speed_cap_mps=float(
+                self.get_parameter("executable_reference_odd_speed_cap_mps").value
+            ),
+            max_lateral_acceleration_mps2=float(
+                self.get_parameter(
+                    "executable_reference_max_lateral_acceleration_mps2"
+                ).value
+            ),
+            safety_speed_cap_mps=(None if safety_speed_cap == 0.0 else safety_speed_cap),
+            require_stop_probability=bool(
+                self.get_parameter(
+                    "executable_reference_require_stop_probability"
+                ).value
+            ),
+        )
+        self.executable_reference_config.validate()
+        self.plan_consistency_speed_scale_mps = float(
+            self.get_parameter("plan_consistency_speed_scale_mps").value
+        )
+        if (
+            not np.isfinite(self.plan_consistency_speed_scale_mps)
+            or self.plan_consistency_speed_scale_mps <= 0.0
+        ):
+            raise ValueError("plan_consistency_speed_scale_mps must be positive")
         self.controller_config: DelayAwareControllerConfig | None = None
         if self.runtime_profile in {
             RuntimeProfile.EXTERNAL_CONTROLLER,
@@ -227,17 +271,8 @@ class InferenceNodeV3(Node):
                     "external controller shadow requires calibration_status=unverified "
                     "until a verified V3 calibration artifact is implemented"
                 )
-            trajectory_step_sec = float(
-                self.get_parameter("trajectory_step_sec").value
-            )
-            if not np.isfinite(trajectory_step_sec) or trajectory_step_sec <= 0.0:
-                raise ValueError("trajectory_step_sec must be finite and positive")
-            waypoint_times = tuple(
-                trajectory_step_sec * (index + 1)
-                for index in range(self.model.trajectory_steps)
-            )
             self.controller_config = DelayAwareControllerConfig(
-                waypoint_times_sec=waypoint_times,
+                waypoint_times_sec=tuple(self.plan_waypoint_times_sec.tolist()),
                 estimated_delay_sec=float(
                     self.get_parameter("estimated_delay_sec").value
                 ),
@@ -373,6 +408,7 @@ class InferenceNodeV3(Node):
         self.sync_debug_pub = self.create_publisher(
             Float64MultiArray, "runtime_sync_debug", 1
         )
+        self.plan_diagnostics_pub = self.create_publisher(String, "plan_diagnostics", 1)
         self.behavior_mode_pub = None
         self.behavior_label_pub = None
         self.behavior_confidence_pub = None
@@ -569,19 +605,67 @@ class InferenceNodeV3(Node):
                 pose.pose.orientation.w = 1.0
                 path_message.poses.append(pose)
             self.trajectory_path_pub.publish(path_message)
+            diagnostic: dict[str, Any] | None = None
+            try:
+                plan = AuthoritativePlanV3(
+                    trajectory_xy_m=np.asarray(
+                        publication.trajectory_xy_m, dtype=np.float64
+                    ).reshape(-1, 2),
+                    speed_profile_mps=np.asarray(
+                        publication.speed_profile_mps, dtype=np.float64
+                    ),
+                    waypoint_times_sec=self.plan_waypoint_times_sec,
+                    observation_stamp_sec=camera_stamp,
+                    frame_id=self.trajectory_frame_id,
+                    stop_probability=None,
+                )
+                diagnostic = plan_diagnostics_payload_v3(
+                    plan,
+                    current_speed_mps=normalize_measured_speed_for_projection(
+                        float(velocity.longitudinal_velocity)
+                    ),
+                    reference_config=self.executable_reference_config,
+                    speed_scale_mps=self.plan_consistency_speed_scale_mps,
+                )
+            except Exception as error:
+                self.status_pub.publish(
+                    String(data=f"plan_diagnostics_rejected:{error}")
+                )
             if self.shadow_control_pub is not None:
                 try:
-                    self._publish_shadow_external_control(
+                    shadow_result = self._publish_shadow_external_control(
                         publication.trajectory_xy_m,
                         publication.speed_profile_mps,
                         image,
                         velocity,
                         steering,
                     )
+                    if diagnostic is not None:
+                        control = shadow_result.control
+                        diagnostic["external_controller"] = {
+                            "authority": "shadow_diagnostic_only",
+                            "preview_time_sec": control.preview_time_sec,
+                            "preview_target_xy_m": (
+                                control.preview_target_xy_m.tolist()
+                            ),
+                            "commanded_speed_mps": control.commanded_speed_mps,
+                            "steering_rad": control.command.steering_rad,
+                            "acceleration_mps2": control.command.acceleration_mps2,
+                            "curvature_per_m": control.curvature_per_m,
+                        }
                 except Exception as error:
+                    if diagnostic is not None:
+                        diagnostic["external_controller"] = {
+                            "authority": "shadow_diagnostic_only",
+                            "error": str(error),
+                        }
                     self.status_pub.publish(
                         String(data=f"shadow_control_rejected:{error}")
                     )
+            if diagnostic is not None:
+                self.plan_diagnostics_pub.publish(
+                    String(data=json.dumps(diagnostic, separators=(",", ":")))
+                )
             if self.shadow_model_control_pub is not None:
                 try:
                     self._publish_shadow_model_control(output.current_control, image)
@@ -628,7 +712,7 @@ class InferenceNodeV3(Node):
         image: Image,
         velocity: VelocityReport,
         steering: SteeringReport,
-    ) -> None:
+    ) -> Any:
         if self.controller_config is None or self.shadow_control_pub is None:
             raise RuntimeError("external controller shadow is not initialized")
         result = self._external_control_from_trajectory(
@@ -646,6 +730,7 @@ class InferenceNodeV3(Node):
         message.longitudinal.acceleration = result.control.command.acceleration_mps2
         message.lateral.steering_tire_angle = result.control.command.steering_rad
         self.shadow_control_pub.publish(message)
+        return result
         self.status_pub.publish(String(data="shadow_control_published:unverified"))
 
     def _external_control_from_trajectory(

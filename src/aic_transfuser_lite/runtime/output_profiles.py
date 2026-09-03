@@ -47,6 +47,7 @@ _BASE_TOPICS = frozenset({
     "predicted_speed_profile",
     "runtime_status",
     "runtime_sync_debug",
+    "plan_diagnostics",
 })
 _PROFILES: Mapping[RuntimeProfile, OutputProfile] = {
     RuntimeProfile.TRAJECTORY_ONLY: OutputProfile(

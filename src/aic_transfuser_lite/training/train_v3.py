@@ -13,6 +13,7 @@ from aic_transfuser_lite.contracts.behavior_v1 import (
 )
 from aic_transfuser_lite.contracts.model_batch_v3 import (
     COMMAND_HISTORY_ALIGNMENT_V3,
+    CONTROL_SEQUENCE_ALIGNMENT_V3,
     ModelBatchV3,
 )
 from aic_transfuser_lite.models.full_control_lite_v3 import FullControlLiteV3
@@ -197,6 +198,8 @@ def load_full_control_config_v3(path: str | Path) -> dict[str, object]:
         raise ValueError("full-control config behavior target ontology/order mismatch")
     if targets.get("command_history_alignment") != COMMAND_HISTORY_ALIGNMENT_V3:
         raise ValueError("full-control config requires causal command history alignment")
+    if targets.get("control_sequence_alignment") != CONTROL_SEQUENCE_ALIGNMENT_V3:
+        raise ValueError("full-control config requires exact-grid control sequence alignment")
     command_history_length = int(data.get("command_history_length", 0))
     if not 0 < command_history_length <= int(model.get("max_ego_history", 0)):
         raise ValueError("command history length must fit max_ego_history")
@@ -260,6 +263,8 @@ def move_batch_v3(batch: ModelBatchV3, device: torch.device) -> ModelBatchV3:
             control_provenance=targets.control_provenance,
             control_sequence=None if targets.control_sequence is None else targets.control_sequence.to(device),
             control_sequence_mask=None if targets.control_sequence_mask is None else targets.control_sequence_mask.to(device),
+            control_sequence_provenance=targets.control_sequence_provenance,
+            control_sequence_time_sec=None if targets.control_sequence_time_sec is None else targets.control_sequence_time_sec.to(device),
             behavior_class=None if targets.behavior_class is None else targets.behavior_class.to(device),
             behavior_mask=None if targets.behavior_mask is None else targets.behavior_mask.to(device),
             behavior_side=None if targets.behavior_side is None else targets.behavior_side.to(device),

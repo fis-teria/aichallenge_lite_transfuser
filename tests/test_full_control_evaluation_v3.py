@@ -33,6 +33,8 @@ def _batch() -> ModelBatchV3:
         control_provenance=("nominal",),
         control_sequence=torch.tensor([[[0.2, 1.0, -0.5], [9.0, 9.0, 9.0]]]),
         control_sequence_mask=torch.tensor([[[True, True, True], [False, False, False]]]),
+        control_sequence_provenance=(("nominal", "missing_exact_timestamp"),),
+        control_sequence_time_sec=torch.tensor([[0.0, 0.1]]),
     )
     return ModelBatchV3(
         image=torch.zeros(1, 1, 3, 2, 2), image_mask=torch.ones(1, 1, dtype=torch.bool),

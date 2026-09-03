@@ -12,6 +12,12 @@
     ego_speed_source: velocity_report
     behavior_confidence_threshold: 0.5
     behavior_temperature: 1.0
+    trajectory_step_sec: 0.1
+    executable_reference_odd_speed_cap_mps: 0.75
+    executable_reference_max_lateral_acceleration_mps2: 1.0
+    executable_reference_safety_speed_cap_mps: 0.0
+    executable_reference_require_stop_probability: false
+    plan_consistency_speed_scale_mps: 1.0
     expected_checkpoint_sha256: REPLACE_WITH_64_HEX_CHECKPOINT_SHA256
     expected_manifest_sha256: REPLACE_WITH_64_HEX_MANIFEST_SHA256
     expected_contract_hash: REPLACE_WITH_64_HEX_MODEL_CONTRACT_SHA256
