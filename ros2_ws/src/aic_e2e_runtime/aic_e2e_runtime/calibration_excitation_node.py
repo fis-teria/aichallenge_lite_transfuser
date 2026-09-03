@@ -99,6 +99,7 @@ class CalibrationExcitationNode(Node):
         self.safety_reason_counts: Counter[str] = Counter()
         self.started_utc = datetime.now(timezone.utc).isoformat()
         self._result_written = False
+        self.finished = False
         self._timer = self.create_timer(1.0 / self.plan.publish_hz, self._on_timer)
         self.get_logger().warning(
             "Calibration excitation armed by exact plan hash; waiting for exclusive "
@@ -317,7 +318,12 @@ class CalibrationExcitationNode(Node):
         os.replace(temporary, self.result_path)
         self._result_written = True
         self._publish_status(status, reason or "complete")
-        rclpy.shutdown()
+        # Do not call rclpy.shutdown() from this timer callback.  Humble's
+        # single-threaded executor waits for the active callback during
+        # shutdown, which deadlocks until the outer collector timeout sends
+        # SIGINT.  Mark completion and let main() leave the executor instead.
+        self._timer.cancel()
+        self.finished = True
 
 
 def main(args=None) -> int:
@@ -325,16 +331,18 @@ def main(args=None) -> int:
     node: CalibrationExcitationNode | None = None
     try:
         node = CalibrationExcitationNode()
-        rclpy.spin(node)
+        while rclpy.ok() and not node.finished:
+            rclpy.spin_once(node, timeout_sec=0.1)
         return node.exit_code
     except KeyboardInterrupt:
         if node is not None:
             node._begin_abort("keyboard_interrupt")
             deadline = time.monotonic() + node.abort_stop_hold_sec
-            while rclpy.ok() and time.monotonic() < deadline:
+            while rclpy.ok() and not node.finished and time.monotonic() < deadline:
                 node._publish_command(node._stop_command())
                 rclpy.spin_once(node, timeout_sec=0.05)
-            node._finish("aborted", 130, "keyboard_interrupt")
+            if not node.finished:
+                node._finish("aborted", 130, "keyboard_interrupt")
             return node.exit_code
         return 130
     finally:

@@ -16,6 +16,30 @@ def test_calibration_node_is_hash_armed_and_fail_closed() -> None:
     assert '"aborted"' in source
 
 
+def test_calibration_completion_leaves_executor_outside_timer_callback() -> None:
+    root = Path(__file__).parents[1]
+    source = (root / "aic_e2e_runtime/calibration_excitation_node.py").read_text()
+    tree = ast.parse(source)
+    node_class = next(
+        item
+        for item in tree.body
+        if isinstance(item, ast.ClassDef) and item.name == "CalibrationExcitationNode"
+    )
+    finish = next(
+        item
+        for item in node_class.body
+        if isinstance(item, ast.FunctionDef) and item.name == "_finish"
+    )
+    called_attributes = {
+        call.func.attr
+        for call in ast.walk(finish)
+        if isinstance(call, ast.Call) and isinstance(call.func, ast.Attribute)
+    }
+    assert "shutdown" not in called_attributes
+    assert "cancel" in called_attributes
+    assert "while rclpy.ok() and not node.finished" in source
+
+
 def test_calibration_launch_uses_independent_safety_and_exclusive_topics() -> None:
     root = Path(__file__).parents[1]
     launch = (root / "launch/calibration_capture_v3.launch.py").read_text()
