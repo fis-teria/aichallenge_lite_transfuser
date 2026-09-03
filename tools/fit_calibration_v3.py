@@ -62,6 +62,7 @@ def main() -> None:
         raise ValueError("calibration dataset has insufficient valid commands")
 
     timestamps = np.asarray([int(row["grid_stamp_ns"]) * 1e-9 for row in rows])
+    run_ids = np.asarray([row["run_id"] for row in rows], dtype=object)
     speed = np.asarray([float(row["velocity_longitudinal_mps"]) for row in rows])
     yaw_rate = np.asarray([float(row["yaw_rate_rps"]) for row in rows])
     actual_steering = np.asarray([float(row["actual_steering_rad"]) for row in rows])
@@ -79,6 +80,7 @@ def main() -> None:
         timestamps,
         speed,
         smoothing_samples=args.acceleration_smoothing_samples,
+        segment_ids=run_ids,
     )
 
     lateral_mask = command_valid & actual_steering_valid
@@ -90,6 +92,7 @@ def main() -> None:
         yaw_rate[lateral_mask],
         wheelbase_m=wheelbase_m,
         max_abs_yaw_rate_rps=max_abs_yaw_rate_rps,
+        segment_ids=run_ids[lateral_mask],
     )
     longitudinal_mask = command_valid & np.isfinite(speed) & (speed >= 0.0)
     longitudinal = fit_longitudinal_calibration(
@@ -97,6 +100,7 @@ def main() -> None:
         command_acceleration[longitudinal_mask],
         actual_acceleration[longitudinal_mask],
         speed[longitudinal_mask],
+        segment_ids=run_ids[longitudinal_mask],
     )
 
     with (args.dataset_root / "runs.csv").open(newline="", encoding="utf-8") as stream:

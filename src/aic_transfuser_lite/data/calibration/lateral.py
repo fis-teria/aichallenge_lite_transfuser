@@ -45,6 +45,7 @@ def fit_lateral_calibration(
     maximum_steering_nrmse: float = 0.7,
     maximum_yaw_rate_nrmse: float = 0.8,
     config: DelayEstimationConfig | None = None,
+    segment_ids: Sequence[str] | np.ndarray | None = None,
 ) -> LateralCalibration:
     """Filter declared applicability outliers, then call the V1 delay fitter."""
 
@@ -62,6 +63,11 @@ def fit_lateral_calibration(
         raise ValueError("lateral calibration inputs must be one-dimensional")
     if len(values[0]) < 3 or any(item.shape != values[0].shape for item in values[1:]):
         raise ValueError("lateral calibration inputs must have equal length >= 3")
+    raw_segment_ids = None
+    if segment_ids is not None:
+        raw_segment_ids = np.asarray(segment_ids, dtype=object)
+        if raw_segment_ids.ndim != 1 or raw_segment_ids.shape != values[0].shape:
+            raise ValueError("segment_ids must match lateral calibration inputs")
     if not np.isfinite(max_abs_yaw_rate_rps) or max_abs_yaw_rate_rps <= 0.0:
         raise ValueError("max_abs_yaw_rate_rps must be finite and positive")
     if (
@@ -76,6 +82,9 @@ def fit_lateral_calibration(
     if int(np.count_nonzero(applicable)) < 3:
         raise ValueError("insufficient applicable lateral calibration samples")
     selected = [item[applicable] for item in values]
+    selected_segment_ids = (
+        None if raw_segment_ids is None else raw_segment_ids[applicable]
+    )
     fit: DelayFitResult = estimate_steering_delay(
         selected[0],
         selected[1],
@@ -84,6 +93,7 @@ def fit_lateral_calibration(
         selected[4],
         wheelbase_m=wheelbase_m,
         config=config,
+        segment_ids=selected_segment_ids,
     )
     if fit.time_constant_sec is None or fit.steering_nrmse is None:
         raise AssertionError("steering delay fitter did not separate first-order lag")

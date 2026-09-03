@@ -6,6 +6,8 @@ from typing import Literal, Sequence
 
 import numpy as np
 
+from ..delay_estimation import validated_time_segment_slices
+
 
 LongitudinalMode = Literal["drive", "brake"]
 
@@ -96,7 +98,8 @@ def _vectors(
     command_accel_mps2: Sequence[float] | np.ndarray,
     actual_accel_mps2: Sequence[float] | np.ndarray,
     speed_mps: Sequence[float] | np.ndarray,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    segment_ids: Sequence[str] | np.ndarray | None = None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, tuple[slice, ...]]:
     values = tuple(
         np.asarray(item, dtype=np.float64)
         for item in (
@@ -112,9 +115,8 @@ def _vectors(
         raise ValueError("longitudinal calibration inputs must have equal length >= 3")
     if not all(np.isfinite(item).all() for item in values):
         raise ValueError("longitudinal calibration inputs must be finite")
-    if np.any(np.diff(values[0]) <= 0.0):
-        raise ValueError("timestamps_sec must be strictly increasing")
-    return values
+    segments = validated_time_segment_slices(values[0], segment_ids)
+    return (*values, segments)
 
 
 def derive_actual_acceleration(
@@ -122,6 +124,7 @@ def derive_actual_acceleration(
     speed_mps: Sequence[float] | np.ndarray,
     *,
     smoothing_samples: int = 5,
+    segment_ids: Sequence[str] | np.ndarray | None = None,
 ) -> np.ndarray:
     """Differentiate measured speed and apply an edge-preserving moving mean."""
 
@@ -131,17 +134,20 @@ def derive_actual_acceleration(
         raise ValueError("timestamps and speed must be equal one-dimensional vectors")
     if not np.isfinite(timestamps).all() or not np.isfinite(speed).all():
         raise ValueError("timestamps and speed must be finite")
-    if np.any(np.diff(timestamps) <= 0.0):
-        raise ValueError("timestamps_sec must be strictly increasing")
     if smoothing_samples <= 0 or smoothing_samples % 2 == 0:
         raise ValueError("smoothing_samples must be a positive odd integer")
-    acceleration = np.gradient(speed, timestamps)
-    if smoothing_samples == 1:
-        return acceleration
-    half = smoothing_samples // 2
-    padded = np.pad(acceleration, (half, half), mode="edge")
-    kernel = np.full(smoothing_samples, 1.0 / smoothing_samples)
-    return np.convolve(padded, kernel, mode="valid")
+    segments = validated_time_segment_slices(timestamps, segment_ids)
+    result = np.empty_like(speed)
+    for segment in segments:
+        acceleration = np.gradient(speed[segment], timestamps[segment])
+        if smoothing_samples == 1:
+            result[segment] = acceleration
+            continue
+        half = smoothing_samples // 2
+        padded = np.pad(acceleration, (half, half), mode="edge")
+        kernel = np.full(smoothing_samples, 1.0 / smoothing_samples)
+        result[segment] = np.convolve(padded, kernel, mode="valid")
+    return result
 
 
 def _grid(minimum: float, maximum: float, step: float) -> np.ndarray:
@@ -189,6 +195,7 @@ def fit_longitudinal_mode(
     *,
     mode: LongitudinalMode,
     config: LongitudinalFitConfig | None = None,
+    segment_ids: Sequence[str] | np.ndarray | None = None,
 ) -> LongitudinalModeFit:
     """Grid-fit pure delay and first-order lag, then linear gain and bias."""
 
@@ -196,8 +203,12 @@ def fit_longitudinal_mode(
     selected.validate()
     if mode not in ("drive", "brake"):
         raise ValueError(f"unsupported longitudinal mode: {mode!r}")
-    timestamps, command, actual, speed = _vectors(
-        timestamps_sec, command_accel_mps2, actual_accel_mps2, speed_mps
+    timestamps, command, actual, speed, segments = _vectors(
+        timestamps_sec,
+        command_accel_mps2,
+        actual_accel_mps2,
+        speed_mps,
+        segment_ids,
     )
     mode_mask = (
         command > selected.mode_hysteresis_mps2
@@ -210,8 +221,15 @@ def fit_longitudinal_mode(
     for delay in _grid(
         selected.delay_min_sec, selected.delay_max_sec, selected.delay_step_sec
     ):
-        delayed = _delayed_hold(timestamps, command, float(delay))
-        valid_start = timestamps >= timestamps[0] + float(delay)
+        delayed = np.empty_like(command)
+        valid_start = np.zeros(len(timestamps), dtype=np.bool_)
+        for segment in segments:
+            delayed[segment] = _delayed_hold(
+                timestamps[segment], command[segment], float(delay)
+            )
+            valid_start[segment] = (
+                timestamps[segment] >= timestamps[segment.start] + float(delay)
+            )
         mask = mode_mask & plausible_actual & valid_start
         if int(np.count_nonzero(mask)) < 3:
             continue
@@ -220,7 +238,11 @@ def fit_longitudinal_mode(
             selected.time_constant_max_sec,
             selected.time_constant_step_sec,
         ):
-            filtered = _first_order(timestamps, delayed, float(time_constant))
+            filtered = np.empty_like(command)
+            for segment in segments:
+                filtered[segment] = _first_order(
+                    timestamps[segment], delayed[segment], float(time_constant)
+                )
             design = np.column_stack((filtered[mask], np.ones(np.count_nonzero(mask))))
             gain, bias = np.linalg.lstsq(design, actual[mask], rcond=None)[0]
             prediction = gain * filtered[mask] + bias
@@ -242,7 +264,10 @@ def fit_longitudinal_mode(
     if best is None:
         raise ValueError(f"insufficient {mode} samples for longitudinal fit")
     nrmse, negative_correlation, delay, time_constant, gain, bias, rmse = best
-    fit_mask = mode_mask & plausible_actual & (timestamps >= timestamps[0] + delay)
+    valid_start = np.zeros(len(timestamps), dtype=np.bool_)
+    for segment in segments:
+        valid_start[segment] = timestamps[segment] >= timestamps[segment.start] + delay
+    fit_mask = mode_mask & plausible_actual & valid_start
     sample_count = int(np.count_nonzero(fit_mask))
     command_range = (
         float(np.min(command[fit_mask])),
@@ -290,6 +315,7 @@ def fit_longitudinal_calibration(
     speed_mps: Sequence[float] | np.ndarray,
     *,
     config: LongitudinalFitConfig | None = None,
+    segment_ids: Sequence[str] | np.ndarray | None = None,
 ) -> LongitudinalCalibration:
     return LongitudinalCalibration(
         drive=fit_longitudinal_mode(
@@ -299,6 +325,7 @@ def fit_longitudinal_calibration(
             speed_mps,
             mode="drive",
             config=config,
+            segment_ids=segment_ids,
         ),
         brake=fit_longitudinal_mode(
             timestamps_sec,
@@ -307,5 +334,6 @@ def fit_longitudinal_calibration(
             speed_mps,
             mode="brake",
             config=config,
+            segment_ids=segment_ids,
         ),
     )

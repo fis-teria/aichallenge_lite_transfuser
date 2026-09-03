@@ -6,7 +6,10 @@ import json
 import numpy as np
 import pytest
 
-from aic_transfuser_lite.data.delay_estimation import DelayEstimationConfig
+from aic_transfuser_lite.data.delay_estimation import (
+    DelayEstimationConfig,
+    validated_time_segment_slices,
+)
 from aic_transfuser_lite.data.calibration.artifact import (
     CalibrationPromotion,
     build_calibration_artifact,
@@ -98,6 +101,99 @@ def test_acceleration_derivative_contract_and_negative_inputs() -> None:
         derive_actual_acceleration(timestamps, timestamps, smoothing_samples=2)
     with pytest.raises(ValueError, match="strictly increasing"):
         derive_actual_acceleration(timestamps[::-1], timestamps)
+
+
+def test_segmented_acceleration_does_not_differentiate_across_run_reset() -> None:
+    timestamps = np.asarray([0.0, 0.1, 0.2, 0.0, 0.1, 0.2])
+    speed = np.asarray([0.0, 0.1, 0.2, 10.0, 10.1, 10.2])
+    segments = np.asarray(["run_a"] * 3 + ["run_b"] * 3)
+    acceleration = derive_actual_acceleration(
+        timestamps,
+        speed,
+        smoothing_samples=1,
+        segment_ids=segments,
+    )
+    np.testing.assert_allclose(acceleration, 1.0, atol=1e-12)
+    with pytest.raises(ValueError, match="not contiguous"):
+        validated_time_segment_slices(
+            np.asarray([0.0, 0.1, 0.2, 0.0, 0.1, 0.2, 0.0, 0.1, 0.2]),
+            np.asarray(["a"] * 3 + ["b"] * 3 + ["a"] * 3),
+        )
+
+
+def test_segmented_longitudinal_fit_resets_delay_and_lag_per_run() -> None:
+    one_run_timestamps = np.arange(0.0, 20.0, 0.1)
+    one_run_command = 1.0 + 0.6 * np.sin(one_run_timestamps * 0.7)
+    one_run_actual = _simulate(
+        one_run_timestamps,
+        one_run_command,
+        delay_sec=0.2,
+        time_constant_sec=0.3,
+        gain=0.8,
+        bias=0.05,
+    )
+    timestamps = np.tile(one_run_timestamps, 2)
+    command = np.tile(one_run_command, 2)
+    actual = np.tile(one_run_actual, 2)
+    segment_ids = np.asarray(["run_a"] * len(one_run_timestamps) + ["run_b"] * len(one_run_timestamps))
+    fit = fit_longitudinal_mode(
+        timestamps,
+        command,
+        actual,
+        np.linspace(1.0, 4.0, len(timestamps)),
+        mode="drive",
+        segment_ids=segment_ids,
+        config=LongitudinalFitConfig(
+            delay_max_sec=0.4,
+            delay_step_sec=0.1,
+            time_constant_min_sec=0.1,
+            time_constant_max_sec=0.6,
+            time_constant_step_sec=0.1,
+            minimum_mode_samples=100,
+            minimum_correlation=0.8,
+        ),
+    )
+    assert fit.pure_delay_sec == pytest.approx(0.2, abs=0.11)
+    assert fit.time_constant_sec == pytest.approx(0.3, abs=0.11)
+    assert fit.individually_valid
+
+
+def test_segmented_lateral_fit_accepts_clock_reset_between_runs() -> None:
+    one_run_timestamps = np.arange(0.0, 25.0, 0.1)
+    one_run_command = np.repeat(np.asarray([-0.12, 0.12, 0.0, 0.06, -0.06]), 50)
+    one_run_actual = _simulate(
+        one_run_timestamps,
+        one_run_command,
+        delay_sec=0.1,
+        time_constant_sec=0.2,
+        gain=1.0,
+        bias=0.0,
+    )
+    timestamps = np.tile(one_run_timestamps, 3)
+    command = np.tile(one_run_command, 3)
+    actual = np.tile(one_run_actual, 3)
+    speed = np.full_like(timestamps, 2.0)
+    segment_ids = np.repeat(np.asarray(["run_a", "run_b", "run_c"]), len(one_run_timestamps))
+    fit = fit_lateral_calibration(
+        timestamps,
+        command,
+        actual,
+        speed,
+        speed * np.tan(actual) / 1.087,
+        wheelbase_m=1.087,
+        segment_ids=segment_ids,
+        config=DelayEstimationConfig(
+            tau_max_sec=0.3,
+            tau_step_sec=0.1,
+            time_constant_min_sec=0.1,
+            time_constant_max_sec=0.4,
+            time_constant_step_sec=0.1,
+            minimum_dynamic_samples=300,
+        ),
+    )
+    assert fit.pure_delay_sec == pytest.approx(0.1, abs=0.11)
+    assert fit.time_constant_sec == pytest.approx(0.2, abs=0.11)
+    assert fit.individually_valid
 
 
 def test_lateral_wrapper_preserves_delay_fitter_and_reports_exclusions() -> None:

@@ -108,6 +108,48 @@ def _validated_signals(
     return tuple(vectors)
 
 
+def validated_time_segment_slices(
+    timestamps_sec: Sequence[float] | np.ndarray,
+    segment_ids: Sequence[str] | np.ndarray | None,
+) -> tuple[slice, ...]:
+    """Return contiguous slices whose timestamps are strictly increasing.
+
+    Separate calibration runs may reset ROS time. A segment identifier may
+    appear in only one contiguous block so disjoint windows cannot share
+    actuator state accidentally.
+    """
+
+    timestamps = _as_finite_vector("timestamps_sec", timestamps_sec)
+    if segment_ids is None:
+        if np.any(np.diff(timestamps) <= 0.0):
+            raise ValueError("timestamps_sec must be strictly increasing")
+        return (slice(0, len(timestamps)),)
+    identifiers = np.asarray(segment_ids, dtype=object)
+    if identifiers.ndim != 1 or identifiers.shape != timestamps.shape:
+        raise ValueError("segment_ids must match the one-dimensional timestamp shape")
+    boundaries = np.flatnonzero(identifiers[1:] != identifiers[:-1]) + 1
+    starts = np.concatenate(([0], boundaries))
+    stops = np.concatenate((boundaries, [len(timestamps)]))
+    slices: list[slice] = []
+    seen: set[str] = set()
+    for start, stop in zip(starts, stops, strict=True):
+        identifier = str(identifiers[int(start)])
+        if not identifier:
+            raise ValueError("segment_ids must not contain empty identifiers")
+        if identifier in seen:
+            raise ValueError(f"segment_id {identifier!r} is not contiguous")
+        seen.add(identifier)
+        if int(stop) - int(start) < 3:
+            raise ValueError(f"segment_id {identifier!r} must contain at least three samples")
+        selected = timestamps[int(start) : int(stop)]
+        if np.any(np.diff(selected) <= 0.0):
+            raise ValueError(
+                f"timestamps_sec must be strictly increasing within segment {identifier!r}"
+            )
+        slices.append(slice(int(start), int(stop)))
+    return tuple(slices)
+
+
 def _inclusive_grid(minimum: float, maximum: float, step: float) -> np.ndarray:
     count = int(math.floor((maximum - minimum) / step + 1e-9)) + 1
     values = minimum + np.arange(count, dtype=np.float64) * step
@@ -195,21 +237,42 @@ def estimate_steering_delay(
     *,
     wheelbase_m: float,
     config: DelayEstimationConfig | None = None,
+    segment_ids: Sequence[str] | np.ndarray | None = None,
 ) -> DelayFitResult:
-    """Fit pure delay and first-order steering response on a shared time grid."""
+    """Fit pure delay and first-order steering response on one or more runs."""
 
     selected = config or DelayEstimationConfig()
     selected.validate()
     if wheelbase_m <= 0.0:
         raise ValueError("wheelbase_m must be positive")
-    timestamps, command, actual, speed, yaw_rate = _validated_signals(
-        timestamps_sec,
-        ("command_steering_rad", command_steering_rad),
-        ("actual_steering_rad", actual_steering_rad),
-        ("speed_mps", speed_mps),
-        ("yaw_rate_rps", yaw_rate_rps),
-    )
-    dynamic = _dynamic_mask(timestamps, command, selected)
+    if segment_ids is None:
+        timestamps, command, actual, speed, yaw_rate = _validated_signals(
+            timestamps_sec,
+            ("command_steering_rad", command_steering_rad),
+            ("actual_steering_rad", actual_steering_rad),
+            ("speed_mps", speed_mps),
+            ("yaw_rate_rps", yaw_rate_rps),
+        )
+    else:
+        timestamps = _as_finite_vector("timestamps_sec", timestamps_sec)
+        signals: list[np.ndarray] = []
+        for name, values in (
+            ("command_steering_rad", command_steering_rad),
+            ("actual_steering_rad", actual_steering_rad),
+            ("speed_mps", speed_mps),
+            ("yaw_rate_rps", yaw_rate_rps),
+        ):
+            vector = _as_finite_vector(name, values)
+            if vector.shape != timestamps.shape:
+                raise ValueError(
+                    f"{name} shape={vector.shape} does not match timestamps shape={timestamps.shape}"
+                )
+            signals.append(vector)
+        command, actual, speed, yaw_rate = signals
+    segments = validated_time_segment_slices(timestamps, segment_ids)
+    dynamic = np.zeros(len(timestamps), dtype=np.bool_)
+    for segment in segments:
+        dynamic[segment] = _dynamic_mask(timestamps[segment], command[segment], selected)
     taus = _inclusive_grid(selected.tau_min_sec, selected.tau_max_sec, selected.tau_step_sec)
     constants = _inclusive_grid(
         selected.time_constant_min_sec,
@@ -218,18 +281,27 @@ def estimate_steering_delay(
     )
     best: tuple[float, float, float, float, float, np.ndarray] | None = None
     for delay_sec in taus:
-        delayed_command = _shifted_hold(timestamps, command, float(delay_sec))
-        valid_start = timestamps >= timestamps[0] + float(delay_sec)
+        delayed_command = np.empty_like(command)
+        valid_start = np.zeros(len(timestamps), dtype=np.bool_)
+        for segment in segments:
+            delayed_command[segment] = _shifted_hold(
+                timestamps[segment], command[segment], float(delay_sec)
+            )
+            valid_start[segment] = (
+                timestamps[segment] >= timestamps[segment.start] + float(delay_sec)
+            )
         score_mask = dynamic & valid_start
         if int(np.count_nonzero(score_mask)) < 3:
             score_mask = valid_start
         for time_constant_sec in constants:
-            predicted = _first_order_response(
-                timestamps,
-                delayed_command,
-                float(time_constant_sec),
-                float(actual[0]),
-            )
+            predicted = np.empty_like(command)
+            for segment in segments:
+                predicted[segment] = _first_order_response(
+                    timestamps[segment],
+                    delayed_command[segment],
+                    float(time_constant_sec),
+                    float(actual[segment.start]),
+                )
             predicted_yaw = speed * np.tan(predicted) / wheelbase_m
             steering_nrmse = _normalized_rmse(predicted[score_mask], actual[score_mask])
             yaw_nrmse = _normalized_rmse(predicted_yaw[score_mask], yaw_rate[score_mask])
@@ -247,14 +319,21 @@ def estimate_steering_delay(
     if best is None:
         raise RuntimeError("Delay grid search produced no candidate")
     objective, delay_sec, time_constant_sec, steering_nrmse, yaw_nrmse, predicted = best
-    score_mask = dynamic & (timestamps >= timestamps[0] + delay_sec)
+    valid_start = np.zeros(len(timestamps), dtype=np.bool_)
+    for segment in segments:
+        valid_start[segment] = timestamps[segment] >= timestamps[segment.start] + delay_sec
+    score_mask = dynamic & valid_start
     if int(np.count_nonzero(score_mask)) < 3:
-        score_mask = timestamps >= timestamps[0] + delay_sec
+        score_mask = valid_start
     correlation = _correlation(predicted[score_mask], actual[score_mask])
     dynamic_count = int(np.count_nonzero(dynamic))
     valid, reasons = _validity(dynamic_count, correlation, selected)
     return DelayFitResult(
-        method="command_to_actual_first_order_and_yaw",
+        method=(
+            "command_to_actual_first_order_and_yaw"
+            if segment_ids is None
+            else "segmented_command_to_actual_first_order_and_yaw"
+        ),
         delay_sec=delay_sec,
         time_constant_sec=time_constant_sec,
         objective=float(objective),
