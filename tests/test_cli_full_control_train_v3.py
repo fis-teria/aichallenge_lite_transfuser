@@ -73,10 +73,7 @@ def _training_fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
     })
     config["data"].update({
         "image_height": 32, "image_width": 32, "lidar_points": 4,
-        "ego_features": [
-            "longitudinal_speed_mps", "lateral_speed_mps", "yaw_rate_rps",
-            "actual_steering_rad",
-        ],
+        "ego_features": ["longitudinal_speed_mps", "lateral_speed_mps", "yaw_rate_rps"],
     })
     config_path = tmp_path / "full_control.yaml"
     config_path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")

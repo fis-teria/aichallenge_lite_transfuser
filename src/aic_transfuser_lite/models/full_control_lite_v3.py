@@ -208,8 +208,11 @@ class FullControlLiteV3(nn.Module):
                 latest_command[:, 2],
                 torch.zeros_like(latest_command[:, 2]),
             )
+            initial_steering = (
+                ego[:, 3] if self.ego_dim >= 4 else torch.zeros_like(ego[:, 0])
+            )
             initial_control = torch.stack(
-                (ego[:, 3], ego[:, 0], initial_acceleration), dim=-1
+                (initial_steering, ego[:, 0], initial_acceleration), dim=-1
             )
             control_sequence = self.control_sequence_head(pooled, initial_control)
         behavior_logits = behavior_side_logits = None

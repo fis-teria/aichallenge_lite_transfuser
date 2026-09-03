@@ -144,13 +144,17 @@ def load_full_control_config_v3(path: str | Path) -> dict[str, object]:
     data = raw["data"]
     if model.get("name") != "full_control_lite_v3" or not bool(model.get("control_head_enabled")):
         raise ValueError("full-control training requires enabled FullControlLiteV3 control head")
-    if list(data.get("ego_features", [])) != [
+    required_ego_prefix = [
         "longitudinal_speed_mps",
         "lateral_speed_mps",
         "yaw_rate_rps",
-        "actual_steering_rad",
-    ]:
-        raise ValueError("full-control config requires the explicit four-feature ego order")
+    ]
+    ego_features = list(data.get("ego_features", []))
+    if ego_features not in (
+        required_ego_prefix,
+        [*required_ego_prefix, "actual_steering_rad"],
+    ):
+        raise ValueError("full-control config has an unsupported explicit ego feature order")
     if float(raw["loss"].get("current_control", 0.0)) <= 0.0:
         raise ValueError("full-control config requires nonzero current_control loss")
     if not bool(model.get("control_sequence_head_enabled")):
