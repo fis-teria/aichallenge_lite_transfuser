@@ -29,16 +29,20 @@ def balanced_class_weights_v3(
 ) -> tuple[float, ...]:
     """Derive inverse-frequency weights from the selected training split only."""
 
-    counts = torch.zeros(class_count, dtype=torch.long)
-    for batch in batches:
-        if batch.targets is None:
-            continue
-        target = getattr(batch.targets, target_name)
-        mask = getattr(batch.targets, mask_name)
-        if target is None or mask is None:
-            continue
-        selected = target[mask].detach().cpu()
-        counts += torch.bincount(selected, minlength=class_count)[:class_count]
+    counter = getattr(batches, "class_counts", None)
+    if callable(counter):
+        counts = counter(target_name, class_count)
+    else:
+        counts = torch.zeros(class_count, dtype=torch.long)
+        for batch in batches:
+            if batch.targets is None:
+                continue
+            target = getattr(batch.targets, target_name)
+            mask = getattr(batch.targets, mask_name)
+            if target is None or mask is None:
+                continue
+            selected = target[mask].detach().cpu()
+            counts += torch.bincount(selected, minlength=class_count)[:class_count]
     missing = torch.nonzero(counts == 0, as_tuple=False).flatten().tolist()
     if missing and require_all_classes:
         raise ValueError(f"training split has no valid {target_name} samples for classes {missing}")

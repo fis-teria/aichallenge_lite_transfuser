@@ -12,6 +12,7 @@ from aic_transfuser_lite.data.dataset_view_v3 import load_temporal_training_batc
 import aic_transfuser_lite.data.dataset_view_v3 as dataset_view_v3
 from aic_transfuser_lite.data.storage_v3 import validate_complete_dataset
 from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3, sha256_file_v3
+from aic_transfuser_lite.training.train_v3 import balanced_class_weights_v3
 from test_dataset_v3_converter import _convert
 
 
@@ -151,6 +152,15 @@ def test_temporal_training_loader_defers_asset_reads_until_batch_access(
         behavior_view_root=behavior_view,
     )
     assert len(batches) > 1
+    assert opened == []
+    weights = balanced_class_weights_v3(
+        batches,
+        target_name="behavior_class",
+        mask_name="behavior_mask",
+        class_count=5,
+        require_all_classes=False,
+    )
+    assert len(weights) == 5
     assert opened == []
     assert all(
         int(batches.rows[anchor]["future_valid_count"]) > 0

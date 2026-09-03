@@ -236,6 +236,32 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
         count = math.ceil(len(self.usable_anchors) / self.batch_size)
         return count if self.max_batches is None else min(count, self.max_batches)
 
+    def class_counts(self, target_name: str, class_count: int) -> torch.Tensor:
+        """Count behavior labels without materializing image or LiDAR assets."""
+
+        columns = {
+            "behavior_class": ("behavior_class", "behavior_valid"),
+            "behavior_side": ("behavior_side", "behavior_side_valid"),
+        }
+        if target_name not in columns or class_count <= 0:
+            raise ValueError("unsupported class-count request")
+        counts = torch.zeros(class_count, dtype=torch.long)
+        if self.behavior_by_sample is None:
+            return counts
+        value_column, valid_column = columns[target_name]
+        batch_limit = len(self.usable_anchors)
+        if self.max_batches is not None:
+            batch_limit = min(batch_limit, self.max_batches * self.batch_size)
+        for anchor in self.usable_anchors[:batch_limit]:
+            annotation = self.behavior_by_sample.get(self.rows[anchor]["sample_id"])
+            if annotation is None or not _csv_bool(annotation[valid_column]):
+                continue
+            value = int(annotation[value_column])
+            if value < 0 or value >= class_count:
+                raise ValueError(f"{target_name} label is outside configured classes")
+            counts[value] += 1
+        return counts
+
     def __getitem__(self, index: int) -> ModelBatchV3:
         count = len(self)
         normalized = index + count if index < 0 else index
