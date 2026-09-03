@@ -176,3 +176,44 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
 Training completion alone does not pass M3. The candidate must first pass
 held-out Trajectory ADE, Speed MAE, and Plan-consistency comparison without
 regression, then repeat the bounded Graneple launch/curve/tracking trials.
+
+## Recovery fine-tune live evidence
+
+Commit `44670a4f` added exact sampler-epoch validation and resumed the recovery
+run from optimizer step 200. Epoch 2 (`step=3868`) replaced epoch 1 as the
+current validation best:
+
+| epoch | trajectory ADE [m] | speed profile MAE [m/s] | promoted |
+|---:|---:|---:|:---:|
+| 1 | 0.236507 | 0.160619 | yes |
+| 2 | **0.198744** | **0.155845** | yes |
+
+The epoch-2 checkpoint SHA-256 was
+`0bb6c6143e404de72d54092a45a5ca916596329471ab4f99ce23781d67c03294`.
+It was copied to Graneple with matching source and a generated runtime artifact
+whose SHA-256 was
+`95212bb706eb9cf6cc499796444d6b9ea07e8bb58f9b1af6ddeac1b8af063e46`.
+
+The first attempted trial accidentally omitted Docker GPU access. Its 4.3 Hz
+inference caused `nominal_command_timeout` for 2477 Safety samples and a 71.6 s
+reported launch latency. That artifact is retained as infrastructure-negative
+evidence but is not used to judge the model. The container was replaced with an
+otherwise identical `--gpus all` instance before the valid trial.
+
+The valid GPU-backed trial `m3_epoch2_trial2_gpu_44670a4` produced:
+
+- launch latency 1.972 s and maximum measured speed 0.7448 m/s;
+- 15.04 m displacement with 105 right-turn samples and no left-turn samples;
+- Executable Reference tracking p95 0.0788 m;
+- Safety `normal` 630 times but
+  `front_obstacle_inside_stopping_distance` 2397 times;
+- final speed 0.0 m/s, with no controller fault and no Plan rejection;
+- collision topic still absent, so collision state remains unverified.
+
+The analyzer JSON SHA-256 was
+`33ca2e1a64c2bb27230c86c300f4903c70e803824dcb9067baa3d7af2e59bf4c`;
+the ROS bag database SHA-256 was
+`a36b175b0e5f37563af5aa981ad3c824ab768af2e384c041da49ea64ad04661d`.
+M3 therefore remains failed: the new checkpoint launches and tracks the
+executed reference, but its closed-loop path reaches the front-obstacle stop
+after only 15 m. Training continues; M4 and M5 remain blocked.
