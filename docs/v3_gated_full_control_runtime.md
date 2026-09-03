@@ -8,6 +8,7 @@ Supervisor, and RViz by default. The inference node publishes
 Startup fails unless all of the following are true:
 
 - the runtime artifact declares both `trajectory` and `control_sequence`;
+- the artifact declares `command_history_alignment=causal_previous_only`;
 - checkpoint, runtime manifest, and trial-evidence hashes match;
 - the calibration artifact is in `shadow` state for a limited trial;
 - authoritative steering, rate, acceleration, jerk, speed, and timing limits
@@ -25,10 +26,13 @@ authority for either source.
 Heading consistency is gated only at trajectory samples whose predicted speed
 is at least `consistency_min_heading_speed_mps`; tangent heading is not
 observable on a near-stationary path. Position, lateral, speed, and endpoint
-checks remain active at every sample. The previous published nominal command
-is fed back as the next one-step command history and as the projection's prior
-acceleration, so receding-horizon execution does not restart from zero on every
-observation.
+checks remain active at every sample. Published nominal commands are appended
+only after inference and fed back as a fixed-length history whose maximum
+length matches the model configuration. Startup is left-padded with invalid
+entries. Thus the runtime input has the same past-only meaning and length as
+training. The most recent published command also supplies the projection's
+prior acceleration, so receding-horizon execution does not restart from zero
+on every observation.
 
 The trial profile also contains an explicitly authorized stopped-launch
 assist. Before authoritative projection, it can raise the model sequence's

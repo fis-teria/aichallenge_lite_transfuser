@@ -54,7 +54,7 @@ from aic_transfuser_lite.runtime.full_control_gate import (
     FullControlReadiness,
     authority_change_allowed,
     choose_full_control_or_same_trajectory_fallback,
-    previous_nominal_command_history,
+    nominal_command_history,
 )
 from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3, sha256_file_v3
 from aic_transfuser_lite.runtime.residual_control import ExternalControllerCommand
@@ -260,6 +260,9 @@ class InferenceNodeV3(Node):
         self.full_control_calibration = None
         self.consistency_thresholds = None
         self.previous_nominal_command: ExternalControllerCommand | None = None
+        self.nominal_command_history: deque[ExternalControllerCommand] = deque(
+            maxlen=self.model.max_ego_history
+        )
         self.launch_assist_completed = False
         if self.runtime_profile is RuntimeProfile.FULL_CONTROL:
             calibration_path = Path(
@@ -793,6 +796,7 @@ class InferenceNodeV3(Node):
         message.longitudinal.acceleration = decision.command.acceleration_mps2
         self.full_control_pub.publish(message)
         self.previous_nominal_command = decision.command
+        self.nominal_command_history.append(decision.command)
         reasons = ",".join(decision.consistency_reasons) or "consistent"
         if launch_assist_applied and decision.source == "model_control_sequence":
             reasons = f"launch_assist,{reasons}"
@@ -867,8 +871,9 @@ class InferenceNodeV3(Node):
             requested.add("control_sequence")
         if self.behavior_enabled:
             requested.update({"behavior", "behavior_side"})
-        command_values, command_valid = previous_nominal_command_history(
-            self.previous_nominal_command
+        command_values, command_valid = nominal_command_history(
+            tuple(self.nominal_command_history),
+            length=self.model.max_ego_history,
         )
         return ModelBatchV3(
             image=image_tensor[None, None], image_mask=torch.ones(1, 1, dtype=torch.bool, device=self.device),
@@ -876,9 +881,9 @@ class InferenceNodeV3(Node):
             ego=ego[None, None], ego_feature_mask=torch.ones(1, 1, 4, dtype=torch.bool, device=self.device),
             command_history=torch.tensor(
                 command_values, dtype=torch.float32, device=self.device
-            )[None, None],
+            )[None],
             command_mask=torch.tensor(
-                [[command_valid]], dtype=torch.bool, device=self.device
+                [command_valid], dtype=torch.bool, device=self.device
             ),
             sensor_dt_sec=dt, requested_outputs=frozenset(requested),
         )

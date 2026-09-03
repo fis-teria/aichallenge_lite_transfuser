@@ -39,6 +39,7 @@ data:
   # Steer Angle: SteeringReport.steering_tire_angle. All values are in SI units.
   ego_features: [longitudinal_speed_mps, lateral_speed_mps, yaw_rate_rps, actual_steering_rad]
 targets:
+  command_history_alignment: causal_previous_only
   behavior_ontology: aic_behavior_v1
   behavior_classes: [FORWARD_NORMAL, FORWARD_FOLLOW, FORWARD_AVOID, FORWARD_RETURN, RECOVERY]
   behavior_sides: [NONE, LEFT, RIGHT]

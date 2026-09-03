@@ -4,7 +4,7 @@
   "title": "AIC ModelBatchV3 tensor contract",
   "type": "object",
   "additionalProperties": false,
-  "required": ["format_version", "tensors", "units"],
+  "required": ["format_version", "tensors", "semantics", "units"],
   "properties": {
     "format_version": {"const": "aic_model_batch_v3"},
     "tensors": {
@@ -23,6 +23,9 @@
         "behavior_side": {"const": "[B] long with [B] bool mask"}
       },
       "required": ["image", "image_mask", "lidar", "lidar_mask", "ego", "ego_feature_mask", "command_history", "command_mask", "sensor_dt_sec"]
+    },
+    "semantics": {
+      "const": {"command_history": "causal_previous_only; excludes the anchor/current target command"}
     },
     "units": {
       "const": {"distance": "m", "angle": "rad", "speed": "m/s", "acceleration": "m/s^2", "time": "s"}

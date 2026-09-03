@@ -9,6 +9,7 @@ from typing import Any
 import torch
 
 from aic_transfuser_lite.contracts.behavior_v1 import BEHAVIOR_ONTOLOGY_V1
+from aic_transfuser_lite.contracts.model_batch_v3 import COMMAND_HISTORY_ALIGNMENT_V3
 
 from aic_transfuser_lite.models.full_control_lite_v3 import FullControlLiteV3
 
@@ -81,6 +82,14 @@ def load_runtime_model_v3(
         raise ValueError("checkpoint embedded contract hash mismatch")
     if not isinstance(manifest["model_kwargs"], dict):
         raise ValueError("model_kwargs must be a mapping")
+    if (
+        "control_sequence" in capabilities
+        and manifest["model_kwargs"].get("command_history_alignment")
+        != COMMAND_HISTORY_ALIGNMENT_V3
+    ):
+        raise ValueError(
+            "control_sequence artifact lacks causal command history alignment"
+        )
     if "behavior" in capabilities and payload.get("behavior_ontology") != BEHAVIOR_ONTOLOGY_V1:
         raise ValueError("behavior-capable checkpoint ontology mismatch")
     model = FullControlLiteV3(**manifest["model_kwargs"]).to(device)

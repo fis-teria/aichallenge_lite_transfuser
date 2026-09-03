@@ -10,6 +10,7 @@ from aic_transfuser_lite.runtime.full_control_gate import (
     FullControlReadiness,
     authority_change_allowed,
     choose_full_control_or_same_trajectory_fallback,
+    nominal_command_history,
     previous_nominal_command_history,
 )
 from aic_transfuser_lite.runtime.residual_control import ExternalControllerCommand
@@ -128,6 +129,29 @@ def test_previous_nominal_command_is_fed_to_next_receding_horizon() -> None:
     assert values == (0.1, 0.8, 0.4)
     assert valid
     assert previous_nominal_command_history(None) == ((0.0, 0.0, 0.0), False)
+
+
+def test_nominal_command_history_is_fixed_length_left_padded_and_truncated() -> None:
+    commands = tuple(
+        ExternalControllerCommand(float(index), float(index + 1), float(-index))
+        for index in range(4)
+    )
+    values, valid = nominal_command_history(commands[:2], length=4)
+    assert values == (
+        (0.0, 0.0, 0.0),
+        (0.0, 0.0, 0.0),
+        (0.0, 1.0, 0.0),
+        (1.0, 2.0, -1.0),
+    )
+    assert valid == (False, False, True, True)
+    truncated, truncated_valid = nominal_command_history(commands, length=2)
+    assert truncated == ((2.0, 3.0, -2.0), (3.0, 4.0, -3.0))
+    assert truncated_valid == (True, True)
+
+
+def test_nominal_command_history_rejects_nonpositive_length() -> None:
+    with pytest.raises(ValueError, match="length must be positive"):
+        nominal_command_history((), length=0)
 
 
 @pytest.mark.parametrize(

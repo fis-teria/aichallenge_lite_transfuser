@@ -6,7 +6,10 @@ from typing import Mapping
 import torch
 from torch import nn
 
-from aic_transfuser_lite.contracts.model_batch_v3 import ModelBatchV3
+from aic_transfuser_lite.contracts.model_batch_v3 import (
+    COMMAND_HISTORY_ALIGNMENT_V3,
+    ModelBatchV3,
+)
 from aic_transfuser_lite.contracts.model_output_v3 import ModelOutputV3
 
 from .camera_encoder import CameraEncoder
@@ -50,6 +53,7 @@ class FullControlLiteV3(nn.Module):
         lidar_angle_increment_rad: float | None = None,
         max_sensor_history: int = 4,
         max_ego_history: int = 10,
+        command_history_alignment: str = COMMAND_HISTORY_ALIGNMENT_V3,
         control_head_enabled: bool = False,
         control_sequence_head_enabled: bool = False,
         control_sequence_steps: int = 10,
@@ -70,6 +74,10 @@ class FullControlLiteV3(nn.Module):
             raise ValueError("V3-013 baseline requires trajectory_steps=15 and candidates=1")
         if image_height <= 0 or image_width <= 0 or lidar_points <= 1 or ego_dim <= 0:
             raise ValueError("input dimensions must be positive")
+        if command_history_alignment != COMMAND_HISTORY_ALIGNMENT_V3:
+            raise ValueError(
+                "FullControlLiteV3 requires causal_previous_only command history"
+            )
         if lidar_angle_increment_rad is None:
             lidar_angle_increment_rad = 2.0 * torch.pi / float(lidar_points)
         self.image_height = image_height
@@ -83,6 +91,7 @@ class FullControlLiteV3(nn.Module):
         self.control_sequence_steps = control_sequence_steps
         self.max_sensor_history = max_sensor_history
         self.max_ego_history = max_ego_history
+        self.command_history_alignment = command_history_alignment
         self.camera = CameraEncoder(
             output_dim=hidden_dim,
             token_h=camera_tokens_hw[0],

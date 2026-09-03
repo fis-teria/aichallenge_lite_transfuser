@@ -2,7 +2,11 @@ import pytest
 import torch
 
 from aic_transfuser_lite.models.encoders.ego_history import EgoHistoryEncoder
-from aic_transfuser_lite.models.temporal.gru import MaskedGRUTemporalEncoder, select_epoch_history
+from aic_transfuser_lite.models.temporal.gru import (
+    MaskedGRUTemporalEncoder,
+    select_epoch_history,
+    select_epoch_history_before_anchor,
+)
 from test_full_control_lite_v3_shape import _batch, _model
 
 
@@ -34,6 +38,31 @@ def test_clock_epoch_boundary_is_left_padded_not_crossed() -> None:
     selected = select_epoch_history([0, 0, 1, 1], anchor_index=2, length=4)
     assert selected.indices == (2, 2, 2, 2)
     assert selected.mask == (False, False, False, True)
+
+
+def test_causal_command_history_excludes_anchor_and_epoch_boundary() -> None:
+    selected = select_epoch_history_before_anchor(
+        [0, 0, 1, 1, 1], anchor_index=4, length=4
+    )
+    assert selected.indices == (2, 2, 2, 3)
+    assert selected.mask == (False, False, True, True)
+    at_boundary = select_epoch_history_before_anchor(
+        [0, 0, 1, 1], anchor_index=2, length=3
+    )
+    assert at_boundary.indices == (2, 2, 2)
+    assert at_boundary.mask == (False, False, False)
+
+
+@pytest.mark.parametrize(
+    ("anchor", "length"), [(-1, 2), (4, 2), (0, 0)]
+)
+def test_causal_command_history_rejects_invalid_selection(
+    anchor: int, length: int
+) -> None:
+    with pytest.raises(ValueError, match="invalid history selection"):
+        select_epoch_history_before_anchor(
+            [0, 0, 1, 1], anchor_index=anchor, length=length
+        )
 
 
 def test_masked_steps_do_not_change_temporal_state() -> None:

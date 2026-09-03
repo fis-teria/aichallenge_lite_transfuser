@@ -1,5 +1,12 @@
 # d1log_0902 全11 run V3学習記録
 
+> **2026-09-03 corrective status:** この記録の`48dee900...` checkpointは、
+> 学習時の`command_history`にprediction anchorの教師commandを含め、runtimeでは
+> 直前のmodel command 1件だけを入力していた旧契約で作成された。full-control用途では
+> **再利用不可**。修正版は`causal_previous_only`の過去10件へ学習・runtimeを統一し、
+> markerを持たないcontrol-sequence artifactをloaderが拒否する。下記の数値は不具合の
+> 発見に至った履歴として保持し、修正版の再学習・AWSIM再試験結果ではない。
+
 ## 目的と範囲
 
 `d1log_0902.zip`の全11 runをrun単位で分割し、公開AICデータで事前学習した
@@ -25,6 +32,8 @@ checkpoint、rosbagはGitへ追加せず、WSL native filesystemだけに保存�
 
 canonical Datasetのraw commandは変更しない。学習viewでcurrent-control教師を絶対範囲へ
 clipし、未来control教師系列を同じsteering-rate、jerk、絶対範囲へ投影する。
+command履歴はanchor/current教師を除いた過去だけを使用し、epoch先頭はinvalid maskで
+左paddingする。未来系列の初期加速度も直前の有効な過去command（無ければ0）から取る。
 
 ## 公開データ初期重み
 
@@ -167,6 +176,10 @@ ros2 launch aic_e2e_runtime transfuser_lite_v3_full_control_trial.launch.py \
 ```
 
 ## 未解決事項
+
+- `48dee900...`は旧history契約のためfull-controlへ再配備しない。修正版commitから
+  新規output directoryへ再学習し、offline選定とGranepleでのshadow/限定走行を
+  やり直す必要がある。
 
 - `full_control_lite_v3.yaml`の`gradient_accumulation_steps: 8`を現行V3 trainerが
   消費しておらず、今回のeffective batch sizeは2だった。次回学習前にtrainer実装と

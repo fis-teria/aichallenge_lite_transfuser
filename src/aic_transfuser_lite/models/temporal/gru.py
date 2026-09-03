@@ -31,6 +31,34 @@ def select_epoch_history(
     return HistorySelection(tuple(indices), tuple([False] * pad + [True] * len(valid)))
 
 
+def select_epoch_history_before_anchor(
+    clock_epochs: Sequence[object], *, anchor_index: int, length: int
+) -> HistorySelection:
+    """Select causal history strictly before an anchor without crossing epochs.
+
+    At an epoch start there is no valid command history. The anchor index is
+    then used only as a safe padding index and every mask entry is false, so
+    the anchor value cannot reach the temporal encoder.
+    """
+
+    if length <= 0 or anchor_index < 0 or anchor_index >= len(clock_epochs):
+        raise ValueError("invalid history selection arguments")
+    epoch = clock_epochs[anchor_index]
+    valid: list[int] = []
+    cursor = anchor_index - 1
+    while cursor >= 0 and len(valid) < length and clock_epochs[cursor] == epoch:
+        valid.append(cursor)
+        cursor -= 1
+    valid.reverse()
+    if not valid:
+        return HistorySelection(
+            tuple([anchor_index] * length), tuple([False] * length)
+        )
+    pad = length - len(valid)
+    indices = [valid[0]] * pad + valid
+    return HistorySelection(tuple(indices), tuple([False] * pad + [True] * len(valid)))
+
+
 class MaskedGRUTemporalEncoder(nn.Module):
     """GRUCell history encoder; invalid steps do not change hidden state."""
 

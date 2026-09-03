@@ -9,6 +9,7 @@ import yaml
 
 from aic_transfuser_lite.cli import EXIT_SUCCESS, main
 from aic_transfuser_lite.data.canonical_converter_v3 import write_prepared_dataset_v3
+from aic_transfuser_lite.data.canonical_converter_v3 import PreparedRunV3
 from aic_transfuser_lite.data.dataset_view_v3 import (
     ControlTargetBoundsV3,
     clip_control_target_v3,
@@ -17,13 +18,14 @@ from aic_transfuser_lite.data.dataset_view_v3 import (
 )
 import aic_transfuser_lite.data.dataset_view_v3 as dataset_view_v3
 from aic_transfuser_lite.data.storage_v3 import validate_complete_dataset
+from aic_transfuser_lite.data.mcap_converter_v2 import TimedCommand
 from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3, sha256_file_v3
 from aic_transfuser_lite.training.train_v3 import (
     TrainerV3,
     balanced_class_weights_v3,
     load_full_control_config_v3,
 )
-from test_dataset_v3_converter import _convert
+from test_dataset_v3_converter import _convert, _streams
 
 
 ROOT = Path(__file__).parents[1]
@@ -44,11 +46,13 @@ def _target_bounds(**overrides: float) -> ControlTargetBoundsV3:
     return ControlTargetBoundsV3(**values)
 
 
-def _training_fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
+def _training_fixture(
+    tmp_path: Path, *, prepared_run: PreparedRunV3 | None = None
+) -> tuple[Path, Path, Path, Path, Path]:
     dataset = tmp_path / "dataset"
     write_prepared_dataset_v3(
         dataset, dataset_id="dataset01", topic_profile_id="default",
-        runs=(_convert(),), jpeg_quality=90,
+        runs=(_convert() if prepared_run is None else prepared_run,), jpeg_quality=90,
     )
     manifest = validate_complete_dataset(dataset)
     behavior_view = tmp_path / "behavior_view"
@@ -121,6 +125,9 @@ def test_cli_full_control_one_epoch_and_resume(tmp_path: Path) -> None:
     artifact = json.loads((output / "runtime_artifact.json").read_text())
     assert "control_sequence" in artifact["capabilities"]
     assert artifact["model_kwargs"]["behavior_head_enabled"] is True
+    assert artifact["model_kwargs"]["command_history_alignment"] == (
+        "causal_previous_only"
+    )
     loaded = load_runtime_model_v3(
         output / "last.pt", output / "runtime_artifact.json", device=torch.device("cpu"),
         expected_checkpoint_sha256=artifact["checkpoint_sha256"],
@@ -230,6 +237,7 @@ def test_temporal_training_loader_defers_asset_reads_until_batch_access(
         control_sequence_steps=10,
         camera_history_length=4,
         ego_history_length=10,
+        command_history_length=10,
         control_target_bounds=_target_bounds(),
         batch_size=2,
         behavior_view_root=behavior_view,
@@ -252,6 +260,73 @@ def test_temporal_training_loader_defers_asset_reads_until_batch_access(
     first = batches[0]
     assert first.image.shape == (2, 4, 3, 32, 32)
     assert len(opened) == 8
+
+
+def test_training_command_history_is_past_only_and_projection_uses_previous_state(
+    tmp_path: Path,
+) -> None:
+    streams = _streams()
+    commands = tuple(
+        TimedCommand(
+            item.timestamp_ns,
+            1.0,
+            -1.0 if index == 0 else 2.0,
+            0.0,
+        )
+        for index, item in enumerate(streams.nominal_commands)
+    )
+    prepared = _convert(
+        streams.__class__(
+            **{
+                **streams.__dict__,
+                "nominal_commands": commands,
+                "final_commands": commands,
+            }
+        )
+    )
+    dataset, split, _, behavior_view, _ = _training_fixture(
+        tmp_path, prepared_run=prepared
+    )
+    batch = load_temporal_training_batches_v3(
+        dataset,
+        split,
+        split="train",
+        image_height=32,
+        image_width=32,
+        lidar_points=4,
+        lidar_min_range_m=0.0,
+        lidar_max_range_m=25.0,
+        ego_features=(
+            "longitudinal_speed_mps",
+            "lateral_speed_mps",
+            "yaw_rate_rps",
+        ),
+        trajectory_steps=15,
+        control_sequence_steps=10,
+        camera_history_length=4,
+        ego_history_length=10,
+        command_history_length=10,
+        control_target_bounds=_target_bounds(),
+        batch_size=2,
+        max_batches=1,
+        behavior_view_root=behavior_view,
+    )[0]
+
+    assert not bool(batch.command_mask[0].any())
+    assert batch.command_mask[1].tolist() == [False] * 9 + [True]
+    assert batch.command_history[1, -1, 2].item() == pytest.approx(-1.0)
+    assert batch.targets is not None
+    assert batch.targets.current_control[1, 2].item() == pytest.approx(2.0)
+    assert batch.targets.control_sequence[1, 0, 2].item() == pytest.approx(-0.6)
+
+
+def test_full_control_config_rejects_noncausal_command_history(tmp_path: Path) -> None:
+    raw = yaml.safe_load((ROOT / "configs/models/full_control_lite_v3.yaml").read_text())
+    raw["targets"]["command_history_alignment"] = "includes_current_target"
+    config = tmp_path / "leaking_history.yaml"
+    config.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    with pytest.raises(ValueError, match="causal command history"):
+        load_full_control_config_v3(config)
 
 
 def test_teacher_control_projection_matches_head_absolute_rate_and_jerk_limits() -> None:

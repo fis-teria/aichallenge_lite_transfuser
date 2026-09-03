@@ -17,6 +17,7 @@ from .data.canonical_converter_v3 import (
     write_prepared_dataset_v3,
 )
 from .data.clock_segments import ClockEpoch
+from .contracts.model_batch_v3 import COMMAND_HISTORY_ALIGNMENT_V3
 from .data.dataset_view_v3 import (
     ControlTargetBoundsV3,
     load_temporal_training_batches_v3,
@@ -333,6 +334,15 @@ def _train_v3(args: argparse.Namespace) -> int:
         config["model"], config["data"], config["loss"], config["training"]
     )
     view = yaml.safe_load(Path(args.view_config).read_text(encoding="utf-8"))
+    if (
+        not isinstance(view, dict)
+        or view.get("command_history_alignment") != COMMAND_HISTORY_ALIGNMENT_V3
+    ):
+        raise ValueError("temporal view requires causal command history alignment")
+    if int(view.get("command_history_length", 0)) != int(
+        data_cfg["command_history_length"]
+    ):
+        raise ValueError("temporal view and model command history lengths differ")
     batch_size = int(args.batch_size or training_cfg["micro_batch_size"])
     epochs = int(args.epochs or training_cfg["epochs"])
     if epochs <= 0 or batch_size <= 0:
@@ -347,6 +357,7 @@ def _train_v3(args: argparse.Namespace) -> int:
         control_sequence_steps=int(model_cfg["control_sequence_steps"]),
         camera_history_length=int(view["camera_history_length"]),
         ego_history_length=int(view["ego_history_length"]),
+        command_history_length=int(view["command_history_length"]),
         control_target_bounds=ControlTargetBoundsV3(
             max_steering_rad=float(model_cfg["control_bounds"]["max_steering_rad"]),
             max_steering_rate_radps=float(

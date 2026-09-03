@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 import math
+from typing import Sequence
 
 from .control_projection import ProjectedControlSequence
 from .residual_control import ExternalControllerCommand
@@ -68,18 +69,37 @@ def previous_nominal_command_history(
 ) -> tuple[tuple[float, float, float], bool]:
     """Encode the last issued nominal command for the next receding horizon."""
 
-    if previous is None:
-        return (0.0, 0.0, 0.0), False
-    values = (
-        previous.steering_rad,
-        previous.speed_mps,
-        previous.acceleration_mps2,
+    values, mask = nominal_command_history(
+        () if previous is None else (previous,), length=1
     )
-    if not all(math.isfinite(value) for value in values):
-        raise ValueError("previous nominal command must be finite")
-    if previous.speed_mps < 0.0:
-        raise ValueError("previous nominal speed must be non-negative")
-    return values, True
+    return values[0], mask[0]
+
+
+def nominal_command_history(
+    commands: Sequence[ExternalControllerCommand], *, length: int
+) -> tuple[tuple[tuple[float, float, float], ...], tuple[bool, ...]]:
+    """Encode fixed-length causal history of commands issued before inference."""
+
+    if length <= 0:
+        raise ValueError("nominal command history length must be positive")
+    selected = tuple(commands[-length:])
+    encoded: list[tuple[float, float, float]] = []
+    for command in selected:
+        values = (
+            command.steering_rad,
+            command.speed_mps,
+            command.acceleration_mps2,
+        )
+        if not all(math.isfinite(value) for value in values):
+            raise ValueError("previous nominal command must be finite")
+        if command.speed_mps < 0.0:
+            raise ValueError("previous nominal speed must be non-negative")
+        encoded.append(values)
+    pad = length - len(encoded)
+    return (
+        tuple([(0.0, 0.0, 0.0)] * pad + encoded),
+        tuple([False] * pad + [True] * len(encoded)),
+    )
 
 
 def authority_change_allowed(

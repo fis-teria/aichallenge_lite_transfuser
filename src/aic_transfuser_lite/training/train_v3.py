@@ -11,7 +11,10 @@ from aic_transfuser_lite.contracts.behavior_v1 import (
     BEHAVIOR_ONTOLOGY_V1,
     BEHAVIOR_SIDE_NAMES_V1,
 )
-from aic_transfuser_lite.contracts.model_batch_v3 import ModelBatchV3
+from aic_transfuser_lite.contracts.model_batch_v3 import (
+    COMMAND_HISTORY_ALIGNMENT_V3,
+    ModelBatchV3,
+)
 from aic_transfuser_lite.models.full_control_lite_v3 import FullControlLiteV3
 
 from .checkpoint_v3 import (
@@ -192,6 +195,11 @@ def load_full_control_config_v3(path: str | Path) -> dict[str, object]:
     }
     if not isinstance(targets, dict) or any(targets.get(key) != value for key, value in expected_targets.items()):
         raise ValueError("full-control config behavior target ontology/order mismatch")
+    if targets.get("command_history_alignment") != COMMAND_HISTORY_ALIGNMENT_V3:
+        raise ValueError("full-control config requires causal command history alignment")
+    command_history_length = int(data.get("command_history_length", 0))
+    if not 0 < command_history_length <= int(model.get("max_ego_history", 0)):
+        raise ValueError("command history length must fit max_ego_history")
     return raw
 
 
@@ -219,6 +227,9 @@ def full_control_model_kwargs_v3(config: dict[str, object]) -> dict[str, object]
         "fusion_heads": int(model["fusion_heads"]),
         "max_sensor_history": int(model["max_sensor_history"]),
         "max_ego_history": int(model["max_ego_history"]),
+        "command_history_alignment": str(
+            config["targets"]["command_history_alignment"]
+        ),
         "control_head_enabled": True,
         "control_sequence_head_enabled": True,
         "control_sequence_steps": int(model["control_sequence_steps"]),

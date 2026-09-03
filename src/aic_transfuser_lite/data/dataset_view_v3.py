@@ -15,7 +15,10 @@ import yaml
 from .canonical_schema_v3 import CanonicalSampleV3
 from .behavior_view_v1 import load_behavior_view_v1
 from aic_transfuser_lite.contracts.model_batch_v3 import ModelBatchV3, TrainingTargetsV3
-from aic_transfuser_lite.models.temporal.gru import select_epoch_history
+from aic_transfuser_lite.models.temporal.gru import (
+    select_epoch_history,
+    select_epoch_history_before_anchor,
+)
 from .storage_v3 import validate_complete_dataset
 from .image_preprocess import preprocess_image
 from .normalization import (
@@ -350,6 +353,7 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
     control_sequence_steps: int
     camera_history_length: int
     ego_history_length: int
+    command_history_length: int
     control_target_bounds: ControlTargetBoundsV3
     batch_size: int
     max_batches: int | None
@@ -435,15 +439,23 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
         ego_selection = select_epoch_history(
             self.epoch_keys, anchor_index=anchor, length=self.ego_history_length
         )
+        command_selection = select_epoch_history_before_anchor(
+            self.epoch_keys,
+            anchor_index=anchor,
+            length=self.command_history_length,
+        )
         sensor_rows = [self.rows[index] for index in sensor_selection.indices]
         ego_rows = [self.rows[index] for index in ego_selection.indices]
+        command_rows = [self.rows[index] for index in command_selection.indices]
         image = torch.stack([self._load_image(item) for item in sensor_rows])
         lidar_values = [self._load_lidar(item) for item in sensor_rows]
-        ego_values, ego_masks, command_values, command_masks = [], [], [], []
+        ego_values, ego_masks = [], []
         for item in ego_rows:
             values, mask = _ego_row(item, self.ego_features)
             ego_values.append(values)
             ego_masks.append(mask)
+        command_values, command_masks = [], []
+        for item in command_rows:
             selected = _selected_command(item, bounds=self.control_target_bounds)
             command_values.append(torch.zeros(3) if selected is None else selected[0])
             command_masks.append(selected is not None)
@@ -489,11 +501,16 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
         initial_steering = (
             float(ego_values[-1][steering_index]) if steering_index is not None else 0.0
         )
+        previous_acceleration = (
+            float(command_values[-1][2])
+            if command_masks[-1] and command_selection.mask[-1]
+            else 0.0
+        )
         sequence = project_teacher_control_sequence_v3(
             sequence,
             sequence_mask,
             initial_steering_rad=initial_steering,
-            initial_acceleration_mps2=float(target_values[2]),
+            initial_acceleration_mps2=previous_acceleration,
             bounds=self.control_target_bounds,
         )
         annotation = (
@@ -511,7 +528,8 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
             "ego": torch.stack(ego_values),
             "ego_feature_mask": torch.stack(ego_masks),
             "command_history": torch.stack(command_values),
-            "command_mask": torch.tensor(command_masks) & torch.tensor(ego_selection.mask),
+            "command_mask": torch.tensor(command_masks)
+            & torch.tensor(command_selection.mask),
             "sensor_dt_sec": torch.zeros(self.camera_history_length, 2),
             "trajectory": torch.from_numpy(future[:, 1:3]).float(),
             "trajectory_mask": torch.from_numpy(future[:, 7].astype(bool)),
@@ -570,6 +588,7 @@ def load_temporal_training_batches_v3(
     control_sequence_steps: int,
     camera_history_length: int,
     ego_history_length: int,
+    command_history_length: int,
     control_target_bounds: ControlTargetBoundsV3,
     batch_size: int,
     max_batches: int | None = None,
@@ -599,8 +618,15 @@ def load_temporal_training_batches_v3(
     }
     if not assigned:
         raise ValueError(f"split {split!r} contains no runs")
-    if batch_size <= 0 or trajectory_steps <= 0 or control_sequence_steps <= 0:
-        raise ValueError("batch size and trajectory/control steps must be positive")
+    if (
+        batch_size <= 0
+        or trajectory_steps <= 0
+        or control_sequence_steps <= 0
+        or camera_history_length <= 0
+        or ego_history_length <= 0
+        or command_history_length <= 0
+    ):
+        raise ValueError("batch size and history/trajectory/control steps must be positive")
     with (root / "samples.csv").open(newline="", encoding="utf-8") as stream:
         rows = [row for row in csv.DictReader(stream) if row["run_id"] in assigned]
     rows.sort(key=lambda row: (row["run_id"], row["segment_id"], int(row["grid_stamp_ns"])))
@@ -639,6 +665,7 @@ def load_temporal_training_batches_v3(
         control_sequence_steps=control_sequence_steps,
         camera_history_length=camera_history_length,
         ego_history_length=ego_history_length,
+        command_history_length=command_history_length,
         control_target_bounds=control_target_bounds,
         batch_size=batch_size,
         max_batches=max_batches,

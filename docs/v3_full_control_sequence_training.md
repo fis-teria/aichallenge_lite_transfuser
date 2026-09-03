@@ -4,7 +4,8 @@ The full-control model keeps trajectory and speed-profile outputs mandatory and
 adds a ten-step physical control sequence at 0.1 s intervals. Each item is
 ordered as steering (rad), speed (m/s), and acceleration (m/s2). The decoder
 predicts steering-rate, bounded speed setpoint, and jerk internally. It
-integrates steering and acceleration from measured ego state/current command
+integrates steering and acceleration from measured ego state/the most recent
+command issued strictly before the prediction anchor
 and applies the configured absolute and rate limits at every step. Speed is
 decoded as an Ackermann command setpoint; it is not incorrectly integrated as
 if it were measured vehicle speed.
@@ -12,6 +13,15 @@ if it were measured vehicle speed.
 Dataset targets use the immediate teacher command followed by commands from
 the same run and clock segment. Missing tail steps are explicitly masked. A
 command from another run or clock epoch is never used as a future label.
+
+`command_history` is a causal input with the explicit
+`causal_previous_only` alignment. It is fixed-length and left-padded with an
+invalid mask at run/clock-epoch starts. The command at the prediction anchor is
+the step-zero target only; it must never appear in its own input history or be
+used as the projection's initial acceleration. Runtime artifacts with a
+`control_sequence` capability must carry the same alignment marker and are
+rejected otherwise. This intentionally prevents checkpoints created under the
+older leaking history contract from being reused for full control.
 
 To initialize the new sequence head from an existing V3 single-control model
 while preserving its learned trajectory/behavior representation:

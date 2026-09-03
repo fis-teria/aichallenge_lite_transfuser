@@ -17,7 +17,9 @@ def test_full_control_launch_keeps_safety_as_only_final_publisher() -> None:
     assert '"nominal_control_cmd"' in source
     assert '"control_sequence"' in source
     assert "choose_full_control_or_same_trajectory_fallback(" in source
-    assert "previous_nominal_command_history(" in source
+    assert "nominal_command_history(" in source
+    assert "length=self.model.max_ego_history" in source
+    assert "self.nominal_command_history.append(decision.command)" in source
     assert "project_model_control_sequence(" in source
     assert "apply_stopped_launch_acceleration_floor(" in source
     assert "rollout_actuator_bicycle(" in source

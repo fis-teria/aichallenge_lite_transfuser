@@ -5,6 +5,9 @@ from dataclasses import dataclass
 import torch
 
 
+COMMAND_HISTORY_ALIGNMENT_V3 = "causal_previous_only"
+
+
 MODEL_BATCH_FORMAT_V3 = "aic_model_batch_v3"
 KNOWN_REQUESTED_OUTPUTS = frozenset(
     {
