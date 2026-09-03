@@ -12,5 +12,10 @@ requirements:
   rviz_enabled: true
   start_from_stopped: true
   abort_on_sensor_timeout: true
+  bounded_stopped_launch_assist:
+    one_shot: true
+    stopped_speed_threshold_mps: 0.1
+    minimum_commanded_speed_mps: 0.2
+    acceleration_floor_mps2: 0.5
 authorization_basis: user_requested_execution_to_m11
 status: approved_for_limited_trial

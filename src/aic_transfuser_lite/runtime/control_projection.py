@@ -112,6 +112,47 @@ class ProjectedControlSequence:
     initial_state: PreviousControlState
 
 
+def apply_stopped_launch_acceleration_floor(
+    commands: np.ndarray,
+    *,
+    previous: PreviousControlState,
+    limits: ControlLimits,
+    stopped_speed_threshold_mps: float,
+    minimum_commanded_speed_mps: float,
+    acceleration_floor_mps2: float,
+) -> tuple[np.ndarray, bool]:
+    """Apply an explicit one-shot launch floor before authoritative projection."""
+
+    limits.validate_for_full_control()
+    _validate_previous(previous, limits)
+    values = np.asarray(commands, dtype=np.float64)
+    if values.ndim != 2 or values.shape[0] < 1 or values.shape[1] != 3:
+        raise ValueError(f"model control sequence must be [H,3], got {values.shape}")
+    if not np.isfinite(values).all():
+        raise ValueError("model control sequence must be finite")
+    parameters = (
+        stopped_speed_threshold_mps,
+        minimum_commanded_speed_mps,
+        acceleration_floor_mps2,
+    )
+    if not all(math.isfinite(value) for value in parameters):
+        raise ValueError("launch-assist parameters must be finite")
+    if stopped_speed_threshold_mps < 0.0:
+        raise ValueError("launch-assist stopped speed must be non-negative")
+    if not 0.0 < minimum_commanded_speed_mps <= limits.max_speed_mps:
+        raise ValueError("launch-assist commanded speed must be within control limits")
+    if not 0.0 < acceleration_floor_mps2 <= limits.max_acceleration_mps2:
+        raise ValueError("launch-assist acceleration floor must be within control limits")
+    if (
+        previous.speed_mps > stopped_speed_threshold_mps
+        or values[0, 1] < minimum_commanded_speed_mps
+    ):
+        return values.copy(), False
+    adjusted = values.copy()
+    adjusted[:, 2] = np.maximum(adjusted[:, 2], acceleration_floor_mps2)
+    return adjusted, bool(np.any(adjusted[:, 2] != values[:, 2]))
+
+
 def _validate_previous(previous: PreviousControlState, limits: ControlLimits) -> None:
     values = (
         previous.steering_rad,

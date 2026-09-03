@@ -7,6 +7,7 @@ from aic_transfuser_lite.runtime.control_projection import (
     ControlLimits,
     PreviousControlState,
     ProjectionTiming,
+    apply_stopped_launch_acceleration_floor,
     project_model_control_sequence,
     project_control_sequence,
     validate_model_control_sequence,
@@ -171,6 +172,60 @@ def test_model_sequence_projection_clips_trial_speed_and_rate() -> None:
     np.testing.assert_allclose(result.commands[:, 2], [0.3, -0.3])
     np.testing.assert_allclose(result.steering_rate_radps, [0.5, -0.5])
     np.testing.assert_allclose(result.jerk_mps3, [3.0, -6.0])
+
+
+def test_stopped_launch_floor_is_explicit_and_projection_keeps_jerk_bound() -> None:
+    commands, applied = apply_stopped_launch_acceleration_floor(
+        np.array([[0.0, 0.8, 0.1], [0.0, 0.8, 0.2]]),
+        previous=PreviousControlState(0.0, 0.0, 0.0),
+        limits=_limits(max_speed_mps=0.8, max_jerk_mps3=4.0),
+        stopped_speed_threshold_mps=0.1,
+        minimum_commanded_speed_mps=0.2,
+        acceleration_floor_mps2=0.5,
+    )
+    assert applied
+    np.testing.assert_allclose(commands[:, 2], 0.5)
+    projected = project_model_control_sequence(
+        commands,
+        previous=PreviousControlState(0.0, 0.0, 0.0),
+        limits=_limits(max_speed_mps=0.8, max_jerk_mps3=4.0),
+        timing=_timing(),
+    )
+    np.testing.assert_allclose(projected.commands[:, 2], [0.4, 0.5])
+
+
+def test_launch_floor_does_not_apply_without_motion_request_or_after_launch() -> None:
+    for previous, first_speed in (
+        (PreviousControlState(0.0, 0.11, 0.0), 0.8),
+        (PreviousControlState(0.0, 0.0, 0.0), 0.1),
+    ):
+        original = np.array([[0.0, first_speed, 0.1]])
+        commands, applied = apply_stopped_launch_acceleration_floor(
+            original,
+            previous=previous,
+            limits=_limits(max_speed_mps=0.8),
+            stopped_speed_threshold_mps=0.1,
+            minimum_commanded_speed_mps=0.2,
+            acceleration_floor_mps2=0.5,
+        )
+        assert not applied
+        np.testing.assert_array_equal(commands, original)
+
+
+@pytest.mark.parametrize(
+    ("floor", "message"),
+    [(0.0, "acceleration floor"), (3.0, "acceleration floor"), (float("nan"), "finite")],
+)
+def test_launch_floor_rejects_unbounded_parameters(floor: float, message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        apply_stopped_launch_acceleration_floor(
+            np.zeros((1, 3)),
+            previous=PreviousControlState(0.0, 0.0, 0.0),
+            limits=_limits(),
+            stopped_speed_threshold_mps=0.1,
+            minimum_commanded_speed_mps=0.2,
+            acceleration_floor_mps2=floor,
+        )
 
 
 @pytest.mark.parametrize(

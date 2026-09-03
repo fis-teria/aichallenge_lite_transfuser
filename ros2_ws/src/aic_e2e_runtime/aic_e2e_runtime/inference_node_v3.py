@@ -46,6 +46,7 @@ from aic_transfuser_lite.runtime.control_projection import (
     ControlLimits,
     PreviousControlState,
     ProjectionTiming,
+    apply_stopped_launch_acceleration_floor,
     project_model_control_sequence,
 )
 from aic_transfuser_lite.runtime.full_control_gate import (
@@ -136,6 +137,10 @@ class InferenceNodeV3(Node):
             "consistency_max_speed_error_mps": 1.5,
             "consistency_max_endpoint_error_m": 0.75,
             "consistency_min_heading_speed_mps": 0.2,
+            "launch_assist_enabled": False,
+            "launch_assist_stopped_speed_mps": 0.1,
+            "launch_assist_min_commanded_speed_mps": 0.2,
+            "launch_assist_acceleration_floor_mps2": 0.5,
         }
         for name, default in parameters.items():
             self.declare_parameter(name, default)
@@ -255,6 +260,7 @@ class InferenceNodeV3(Node):
         self.full_control_calibration = None
         self.consistency_thresholds = None
         self.previous_nominal_command: ExternalControllerCommand | None = None
+        self.launch_assist_completed = False
         if self.runtime_profile is RuntimeProfile.FULL_CONTROL:
             calibration_path = Path(
                 str(self.get_parameter("calibration_artifact_path").value)
@@ -695,8 +701,35 @@ class InferenceNodeV3(Node):
             speed_mps=float(velocity.longitudinal_velocity),
             acceleration_mps2=previous_acceleration_mps2,
         )
+        proposals = sequence_values[0, 0]
+        launch_assist_applied = False
+        if bool(self.get_parameter("launch_assist_enabled").value):
+            stopped_threshold = float(
+                self.get_parameter("launch_assist_stopped_speed_mps").value
+            )
+            if previous.speed_mps > stopped_threshold:
+                self.launch_assist_completed = True
+            if not self.launch_assist_completed:
+                proposals, launch_assist_applied = (
+                    apply_stopped_launch_acceleration_floor(
+                        proposals,
+                        previous=previous,
+                        limits=self.full_control_limits,
+                        stopped_speed_threshold_mps=stopped_threshold,
+                        minimum_commanded_speed_mps=float(
+                            self.get_parameter(
+                                "launch_assist_min_commanded_speed_mps"
+                            ).value
+                        ),
+                        acceleration_floor_mps2=float(
+                            self.get_parameter(
+                                "launch_assist_acceleration_floor_mps2"
+                            ).value
+                        ),
+                    )
+                )
         projected = project_model_control_sequence(
-            sequence_values[0, 0],
+            proposals,
             previous=previous,
             limits=self.full_control_limits,
             timing=ProjectionTiming(
@@ -761,6 +794,8 @@ class InferenceNodeV3(Node):
         self.full_control_pub.publish(message)
         self.previous_nominal_command = decision.command
         reasons = ",".join(decision.consistency_reasons) or "consistent"
+        if launch_assist_applied and decision.source == "model_control_sequence":
+            reasons = f"launch_assist,{reasons}"
         self.status_pub.publish(String(data=f"full_control_published:{decision.source}:{reasons}"))
 
     def _publish_shadow_model_control(self, current_control: Any, image: Image) -> None:
