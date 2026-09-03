@@ -31,7 +31,8 @@ def test_trajectory_authoritative_launch_keeps_safety_as_sole_final_publisher() 
     assert params["executable_reference_require_stop_probability"] is False
     assert params["expected_drive_gear"] == 2
     assert params["expected_autonomous_mode"] == 1
-    assert params["required_awsim_state"] == "Start"
+    assert params["allowed_awsim_states"] == ["Start", "Ready"]
+    assert params["race_arm_topic"] == "/overtake/race_armed"
     assert params["launch_assist_acceleration_floor_mps2"] == 0.5
     assert params["speed_ki"] > 0.0
     assert 'executable="inference_node_v3"' in launch
@@ -42,6 +43,7 @@ def test_trajectory_authoritative_launch_keeps_safety_as_sole_final_publisher() 
     assert "control_from_executable_reference_v3(" in source
     assert "fail_closed_stop_control_v3(" in source
     assert "evaluate_control_preflight_v3(" in source
+    assert "self._on_race_armed" in source
     assert "LongitudinalControllerV3(" in source
     assert "self.count_publishers(final_topic)" in source
     assert "self.count_subscribers(final_topic)" in source

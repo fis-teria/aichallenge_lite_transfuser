@@ -47,11 +47,12 @@
     gear_status_topic: /vehicle/status/gear_status
     control_mode_topic: /vehicle/status/control_mode
     awsim_state_topic: /awsim/state
+    race_arm_topic: /overtake/race_armed
     nominal_control_topic: /nominal_control_cmd
     final_control_topic: /control/command/control_cmd
     expected_drive_gear: 2
     expected_autonomous_mode: 1
-    required_awsim_state: Start
+    allowed_awsim_states: [Start, Ready]
     preflight_maximum_status_age_sec: 0.5
     expected_checkpoint_sha256: REPLACE_WITH_64_HEX_CHECKPOINT_SHA256
     expected_manifest_sha256: REPLACE_WITH_64_HEX_MANIFEST_SHA256

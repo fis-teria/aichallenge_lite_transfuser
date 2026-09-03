@@ -12,13 +12,15 @@ def _evaluate(**overrides):
         "gear_report": 2,
         "control_mode_report": 1,
         "awsim_state": "Start",
+        "race_armed": True,
         "gear_age_sec": 0.1,
         "control_mode_age_sec": 0.1,
         "awsim_state_age_sec": 0.1,
+        "race_armed_age_sec": 0.1,
         "maximum_status_age_sec": 0.5,
         "expected_drive_gear": 2,
         "expected_autonomous_mode": 1,
-        "required_awsim_state": "Start",
+        "allowed_awsim_states": ("Start", "Ready"),
         "nominal_publishers": 1,
         "nominal_subscribers": 1,
         "final_publishers": 1,
@@ -33,12 +35,21 @@ def test_graneple_drive_autonomous_start_route_is_ready() -> None:
     assert result.reasons == ()
 
 
+def test_graneple_ready_state_requires_official_race_arm() -> None:
+    assert _evaluate(awsim_state="Ready", race_armed=True).ready
+    result = _evaluate(awsim_state="Ready", race_armed=False)
+    assert not result.ready
+    assert result.reasons == ("race_not_armed",)
+
+
 @pytest.mark.parametrize(
     ("overrides", "reason"),
     [
         ({"gear_report": 1}, "gear_not_drive"),
         ({"control_mode_report": 4}, "control_mode_not_autonomous"),
         ({"awsim_state": "Grounded"}, "awsim_not_started"),
+        ({"race_armed": False}, "race_not_armed"),
+        ({"race_armed": None}, "race_arm_missing"),
         ({"gear_age_sec": 0.6}, "gear_stale"),
         ({"nominal_publishers": 2}, "nominal_publisher_count"),
         ({"final_publishers": 0}, "final_publisher_count"),

@@ -29,6 +29,7 @@ from rclpy.qos import (
 )
 from sensor_msgs.msg import Image, LaserScan
 from std_msgs.msg import (
+    Bool,
     Float32,
     Float32MultiArray,
     Float64MultiArray,
@@ -168,11 +169,12 @@ class InferenceNodeV3(Node):
             "gear_status_topic": "/vehicle/status/gear_status",
             "control_mode_topic": "/vehicle/status/control_mode",
             "awsim_state_topic": "/awsim/state",
+            "race_arm_topic": "/overtake/race_armed",
             "nominal_control_topic": "/nominal_control_cmd",
             "final_control_topic": "/control/command/control_cmd",
             "expected_drive_gear": 2,
             "expected_autonomous_mode": 1,
-            "required_awsim_state": "Start",
+            "allowed_awsim_states": ["Start", "Ready"],
             "preflight_maximum_status_age_sec": 0.5,
             "calibration_artifact_path": "",
             "full_control_deployment_stage": "limited_odd_trial",
@@ -539,9 +541,11 @@ class InferenceNodeV3(Node):
         self.preflight_gear_report: int | None = None
         self.preflight_control_mode_report: int | None = None
         self.preflight_awsim_state: str | None = None
+        self.preflight_race_armed: bool | None = None
         self.gear_report_received_sec: float | None = None
         self.control_mode_received_sec: float | None = None
         self.awsim_state_received_sec: float | None = None
+        self.race_armed_received_sec: float | None = None
         self.behavior_mode_pub = None
         self.behavior_label_pub = None
         self.behavior_confidence_pub = None
@@ -576,6 +580,17 @@ class InferenceNodeV3(Node):
                 String,
                 str(self.get_parameter("awsim_state_topic").value),
                 self._on_awsim_state,
+                QoSProfile(
+                    history=HistoryPolicy.KEEP_LAST,
+                    depth=1,
+                    reliability=ReliabilityPolicy.RELIABLE,
+                    durability=DurabilityPolicy.TRANSIENT_LOCAL,
+                ),
+            )
+            self.create_subscription(
+                Bool,
+                str(self.get_parameter("race_arm_topic").value),
+                self._on_race_armed,
                 QoSProfile(
                     history=HistoryPolicy.KEEP_LAST,
                     depth=1,
@@ -620,6 +635,10 @@ class InferenceNodeV3(Node):
         self.preflight_awsim_state = str(message.data).strip()
         self.awsim_state_received_sec = self._receipt_time_sec()
 
+    def _on_race_armed(self, message: Bool) -> None:
+        self.preflight_race_armed = bool(message.data)
+        self.race_armed_received_sec = self._receipt_time_sec()
+
     def _control_preflight(self) -> ControlPreflightV3:
         now_sec = self._receipt_time_sec()
 
@@ -632,9 +651,11 @@ class InferenceNodeV3(Node):
             gear_report=self.preflight_gear_report,
             control_mode_report=self.preflight_control_mode_report,
             awsim_state=self.preflight_awsim_state,
+            race_armed=self.preflight_race_armed,
             gear_age_sec=age(self.gear_report_received_sec),
             control_mode_age_sec=age(self.control_mode_received_sec),
             awsim_state_age_sec=age(self.awsim_state_received_sec),
+            race_armed_age_sec=age(self.race_armed_received_sec),
             maximum_status_age_sec=float(
                 self.get_parameter("preflight_maximum_status_age_sec").value
             ),
@@ -644,8 +665,9 @@ class InferenceNodeV3(Node):
             expected_autonomous_mode=int(
                 self.get_parameter("expected_autonomous_mode").value
             ),
-            required_awsim_state=str(
-                self.get_parameter("required_awsim_state").value
+            allowed_awsim_states=tuple(
+                str(value)
+                for value in self.get_parameter("allowed_awsim_states").value
             ),
             nominal_publishers=self.count_publishers(nominal_topic),
             nominal_subscribers=self.count_subscribers(nominal_topic),

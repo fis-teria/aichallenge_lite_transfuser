@@ -29,7 +29,8 @@ The runtime checks all of these immediately before every nominal command:
 
 - GearReport equals Drive (`2` in the installed Autoware messages);
 - ControlModeReport equals Autonomous (`1`);
-- the transient-local AWSIM state equals `Start`;
+- the transient-local AWSIM state is `Start` or `Ready`, and the retained
+  `/overtake/race_armed` value is `true`;
 - Gear and Control Mode reports are no older than 0.5 s;
 - `/nominal_control_cmd` has exactly one publisher and one subscriber;
 - `/control/command/control_cmd` has exactly one publisher and one subscriber.
@@ -37,6 +38,12 @@ The runtime checks all of these immediately before every nominal command:
 The final topic publisher must be Safety and its one subscriber must be AWSIM.
 The preflight cannot identify endpoint process names from counts alone, so the
 launch/graph check on Graneple must also record `ros2 topic info -v`.
+
+AWSIM emits `Start` as a transition and then returns the per-vehicle state to
+`Ready`. Therefore `Ready` by itself never opens the preflight: the official
+autostart service must also have accepted the start and published
+`race_armed=true`. Negative tests cover `Grounded`, unarmed `Ready`, missing arm
+state, stale Drive/Autonomous reports, and non-unique routing.
 
 ## 2026-09-04 Graneple M0 observations
 
@@ -59,6 +66,44 @@ Read-only inspection of the already-running official graph on
 These observations validate topic/message/routing semantics, not vehicle
 response. A speed-only versus acceleration-only response experiment has not yet
 been run for this patch.
+
+## 2026-09-04 Graneple launch finding
+
+The immutable `2bd5537` source archive built successfully in the official
+`aichallenge-2025-dev:latest` container. Runtime startup must source the
+Autoware underlay before the V3 overlay:
+
+```bash
+source /opt/ros/humble/setup.bash
+source /autoware/install/setup.bash
+source /work/ros2_ws/install/setup.bash
+ros2 launch aic_e2e_runtime \
+  transfuser_lite_v3_trajectory_authoritative.launch.py \
+  param_file:=/artifacts/runtime.v3.trajectory_authoritative.param.yaml \
+  model_path:=/artifacts/last.pt \
+  artifact_manifest_path:=/artifacts/runtime_artifact.json \
+  launch_rviz:=false use_sim_time:=true
+```
+
+Before Start, both nominal and final topics had exactly one publisher and one
+subscriber, and the controller failed closed with `awsim_not_started` while
+AWSIM was `Grounded`. The official start sequence then proved this state
+machine on the installed simulator:
+
+```text
+admin: WaitStart --one-shot start--> Start
+vehicle: Grounded --start event--> Start --settled--> Ready
+official_start service: success=true
+race_armed: false -> true
+```
+
+The original M2 preflight incorrectly required the retained vehicle state to
+remain exactly `Start`. It therefore continued to command zero speed and
+-4.0 m/s2 after the accepted official start, even though the retained state had
+correctly settled to `Ready`. The corrected contract accepts `Start` or
+`Ready` only when `race_armed=true`; unarmed `Ready` remains fail-closed. The
+corrected runtime has not yet been rerun at the time of this entry, so launch
+response and M3 are not claimed.
 
 ## Unit and negative tests
 
