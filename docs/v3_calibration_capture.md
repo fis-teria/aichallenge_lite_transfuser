@@ -119,3 +119,26 @@ The ROS-independent plan validation, command construction, parser, authority,
 timeout, non-finite, and bounds tests can run under pytest. An actual AWSIM
 excitation must not be reported successful unless `--execute` was run on
 Graneple and the resulting bag/result manifest passed the gates above.
+
+## Verification record
+
+The final source implementation at commit `9ba32f9` passed the focused WSL
+suite (`14 passed`) and the combined repository plus ROS-package suite
+(`425 passed`, `34 warnings`) under `tools/with_wsl_training_lock.sh`.
+
+An immutable archive of that commit (SHA-256
+`d3acf0ed3b665fea10857b6b8a2966cf9ccb8ed62aa4a954c3fc0ac2d0ad762e`)
+was validated on `graneple@192.168.3.10` in
+`aichallenge-2025-dev:latest`:
+
+- focused plan/collector/ROS source tests: `13 passed`, `1 skipped`;
+  the skipped checkout-HEAD mismatch test requires `.git`, which the immutable
+  archive intentionally lacks;
+- `aic_e2e_runtime` colcon build: passed;
+- `calibration_capture_v3.launch.py --show-args`: passed;
+- hash-bound collector dry-run for the steering plan: passed and created no
+  capture output.
+
+No `--execute` command, AWSIM Start request, vehicle command, MCAP capture,
+calibration fit, or closed-loop run was performed by this verification. Those
+stages remain unverified and must not be reported as successful.
