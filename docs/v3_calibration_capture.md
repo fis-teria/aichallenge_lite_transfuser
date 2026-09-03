@@ -84,16 +84,21 @@ PYTHONPATH=src python3 tools/collect_calibration_v3.py \
 
 Repeat with unique IDs for:
 
-- `configs/calibration/excitation_steering_low_speed_v2.yaml` (preferred;
-  maintains motion during steering steps)
+- `configs/calibration/excitation_steering_low_speed_v3.yaml` (preferred;
+  maintains low-speed motion using the measured equilibrium command)
 - `configs/calibration/excitation_drive_low_speed_v1.yaml`
-- `configs/calibration/excitation_brake_low_speed_v2.yaml` (preferred; reaches
-  sufficient speed before each brake step)
+- `configs/calibration/excitation_brake_low_speed_v1.yaml` (repeat additional
+  independent runs until the moving-sample gate is met)
 
-The V1 steering and brake plans remain reproducible historical inputs, but the
-live `v3_0efecab` campaign showed that they do not provide enough moving
-steering/brake response for the current fit gates. Do not weaken those gates or
-count stationary command holds as added calibration evidence.
+The V1 steering plan remains a reproducible historical input, but the live
+`v3_0efecab` campaign showed that it does not provide moving steering response.
+The V2 steering pilot reached 2.80 m/s because AWSIM did not treat the command
+speed as a hard cap, then Safety aborted on an obstacle; its failed bag is not
+calibration evidence. V3 uses the measured low-speed equilibrium acceleration.
+The V1 brake plan is bounded and completed safely, but requires more independent
+runs to meet the moving-sample gate. Do not weaken that gate or count stationary
+command holds as added calibration evidence. The V2 brake plan must not be run
+until its higher-acceleration reach segments are separately requalified.
 
 Collect at least three independent runs per target mode. Stop and reset/reposition
 the scenario between runs rather than concatenating repetitions into one bag.

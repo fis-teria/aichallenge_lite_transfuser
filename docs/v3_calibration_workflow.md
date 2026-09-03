@@ -122,3 +122,10 @@ the original plan. It was not promoted or used for control. The V2 excitation
 plans keep steering excitation moving and start brake steps from a higher
 speed; the moving-speed fit gates prevent stationary data from hiding an
 insufficient capture.
+
+The first V2 steering pilot was also rejected: AWSIM reached 2.80 m/s because
+the command speed was not enforced as a hard cap, and Safety aborted on
+`front_obstacle_inside_stopping_distance`. The V3 steering plan therefore uses
+the measured low-speed equilibrium acceleration. The V2 brake plan remains
+unqualified and is not authorized for execution; additional bounded V1 brake
+runs are used instead.
