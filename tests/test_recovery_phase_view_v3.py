@@ -6,12 +6,15 @@ from pathlib import Path
 
 import pytest
 
+from aic_transfuser_lite.data.behavior_view_v1 import load_behavior_view_v1
 from aic_transfuser_lite.data.recovery_phase_view_v3 import (
     RecoveryPhaseLabelV3,
     RecoveryPhaseIntervalV3,
     build_recovery_phase_labels_v3,
     classify_recovery_phase_v3,
     load_recovery_phase_intervals_v3,
+    load_recovery_phase_view_v3,
+    write_recovery_behavior_view_v1,
     write_recovery_phase_view_v3,
 )
 
@@ -132,3 +135,50 @@ def test_phase_view_rejects_duplicate_sample_ids(tmp_path: Path) -> None:
             labels=(label, label),
             source_records=(),
         )
+
+
+def test_phase_and_behavior_views_round_trip(tmp_path: Path) -> None:
+    label = RecoveryPhaseLabelV3(
+        sample_id="sample",
+        run_id="run",
+        grid_stamp_ns=1_000_000_000,
+        phase="recovery",
+        segment_id="left",
+        side="left",
+        geometry="straight",
+        requested_signed_offset_m=0.35,
+        generated_point_id=6,
+        pose_source_stamp_ns=1_001_000_000,
+        pose_delta_ms=1.0,
+        generated_lateral_error_m=0.01,
+        base_lateral_offset_m=0.2,
+        training_eligible=True,
+    )
+    dataset_sha = "b" * 64
+    phase_root = tmp_path / "phase"
+    write_recovery_phase_view_v3(
+        phase_root,
+        dataset_manifest_sha256=dataset_sha,
+        labels=(label,),
+        source_records=(),
+    )
+    loaded = load_recovery_phase_view_v3(
+        phase_root,
+        dataset_manifest_sha256=dataset_sha,
+    )
+    assert loaded == (label,)
+
+    behavior_root = tmp_path / "behavior"
+    write_recovery_behavior_view_v1(
+        behavior_root,
+        dataset_manifest_sha256=dataset_sha,
+        phase_view_manifest_sha256="c" * 64,
+        labels=loaded,
+    )
+    behavior = load_behavior_view_v1(
+        behavior_root,
+        dataset_manifest_sha256=dataset_sha,
+    )["sample"]
+    assert behavior["behavior_label"] == "FORWARD_NORMAL"
+    assert behavior["behavior_side_label"] == "NONE"
+    assert behavior["source"] == "recovery_reference_phase"

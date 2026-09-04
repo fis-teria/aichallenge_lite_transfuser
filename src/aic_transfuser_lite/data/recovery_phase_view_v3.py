@@ -14,6 +14,17 @@ from .collection_reference_v3 import (
     load_route_reference_v3,
     project_to_route_v3,
 )
+from .behavior_view_v1 import (
+    BEHAVIOR_VIEW_FORMAT_V1,
+    BehaviorAnnotationV1,
+)
+from aic_transfuser_lite.contracts.behavior_v1 import (
+    BEHAVIOR_CLASS_NAMES_V1,
+    BEHAVIOR_ONTOLOGY_V1,
+    BEHAVIOR_SIDE_NAMES_V1,
+    BehaviorClassV1,
+    BehaviorSideV1,
+)
 from .recovery_reference_v3 import load_mpc_reference_v3
 
 
@@ -255,6 +266,121 @@ def write_recovery_phase_view_v3(
     }
     manifest_path = output / "manifest.json"
     manifest_path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return payload
+
+
+def load_recovery_phase_view_v3(
+    root: str | Path,
+    *,
+    dataset_manifest_sha256: str,
+) -> tuple[RecoveryPhaseLabelV3, ...]:
+    source = Path(root)
+    manifest = json.loads((source / "manifest.json").read_text(encoding="utf-8"))
+    if manifest.get("format") != RECOVERY_PHASE_VIEW_FORMAT:
+        raise ValueError("recovery phase view format mismatch")
+    if manifest.get("dataset_manifest_sha256") != dataset_manifest_sha256:
+        raise ValueError("recovery phase view targets a different Dataset V3 manifest")
+    labels_path = source / "phase_labels.csv"
+    if _sha256(labels_path) != manifest.get("labels_sha256"):
+        raise ValueError("recovery phase labels SHA-256 mismatch")
+    with labels_path.open(newline="", encoding="utf-8") as stream:
+        reader = csv.DictReader(stream)
+        fields = list(RecoveryPhaseLabelV3.__dataclass_fields__)
+        if reader.fieldnames != fields:
+            raise ValueError("recovery phase labels CSV fields mismatch")
+        labels = tuple(
+            RecoveryPhaseLabelV3(
+                sample_id=row["sample_id"],
+                run_id=row["run_id"],
+                grid_stamp_ns=int(row["grid_stamp_ns"]),
+                phase=row["phase"],
+                segment_id=row["segment_id"],
+                side=row["side"],
+                geometry=row["geometry"],
+                requested_signed_offset_m=float(row["requested_signed_offset_m"]),
+                generated_point_id=int(row["generated_point_id"]),
+                pose_source_stamp_ns=int(row["pose_source_stamp_ns"]),
+                pose_delta_ms=float(row["pose_delta_ms"]),
+                generated_lateral_error_m=float(row["generated_lateral_error_m"]),
+                base_lateral_offset_m=float(row["base_lateral_offset_m"]),
+                training_eligible=_strict_bool(row["training_eligible"]),
+            )
+            for row in reader
+        )
+    if len(labels) != manifest.get("sample_count"):
+        raise ValueError("recovery phase view sample count mismatch")
+    if len({label.sample_id for label in labels}) != len(labels):
+        raise ValueError("recovery phase view contains duplicate sample_id values")
+    return labels
+
+
+def write_recovery_behavior_view_v1(
+    output_root: str | Path,
+    *,
+    dataset_manifest_sha256: str,
+    phase_view_manifest_sha256: str,
+    labels: Sequence[RecoveryPhaseLabelV3],
+) -> dict[str, Any]:
+    """Write behavior labels without conflating lateral return with safety recovery.
+
+    These runs contain no dynamic obstacle decision. Every reference-tracking
+    phase is therefore FORWARD_NORMAL; the lateral excursion remains encoded
+    only by the authoritative future trajectory target.
+    """
+
+    output = Path(output_root)
+    if output.exists():
+        raise FileExistsError(f"recovery behavior view output already exists: {output}")
+    if not labels:
+        raise ValueError("recovery behavior view requires labels")
+    if len({label.sample_id for label in labels}) != len(labels):
+        raise ValueError("recovery behavior view contains duplicate sample IDs")
+    annotations = tuple(
+        BehaviorAnnotationV1(
+            sample_id=label.sample_id,
+            run_id=label.run_id,
+            grid_stamp_ns=label.grid_stamp_ns,
+            behavior_class=int(BehaviorClassV1.FORWARD_NORMAL),
+            behavior_label=BehaviorClassV1.FORWARD_NORMAL.name,
+            behavior_side=int(BehaviorSideV1.NONE),
+            behavior_side_label=BehaviorSideV1.NONE.name,
+            behavior_valid=True,
+            behavior_side_valid=True,
+            quality=1.0,
+            source_stamp_ns=label.pose_source_stamp_ns,
+            source_age_ms=label.pose_delta_ms,
+            source="recovery_reference_phase",
+            authority="teacher_reference_tracking",
+            target_vehicle=None,
+            invalid_reason=None,
+        )
+        for label in labels
+    )
+    output.mkdir(parents=True)
+    labels_path = output / "behavior_labels.csv"
+    with labels_path.open("w", newline="", encoding="utf-8") as stream:
+        fields = list(BehaviorAnnotationV1.__dataclass_fields__)
+        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer.writeheader()
+        for annotation in annotations:
+            writer.writerow(asdict(annotation))
+    payload: dict[str, Any] = {
+        "format": BEHAVIOR_VIEW_FORMAT_V1,
+        "ontology": BEHAVIOR_ONTOLOGY_V1,
+        "class_names": list(BEHAVIOR_CLASS_NAMES_V1),
+        "side_names": list(BEHAVIOR_SIDE_NAMES_V1),
+        "dataset_manifest_sha256": dataset_manifest_sha256,
+        "phase_view_manifest_sha256": phase_view_manifest_sha256,
+        "labels_sha256": _sha256(labels_path),
+        "sources": [{"source": "recovery_reference_phase"}],
+        "sample_count": len(annotations),
+        "valid_behavior_count": len(annotations),
+        "valid_side_count": len(annotations),
+    }
+    (output / "manifest.json").write_text(
         json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
         encoding="utf-8",
     )

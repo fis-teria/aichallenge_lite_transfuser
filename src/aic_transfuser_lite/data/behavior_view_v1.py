@@ -22,6 +22,9 @@ from .storage_v3 import validate_complete_dataset
 
 
 BEHAVIOR_VIEW_FORMAT_V1 = "aic_behavior_view_v1"
+BEHAVIOR_LABEL_SOURCES_V1 = frozenset(
+    {"mpc_expert_autoware_log", "recovery_reference_phase"}
+)
 _LOG_TIME = re.compile(r"\[INFO\]\s+\[([0-9]+(?:\.[0-9]+)?)\]")
 _FIELD = re.compile(r"(?:^|\s)([a-zA-Z][a-zA-Z0-9_]*)=([^\s]+)")
 _REQUIRED_FIELDS = frozenset(
@@ -404,7 +407,7 @@ def _validate_behavior_row_v1(row: dict[str, str]) -> None:
             raise ValueError("valid behavior class is outside ontology")
         if row["behavior_label"] != BEHAVIOR_CLASS_NAMES_V1[behavior]:
             raise ValueError("behavior class/label mismatch")
-        if row["source"] != "mpc_expert_autoware_log":
+        if row["source"] not in BEHAVIOR_LABEL_SOURCES_V1:
             raise ValueError("valid behavior row has unexpected source")
         if not row["source_stamp_ns"] or not row["source_age_ms"]:
             raise ValueError("valid behavior row requires source timestamp and age")
