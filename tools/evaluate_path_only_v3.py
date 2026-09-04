@@ -606,6 +606,7 @@ def main() -> int:
     )
     cohort_payload = {
         "split": args.split,
+        "evaluation_batch_size": args.batch_size,
         "sample_ids": [row["sample_id"] for row in rows],
         "teacher_quality_ids": [row["sample_id"] for row in rows if row["teacher_quality"]],
         "future_valid_counts": [row["future_valid_waypoints"] for row in rows],

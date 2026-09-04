@@ -80,7 +80,9 @@ def main() -> int:
 
     sample_counts: Counter[str] = Counter()
     with (args.dataset_root / "samples.csv").open(newline="", encoding="utf-8") as stream:
-        for row in csv.DictReader(stream):
+        reader = csv.DictReader(stream)
+        sample_fields = tuple(reader.fieldnames or ())
+        for row in reader:
             sample_counts[run_to_split[row["run_id"]]] += 1
 
     run_counts = Counter(run_to_split.values())
@@ -169,7 +171,11 @@ def main() -> int:
             "separate runs from the same simulator/course are not statistically independent environments",
             "five validation runs limit run-level uncertainty resolution",
         ],
-        "planned_reference_present_in_canonical_dataset": False,
+        "planned_reference_fields_in_samples_csv": [
+            name
+            for name in sample_fields
+            if "planned" in name.lower() or "reference" in name.lower()
+        ],
     }
     args.output.mkdir(parents=True)
     (args.output / "dataset_audit.json").write_text(
