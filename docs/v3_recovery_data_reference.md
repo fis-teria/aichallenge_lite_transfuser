@@ -20,8 +20,11 @@ become inference inputs.
 in namespace `heading_arrows` are accepted. The Arrow tail is `(x_m, y_m)` and
 the tail-to-head direction is `heading_rad` in the marker frame.
 
-For each measured pose, the audit chooses the nearest reference Arrow and
-projects its displacement onto the Arrow's left normal:
+For each measured pose, the audit projects onto the nearest circular route
+segment and interpolates the adjacent Arrow headings. This is required because
+the captured course Reference is sparse; nearest-point projection on a curve
+would misclassify along-track spacing as lateral error. The displacement is
+then projected onto the interpolated heading's left normal:
 
 - positive lateral offset: vehicle is left of the Reference;
 - negative lateral offset: vehicle is right of the Reference;

@@ -321,27 +321,59 @@ def project_to_route_v3(
     yaw_rad: float,
     points: Sequence[RoutePointV3],
 ) -> RouteProjectionV3:
-    """Project pose to the nearest arrow and return signed SI-unit errors.
+    """Project pose to the nearest route segment and return signed SI errors.
 
     Positive lateral offset is left of the reference heading. Positive heading
-    error is counter-clockwise from the reference heading.
+    error is counter-clockwise from the reference heading. Segment projection
+    avoids treating along-track distance as lateral error on a sparse curved
+    Reference. The route is circular, matching the collection course contract.
     """
 
     if len(points) < 3:
         raise ValueError("route projection requires at least three points")
-    index = min(
-        range(len(points)),
-        key=lambda item: (x_m - points[item].x_m) ** 2 + (y_m - points[item].y_m) ** 2,
-    )
+    curvatures = _route_curvatures(points)
+    best: tuple[float, int, float, float, float] | None = None
+    query_x = float(x_m)
+    query_y = float(y_m)
+    for index, point in enumerate(points):
+        following = points[(index + 1) % len(points)]
+        segment_x = following.x_m - point.x_m
+        segment_y = following.y_m - point.y_m
+        squared_length = segment_x * segment_x + segment_y * segment_y
+        if squared_length <= 1e-12:
+            continue
+        fraction = max(
+            0.0,
+            min(
+                1.0,
+                ((query_x - point.x_m) * segment_x + (query_y - point.y_m) * segment_y)
+                / squared_length,
+            ),
+        )
+        projection_x = point.x_m + fraction * segment_x
+        projection_y = point.y_m + fraction * segment_y
+        squared_distance = (query_x - projection_x) ** 2 + (query_y - projection_y) ** 2
+        candidate = (squared_distance, index, fraction, projection_x, projection_y)
+        if best is None or candidate < best:
+            best = candidate
+    if best is None:
+        raise ValueError("route projection found no non-degenerate segment")
+    _, index, fraction, projection_x, projection_y = best
     point = points[index]
-    dx = float(x_m) - point.x_m
-    dy = float(y_m) - point.y_m
-    lateral = -math.sin(point.heading_rad) * dx + math.cos(point.heading_rad) * dy
+    following = points[(index + 1) % len(points)]
+    heading_delta = wrap_angle_rad(following.heading_rad - point.heading_rad)
+    heading = wrap_angle_rad(point.heading_rad + fraction * heading_delta)
+    dx = query_x - projection_x
+    dy = query_y - projection_y
+    lateral = -math.sin(heading) * dx + math.cos(heading) * dy
+    curvature = (1.0 - fraction) * curvatures[index] + fraction * curvatures[
+        (index + 1) % len(points)
+    ]
     return RouteProjectionV3(
         point_id=point.point_id,
         lateral_offset_m=lateral,
-        heading_error_rad=wrap_angle_rad(float(yaw_rad) - point.heading_rad),
-        curvature_inv_m=_route_curvatures(points)[index],
+        heading_error_rad=wrap_angle_rad(float(yaw_rad) - heading),
+        curvature_inv_m=curvature,
     )
 
 

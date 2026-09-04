@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -145,6 +146,32 @@ def test_reference_hash_mismatch_fails_closed(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="SHA-256 mismatch"):
         verify_route_reference_manifest_v3(destination)
+
+
+def test_sparse_curved_reference_uses_segment_projection() -> None:
+    radius_m = 10.0
+    points = tuple(
+        RoutePointV3(
+            point_id=index,
+            x_m=radius_m * math.cos(angle),
+            y_m=radius_m * math.sin(angle),
+            heading_rad=angle + math.pi / 2.0,
+        )
+        for index, angle in enumerate((0.0, math.pi / 2.0, math.pi, 3.0 * math.pi / 2.0))
+    )
+    fraction = 0.5
+    chord_x = (1.0 - fraction) * points[0].x_m + fraction * points[1].x_m
+    chord_y = (1.0 - fraction) * points[0].y_m + fraction * points[1].y_m
+    heading = 3.0 * math.pi / 4.0
+    offset_m = 0.4
+    query_x = chord_x - math.sin(heading) * offset_m
+    query_y = chord_y + math.cos(heading) * offset_m
+
+    projection = project_to_route_v3(query_x, query_y, heading + 0.1, points)
+
+    assert projection.point_id == 0
+    assert projection.lateral_offset_m == pytest.approx(offset_m, abs=1e-6)
+    assert projection.heading_error_rad == pytest.approx(0.1, abs=1e-6)
 
 
 def test_marker_parser_uses_only_heading_arrow_namespace() -> None:
