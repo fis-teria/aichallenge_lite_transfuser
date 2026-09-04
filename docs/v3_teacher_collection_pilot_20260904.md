@@ -318,3 +318,79 @@ set. The remaining acquisition order is left-near, right-far, and left-far,
 with multiple independent repetitions of every case. After capture the
 official Start was cancelled, AWSIM was reset to `Grounded`, and both temporary
 teacher processes were stopped.
+
+## Remaining recovery capture batch
+
+The remaining lateral-recovery cases were collected on Graneple on 2026-09-04.
+The initial combined Reference could not be used for the later cases because
+the vehicle physically stopped progressing near route distance 135 m even
+though the teacher still requested positive acceleration and Safety reported
+`normal`. Those two operational attempts are retained under `rejected` and are
+not training inputs. Instead, each missing case received a separate early,
+clearance-checked Reference so every repetition starts from a fresh initialized
+Autoware state and reaches the intended excursion in one bounded run.
+
+The accepted batch contains five independent runs for each of the three missing
+cases:
+
+| case | duration/run | requested hold | measured hold mean | post-recovery absolute offset mean | maximum speed |
+|---|---:|---:|---:|---:|---:|
+| `offset_left_near` | 150 s | +0.35 m | +0.3484 m | 0.1432 m | 0.4069 m/s |
+| `offset_right_far` | 150 s | -0.55 m | -0.5536 m | 0.0625 m | 0.4070 m/s |
+| `offset_left_far` | 330 s | +0.55 m | +0.5469 m | 0.1260 m | 0.4577 m/s |
+
+All 15 runs passed the batch acceptance policy: complete manifest, one nominal
+teacher publisher, recorder exit code zero, bag metadata present, absolute hold
+target error no greater than 0.08 m, post-recovery mean absolute offset no
+greater than 0.20 m, and no speed sample above 0.85 m/s. The aggregate contains
+1,585,831 messages and 3,568,317,904 bytes of compressed MCAP. Required sensor
+and command totals include 29,882 Camera images, 62,737 LiDAR scans, 156,859
+poses, 89,628 velocity reports, 313,763 nominal commands, and 62,767 final
+commands. Every individual run contains all of these required topic classes.
+
+The final left-far Reference required an evidence-driven correction. A 4 m
+return profile reached the requested +0.55 m hold but left 0.3730 m of mean
+absolute offset after recovery, so that run was rejected. The accepted version
+uses a 16 m return profile at base-route distance 79.36--113.36 m. It passed the
+same 1.40 m minimum centre-clearance check and has these hashes:
+
+- Reference CSV:
+  `85ff0ec5f3dd98e8d059bf241bc5713c84a67f476ef417e971c0e12cfa063fdc`;
+- phase intervals:
+  `a47ef07113371742a02c1112af5f7831d52ca1150e92c735c03d21a57408c729`.
+
+The batch-wide coverage audit evaluated 27,387 sampled states. Every lateral,
+heading, curve, stopped, and recovery bucket passed. In particular,
+`offset_left_near` passed with 4,403 samples and 70 episodes,
+`offset_right_far` with 2,072 samples and 25 episodes, `offset_left_far` with
+5,538 samples and 30 episodes, `recovery_left` with 2,128 samples and 30
+episodes, and `recovery_right` with 1,056 samples and 21 episodes. The overall
+coverage status remains `FAIL` only because two separate non-recovery targets
+remain: `launch` needs another 489 samples and 2 episodes, and `stop_approach`
+needs another 572 samples and 17 episodes. This does not invalidate the
+completed recovery acquisition, but it must be resolved before claiming the
+entire Dataset V3 coverage contract is complete.
+
+The durable remote artifacts are stored at:
+
+- accepted bags and manifests:
+  `/home/graneple/git/autononous_ai/aichallenge-racingkart/output/teacher_recovery_v3/38f5c67/recovery_remaining_20260904/accepted`;
+- `quality_summary.json`, `coverage.json`, and `coverage.gaps.json`:
+  `/home/graneple/git/autononous_ai/aichallenge-racingkart/output/teacher_recovery_v3/38f5c67/recovery_remaining_20260904`;
+- case-specific References:
+  `/home/graneple/git/autononous_ai/aichallenge-racingkart/output/teacher_recovery_v3/38f5c67/recovery_case_references_20260904`.
+
+The quality-summary, coverage, and gap-report SHA-256 values are respectively
+`1fa2e4fd3ea7f0dffd58bb607988a408f1cad8090dbfb9e58d0b7dd057d124d6`,
+`7a27b5c2e1bf5063c2c9a9568000869a7af723d16b9ffebf29a579b03bb6f440`,
+and `00a953ef9cd5b59b3301643330c59efa448fc939ab6d6b82098f52cc329a2da6`.
+All 15 MCAP files passed their stored SHA-256 checks and byte-for-byte comparison
+between the runtime and durable copies. Rejected and interrupted probes remain
+isolated under `rejected`; none are part of `accepted`.
+
+After the audit, official Start was cancelled, AWSIM was confirmed `Grounded`
+at 0.0 m/s, the temporary teacher and Safety processes were absent, both nominal
+and final command topics had zero publishers, and the standard official MPC
+Reference parameter was restored. No bag, weight, or generated data was added
+to Git. The host had 7.3 GiB free after retaining both verified copies, so the
+runtime duplicate should only be removed after an explicit retention decision.
