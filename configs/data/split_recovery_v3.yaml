@@ -1,5 +1,8 @@
 format_version: aic_split_config_v1
-split_seed: 183
+# Selected against the accepted 15-run inventory so every collection case has
+# train/validation/test = 3/1/1 and the two implausible yaw-rate frames remain
+# outside the training split.
+split_seed: 4904
 ratios:
   train: 0.60
   validation: 0.20
