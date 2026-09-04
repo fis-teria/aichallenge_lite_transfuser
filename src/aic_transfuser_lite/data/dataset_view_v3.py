@@ -600,8 +600,12 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
             ego_values.append(values)
             ego_masks.append(mask)
         command_values, command_masks = [], []
-        for item in command_rows:
-            selected = _selected_command(item, bounds=self.control_target_bounds)
+        for item, history_valid in zip(command_rows, command_selection.mask):
+            selected = (
+                _selected_command(item, bounds=self.control_target_bounds)
+                if history_valid
+                else None
+            )
             command_values.append(torch.zeros(3) if selected is None else selected[0])
             command_masks.append(selected is not None)
         trajectory = np.load(self.root / row["trajectory_path"], allow_pickle=False)
