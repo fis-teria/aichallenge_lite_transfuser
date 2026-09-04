@@ -85,6 +85,63 @@ The runner also remaps the MPC's relative
 `/awsim/control_mode_request_topic`. Without that remap the MPC can calculate a
 non-zero target speed while continuing to publish zero commands.
 
+### Recovery Reference generation
+
+Keep two References separate throughout collection:
+
+- the captured raceline is the fixed teacher/debug-only axis used by the
+  coverage audit to measure lateral and heading error;
+- the generated recovery Reference is supplied only to the official MPC so it
+  deliberately moves away from that axis and returns.
+
+`generate_recovery_reference_v3.py` reads the official MPC CSV and occupancy
+grid. It automatically selects disjoint left-curve and right-curve intervals
+whose complete circular vehicle footprint remains free. The initial contract
+uses a 1.40 m centre-to-wall clearance: half of the official effective 2.30 m
+width plus the configured 0.25 m wall margin. Clearance is checked between
+source waypoints at occupancy-grid resolution, not only at CSV points.
+
+Each selected episode is a C2-continuous lateral profile:
+
+- 6 m approach from the raceline to the requested offset: record for audit,
+  but exclude from training;
+- 3 m hold at 0.35 m (near) or 0.55 m (far): eligible after post-run checks;
+- 4 m return to the raceline: eligible after post-run checks.
+
+At the 0.75 m/s collection cap, 4 m is short enough to produce at least
+0.15 m improvement inside the existing 3 s recovery gate. Eligibility is
+written to the adjacent `*.intervals.csv`; generation alone does not make a
+frame training data. The post-run pose, sensor synchronization, Safety reason,
+and successful return still have to pass.
+
+Generate into a native Linux data/artifact directory (the Windows example
+below is only the Codex source-of-truth dry run):
+
+```bash
+PYTHONPATH=src python3 tools/generate_recovery_reference_v3.py \
+  --base-reference /path/to/traj_mincurv_manual.csv \
+  --occupancy-map-yaml /path/to/occupancy_grid_map.yaml \
+  --config configs/data/recovery_reference_generator_v3.yaml \
+  --output /artifacts/recovery_reference_v3/recovery_reference_v3.csv
+```
+
+The tool refuses overwrite and emits a hash-bound manifest plus the interval
+CSV. For the inspected official MPC, render a copied config rather than
+modifying its package or source checkout:
+
+```bash
+PYTHONPATH=src python3 tools/render_official_mpc_recovery_config_v3.py \
+  --base-config /path/to/official/config.yaml \
+  --reference-container-path /artifacts/recovery_reference_v3/recovery_reference_v3.csv \
+  --output /artifacts/recovery_reference_v3/official_mpc_recovery_config.yaml
+```
+
+The renderer accounts for the controller's package-share path concatenation,
+forces circular/reference-path mode, and disables dynamic path/border updates.
+Use the copied official `ref_vel.yaml` with `run_official_mpc_teacher_v3.sh`.
+The independent Safety Supervisor remains authoritative; changing the path is
+not permission to bypass the measured 0.75 m/s speed cap.
+
 1. Capture the course Reference once per course/version:
 
    ```bash
@@ -170,6 +227,13 @@ controlled heading-error examples. Those cases still require a verified
 scenario/pose mechanism, a safe human/test harness, or an expert DAgger
 controller. Recording, provenance, coverage evaluation, and next-gap
 generation are automated for every established start.
+
+The generated MPC recovery Reference removes that heading-error limitation for
+bounded lateral recovery episodes: its smooth approach and return create
+measured offset and heading error while the official controller remains the
+teacher. Start randomization is no longer the primary source of the recovery
+label. It remains useful only to place a short pilot before a selected segment;
+the realized bag pose and the fixed raceline audit still decide the label.
 
 Do not run this recorder beside trajectory-authoritative/full-control E2E
 inference. Recording `/nominal_control_cmd` and
