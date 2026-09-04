@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
+import subprocess
 
 import pytest
 
 from aic_transfuser_lite.data.topic_profile_v3 import load_topic_profile_v3
 from tools.record_dataset_v3 import (
     DEFAULT_FORBIDDEN_NODE_PATTERN,
+    _publisher_count,
     build_record_command,
     parse_publisher_count,
     select_recording_topics,
@@ -62,6 +64,43 @@ def test_teacher_publisher_count_parser_is_exact() -> None:
     assert parse_publisher_count("Type: example\nPublisher count: 1\n") == 1
     with pytest.raises(ValueError, match="lacks Publisher count"):
         parse_publisher_count("Publisher Count: unknown\n")
+
+
+def test_teacher_publisher_discovery_bypasses_cross_domain_daemon(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    observed: dict[str, object] = {}
+
+    def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        observed["command"] = command
+        observed["kwargs"] = kwargs
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            stdout="Type: example\nPublisher count: 1\n",
+            stderr="",
+        )
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    assert _publisher_count("/nominal_control_cmd", {"ROS_DOMAIN_ID": "1"}) == 1
+    assert observed["command"] == [
+        "ros2",
+        "topic",
+        "info",
+        "--no-daemon",
+        "--spin-time",
+        "2.0",
+        "--verbose",
+        "/nominal_control_cmd",
+    ]
+    assert observed["kwargs"] == {
+        "check": False,
+        "capture_output": True,
+        "text": True,
+        "timeout": 10.0,
+        "env": {"ROS_DOMAIN_ID": "1"},
+    }
 
 
 def test_inference_guard_does_not_block_diagnostic_rviz() -> None:

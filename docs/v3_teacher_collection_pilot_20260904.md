@@ -133,3 +133,44 @@ The combined report SHA-256 is
 `4df7888731541929c091d256a8a07aa146150a951ee58010849d11b3e860c0c5`;
 the gap report SHA-256 is
 `67f5be220fdc2b285524508b514317a848f6ca3c532bb7de06746c60a4e12548`.
+
+## Automated seeded recovery batch
+
+Three additional 120 s official-MPC runs were captured with deterministic
+AWSIM start seeds. Each run used the independent Safety Supervisor, passed the
+single-publisher recorder preflight, reached an authoritative one-shot Start,
+finalized its rosbag metadata, and was followed by official-Start cancellation
+and an admin reset to `Grounded`:
+
+| run | seed | compressed MCAP SHA-256 |
+|---|---:|---|
+| `mpc_random_seed102_retry2` | 102 | `ba27dd5e53d5940673dce6ecf0cbc3929570d384609535c26e50e3bc46b4b2d2` |
+| `mpc_random_seed100` | 100 | `3efe482e6b700541c05a8d2c85bd9e76fc277483e4f23133078401b1d33de1c8` |
+| `mpc_random_seed099` | 99 | `2d917529bbaff99f4326c5b45f4930278804b29b837ed31c33336b086c7c9b0a` |
+
+The accepted set now contains five runs and 5,204 sampled audit states. The
+combined audit passes `right_curve` (4,844 samples, 5 runs, 10 episodes) and
+`stopped` (4,542 samples, 5 runs, 15 episodes). Overall coverage remains
+`FAIL`: `left_curve` is still zero, `offset_left_far` has enough samples and
+runs but only 9/20 episodes, and the right-offset, heading-right, launch,
+stop-approach, straight, and recovery gates remain incomplete. Repeating the
+same start region is therefore not an efficient way to close the remaining
+gaps.
+
+- Combined report SHA-256:
+  `03a20c4bf410d13b17a3a0a190fe515f22c15120825ba5428a6a2d87454cfda2`
+- Combined gap report SHA-256:
+  `e31b7016bf8aabc5d62e14d4fba1da45576465b0c6c2eaea378b6b41571c9264`
+- Remote report:
+  `/home/graneple/git/autononous_ai/aichallenge-racingkart/output/teacher_recovery_v3/50dc441/reports/combined_5run_seed099_100_102.coverage.json`
+
+Two interrupted setup attempts (`mpc_random_seed101` and
+`mpc_random_seed102`) and one non-grounding seed attempt
+(`mpc_random_left_far_seed105`) were isolated under `raw`; they are not part of
+the accepted five-run audit.
+
+The collection exposed a cross-domain ROS discovery bug in
+`record_dataset_v3.py`: topic discovery bypassed the ROS daemon, but publisher
+count discovery did not. The recorder now uses `ros2 topic info --no-daemon`
+with an explicit spin time, preventing a domain-0 daemon from falsely
+reporting zero publishers for a domain-1 teacher.

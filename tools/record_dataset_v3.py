@@ -119,7 +119,16 @@ def parse_publisher_count(output: str) -> int:
 
 def _publisher_count(topic: str, env: Mapping[str, str]) -> int:
     result = subprocess.run(
-        ["ros2", "topic", "info", "--verbose", topic],
+        [
+            "ros2",
+            "topic",
+            "info",
+            "--no-daemon",
+            "--spin-time",
+            "2.0",
+            "--verbose",
+            topic,
+        ],
         check=False,
         capture_output=True,
         text=True,
