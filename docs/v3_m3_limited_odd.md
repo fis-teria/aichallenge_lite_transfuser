@@ -63,7 +63,9 @@ Run at least three independent stopped launches. For each trial:
 - measured speed remains at or below 0.85 m/s (0.75 m/s cap plus 0.10 m/s
   measurement/control tolerance);
 - no `launch_response_missing` or other controller fault occurs;
-- Safety remains `normal` during accepted nominal motion;
+- Safety remains `normal` or reports the bounded `speed_limit_guard` while
+  enforcing the configured cap; no timeout, future-timestamp, obstacle, NaN,
+  or other fail-safe reason occurs during accepted nominal motion;
 - the run contains measurable straight and gentle-turn samples;
 - a matched collision observer reports no `true` event.
 
@@ -267,3 +269,43 @@ It produced trajectory ADE `0.237094 m` and speed MAE `0.166722 m/s` over
 18.51% and speed MAE by 0.59%, so it passes the offline regression gate against
 the initial causal baseline. This offline result does not override the failed
 M3 closed-loop gate above; M4 and M5 remain blocked.
+
+## Predictive speed-guard rerun
+
+Bag readback of the recovery teacher captures revealed that clamping only the
+command speed field did not constrain the AWSIM vehicle. Commit `92b37d6`
+added measured-speed braking, but its 30 s Graneple probe still reached
+0.8987 m/s because braking began only after the 0.75 m/s limit was crossed.
+
+Commit `ef56060` adds a 0.10 m/s predictive guard margin. A fresh 30 s probe
+passed the declared 0.85 m/s tolerance with maximum speed 0.7887 m/s and P99
+speed 0.7475 m/s. The recorder completed with exit code zero; its compressed
+MCAP SHA-256 was
+`03204b3c2ea323f6a6c09ed2173ec8a2a866c430ba5528a1fc29c57314db5e11`.
+
+The subsequent independent model trial `m3_speed_guard_trial2_ef56060` did not
+pass M3 even though the speed cap did:
+
+- duration 112.27 s; launch latency 3.141 s (`FAIL`, limit 3.0 s);
+- maximum speed 0.7458 m/s (`PASS`);
+- displacement 23.72 m and reconstructed path length 24.06 m;
+- left/right/straight samples 36/16/3,155;
+- Safety reasons: normal 2,112, speed-limit guard 131, plus one
+  `lidar_future_timestamp` and one `nominal_command_timeout`;
+- Executable Reference tracking p95 0.3028 m over 553/1,034 matched
+  predictions;
+- official-raceline separation p95 2.35 m, maximum 2.60 m, and final 1.47 m;
+- final speed 0.0038 m/s; collision publisher absent, so collision state is
+  still unverified.
+
+Evidence SHA-256 values: analyzer JSON
+`57015b296f28ee553a5b6df5ec9d3639cb178af8a4901f30efd5e8742bf7d782`,
+path/raceline JSON
+`c6134f431395fb8f42a3f2fc8a439386dd850c19a841899aee6d9303fcb92224`,
+ROS bag database
+`3b69ab735c479f9349c65e032ebccac3856737ca77b0527bfc1ed5a2deb4c254`,
+and collision-topology log
+`8d184377b1ebda602d21287946940042c24d2a3efa1e4a247c7de9fabdbf8bcc`.
+The repeated 2.60 m maximum raceline separation and physical stop confirm that
+the remaining primary blocker is closed-loop trajectory generalization, not
+the speed-limit implementation. M4 and M5 remain blocked.

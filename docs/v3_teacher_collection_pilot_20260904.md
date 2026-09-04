@@ -246,6 +246,11 @@ late for the AWSIM actuation path. Safety therefore now has an explicit
 is requested at or above `max_speed_mps - speed_limit_guard_margin_mps`, it
 returns `speed_limit_guard` with bounded steering and
 `min_accel_mps2` braking. Existing deceleration is not replaced by the guard,
-and negative or non-finite margins are tested. This predictive guard still
-requires a fresh Graneple probe before the 0.75 m/s runtime cap can be
-considered experimentally verified.
+and negative or non-finite margins are tested.
+
+A fresh `ef56060` Graneple probe passed the bounded speed check: maximum speed
+was 0.7887 m/s, P99 speed was 0.7475 m/s, and the 30 s bag finalized with
+recorder exit code zero. Its compressed MCAP SHA-256 was
+`03204b3c2ea323f6a6c09ed2173ec8a2a866c430ba5528a1fc29c57314db5e11`.
+This verifies the 0.75 m/s Safety cap with the declared 0.10 m/s tolerance; it
+does not by itself pass the M3 model closed-loop gate.
