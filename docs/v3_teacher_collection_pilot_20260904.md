@@ -174,3 +174,43 @@ The collection exposed a cross-domain ROS discovery bug in
 count discovery did not. The recorder now uses `ros2 topic info --no-daemon`
 with an explicit spin time, preventing a domain-0 daemon from falsely
 reporting zero publishers for a domain-1 teacher.
+
+## Verified right-far capture
+
+The `0.80 m` randomization range could not produce a right-far initial pose
+because the fixed grid pose is already +0.664 m left of Reference point 59.
+Seed 109 was therefore rerun with a bounded `1.50 m` lateral range:
+
+```text
+--start-random=true --start-random-seed=109 \
+--start-random-range=1.50,0.00 --start-random-min-separation=0
+```
+
+Before recording, a fresh Autoware initialization reported `WaitStart`,
+`Grounded`, and `initialization_ready=true`. Projection of the live pose was
+-0.5894 m, and the first synchronized pose read back from the finalized bag
+was also -0.5894 m relative to Reference point 59. The run is therefore a
+measured right-far case rather than a label inferred from the requested range.
+
+- Run: `mpc_random_right_far_seed109_r150`
+- Scenario: `d1_sim_recovery_right_far`
+- Duration: 120 s
+- Sampled audit states: 1,040
+- Recorder result: exit code 0 with finalized metadata
+- Compressed MCAP SHA-256:
+  `53df5f58089151a7542f06dfbafeb9b0741d34b553c67ff5fc5e8b1d4fdbf2a5`
+- Run report SHA-256:
+  `bdcabaa9c99cdfd94848dd61c311d7b1766ace8401542194eb06a78ff01b651c`
+
+The six-run combined audit contains 6,244 states and remains `FAIL`.
+`offset_right_far` improved from 207 to 337 samples and reached 20 episodes,
+but still needs 163 samples to meet its 500-sample gate. `right_curve` and
+`stopped` remain `PASS`; `left_curve` remains at zero. This capture is recovery
+training evidence only. No retraining or M3 closed-loop rerun has yet used it.
+
+- Combined report SHA-256:
+  `b3715b8e6668f69ee99faad2d172d14fe3e8775bc9b7167e77d70ee6528c5eb0`
+- Combined gap report SHA-256:
+  `7474c5f6529ca21b0fb15f8a7ac4e8dde720d6054e164cd014928c2c93d756d9`
+- Remote report:
+  `/home/graneple/git/autononous_ai/aichallenge-racingkart/output/teacher_recovery_v3/50dc441/reports/combined_6run_seed109_r150.coverage.json`
