@@ -125,7 +125,9 @@ def build_parser() -> argparse.ArgumentParser:
     train.add_argument("--batch-size", type=int)
     train.add_argument("--device", default="auto")
     train.add_argument("--max-batches", type=int)
+    train.add_argument("--checkpoint-every-steps", type=int)
     train.add_argument("--init-checkpoint")
+    train.add_argument("--resume-initialization-checkpoint")
     train.add_argument("--freeze-migrated", action="store_true")
     train.add_argument("--resume", action="store_true")
     train.add_argument("--dry-run", action="store_true")
@@ -334,8 +336,14 @@ def _behavior_build(args: argparse.Namespace) -> int:
 def _train_v3(args: argparse.Namespace) -> int:
     if args.resume and args.init_checkpoint:
         raise ValueError("--resume and --init-checkpoint are mutually exclusive")
+    if args.init_checkpoint and args.resume_initialization_checkpoint:
+        raise ValueError(
+            "--init-checkpoint and --resume-initialization-checkpoint are mutually exclusive"
+        )
     if args.freeze_migrated and not (args.init_checkpoint or args.resume):
         raise ValueError("--freeze-migrated requires initialization or resume")
+    if args.resume_initialization_checkpoint and not args.resume:
+        raise ValueError("--resume-initialization-checkpoint requires --resume")
     config = load_full_control_config_v3(args.config)
     model_cfg, data_cfg, loss_cfg, training_cfg = (
         config["model"], config["data"], config["loss"], config["training"]
@@ -458,6 +466,25 @@ def _train_v3(args: argparse.Namespace) -> int:
             "unmapped_source": list(migration.unmapped_v1),
             "new_key_count": len(migration.new_v3),
         }
+    elif args.resume_initialization_checkpoint:
+        initialization_path = Path(
+            args.resume_initialization_checkpoint
+        ).expanduser().resolve()
+        payload = torch.load(initialization_path, map_location="cpu", weights_only=True)
+        if not isinstance(payload, dict) or not isinstance(payload.get("model"), dict):
+            raise ValueError("resume initialization checkpoint has no model state mapping")
+        migration = model.migrate_v1_weights(payload["model"])
+        if not migration.loaded:
+            raise ValueError("resume initialization checkpoint has no compatible model weights")
+        initialization = {
+            "checkpoint_sha256": _sha256(initialization_path),
+            "freeze_migrated": False,
+            "loaded_key_count": len(migration.loaded),
+            "shape_mismatch": list(migration.shape_mismatch),
+            "unmapped_source": list(migration.unmapped_v1),
+            "new_key_count": len(migration.new_v3),
+            "resume_provenance_only": True,
+        }
     if args.freeze_migrated:
         model.freeze_except_control_sequence = True
         for name, parameter in model.named_parameters():
@@ -498,7 +525,13 @@ def _train_v3(args: argparse.Namespace) -> int:
         len(batches) / gradient_accumulation_steps
     )
     target_steps = epochs * optimizer_steps_per_epoch
-    checkpoint_every_steps = int(training_cfg["checkpoint_every_steps"])
+    checkpoint_every_steps = int(
+        training_cfg["checkpoint_every_steps"]
+        if args.checkpoint_every_steps is None
+        else args.checkpoint_every_steps
+    )
+    if checkpoint_every_steps <= 0:
+        raise ValueError("--checkpoint-every-steps must be positive")
     validation_history_path = output / "validation_history.json"
     validation_history: list[dict[str, Any]] = []
     best_metrics: dict[str, float] | None = None
@@ -634,6 +667,7 @@ def _train_v3(args: argparse.Namespace) -> int:
         "epochs": epochs,
         "micro_batches_per_epoch": len(batches),
         "gradient_accumulation_steps": gradient_accumulation_steps,
+        "checkpoint_every_steps": checkpoint_every_steps,
         "optimizer_steps_per_epoch": optimizer_steps_per_epoch,
         "identity": identity.__dict__,
         "config_sha256": _sha256(Path(args.config)), "device": str(device), "last_log": trainer.logs[-1] if trainer.logs else None,

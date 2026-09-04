@@ -177,9 +177,15 @@ def test_cli_full_control_one_epoch_and_resume(tmp_path: Path) -> None:
     assert loaded.model.behavior_head is not None
     run = json.loads((output / "run_manifest.json").read_text())
     assert run["global_step"] == 1
-    assert main([*args, "--resume"]) == EXIT_SUCCESS
+    assert main([
+        *args,
+        "--resume",
+        "--resume-initialization-checkpoint",
+        str(output / "last.pt"),
+    ]) == EXIT_SUCCESS
     resumed = json.loads((output / "run_manifest.json").read_text())
     assert resumed["global_step"] == 1
+    assert resumed["initialization"]["resume_provenance_only"] is True
     initialized_output = tmp_path / "initialized_run"
     initialized_args = [
         *args[: args.index("--output")],
@@ -234,11 +240,15 @@ def test_cli_full_control_saves_periodic_resumable_checkpoints(
         "--view-config", str(ROOT / "configs/data/view_temporal_v3.yaml"),
         "--behavior-view", str(behavior_view), "--output", str(output),
         "--epochs", "1", "--batch-size", "2", "--max-batches", "2",
+        "--checkpoint-every-steps", "2",
         "--device", "cpu",
     ]) == EXIT_SUCCESS
-    assert saved_steps == [1, 2]
+    assert saved_steps == [2]
     assert torch.load(output / "last.pt", map_location="cpu", weights_only=True)[
         "global_step"
+    ] == 2
+    assert json.loads((output / "run_manifest.json").read_text())[
+        "checkpoint_every_steps"
     ] == 2
 
 
