@@ -72,6 +72,19 @@ correctly rejected as `nominal_command_timeout`. Before recording, verify one
 publisher on each command topic and verify that `/safety_reason` is not a
 continuous `nominal_command_timeout`.
 
+For the official MPC, start the teacher in the Autoware environment with:
+
+```bash
+ROS_DOMAIN_ID=1 tools/run_official_mpc_teacher_v3.sh \
+  /path/to/multi_purpose_mpc_ros/config/config.yaml \
+  /path/to/multi_purpose_mpc_ros/config/ref_vel.yaml
+```
+
+The runner also remaps the MPC's relative
+`control/control_mode_request_topic` subscription to the simulator's
+`/awsim/control_mode_request_topic`. Without that remap the MPC can calculate a
+non-zero target speed while continuing to publish zero commands.
+
 1. Capture the course Reference once per course/version:
 
    ```bash
