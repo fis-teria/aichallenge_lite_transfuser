@@ -344,6 +344,86 @@ def load_behavior_view_v1(
     return by_sample
 
 
+def merge_behavior_views_v1(
+    *,
+    dataset_root: str | Path,
+    source_view_roots: Sequence[str | Path],
+    output_root: str | Path,
+) -> dict[str, object]:
+    """Merge disjoint Behavior V1 views and retarget them to one Dataset V3."""
+
+    if not source_view_roots:
+        raise ValueError("at least one behavior view is required")
+    dataset = Path(dataset_root)
+    dataset_manifest = validate_complete_dataset(dataset)
+    with (dataset / "samples.csv").open(newline="", encoding="utf-8") as stream:
+        sample_rows = list(csv.DictReader(stream))
+    expected_ids = {row["sample_id"] for row in sample_rows}
+    if len(expected_ids) != len(sample_rows):
+        raise ValueError("target Dataset V3 contains duplicate sample IDs")
+    merged: dict[str, dict[str, str]] = {}
+    sources = []
+    for source_raw in source_view_roots:
+        source = Path(source_raw)
+        manifest_path = source / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        source_dataset_sha = str(manifest.get("dataset_manifest_sha256", ""))
+        rows = load_behavior_view_v1(
+            source,
+            dataset_manifest_sha256=source_dataset_sha,
+        )
+        overlap = set(merged).intersection(rows)
+        if overlap:
+            raise ValueError(f"behavior views overlap sample IDs: {sorted(overlap)[:3]}")
+        merged.update(rows)
+        sources.append(
+            {
+                "view": str(source.resolve()),
+                "manifest_sha256": _sha256(manifest_path),
+                "dataset_manifest_sha256": source_dataset_sha,
+                "sample_count": len(rows),
+            }
+        )
+    missing = expected_ids - set(merged)
+    extra = set(merged) - expected_ids
+    if missing or extra:
+        raise ValueError(
+            f"merged behavior coverage mismatch: missing={len(missing)}, extra={len(extra)}"
+        )
+    output = Path(output_root)
+    if output.exists():
+        raise FileExistsError(f"merged behavior view output already exists: {output}")
+    output.mkdir(parents=True)
+    labels_path = output / "behavior_labels.csv"
+    fields = list(BehaviorAnnotationV1.__dataclass_fields__)
+    with labels_path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer.writeheader()
+        for sample_id in sorted(merged):
+            writer.writerow(merged[sample_id])
+    payload: dict[str, object] = {
+        "format": BEHAVIOR_VIEW_FORMAT_V1,
+        "ontology": BEHAVIOR_ONTOLOGY_V1,
+        "class_names": list(BEHAVIOR_CLASS_NAMES_V1),
+        "side_names": list(BEHAVIOR_SIDE_NAMES_V1),
+        "dataset_manifest_sha256": dataset_manifest["manifest_sha256"],
+        "labels_sha256": _sha256(labels_path),
+        "sources": sources,
+        "sample_count": len(merged),
+        "valid_behavior_count": sum(
+            _strict_bool(row["behavior_valid"]) for row in merged.values()
+        ),
+        "valid_side_count": sum(
+            _strict_bool(row["behavior_side_valid"]) for row in merged.values()
+        ),
+    }
+    (output / "manifest.json").write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return payload
+
+
 def _classify_fields(
     fields: dict[str, str]
 ) -> tuple[BehaviorClassV1, BehaviorSideV1, bool, str | None]:
