@@ -36,6 +36,11 @@ data:
   lidar_min_range_m: 0.0
   lidar_max_range_m: 25.0
   ego_features: [longitudinal_speed_mps, lateral_speed_mps, yaw_rate_rps, actual_steering_rad]
+  ego_abs_limits:
+    longitudinal_speed_mps: 20.0
+    lateral_speed_mps: 10.0
+    yaw_rate_rps: 5.0
+    actual_steering_rad: 0.7
 targets:
   command_history_alignment: causal_previous_only
   control_sequence_alignment: exact_grid_timestamp_only

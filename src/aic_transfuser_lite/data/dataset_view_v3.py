@@ -5,7 +5,7 @@ from pathlib import Path
 import csv
 import json
 import math
-from typing import Sequence
+from typing import Mapping, Sequence
 
 import numpy as np
 from PIL import Image
@@ -350,6 +350,7 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
     lidar_min_range_m: float
     lidar_max_range_m: float
     ego_features: tuple[str, ...]
+    ego_abs_limits: Mapping[str, float] | None
     trajectory_steps: int
     control_sequence_steps: int
     camera_history_length: int
@@ -457,7 +458,11 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
         lidar_values = [self._load_lidar(item) for item in sensor_rows]
         ego_values, ego_masks = [], []
         for item in ego_rows:
-            values, mask = _ego_row(item, self.ego_features)
+            values, mask = _ego_row(
+                item,
+                self.ego_features,
+                abs_limits=self.ego_abs_limits,
+            )
             ego_values.append(values)
             ego_masks.append(mask)
         command_values, command_masks = [], []
@@ -611,6 +616,7 @@ def load_temporal_training_batches_v3(
     command_history_length: int,
     control_target_bounds: ControlTargetBoundsV3,
     batch_size: int,
+    ego_abs_limits: Mapping[str, float] | None = None,
     max_batches: int | None = None,
     behavior_view_root: str | Path | None = None,
 ) -> Sequence[ModelBatchV3]:
@@ -657,13 +663,28 @@ def load_temporal_training_batches_v3(
         if key in row_index_by_epoch_stamp:
             raise ValueError("duplicate run/segment/grid timestamp in Dataset V3")
         row_index_by_epoch_stamp[key] = index
+    if ego_abs_limits is not None:
+        unknown_limits = set(ego_abs_limits) - set(ego_features)
+        if unknown_limits:
+            raise ValueError(
+                f"ego_abs_limits has unknown features: {sorted(unknown_limits)}"
+            )
+        if any(
+            not math.isfinite(float(value)) or float(value) <= 0.0
+            for value in ego_abs_limits.values()
+        ):
+            raise ValueError("ego_abs_limits values must be finite and positive")
     usable_anchors: list[int] = []
     for anchor, row in enumerate(rows):
         if _selected_command(row, bounds=control_target_bounds) is None:
             continue
         if int(row["future_valid_count"]) <= 0:
             continue
-        _, current_ego_mask = _ego_row(row, ego_features)
+        _, current_ego_mask = _ego_row(
+            row,
+            ego_features,
+            abs_limits=ego_abs_limits,
+        )
         if not bool(current_ego_mask.all()):
             continue
         usable_anchors.append(anchor)
@@ -688,6 +709,7 @@ def load_temporal_training_batches_v3(
         lidar_min_range_m=lidar_min_range_m,
         lidar_max_range_m=lidar_max_range_m,
         ego_features=ego_features,
+        ego_abs_limits=ego_abs_limits,
         trajectory_steps=trajectory_steps,
         control_sequence_steps=control_sequence_steps,
         camera_history_length=camera_history_length,
@@ -743,7 +765,12 @@ def _selected_command(
     return None
 
 
-def _ego_row(row: dict[str, str], features: tuple[str, ...]) -> tuple[torch.Tensor, torch.Tensor]:
+def _ego_row(
+    row: dict[str, str],
+    features: tuple[str, ...],
+    *,
+    abs_limits: Mapping[str, float] | None = None,
+) -> tuple[torch.Tensor, torch.Tensor]:
     columns = {
         "longitudinal_speed_mps": "velocity_longitudinal_mps",
         "lateral_speed_mps": "velocity_lateral_mps",
@@ -758,6 +785,8 @@ def _ego_row(row: dict[str, str], features: tuple[str, ...]) -> tuple[torch.Tens
         is_valid = math.isfinite(value) and (
             feature != "actual_steering_rad" or row["actual_steering_valid"].lower() == "true"
         )
+        if is_valid and abs_limits is not None and feature in abs_limits:
+            is_valid = abs(value) <= float(abs_limits[feature])
         values.append(value if is_valid else 0.0)
         valid.append(is_valid)
     return torch.tensor(values, dtype=torch.float32), torch.tensor(valid, dtype=torch.bool)

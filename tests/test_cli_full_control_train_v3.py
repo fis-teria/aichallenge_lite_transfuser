@@ -14,6 +14,7 @@ from aic_transfuser_lite.data.canonical_converter_v3 import PreparedRunV3
 from aic_transfuser_lite.data.canonical_schema_v3 import make_sample_id
 from aic_transfuser_lite.data.dataset_view_v3 import (
     ControlTargetBoundsV3,
+    _ego_row,
     clip_control_target_v3,
     load_temporal_training_batches_v3,
     project_teacher_control_sequence_v3,
@@ -526,3 +527,30 @@ def test_teacher_control_projection_rejects_invalid_bounds_shape_and_mask() -> N
             initial_acceleration_mps2=0.0,
             bounds=_target_bounds(),
         )
+
+
+def test_ego_abs_limit_masks_implausible_yaw_rate() -> None:
+    row = {
+        "velocity_longitudinal_mps": "0.4",
+        "velocity_lateral_mps": "0.01",
+        "yaw_rate_rps": "1077.0",
+        "actual_steering_rad": "0.1",
+        "actual_steering_valid": "true",
+    }
+    values, mask = _ego_row(
+        row,
+        (
+            "longitudinal_speed_mps",
+            "lateral_speed_mps",
+            "yaw_rate_rps",
+            "actual_steering_rad",
+        ),
+        abs_limits={
+            "longitudinal_speed_mps": 20.0,
+            "lateral_speed_mps": 10.0,
+            "yaw_rate_rps": 5.0,
+            "actual_steering_rad": 0.7,
+        },
+    )
+    assert values.tolist() == pytest.approx([0.4, 0.01, 0.0, 0.1])
+    assert mask.tolist() == [True, True, False, True]

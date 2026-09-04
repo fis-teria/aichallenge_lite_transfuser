@@ -379,6 +379,7 @@ def _train_v3(args: argparse.Namespace) -> int:
         "lidar_min_range_m": float(data_cfg["lidar_min_range_m"]),
         "lidar_max_range_m": float(data_cfg["lidar_max_range_m"]),
         "ego_features": tuple(data_cfg["ego_features"]),
+        "ego_abs_limits": data_cfg.get("ego_abs_limits"),
         "trajectory_steps": int(model_cfg["trajectory_steps"]),
         "control_sequence_steps": int(model_cfg["control_sequence_steps"]),
         "camera_history_length": int(view["camera_history_length"]),

@@ -298,6 +298,15 @@ def load_full_control_config_v3(path: str | Path) -> dict[str, object]:
         [*required_ego_prefix, "actual_steering_rad"],
     ):
         raise ValueError("full-control config has an unsupported explicit ego feature order")
+    ego_abs_limits = data.get("ego_abs_limits")
+    if ego_abs_limits is not None:
+        if not isinstance(ego_abs_limits, dict) or set(ego_abs_limits) != set(ego_features):
+            raise ValueError("ego_abs_limits must cover every configured ego feature exactly")
+        if any(
+            not math.isfinite(float(value)) or float(value) <= 0.0
+            for value in ego_abs_limits.values()
+        ):
+            raise ValueError("ego_abs_limits values must be finite and positive")
     if float(raw["loss"].get("current_control", 0.0)) <= 0.0:
         raise ValueError("full-control config requires nonzero current_control loss")
     if not bool(model.get("control_sequence_head_enabled")):
