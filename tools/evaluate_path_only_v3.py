@@ -632,6 +632,11 @@ def main() -> int:
             "teacher_quality": len(filtered.usable_anchors),
             "motion_target_rejected": filtered.motion_target_rejected_count,
             "motion_target_censored": filtered.motion_target_censored_count,
+            "motion_target_censored_stationary_prefix": (
+                filtered.motion_target_censored_stationary_prefix_count
+            ),
+            "motion_target_candidates": filtered.motion_target_candidate_count,
+            "motion_target_observed": filtered.motion_target_observed_count,
         },
         "cohort_identity_sha256": cohort_identity,
         "teacher_quality": quality_summary,

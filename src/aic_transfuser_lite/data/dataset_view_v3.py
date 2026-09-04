@@ -472,8 +472,11 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
     batch_size: int
     max_batches: int | None
     base_exclusion_counts: dict[str, int]
+    motion_target_candidate_count: int
+    motion_target_observed_count: int
     motion_target_rejected_count: int
     motion_target_censored_count: int
+    motion_target_censored_stationary_prefix_count: int
 
     def __len__(self) -> int:
         count = math.ceil(len(self.usable_anchors) / self.batch_size)
@@ -836,6 +839,9 @@ def load_temporal_training_batches_v3(
     }
     motion_target_rejected_count = 0
     motion_target_censored_count = 0
+    motion_target_candidate_count = 0
+    motion_target_observed_count = 0
+    motion_target_censored_stationary_prefix_count = 0
     for anchor, row in enumerate(rows):
         selected_command = _selected_command(row, bounds=control_target_bounds)
         if selected_command is None:
@@ -859,6 +865,7 @@ def load_temporal_training_batches_v3(
             and abs(current_speed_mps) <= target_filter.stopped_speed_max_mps
             and commanded_speed_mps >= target_filter.commanded_speed_min_mps
         ):
+            motion_target_candidate_count += 1
             future = np.load(root / row["trajectory_path"], allow_pickle=False)
             assessment = assess_commanded_motion_target_v3(
                 future,
@@ -868,9 +875,21 @@ def load_temporal_training_batches_v3(
             )
             if assessment is MotionTargetAssessmentV3.CENSORED_FUTURE:
                 motion_target_censored_count += 1
+                horizon = future[: target_filter.horizon_steps]
+                valid = horizon[:, 7].astype(bool)
+                selected = horizon[valid]
+                if len(selected) and (
+                    float(np.maximum(selected[:, 4], 0.0).max())
+                    < target_filter.minimum_future_speed_mps
+                    and float(np.linalg.norm(selected[:, 1:3], axis=1).max())
+                    < target_filter.minimum_future_displacement_m
+                ):
+                    motion_target_censored_stationary_prefix_count += 1
             elif assessment is MotionTargetAssessmentV3.CONTRADICTORY_STATIONARY:
                 motion_target_rejected_count += 1
                 continue
+            elif assessment is MotionTargetAssessmentV3.OBSERVED_MOTION:
+                motion_target_observed_count += 1
         usable_anchors.append(anchor)
     if not usable_anchors:
         raise ValueError("no full-control-capable samples in selected split")
@@ -903,8 +922,13 @@ def load_temporal_training_batches_v3(
         batch_size=batch_size,
         max_batches=max_batches,
         base_exclusion_counts=base_exclusion_counts,
+        motion_target_candidate_count=motion_target_candidate_count,
+        motion_target_observed_count=motion_target_observed_count,
         motion_target_rejected_count=motion_target_rejected_count,
         motion_target_censored_count=motion_target_censored_count,
+        motion_target_censored_stationary_prefix_count=(
+            motion_target_censored_stationary_prefix_count
+        ),
     )
 
 

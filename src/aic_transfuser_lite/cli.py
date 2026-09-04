@@ -488,8 +488,21 @@ def _train_v3(args: argparse.Namespace) -> int:
             "motion_target_rejected_train": int(
                 getattr(batches, "motion_target_rejected_count", 0)
             ),
+            "motion_target_candidates_train": int(
+                getattr(batches, "motion_target_candidate_count", 0)
+            ),
+            "motion_target_observed_train": int(
+                getattr(batches, "motion_target_observed_count", 0)
+            ),
             "motion_target_censored_train": int(
                 getattr(batches, "motion_target_censored_count", 0)
+            ),
+            "motion_target_censored_stationary_prefix_train": int(
+                getattr(
+                    batches,
+                    "motion_target_censored_stationary_prefix_count",
+                    0,
+                )
             ),
             "base_exclusions_train": dict(
                 getattr(batches, "base_exclusion_counts", {})
@@ -499,6 +512,20 @@ def _train_v3(args: argparse.Namespace) -> int:
                 if validation_batches is None
                 else int(
                     getattr(validation_batches, "motion_target_rejected_count", 0)
+                )
+            ),
+            "motion_target_candidates_validation": (
+                None
+                if validation_batches is None
+                else int(
+                    getattr(validation_batches, "motion_target_candidate_count", 0)
+                )
+            ),
+            "motion_target_observed_validation": (
+                None
+                if validation_batches is None
+                else int(
+                    getattr(validation_batches, "motion_target_observed_count", 0)
                 )
             ),
             "motion_target_censored_validation": (
@@ -933,14 +960,41 @@ def _train_v3(args: argparse.Namespace) -> int:
             "train_rejected": int(
                 getattr(batches, "motion_target_rejected_count", 0)
             ),
+            "train_candidates": int(
+                getattr(batches, "motion_target_candidate_count", 0)
+            ),
+            "train_observed": int(
+                getattr(batches, "motion_target_observed_count", 0)
+            ),
             "train_censored": int(
                 getattr(batches, "motion_target_censored_count", 0)
+            ),
+            "train_censored_stationary_prefix": int(
+                getattr(
+                    batches,
+                    "motion_target_censored_stationary_prefix_count",
+                    0,
+                )
             ),
             "validation_rejected": (
                 None
                 if validation_batches is None
                 else int(
                     getattr(validation_batches, "motion_target_rejected_count", 0)
+                )
+            ),
+            "validation_candidates": (
+                None
+                if validation_batches is None
+                else int(
+                    getattr(validation_batches, "motion_target_candidate_count", 0)
+                )
+            ),
+            "validation_observed": (
+                None
+                if validation_batches is None
+                else int(
+                    getattr(validation_batches, "motion_target_observed_count", 0)
                 )
             ),
             "validation_base_exclusions": (
@@ -955,6 +1009,17 @@ def _train_v3(args: argparse.Namespace) -> int:
                 if validation_batches is None
                 else int(
                     getattr(validation_batches, "motion_target_censored_count", 0)
+                )
+            ),
+            "validation_censored_stationary_prefix": (
+                None
+                if validation_batches is None
+                else int(
+                    getattr(
+                        validation_batches,
+                        "motion_target_censored_stationary_prefix_count",
+                        0,
+                    )
                 )
             ),
         },
