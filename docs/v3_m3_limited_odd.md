@@ -252,3 +252,18 @@ path/raceline JSON
 and ROS bag database
 `6f70a1e4308af76c6834bff76bb9e8bd868ba22ab7969412b21138b264c985e5`.
 M4 and M5 remain blocked while later training epochs are evaluated.
+
+The five-epoch run completed at global step 9670. Epoch 4 was not promoted
+(trajectory ADE `0.218578 m`, speed MAE `0.176984 m/s`), and epoch 5 was not
+promoted (trajectory ADE `0.196940 m`, speed MAE `0.153472 m/s`). The final
+selected checkpoint therefore remains `epoch_003.pt`.
+
+After training released the WSL worktree lock, the initial causal checkpoint
+was evaluated on the exact same held-out validation split. Its checkpoint
+SHA-256 was
+`6e8fc01b55ba438f299731a01fd1e35ef7f853c2399f5514454eefab30f93d0e`.
+It produced trajectory ADE `0.237094 m` and speed MAE `0.166722 m/s` over
+8,895 samples. The selected epoch 3 checkpoint improves trajectory ADE by
+18.51% and speed MAE by 0.59%, so it passes the offline regression gate against
+the initial causal baseline. This offline result does not override the failed
+M3 closed-loop gate above; M4 and M5 remain blocked.
