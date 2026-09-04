@@ -104,12 +104,14 @@ uses a 1.40 m centre-to-wall clearance: half of the official effective 2.30 m
 width plus the configured 0.25 m wall margin. Clearance is checked between
 source waypoints at occupancy-grid resolution, not only at CSV points.
 
-Each selected episode is a C2-continuous lateral profile:
+Each selected episode is a C2-continuous lateral profile. The first low-speed
+pilot showed that a 6 m approach and 3 m hold ended before the MPC/vehicle
+lateral response settled, so the versioned collection config now uses:
 
-- 6 m approach from the raceline to the requested offset: record for audit,
+- 10 m approach from the base MPC line to the requested offset: record for audit,
   but exclude from training;
-- 3 m hold at 0.35 m (near) or 0.55 m (far): eligible after post-run checks;
-- 4 m return to the raceline: eligible after post-run checks.
+- 8 m hold at 0.35 m (near) or 0.55 m (far): eligible after post-run checks;
+- 4 m return to the base MPC line: eligible after post-run checks.
 
 At the 0.75 m/s collection cap, 4 m is short enough to produce at least
 0.15 m improvement inside the existing 3 s recovery gate. Eligibility is
@@ -144,6 +146,19 @@ forces circular/reference-path mode, and disables dynamic path/border updates.
 Use the copied official `ref_vel.yaml` with `run_official_mpc_teacher_v3.sh`.
 The independent Safety Supervisor remains authoritative; changing the path is
 not permission to bypass the measured 0.75 m/s speed cap.
+
+Build the coverage axis from the exact generated-path source CSV, rather than
+from the sparse visualization markers:
+
+```bash
+PYTHONPATH=src python3 tools/convert_mpc_reference_to_collection_reference_v3.py \
+  --input /path/to/traj_mincurv_manual.csv \
+  --output /artifacts/recovery_reference_v3/base_mpc_collection_reference.csv
+```
+
+Its manifest binds the source CSV SHA-256. The marker capture remains useful
+for course/version diagnostics, but its roughly 5.7 m spacing is too sparse to
+be the primary numerical offset axis on tight curves.
 
 1. Capture the course Reference once per course/version:
 

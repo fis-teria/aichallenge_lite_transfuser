@@ -134,6 +134,8 @@ def test_repository_config_and_map_loader_are_versioned(tmp_path: Path) -> None:
     config = load_recovery_reference_config_v3(
         ROOT / "configs/data/recovery_reference_generator_v3.yaml"
     )
+    assert config.approach_length_m == 10.0
+    assert config.hold_length_m == 8.0
     assert config.recovery_length_m == 4.0
     assert {request.side for request in config.requests} == {"left", "right"}
 

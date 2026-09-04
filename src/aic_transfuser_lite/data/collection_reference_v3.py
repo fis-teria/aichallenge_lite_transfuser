@@ -199,6 +199,7 @@ def write_route_reference_v3(
     source_topic: str,
     source_type: str,
     captured_utc: str,
+    source_artifact: str | Path | None = None,
 ) -> Path:
     output = Path(output_csv)
     if output.exists():
@@ -235,21 +236,27 @@ def write_route_reference_v3(
             )
     digest = hashlib.sha256(output.read_bytes()).hexdigest()
     manifest = output.with_suffix(".manifest.yaml")
+    manifest_payload: dict[str, Any] = {
+        "format_version": COLLECTION_REFERENCE_FORMAT,
+        "teacher_debug_only": True,
+        "coordinate_frame": ordered[0].frame_id,
+        "point_count": len(ordered),
+        "source_topic": source_topic,
+        "source_type": source_type,
+        "captured_utc": captured_utc,
+        "reference_csv": output.name,
+        "reference_sha256": digest,
+    }
+    if source_artifact is not None:
+        source_path = Path(source_artifact)
+        if not source_path.is_file():
+            raise FileNotFoundError(f"Reference source artifact not found: {source_path}")
+        manifest_payload["source_artifact"] = str(source_path)
+        manifest_payload["source_artifact_sha256"] = hashlib.sha256(
+            source_path.read_bytes()
+        ).hexdigest()
     manifest.write_text(
-        yaml.safe_dump(
-            {
-                "format_version": COLLECTION_REFERENCE_FORMAT,
-                "teacher_debug_only": True,
-                "coordinate_frame": ordered[0].frame_id,
-                "point_count": len(ordered),
-                "source_topic": source_topic,
-                "source_type": source_type,
-                "captured_utc": captured_utc,
-                "reference_csv": output.name,
-                "reference_sha256": digest,
-            },
-            sort_keys=False,
-        ),
+        yaml.safe_dump(manifest_payload, sort_keys=False),
         encoding="utf-8",
     )
     return manifest

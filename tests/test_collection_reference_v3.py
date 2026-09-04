@@ -148,6 +148,25 @@ def test_reference_hash_mismatch_fails_closed(tmp_path: Path) -> None:
         verify_route_reference_manifest_v3(destination)
 
 
+def test_offline_reference_manifest_binds_source_artifact(tmp_path: Path) -> None:
+    source = tmp_path / "source.csv"
+    source.write_text("source fixture\n", encoding="utf-8")
+    destination = tmp_path / "reference.csv"
+    manifest = write_route_reference_v3(
+        destination,
+        _straight_route(),
+        source_topic="/offline/reference",
+        source_type="fixture/csv",
+        captured_utc="2026-09-04T00:00:00+00:00",
+        source_artifact=source,
+    )
+
+    payload = verify_route_reference_manifest_v3(destination)
+    assert manifest.is_file()
+    assert payload["source_artifact"] == str(source)
+    assert len(payload["source_artifact_sha256"]) == 64
+
+
 def test_sparse_curved_reference_uses_segment_projection() -> None:
     radius_m = 10.0
     points = tuple(

@@ -1,10 +1,11 @@
 format_version: aic_recovery_reference_generator_v1
 
-# At the 0.75 m/s collection cap, the 4 m return produces measurable
-# improvement inside the 3 s recovery gate. The approach is never training data.
+# The low-speed MPC showed delayed lateral response in the first pilot. The
+# longer approach/hold lets the measured vehicle reach the requested band; the
+# 4 m return remains short enough to create improvement inside the 3 s gate.
 phase_lengths_m:
-  approach: 6.0
-  hold: 3.0
+  approach: 10.0
+  hold: 8.0
   recovery: 4.0
 
 minimum_segment_gap_m: 8.0
