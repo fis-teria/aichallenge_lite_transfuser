@@ -8,7 +8,7 @@ import pytest
 import torch
 import yaml
 
-from aic_transfuser_lite.cli import EXIT_SUCCESS, main
+from aic_transfuser_lite.cli import EXIT_GATE, EXIT_SUCCESS, main
 from aic_transfuser_lite.data.canonical_converter_v3 import write_prepared_dataset_v3
 from aic_transfuser_lite.data.canonical_converter_v3 import PreparedRunV3
 from aic_transfuser_lite.data.canonical_schema_v3 import make_sample_id
@@ -278,6 +278,40 @@ def test_cli_promotes_best_trajectory_checkpoint_from_validation_split(
     assert artifact["checkpoint_sha256"] == sha256_file_v3(
         output / "best_trajectory.pt"
     )
+
+
+def test_cli_launch_gate_blocks_runtime_artifact_promotion(tmp_path: Path) -> None:
+    dataset, split, config, behavior_view, output = _training_fixture(
+        tmp_path, include_validation=True
+    )
+    raw = yaml.safe_load(config.read_text(encoding="utf-8"))
+    raw["validation"] = {
+        "launch_gate": {
+            "enabled": True,
+            "current_speed_max_mps": 100.0,
+            "commanded_speed_min_mps": 101.0,
+            "minimum_forward_progress_m": 100.0,
+            "minimum_samples": 1,
+            "minimum_ready_fraction": 1.0,
+        }
+    }
+    config.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+
+    result = main([
+        "train", "--config", str(config), "--dataset-root", str(dataset),
+        "--split-manifest", str(split),
+        "--view-config", str(ROOT / "configs/data/view_temporal_v3.yaml"),
+        "--behavior-view", str(behavior_view), "--output", str(output),
+        "--epochs", "1", "--batch-size", "2", "--device", "cpu",
+    ])
+
+    assert result == EXIT_GATE
+    assert (output / "last.pt").is_file()
+    assert not (output / "runtime_artifact.json").exists()
+    manifest = json.loads((output / "run_manifest.json").read_text())
+    assert manifest["launch_readiness_gate_passed"] is False
+    assert manifest["selected_checkpoint"] is None
+    assert manifest["best_validation"] is None
 
 
 def test_full_control_config_rejects_nonpositive_checkpoint_interval(tmp_path: Path) -> None:

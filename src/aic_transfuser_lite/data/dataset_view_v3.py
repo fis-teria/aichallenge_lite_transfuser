@@ -59,6 +59,81 @@ class ControlTargetBoundsV3:
             raise ValueError("control target jerk bounds must straddle zero")
 
 
+@dataclass(frozen=True)
+class MotionTargetFilterConfigV3:
+    """Reject commanded-motion anchors whose measured future stayed stationary.
+
+    All speeds are in m/s, displacement is in metres, and ``horizon_steps`` is
+    counted on the Dataset V3 dense future grid. The filter is deliberately
+    conditional on a positive teacher command so genuine stop examples remain
+    eligible.
+    """
+
+    enabled: bool = False
+    stopped_speed_max_mps: float = 0.05
+    commanded_speed_min_mps: float = 0.5
+    minimum_future_speed_mps: float = 0.2
+    minimum_future_displacement_m: float = 0.1
+    horizon_steps: int = 15
+
+    def validate(self) -> None:
+        values = (
+            self.stopped_speed_max_mps,
+            self.commanded_speed_min_mps,
+            self.minimum_future_speed_mps,
+            self.minimum_future_displacement_m,
+        )
+        if any(not math.isfinite(float(value)) or value < 0.0 for value in values):
+            raise ValueError("motion target filter thresholds must be finite and non-negative")
+        if self.commanded_speed_min_mps <= self.stopped_speed_max_mps:
+            raise ValueError("commanded motion threshold must exceed stopped speed threshold")
+        if self.minimum_future_speed_mps <= 0.0:
+            raise ValueError("minimum future speed must be positive")
+        if self.minimum_future_displacement_m <= 0.0:
+            raise ValueError("minimum future displacement must be positive")
+        if self.horizon_steps <= 0:
+            raise ValueError("motion target filter horizon_steps must be positive")
+
+
+def stationary_commanded_motion_target_v3(
+    future_state: np.ndarray,
+    *,
+    current_speed_mps: float,
+    commanded_speed_mps: float,
+    config: MotionTargetFilterConfigV3,
+) -> bool:
+    """Return true only for a contradictory commanded-motion training target."""
+
+    config.validate()
+    if not config.enabled:
+        return False
+    current_speed = abs(float(current_speed_mps))
+    commanded_speed = float(commanded_speed_mps)
+    if not math.isfinite(current_speed) or not math.isfinite(commanded_speed):
+        raise ValueError("motion target filter speeds must be finite")
+    if (
+        current_speed > config.stopped_speed_max_mps
+        or commanded_speed < config.commanded_speed_min_mps
+    ):
+        return False
+    future = np.asarray(future_state)
+    if future.ndim != 2 or future.shape[1] != 8:
+        raise ValueError("motion target filter requires dense future state [H,8]")
+    horizon = future[: config.horizon_steps]
+    valid = horizon[:, 7].astype(bool)
+    if not bool(valid.any()):
+        return False
+    selected = horizon[valid]
+    if not np.isfinite(selected[:, 1:5]).all():
+        raise ValueError("valid motion target filter future values must be finite")
+    maximum_displacement_m = float(np.linalg.norm(selected[:, 1:3], axis=1).max())
+    maximum_forward_speed_mps = float(np.maximum(selected[:, 4], 0.0).max())
+    return (
+        maximum_forward_speed_mps < config.minimum_future_speed_mps
+        and maximum_displacement_m < config.minimum_future_displacement_m
+    )
+
+
 def clip_control_target_v3(
     control: torch.Tensor, *, bounds: ControlTargetBoundsV3
 ) -> torch.Tensor:
@@ -359,6 +434,7 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
     control_target_bounds: ControlTargetBoundsV3
     batch_size: int
     max_batches: int | None
+    motion_target_rejected_count: int
 
     def __len__(self) -> int:
         count = math.ceil(len(self.usable_anchors) / self.batch_size)
@@ -619,6 +695,7 @@ def load_temporal_training_batches_v3(
     ego_abs_limits: Mapping[str, float] | None = None,
     max_batches: int | None = None,
     behavior_view_root: str | Path | None = None,
+    motion_target_filter: MotionTargetFilterConfigV3 | None = None,
 ) -> Sequence[ModelBatchV3]:
     """Create leakage-safe lazy temporal batches from Dataset V3.
 
@@ -628,6 +705,8 @@ def load_temporal_training_batches_v3(
     """
     root = Path(dataset_root)
     dataset_manifest = validate_complete_dataset(root)
+    target_filter = motion_target_filter or MotionTargetFilterConfigV3()
+    target_filter.validate()
     behavior_by_sample = (
         None
         if behavior_view_root is None
@@ -675,8 +754,10 @@ def load_temporal_training_batches_v3(
         ):
             raise ValueError("ego_abs_limits values must be finite and positive")
     usable_anchors: list[int] = []
+    motion_target_rejected_count = 0
     for anchor, row in enumerate(rows):
-        if _selected_command(row, bounds=control_target_bounds) is None:
+        selected_command = _selected_command(row, bounds=control_target_bounds)
+        if selected_command is None:
             continue
         if int(row["future_valid_count"]) <= 0:
             continue
@@ -687,6 +768,22 @@ def load_temporal_training_batches_v3(
         )
         if not bool(current_ego_mask.all()):
             continue
+        current_speed_mps = float(row["velocity_longitudinal_mps"])
+        commanded_speed_mps = float(selected_command[0][1])
+        if (
+            target_filter.enabled
+            and abs(current_speed_mps) <= target_filter.stopped_speed_max_mps
+            and commanded_speed_mps >= target_filter.commanded_speed_min_mps
+        ):
+            future = np.load(root / row["trajectory_path"], allow_pickle=False)
+            if stationary_commanded_motion_target_v3(
+                future,
+                current_speed_mps=current_speed_mps,
+                commanded_speed_mps=commanded_speed_mps,
+                config=target_filter,
+            ):
+                motion_target_rejected_count += 1
+                continue
         usable_anchors.append(anchor)
     if not usable_anchors:
         raise ValueError("no full-control-capable samples in selected split")
@@ -718,6 +815,7 @@ def load_temporal_training_batches_v3(
         control_target_bounds=control_target_bounds,
         batch_size=batch_size,
         max_batches=max_batches,
+        motion_target_rejected_count=motion_target_rejected_count,
     )
 
 

@@ -13,6 +13,7 @@ from aic_transfuser_lite.training.losses_v3 import (
     LossWeightsV3, compute_losses_v3, enforce_trajectory_regression_gate,
 )
 from aic_transfuser_lite.training.train_v3 import (
+    LaunchReadinessGateConfigV3,
     TrainerV3,
     evaluate_trajectory_speed_v3,
     is_better_trajectory_checkpoint_v3,
@@ -237,6 +238,32 @@ def test_validation_metrics_use_si_units_and_restore_train_state() -> None:
     assert metrics["trajectory_valid_waypoints"] == 30
     assert metrics["speed_valid_waypoints"] == 30
     assert model.training is True
+
+
+def test_launch_readiness_gate_is_separate_from_average_ade() -> None:
+    source = _full_batch()
+    stopped = replace(source, ego=torch.zeros_like(source.ego))
+    gate = LaunchReadinessGateConfigV3(
+        minimum_samples=2,
+        minimum_ready_fraction=1.0,
+        minimum_forward_progress_m=0.1,
+    )
+    ready = evaluate_trajectory_speed_v3(
+        _FixedValidationModel(xy_offset=(0.2, 0.0), speed_offset=0.0),
+        [stopped],
+        launch_gate=gate,
+    )
+    blocked = evaluate_trajectory_speed_v3(
+        _FixedValidationModel(xy_offset=(0.05, 0.0), speed_offset=0.0),
+        [stopped],
+        launch_gate=gate,
+    )
+
+    assert ready["launch_sample_count"] == 2
+    assert ready["launch_path_ready_fraction"] == pytest.approx(1.0)
+    assert ready["launch_gate_pass"] is True
+    assert blocked["trajectory_ade_m"] < ready["trajectory_ade_m"]
+    assert blocked["launch_gate_pass"] is False
 
 
 def test_validation_and_checkpoint_order_fail_closed_on_invalid_input() -> None:

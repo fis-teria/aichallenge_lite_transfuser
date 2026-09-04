@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 import math
@@ -17,6 +18,7 @@ from aic_transfuser_lite.contracts.model_batch_v3 import (
     CONTROL_SEQUENCE_ALIGNMENT_V3,
     ModelBatchV3,
 )
+from aic_transfuser_lite.data.dataset_view_v3 import MotionTargetFilterConfigV3
 from aic_transfuser_lite.models.full_control_lite_v3 import FullControlLiteV3
 
 from .checkpoint_v3 import (
@@ -192,10 +194,43 @@ class TrainerV3:
         self.sampler.load_state_dict(sampler_state)
 
 
+@dataclass(frozen=True)
+class LaunchReadinessGateConfigV3:
+    """Held-out path-readiness gate for stopped, commanded-motion samples."""
+
+    current_speed_max_mps: float = 0.05
+    commanded_speed_min_mps: float = 0.5
+    minimum_forward_progress_m: float = 0.1
+    minimum_samples: int = 20
+    minimum_ready_fraction: float = 0.8
+
+    def validate(self) -> None:
+        values = (
+            self.current_speed_max_mps,
+            self.commanded_speed_min_mps,
+            self.minimum_forward_progress_m,
+            self.minimum_ready_fraction,
+        )
+        if any(not math.isfinite(float(value)) for value in values):
+            raise ValueError("launch readiness thresholds must be finite")
+        if self.current_speed_max_mps < 0.0:
+            raise ValueError("launch current speed threshold must be non-negative")
+        if self.commanded_speed_min_mps <= self.current_speed_max_mps:
+            raise ValueError("launch command threshold must exceed stopped threshold")
+        if self.minimum_forward_progress_m <= 0.0:
+            raise ValueError("launch minimum forward progress must be positive")
+        if self.minimum_samples <= 0:
+            raise ValueError("launch readiness minimum_samples must be positive")
+        if not 0.0 <= self.minimum_ready_fraction <= 1.0:
+            raise ValueError("launch readiness fraction must be within [0,1]")
+
+
 def evaluate_trajectory_speed_v3(
     model: torch.nn.Module,
     batches: Sequence[ModelBatchV3],
-) -> dict[str, float]:
+    *,
+    launch_gate: LaunchReadinessGateConfigV3 | None = None,
+) -> dict[str, float | bool]:
     """Evaluate authoritative trajectory/speed heads on a held-out split.
 
     ``trajectory_ade_m`` is the mean Euclidean waypoint error in metres and
@@ -213,6 +248,10 @@ def evaluate_trajectory_speed_v3(
     trajectory_count = 0
     speed_error_sum = 0.0
     speed_count = 0
+    launch_sample_count = 0
+    launch_ready_count = 0
+    if launch_gate is not None:
+        launch_gate.validate()
     model.eval()
     try:
         with torch.no_grad():
@@ -243,16 +282,61 @@ def evaluate_trajectory_speed_v3(
                 trajectory_count += int(trajectory_values.numel())
                 speed_error_sum += float(speed_values.sum().cpu())
                 speed_count += int(speed_values.numel())
+                if launch_gate is not None:
+                    if (
+                        batch.targets.current_control is None
+                        or batch.targets.current_control_mask is None
+                    ):
+                        raise ValueError(
+                            "launch readiness requires current control targets"
+                        )
+                    launch_rows = (
+                        (torch.abs(batch.ego[:, -1, 0]) <= launch_gate.current_speed_max_mps)
+                        & batch.targets.current_control_mask[:, 1]
+                        & (
+                            batch.targets.current_control[:, 1]
+                            >= launch_gate.commanded_speed_min_mps
+                        )
+                    )
+                    forward_progress = predicted_xy[:, :, 0].amax(dim=1)
+                    launch_sample_count += int(launch_rows.sum().cpu())
+                    launch_ready_count += int(
+                        (
+                            launch_rows
+                            & (
+                                forward_progress
+                                >= launch_gate.minimum_forward_progress_m
+                            )
+                        ).sum().cpu()
+                    )
     finally:
         model.train(was_training)
     if trajectory_count == 0 or speed_count == 0:
         raise ValueError("V3 validation split has no valid trajectory/speed targets")
-    return {
+    metrics: dict[str, float | bool] = {
         "trajectory_ade_m": trajectory_error_sum / trajectory_count,
         "speed_profile_mae_mps": speed_error_sum / speed_count,
         "trajectory_valid_waypoints": float(trajectory_count),
         "speed_valid_waypoints": float(speed_count),
     }
+    if launch_gate is not None:
+        ready_fraction = (
+            launch_ready_count / launch_sample_count
+            if launch_sample_count > 0
+            else 0.0
+        )
+        metrics.update(
+            {
+                "launch_sample_count": float(launch_sample_count),
+                "launch_path_ready_count": float(launch_ready_count),
+                "launch_path_ready_fraction": ready_fraction,
+                "launch_gate_pass": (
+                    launch_sample_count >= launch_gate.minimum_samples
+                    and ready_fraction >= launch_gate.minimum_ready_fraction
+                ),
+            }
+        )
+    return metrics
 
 
 def is_better_trajectory_checkpoint_v3(
@@ -348,7 +432,89 @@ def load_full_control_config_v3(path: str | Path) -> dict[str, object]:
     command_history_length = int(data.get("command_history_length", 0))
     if not 0 < command_history_length <= int(model.get("max_ego_history", 0)):
         raise ValueError("command history length must fit max_ego_history")
+    motion_target_filter_config_v3(raw)
+    launch_readiness_gate_config_v3(raw)
     return raw
+
+
+def launch_readiness_gate_config_v3(
+    config: dict[str, object],
+) -> LaunchReadinessGateConfigV3 | None:
+    """Parse an optional fail-closed validation gate for launch path readiness."""
+
+    validation = config.get("validation")
+    if validation is None:
+        return None
+    if not isinstance(validation, dict):
+        raise ValueError("validation must be a mapping")
+    raw = validation.get("launch_gate")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise ValueError("validation launch_gate must be a mapping")
+    allowed = {
+        "enabled",
+        "current_speed_max_mps",
+        "commanded_speed_min_mps",
+        "minimum_forward_progress_m",
+        "minimum_samples",
+        "minimum_ready_fraction",
+    }
+    unknown = set(raw).difference(allowed)
+    if unknown:
+        raise ValueError(f"unknown validation launch_gate fields: {sorted(unknown)}")
+    if not bool(raw.get("enabled", False)):
+        return None
+    result = LaunchReadinessGateConfigV3(
+        current_speed_max_mps=float(raw.get("current_speed_max_mps", 0.05)),
+        commanded_speed_min_mps=float(raw.get("commanded_speed_min_mps", 0.5)),
+        minimum_forward_progress_m=float(
+            raw.get("minimum_forward_progress_m", 0.1)
+        ),
+        minimum_samples=int(raw.get("minimum_samples", 20)),
+        minimum_ready_fraction=float(raw.get("minimum_ready_fraction", 0.8)),
+    )
+    result.validate()
+    return result
+
+
+def motion_target_filter_config_v3(
+    config: dict[str, object],
+) -> MotionTargetFilterConfigV3:
+    """Parse the optional Dataset V3 commanded-motion consistency filter."""
+
+    targets = config.get("targets")
+    if not isinstance(targets, dict):
+        raise ValueError("full-control config targets must be a mapping")
+    raw = targets.get("motion_target_filter")
+    if raw is None:
+        result = MotionTargetFilterConfigV3()
+    elif not isinstance(raw, dict):
+        raise ValueError("motion_target_filter must be a mapping")
+    else:
+        allowed = {
+            "enabled",
+            "stopped_speed_max_mps",
+            "commanded_speed_min_mps",
+            "minimum_future_speed_mps",
+            "minimum_future_displacement_m",
+            "horizon_steps",
+        }
+        unknown = set(raw).difference(allowed)
+        if unknown:
+            raise ValueError(f"unknown motion_target_filter fields: {sorted(unknown)}")
+        result = MotionTargetFilterConfigV3(
+            enabled=bool(raw.get("enabled", False)),
+            stopped_speed_max_mps=float(raw.get("stopped_speed_max_mps", 0.05)),
+            commanded_speed_min_mps=float(raw.get("commanded_speed_min_mps", 0.5)),
+            minimum_future_speed_mps=float(raw.get("minimum_future_speed_mps", 0.2)),
+            minimum_future_displacement_m=float(
+                raw.get("minimum_future_displacement_m", 0.1)
+            ),
+            horizon_steps=int(raw.get("horizon_steps", 15)),
+        )
+    result.validate()
+    return result
 
 
 def build_full_control_model_v3(config: dict[str, object]) -> FullControlLiteV3:

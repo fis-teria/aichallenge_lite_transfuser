@@ -145,6 +145,8 @@ class InferenceNodeV3(Node):
             "executable_reference_max_lateral_acceleration_mps2": 1.0,
             "executable_reference_safety_speed_cap_mps": 0.0,
             "executable_reference_require_stop_probability": False,
+            "executable_reference_speed_source": "model",
+            "executable_reference_path_only_target_speed_mps": 0.0,
             "plan_consistency_speed_scale_mps": 1.0,
             "estimated_delay_sec": 0.0,
             "base_preview_sec": 0.35,
@@ -280,6 +282,11 @@ class InferenceNodeV3(Node):
         safety_speed_cap = float(
             self.get_parameter("executable_reference_safety_speed_cap_mps").value
         )
+        path_only_target_speed = float(
+            self.get_parameter(
+                "executable_reference_path_only_target_speed_mps"
+            ).value
+        )
         self.executable_reference_config = ExecutableReferenceConfigV3(
             odd_speed_cap_mps=float(
                 self.get_parameter("executable_reference_odd_speed_cap_mps").value
@@ -294,6 +301,12 @@ class InferenceNodeV3(Node):
                 self.get_parameter(
                     "executable_reference_require_stop_probability"
                 ).value
+            ),
+            speed_source=str(
+                self.get_parameter("executable_reference_speed_source").value
+            ),
+            path_only_target_speed_mps=(
+                None if path_only_target_speed == 0.0 else path_only_target_speed
             ),
         )
         self.executable_reference_config.validate()

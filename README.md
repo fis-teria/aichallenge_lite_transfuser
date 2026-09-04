@@ -336,3 +336,10 @@ profile駆動の収録preflight/実行、raw bagの軽量coverage audit、不足
 手順と安全境界は
 [`docs/v3_recovery_data_reference.md`](docs/v3_recovery_data_reference.md)を参照する。
 Referenceとglobal poseはteacher/debug-onlyであり、推論入力には含めない。
+
+停止中なのに走行指令が出ている無動作未来を教師から除外し、モデルを経路形状のみに
+権限化して外部速度目標をMPC/追従制御へ渡すM3復旧方針、発進用のcheckpoint promotion
+gate、WSL実行コマンドは
+[`docs/v3_path_only_launch_recovery.md`](docs/v3_path_only_launch_recovery.md)を参照する。
+現行Dataset V3にはplanned Reference targetがないため、測定未来をReferenceとして
+偽装せず、将来追加する場合はconverter/収録契約をversioned変更する。

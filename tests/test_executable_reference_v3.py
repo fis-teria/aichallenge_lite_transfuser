@@ -139,6 +139,49 @@ def test_moving_path_with_zero_speed_is_not_retimed_by_hidden_floor() -> None:
     assert decision.reasons == ("non_executable_speed:segment=0",)
 
 
+def test_path_only_speed_source_ignores_model_speed_and_remains_capped() -> None:
+    decision = build_executable_reference_v3(
+        _plan(
+            np.asarray([[0.1, 0.0], [0.2, 0.0], [0.3, 0.0]]),
+            np.zeros(3),
+        ),
+        current_speed_mps=0.0,
+        config=ExecutableReferenceConfigV3(
+            odd_speed_cap_mps=0.75,
+            max_lateral_acceleration_mps2=1.0,
+            speed_source="path_only_constant",
+            path_only_target_speed_mps=0.75,
+        ),
+    )
+
+    assert decision.stop_required is False
+    assert decision.reference is not None
+    np.testing.assert_allclose(decision.reference.speed_mps, 0.75)
+    assert decision.reference.transformations == ("model_speed_ignored",)
+    assert bool((np.diff(decision.reference.time_from_observation_sec) > 0.0).all())
+
+
+@pytest.mark.parametrize(
+    "config",
+    [
+        ExecutableReferenceConfigV3(2.0, 1.0, speed_source="unknown"),
+        ExecutableReferenceConfigV3(2.0, 1.0, speed_source="path_only_constant"),
+        ExecutableReferenceConfigV3(2.0, 1.0, path_only_target_speed_mps=0.75),
+    ],
+)
+def test_invalid_path_only_speed_configuration_fails_closed(
+    config: ExecutableReferenceConfigV3,
+) -> None:
+    decision = build_executable_reference_v3(
+        _plan(np.asarray([[0.1, 0.0], [0.2, 0.0]]), np.ones(2)),
+        current_speed_mps=0.0,
+        config=config,
+    )
+    assert decision.stop_required is True
+    assert decision.reference is None
+    assert decision.reasons[0].startswith("invalid_plan:")
+
+
 def test_bounded_nonforward_origin_noise_is_trimmed_before_retiming() -> None:
     decision = build_executable_reference_v3(
         _plan(

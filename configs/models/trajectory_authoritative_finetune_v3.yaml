@@ -52,6 +52,17 @@ targets:
   control_sequence_steps: 10
   control_dt_sec: 0.1
   teacher_priority: [nominal, final_fallback]
+  # A commanded-motion anchor is not a valid imitation target when the recorded
+  # vehicle remained stationary for the complete 1.5 s prediction horizon.
+  # Genuine stop examples are retained because their teacher speed is below the
+  # commanded-speed threshold.
+  motion_target_filter:
+    enabled: true
+    stopped_speed_max_mps: 0.05
+    commanded_speed_min_mps: 0.5
+    minimum_future_speed_mps: 0.2
+    minimum_future_displacement_m: 0.1
+    horizon_steps: 15
 loss:
   # M3 recovery fine-tune keeps Trajectory/Speed authoritative. Auxiliary
   # heads remain trainable at low weight so the existing artifact contract is
@@ -67,6 +78,17 @@ loss:
   trajectory_regression_gate:
     metric: trajectory_ade_m
     max_relative_regression: 0.0
+validation:
+  # Deployment artifact promotion is blocked unless held-out stopped inputs
+  # produce a usable forward path. Speed is intentionally not part of this
+  # gate because path-only runtime gives speed authority to the controller.
+  launch_gate:
+    enabled: true
+    current_speed_max_mps: 0.05
+    commanded_speed_min_mps: 0.5
+    minimum_forward_progress_m: 0.1
+    minimum_samples: 20
+    minimum_ready_fraction: 0.8
 training:
   epochs: 5
   target_vram_gb: 8

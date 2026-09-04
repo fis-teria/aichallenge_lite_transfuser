@@ -73,6 +73,8 @@ class ExecutableReferenceConfigV3:
     stop_probability_threshold: float = 0.6
     safety_speed_cap_mps: float | None = None
     require_stop_probability: bool = False
+    speed_source: str = "model"
+    path_only_target_speed_mps: float | None = None
     minimum_initial_forward_m: float = 1e-3
     maximum_initial_noise_radius_m: float = 0.05
     minimum_path_length_m: float = 1e-3
@@ -94,6 +96,20 @@ class ExecutableReferenceConfigV3:
             or self.safety_speed_cap_mps <= 0.0
         ):
             raise ValueError("safety_speed_cap_mps must be finite and positive")
+        if self.speed_source not in {"model", "path_only_constant"}:
+            raise ValueError("speed_source must be model or path_only_constant")
+        if self.speed_source == "path_only_constant":
+            if self.path_only_target_speed_mps is None or (
+                not math.isfinite(float(self.path_only_target_speed_mps))
+                or self.path_only_target_speed_mps <= 0.0
+            ):
+                raise ValueError(
+                    "path_only_target_speed_mps must be finite and positive in path-only mode"
+                )
+        elif self.path_only_target_speed_mps is not None:
+            raise ValueError(
+                "path_only_target_speed_mps is only valid with path_only_constant"
+            )
         if not math.isfinite(float(self.stop_probability_threshold)) or not (
             0.0 <= self.stop_probability_threshold <= 1.0
         ):
@@ -282,21 +298,33 @@ def build_executable_reference_v3(
         return result
 
     curvature = estimate_polyline_curvature_per_m(trajectory)
+    requested_speed = predicted_speed
+    if config.speed_source == "path_only_constant":
+        assert config.path_only_target_speed_mps is not None
+        requested_speed = np.full(
+            len(trajectory), float(config.path_only_target_speed_mps), dtype=np.float64
+        )
+        transformations.append("model_speed_ignored")
     curvature_speed_cap = np.full(len(trajectory), math.inf, dtype=np.float64)
     curved = curvature > 1e-12
     curvature_speed_cap[curved] = np.sqrt(
         config.max_lateral_acceleration_mps2 / curvature[curved]
     )
     cap = np.minimum(curvature_speed_cap, config.odd_speed_cap_mps)
-    if bool((predicted_speed > config.odd_speed_cap_mps).any()):
+    if bool((requested_speed > config.odd_speed_cap_mps).any()):
         transformations.append("odd_speed_cap")
-    if bool((curvature_speed_cap < np.minimum(predicted_speed, config.odd_speed_cap_mps)).any()):
+    if bool(
+        (
+            curvature_speed_cap
+            < np.minimum(requested_speed, config.odd_speed_cap_mps)
+        ).any()
+    ):
         transformations.append("curvature_speed_cap")
     if config.safety_speed_cap_mps is not None:
-        if bool((np.minimum(predicted_speed, cap) > config.safety_speed_cap_mps).any()):
+        if bool((np.minimum(requested_speed, cap) > config.safety_speed_cap_mps).any()):
             transformations.append("safety_speed_cap")
         cap = np.minimum(cap, config.safety_speed_cap_mps)
-    executable_speed = np.minimum(predicted_speed, cap)
+    executable_speed = np.minimum(requested_speed, cap)
     if plan.stop_probability is None:
         transformations.append("stop_probability_unavailable")
 

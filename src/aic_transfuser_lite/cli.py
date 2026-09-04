@@ -43,7 +43,9 @@ from .training.losses_v3 import LossWeightsV3
 from .training.train_v3 import (
     TrainerV3, balanced_class_weights_v3, build_full_control_model_v3,
     evaluate_trajectory_speed_v3, full_control_model_kwargs_v3,
-    is_better_trajectory_checkpoint_v3, load_full_control_config_v3,
+    is_better_trajectory_checkpoint_v3, launch_readiness_gate_config_v3,
+    load_full_control_config_v3,
+    motion_target_filter_config_v3,
 )
 import torch
 import yaml
@@ -345,6 +347,7 @@ def _train_v3(args: argparse.Namespace) -> int:
     if args.resume_initialization_checkpoint and not args.resume:
         raise ValueError("--resume-initialization-checkpoint requires --resume")
     config = load_full_control_config_v3(args.config)
+    launch_gate = launch_readiness_gate_config_v3(config)
     model_cfg, data_cfg, loss_cfg, training_cfg = (
         config["model"], config["data"], config["loss"], config["training"]
     )
@@ -396,6 +399,7 @@ def _train_v3(args: argparse.Namespace) -> int:
         "control_target_bounds": control_target_bounds,
         "batch_size": batch_size,
         "behavior_view_root": args.behavior_view,
+        "motion_target_filter": motion_target_filter_config_v3(config),
     }
     batches = load_temporal_training_batches_v3(
         args.dataset_root, args.split_manifest, split="train",
@@ -444,6 +448,17 @@ def _train_v3(args: argparse.Namespace) -> int:
             ),
             "behavior_class_weights": behavior_weights,
             "behavior_side_class_weights": side_weights,
+            "motion_target_rejected_train": int(
+                getattr(batches, "motion_target_rejected_count", 0)
+            ),
+            "motion_target_rejected_validation": (
+                None
+                if validation_batches is None
+                else int(
+                    getattr(validation_batches, "motion_target_rejected_count", 0)
+                )
+            ),
+            "launch_readiness_gate_enabled": launch_gate is not None,
         }))
         return EXIT_SUCCESS
     output = Path(args.output).resolve()
@@ -568,7 +583,9 @@ def _train_v3(args: argparse.Namespace) -> int:
         epoch = trainer.sampler.epoch + 1
         if any(int(row["epoch"]) == epoch for row in validation_history):
             return
-        metrics = evaluate_trajectory_speed_v3(model, validation_batches)
+        metrics = evaluate_trajectory_speed_v3(
+            model, validation_batches, launch_gate=launch_gate
+        )
         row: dict[str, Any] = {
             "epoch": epoch,
             "global_step": trainer.global_step,
@@ -577,7 +594,12 @@ def _train_v3(args: argparse.Namespace) -> int:
         epoch_checkpoint = output / f"epoch_{epoch:03d}.pt"
         _atomic_copy(checkpoint, epoch_checkpoint)
         row["checkpoint"] = epoch_checkpoint.name
-        if is_better_trajectory_checkpoint_v3(metrics, best_metrics):
+        launch_gate_passed = (
+            launch_gate is None or bool(metrics["launch_gate_pass"])
+        )
+        if launch_gate_passed and is_better_trajectory_checkpoint_v3(
+            metrics, best_metrics
+        ):
             best_metrics = {
                 "trajectory_ade_m": float(metrics["trajectory_ade_m"]),
                 "speed_profile_mae_mps": float(metrics["speed_profile_mae_mps"]),
@@ -586,13 +608,24 @@ def _train_v3(args: argparse.Namespace) -> int:
             row["promoted"] = True
         else:
             row["promoted"] = False
+        if launch_gate is not None:
+            row["promotion_gate"] = "pass" if launch_gate_passed else "launch_failed"
         validation_history.append(row)
-        best_row = min(
-            validation_history,
-            key=lambda item: (
-                float(item["trajectory_ade_m"]),
-                float(item["speed_profile_mae_mps"]),
-            ),
+        eligible_rows = [
+            item
+            for item in validation_history
+            if launch_gate is None or bool(item.get("launch_gate_pass", False))
+        ]
+        best_row = (
+            None
+            if not eligible_rows
+            else min(
+                eligible_rows,
+                key=lambda item: (
+                    float(item["trajectory_ade_m"]),
+                    float(item["speed_profile_mae_mps"]),
+                ),
+            )
         )
         _write_json_atomic(
             validation_history_path,
@@ -600,7 +633,15 @@ def _train_v3(args: argparse.Namespace) -> int:
                 "format": "aic_v3_validation_history_v1",
                 "identity": identity.__dict__,
                 "optimizer_steps_per_epoch": optimizer_steps_per_epoch,
-                "selection": ["trajectory_ade_m", "speed_profile_mae_mps"],
+                "selection": (
+                    ["trajectory_ade_m", "speed_profile_mae_mps"]
+                    if launch_gate is None
+                    else [
+                        "launch_gate_pass",
+                        "trajectory_ade_m",
+                        "speed_profile_mae_mps",
+                    ]
+                ),
                 "epochs": validation_history,
                 "best": best_row,
             },
@@ -638,30 +679,39 @@ def _train_v3(args: argparse.Namespace) -> int:
             completed_epochs = trainer.sampler.epoch + 1
     if trainer.global_step != target_steps:
         raise RuntimeError("training step count does not match exact epoch contract")
+    promoted_checkpoint = output / "best_trajectory.pt"
+    launch_gate_evaluated = launch_gate is not None and validation_batches is not None
+    launch_gate_passed = (
+        not launch_gate_evaluated or promoted_checkpoint.is_file()
+    )
     selected_checkpoint = (
-        output / "best_trajectory.pt"
-        if (output / "best_trajectory.pt").is_file()
-        else checkpoint
+        promoted_checkpoint if promoted_checkpoint.is_file() else checkpoint
     )
     runtime_artifact = output / "runtime_artifact.json"
-    runtime_artifact.write_text(
-        json.dumps(
-            {
-                "format": "aic_runtime_artifact_v3",
-                "checkpoint_sha256": _sha256(selected_checkpoint),
-                "contract_hash": contract_hash,
-                "capabilities": [
-                    "trajectory", "speed_profile", "current_control", "control_sequence",
-                    "behavior", "behavior_side",
-                ],
-                "model_kwargs": full_control_model_kwargs_v3(config),
-            },
-            indent=2,
-            sort_keys=True,
+    if launch_gate_passed:
+        runtime_artifact.write_text(
+            json.dumps(
+                {
+                    "format": "aic_runtime_artifact_v3",
+                    "checkpoint_sha256": _sha256(selected_checkpoint),
+                    "contract_hash": contract_hash,
+                    "capabilities": [
+                        "trajectory", "speed_profile", "current_control", "control_sequence",
+                        "behavior", "behavior_side",
+                    ],
+                    "model_kwargs": full_control_model_kwargs_v3(config),
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
         )
-        + "\n",
-        encoding="utf-8",
-    )
+    eligible_validation_rows = [
+        item
+        for item in validation_history
+        if launch_gate is None or bool(item.get("launch_gate_pass", False))
+    ]
     run_manifest = {
         "format": "aic_full_control_training_run_v3", "global_step": trainer.global_step,
         "epochs": epochs,
@@ -673,22 +723,41 @@ def _train_v3(args: argparse.Namespace) -> int:
         "config_sha256": _sha256(Path(args.config)), "device": str(device), "last_log": trainer.logs[-1] if trainer.logs else None,
         "behavior_ontology": "aic_behavior_v1",
         "behavior_view_manifest_sha256": _sha256(Path(args.behavior_view) / "manifest.json"),
-        "runtime_artifact_manifest_sha256": _sha256(runtime_artifact),
-        "selected_checkpoint": selected_checkpoint.name,
+        "runtime_artifact_manifest_sha256": (
+            _sha256(runtime_artifact) if launch_gate_passed else None
+        ),
+        "selected_checkpoint": (
+            selected_checkpoint.name if launch_gate_passed else None
+        ),
+        "launch_readiness_gate_passed": (
+            launch_gate_passed if launch_gate_evaluated else None
+        ),
         "validation_history": (
             None if validation_batches is None else validation_history_path.name
         ),
         "best_validation": (
             None
-            if not validation_history
+            if not eligible_validation_rows
             else min(
-                validation_history,
+                eligible_validation_rows,
                 key=lambda item: (
                     float(item["trajectory_ade_m"]),
                     float(item["speed_profile_mae_mps"]),
                 ),
             )
         ),
+        "motion_target_filter": {
+            "train_rejected": int(
+                getattr(batches, "motion_target_rejected_count", 0)
+            ),
+            "validation_rejected": (
+                None
+                if validation_batches is None
+                else int(
+                    getattr(validation_batches, "motion_target_rejected_count", 0)
+                )
+            ),
+        },
         "initialization": initialization,
     }
     if args.resume and initialization is None:
@@ -700,10 +769,12 @@ def _train_v3(args: argparse.Namespace) -> int:
         json.dumps(run_manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     print(json.dumps({
-        "status": "COMPLETE", "checkpoint": str(selected_checkpoint),
-        "runtime_artifact": str(runtime_artifact), "global_step": trainer.global_step,
+        "status": "COMPLETE" if launch_gate_passed else "GATE_FAILED",
+        "checkpoint": str(selected_checkpoint),
+        "runtime_artifact": str(runtime_artifact) if launch_gate_passed else None,
+        "global_step": trainer.global_step,
     }))
-    return EXIT_SUCCESS
+    return EXIT_SUCCESS if launch_gate_passed else EXIT_GATE
 
 
 def _input_output(parser: argparse.ArgumentParser) -> None:

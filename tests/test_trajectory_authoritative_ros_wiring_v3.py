@@ -31,6 +31,8 @@ def test_trajectory_authoritative_launch_keeps_safety_as_sole_final_publisher() 
     assert params["speed_limit_guard_margin_mps"] == 0.10
     assert params["minimum_lookahead_distance_m"] == 1.0
     assert params["executable_reference_require_stop_probability"] is False
+    assert params["executable_reference_speed_source"] == "path_only_constant"
+    assert params["executable_reference_path_only_target_speed_mps"] == 0.75
     assert params["expected_drive_gear"] == 2
     assert params["expected_autonomous_mode"] == 1
     assert params["allowed_awsim_states"] == ["Start", "Ready"]

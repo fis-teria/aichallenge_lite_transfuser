@@ -377,3 +377,13 @@ curve-coverage gates fail and collision evidence is unavailable. The dedicated
 runtime container was stopped after evidence capture. Autoware was restarted,
 the standard mux and wall-recovery nodes were restored, and AWSIM was confirmed
 `Grounded`.
+
+## Path-only launch recovery implementation
+
+The follow-up implementation is documented in
+`docs/v3_path_only_launch_recovery.md`. It filters stopped commanded-motion
+anchors whose measured 1.5 s future also remained stationary, assigns runtime
+speed authority to the executable-reference/controller layer, and blocks
+artifact promotion unless a held-out launch-path gate passes. This changes only
+the candidate-production path; it does not retroactively change the failed M3
+result above or satisfy any closed-loop M3 gate.
