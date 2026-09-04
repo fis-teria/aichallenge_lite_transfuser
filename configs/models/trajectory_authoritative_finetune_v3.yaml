@@ -89,6 +89,10 @@ validation:
     minimum_forward_progress_m: 0.1
     minimum_samples: 20
     minimum_ready_fraction: 0.8
+    minimum_runs: 2
+    minimum_episodes: 3
+    episode_gap_sec: 0.5
+    runtime_parameter_path: ros2_ws/src/aic_e2e_runtime/config/runtime.v3.trajectory_authoritative.param.yaml
 training:
   epochs: 5
   target_vram_gb: 8

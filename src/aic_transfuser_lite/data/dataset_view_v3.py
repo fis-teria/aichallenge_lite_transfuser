@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 import csv
 import json
@@ -95,6 +96,54 @@ class MotionTargetFilterConfigV3:
             raise ValueError("motion target filter horizon_steps must be positive")
 
 
+class MotionTargetAssessmentV3(str, Enum):
+    NOT_COMMANDED_FROM_STOP = "not_commanded_from_stop"
+    CENSORED_FUTURE = "censored_future"
+    OBSERVED_MOTION = "observed_motion"
+    CONTRADICTORY_STATIONARY = "contradictory_stationary"
+
+
+def assess_commanded_motion_target_v3(
+    future_state: np.ndarray,
+    *,
+    current_speed_mps: float,
+    commanded_speed_mps: float,
+    config: MotionTargetFilterConfigV3,
+) -> MotionTargetAssessmentV3:
+    """Classify stopped commanded-motion targets without hiding censoring."""
+
+    config.validate()
+    current_speed = abs(float(current_speed_mps))
+    commanded_speed = float(commanded_speed_mps)
+    if not math.isfinite(current_speed) or not math.isfinite(commanded_speed):
+        raise ValueError("motion target filter speeds must be finite")
+    if (
+        current_speed > config.stopped_speed_max_mps
+        or commanded_speed < config.commanded_speed_min_mps
+    ):
+        return MotionTargetAssessmentV3.NOT_COMMANDED_FROM_STOP
+    future = np.asarray(future_state)
+    if future.ndim != 2 or future.shape[1] != 8:
+        raise ValueError("motion target filter requires dense future state [H,8]")
+    horizon = future[: config.horizon_steps]
+    if len(horizon) < config.horizon_steps:
+        return MotionTargetAssessmentV3.CENSORED_FUTURE
+    valid = horizon[:, 7].astype(bool)
+    if int(valid.sum()) < config.horizon_steps:
+        return MotionTargetAssessmentV3.CENSORED_FUTURE
+    selected = horizon[valid]
+    if not np.isfinite(selected[:, 1:5]).all():
+        raise ValueError("valid motion target filter future values must be finite")
+    maximum_displacement_m = float(np.linalg.norm(selected[:, 1:3], axis=1).max())
+    maximum_forward_speed_mps = float(np.maximum(selected[:, 4], 0.0).max())
+    if (
+        maximum_forward_speed_mps < config.minimum_future_speed_mps
+        and maximum_displacement_m < config.minimum_future_displacement_m
+    ):
+        return MotionTargetAssessmentV3.CONTRADICTORY_STATIONARY
+    return MotionTargetAssessmentV3.OBSERVED_MOTION
+
+
 def stationary_commanded_motion_target_v3(
     future_state: np.ndarray,
     *,
@@ -104,34 +153,14 @@ def stationary_commanded_motion_target_v3(
 ) -> bool:
     """Return true only for a contradictory commanded-motion training target."""
 
-    config.validate()
     if not config.enabled:
         return False
-    current_speed = abs(float(current_speed_mps))
-    commanded_speed = float(commanded_speed_mps)
-    if not math.isfinite(current_speed) or not math.isfinite(commanded_speed):
-        raise ValueError("motion target filter speeds must be finite")
-    if (
-        current_speed > config.stopped_speed_max_mps
-        or commanded_speed < config.commanded_speed_min_mps
-    ):
-        return False
-    future = np.asarray(future_state)
-    if future.ndim != 2 or future.shape[1] != 8:
-        raise ValueError("motion target filter requires dense future state [H,8]")
-    horizon = future[: config.horizon_steps]
-    valid = horizon[:, 7].astype(bool)
-    if not bool(valid.any()):
-        return False
-    selected = horizon[valid]
-    if not np.isfinite(selected[:, 1:5]).all():
-        raise ValueError("valid motion target filter future values must be finite")
-    maximum_displacement_m = float(np.linalg.norm(selected[:, 1:3], axis=1).max())
-    maximum_forward_speed_mps = float(np.maximum(selected[:, 4], 0.0).max())
-    return (
-        maximum_forward_speed_mps < config.minimum_future_speed_mps
-        and maximum_displacement_m < config.minimum_future_displacement_m
-    )
+    return assess_commanded_motion_target_v3(
+        future_state,
+        current_speed_mps=current_speed_mps,
+        commanded_speed_mps=commanded_speed_mps,
+        config=config,
+    ) is MotionTargetAssessmentV3.CONTRADICTORY_STATIONARY
 
 
 def clip_control_target_v3(
@@ -412,6 +441,14 @@ def _exact_time_index(values: np.ndarray, target_sec: float) -> int:
 
 
 @dataclass(frozen=True)
+class TemporalSampleMetadataV3:
+    sample_id: str
+    run_id: str
+    segment_id: str
+    grid_stamp_ns: int
+
+
+@dataclass(frozen=True)
 class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
     root: Path
     rows: list[dict[str, str]]
@@ -434,11 +471,32 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
     control_target_bounds: ControlTargetBoundsV3
     batch_size: int
     max_batches: int | None
+    base_exclusion_counts: dict[str, int]
     motion_target_rejected_count: int
+    motion_target_censored_count: int
 
     def __len__(self) -> int:
         count = math.ceil(len(self.usable_anchors) / self.batch_size)
         return count if self.max_batches is None else min(count, self.max_batches)
+
+    def metadata_for_batch(self, index: int) -> tuple[TemporalSampleMetadataV3, ...]:
+        """Return stable identities for the same anchors materialized by ``index``."""
+
+        count = len(self)
+        normalized = index + count if index < 0 else index
+        if normalized < 0 or normalized >= count:
+            raise IndexError(index)
+        start = normalized * self.batch_size
+        anchors = self.usable_anchors[start : start + self.batch_size]
+        return tuple(
+            TemporalSampleMetadataV3(
+                sample_id=self.rows[anchor]["sample_id"],
+                run_id=self.rows[anchor]["run_id"],
+                segment_id=self.rows[anchor]["segment_id"],
+                grid_stamp_ns=int(self.rows[anchor]["grid_stamp_ns"]),
+            )
+            for anchor in anchors
+        )
 
     def class_counts(self, target_name: str, class_count: int) -> torch.Tensor:
         """Count behavior labels without materializing image or LiDAR assets."""
@@ -622,11 +680,24 @@ class _LazyTemporalTrainingBatchesV3(Sequence[ModelBatchV3]):
             "lidar": torch.stack(lidar_values),
             "lidar_mask": torch.tensor(sensor_selection.mask),
             "ego": torch.stack(ego_values),
-            "ego_feature_mask": torch.stack(ego_masks),
+            "ego_feature_mask": torch.stack(ego_masks)
+            & torch.tensor(ego_selection.mask, dtype=torch.bool)[:, None],
             "command_history": torch.stack(command_values),
             "command_mask": torch.tensor(command_masks)
             & torch.tensor(command_selection.mask),
-            "sensor_dt_sec": torch.zeros(self.camera_history_length, 2),
+            # [camera age from canonical grid, LiDAR minus camera stamp], sec.
+            # Runtime uses its Camera message as the anchor (camera age = 0)
+            # and preserves the same signed LiDAR-minus-Camera convention.
+            "sensor_dt_sec": torch.tensor(
+                [
+                    [
+                        float(item["camera_delta_ms"]) * 1e-3,
+                        float(item["lidar_delta_ms"]) * 1e-3,
+                    ]
+                    for item in sensor_rows
+                ],
+                dtype=torch.float32,
+            ),
             "trajectory": torch.from_numpy(future[:, 1:3]).float(),
             "trajectory_mask": torch.from_numpy(future[:, 7].astype(bool)),
             "speed": torch.from_numpy(future[:, 4]).float(),
@@ -754,12 +825,20 @@ def load_temporal_training_batches_v3(
         ):
             raise ValueError("ego_abs_limits values must be finite and positive")
     usable_anchors: list[int] = []
+    base_exclusion_counts = {
+        "missing_selected_command": 0,
+        "zero_valid_future": 0,
+        "invalid_current_ego": 0,
+    }
     motion_target_rejected_count = 0
+    motion_target_censored_count = 0
     for anchor, row in enumerate(rows):
         selected_command = _selected_command(row, bounds=control_target_bounds)
         if selected_command is None:
+            base_exclusion_counts["missing_selected_command"] += 1
             continue
         if int(row["future_valid_count"]) <= 0:
+            base_exclusion_counts["zero_valid_future"] += 1
             continue
         _, current_ego_mask = _ego_row(
             row,
@@ -767,6 +846,7 @@ def load_temporal_training_batches_v3(
             abs_limits=ego_abs_limits,
         )
         if not bool(current_ego_mask.all()):
+            base_exclusion_counts["invalid_current_ego"] += 1
             continue
         current_speed_mps = float(row["velocity_longitudinal_mps"])
         commanded_speed_mps = float(selected_command[0][1])
@@ -776,12 +856,15 @@ def load_temporal_training_batches_v3(
             and commanded_speed_mps >= target_filter.commanded_speed_min_mps
         ):
             future = np.load(root / row["trajectory_path"], allow_pickle=False)
-            if stationary_commanded_motion_target_v3(
+            assessment = assess_commanded_motion_target_v3(
                 future,
                 current_speed_mps=current_speed_mps,
                 commanded_speed_mps=commanded_speed_mps,
                 config=target_filter,
-            ):
+            )
+            if assessment is MotionTargetAssessmentV3.CENSORED_FUTURE:
+                motion_target_censored_count += 1
+            elif assessment is MotionTargetAssessmentV3.CONTRADICTORY_STATIONARY:
                 motion_target_rejected_count += 1
                 continue
         usable_anchors.append(anchor)
@@ -815,7 +898,9 @@ def load_temporal_training_batches_v3(
         control_target_bounds=control_target_bounds,
         batch_size=batch_size,
         max_batches=max_batches,
+        base_exclusion_counts=base_exclusion_counts,
         motion_target_rejected_count=motion_target_rejected_count,
+        motion_target_censored_count=motion_target_censored_count,
     )
 
 

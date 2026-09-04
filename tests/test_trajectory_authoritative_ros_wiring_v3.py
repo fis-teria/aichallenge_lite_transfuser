@@ -30,6 +30,10 @@ def test_trajectory_authoritative_launch_keeps_safety_as_sole_final_publisher() 
     assert params["max_speed_mps"] == 0.75
     assert params["speed_limit_guard_margin_mps"] == 0.10
     assert params["minimum_lookahead_distance_m"] == 1.0
+    assert params["history_reset_gap_sec"] == 0.5
+    assert params["lidar_angle_min_rad"] == -1.5666074752807617
+    assert params["lidar_angle_increment_rad"] == 0.004188789986073971
+    assert params["expected_lidar_frame"] == "lidar"
     assert params["executable_reference_require_stop_probability"] is False
     assert params["executable_reference_speed_source"] == "path_only_constant"
     assert params["executable_reference_path_only_target_speed_mps"] == 0.75

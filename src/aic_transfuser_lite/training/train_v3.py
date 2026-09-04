@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections import defaultdict
 from pathlib import Path
 from typing import Sequence
 import math
 
+import numpy as np
 import torch
 import yaml
 
@@ -19,6 +21,10 @@ from aic_transfuser_lite.contracts.model_batch_v3 import (
     ModelBatchV3,
 )
 from aic_transfuser_lite.data.dataset_view_v3 import MotionTargetFilterConfigV3
+from aic_transfuser_lite.evaluation.launch_replay_v3 import (
+    load_path_only_replay_config_v3,
+    replay_path_only_launch_v3,
+)
 from aic_transfuser_lite.models.full_control_lite_v3 import FullControlLiteV3
 
 from .checkpoint_v3 import (
@@ -203,6 +209,13 @@ class LaunchReadinessGateConfigV3:
     minimum_forward_progress_m: float = 0.1
     minimum_samples: int = 20
     minimum_ready_fraction: float = 0.8
+    minimum_runs: int = 0
+    minimum_episodes: int = 0
+    episode_gap_sec: float = 0.5
+    runtime_parameter_path: str = (
+        "ros2_ws/src/aic_e2e_runtime/config/"
+        "runtime.v3.trajectory_authoritative.param.yaml"
+    )
 
     def validate(self) -> None:
         values = (
@@ -210,6 +223,7 @@ class LaunchReadinessGateConfigV3:
             self.commanded_speed_min_mps,
             self.minimum_forward_progress_m,
             self.minimum_ready_fraction,
+            self.episode_gap_sec,
         )
         if any(not math.isfinite(float(value)) for value in values):
             raise ValueError("launch readiness thresholds must be finite")
@@ -221,8 +235,14 @@ class LaunchReadinessGateConfigV3:
             raise ValueError("launch minimum forward progress must be positive")
         if self.minimum_samples <= 0:
             raise ValueError("launch readiness minimum_samples must be positive")
+        if self.minimum_runs < 0 or self.minimum_episodes < 0:
+            raise ValueError("launch readiness run/episode minimums must be non-negative")
+        if self.episode_gap_sec <= 0.0:
+            raise ValueError("launch readiness episode gap must be positive")
         if not 0.0 <= self.minimum_ready_fraction <= 1.0:
             raise ValueError("launch readiness fraction must be within [0,1]")
+        if not self.runtime_parameter_path.strip():
+            raise ValueError("launch readiness runtime parameter path must not be empty")
 
 
 def evaluate_trajectory_speed_v3(
@@ -230,7 +250,8 @@ def evaluate_trajectory_speed_v3(
     batches: Sequence[ModelBatchV3],
     *,
     launch_gate: LaunchReadinessGateConfigV3 | None = None,
-) -> dict[str, float | bool]:
+    launch_batches: Sequence[ModelBatchV3] | None = None,
+) -> dict[str, object]:
     """Evaluate authoritative trajectory/speed heads on a held-out split.
 
     ``trajectory_ade_m`` is the mean Euclidean waypoint error in metres and
@@ -248,14 +269,15 @@ def evaluate_trajectory_speed_v3(
     trajectory_count = 0
     speed_error_sum = 0.0
     speed_count = 0
-    launch_sample_count = 0
-    launch_ready_count = 0
+    run_trajectory_sum: dict[str, float] = defaultdict(float)
+    run_trajectory_count: dict[str, int] = defaultdict(int)
     if launch_gate is not None:
         launch_gate.validate()
     model.eval()
     try:
         with torch.no_grad():
-            for source_batch in batches:
+            metadata_provider = getattr(batches, "metadata_for_batch", None)
+            for batch_index, source_batch in enumerate(batches):
                 batch = move_batch_v3(source_batch, device)
                 if batch.targets is None:
                     raise ValueError("V3 validation batch is missing targets")
@@ -282,7 +304,69 @@ def evaluate_trajectory_speed_v3(
                 trajectory_count += int(trajectory_values.numel())
                 speed_error_sum += float(speed_values.sum().cpu())
                 speed_count += int(speed_values.numel())
-                if launch_gate is not None:
+                metadata = (
+                    metadata_provider(batch_index)
+                    if callable(metadata_provider)
+                    else None
+                )
+                for row_index in range(batch.batch_size):
+                    row_values = trajectory_error[row_index][
+                        batch.targets.trajectory_mask[row_index]
+                    ]
+                    run_id = (
+                        "__metadata_unavailable__"
+                        if metadata is None
+                        else metadata[row_index].run_id
+                    )
+                    run_trajectory_sum[run_id] += float(row_values.sum().cpu())
+                    run_trajectory_count[run_id] += int(row_values.numel())
+    finally:
+        model.train(was_training)
+    if trajectory_count == 0 or speed_count == 0:
+        raise ValueError("V3 validation split has no valid trajectory/speed targets")
+    run_ades = {
+        run_id: run_trajectory_sum[run_id] / run_trajectory_count[run_id]
+        for run_id in sorted(run_trajectory_sum)
+        if run_trajectory_count[run_id] > 0
+    }
+    metrics: dict[str, object] = {
+        "trajectory_ade_m": trajectory_error_sum / trajectory_count,
+        "speed_profile_mae_mps": speed_error_sum / speed_count,
+        "trajectory_valid_waypoints": float(trajectory_count),
+        "speed_valid_waypoints": float(speed_count),
+        "trajectory_run_equal_ade_m": float(np.mean(tuple(run_ades.values()))),
+        "trajectory_worst_run_ade_m": float(max(run_ades.values())),
+        "trajectory_run_ade_m": run_ades,
+    }
+    if launch_gate is not None:
+        first_batch = batches[0]
+        if first_batch.targets is None:
+            raise ValueError("launch replay requires trajectory targets for shape identity")
+        replay_config = load_path_only_replay_config_v3(
+            launch_gate.runtime_parameter_path,
+            trajectory_steps=int(first_batch.targets.trajectory_xy_m.shape[1]),
+            minimum_endpoint_forward_m=launch_gate.minimum_forward_progress_m,
+        )
+        selected_launch_batches = batches if launch_batches is None else launch_batches
+        launch_sample_count = 0
+        launch_ready_count = 0
+        reference_accepted_count = 0
+        max_x_only_false_positive_count = 0
+        requested_speed_at_launch_count = 0
+        path_lengths: list[float] = []
+        endpoint_forward: list[float] = []
+        lookahead: list[float] = []
+        reasons: dict[str, int] = defaultdict(int)
+        launch_identities: list[tuple[str, str, int]] = []
+        metadata_known = True
+        model.eval()
+        try:
+            with torch.no_grad():
+                launch_metadata_provider = getattr(
+                    selected_launch_batches, "metadata_for_batch", None
+                )
+                for batch_index, source_batch in enumerate(selected_launch_batches):
+                    batch = move_batch_v3(source_batch, device)
                     if (
                         batch.targets.current_control is None
                         or batch.targets.current_control_mask is None
@@ -298,28 +382,65 @@ def evaluate_trajectory_speed_v3(
                             >= launch_gate.commanded_speed_min_mps
                         )
                     )
-                    forward_progress = predicted_xy[:, :, 0].amax(dim=1)
-                    launch_sample_count += int(launch_rows.sum().cpu())
-                    launch_ready_count += int(
-                        (
-                            launch_rows
-                            & (
-                                forward_progress
-                                >= launch_gate.minimum_forward_progress_m
-                            )
-                        ).sum().cpu()
+                    output = model(batch)
+                    predicted_xy = output.trajectory_xy[:, 0]
+                    predicted_speed = output.trajectory_speed_mps[:, 0]
+                    metadata = (
+                        launch_metadata_provider(batch_index)
+                        if callable(launch_metadata_provider)
+                        else None
                     )
-    finally:
-        model.train(was_training)
-    if trajectory_count == 0 or speed_count == 0:
-        raise ValueError("V3 validation split has no valid trajectory/speed targets")
-    metrics: dict[str, float | bool] = {
-        "trajectory_ade_m": trajectory_error_sum / trajectory_count,
-        "speed_profile_mae_mps": speed_error_sum / speed_count,
-        "trajectory_valid_waypoints": float(trajectory_count),
-        "speed_valid_waypoints": float(speed_count),
-    }
-    if launch_gate is not None:
+                    for row_index in torch.flatnonzero(launch_rows).cpu().tolist():
+                        launch_sample_count += 1
+                        if metadata is None:
+                            metadata_known = False
+                        else:
+                            item = metadata[row_index]
+                            launch_identities.append(
+                                (item.run_id, item.segment_id, item.grid_stamp_ns)
+                            )
+                        replay = replay_path_only_launch_v3(
+                            predicted_xy[row_index].detach().cpu().numpy(),
+                            predicted_speed[row_index].detach().cpu().numpy(),
+                            current_speed_mps=float(batch.ego[row_index, -1, 0].cpu()),
+                            yaw_rate_rps=float(batch.ego[row_index, -1, 2].cpu()),
+                            actual_steering_rad=float(batch.ego[row_index, -1, 3].cpu()),
+                            config=replay_config,
+                        )
+                        path_lengths.append(replay.path_length_m)
+                        endpoint_forward.append(replay.endpoint_forward_m)
+                        if replay.lookahead_distance_m is not None:
+                            lookahead.append(replay.lookahead_distance_m)
+                        reference_accepted_count += int(replay.reference_accepted)
+                        launch_ready_count += int(replay.ready)
+                        requested_speed_at_launch_count += int(
+                            replay.controller_requested_speed_mps is not None
+                            and replay.controller_requested_speed_mps
+                            >= replay_config.minimum_controller_speed_mps
+                        )
+                        if (
+                            replay.maximum_forward_m
+                            >= launch_gate.minimum_forward_progress_m
+                            and not replay.ready
+                        ):
+                            max_x_only_false_positive_count += 1
+                        for reason in replay.reasons:
+                            reasons[reason] += 1
+        finally:
+            model.train(was_training)
+        run_ids = {item[0] for item in launch_identities}
+        episodes = 0
+        if metadata_known:
+            grouped: dict[tuple[str, str], list[int]] = defaultdict(list)
+            for run_id, segment_id, stamp_ns in launch_identities:
+                grouped[(run_id, segment_id)].append(stamp_ns)
+            gap_ns = int(round(launch_gate.episode_gap_sec * 1_000_000_000.0))
+            for stamps in grouped.values():
+                ordered = sorted(stamps)
+                episodes += int(bool(ordered)) + sum(
+                    right - left > gap_ns
+                    for left, right in zip(ordered, ordered[1:])
+                )
         ready_fraction = (
             launch_ready_count / launch_sample_count
             if launch_sample_count > 0
@@ -330,9 +451,38 @@ def evaluate_trajectory_speed_v3(
                 "launch_sample_count": float(launch_sample_count),
                 "launch_path_ready_count": float(launch_ready_count),
                 "launch_path_ready_fraction": ready_fraction,
+                "launch_reference_accepted_count": float(reference_accepted_count),
+                "launch_controller_speed_ready_count": float(
+                    requested_speed_at_launch_count
+                ),
+                "launch_max_x_only_false_positive_count": float(
+                    max_x_only_false_positive_count
+                ),
+                "launch_run_count": float(len(run_ids)) if metadata_known else None,
+                "launch_episode_count": float(episodes) if metadata_known else None,
+                "launch_metadata_known": metadata_known,
+                "launch_mean_path_length_m": (
+                    float(np.mean(path_lengths)) if path_lengths else 0.0
+                ),
+                "launch_mean_endpoint_forward_m": (
+                    float(np.mean(endpoint_forward)) if endpoint_forward else 0.0
+                ),
+                "launch_mean_lookahead_distance_m": (
+                    float(np.mean(lookahead)) if lookahead else 0.0
+                ),
+                "launch_rejection_reasons": dict(sorted(reasons.items())),
+                "launch_stop_probability_connected": False,
                 "launch_gate_pass": (
                     launch_sample_count >= launch_gate.minimum_samples
                     and ready_fraction >= launch_gate.minimum_ready_fraction
+                    and (
+                        launch_gate.minimum_runs == 0
+                        or (metadata_known and len(run_ids) >= launch_gate.minimum_runs)
+                    )
+                    and (
+                        launch_gate.minimum_episodes == 0
+                        or (metadata_known and episodes >= launch_gate.minimum_episodes)
+                    )
                 ),
             }
         )
@@ -340,11 +490,11 @@ def evaluate_trajectory_speed_v3(
 
 
 def is_better_trajectory_checkpoint_v3(
-    candidate: dict[str, float], best: dict[str, float] | None
+    candidate: dict[str, object], best: dict[str, object] | None
 ) -> bool:
-    """Order checkpoints by trajectory ADE, then speed MAE as a tie-break."""
+    """Order research candidates by ADE then worst-run ADE; speed is diagnostic."""
 
-    keys = ("trajectory_ade_m", "speed_profile_mae_mps")
+    keys = ("trajectory_ade_m", "trajectory_worst_run_ade_m")
     for name in keys:
         value = float(candidate[name])
         if not math.isfinite(value) or value < 0.0:
@@ -432,6 +582,14 @@ def load_full_control_config_v3(path: str | Path) -> dict[str, object]:
     command_history_length = int(data.get("command_history_length", 0))
     if not 0 < command_history_length <= int(model.get("max_ego_history", 0)):
         raise ValueError("command history length must fit max_ego_history")
+    expected_history = {
+        "image_history_length": int(model.get("max_sensor_history", 0)),
+        "lidar_history_length": int(model.get("max_sensor_history", 0)),
+        "ego_history_length": int(model.get("max_ego_history", 0)),
+        "command_history_length": int(model.get("max_ego_history", 0)),
+    }
+    if any(int(data.get(name, 0)) != value for name, value in expected_history.items()):
+        raise ValueError("model and data temporal history contracts differ")
     motion_target_filter_config_v3(raw)
     launch_readiness_gate_config_v3(raw)
     return raw
@@ -459,6 +617,10 @@ def launch_readiness_gate_config_v3(
         "minimum_forward_progress_m",
         "minimum_samples",
         "minimum_ready_fraction",
+        "minimum_runs",
+        "minimum_episodes",
+        "episode_gap_sec",
+        "runtime_parameter_path",
     }
     unknown = set(raw).difference(allowed)
     if unknown:
@@ -473,6 +635,16 @@ def launch_readiness_gate_config_v3(
         ),
         minimum_samples=int(raw.get("minimum_samples", 20)),
         minimum_ready_fraction=float(raw.get("minimum_ready_fraction", 0.8)),
+        minimum_runs=int(raw.get("minimum_runs", 0)),
+        minimum_episodes=int(raw.get("minimum_episodes", 0)),
+        episode_gap_sec=float(raw.get("episode_gap_sec", 0.5)),
+        runtime_parameter_path=str(
+            raw.get(
+                "runtime_parameter_path",
+                "ros2_ws/src/aic_e2e_runtime/config/"
+                "runtime.v3.trajectory_authoritative.param.yaml",
+            )
+        ),
     )
     result.validate()
     return result

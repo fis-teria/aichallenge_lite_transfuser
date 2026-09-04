@@ -21,12 +21,19 @@ from aic_transfuser_lite.data.dataset_view_v3 import (
     select_control_sequence_row_indices_v3,
 )
 import aic_transfuser_lite.data.dataset_view_v3 as dataset_view_v3
+import aic_transfuser_lite.cli as cli_module
 from aic_transfuser_lite.data.storage_v3 import validate_complete_dataset
 from aic_transfuser_lite.data.mcap_converter_v2 import TimedCommand
-from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3, sha256_file_v3
+from aic_transfuser_lite.runtime.input_history_v3 import (
+    RuntimeObservationTensorV3,
+    build_runtime_temporal_batch_v3,
+)
+from aic_transfuser_lite.runtime.model_loader_v3 import sha256_file_v3
+from aic_transfuser_lite.runtime.residual_control import ExternalControllerCommand
 from aic_transfuser_lite.training.train_v3 import (
     TrainerV3,
     balanced_class_weights_v3,
+    build_full_control_model_v3,
     load_full_control_config_v3,
 )
 from test_dataset_v3_converter import _convert, _streams
@@ -162,21 +169,13 @@ def test_cli_full_control_one_epoch_and_resume(tmp_path: Path) -> None:
     ]
     assert main(args) == EXIT_SUCCESS
     assert (output / "last.pt").is_file()
-    artifact = json.loads((output / "runtime_artifact.json").read_text())
-    assert "control_sequence" in artifact["capabilities"]
-    assert artifact["model_kwargs"]["behavior_head_enabled"] is True
-    assert artifact["model_kwargs"]["command_history_alignment"] == (
-        "causal_previous_only"
-    )
-    loaded = load_runtime_model_v3(
-        output / "last.pt", output / "runtime_artifact.json", device=torch.device("cpu"),
-        expected_checkpoint_sha256=artifact["checkpoint_sha256"],
-        expected_manifest_sha256=sha256_file_v3(output / "runtime_artifact.json"),
-        expected_contract_hash=artifact["contract_hash"],
-    )
-    assert loaded.model.behavior_head is not None
+    # --max-batches is a smoke run: it proves execution, but must never emit a
+    # promotable runtime artifact from a truncated training/validation cohort.
+    assert not (output / "runtime_artifact.json").exists()
     run = json.loads((output / "run_manifest.json").read_text())
     assert run["global_step"] == 1
+    assert run["selected_checkpoint"] is None
+    assert run["runtime_deployment_eligible"] is False
     assert main([
         *args,
         "--resume",
@@ -258,6 +257,9 @@ def test_cli_promotes_best_trajectory_checkpoint_from_validation_split(
     dataset, split, config, behavior_view, output = _training_fixture(
         tmp_path, include_validation=True
     )
+    raw = yaml.safe_load(config.read_text(encoding="utf-8"))
+    raw["loss"]["trajectory_regression_gate"]["max_relative_regression"] = 10.0
+    config.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
     assert main([
         "train", "--config", str(config), "--dataset-root", str(dataset),
         "--split-manifest", str(split),
@@ -269,7 +271,7 @@ def test_cli_promotes_best_trajectory_checkpoint_from_validation_split(
     assert (output / "best_trajectory.pt").is_file()
     history = json.loads((output / "validation_history.json").read_text())
     assert history["selection"] == [
-        "trajectory_ade_m", "speed_profile_mae_mps"
+        "trajectory_ade_m", "trajectory_worst_run_ade_m"
     ]
     assert history["epochs"][0]["promoted"] is True
     manifest = json.loads((output / "run_manifest.json").read_text())
@@ -278,6 +280,9 @@ def test_cli_promotes_best_trajectory_checkpoint_from_validation_split(
     assert artifact["checkpoint_sha256"] == sha256_file_v3(
         output / "best_trajectory.pt"
     )
+    assert artifact["promotion_status"] == "research_candidate_only"
+    assert artifact["runtime_deployment_eligible"] is False
+    assert artifact["stop_probability_connected"] is False
 
 
 def test_cli_launch_gate_blocks_runtime_artifact_promotion(tmp_path: Path) -> None:
@@ -314,6 +319,44 @@ def test_cli_launch_gate_blocks_runtime_artifact_promotion(tmp_path: Path) -> No
     assert manifest["best_validation"] is None
 
 
+def test_cli_regression_gate_blocks_runtime_artifact_promotion(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    dataset, split, config, behavior_view, output = _training_fixture(
+        tmp_path, include_validation=True
+    )
+    calls = 0
+
+    def fixed_evaluation(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        ade = 1.0 if calls == 1 else 1.1
+        return {
+            "trajectory_ade_m": ade,
+            "speed_profile_mae_mps": 0.2,
+            "trajectory_valid_waypoints": 30.0,
+            "speed_valid_waypoints": 30.0,
+            "trajectory_run_equal_ade_m": ade,
+            "trajectory_worst_run_ade_m": ade,
+            "trajectory_run_ade_m": {"run02": ade},
+        }
+
+    monkeypatch.setattr(cli_module, "evaluate_trajectory_speed_v3", fixed_evaluation)
+    result = main([
+        "train", "--config", str(config), "--dataset-root", str(dataset),
+        "--split-manifest", str(split),
+        "--view-config", str(ROOT / "configs/data/view_temporal_v3.yaml"),
+        "--behavior-view", str(behavior_view), "--output", str(output),
+        "--epochs", "1", "--batch-size", "2", "--device", "cpu",
+    ])
+    assert result == EXIT_GATE
+    assert not (output / "best_trajectory.pt").exists()
+    assert not (output / "runtime_artifact.json").exists()
+    history = json.loads((output / "validation_history.json").read_text())
+    assert history["epochs"][0]["trajectory_regression_gate_pass"] is False
+    assert history["epochs"][0]["promotion_gate"] == "trajectory_regression_failed"
+
+
 def test_full_control_config_rejects_nonpositive_checkpoint_interval(tmp_path: Path) -> None:
     raw = yaml.safe_load((ROOT / "configs/models/full_control_lite_v3.yaml").read_text())
     raw["training"]["checkpoint_every_steps"] = 0
@@ -337,6 +380,17 @@ def test_full_control_config_rejects_invalid_plan_loss_and_accumulation(
     raw["training"]["gradient_accumulation_steps"] = 0
     config.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
     with pytest.raises(ValueError, match="gradient_accumulation_steps"):
+        load_full_control_config_v3(config)
+
+
+def test_full_control_config_rejects_training_runtime_history_contract_drift(
+    tmp_path: Path,
+) -> None:
+    raw = yaml.safe_load((ROOT / "configs/models/full_control_lite_v3.yaml").read_text())
+    raw["data"]["ego_history_length"] = raw["model"]["max_ego_history"] - 1
+    config = tmp_path / "history_drift.yaml"
+    config.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    with pytest.raises(ValueError, match="temporal history contracts differ"):
         load_full_control_config_v3(config)
 
 
@@ -389,6 +443,112 @@ def test_temporal_training_loader_defers_asset_reads_until_batch_access(
     first = batches[0]
     assert first.image.shape == (2, 4, 3, 32, 32)
     assert len(opened) == 8
+    anchor_row = batches.rows[batches.usable_anchors[0]]
+    assert first.sensor_dt_sec[0, -1].tolist() == pytest.approx(
+        [
+            float(anchor_row["camera_delta_ms"]) * 1e-3,
+            float(anchor_row["lidar_delta_ms"]) * 1e-3,
+        ]
+    )
+
+
+def test_canonical_training_and_runtime_history_have_golden_model_parity(
+    tmp_path: Path,
+) -> None:
+    dataset, split, config_path, behavior_view, _ = _training_fixture(tmp_path)
+    config = load_full_control_config_v3(config_path)
+    batches = load_temporal_training_batches_v3(
+        dataset,
+        split,
+        split="train",
+        image_height=32,
+        image_width=32,
+        lidar_points=4,
+        lidar_min_range_m=0.0,
+        lidar_max_range_m=25.0,
+        ego_features=("longitudinal_speed_mps", "lateral_speed_mps", "yaw_rate_rps"),
+        trajectory_steps=15,
+        control_sequence_steps=10,
+        camera_history_length=4,
+        ego_history_length=10,
+        command_history_length=10,
+        control_target_bounds=_target_bounds(),
+        batch_size=2,
+        max_batches=1,
+        behavior_view_root=behavior_view,
+    )
+    training = batches[0]
+    row = 1  # one real predecessor plus current anchor exercises warm-up padding
+    valid_sensor_indices = torch.flatnonzero(training.image_mask[row]).tolist()
+    valid_ego_indices = torch.flatnonzero(
+        training.ego_feature_mask[row].all(dim=1)
+    ).tolist()
+    assert len(valid_sensor_indices) == len(valid_ego_indices) == 2
+    observations = tuple(
+        RuntimeObservationTensorV3(
+            stamp_sec=1.0 + offset * 0.1,
+            image=training.image[row, sensor_index],
+            lidar=training.lidar[row, sensor_index],
+            ego=training.ego[row, ego_index],
+            sensor_dt_sec=training.sensor_dt_sec[row, sensor_index],
+        )
+        for offset, (sensor_index, ego_index) in enumerate(
+            zip(valid_sensor_indices, valid_ego_indices)
+        )
+    )
+    commands = tuple(
+        ExternalControllerCommand(*training.command_history[row, index].tolist())
+        for index in torch.flatnonzero(training.command_mask[row]).tolist()
+    )
+    runtime = build_runtime_temporal_batch_v3(
+        observations,
+        commands,
+        sensor_history_length=4,
+        ego_history_length=10,
+        command_history_length=10,
+        requested_outputs=training.requested_outputs,
+    )
+    expected = replace(
+        training,
+        image=training.image[row : row + 1],
+        image_mask=training.image_mask[row : row + 1],
+        lidar=training.lidar[row : row + 1],
+        lidar_mask=training.lidar_mask[row : row + 1],
+        ego=training.ego[row : row + 1],
+        ego_feature_mask=training.ego_feature_mask[row : row + 1],
+        command_history=training.command_history[row : row + 1],
+        command_mask=training.command_mask[row : row + 1],
+        sensor_dt_sec=training.sensor_dt_sec[row : row + 1],
+        targets=None,
+    )
+    for name in (
+        "image",
+        "image_mask",
+        "lidar",
+        "lidar_mask",
+        "ego",
+        "ego_feature_mask",
+        "command_history",
+        "command_mask",
+        "sensor_dt_sec",
+    ):
+        torch.testing.assert_close(getattr(runtime, name), getattr(expected, name))
+    model = build_full_control_model_v3(config).eval()
+    with torch.inference_mode():
+        actual_output = model(runtime)
+        expected_output = model(expected)
+    torch.testing.assert_close(
+        actual_output.trajectory_xy,
+        expected_output.trajectory_xy,
+        rtol=0.0,
+        atol=0.0,
+    )
+    torch.testing.assert_close(
+        actual_output.trajectory_speed_mps,
+        expected_output.trajectory_speed_mps,
+        rtol=0.0,
+        atol=0.0,
+    )
 
 
 def test_training_command_history_is_past_only_and_projection_uses_previous_state(

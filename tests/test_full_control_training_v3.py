@@ -229,6 +229,34 @@ class _FixedValidationModel(torch.nn.Module):
         )
 
 
+class _LaunchValidationModel(torch.nn.Module):
+    def __init__(self, *, endpoint_forward_m: float) -> None:
+        super().__init__()
+        self.anchor = torch.nn.Parameter(torch.zeros(()))
+        self.endpoint_forward_m = endpoint_forward_m
+
+    def forward(self, batch: ModelBatchV3) -> ModelOutputV3:
+        assert batch.targets is not None
+        steps = batch.targets.trajectory_xy_m.shape[1]
+        x = torch.linspace(
+            self.endpoint_forward_m / steps,
+            self.endpoint_forward_m,
+            steps,
+            device=batch.image.device,
+        )
+        xy = torch.stack((x, torch.zeros_like(x)), dim=-1)
+        xy = xy.unsqueeze(0).expand(batch.batch_size, -1, -1)
+        return ModelOutputV3(
+            trajectory_xy=xy.unsqueeze(1),
+            trajectory_speed_mps=torch.zeros(
+                batch.batch_size, 1, steps, device=batch.image.device
+            ),
+            candidate_logits=torch.zeros(
+                batch.batch_size, 1, device=batch.image.device
+            ),
+        )
+
+
 def test_validation_metrics_use_si_units_and_restore_train_state() -> None:
     model = _FixedValidationModel(xy_offset=(3.0, 4.0), speed_offset=0.25)
     model.train()
@@ -249,12 +277,12 @@ def test_launch_readiness_gate_is_separate_from_average_ade() -> None:
         minimum_forward_progress_m=0.1,
     )
     ready = evaluate_trajectory_speed_v3(
-        _FixedValidationModel(xy_offset=(0.2, 0.0), speed_offset=0.0),
+        _LaunchValidationModel(endpoint_forward_m=0.2),
         [stopped],
         launch_gate=gate,
     )
     blocked = evaluate_trajectory_speed_v3(
-        _FixedValidationModel(xy_offset=(0.05, 0.0), speed_offset=0.0),
+        _LaunchValidationModel(endpoint_forward_m=0.05),
         [stopped],
         launch_gate=gate,
     )
@@ -271,14 +299,17 @@ def test_validation_and_checkpoint_order_fail_closed_on_invalid_input() -> None:
     with pytest.raises(ValueError, match="missing targets"):
         evaluate_trajectory_speed_v3(model, [replace(_full_batch(), targets=None)])
     assert is_better_trajectory_checkpoint_v3(
-        {"trajectory_ade_m": 1.0, "speed_profile_mae_mps": 0.2}, None
+        {"trajectory_ade_m": 1.0, "trajectory_worst_run_ade_m": 1.2}, None
     )
     assert is_better_trajectory_checkpoint_v3(
-        {"trajectory_ade_m": 1.0, "speed_profile_mae_mps": 0.1},
-        {"trajectory_ade_m": 1.0, "speed_profile_mae_mps": 0.2},
+        {"trajectory_ade_m": 1.0, "trajectory_worst_run_ade_m": 1.1},
+        {"trajectory_ade_m": 1.0, "trajectory_worst_run_ade_m": 1.2},
     )
     with pytest.raises(ValueError, match="finite and non-negative"):
         is_better_trajectory_checkpoint_v3(
-            {"trajectory_ade_m": float("nan"), "speed_profile_mae_mps": 0.1},
+            {
+                "trajectory_ade_m": float("nan"),
+                "trajectory_worst_run_ade_m": 1.0,
+            },
             None,
         )

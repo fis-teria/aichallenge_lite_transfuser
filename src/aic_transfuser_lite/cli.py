@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import json
 import math
@@ -8,6 +9,7 @@ import os
 from pathlib import Path
 import shutil
 import sys
+import time
 from typing import Any, Sequence
 from urllib.parse import unquote, urlparse
 
@@ -26,6 +28,7 @@ from .contracts.model_batch_v3 import (
 )
 from .data.dataset_view_v3 import (
     ControlTargetBoundsV3,
+    MotionTargetFilterConfigV3,
     load_temporal_training_batches_v3,
     load_v1_compatibility_view_config,
 )
@@ -348,9 +351,18 @@ def _train_v3(args: argparse.Namespace) -> int:
         raise ValueError("--resume-initialization-checkpoint requires --resume")
     config = load_full_control_config_v3(args.config)
     launch_gate = launch_readiness_gate_config_v3(config)
+    motion_target_filter = motion_target_filter_config_v3(config)
     model_cfg, data_cfg, loss_cfg, training_cfg = (
         config["model"], config["data"], config["loss"], config["training"]
     )
+    regression_gate_cfg = loss_cfg.get("trajectory_regression_gate")
+    if not isinstance(regression_gate_cfg, dict):
+        raise ValueError("trajectory_regression_gate must be a mapping")
+    maximum_relative_regression = float(
+        regression_gate_cfg.get("max_relative_regression", 0.0)
+    )
+    if not math.isfinite(maximum_relative_regression) or maximum_relative_regression < 0.0:
+        raise ValueError("trajectory max_relative_regression must be finite and non-negative")
     view = yaml.safe_load(Path(args.view_config).read_text(encoding="utf-8"))
     if (
         not isinstance(view, dict)
@@ -363,6 +375,17 @@ def _train_v3(args: argparse.Namespace) -> int:
         data_cfg["command_history_length"]
     ):
         raise ValueError("temporal view and model command history lengths differ")
+    expected_view_history = {
+        "camera_history_length": int(data_cfg["image_history_length"]),
+        "lidar_history_length": int(data_cfg["lidar_history_length"]),
+        "ego_history_length": int(data_cfg["ego_history_length"]),
+        "command_history_length": int(data_cfg["command_history_length"]),
+    }
+    if any(
+        int(view.get(name, 0)) != value
+        for name, value in expected_view_history.items()
+    ):
+        raise ValueError("temporal view and model/data history contracts differ")
     batch_size = int(args.batch_size or training_cfg["micro_batch_size"])
     epochs = int(args.epochs or training_cfg["epochs"])
     if epochs <= 0 or batch_size <= 0:
@@ -399,19 +422,30 @@ def _train_v3(args: argparse.Namespace) -> int:
         "control_target_bounds": control_target_bounds,
         "batch_size": batch_size,
         "behavior_view_root": args.behavior_view,
-        "motion_target_filter": motion_target_filter_config_v3(config),
+        "motion_target_filter": motion_target_filter,
     }
     batches = load_temporal_training_batches_v3(
         args.dataset_root, args.split_manifest, split="train",
         max_batches=args.max_batches, **batch_loader_arguments,
     )
     validation_batches = None
+    launch_validation_batches = None
     if args.max_batches is None:
         validation_batches = load_temporal_training_batches_v3(
             args.dataset_root,
             args.split_manifest,
             split="validation",
             **batch_loader_arguments,
+        )
+        launch_loader_arguments = {
+            **batch_loader_arguments,
+            "motion_target_filter": MotionTargetFilterConfigV3(enabled=False),
+        }
+        launch_validation_batches = load_temporal_training_batches_v3(
+            args.dataset_root,
+            args.split_manifest,
+            split="validation",
+            **launch_loader_arguments,
         )
     behavior_weights = balanced_class_weights_v3(
         batches, target_name="behavior_class", mask_name="behavior_mask", class_count=5,
@@ -440,6 +474,9 @@ def _train_v3(args: argparse.Namespace) -> int:
     requested = args.device
     requested = ("cuda" if torch.cuda.is_available() else "cpu") if requested == "auto" else requested
     device = torch.device(requested)
+    torch.manual_seed(identity.seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(identity.seed)
     if args.dry_run:
         print(json.dumps({
             "status": "DRY_RUN", "batches": len(batches), "device": str(device),
@@ -451,6 +488,12 @@ def _train_v3(args: argparse.Namespace) -> int:
             "motion_target_rejected_train": int(
                 getattr(batches, "motion_target_rejected_count", 0)
             ),
+            "motion_target_censored_train": int(
+                getattr(batches, "motion_target_censored_count", 0)
+            ),
+            "base_exclusions_train": dict(
+                getattr(batches, "base_exclusion_counts", {})
+            ),
             "motion_target_rejected_validation": (
                 None
                 if validation_batches is None
@@ -458,11 +501,29 @@ def _train_v3(args: argparse.Namespace) -> int:
                     getattr(validation_batches, "motion_target_rejected_count", 0)
                 )
             ),
+            "motion_target_censored_validation": (
+                None
+                if validation_batches is None
+                else int(
+                    getattr(validation_batches, "motion_target_censored_count", 0)
+                )
+            ),
+            "unfiltered_validation_batches": (
+                None
+                if launch_validation_batches is None
+                else len(launch_validation_batches)
+            ),
             "launch_readiness_gate_enabled": launch_gate is not None,
         }))
         return EXIT_SUCCESS
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=args.resume)
+    started_at_utc = datetime.now(timezone.utc).isoformat()
+    wall_start = time.monotonic()
+    training_history_path = output / "training_history.jsonl"
+    resolved_config_path = output / "resolved_training_config.yaml"
+    if not args.resume:
+        shutil.copy2(Path(args.config), resolved_config_path)
     model = build_full_control_model_v3(config).to(device)
     initialization = None
     if args.init_checkpoint:
@@ -533,6 +594,64 @@ def _train_v3(args: argparse.Namespace) -> int:
         if not checkpoint.is_file():
             raise FileNotFoundError(f"resume checkpoint missing: {checkpoint}")
         trainer.resume(checkpoint)
+    model_parameters = dict(model.named_parameters())
+    model_buffers = dict(model.named_buffers())
+    if initialization is not None:
+        loaded_names = set(migration.loaded)
+        loaded_parameter_numel = sum(
+            parameter.numel()
+            for name, parameter in model_parameters.items()
+            if name in loaded_names
+        )
+        loaded_buffer_numel = sum(
+            buffer.numel()
+            for name, buffer in model_buffers.items()
+            if name in loaded_names
+        )
+        initialization.update(
+            {
+                "loaded_parameter_numel": loaded_parameter_numel,
+                "total_parameter_numel": sum(
+                    parameter.numel() for parameter in model_parameters.values()
+                ),
+                "loaded_buffer_numel": loaded_buffer_numel,
+                "total_buffer_numel": sum(
+                    buffer.numel() for buffer in model_buffers.values()
+                ),
+            }
+        )
+    trainable_parameters = {
+        name: int(parameter.numel())
+        for name, parameter in model_parameters.items()
+        if parameter.requires_grad
+    }
+    baseline_metrics: dict[str, object] | None = None
+    baseline_path = output / "baseline_validation.json"
+    if validation_batches is not None and not args.resume:
+        baseline_metrics = evaluate_trajectory_speed_v3(
+            model,
+            validation_batches,
+            launch_gate=launch_gate,
+            launch_batches=launch_validation_batches,
+        )
+        _write_json_atomic(
+            baseline_path,
+            {
+                "format": "aic_v3_baseline_validation_v1",
+                "identity": identity.__dict__,
+                "checkpoint_sha256": (
+                    None
+                    if not args.init_checkpoint
+                    else _sha256(Path(args.init_checkpoint).expanduser().resolve())
+                ),
+                "metrics": baseline_metrics,
+            },
+        )
+    elif args.resume and baseline_path.is_file():
+        baseline_payload = json.loads(baseline_path.read_text(encoding="utf-8"))
+        if baseline_payload.get("identity") != identity.__dict__:
+            raise ValueError("baseline validation experiment identity mismatch")
+        baseline_metrics = baseline_payload.get("metrics")
     gradient_accumulation_steps = int(
         training_cfg.get("gradient_accumulation_steps", 1)
     )
@@ -549,7 +668,7 @@ def _train_v3(args: argparse.Namespace) -> int:
         raise ValueError("--checkpoint-every-steps must be positive")
     validation_history_path = output / "validation_history.json"
     validation_history: list[dict[str, Any]] = []
-    best_metrics: dict[str, float] | None = None
+    best_metrics: dict[str, object] | None = None
     if args.resume and validation_history_path.is_file():
         prior_validation = json.loads(
             validation_history_path.read_text(encoding="utf-8")
@@ -571,7 +690,9 @@ def _train_v3(args: argparse.Namespace) -> int:
                 )
             best_metrics = {
                 "trajectory_ade_m": float(selected["trajectory_ade_m"]),
-                "speed_profile_mae_mps": float(selected["speed_profile_mae_mps"]),
+                "trajectory_worst_run_ade_m": float(
+                    selected["trajectory_worst_run_ade_m"]
+                ),
             }
 
     def validate_epoch_boundary() -> None:
@@ -584,7 +705,10 @@ def _train_v3(args: argparse.Namespace) -> int:
         if any(int(row["epoch"]) == epoch for row in validation_history):
             return
         metrics = evaluate_trajectory_speed_v3(
-            model, validation_batches, launch_gate=launch_gate
+            model,
+            validation_batches,
+            launch_gate=launch_gate,
+            launch_batches=launch_validation_batches,
         )
         row: dict[str, Any] = {
             "epoch": epoch,
@@ -597,12 +721,24 @@ def _train_v3(args: argparse.Namespace) -> int:
         launch_gate_passed = (
             launch_gate is None or bool(metrics["launch_gate_pass"])
         )
-        if launch_gate_passed and is_better_trajectory_checkpoint_v3(
+        if baseline_metrics is None:
+            raise RuntimeError("validation promotion requires an initial baseline")
+        baseline_ade_m = float(baseline_metrics["trajectory_ade_m"])
+        regression_limit_m = baseline_ade_m * (1.0 + maximum_relative_regression)
+        regression_gate_passed = (
+            float(metrics["trajectory_ade_m"]) <= regression_limit_m
+        )
+        row["trajectory_regression_baseline_ade_m"] = baseline_ade_m
+        row["trajectory_regression_limit_m"] = regression_limit_m
+        row["trajectory_regression_gate_pass"] = regression_gate_passed
+        if launch_gate_passed and regression_gate_passed and is_better_trajectory_checkpoint_v3(
             metrics, best_metrics
         ):
             best_metrics = {
                 "trajectory_ade_m": float(metrics["trajectory_ade_m"]),
-                "speed_profile_mae_mps": float(metrics["speed_profile_mae_mps"]),
+                "trajectory_worst_run_ade_m": float(
+                    metrics["trajectory_worst_run_ade_m"]
+                ),
             }
             _atomic_copy(checkpoint, output / "best_trajectory.pt")
             row["promoted"] = True
@@ -610,11 +746,14 @@ def _train_v3(args: argparse.Namespace) -> int:
             row["promoted"] = False
         if launch_gate is not None:
             row["promotion_gate"] = "pass" if launch_gate_passed else "launch_failed"
+        if not regression_gate_passed:
+            row["promotion_gate"] = "trajectory_regression_failed"
         validation_history.append(row)
         eligible_rows = [
             item
             for item in validation_history
             if launch_gate is None or bool(item.get("launch_gate_pass", False))
+            if bool(item.get("trajectory_regression_gate_pass", False))
         ]
         best_row = (
             None
@@ -623,7 +762,7 @@ def _train_v3(args: argparse.Namespace) -> int:
                 eligible_rows,
                 key=lambda item: (
                     float(item["trajectory_ade_m"]),
-                    float(item["speed_profile_mae_mps"]),
+                    float(item["trajectory_worst_run_ade_m"]),
                 ),
             )
         )
@@ -634,12 +773,12 @@ def _train_v3(args: argparse.Namespace) -> int:
                 "identity": identity.__dict__,
                 "optimizer_steps_per_epoch": optimizer_steps_per_epoch,
                 "selection": (
-                    ["trajectory_ade_m", "speed_profile_mae_mps"]
+                    ["trajectory_ade_m", "trajectory_worst_run_ade_m"]
                     if launch_gate is None
                     else [
                         "launch_gate_pass",
                         "trajectory_ade_m",
-                        "speed_profile_mae_mps",
+                        "trajectory_worst_run_ade_m",
                     ]
                 ),
                 "epochs": validation_history,
@@ -667,12 +806,15 @@ def _train_v3(args: argparse.Namespace) -> int:
         )
         if full_optimizer_steps > 0:
             step_count = min(checkpoint_every_steps, full_optimizer_steps)
-            trainer.train_steps(step_count)
+            new_logs = trainer.train_steps(step_count)
         else:
-            trainer.train_steps(
+            new_logs = trainer.train_steps(
                 1,
                 micro_batches_per_optimizer_step=micro_batches_remaining,
             )
+        with training_history_path.open("a", encoding="utf-8") as stream:
+            for log in new_logs:
+                stream.write(json.dumps(log, sort_keys=True) + "\n")
         trainer.save(checkpoint)
         if trainer.sampler.offset == len(batches):
             validate_epoch_boundary()
@@ -681,14 +823,18 @@ def _train_v3(args: argparse.Namespace) -> int:
         raise RuntimeError("training step count does not match exact epoch contract")
     promoted_checkpoint = output / "best_trajectory.pt"
     launch_gate_evaluated = launch_gate is not None and validation_batches is not None
+    smoke_run = args.max_batches is not None
     launch_gate_passed = (
-        not launch_gate_evaluated or promoted_checkpoint.is_file()
+        None
+        if not launch_gate_evaluated
+        else any(bool(row.get("launch_gate_pass", False)) for row in validation_history)
     )
+    promotion_passed = promoted_checkpoint.is_file()
     selected_checkpoint = (
         promoted_checkpoint if promoted_checkpoint.is_file() else checkpoint
     )
     runtime_artifact = output / "runtime_artifact.json"
-    if launch_gate_passed:
+    if promotion_passed and not smoke_run:
         runtime_artifact.write_text(
             json.dumps(
                 {
@@ -700,6 +846,9 @@ def _train_v3(args: argparse.Namespace) -> int:
                         "behavior", "behavior_side",
                     ],
                     "model_kwargs": full_control_model_kwargs_v3(config),
+                    "promotion_status": "research_candidate_only",
+                    "runtime_deployment_eligible": False,
+                    "stop_probability_connected": False,
                 },
                 indent=2,
                 sort_keys=True,
@@ -711,27 +860,58 @@ def _train_v3(args: argparse.Namespace) -> int:
         item
         for item in validation_history
         if launch_gate is None or bool(item.get("launch_gate_pass", False))
+        if bool(item.get("trajectory_regression_gate_pass", False))
     ]
     run_manifest = {
         "format": "aic_full_control_training_run_v3", "global_step": trainer.global_step,
+        "started_at_utc": started_at_utc,
+        "completed_at_utc": datetime.now(timezone.utc).isoformat(),
+        "wall_time_sec": time.monotonic() - wall_start,
         "epochs": epochs,
+        "seed": identity.seed,
         "micro_batches_per_epoch": len(batches),
         "gradient_accumulation_steps": gradient_accumulation_steps,
         "checkpoint_every_steps": checkpoint_every_steps,
         "optimizer_steps_per_epoch": optimizer_steps_per_epoch,
         "identity": identity.__dict__,
         "config_sha256": _sha256(Path(args.config)), "device": str(device), "last_log": trainer.logs[-1] if trainer.logs else None,
+        "training_history": training_history_path.name,
+        "resolved_training_config": resolved_config_path.name,
+        "optimizer": {
+            "name": "AdamW",
+            "learning_rate": 1e-4,
+            "weight_decay": float(optimizer.param_groups[0]["weight_decay"]),
+            "new_state_from_initial_checkpoint": not args.resume,
+        },
+        "scheduler": None,
+        "precision": "float32",
+        "augmentation": None,
         "behavior_ontology": "aic_behavior_v1",
         "behavior_view_manifest_sha256": _sha256(Path(args.behavior_view) / "manifest.json"),
         "runtime_artifact_manifest_sha256": (
-            _sha256(runtime_artifact) if launch_gate_passed else None
+            _sha256(runtime_artifact)
+            if promotion_passed and not smoke_run
+            else None
         ),
         "selected_checkpoint": (
-            selected_checkpoint.name if launch_gate_passed else None
+            selected_checkpoint.name if promotion_passed and not smoke_run else None
         ),
-        "launch_readiness_gate_passed": (
-            launch_gate_passed if launch_gate_evaluated else None
+        "launch_readiness_gate_passed": launch_gate_passed,
+        "research_candidate_checkpoint": (
+            selected_checkpoint.name if promotion_passed and not smoke_run else None
         ),
+        "runtime_deployment_checkpoint": None,
+        "runtime_deployment_eligible": False,
+        "runtime_deployment_blockers": [
+            "stop_probability_not_connected",
+            "closed_loop_not_evaluated",
+            "collision_observability_unverified",
+        ],
+        "baseline_validation": (
+            baseline_path.name if baseline_metrics is not None else None
+        ),
+        "trainable_parameter_numel": sum(trainable_parameters.values()),
+        "trainable_parameter_names": sorted(trainable_parameters),
         "validation_history": (
             None if validation_batches is None else validation_history_path.name
         ),
@@ -742,19 +922,39 @@ def _train_v3(args: argparse.Namespace) -> int:
                 eligible_validation_rows,
                 key=lambda item: (
                     float(item["trajectory_ade_m"]),
-                    float(item["speed_profile_mae_mps"]),
+                    float(item["trajectory_worst_run_ade_m"]),
                 ),
             )
         ),
         "motion_target_filter": {
+            "train_base_exclusions": dict(
+                getattr(batches, "base_exclusion_counts", {})
+            ),
             "train_rejected": int(
                 getattr(batches, "motion_target_rejected_count", 0)
+            ),
+            "train_censored": int(
+                getattr(batches, "motion_target_censored_count", 0)
             ),
             "validation_rejected": (
                 None
                 if validation_batches is None
                 else int(
                     getattr(validation_batches, "motion_target_rejected_count", 0)
+                )
+            ),
+            "validation_base_exclusions": (
+                None
+                if validation_batches is None
+                else dict(
+                    getattr(validation_batches, "base_exclusion_counts", {})
+                )
+            ),
+            "validation_censored": (
+                None
+                if validation_batches is None
+                else int(
+                    getattr(validation_batches, "motion_target_censored_count", 0)
                 )
             ),
         },
@@ -769,12 +969,18 @@ def _train_v3(args: argparse.Namespace) -> int:
         json.dumps(run_manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     print(json.dumps({
-        "status": "COMPLETE" if launch_gate_passed else "GATE_FAILED",
+        "status": (
+            "SMOKE_COMPLETE"
+            if smoke_run
+            else "COMPLETE" if promotion_passed else "GATE_FAILED"
+        ),
         "checkpoint": str(selected_checkpoint),
-        "runtime_artifact": str(runtime_artifact) if launch_gate_passed else None,
+        "runtime_artifact": (
+            str(runtime_artifact) if promotion_passed and not smoke_run else None
+        ),
         "global_step": trainer.global_step,
     }))
-    return EXIT_SUCCESS if launch_gate_passed else EXIT_GATE
+    return EXIT_SUCCESS if smoke_run or promotion_passed else EXIT_GATE
 
 
 def _input_output(parser: argparse.ArgumentParser) -> None:

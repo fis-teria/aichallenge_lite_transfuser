@@ -7,7 +7,9 @@ import pytest
 import yaml
 
 from aic_transfuser_lite.data.dataset_view_v3 import (
+    MotionTargetAssessmentV3,
     MotionTargetFilterConfigV3,
+    assess_commanded_motion_target_v3,
     stationary_commanded_motion_target_v3,
 )
 from aic_transfuser_lite.training.train_v3 import (
@@ -52,6 +54,42 @@ def test_observed_launch_motion_keeps_target(signal: str) -> None:
         commanded_speed_mps=0.75,
         config=_enabled(),
     )
+
+
+def test_incomplete_future_is_censored_and_not_filtered() -> None:
+    future = _future()
+    future[14, 7] = 0.0
+    assert assess_commanded_motion_target_v3(
+        future,
+        current_speed_mps=0.0,
+        commanded_speed_mps=0.75,
+        config=_enabled(),
+    ) is MotionTargetAssessmentV3.CENSORED_FUTURE
+    assert not stationary_commanded_motion_target_v3(
+        future,
+        current_speed_mps=0.0,
+        commanded_speed_mps=0.75,
+        config=_enabled(),
+    )
+
+
+@pytest.mark.parametrize(
+    ("current_speed_mps", "commanded_speed_mps", "expected"),
+    [
+        (0.05, 0.5, True),
+        (0.050001, 0.5, False),
+        (0.05, 0.499999, False),
+    ],
+)
+def test_motion_filter_threshold_boundaries(
+    current_speed_mps: float, commanded_speed_mps: float, expected: bool
+) -> None:
+    assert stationary_commanded_motion_target_v3(
+        _future(),
+        current_speed_mps=current_speed_mps,
+        commanded_speed_mps=commanded_speed_mps,
+        config=_enabled(),
+    ) is expected
 
 
 def test_genuine_stop_and_moving_anchors_are_not_filtered() -> None:

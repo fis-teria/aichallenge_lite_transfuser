@@ -17,8 +17,12 @@ def test_full_control_launch_keeps_safety_as_only_final_publisher() -> None:
     assert '"nominal_control_cmd"' in source
     assert '"control_sequence"' in source
     assert "choose_full_control_or_same_trajectory_fallback(" in source
-    assert "nominal_command_history(" in source
-    assert "length=self.model.max_ego_history" in source
+    assert "build_runtime_temporal_batch_v3(" in source
+    assert "RuntimeObservationHistoryV3(" in source
+    assert "sensor_history_length=self.model.max_sensor_history" in source
+    assert "ego_history_length=self.model.max_ego_history" in source
+    assert "command_history_length=self.model.max_ego_history" in source
+    assert "prepare_native_lidar_input(" in source
     assert "self.nominal_command_history.append(decision.command)" in source
     assert "project_model_control_sequence(" in source
     assert "apply_stopped_launch_acceleration_floor(" in source

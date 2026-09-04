@@ -66,7 +66,6 @@ from aic_transfuser_lite.control.shadow_trajectory_controller import (
     shadow_control_from_trajectory_speed_profile,
 )
 from aic_transfuser_lite.data.image_preprocess import preprocess_image
-from aic_transfuser_lite.data.normalization import normalize_lidar_range_and_validity
 from aic_transfuser_lite.data.calibration.artifact import load_calibration_artifact
 from aic_transfuser_lite.runtime.control_projection import (
     ControlLimits,
@@ -85,9 +84,17 @@ from aic_transfuser_lite.runtime.full_control_gate import (
     FullControlReadiness,
     authority_change_allowed,
     choose_full_control_or_same_trajectory_fallback,
-    nominal_command_history,
+)
+from aic_transfuser_lite.runtime.input_history_v3 import (
+    RuntimeObservationHistoryV3,
+    RuntimeObservationTensorV3,
+    build_runtime_temporal_batch_v3,
 )
 from aic_transfuser_lite.runtime.model_loader_v3 import load_runtime_model_v3, sha256_file_v3
+from aic_transfuser_lite.runtime.preprocessing_v1 import (
+    V1LidarContract,
+    prepare_native_lidar_input,
+)
 from aic_transfuser_lite.runtime.residual_control import ExternalControllerCommand
 from aic_transfuser_lite.runtime.rollout_consistency import (
     ConsistencyThresholds,
@@ -136,8 +143,12 @@ class InferenceNodeV3(Node):
             "trajectory_frame_id": "base_link",
             "input_timeout_sec": 0.35, "sync_queue_size": 10,
             "sync_clock_poll_sec": 0.005,
+            "history_reset_gap_sec": 0.5,
             "max_sensor_skew_ms": 30.0,
             "lidar_min_range_m": 0.0, "lidar_max_range_m": 25.0,
+            "lidar_angle_min_rad": -1.5666074752807617,
+            "lidar_angle_increment_rad": 0.004188789986073971,
+            "expected_lidar_frame": "lidar",
             "behavior_confidence_threshold": 0.5, "behavior_temperature": 1.0,
             "controller_calibration_status": "unverified",
             "trajectory_step_sec": 0.1,
@@ -242,6 +253,24 @@ class InferenceNodeV3(Node):
             expected_contract_hash=str(self.get_parameter("expected_contract_hash").value),
         )
         self.model = loaded.model
+        self.lidar_contract = V1LidarContract(
+            points=self.model.lidar_points,
+            angle_min_rad=float(self.get_parameter("lidar_angle_min_rad").value),
+            angle_increment_rad=float(
+                self.get_parameter("lidar_angle_increment_rad").value
+            ),
+            range_min_m=float(self.get_parameter("lidar_min_range_m").value),
+            range_max_m=float(self.get_parameter("lidar_max_range_m").value),
+            frame_id=str(self.get_parameter("expected_lidar_frame").value),
+        )
+        self.observation_history = RuntimeObservationHistoryV3(
+            maximum_length=max(
+                self.model.max_sensor_history, self.model.max_ego_history
+            ),
+            maximum_gap_sec=float(
+                self.get_parameter("history_reset_gap_sec").value
+            ),
+        )
         self.model_capabilities = loaded.capabilities
         if (
             self.runtime_profile is RuntimeProfile.SHADOW_CONTROL
@@ -1297,17 +1326,19 @@ class InferenceNodeV3(Node):
         image_tensor = preprocess_image(
             rgb, height=self.model.image_height, width=self.model.image_width
         ).to(self.device)
-        ranges = np.asarray(scan.ranges, dtype=np.float32)
-        if ranges.shape != (self.model.lidar_points,):
-            raise ValueError(f"lidar_point_count:{ranges.size}")
-        valid = np.isfinite(ranges) & (ranges >= float(scan.range_min)) & (ranges <= float(scan.range_max))
-        if not bool(valid.any()):
+        lidar = torch.from_numpy(
+            prepare_native_lidar_input(
+                np.asarray(scan.ranges, dtype=np.float32),
+                angle_min_rad=float(scan.angle_min),
+                angle_increment_rad=float(scan.angle_increment),
+                range_min_m=float(scan.range_min),
+                range_max_m=float(scan.range_max),
+                frame_id=str(scan.header.frame_id),
+                contract=self.lidar_contract,
+            )
+        ).to(self.device)
+        if not bool(lidar[1].any()):
             raise ValueError("lidar_zero_valid_beams")
-        lidar = torch.from_numpy(normalize_lidar_range_and_validity(
-            ranges, valid,
-            min_range_m=float(self.get_parameter("lidar_min_range_m").value),
-            max_range_m=float(self.get_parameter("lidar_max_range_m").value),
-        )).to(self.device)
         # Competition-legal ego inputs: Wheel Odometry (VelocityReport) and Steer Angle.
         ego = torch.tensor([
             float(velocity.longitudinal_velocity),
@@ -1317,11 +1348,13 @@ class InferenceNodeV3(Node):
         ], dtype=torch.float32, device=self.device)
         if not torch.isfinite(ego).all():
             raise ValueError("non_finite_ego")
-        dt = torch.tensor(
-            [[[
-                stamps["lidar"] - stamps["velocity"],
-                stamps["steering"] - stamps["velocity"],
-            ]]],
+        camera_stamp_sec = strict_message_stamp_to_seconds(image)
+        sensor_dt = torch.tensor(
+            [
+                0.0,
+                stamps["lidar"] - camera_stamp_sec,
+            ],
+            dtype=torch.float32,
             device=self.device,
         )
         requested = {"trajectory", "speed_profile"}
@@ -1340,21 +1373,29 @@ class InferenceNodeV3(Node):
             requested.add("control_sequence")
         if self.behavior_enabled:
             requested.update({"behavior", "behavior_side"})
-        command_values, command_valid = nominal_command_history(
-            tuple(self.nominal_command_history),
-            length=self.model.max_ego_history,
+        reset_reason = self.observation_history.append(
+            RuntimeObservationTensorV3(
+                stamp_sec=camera_stamp_sec,
+                image=image_tensor,
+                lidar=lidar,
+                ego=ego,
+                sensor_dt_sec=sensor_dt,
+            )
         )
-        return ModelBatchV3(
-            image=image_tensor[None, None], image_mask=torch.ones(1, 1, dtype=torch.bool, device=self.device),
-            lidar=lidar[None, None], lidar_mask=torch.ones(1, 1, dtype=torch.bool, device=self.device),
-            ego=ego[None, None], ego_feature_mask=torch.ones(1, 1, 4, dtype=torch.bool, device=self.device),
-            command_history=torch.tensor(
-                command_values, dtype=torch.float32, device=self.device
-            )[None],
-            command_mask=torch.tensor(
-                [command_valid], dtype=torch.bool, device=self.device
-            ),
-            sensor_dt_sec=dt, requested_outputs=frozenset(requested),
+        if reset_reason is not None:
+            self.nominal_command_history.clear()
+            self.previous_nominal_command = None
+            self.launch_assist_completed = False
+            if self.longitudinal_controller is not None:
+                self.longitudinal_controller.reset()
+            self.status_pub.publish(String(data=f"history_reset:{reset_reason}"))
+        return build_runtime_temporal_batch_v3(
+            self.observation_history.values,
+            tuple(self.nominal_command_history),
+            sensor_history_length=self.model.max_sensor_history,
+            ego_history_length=self.model.max_ego_history,
+            command_history_length=self.model.max_ego_history,
+            requested_outputs=frozenset(requested),
         )
 
     def _publish_behavior(self, output: Any) -> None:
