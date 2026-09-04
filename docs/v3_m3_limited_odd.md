@@ -309,3 +309,71 @@ and collision-topology log
 The repeated 2.60 m maximum raceline separation and physical stop confirm that
 the remaining primary blocker is closed-loop trajectory generalization, not
 the speed-limit implementation. M4 and M5 remain blocked.
+
+## Mixed lap/recovery epoch-4 closed-loop result
+
+The mixed-data five-epoch run documented in
+`docs/v3_teacher_collection_pilot_20260904.md` selected epoch 4. The Graneple
+deployment used source commit `2115c958102eb07e8d24efb2888015cdabaa862e`,
+checkpoint SHA-256
+`9dea8c47f7b446c10661fb38090a377457b639e762ffe6cfe80ed061df0b6d19`,
+runtime artifact SHA-256
+`948fe1c3810023e0aef7166bc2463da7024013edf9b0caf20945e60b0a1fbab4`,
+and runtime parameter SHA-256
+`4f6d86d95d72ea151c86479e48fe156ff6e4fa1f235518d54d26d2ff70b827b7`.
+The immutable source archive SHA-256 was
+`798bbf5940c17430a361d92683af351c59499f587f6c5e81aaef290c7e7a229f`.
+
+The official `aichallenge-2025-dev:latest` container passed 86 focused V3
+runtime/controller/M3 tests and built `aic_e2e_runtime` successfully. A full
+archive-only pytest run reported 577 passed, one skipped, and five failures;
+all five failures were missing legacy v0/e3a checkpoints intentionally excluded
+from the Git archive. The Windows/WSL source checkout had already passed the
+complete 583-test suite with those protected ignored assets present.
+
+Three independent runtime starts were evaluated. Each trial reset AWSIM,
+restarted Autoware, stopped the competing standard `hybrid_control_mux_node`
+publisher and teacher-only `wall_recovery_planner_node` subscriber, verified
+one publisher and one subscriber on both nominal and final control routing,
+then issued exactly one official Start. Only non-control evidence topics were
+recorded. Each bounded interval was approximately 112.3--112.7 s.
+
+| metric | trial 1 | trial 2 | trial 3 |
+|---|---:|---:|---:|
+| maximum commanded speed [m/s] | 0.112449 | 0.112757 | 0.112821 |
+| maximum measured speed [m/s] | 0.037637 | 0.037526 | 0.037531 |
+| displacement [m] | 2.3440 | 2.3383 | 2.3415 |
+| executable-reference tracking p95 [m] | 0.04748 | 0.04740 | 0.04754 |
+| raw-trajectory tracking p95 [m] | 0.29335 | 0.29367 | 0.29342 |
+| left/right turn samples | 0/0 | 0/0 | 0/0 |
+| launch pass | no | no | no |
+
+The speed cap passed in all trials and Safety was `normal` for a mean 99.896%
+of recorded samples. Preflight was ready for a mean 99.904%. Nevertheless,
+every recorded longitudinal-controller state was `blocked`. The executable
+reference never reached the configured 0.2 m/s launch threshold after the
+pre-arm `race_not_armed` block; its maximum requested speed was only about
+0.113 m/s. Thus the vehicle never established a launch, travelled only 2.341 m
+on average, and reached no curve. The strong offline held-out metrics therefore
+did not generalize to the initial closed-loop observation distribution.
+
+The collision topic was absent in all three trials, with topology-log SHA-256
+`8d184377b1ebda602d21287946940042c24d2a3efa1e4a247c7de9fabdbf8bcc`.
+Collision-clear status remains unverified. Analyzer JSON SHA-256 values were
+`fd77b60cce9ca48d1a4cf3e6943a8591a892e036e8e837905d09c387387a54f7`,
+`9cdca326ca3484e383eaa5815fe55f04b3b5251d841550cc68215e9c0f32b6a3`,
+and `cf6d8306176ac4fa7f2d2519389efef6e004e17382acb8caca3c19a9f3d8514c`.
+The corresponding bag database SHA-256 values were
+`964c833b3fede54d92c757f6d8209fb591c7567e875bd76ad9f0af71cc274787`,
+`f3bd62a49da13284e9f8b99f642ae93d8c8837c58b7f20c8a61dd832fede5437`,
+and `8cae28a16693b36768a8b71166edf1f769e2c773d5570fe5978a1c1305c44de0`.
+The aggregate evidence is
+`/home/graneple/v3_runtime/m3_mixed_2115c95/evidence/m3_three_trial_summary.json`
+with SHA-256
+`5c738bfb479aa40cbc06c89496b238e9eaaad3e390b46f48db03dbb7d23f7068`.
+
+M3 remains failed: offline trajectory/speed regression passes, but launch and
+curve-coverage gates fail and collision evidence is unavailable. The dedicated
+runtime container was stopped after evidence capture. Autoware was restarted,
+the standard mux and wall-recovery nodes were restored, and AWSIM was confirmed
+`Grounded`.

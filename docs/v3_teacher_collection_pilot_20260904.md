@@ -394,3 +394,76 @@ and final command topics had zero publishers, and the standard official MPC
 Reference parameter was restored. No bag, weight, or generated data was added
 to Git. The host had 7.3 GiB free after retaining both verified copies, so the
 runtime duplicate should only be removed after an explicit retention decision.
+
+## Canonical conversion and mixed-data training
+
+The 15 accepted remaining-case bags were transferred byte-for-byte to WSL at
+`/home/thistle/e2e_autonomous/raw/teacher_recovery_v3_20260904/accepted`.
+All stored SHA-256 values matched after transfer. Canonical Dataset V3 conversion
+produced 15 runs and 23,751 samples at
+`/home/thistle/e2e_autonomous/datasets/recovery_20260904_v3`; its manifest
+SHA-256 is
+`ae4cbd76b0397057638a1a84a43187cc2f69c0e46f88a397eb5e96d0e1568efa`,
+and the Dataset V3 audit passed.
+
+The recovery phase view contains 3,372 approach, 2,329 hold, 2,799 recovery,
+and 15,251 baseline samples. Hold plus recovery therefore contributes 5,128
+direct recovery examples. Maximum/mean source alignment error was
+24.999/5.985 ms against the 50 ms limit. All 23,751 samples have a valid
+0.75 m/s nominal speed target; future-label invalid fraction was 0.007605 and
+LiDAR validity was 0.95348. Two implausible raw yaw-rate values, 1077.06 and
+179.46 rad/s, were excluded from anchor eligibility by the explicit 5 rad/s
+ego-feature limit. Their runs were assigned to test/validation, not training.
+
+The recovery split uses seed 4904 and places three/one/one runs from each of
+`offset_left_near`, `offset_right_far`, and `offset_left_far` into
+train/validation/test. Its manifest SHA-256 is
+`12f23492bf75ef36359842696390b6db2d975e20f378ed784e5c4a952e9dc563`.
+The earlier single `right_near_left_curve` pilot remains a separately retained
+partial capture and is not one of these 15 converted runs. It should be added
+through a new run-balanced data revision rather than silently mixed as a lone
+case.
+
+The streaming hard-link merge with the 11-run normal-lap dataset produced 26
+runs and 72,697 samples at
+`/home/thistle/e2e_autonomous/datasets/d1log_recovery_mixed_20260904_v3`.
+Its manifest SHA-256 is
+`181cf909b80589110574859990b0885005b7f9a0bb07cff1c24f38d6b090f388`.
+Recovery runs are 32.7% of natural samples, while hold plus recovery phases are
+7.1% of effective samples. The mixed Dataset V3 and Behavior View V1 audits
+passed. The preserved normal and recovery run-level splits contain 16/5/5
+train/validation/test runs with no leakage.
+
+The one-step CUDA smoke run completed at
+`/home/thistle/e2e_autonomous/runs/recovery_20260904_smoke_daeae6c`.
+The full waypoint-authoritative command was then run under the WSL training
+lock (paths abbreviated only for line length):
+
+```bash
+tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
+  -m aic_transfuser_lite.cli train \
+  --config configs/models/trajectory_authoritative_finetune_v3.yaml \
+  --dataset-root /home/thistle/e2e_autonomous/datasets/d1log_recovery_mixed_20260904_v3 \
+  --split-manifest /home/thistle/e2e_autonomous/datasets/d1log_recovery_mixed_20260904_split_manifest.json \
+  --view-config configs/data/view_temporal_v3.yaml \
+  --behavior-view /home/thistle/e2e_autonomous/datasets/d1log_recovery_mixed_20260904_behavior_v1 \
+  --output /home/thistle/e2e_autonomous/runs/d1log_recovery_mixed_20260904_waypoint_e02b804 \
+  --epochs 5 --batch-size 2 --device cuda --checkpoint-every-steps 500 \
+  --resume --resume-initialization-checkpoint \
+  /home/thistle/e2e_autonomous/runs/m3_trajectory_authoritative_finetune_v3_19a0748/last.pt
+```
+
+The run completed exactly 14,110 optimizer steps. Epoch 4 was selected with
+trajectory ADE 0.129715 m and speed-profile MAE 0.111101 m/s over 198,382 valid
+validation waypoints. Epoch 5 was not promoted (0.129976 m and 0.109913 m/s).
+The selected checkpoint contains 219 finite tensors and has SHA-256
+`9dea8c47f7b446c10661fb38090a377457b639e762ffe6cfe80ed061df0b6d19`.
+The runtime artifact SHA-256 is
+`948fe1c3810023e0aef7166bc2463da7024013edf9b0caf20945e60b0a1fbab4`.
+
+An exact same-split comparison against the initialization checkpoint measured
+ADE 0.198042 -> 0.129715 m (34.50% improvement) and speed MAE
+0.224224 -> 0.111101 m/s (50.45% improvement). The offline regression gate
+therefore passes. This result does not imply an M3 closed-loop pass; the three
+independent Graneple trials and their failure mode are recorded in
+`docs/v3_m3_limited_odd.md`.
