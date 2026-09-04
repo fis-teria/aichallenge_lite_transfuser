@@ -24,7 +24,9 @@ from aic_transfuser_lite.data.topic_profile_v3 import (
 from aic_transfuser_lite.data.collection_reference_v3 import (
     verify_route_reference_manifest_v3,
 )
-DEFAULT_FORBIDDEN_NODE_PATTERN = r"trajectory_authoritative|full_control.*inference|aic_transfuser.*inference"
+DEFAULT_FORBIDDEN_NODE_PATTERN = (
+    r"aic_transfuser.*inference|inference.*trajectory_authoritative|full_control.*inference"
+)
 
 
 def _safe_id(value: str, name: str) -> str:

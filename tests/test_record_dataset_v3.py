@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 import pytest
 
 from aic_transfuser_lite.data.topic_profile_v3 import load_topic_profile_v3
 from tools.record_dataset_v3 import (
+    DEFAULT_FORBIDDEN_NODE_PATTERN,
     build_record_command,
     parse_publisher_count,
     select_recording_topics,
@@ -60,3 +62,14 @@ def test_teacher_publisher_count_parser_is_exact() -> None:
     assert parse_publisher_count("Type: example\nPublisher count: 1\n") == 1
     with pytest.raises(ValueError, match="lacks Publisher count"):
         parse_publisher_count("Publisher Count: unknown\n")
+
+
+def test_inference_guard_does_not_block_diagnostic_rviz() -> None:
+    assert re.search(
+        DEFAULT_FORBIDDEN_NODE_PATTERN,
+        "/aic_transfuser_inference_v3_trajectory_authoritative",
+    )
+    assert not re.search(
+        DEFAULT_FORBIDDEN_NODE_PATTERN,
+        "/v3_trajectory_authoritative_rviz",
+    )
