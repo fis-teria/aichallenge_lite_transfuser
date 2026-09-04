@@ -113,3 +113,18 @@ def test_launch_replay_preserves_curvature_cap_and_rejects_nonfinite_path() -> N
             actual_steering_rad=0.0,
             config=_config(),
         )
+
+
+def test_reverse_stationary_noise_is_counted_as_fail_closed_launch_rejection() -> None:
+    x = np.linspace(0.1, 1.5, 15)
+    result = replay_path_only_launch_v3(
+        np.stack((x, np.zeros_like(x)), axis=1),
+        np.zeros(15),
+        current_speed_mps=-0.04,
+        yaw_rate_rps=0.0,
+        actual_steering_rad=0.0,
+        config=_config(),
+    )
+    assert result.ready is False
+    assert result.reference_accepted is False
+    assert result.reasons[0].startswith("measured_speed_rejected:")

@@ -221,7 +221,22 @@ def replay_path_only_launch_v3(
         frame_id="base_link",
         stop_probability=None,
     )
-    measured_speed = normalize_measured_speed_for_projection(current_speed_mps)
+    try:
+        measured_speed = normalize_measured_speed_for_projection(current_speed_mps)
+    except ValueError as error:
+        return LaunchReplayResultV3(
+            ready=False,
+            reference_accepted=False,
+            reasons=(f"measured_speed_rejected:{error}",),
+            transformations=(),
+            trim_count=0,
+            maximum_abs_curvature_per_m=None,
+            controller_requested_speed_mps=None,
+            controller_acceleration_mps2=None,
+            controller_state=None,
+            lookahead_distance_m=None,
+            **common,
+        )
     decision = build_executable_reference_v3(
         plan, current_speed_mps=measured_speed, config=config.reference
     )
