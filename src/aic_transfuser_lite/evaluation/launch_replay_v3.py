@@ -213,6 +213,14 @@ def replay_path_only_launch_v3(
         delta = trajectory[-1] - trajectory[-2]
         if float(np.linalg.norm(delta)) > 1e-6:
             endpoint_heading = float(math.atan2(delta[1], delta[0]))
+    common = {
+        "initial_forward_m": float(trajectory[0, 0]),
+        "maximum_forward_m": float(trajectory[:, 0].max()),
+        "endpoint_forward_m": float(endpoint[0]),
+        "endpoint_displacement_m": float(np.linalg.norm(endpoint)),
+        "path_length_m": float(cumulative[-1]),
+        "endpoint_heading_rad": endpoint_heading,
+    }
     plan = AuthoritativePlanV3(
         trajectory_xy_m=trajectory,
         speed_profile_mps=speeds,
@@ -240,14 +248,6 @@ def replay_path_only_launch_v3(
     decision = build_executable_reference_v3(
         plan, current_speed_mps=measured_speed, config=config.reference
     )
-    common = {
-        "initial_forward_m": float(trajectory[0, 0]),
-        "maximum_forward_m": float(trajectory[:, 0].max()),
-        "endpoint_forward_m": float(endpoint[0]),
-        "endpoint_displacement_m": float(np.linalg.norm(endpoint)),
-        "path_length_m": float(cumulative[-1]),
-        "endpoint_heading_rad": endpoint_heading,
-    }
     if decision.stop_required or decision.reference is None:
         return LaunchReplayResultV3(
             ready=False,
