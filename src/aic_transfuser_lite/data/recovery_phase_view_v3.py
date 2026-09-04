@@ -9,7 +9,11 @@ import math
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from .collection_reference_v3 import RoutePointV3, project_to_route_v3
+from .collection_reference_v3 import (
+    RoutePointV3,
+    load_route_reference_v3,
+    project_to_route_v3,
+)
 from .recovery_reference_v3 import load_mpc_reference_v3
 
 
@@ -148,8 +152,8 @@ def build_recovery_phase_labels_v3(
     pose_stamps = [int(item.timestamp_ns) for item in ordered_poses]
     if len(set(pose_stamps)) != len(pose_stamps):
         raise ValueError(f"run {run_id!r} has duplicate pose timestamps")
-    generated = _route_points(generated_reference_path)
-    base = _route_points(base_reference_path)
+    generated = _mpc_route_points(generated_reference_path)
+    base = load_route_reference_v3(base_reference_path)
     intervals = load_recovery_phase_intervals_v3(intervals_path)
     labels: list[RecoveryPhaseLabelV3] = []
     for row in sample_rows:
@@ -257,7 +261,7 @@ def write_recovery_phase_view_v3(
     return payload
 
 
-def _route_points(path: str | Path) -> tuple[RoutePointV3, ...]:
+def _mpc_route_points(path: str | Path) -> tuple[RoutePointV3, ...]:
     return tuple(
         RoutePointV3(index, point.x_m, point.y_m, point.psi_rad)
         for index, point in enumerate(load_mpc_reference_v3(path))

@@ -32,6 +32,14 @@ def _write_reference(path: Path) -> None:
             writer.writerow((index, index, 0.0, 0.0, 0.0, 1.0, 0.0))
 
 
+def _write_collection_reference(path: Path) -> None:
+    with path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(("point_id", "frame_id", "x_m", "y_m", "heading_rad"))
+        for index in range(20):
+            writer.writerow((index, "map", index, 0.0, 0.0))
+
+
 def _write_intervals(path: Path) -> None:
     with path.open("w", newline="", encoding="utf-8") as stream:
         writer = csv.writer(stream)
@@ -60,7 +68,7 @@ def test_phase_labels_align_pose_in_si_units(tmp_path: Path) -> None:
     base = tmp_path / "base.csv"
     intervals = tmp_path / "intervals.csv"
     _write_reference(generated)
-    _write_reference(base)
+    _write_collection_reference(base)
     _write_intervals(intervals)
     rows = [
         {"sample_id": "sample", "run_id": "run", "grid_stamp_ns": "1000000000"},
@@ -86,7 +94,7 @@ def test_phase_labels_fail_on_stale_pose(tmp_path: Path) -> None:
     base = tmp_path / "base.csv"
     intervals = tmp_path / "intervals.csv"
     _write_reference(generated)
-    _write_reference(base)
+    _write_collection_reference(base)
     _write_intervals(intervals)
     with pytest.raises(ValueError, match="nearest pose delta"):
         build_recovery_phase_labels_v3(
