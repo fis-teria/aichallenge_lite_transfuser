@@ -86,3 +86,47 @@ control-enable and command remappings. Both must be used for subsequent runs.
 The Windows repository is the source of truth. This pilot did not sync into the
 WSL training checkout because a training process was active, and no Git push
 was performed from the experiment host.
+
+## Seeded lateral-offset capture
+
+After the trajectory-authoritative fine-tune completed, the AWSIM executable
+was restarted with its built-in deterministic start randomizer:
+
+```text
+--start-random=true --start-random-seed=103 \
+--start-random-range=0.80,0.00 --start-random-min-separation=0
+```
+
+AWSIM logged the enabled seed and the jittered `GoKart1` position. The first
+localized pose was displaced 0.778 m from the earlier fixed-start M3 pose; its
+projection onto the route Reference left normal was +0.752 m. This is a
+verified left-far start, rather than a case label inferred from the requested
+arguments alone.
+
+The same one-publisher teacher chain passed recorder preflight and produced a
+second bounded capture:
+
+- Run: `mpc_random_left_far_seed103`
+- Scenario: `d1_sim_recovery_left_far`
+- Collection case: `offset_left_far`
+- Duration: 120 s
+- MCAP size: 27,015,097 bytes
+- MCAP SHA-256:
+  `eaa9f68630d3697ab41d6a7eb92c8eb02be4dbc54681cf13bde44e7790549e44`
+- Raw location:
+  `/home/graneple/git/autononous_ai/aichallenge-racingkart/output/teacher_recovery_v3/50dc441/valid_candidates/mpc_random_left_far_seed103`
+
+The official start service returned success, all requested bag topics were
+subscribed, and the recorder finalized with exit code 0. The teacher again
+reached `front_obstacle_inside_stopping_distance`; the vehicle was reset to
+`Grounded`, and both teacher processes were stopped after collection.
+
+The two-run combined audit remains `FAIL`, which is expected and prevents this
+partial set from being promoted directly into training. It now contains 2,087
+sampled states. Left-far coverage reached 1,927 samples across two runs and
+heading-left coverage reached 1,809 samples across two runs, but both still
+miss their five-run and twenty-episode gates. Left-curve coverage remains zero.
+The combined report SHA-256 is
+`4df7888731541929c091d256a8a07aa146150a951ee58010849d11b3e860c0c5`;
+the gap report SHA-256 is
+`67f5be220fdc2b285524508b514317a848f6ca3c532bb7de06746c60a4e12548`.

@@ -140,13 +140,30 @@ gate; it is not deployment proof.
 
 ## Current automation boundary
 
-The inspected official `/set_initial_pose` service is
-`std_srvs/srv/Trigger`. It initializes from the simulator's latest GNSS and does
-not accept a requested `(x, y, yaw)` offset. Therefore the repository does not
-pretend to generate perturbed starts automatically. Until a verified simulator
-reset/teleport API or an expert DAgger collection controller is available, a
-human/test harness must safely establish each `collection_case_id`; recording,
-provenance, coverage evaluation, and next-gap generation are automated.
+The official `/set_initial_pose` service is `std_srvs/srv/Trigger`. It
+initializes from the simulator's latest GNSS and does not accept a requested
+`(x, y, yaw)` offset. However, the inspected AWSIM build also exposes a
+deterministic process-start randomizer. A Graneple preflight verified that the
+following arguments reached AWSIM and displaced the localized start by
+0.778 m, including +0.752 m along the Reference left normal:
+
+```text
+--start-random=true --start-random-seed=103 \
+--start-random-range=0.80,0.00 --start-random-min-separation=0
+```
+
+This makes bounded lateral and longitudinal start-position acquisition
+automatable by restarting AWSIM with a versioned seed. The recorder must still
+measure the actual pose against the Reference before assigning a left/right
+near/far case; the requested range is not evidence of the realized offset.
+Use course-safe ranges, return AWSIM to `Grounded`, and stop the teacher after
+each capture.
+
+The randomizer preserves the base vehicle orientation, so it does not provide
+controlled heading-error examples. Those cases still require a verified
+scenario/pose mechanism, a safe human/test harness, or an expert DAgger
+controller. Recording, provenance, coverage evaluation, and next-gap
+generation are automated for every established start.
 
 Do not run this recorder beside trajectory-authoritative/full-control E2E
 inference. Recording `/nominal_control_cmd` and
