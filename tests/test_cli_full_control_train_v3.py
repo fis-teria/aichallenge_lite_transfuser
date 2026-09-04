@@ -479,10 +479,12 @@ def test_canonical_training_and_runtime_history_have_golden_model_parity(
     )
     training = batches[0]
     row = 1  # one real predecessor plus current anchor exercises warm-up padding
-    valid_sensor_indices = torch.flatnonzero(training.image_mask[row]).tolist()
-    valid_ego_indices = torch.flatnonzero(
-        training.ego_feature_mask[row].all(dim=1)
-    ).tolist()
+    valid_sensor_indices = torch.nonzero(
+        training.image_mask[row], as_tuple=False
+    ).flatten().tolist()
+    valid_ego_indices = torch.nonzero(
+        training.ego_feature_mask[row].all(dim=1), as_tuple=False
+    ).flatten().tolist()
     assert len(valid_sensor_indices) == len(valid_ego_indices) == 2
     observations = tuple(
         RuntimeObservationTensorV3(
@@ -498,7 +500,9 @@ def test_canonical_training_and_runtime_history_have_golden_model_parity(
     )
     commands = tuple(
         ExternalControllerCommand(*training.command_history[row, index].tolist())
-        for index in torch.flatnonzero(training.command_mask[row]).tolist()
+        for index in torch.nonzero(
+            training.command_mask[row], as_tuple=False
+        ).flatten().tolist()
     )
     runtime = build_runtime_temporal_batch_v3(
         observations,

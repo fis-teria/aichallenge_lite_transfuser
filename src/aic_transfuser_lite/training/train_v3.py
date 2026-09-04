@@ -390,7 +390,9 @@ def evaluate_trajectory_speed_v3(
                         if callable(launch_metadata_provider)
                         else None
                     )
-                    for row_index in torch.flatnonzero(launch_rows).cpu().tolist():
+                    for row_index in torch.nonzero(
+                        launch_rows, as_tuple=False
+                    ).flatten().cpu().tolist():
                         launch_sample_count += 1
                         if metadata is None:
                             metadata_known = False
