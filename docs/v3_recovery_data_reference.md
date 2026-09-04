@@ -55,6 +55,23 @@ independent recovery cases.
 Run these commands in the official Linux/ROS environment. Do not record or
 train under `/mnt/e`.
 
+When an external teacher is routed through the independent Safety Supervisor,
+run the teacher-only safety launch below. The teacher publishes
+`/nominal_control_cmd`; Safety is the only publisher of
+`/control/command/control_cmd`.
+
+```bash
+ros2 launch aic_e2e_runtime teacher_capture_safety_v3.launch.py \
+  use_sim_time:=true \
+  maximum_speed_mps:=0.75
+```
+
+`use_sim_time:=true` is mandatory. If the teacher stamps commands from the
+simulation clock while Safety uses the wall clock, every teacher command is
+correctly rejected as `nominal_command_timeout`. Before recording, verify one
+publisher on each command topic and verify that `/safety_reason` is not a
+continuous `nominal_command_timeout`.
+
 1. Capture the course Reference once per course/version:
 
    ```bash
