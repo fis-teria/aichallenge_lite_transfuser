@@ -193,6 +193,17 @@ def apply_safety(
         return SafetyDecision(brake, True, "model_stop", front, d_stop)
 
     steering = float(np.clip(nominal.steering_rad, -config.max_steer_rad, config.max_steer_rad))
+    if speed_mps > config.max_speed_mps:
+        return SafetyDecision(
+            ControlCommand(
+                steering_rad=steering,
+                acceleration_mps2=config.min_accel_mps2,
+            ),
+            True,
+            "speed_limit_exceeded",
+            front,
+            d_stop,
+        )
     acceleration = float(
         np.clip(nominal.acceleration_mps2, config.min_accel_mps2, config.max_accel_mps2)
     )

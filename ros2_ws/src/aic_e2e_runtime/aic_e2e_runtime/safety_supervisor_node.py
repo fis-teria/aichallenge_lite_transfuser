@@ -195,10 +195,16 @@ class SafetySupervisorNode(Node):
             self._publish(brake, "safety_exception", commanded_speed_mps=0.0)
             return
         pass_through_speed = decision.reason in {"normal", "command_clamped"}
+        if decision.reason == "speed_limit_exceeded":
+            commanded_speed_mps = self.config.max_speed_mps
+        elif pass_through_speed:
+            commanded_speed_mps = self.nominal_speed_mps
+        else:
+            commanded_speed_mps = 0.0
         self._publish(
             decision.command,
             decision.reason,
-            commanded_speed_mps=(self.nominal_speed_mps if pass_through_speed else 0.0),
+            commanded_speed_mps=commanded_speed_mps,
         )
 
 

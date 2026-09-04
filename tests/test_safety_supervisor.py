@@ -78,6 +78,48 @@ def test_clear_path_passes_nominal_command() -> None:
     assert decision.command == nominal
 
 
+def test_speed_limit_exceeded_forces_brake_and_preserves_bounded_steering() -> None:
+    now = 100.0
+    decision = apply_safety(
+        ControlCommand(steering_rad=0.9, acceleration_mps2=2.0),
+        speed_mps=0.80,
+        lidar_ranges_m=np.full(181, 30.0, dtype=np.float32),
+        angle_min_rad=-np.pi / 2,
+        angle_increment_rad=np.pi / 180,
+        stop_probability=None,
+        confidence=1.0,
+        stamps=fresh(now),
+        now_sec=now,
+        config=SafetyConfig(max_speed_mps=0.75, max_steer_rad=0.6, min_accel_mps2=-4.0),
+    )
+
+    assert decision.overridden
+    assert decision.reason == "speed_limit_exceeded"
+    assert decision.command.steering_rad == 0.6
+    assert decision.command.acceleration_mps2 == -4.0
+
+
+def test_speed_at_limit_does_not_trigger_overspeed_brake() -> None:
+    now = 100.0
+    nominal = ControlCommand(steering_rad=0.1, acceleration_mps2=0.5)
+    decision = apply_safety(
+        nominal,
+        speed_mps=0.75,
+        lidar_ranges_m=np.full(181, 30.0, dtype=np.float32),
+        angle_min_rad=-np.pi / 2,
+        angle_increment_rad=np.pi / 180,
+        stop_probability=None,
+        confidence=1.0,
+        stamps=fresh(now),
+        now_sec=now,
+        config=SafetyConfig(max_speed_mps=0.75),
+    )
+
+    assert not decision.overridden
+    assert decision.reason == "normal"
+    assert decision.command == nominal
+
+
 def test_disabled_model_stop_ignores_untrained_probability() -> None:
     now = 100.0
     scan = np.full(181, 30.0, dtype=np.float32)

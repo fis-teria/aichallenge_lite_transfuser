@@ -214,3 +214,21 @@ training evidence only. No retraining or M3 closed-loop rerun has yet used it.
   `7474c5f6529ca21b0fb15f8a7ac4e8dde720d6054e164cd014928c2c93d756d9`
 - Remote report:
   `/home/graneple/git/autononous_ai/aichallenge-racingkart/output/teacher_recovery_v3/50dc441/reports/combined_6run_seed109_r150.coverage.json`
+
+### Speed-cap defect found by bag readback
+
+Although these teacher launches configured the Safety Supervisor with
+`max_speed_mps=0.75`, synchronized velocity readback showed per-run maxima of
+5.81--5.90 m/s. The envelope clamped the outgoing command's speed field, but
+the Safety decision did not override positive acceleration after ego speed
+crossed the limit. The six runs therefore prove recovery geometry and recorder
+operation, but they are not evidence of a 0.75 m/s teacher trial and must not be
+used as such.
+
+The Safety core now returns `speed_limit_exceeded` with bounded steering and
+`min_accel_mps2` braking whenever measured ego speed is above the configured
+maximum. The ROS node publishes the configured maximum speed alongside that
+brake instead of passing the nominal acceleration through. Unit and negative
+tests cover both an overspeed command and the exact-limit non-trigger case.
+The fix still requires a fresh Graneple run before the 0.75 m/s runtime cap can
+be considered experimentally verified.
