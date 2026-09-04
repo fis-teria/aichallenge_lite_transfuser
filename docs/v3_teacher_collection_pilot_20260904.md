@@ -254,3 +254,67 @@ recorder exit code zero. Its compressed MCAP SHA-256 was
 `03204b3c2ea323f6a6c09ed2173ec8a2a866c430ba5528a1fc29c57314db5e11`.
 This verifies the 0.75 m/s Safety cap with the declared 0.10 m/s tolerance; it
 does not by itself pass the M3 model closed-loop gate.
+
+## Generated recovery Reference pilot
+
+Commit `e9dd85d` added the clearance-checked recovery Reference generator and
+commit `38f5c67` bound collection coverage to the exact official MPC baseline.
+The current configuration automatically selected four disjoint cases:
+
+| case | side/offset | base-route interval |
+|---|---|---:|
+| `right_near_left_curve` | right, 0.35 m | 89.74--111.59 m |
+| `left_near_right_curve` | left, 0.35 m | 174.10--196.18 m |
+| `right_far_right_curve` | right, 0.55 m | 268.87--289.63 m |
+| `left_far_left_curve` | left, 0.55 m | 313.39--334.73 m |
+
+Each case has separate approach, hold, and return-to-baseline intervals. The
+generated path passed the configured 1.40 m minimum vehicle-centre clearance
+check. Artifact hashes are:
+
+- generated MPC Reference:
+  `1e06af3a0da492613ab5af5ae69b74d6bdc23b392e8d2b2ef4bf51cbc9e4229a`;
+- phase intervals:
+  `b76321e13fbb57ce0d8ad1d3007e82307c3f6b74fb7e2f210acbc3349e2cf827`;
+- exact baseline collection Reference:
+  `8bfa666213eac167fa648ebee8076109bad44ed97ea60f661f527effa4eba594`.
+
+Two 180 s Safety-bounded official-MPC pilots were retained as operational
+evidence but rejected as recovery teacher data. The first used the original
+short approach/hold profile. The second used the longer profile above, but its
+`right_near_left_curve` hold stayed at +0.0004 m mean lateral offset instead of
+the requested -0.35 m. Static inspection confirmed that the MPC loaded a
+different path, but the executed vehicle did not follow its lateral excursion.
+
+### Accepted partial Pure Pursuit capture
+
+The same generated Reference was then published as the planning trajectory and
+tracked with `simple_pure_pursuit`. Its command was the sole publisher on
+`/nominal_control_cmd`; the independent Safety Supervisor was the sole final
+publisher on `/control/command/control_cmd`. A 180 s full sensor capture passed
+recorder preflight and finalized normally:
+
+- run: `pure_pursuit_reference_pilot_003`;
+- teacher: `simple_pure_pursuit_recovery_reference_v3`;
+- captured messages: 90,606, including 1,707 Camera images, 3,584 LiDAR scans,
+  8,962 poses, and 5,121 velocity reports;
+- compressed MCAP size: 199,759,183 bytes;
+- compressed MCAP SHA-256:
+  `2e0477478bc2710802fb7324c4fc2d3325d4dc77e732ca97f0bda6cc57fb85d0`;
+- remote location:
+  `/home/graneple/git/autononous_ai/aichallenge-racingkart/output/teacher_recovery_v3/38f5c67/pure_pursuit_reference_pilot_003`.
+
+Bag-derived phase audit for `right_near_left_curve` measured a -0.3884 m hold
+mean against the -0.35 m target, with a -0.0405 m mean signed error from the
+generated segment. The post-recovery tail crossed back to the baseline side;
+its mean was +0.1346 m and its mean absolute offset was 0.1552 m. Maximum speed
+was 0.3965 m/s, P99 was 0.3904 m/s, and no velocity sample exceeded 0.85 m/s.
+This run is accepted as partial right-near recovery teacher data.
+
+The generic coverage audit still reports `FAIL`, as required for a single run:
+1,563 sampled states, 254 right-near samples, 96 right-far samples, and one
+right-recovery episode. It must not be treated as a coverage-complete training
+set. The remaining acquisition order is left-near, right-far, and left-far,
+with multiple independent repetitions of every case. After capture the
+official Start was cancelled, AWSIM was reset to `Grounded`, and both temporary
+teacher processes were stopped.
