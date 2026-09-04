@@ -97,11 +97,14 @@ was restarted with its built-in deterministic start randomizer:
 --start-random-range=0.80,0.00 --start-random-min-separation=0
 ```
 
-AWSIM logged the enabled seed and the jittered `GoKart1` position. The first
-localized pose was displaced 0.778 m from the earlier fixed-start M3 pose; its
-projection onto the route Reference left normal was +0.752 m. This is a
+AWSIM logged the enabled seed and the jittered `GoKart1` position. A subsequent
+bag-derived comparison (using the first synchronized pose from each capture)
+showed that seed 103 was displaced 0.275 m from the fixed-start teacher pilot.
+Its signed lateral offset relative to route Reference point 59 increased from
++0.664 m in `mpc_standard_pilot_005` to +0.937 m in this capture. This is a
 verified left-far start, rather than a case label inferred from the requested
-arguments alone.
+arguments alone. The earlier live estimate taken before restarting Autoware was
+stale and is not used as evidence.
 
 The same one-publisher teacher chain passed recorder preflight and produced a
 second bounded capture:

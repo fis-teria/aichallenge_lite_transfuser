@@ -143,14 +143,20 @@ gate; it is not deployment proof.
 The official `/set_initial_pose` service is `std_srvs/srv/Trigger`. It
 initializes from the simulator's latest GNSS and does not accept a requested
 `(x, y, yaw)` offset. However, the inspected AWSIM build also exposes a
-deterministic process-start randomizer. A Graneple preflight verified that the
-following arguments reached AWSIM and displaced the localized start by
-0.778 m, including +0.752 m along the Reference left normal:
+deterministic process-start randomizer. A Graneple capture verified that the
+following arguments reached AWSIM and displaced the first synchronized
+bag-derived pose by 0.275 m from the fixed-start teacher pilot. The signed
+lateral offset relative to Reference point 59 increased from +0.664 m to
++0.937 m, so the resulting capture is a verified left-far case:
 
 ```text
 --start-random=true --start-random-seed=103 \
 --start-random-range=0.80,0.00 --start-random-min-separation=0
 ```
+
+Do not validate a randomized start from a localization sample retained across
+an AWSIM restart. Restart Autoware, wait for initialization readiness, and use
+the first synchronized pose stored in the finalized bag as the evidence value.
 
 This makes bounded lateral and longitudinal start-position acquisition
 automatable by restarting AWSIM with a versioned seed. The recorder must still
