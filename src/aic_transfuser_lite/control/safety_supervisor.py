@@ -25,6 +25,7 @@ class SafetyConfig:
     ego_timeout_sec: float = 0.2
     future_tolerance_sec: float = 0.001
     max_speed_mps: float = 12.0
+    speed_limit_guard_margin_mps: float = 0.1
     max_command_validity_sec: float = 0.15
     nominal_timeout_sec: float = 0.3
 
@@ -193,6 +194,9 @@ def apply_safety(
         return SafetyDecision(brake, True, "model_stop", front, d_stop)
 
     steering = float(np.clip(nominal.steering_rad, -config.max_steer_rad, config.max_steer_rad))
+    guard_margin = float(config.speed_limit_guard_margin_mps)
+    if not math.isfinite(guard_margin) or guard_margin < 0.0:
+        raise ValueError("speed_limit_guard_margin_mps must be finite and non-negative")
     if speed_mps > config.max_speed_mps:
         return SafetyDecision(
             ControlCommand(
@@ -201,6 +205,18 @@ def apply_safety(
             ),
             True,
             "speed_limit_exceeded",
+            front,
+            d_stop,
+        )
+    guard_speed_mps = max(config.max_speed_mps - guard_margin, 0.0)
+    if nominal.acceleration_mps2 > 0.0 and speed_mps >= guard_speed_mps:
+        return SafetyDecision(
+            ControlCommand(
+                steering_rad=steering,
+                acceleration_mps2=config.min_accel_mps2,
+            ),
+            True,
+            "speed_limit_guard",
             front,
             d_stop,
         )

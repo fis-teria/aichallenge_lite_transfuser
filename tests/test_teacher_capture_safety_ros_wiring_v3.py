@@ -45,5 +45,5 @@ def test_teacher_capture_safety_keeps_strict_freshness_and_sensor_timeouts() -> 
 def test_runtime_preserves_speed_cap_while_braking_overspeed() -> None:
     source = NODE.read_text(encoding="utf-8")
 
-    assert 'decision.reason == "speed_limit_exceeded"' in source
+    assert '"speed_limit_exceeded", "speed_limit_guard"' in source
     assert "commanded_speed_mps = self.config.max_speed_mps" in source

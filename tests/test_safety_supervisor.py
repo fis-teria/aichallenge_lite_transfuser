@@ -99,7 +99,7 @@ def test_speed_limit_exceeded_forces_brake_and_preserves_bounded_steering() -> N
     assert decision.command.acceleration_mps2 == -4.0
 
 
-def test_speed_at_limit_does_not_trigger_overspeed_brake() -> None:
+def test_positive_acceleration_at_limit_triggers_predictive_guard() -> None:
     now = 100.0
     nominal = ControlCommand(steering_rad=0.1, acceleration_mps2=0.5)
     decision = apply_safety(
@@ -115,9 +115,46 @@ def test_speed_at_limit_does_not_trigger_overspeed_brake() -> None:
         config=SafetyConfig(max_speed_mps=0.75),
     )
 
+    assert decision.overridden
+    assert decision.reason == "speed_limit_guard"
+    assert decision.command.acceleration_mps2 == -4.0
+
+
+def test_predictive_guard_does_not_replace_existing_deceleration() -> None:
+    now = 100.0
+    nominal = ControlCommand(steering_rad=0.1, acceleration_mps2=-0.5)
+    decision = apply_safety(
+        nominal,
+        speed_mps=0.70,
+        lidar_ranges_m=np.full(181, 30.0, dtype=np.float32),
+        angle_min_rad=-np.pi / 2,
+        angle_increment_rad=np.pi / 180,
+        stop_probability=None,
+        confidence=1.0,
+        stamps=fresh(now),
+        now_sec=now,
+        config=SafetyConfig(max_speed_mps=0.75, speed_limit_guard_margin_mps=0.1),
+    )
+
     assert not decision.overridden
     assert decision.reason == "normal"
     assert decision.command == nominal
+
+
+def test_predictive_guard_margin_must_be_non_negative() -> None:
+    with np.testing.assert_raises_regex(ValueError, "finite and non-negative"):
+        apply_safety(
+            ControlCommand(steering_rad=0.0, acceleration_mps2=1.0),
+            speed_mps=0.5,
+            lidar_ranges_m=np.full(181, 30.0, dtype=np.float32),
+            angle_min_rad=-np.pi / 2,
+            angle_increment_rad=np.pi / 180,
+            stop_probability=None,
+            confidence=1.0,
+            stamps=fresh(100.0),
+            now_sec=100.0,
+            config=SafetyConfig(speed_limit_guard_margin_mps=-0.1),
+        )
 
 
 def test_disabled_model_stop_ignores_untrained_probability() -> None:

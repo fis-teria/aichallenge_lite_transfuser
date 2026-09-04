@@ -225,10 +225,27 @@ crossed the limit. The six runs therefore prove recovery geometry and recorder
 operation, but they are not evidence of a 0.75 m/s teacher trial and must not be
 used as such.
 
-The Safety core now returns `speed_limit_exceeded` with bounded steering and
-`min_accel_mps2` braking whenever measured ego speed is above the configured
-maximum. The ROS node publishes the configured maximum speed alongside that
-brake instead of passing the nominal acceleration through. Unit and negative
-tests cover both an overspeed command and the exact-limit non-trigger case.
-The fix still requires a fresh Graneple run before the 0.75 m/s runtime cap can
-be considered experimentally verified.
+The first fix made the Safety core return `speed_limit_exceeded` with bounded
+steering and `min_accel_mps2` braking whenever measured ego speed was above the
+configured maximum. A fresh 30 s Graneple probe at source commit `92b37d6`
+confirmed that this code executed (`speed_limit_exceeded` was reported), and
+the bag finalized normally, but the result still failed the speed gate:
+
+- Run: `safety_speed_cap_probe_92b37d6`
+- Sampled states: 254
+- Mean speed: 0.4636 m/s
+- P99 speed: 0.8828 m/s
+- Maximum speed: 0.8987 m/s
+- Acceptance bound: <= 0.85 m/s
+- Compressed MCAP SHA-256:
+  `d7daf27d5416eca3a845330d0cbc5b05c7ce98ed44ed12f97b7ea0196a82dfd2`
+
+The measured overshoot shows that braking only after crossing 0.75 m/s is too
+late for the AWSIM actuation path. Safety therefore now has an explicit
+`speed_limit_guard_margin_mps` (default 0.1 m/s). When positive acceleration
+is requested at or above `max_speed_mps - speed_limit_guard_margin_mps`, it
+returns `speed_limit_guard` with bounded steering and
+`min_accel_mps2` braking. Existing deceleration is not replaced by the guard,
+and negative or non-finite margins are tested. This predictive guard still
+requires a fresh Graneple probe before the 0.75 m/s runtime cap can be
+considered experimentally verified.
