@@ -327,7 +327,8 @@ def future_geometry(future: np.ndarray, config: SpatialAuditConfig, *, horizon_s
 def v3_row_status(row: dict[str, str], future: np.ndarray | None, model_config: dict[str, Any]
                   ) -> dict[str, Any]:
     """Call saved V3 helpers exactly, including float32 command clipping/order."""
-    bounds = ControlTargetBoundsV3(**model_config["model"]["control_bounds"])
+    bounds = ControlTargetBoundsV3(**model_config["model"]["control_bounds"],
+                                  control_dt_sec=float(model_config["model"]["control_dt_sec"]))
     command = _selected_command(row, bounds=bounds)
     data = model_config["data"]
     _, mask = _ego_row(row, tuple(data["ego_features"]), abs_limits=data.get("ego_abs_limits"))
