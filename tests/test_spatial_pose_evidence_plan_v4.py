@@ -534,3 +534,89 @@ def test_prior_canonical_identity_tamper_rejected(tmp_path: Path) -> None:
     prior["minimal_read_proposal.json"]["seeds"][0]["roles"].append("injected")
     with pytest.raises(ValueError, match="prior logical identity"):
         p.verify_prior(prior, data, pid)
+
+
+def test_six_known_zero_prefixes_are_not_positive_or_missing() -> None:
+    rows = []
+    for kind, count, status, steps in (("KNOWN_ZERO", 6, "BOUNDED_PROPOSAL_PENDING_DOMAIN_AND_COST", [1, 2, 3, 4]),
+            ("KNOWN_PREFIX", 2, "CLAIM_CLOSURE_BLOCKED", [1, 2]),
+            ("UNKNOWN_FIRST_FUTURE_MISSING", 2, "CLAIM_CLOSURE_BLOCKED_NO_POSITIVE_SAVED_PREFIX", [])):
+        rows.extend({"kind": "FULL_SAVED_PREFIX_B_C", "status": status, "target_steps": steps,
+                     "saved_support": {"support_kind": kind}} for _ in range(count))
+    summary = p.support_summary(rows, [])
+    assert summary["all_legacy_support_kinds"] == {"KNOWN_ZERO": 6, "KNOWN_PREFIX": 2, "UNKNOWN_FIRST_FUTURE_MISSING": 2}
+    assert summary["within_observed_caps_support_kinds"] == {"KNOWN_ZERO": 6}
+    assert summary["within_caps_retained_steps"] == {"4": 6}
+
+
+def test_all_four_preserved_seed_records_with_distinct_pair_claims(tmp_path: Path) -> None:
+    data, prior, _, fixed = revision_inputs(tmp_path)
+    groups, anchors, records = p.validate_inputs(data, p.Limits())
+    old = prior["minimal_read_proposal.json"]
+    fourth = groups[5]
+    extra = {"group_id": fourth["group_id"], "run_id": fourth["run_id"], "roles": ["large_strict_prefix_dependency"],
+        "candidates": [p.record_binding(r, records) for r in sorted(fourth["candidate_ids"])],
+        "saved_maxima": fourth["all_pair_maxima"], "related_anchor_steps": []}
+    for seed in old["seeds"]:
+        seed["roles"] = [r for r in seed["roles"] if r != "large_strict_prefix_dependency"]
+    old["seeds"].append(extra)
+    fixed[fourth["group_id"]] = fourth["semantic_stamp_ns"]
+    c = p.closure("partial_probe:" + fourth["group_id"], {fourth["group_id"]}, [], fourth["run_id"],
+                  {g["group_id"]: g for g in groups}, records, p.Limits())
+    c.update(kind="DISTINCT_PARTIAL_PROBE_B_C", sample_id=None, target_steps=[])
+    old["closures"].append(c)
+    m = prior["execution_manifest.json"]
+    pid = p.identity({"policy": m["format"], "status": m["status"], "limits": m["limits"], "input_hashes": data["_hashes"],
+        "code_hashes": m["code_hashes"], "result": {"proposal": old, "facts": m["facts"]}, "claims": prior["claim_requirements.json"]})
+    m["logical_plan_identity"] = pid
+    revised = p.revise_plan(data, prior, p.Limits(), p.Deadline(60), pid, fixed)["proposal"]
+    assert revised["seeds"] == old["seeds"] and revised["legacy_claims"] == old["closures"]
+    assert len(revised["closures"]) == 4 and len(revised["union"]["record_ids"]) == 8
+    assert {c["claim_id"] for c in revised["closures"]} == {"record_pair_binding:" + gid for gid in fixed}
+
+
+def test_code_hash_failure_does_not_escape(tmp_path: Path, monkeypatch) -> None:
+    c, e, hashes = save_fixture(tmp_path)
+    original = p.bounded_read
+    def fail(path, cap):
+        if path.suffix == ".py":
+            raise OSError("code hash unavailable")
+        return original(path, cap)
+    monkeypatch.setattr(p, "bounded_read", fail)
+    result = p.run_plan(c, e, tmp_path / "out", REPO, expected=hashes)
+    assert result["status"] == "BLOCKED"
+    assert json.loads((tmp_path / "out/approval_request.json").read_text())["windows"] == []
+
+
+def test_binding_cap_failure_not_cleared_by_union(tmp_path: Path) -> None:
+    data, prior, pid, seeds = revision_inputs(tmp_path)
+    plan = p.revise_plan(data, prior, p.Limits(closure_candidates=1), p.Deadline(60), pid, seeds)["proposal"]
+    assert plan["union"]["status"] == "WITHIN_LISTED_CAPS_UNAPPROVED"
+    assert all(c["status"] == "CLAIM_CLOSURE_BLOCKED" for c in plan["closures"])
+
+
+def test_source_locator_does_not_even_stat_or_resolve_raw(monkeypatch) -> None:
+    seed = {"run_id": p.NORMAL_RUNS[0], "candidates": [{"run_id": p.NORMAL_RUNS[0],
+        "source_id": "example.mcap:metadata:" + "a" * 64}]}
+    report = {"run_id": seed["run_id"], "source_id": seed["candidates"][0]["source_id"],
+              "path": "/opaque/" + seed["run_id"] + "/example.mcap"}
+    def forbidden(*args, **kwargs):
+        raise AssertionError("source filesystem operation forbidden")
+    for name in ("open", "stat", "lstat", "resolve", "exists"):
+        monkeypatch.setattr(Path, name, forbidden)
+    locator = p.source_locator(seed, [report])
+    assert locator["status"] == "SAVED_LOCATOR_BOUND_NOT_SOURCE_INSPECTED"
+    assert locator["source_full_sha256"] is None
+
+
+def test_deadline_is_checked_inside_record_validation_loop() -> None:
+    class CountingDeadline:
+        calls = 0
+        def check(self):
+            self.calls += 1
+            if self.calls == 3:
+                raise ValueError("LIMIT: cooperative analysis deadline")
+    deadline = CountingDeadline()
+    with pytest.raises(ValueError, match="deadline"):
+        p.validate_inputs(fixture(), p.Limits(), deadline)
+    assert deadline.calls == 3

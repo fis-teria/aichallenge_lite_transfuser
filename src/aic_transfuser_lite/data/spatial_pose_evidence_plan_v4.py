@@ -374,6 +374,7 @@ def acquisition_items(c: dict) -> list:
 
 
 def build_plan(inputs: dict, limits: Limits) -> dict:
+    """Legacy synthetic regression baseline; production revision never calls this selector."""
     limits.validate()
     groups, anchors, records = validate_inputs(inputs, limits)
     refs = group_references(anchors)
@@ -672,12 +673,7 @@ def revise_plan(inputs: dict, prior: dict, limits: Limits, deadline: Deadline,
     for seed in seeds:
         deadline.check()
         claims.append(pair_claim(seed, source_locator(seed, inputs["evidence/raw_read_report.json"]["files"]), limits))
-    full = [c for c in legacy if c["kind"] == "FULL_SAVED_PREFIX_B_C"]
-    within = [c for c in full if c["status"] == "BOUNDED_PROPOSAL_PENDING_DOMAIN_AND_COST"]
-    summary = {"legacy_full_prefix_count": len(full), "within_observed_caps_support_kinds": dict(Counter(c["saved_support"]["support_kind"] for c in within)),
-        "within_caps_retained_steps": dict(Counter(str(len(c["target_steps"])) for c in within)),
-        "all_legacy_support_kinds": dict(Counter(c["saved_support"]["support_kind"] for c in full)),
-        "known_zero_is_not_positive_driving_path": True, "input_missing_first_future_anchors": sum(a["scopes"]["h30"]["spatial_support"]["support_kind"] == "UNKNOWN_FIRST_FUTURE_MISSING" for a in anchors)}
+    summary = support_summary(legacy, anchors)
     union_records = sorted({r["record_id"] for c in claims for r in c["required_candidates"]})
     proposal = {**FLAGS, "policy": VERSION, "prior_logical_identity_recomputed": old_id,
         "seeds": seeds, "legacy_claims": legacy, "legacy_replay_contracts": supplements,
@@ -713,6 +709,18 @@ def revise_plan(inputs: dict, prior: dict, limits: Limits, deadline: Deadline,
     if any(c["status"] == "SOURCE_LOCATOR_UNRESOLVED" for c in claims):
         approval["unresolved_fields"].append("SOURCE_LOCATOR_UNRESOLVED")
     return {"proposal": proposal, "approval": approval, "facts": summary}
+
+
+def support_summary(legacy: list, anchors: list) -> dict:
+    """Count stored support kinds, not geometry or teacher eligibility."""
+    full = [c for c in legacy if c["kind"] == "FULL_SAVED_PREFIX_B_C"]
+    within = [c for c in full if c["status"] == "BOUNDED_PROPOSAL_PENDING_DOMAIN_AND_COST"]
+    return {"legacy_full_prefix_count": len(full),
+        "within_observed_caps_support_kinds": dict(Counter(c["saved_support"]["support_kind"] for c in within)),
+        "within_caps_retained_steps": dict(Counter(str(len(c["target_steps"])) for c in within)),
+        "all_legacy_support_kinds": dict(Counter(c["saved_support"]["support_kind"] for c in full)),
+        "known_zero_is_not_positive_driving_path": True,
+        "input_missing_first_future_anchors": sum(a["scopes"]["h30"]["spatial_support"]["support_kind"] == "UNKNOWN_FIRST_FUTURE_MISSING" for a in anchors)}
 
 
 def unique_object(pairs: list) -> dict:
@@ -851,6 +859,10 @@ def run_plan(conflict_root: Path, evidence_root: Path, output: Path, repo: Path,
         commit, working_tree = git("rev-parse", "HEAD"), git("status", "--porcelain")
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         blockers.append("code_or_git_identity:" + type(error).__name__)
+    try:
+        deadline.check()
+    except ValueError as error:
+        partial.append(str(error))
     if blockers or partial:
         result = empty_result()
     status = "BLOCKED" if blockers else "PARTIAL" if partial else "COMPLETE_PLAN_ONLY"
