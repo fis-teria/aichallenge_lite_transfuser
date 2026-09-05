@@ -287,7 +287,7 @@ def dependency(endpoint: Any, run: str, topic: str, lookup: Mapping[tuple, list[
                by_id: Mapping[str, Mapping[str, Any]], expected_domain: tuple | None = None) -> dict[str, Any]:
     e = mapping(endpoint)
     stamps, hashes = e.get("source_stamps_ns"), e.get("source_payload_hashes")
-    out: dict[str, Any] = {"original_endpoint_evidence": clean(e), "endpoints": [], "observed_difference": False,
+    out: dict[str, Any] = {"original_endpoint_evidence": clean(e), "endpoints": [], "observed_difference": None,
                           "frame_or_type_conflict": False, "invalid_candidate": False}
     if not isinstance(stamps, list) or len(stamps) != 2 or not all(stamp(s) for s in stamps) or not isinstance(hashes, list) or len(hashes) != 2:
         return {**out, "status": "UNKNOWN", "reasons": ["endpoint_stamp_hash_not_recorded"]}
@@ -308,7 +308,7 @@ def dependency(endpoint: Any, run: str, topic: str, lookup: Mapping[tuple, list[
         if expected_domain is None or len(groups) != 1 or any(g["domain_identity"]["status"] != "PASS" for g in groups):
             reasons.add("source_or_epoch_alias_not_resolved")
         for g in groups:
-            out["observed_difference"] |= g["observed_nonzero_difference"]
+            out["observed_difference"] = bool(out["observed_difference"]) or g["observed_nonzero_difference"]
             out["frame_or_type_conflict"] |= "FRAME_OR_TYPE_CONFLICT" in g["classification"]
             out["invalid_candidate"] |= "INVALID_OR_INCOMPLETE_RECORD" in g["classification"]
             if g["observed_projected_equality"]["status"] == "UNKNOWN":
@@ -325,7 +325,8 @@ def dependency(endpoint: Any, run: str, topic: str, lookup: Mapping[tuple, list[
 def combine_dependencies(deps: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     statuses = [d["status"] for d in deps]
     return {"status": "FAIL" if "FAIL" in statuses else "UNKNOWN" if not statuses or "UNKNOWN" in statuses else "PASS",
-            "observed_difference": any(d.get("observed_difference") for d in deps),
+            "observed_difference": (any(d.get("observed_difference") for d in deps)
+                if any(d.get("observed_difference") is not None for d in deps) else None),
             "frame_or_type_conflict": any(d.get("frame_or_type_conflict") for d in deps),
             "invalid_candidate": any(d.get("invalid_candidate") for d in deps),
             "scope": "listed_interpolation_dependencies_not_all_window_records"}
@@ -333,6 +334,8 @@ def combine_dependencies(deps: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
 
 def legacy_window(records: Sequence[Mapping[str, Any]], start: int, end: int, gap_sec: float = .2) -> dict[str, Any]:
     """Copy of old predicates, no import/execution of old reader or model modules."""
+    if any(not isinstance(r, dict) for r in records):
+        return {"status": "UNKNOWN", "flags": [], "reason": "invalid_record_cannot_assign_window"}
     poses = [r for r in records if r.get("topic") == POSE and stamp(r.get("semantic_stamp_ns"))
              and start - 50000000 <= r["semantic_stamp_ns"] <= end + 50000000]
     if any(record_errors(r) for r in poses):
@@ -362,7 +365,7 @@ def legacy_window(records: Sequence[Mapping[str, Any]], start: int, end: int, ga
 
 def extraction(files: Sequence[Mapping[str, Any]], start: int, end: int) -> dict[str, Any]:
     relevant = [f for f in files if any(isinstance(w, list) and len(w) == 2 and all(stamp(t) for t in w)
-                    and w[0] <= end and w[1] >= start for w in f.get("windows_bag_ns", []))]
+                    and w[0] <= end and w[1] >= start for w in (f.get("windows_bag_ns") if isinstance(f.get("windows_bag_ns"), list) else []))]
     bad = any(f.get("source_stat_unchanged") is False or f.get("decode_errors") for f in relevant)
     return {"status": "FAIL" if bad else "UNKNOWN", "predicate": "independent_extraction_completeness",
         "reports": [{k: f.get(k) for k in ("mode", "scan_stop", "windows_bag_ns", "decode_errors", "source_stat_unchanged", "status", "source_id", "logical_payload_identity")} for f in relevant],
@@ -396,7 +399,7 @@ def anchor_impact(anchor: Mapping[str, Any], raw: Mapping[str, list], lookup: Ma
     repro = mapping(anchor.get("source_reproduction"))
     obs = repro.get("t_obs_ns")
     steps = repro.get("steps")
-    if not isinstance(run, str) or not stamp(obs) or not isinstance(steps, list) or len(steps) > config.max_steps:
+    if not isinstance(anchor.get("sample_id"), str) or not isinstance(run, str) or not stamp(obs) or not isinstance(steps, list) or len(steps) != 30 or len(steps) > config.max_steps:
         return {"sample_id": anchor.get("sample_id"), "processing": "INVALID_OR_LIMITED", "status": "UNKNOWN"}
     if any(not isinstance(s, dict) or s.get("step") != i + 1 or not isinstance(s.get("saved_valid"), bool) for i, s in enumerate(steps)):
         return {"sample_id": anchor.get("sample_id"), "processing": "INVALID_OR_LIMITED", "status": "UNKNOWN"}
@@ -436,8 +439,14 @@ def anchor_impact(anchor: Mapping[str, Any], raw: Mapping[str, list], lookup: Ma
                 "observed_difference_steps": [s["step"] for s in rows if s["combined"]["observed_difference"]],
                 "status_counts": dict(Counter(s["combined"]["status"] for s in rows))}
         window = legacy_window(raw.get(run, []), obs, obs + length * 100000000)
+        prefix_scope = aggregate(prefix)
+        prefix_end = obs + round(support["reported_elapsed_sec"] * 1e9) if retained_valid and finite(support["reported_elapsed_sec"]) else None
+        prefix_scope["window_end_ns"] = prefix_end
+        prefix_scope["local_boundary_evidence"] = predicate("UNKNOWN" if prefix else "NOT_INSPECTED",
+            "prefix_interval_no_boundary_not_proven", legacy_recomputed=(legacy_window(raw.get(run, []), obs, prefix_end) if prefix and prefix_end is not None else None))
+        prefix_scope["extraction_completeness"] = extraction(files, obs, prefix_end) if prefix and prefix_end is not None else predicate("NOT_INSPECTED", "no_positive_time_prefix_to_check")
         scopes[h] = {"all_targets": aggregate(chosen), "saved_valid_targets": aggregate([s for s in chosen if s["saved_valid"]]),
-            "existing_strict_prefix": aggregate(prefix), "retained_metadata_consistent": retained_valid,
+            "existing_strict_prefix": prefix_scope, "retained_metadata_consistent": retained_valid,
             "spatial_support": support, "legacy_window_recomputed": window,
             "local_boundary_evidence": predicate("UNKNOWN", "window_checks_do_not_prove_no_clock_frame_epoch_boundary", legacy=window),
             "extraction_completeness": extraction(files, obs, obs + length * 100000000),
@@ -461,6 +470,8 @@ def anchor_impact(anchor: Mapping[str, Any], raw: Mapping[str, list], lookup: Ma
         "legacy_h30_status_and_flags_match": original_boundary.get("status") == new_boundary["status"] and sorted(original_boundary.get("flags", [])) == new_boundary["flags"],
         "common_grid_comparison": {"status": "NOT_INSPECTED" if not positive else "UNKNOWN", "comparability": "NOT_COMPARABLE" if positive == 0 else "REPORTED_POSITIVE_GRID_ONLY" if positive else "UNKNOWN",
             "positive_grid_points": positive, "new_residual_m": None, "old_residual_m": mapping(anchor.get("comparison")).get("common_grid_max_residual_m")},
+        "anchor_issues": ([h + ":retained_step_time_inconsistent" for h in scopes if not scopes[h]["retained_metadata_consistent"]]
+                          + [h + ":invalid_reported_arc" for h in scopes if not finite(mapping(mapping(mapping(anchor.get("comparison")).get("strict_diagnostic_v1")).get(h)).get("arc_m"))]),
         "new_teacher_or_runtime_adoption": False}
 
 
@@ -481,7 +492,7 @@ def analyze(raw: Mapping[str, list], anchors: Sequence[Mapping], reports: Mappin
         else:
             impacts.append(anchor_impact(mapping(anchor), raw, lookup, by_id, reports.get("files", []), config))
     invalid_records = sum(bool(r["errors"]) for r in records)
-    invalid_anchors = sum(r["processing"] == "INVALID_OR_LIMITED" for r in impacts)
+    invalid_anchors = sum(r["processing"] == "INVALID_OR_LIMITED" or bool(r.get("anchor_issues")) for r in impacts)
     scope_counts = {}
     for h in ("h15", "h30"):
         scopes = [r["scopes"][h] for r in impacts if r["processing"] == "PROCESSED"]
@@ -506,10 +517,12 @@ def analyze(raw: Mapping[str, list], anchors: Sequence[Mapping], reports: Mappin
     counts_by_run = []
     for run in sorted(raw):
         selected = [g for g in groups if g["run_id"] == run and g["topic"] == POSE and g["candidate_count"] > 1]
-        counts_by_run.append({"run_id": run, "pose_duplicate_groups": len(selected),
-            "first_to_later_legacy_pairs": sum(g["legacy_xy_gt_1e8"]["first_to_later_count"] or 0 for g in selected),
-            "all_pair_legacy_pairs": sum(g["legacy_xy_gt_1e8"]["all_pairs_count"] or 0 for g in selected),
-            "counts_complete": all(g["all_pair_maximum_status"] == "PASS" for g in selected) and not over_records})
+        pose_present = any(mapping(r).get("topic") == POSE for r in raw[run])
+        counts_by_run.append({"run_id": run, "pose_duplicate_groups": len(selected) if pose_present else None,
+            "source_payload_observed": pose_present, "count_scope": "saved_pose_records_only_not_source_completeness",
+            "first_to_later_legacy_pairs": sum(g["legacy_xy_gt_1e8"]["first_to_later_count"] or 0 for g in selected) if pose_present else None,
+            "all_pair_legacy_pairs": sum(g["legacy_xy_gt_1e8"]["all_pairs_count"] or 0 for g in selected) if pose_present else None,
+            "counts_complete": pose_present and all(g["all_pair_maximum_status"] == "PASS" for g in selected) and not over_records})
     summary["legacy_count_definitions_by_run"] = counts_by_run
     return {"records": records, "record_index_semantics": "input_hash_run_id_original_JSON_array_index_only"}, {"groups": groups}, impacts, summary
 

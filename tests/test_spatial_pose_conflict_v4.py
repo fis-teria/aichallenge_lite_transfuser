@@ -296,3 +296,53 @@ def test_no_forbidden_imports() -> None:
         "import sys;sys.path.insert(0,'src');import aic_transfuser_lite.data.spatial_pose_conflict_v4;"
         "assert not any(k.startswith(('torch','rosbags','aic_transfuser_lite.training')) for k in sys.modules)"], cwd=ROOT)
     assert result.returncode == 0
+
+
+def test_absent_recovery_payload_is_not_zero_conflict() -> None:
+    raw, anchors, report = fixture()
+    raw["run"] = []
+    _, _, a, summary = analyze(raw, anchors, report, "hash", ConflictConfig())
+    assert a[0]["anchor_pose_dependency"]["observed_difference"] is None
+    assert a[0]["scopes"]["h30"]["saved_valid_targets"]["dependency"]["observed_difference"] is None
+    assert summary["legacy_count_definitions_by_run"][0]["pose_duplicate_groups"] is None
+
+
+def test_invalid_record_shape_and_missing_pose_field_partial() -> None:
+    raw, anchors, report = fixture()
+    raw["run"].append(None)
+    del raw["run"][0]["value"]["yaw_rad"]
+    _, _, a, summary = analyze(raw, anchors, report, "hash", ConflictConfig())
+    assert summary["status"] == "PARTIAL"
+    assert summary["invalid_record_count"] == 2
+    assert a[0]["anchor_pose_dependency"]["status"] == "UNKNOWN"
+
+
+def test_saved_json_nonfinite_output_is_explicit_and_invalid(tmp_path: Path) -> None:
+    root, hashes = make_files(tmp_path)
+    p = root / "raw_window_evidence.json"
+    data = json.loads(p.read_text())
+    data["run"][0]["value"]["x_m"] = float("nan")
+    p.write_text(json.dumps(data))
+    hashes["raw_window_evidence.json"] = sha256_file(p)
+    result = run_audit(root, tmp_path / "out", ROOT, ConflictConfig(), expected_hashes=hashes, expected_count=1)
+    assert result["status"] == "PARTIAL"
+    inv = json.loads((tmp_path / "out/input_inventory.json").read_text())
+    assert inv["records"][0]["record"]["value"]["x_m"] == {"invalid_number": "nan"}
+
+
+def test_malformed_json_blocks_and_does_not_follow_paths(tmp_path: Path) -> None:
+    root, hashes = make_files(tmp_path)
+    (root / "raw_read_report.json").write_text('{"files": NaN, "files": []}')
+    result = run_audit(root, tmp_path / "out", ROOT, ConflictConfig(), expected_hashes=hashes, expected_count=1)
+    assert result["status"] == "BLOCKED"
+
+
+def test_anchor_limit_preserves_ids_and_retained_inconsistency_partial() -> None:
+    raw, anchors, report = fixture()
+    anchors.append({**deepcopy(anchors[0]), "sample_id": "second"})
+    _, _, a, summary = analyze(raw, anchors, report, "hash", ConflictConfig(max_anchors=1))
+    assert [r["sample_id"] for r in a] == ["anchor", "second"]
+    assert a[1]["processing"] == "NOT_INSPECTED_LIMIT"
+    assert summary["status"] == "PARTIAL"
+    anchors[0]["comparison"]["strict_diagnostic_v1"]["h15"]["elapsed_sec"] = 99
+    assert analyze(raw, anchors[:1], report, "hash", ConflictConfig())[3]["status"] == "PARTIAL"
