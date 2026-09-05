@@ -552,6 +552,36 @@ def run_audit(*, dataset_root: Path, split_manifest: Path, output: Path, repo: P
         phases = load_annotations(phase_view, "phase_labels.csv", manifest, phase_parent)
         raw_inventory, run_facts = inventory_raw(runs)
         inventory.extend(raw_inventory)
+        runtime_path = repo / "ros2_ws/src/aic_e2e_runtime/config/runtime.v3.trajectory_authoritative.param.yaml"
+        inventory.append(source_entry("controller_and_vehicle_parameter_profile", runtime_path))
+        inventory.extend([
+            {"name": "canonical_future_and_mask", "status": "PRESENT", "payload_scope": list(config.splits),
+             "contract": "[H,8] observation base_link; mask column7; teacher-only"},
+            {"name": "reset_segmentation", "status": "PRESENT", "evidence": "samples.segment_id clock epochs",
+             "physical_reset_teleport_annotation": "NOT_INSPECTED"},
+            {"name": "absolute_pose_odometry", "status": "PRESENT" if any(f.get("pose_topic_present") for f in run_facts.values()) else "NOT_INSPECTED",
+             "evidence": "raw metadata topic counts only", "payload_status": "NOT_INSPECTED"},
+            {"name": "stop_reason", "status": "PRESENT" if any(f.get("safety_topic_present") for f in run_facts.values()) else "NOT_INSPECTED",
+             "evidence": "raw metadata topic counts only", "anchor_alignment": "NOT_INSPECTED"},
+            {"name": "route_intent_inference_input", "status": "UNSUPPORTED", "evidence": "no route intent field in selected V3 ModelBatch"},
+            {"name": "launch_permission_and_operation_mode", "status": "NOT_INSPECTED",
+             "reason": "nominal command or recorded topic is not anchor launch permission"},
+            {"name": "vehicle_footprint_rear_axle_and_clearance", "status": "NOT_INSPECTED",
+             "reason": "wheelbase parameter alone does not establish body footprint or pose reference"},
+        ])
+        if phase_view:
+            phase_meta = json.loads((phase_view / "manifest.json").read_text(encoding="utf-8"))
+            inventory_by_name = {entry["name"]: entry for entry in raw_inventory}
+            for source in phase_meta.get("sources", []):
+                for field, prefix in (("bag_metadata_sha256", "raw_metadata"),
+                    ("generated_reference_sha256", "recovery_reference_v3.csv"),
+                    ("intervals_sha256", "recovery_reference_v3.intervals.csv"),
+                    ("base_reference_sha256", "base_mpc_collection_reference.csv")):
+                    entry = inventory_by_name.get(f"{prefix}:{source['run_id']}")
+                    if entry and entry["status"] == "PRESENT":
+                        entry["phase_source_identity_match"] = entry["file_sha256"] == source[field]
+                        if not entry["phase_source_identity_match"]:
+                            raise ValueError(f"phase source identity mismatch: {entry['name']}")
         rows = csv_rows(root / "samples.csv")
         if len({r["sample_id"] for r in rows}) != len(rows):
             raise ValueError("duplicate canonical sample ID")
