@@ -156,8 +156,10 @@ def _expand(data: bytes, compression: str, expected: int, meter: ReadMeter) -> b
         result = data
     elif compression == "zstd":
         import zstandard
+        if zstandard.get_frame_parameters(data[:18]).window_size > meter.config.max_record_bytes:
+            raise BudgetExceeded("zstd_window_bytes")
         # Streaming output cap also defends against incorrect declared chunk size.
-        with zstandard.ZstdDecompressor(max_window_size=65536).stream_reader(BytesIO(data)) as reader:
+        with zstandard.ZstdDecompressor(max_window_size=meter.config.max_record_bytes).stream_reader(BytesIO(data)) as reader:
             result = reader.read(expected + 1)
     else:
         raise ValueError(f"unsupported bounded chunk compression: {compression}")
@@ -218,13 +220,13 @@ def read_mcap_windows(path: Path, windows: Sequence[tuple[int, int]], *, meter: 
     Source read time and expanded chunks are bounded globally across invocations.
     Partial records remain evidence, never imply complete window coverage.
     """
-    from rosbags.typesys import Stores, get_typestore, get_types_from_msg
+    from rosbags.typesys import Stores, get_typestore, get_types_from_msg, get_types_from_idl
     from rosbags.typesys.base import TypesysError
     from rosbags.rosbag2.errors import ReaderError
     import zstandard
     from .spatial_coverage_v4 import sha256_file
     store = get_typestore(Stores.ROS2_HUMBLE)
-    schemas: dict[int, tuple[str, str]] = {}
+    schemas: dict[int, tuple[str, str, str]] = {}
     channels: dict[int, tuple[int, str]] = {}
     records: list[dict[str, Any]] = []
     before = meter.snapshot()
@@ -236,8 +238,8 @@ def read_mcap_windows(path: Path, windows: Sequence[tuple[int, int]], *, meter: 
         "status": "COMPLETE", "mode": "forward_stream" if path.suffix in {".zstd", ".zst"} else "indexed",
         "bag_header_time_relation": "must_be_checked_from_returned_records", "decode_errors": []}
 
-    def register(sid: int, name: str, definition: str) -> None:
-        schemas[sid] = (name, definition)
+    def register(sid: int, name: str, definition: str, encoding: str) -> None:
+        schemas[sid] = (name, definition, encoding)
 
     def parse(stream: Any, *, top: bool, outer_seek: bool = False) -> None:
         while True:
@@ -280,10 +282,15 @@ def read_mcap_windows(path: Path, windows: Sequence[tuple[int, int]], *, meter: 
                     _discard(stream, size - 22, seekable=outer_seek)
                     continue
                 raw = _exact(stream, size - 22)
-                name, definition = schemas[sid]
+                name, definition, encoding = schemas[sid]
                 try:
                     if name not in store.types:
-                        store.register(get_types_from_msg(definition, name))
+                        if encoding == "ros2msg":
+                            store.register(get_types_from_msg(definition, name))
+                        elif encoding in {"ros2idl", "omgidl"}:
+                            store.register(get_types_from_idl(definition))
+                        else:
+                            raise ValueError(f"unsupported selected schema encoding {encoding}")
                     records.append(decode_message(raw, name, topic, stamp, store, meter, source_id))
                 except BudgetExceeded:
                     raise
@@ -294,9 +301,7 @@ def read_mcap_windows(path: Path, windows: Sequence[tuple[int, int]], *, meter: 
             sid = struct.unpack("<H", _exact(rec, 2))[0]
             if op == 3:
                 name, encoding, definition = _string(rec), _string(rec), _string(rec)
-                if encoding != "ros2msg":
-                    raise ValueError(f"unsupported schema encoding {encoding}")
-                register(sid, name, definition)
+                register(sid, name, definition, encoding)
             else:
                 schema = struct.unpack("<H", _exact(rec, 2))[0]
                 topic, encoding = _string(rec), _string(rec)
@@ -309,7 +314,12 @@ def read_mcap_windows(path: Path, windows: Sequence[tuple[int, int]], *, meter: 
             counted = MeteredStream(file, meter, "source_bytes")
             if path.suffix in {".zstd", ".zst"}:
                 import zstandard
-                with zstandard.ZstdDecompressor(max_window_size=65536).stream_reader(counted, closefd=False) as expanded:
+                frame = zstandard.get_frame_parameters(counted.read(18))
+                result["zstd_window_bytes"] = frame.window_size
+                if frame.window_size > meter.config.max_record_bytes:
+                    raise BudgetExceeded("zstd_window_bytes")
+                counted.seek(0)
+                with zstandard.ZstdDecompressor(max_window_size=meter.config.max_record_bytes).stream_reader(counted, closefd=False) as expanded:
                     stream = MeteredStream(expanded, meter, "expanded_bytes")
                     if _exact(stream, 8) != b"\x89MCAP0\r\n":
                         raise ValueError("invalid MCAP magic")
@@ -330,8 +340,8 @@ def read_mcap_windows(path: Path, windows: Sequence[tuple[int, int]], *, meter: 
                 reader = IndexOnly(ReadPath())
                 reader.open()
                 for sid, schema in reader.schemas.items():
-                    register(sid, schema.name, schema.data)
-                names = {name: sid for sid, (name, _) in schemas.items()}
+                    register(sid, schema.name, schema.data, schema.encoding)
+                names = {name: sid for sid, (name, _, _) in schemas.items()}
                 channels.update({cid: (names[ch.schema], ch.topic) for cid, ch in reader.channels.items()})
                 result["indexed_chunks"] = len(reader.chunks)
                 wanted = [c for c in reader.chunks if _intersects(c.message_start_time, c.message_end_time, windows)]

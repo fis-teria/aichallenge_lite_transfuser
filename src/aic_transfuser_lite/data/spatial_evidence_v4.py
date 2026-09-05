@@ -564,7 +564,7 @@ def run_evidence_audit(*, root: Path, split: Path, previous: Path, output: Path,
             records, report = read_mcap_windows(Path(file["path"]), run["windows_bag_ns"], meter=meter)
             report["run_id"] = run["run_id"]
             read_reports.append(report)
-            write_json(output / "raw_read_progress.json", {"budget": asdict(budget), "actual": meter.snapshot(), "files": read_reports})
+            write_json(output / f"raw_read_progress_{len(read_reports):03d}.json", {"budget": asdict(budget), "actual": meter.snapshot(), "files": read_reports})
             all_records[run["run_id"]].extend(records)
             complete_by_run[run["run_id"]] &= report["status"] == "COMPLETE"
             print(json.dumps({"run": run["run_id"], "status": report["status"], "reason": report.get("reason"), "actual": report["actual"]}), flush=True)

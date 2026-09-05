@@ -338,3 +338,28 @@ def test_reference_shape_mtime_not_a_route_or_permission_validator() -> None:
     result = evidence_for_anchor(future(), sample(), metadata, records(), True, EvidenceConfig())
     assert result["path_supervision"]["status"] == "UNKNOWN"
     assert result["context"]["driving_permission"]["status"] == "UNKNOWN"
+
+
+def test_idl_schema_and_megabyte_zstd_window(tmp_path: Path) -> None:
+    from rosbags.rosbag2 import Writer
+    from rosbags.rosbag2.enums import StoragePlugin
+    from rosbags.typesys import Stores, get_typestore, get_types_from_idl
+    import zstandard
+    definition = "=" * 80 + "\nIDL: audit_msgs/msg/Reason\nmodule audit_msgs { module msg { struct Reason { string data; }; }; };"
+    store = get_typestore(Stores.ROS2_HUMBLE)
+    store.register(get_types_from_idl(definition))
+    typename = "audit_msgs/msg/Reason"
+    with Writer(tmp_path / "bag", version=9, storage_plugin=StoragePlugin.MCAP) as writer:
+        con = writer.add_connection("/safety_reason", typename, msgdef=definition, rihs01=store.hash_rihs01(typename))
+        msg = store.types[typename](data="fixture" * 200000)
+        writer.write(con, 100, store.serialize_cdr(msg, typename))
+    path = next((tmp_path / "bag").glob("*.mcap"))
+    compressed = path.with_suffix(".mcap.zstd")
+    compressed.write_bytes(zstandard.ZstdCompressor().compress(path.read_bytes()))
+    rows, report = read_mcap_windows(compressed, [(100, 100)], meter=ReadMeter(ReadBudget()))
+    assert report["status"] == "COMPLETE", report
+    assert report["zstd_window_bytes"] > 65536
+    assert rows[0]["value"]["data"] == msg.data
+    _, capped = read_mcap_windows(compressed, [(100, 100)], meter=ReadMeter(ReadBudget(max_record_bytes=65536)))
+    assert capped["status"] == "BUDGET_EXCEEDED"
+    assert capped["reason"] == "zstd_window_bytes"
