@@ -1,0 +1,18 @@
+prior_run: /home/thistle/e2e_autonomous/runs/spatial_diagnostic_v4_20260906_f33b197
+checkpoint: /home/thistle/e2e_autonomous/runs/spatial_diagnostic_v4_20260906_f33b197/checkpoints/final.pt
+dataset_root: /home/thistle/e2e_autonomous/datasets/d1log_recovery_mixed_20260904_v3
+split_manifest: /home/thistle/e2e_autonomous/datasets/d1log_recovery_mixed_20260904_split_manifest.json
+annotation_ledger: /home/thistle/e2e_autonomous/runs/spatial_v4_coverage_full_v2_20260905/anchor_audit_ledger.csv
+evaluation:
+  seed: 42
+  candidates_per_run: 256
+  main_per_run: 32
+  observation_per_run: 4
+  minimum_gap_ns: 500000000
+  active_seconds: 1800
+  microbatch: 2
+  rtol: 0.00001
+  atol_m: 0.000001
+  dtype: float32
+  device: cuda
+  optimizer_steps: 0
