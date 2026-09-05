@@ -17,7 +17,10 @@ branch: `codex/windows-wsl-training-sync`。
 | pose競合開始 | ec255bce2d2d838698a6c964f880ba2d09a28303 |
 
 今回の依頼は外部添付 `9374b255-4e03-498b-9e22-f3669c3501f1/pasted-text.txt`。
-依頼文だけの独立commitは存在しない。実装commitは出力execution_manifestに記録する。
+開始HEADまでの履歴に今回の依頼文だけの独立commitはなく、今回も添付自体のcommitは作っていない。
+初期実装: `1efb7a4b206f51d71d83fa37dcb022f243366a90`。
+最終コード・計画実行版: `17ead237de8f1a6b8e52fdc18bcf7c01e75e5403`。
+本書の結果追記commitはその後のdoc-only commitであり、実行版とは区別する。
 Webの過去422はローカルobject不存在の証拠ではなく、古い公開版への代替なし。
 
 変更は新規plan module、CLI、合成テスト、本書の4ファイルのみ。
@@ -36,7 +39,21 @@ Dataset identityは旧/新manifestの文字列一致のみで、本体の検証�
 
 旧報告: 6,600 records、29 anchors、172重複pose群 (171非ゼロ投影差、1投影一致)。
 recovery12件のpayload未取得を無競合としない。既知0、UNKNOWN、NOT_INSPECTEDを分けて保持する。
-検証後の実数・選択ID・closure件数は下の実行結果節に追記する。
+今回のJSON結合・保存診断集計で6,600 records / 29 anchors / pose685群 / 重複172群を確認。
+172群は全て2候補・異なるpayload hash。非ゼロ171、投影一致1、正のXY差<=1e-8mは44、
+yaw非ゼロ170、XY差>20µmは73。保存最大XY差0.1311721647999626m、最大yaw差0.015095404171680205rad。
+anchor姿勢endpointに候補差10件、strict prefixへの候補差依存はh15/h30各15件。
+旧summaryの29/29 status/flags一致、旧再現PASS17/UNKNOWN12、支持13/既知0が14/先頭欠損2、
+原点のみNOT_COMPARABLE16件は引継ぎ報告値として保持し、新たな独立再現とはしない。
+
+静的コード照合で、旧converter `_deduplicate_sorted` と保存抽出側 `interpolate_records` は
+それぞれ渡された列のsemantic stampごとの最後をdictで残すと確認。
+ただし、その列の由来が同一である証明はない。
+旧 `observed_boundaries` はbag順の隣接poseの同stamp XY差>1e-8を検査し、
+全候補組・yaw・物理一意性を証明するものではない。
+`compare_horizons` はstrict_polylineへboundary_eventsを渡していない。
+forward readerの早期停止にはコード上もlog_time単調性仮定の表記がある。
+これらは静的確認のみで実行・変更なし。
 
 ## 3. Claimと十分条件
 
@@ -71,6 +88,8 @@ anchor endpoint非ゼロ最大、strict prefix依存最大、旧1e-8mに最も�
 診断用の偏った選択でありDataset不良率推定には使わない。
 
 各seedから独立したsingle-target partial probeを1件設定する。
+anchor役割はその群をanchor姿勢に使うanchorを優先し、次にstrict内依存・stable ID・先頭step。
+先頭欠損anchorのstep1は診断対象であり、適格なprefixとしては扱わない。
 関連anchorのh15/h30既存strict prefix全stepは別claimとして全endpointを列挙する。
 anchor姿勢は全futureへ依存し、targetより後の右endpointも省かない。
 source/schema/topic、候補全ID/hash、旧endpoint hash、clock観測窓を保存する。
@@ -125,7 +144,7 @@ bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q tests/test_sp
 bash tools/with_wsl_training_lock.sh .venv/bin/python tools/plan_spatial_pose_evidence_v4.py \
   --conflict-root /home/thistle/e2e_autonomous/runs/spatial_v4_pose_conflicts_final_20260905 \
   --evidence-root /home/thistle/e2e_autonomous/runs/spatial_v4_evidence_run_v3_20260906 \
-  --output /home/thistle/e2e_autonomous/runs/spatial_v4_pose_evidence_plan_v1_20260905
+  --output /home/thistle/e2e_autonomous/runs/spatial_v4_pose_evidence_plan_v2_20260905
 ```
 
 入力上限: 各16MiB/合計32MiB/10,000 records/2,000群/64 anchors/30 steps/60秒。
@@ -136,6 +155,57 @@ logical identityは入力hash+code hash+policy+設定+論理計画に結合し�
 成果物6件: input_manifest.json、claim_requirements.json、minimal_read_proposal.json、
 unresolved_and_unrecoverable.json、execution_manifest.json、report_ja.md。
 
-実行結果は検証後に追記。過去52/680 passedは今回の結果に流用しない。
+### 実行結果 (2026-09-05)
+
+Windows/WSLとも開始時clean、Windowsの対象学習processなし。
+各commit後のsync preflightがWSL clean/process/lock/commitを検査し、CHECK_OK → SYNC_OK。
+同期scriptは既存Datasetディレクトリの存在を確認するが、Datasetファイルは読んでいない。
+Windows側の無関係なPythonプロセスは停止・変更していない。
+
+最終コード版 `17ead237de8f1a6b8e52fdc18bcf7c01e75e5403` にて:
+
+- lock付きfocused実行: **43 passed in 0.43s** (新規33 + 非学習synchronization10)。
+- WSL plan: **COMPLETE_PLAN_ONLY**, exit 0。
+- Windows Python 3.10でも同じ入力からplan生成、**COMPLETE_PLAN_ONLY**。
+- 論理identityは双方一致: `394292c7c268715a5efc4cd408f0e9634835d5d4cf016729a01c9f4786dde71d`。
+- 9入力、計11,768,262 bytes (初回読取の合計)。期待hash・前後hashすべて一致。
+- 入力内Dataset identity `181cf909b80589110574859990b0885005b7f9a0bb07cff1c24f38d6b090f388` を両manifestで照合。本体未確認。
+- 旧pose監査logical identity `ccd1f4e830d4726fcb8fbef45ac83bc60a9f99ec9ca4233dce6f4590f6f4ba44` は入力manifestの記録値。
+
+WSL成果物root:
+`/home/thistle/e2e_autonomous/runs/spatial_v4_pose_evidence_plan_v2_20260905`。
+Windows独立生成root:
+`E:\workspace\e2e_lite_transfuser\tmp\spatial_v4_pose_evidence_plan_windows_v2_20260905`。
+旧v1計画は上書きせず保持し、今回の採用計画はv2。入力成果物・旧tierの上書きなし。
+既存output拒否のため再実行するときは、新しい未存在versioned rootを指定する。
+
+選択4群は役割別順位の結果すべてnormal131505となった。normal132822も候補母集団には含むが、
+run均等化を目的としていない。recovery/test/未選択sessionへの一般化はしない。
+
+| 役割 / stable group ID | bag=header stamp (ns) | 保存XY差 (m) | 部分probeの観測closure |
+|---|---:|---:|---|
+| anchor endpoint / `8fbd120c37e872d2bc51ab58bc95813636caa7de04a335b560e9337c6993f12b` | 6189999861 | 0.00006032426614470164 | 6群/9候補/122clock、0.610秒、上限内・未承認 |
+| strict prefix大差 / `208cfcac87744ded9ef39f3c85ac2ae6d3f545255e81239e33e8819e1947b20c` | 256259994272 | 0.060719386103918874 | 6群/8候補/587clock、2.925秒、上限超過BLOCKED |
+| 旧閾値近傍 / `353301a96a1f493e253091d78bef0c43c2b90818097aa892e392a5756250811d` | 5449999878 | 0.000000009857472638787348 | 6群/7候補/128clock、0.635秒、上限内・未承認 |
+| XY/yaw同値対照 / `ffe514be1a0f7756c75006e4066566bcaf025610e726962ed1ecb9c93fca65f7` | 939999978 | 0 | 1群/2候補/101clock、0.500秒、prefix依存なし |
+
+全候補record ID/payload hash・関連anchor全件・endpoint/stepは `minimal_read_proposal.json` に保存。
+部分probeの対象anchorは順に `20260902-131505__epoch0000__6192918933` step1 (strict外の欠損診断)、
+`20260902-131505__epoch0000__253892918933` step24、
+`20260902-131505__epoch0000__5292918933` step1、対照はanchorなし。
+
+全体最大群 `8fb56a44449a41e5f3f294004247a9d3bd4bb891089e9348f65ac5ead395447e`
+(保存XY差0.1311721647999626m) は選択済みanchor群のstrict prefix非依存。
+この値を対象prefixの最大誤差や経路誤差とはしない。
+
+4 partial probesの観測unionは**19群/26候補**で合算上限内だが、1 probeの個別窓上限超過を解除しない。
+関連5 anchors × h15/h30 = **10 full-prefix claims**を別列挙。
+6件は観測closure上限内、2件は超過、2件は正の既存prefixなし。
+後半走行anchorのh30は122群/146候補/705clock/約3.520秒が必要であり、seedだけで代用しない。
+**14 claim全て、独立domain partitionと原本候補scopeの完全性は未確定**。
+上限内の計画も追加取得可能性や幾何適格性のPASSではない。
+
+全pytest・raw fixture・Datasetテスト・optimizerは実行せず、過去52/680 passedを流用していない。
+raw読取 (metadata/index含む)、Dataset本体読取、学習、推論、制御変更、走行、pushは0。
 
 追加取得は未実行・未承認。対象source/stage/window/claim・独立予算・reader修正と試験・原本不変性と新出力先の明示承認後に、別タスクとして判断する。
