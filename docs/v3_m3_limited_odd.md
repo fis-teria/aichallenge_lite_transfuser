@@ -387,3 +387,14 @@ speed authority to the executable-reference/controller layer, and blocks
 artifact promotion unless a held-out launch-path gate passes. This changes only
 the candidate-production path; it does not retroactively change the failed M3
 result above or satisfy any closed-loop M3 gate.
+
+The 2026-09-05 audited experiment is recorded in
+`docs/v3_experiment_a_audit_20260905.md`. It produced no promoted candidate, so
+AWSIM was not started. If a later candidate passes offline screening, begin
+with at least three independent stopped-launch trials only. Record raw path,
+executable path, every speed cap, controller request/state, measured speed,
+Safety reason, and a matched collision publisher. Proceed to gentle left/right
+curve coverage only after every launch reaches 0.10 m/s within 3.0 s, respects
+the 0.85 m/s tolerance, and has no controller or Safety fault. An absent
+collision publisher remains unverified, and neither offline replay nor launch
+alone establishes M3.

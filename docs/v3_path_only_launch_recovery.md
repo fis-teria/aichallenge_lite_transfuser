@@ -30,17 +30,24 @@ streams requested at least 0.5 m/s:
   431/22 test.
 
 The implemented loader follows the actual nominal-first/final-fallback teacher
-selection contract instead of requiring both streams. A post-change live
-loader check produced:
+selection contract instead of requiring both streams. It also requires all 15
+future points before declaring a contradictory stationary future. A
+post-change live loader check produced:
 
-| split | usable after filter | contradictory anchors rejected | retained launch candidates |
-|---|---:|---:|---:|
-| train | 43,680 | 1,462 | 188 |
-| validation | 13,153 | 476 | 54 |
-| test | 13,382 | 462 | 58 |
+| split | raw rows | base exclusions | unfiltered valid | complete contradictory rejected | censored | teacher quality | stopped-commanded retained |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| train | 45,190 | 48 | 45,142 | 1,363 | 162 | 43,779 | 287 |
+| validation | 13,641 | 12 | 13,629 | 450 | 37 | 13,179 | 80 |
+| test | 13,866 | 22 | 13,844 | 444 | 27 | 13,400 | 76 |
 
-The 54 held-out validation candidates exceed the launch gate's minimum sample
-count of 20.
+The previously reported 1,462/476/462 exclusions counted 99/26/18 censored
+stationary prefixes as if the full 1.5 s future had been observed. Those rows
+are now retained as censored/unknown. The 82 rows outside the user-provided
+usable-plus-excluded total are 60 invalid-current-ego rows and 22 rows with no
+valid future point, not split leakage. The runtime-compatible launch replay
+keeps all 530 validation stopped-commanded anchors in its denominator: 450
+complete contradictory outcomes, 43 observed-motion outcomes, and 37 censored
+outcomes.
 
 These frames teach a path/speed model to remain near the origin even though the
 teacher command requests motion. They are excluded only when all of the
@@ -69,11 +76,16 @@ Other profiles retain the default `model` speed source.
 ## Offline promotion gate
 
 The trajectory-authoritative fine-tune config enables a held-out launch gate.
-For validation inputs stopped at no more than 0.05 m/s with commanded speed at least
-0.5 m/s, at least 20 samples must be available and at least 80% must predict
-0.1 m or more forward progress. Epochs that fail this gate are not copied to
-`best_trajectory.pt`. If no epoch passes, training preserves `last.pt` for
-diagnosis, writes no `runtime_artifact.json`, and exits with gate code 5.
+For validation inputs stopped at no more than 0.05 m/s with commanded speed at
+least 0.5 m/s, at least 20 samples, two runs, and three estimated launch
+episodes must be available. At least 80% must pass the same executable-reference
+and controller dry-run used by the trajectory-authoritative runtime, including
+valid finite XY, initial-point handling, endpoint forward progress, curvature
+caps, and controller request speed of at least 0.2 m/s. A maximum-X test alone
+cannot pass the gate. Epochs must also meet the initial-checkpoint trajectory
+ADE non-regression gate before research-candidate promotion. If no epoch passes
+both gates, training preserves epoch snapshots and `last.pt` for diagnosis,
+writes no `runtime_artifact.json`, and returns the `GATE_FAILED` status.
 
 This is an offline readiness gate, not M3 success. M3 still requires fresh
 closed-loop launch, tracking, curve coverage, Safety, and collision evidence.
@@ -114,3 +126,13 @@ tools/with_wsl_training_lock.sh \
 Confirm the initialization checkpoint exists and record its SHA-256 before
 starting. A passing offline artifact must still be deployed and evaluated under
 the M3 procedure in `docs/v3_m3_limited_odd.md`.
+
+## 2026-09-05 experiment A result
+
+The audited five-epoch run is documented in
+`docs/v3_experiment_a_audit_20260905.md`. No epoch passed trajectory
+non-regression and runtime-compatible launch readiness simultaneously, so no
+research or runtime candidate was promoted. Epoch 3 is retained only as a
+diagnostic checkpoint: it reached 506/530 offline launch-ready anchors but
+regressed waypoint-weighted ADE from 0.133046 m to 0.136326 m and had a 96.8%
+initial-noise trim rate. No AWSIM closed-loop run was performed.

@@ -343,3 +343,10 @@ gate、WSL実行コマンドは
 [`docs/v3_path_only_launch_recovery.md`](docs/v3_path_only_launch_recovery.md)を参照する。
 現行Dataset V3にはplanned Reference targetがないため、測定未来をReferenceとして
 偽装せず、将来追加する場合はconverter/収録契約をversioned変更する。
+
+学習/runtime履歴の4/4/10/10整合、censored future、runtime互換launch gate、
+初期checkpoint A0、5 epochの実験A、run単位paired bootstrapまで含む2026-09-05の
+監査・実測結果は
+[`docs/v3_experiment_a_audit_20260905.md`](docs/v3_experiment_a_audit_20260905.md)を参照する。
+実験Aは総合screening不合格であり、runtime artifactは生成されず、AWSIM closed-loopも
+実行していない。
