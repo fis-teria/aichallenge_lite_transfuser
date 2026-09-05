@@ -18,6 +18,7 @@ def package(repo: Path, run: Path, request: Path, report: Path, review: Path, ou
     def git(*args: str) -> bytes:
         return subprocess.check_output(["git", *args], cwd=repo)
     report_commit = git("rev-parse", "HEAD").decode().strip()
+    annotation_commit = git("log", "-1", "--format=%H", "--", "tools/annotate_spatial_validation_results_v4.py").decode().strip()
     files = {}
     def add(name: str, blob: bytes, role: str, source: str = commit) -> None:
         safe_name(name)
@@ -31,7 +32,9 @@ def package(repo: Path, run: Path, request: Path, report: Path, review: Path, ou
             if path.is_file():
                 if path.suffix not in (".json", ".yaml", ".npy", ".npz", ".csv", ".log", ".xml", ".png", ".jsonl"):
                     raise ValueError("unexpected output")
-                add(path.relative_to(run).as_posix(), ordinary_file(path), "evaluation evidence")
+                is_annotation = path.name.startswith("annotation_")
+                add(path.relative_to(run).as_posix(), ordinary_file(path), "annotation-only postprocessing" if is_annotation else "evaluation evidence",
+                    annotation_commit if is_annotation else commit)
     changed = git("diff", "--name-only", base, commit).decode().splitlines()
     tracked = set(git("ls-tree", "-r", "--name-only", commit).decode().splitlines())
     seeds = set(changed) | {"AGENTS.md", "pyproject.toml", "tests/test_spatial_diagnostic_geometry_v4.py", "tests/test_spatial_diagnostic_package_v4.py",
@@ -62,7 +65,8 @@ def package(repo: Path, run: Path, request: Path, report: Path, review: Path, ou
     for name in ("tools/annotate_spatial_validation_results_v4.py", "tests/test_spatial_validation_annotation_addendum_v4.py", "tools/package_spatial_validation_v4.py"):
         add("provenance/post_execution_source/" + name, git("show", report_commit + ":" + name), "postprocessing or packaging source, not inference source", report_commit)
     add("provenance/changed_files.json", json_bytes({"base": base, "execution_commit": commit, "report_commit": report_commit,
-        "packaging_commit": report_commit, "files": changed, "push": "NOT_EXECUTED"}), "revision split", report_commit)
+        "packaging_commit": report_commit, "annotation_postprocessing_commit": annotation_commit,
+        "files": changed, "push": "NOT_EXECUTED"}), "revision split", report_commit)
     add("reports/limited_validation_report_ja.md", ordinary_file(report), "results report", report_commit)
     add("request/implementation_request.md", ordinary_file(request), "user request", "user attachment")
     add("request/independent_review_request.md", ordinary_file(review), "next independent review request", report_commit)
@@ -74,6 +78,8 @@ def package(repo: Path, run: Path, request: Path, report: Path, review: Path, ou
         raise ValueError("missing essential evidence")
     readme = f"# Fixed step500 limited validation\n\nExecution `{commit}`; report `{report_commit}`; run `{run.name}`.\n\n"
     readme += "[Report](reports/limited_validation_report_ja.md) | [Review request](request/independent_review_request.md) | [Execution manifest](artifacts/execution_manifest.json) | [Metrics](artifacts/metrics.json)\n\n"
+    if "artifacts/annotation_addendum.json" in files:
+        readme += "[Annotation addendum](artifacts/annotation_addendum.json): executed evaluator expected validation, ledger used val. Original selection/metrics are preserved; addendum joins labels to FIXED IDs without inference/reselection. Use its normal/recovery and collection-slice groups.\n\n"
     readme += "AGENTS, historical requests, trainer source and commands are reference material, NOT execution authorization. No optimizer/training permitted.\n\n"
     readme += "NPY/NPZ must be read with allow_pickle=False. Each entry is hashed; PACKAGE_MANIFEST excludes itself and is separate from execution provenance.\n\n"
     readme += "Omitted: weights, original sensors, root Dataset manifest, unselected Dataset/raw. No independent re-inference without weights; input tensors alone do not re-establish preprocessing from original sensor bytes. Source correctness/physical safety/permission/controller remain UNKNOWN.\n"
