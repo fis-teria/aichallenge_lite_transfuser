@@ -268,3 +268,73 @@ def test_source_protection_and_immutable_output(tmp_path: Path) -> None:
     output.mkdir()
     with pytest.raises(FileExistsError):
         run_evidence_audit(**args, output=output)
+
+
+def test_end_to_end_dry_partial_identity_and_source_immutability(tmp_path: Path) -> None:
+    from aic_transfuser_lite.data.spatial_evidence_v4 import FIELDS
+    from aic_transfuser_lite.data.spatial_coverage_v4 import csv_rows
+    root, prior, raw = tmp_path / "data", tmp_path / "prior", tmp_path / "raw"
+    (root / "trajectories").mkdir(parents=True)
+    prior.mkdir(); raw.mkdir()
+    (raw / "broken.mcap").write_bytes(b"not an MCAP file")
+    (raw / "metadata.yaml").write_text(yaml.safe_dump({"rosbag2_bagfile_information": {
+        "relative_file_paths": ["broken.mcap"], "topics_with_message_count": []}}))
+    rows = [sample(f"s{i}", f"r{i}") for i in range(3)]
+    for row in rows:
+        np.save(root / row["trajectory_path"], future())
+    write_csv(root / "samples.csv", rows, list(rows[0]))
+    runs = [dict(run_id=r["run_id"], source_hash=r["run_id"], source_uri=raw.as_uri()) for r in rows]
+    write_csv(root / "runs.csv", runs, list(runs[0]))
+    manifest = dict(complete=True, schema_version="aic_canonical_dataset_v3", runs=runs,
+        files=[dict(path=p.relative_to(root).as_posix(), sha256=sha256_file(p))
+               for p in sorted(root.rglob("*")) if p.is_file()])
+    digest = identity(manifest)
+    (root / "manifest.yaml").write_text(yaml.safe_dump({**manifest, "manifest_sha256": digest}))
+    split = tmp_path / "split.json"
+    split.write_text(json.dumps(dict(dataset_manifest_sha256=digest,
+        assignments=[dict(run_id=f"r{i}", split=s) for i, s in enumerate(("train", "val", "test"))])))
+    ledger = [{**{k: "" for k in FIELDS}, **old(r["sample_id"], r["run_id"]),
+               "split": s, "source_uri": raw.as_uri(), "source_hash": r["run_id"],
+               "h15_raw_arc_m": ".75", "h30_raw_arc_m": "1.5"}
+              for r, s in zip(rows, ("train", "val", "test"))]
+    write_csv(prior / "anchor_audit_ledger.csv", ledger, list(FIELDS))
+    (prior / "audit_manifest.json").write_text(json.dumps({"repository": {"head": PREVIOUS_IMPLEMENTATION}}))
+    (prior / "source_inventory.json").write_text("[]")
+    expected = {"dataset_identity": digest, **{k: sha256_file(p) for k, p in {
+        "dataset_manifest": root / "manifest.yaml", "split": split,
+        "previous_manifest": prior / "audit_manifest.json", "previous_ledger": prior / "anchor_audit_ledger.csv"}.items()}}
+    before = {p: sha256_file(p) for directory in (root, prior, raw) for p in directory.rglob("*") if p.is_file()}
+    args = dict(root=root, split=split, previous=prior, repo=ROOT, expected=expected,
+                config=EvidenceConfig(), budget=ReadBudget())
+    a = run_evidence_audit(**args, output=tmp_path / "dry1")
+    b = run_evidence_audit(**args, output=tmp_path / "dry2")
+    assert a["status"] == b["status"] == "DRY_RUN"
+    assert a["raw_actual"]["source_bytes"] == 0
+    assert a["source_reader_statuses"] == {"NOT_INSPECTED": 1}
+    for name in ("selection.json", "anchor_evidence.json", "all_anchor_status.csv", "raw_read_plan.json"):
+        assert sha256_file(tmp_path / "dry1" / name) == sha256_file(tmp_path / "dry2" / name)
+    result = run_evidence_audit(**args, output=tmp_path / "actual", execute_raw=True,
+                                approved_plan=tmp_path / "dry1/raw_read_plan.json")
+    assert result["status"] == "PARTIAL"
+    assert result["tiers"] == {"OBSERVED_ONLY": 1}
+    assert result["source_reader_statuses"] == {"BLOCKED": 1}
+    assert result["val_stopped_commanded_tracked"] == 1
+    states = csv_rows(tmp_path / "actual/all_anchor_status.csv")
+    assert states[-1]["additional_inspection"] == "NOT_INSPECTED"
+    assert before == {p: sha256_file(p) for p in before}
+
+
+def test_invalid_zstd_is_recorded_not_unhandled(tmp_path: Path) -> None:
+    path = tmp_path / "bad.mcap.zstd"
+    path.write_bytes(b"not zstandard")
+    rows, report = read_mcap_windows(path, [(0, 1)], meter=ReadMeter(ReadBudget()))
+    assert rows == []
+    assert report["status"] == "BLOCKED"
+    assert "ZstdError" in report["reason"]
+
+
+def test_reference_shape_mtime_not_a_route_or_permission_validator() -> None:
+    metadata = {**old(), "reference_mtime": "same", "reference_shape_matches": "True"}
+    result = evidence_for_anchor(future(), sample(), metadata, records(), True, EvidenceConfig())
+    assert result["path_supervision"]["status"] == "UNKNOWN"
+    assert result["context"]["driving_permission"]["status"] == "UNKNOWN"

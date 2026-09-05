@@ -564,9 +564,10 @@ def run_evidence_audit(*, root: Path, split: Path, previous: Path, output: Path,
             records, report = read_mcap_windows(Path(file["path"]), run["windows_bag_ns"], meter=meter)
             report["run_id"] = run["run_id"]
             read_reports.append(report)
+            write_json(output / "raw_read_progress.json", {"budget": asdict(budget), "actual": meter.snapshot(), "files": read_reports})
             all_records[run["run_id"]].extend(records)
             complete_by_run[run["run_id"]] &= report["status"] == "COMPLETE"
-            print(json.dumps({"run": run["run_id"], "status": report["status"], "actual": report["actual"]}), flush=True)
+            print(json.dumps({"run": run["run_id"], "status": report["status"], "reason": report.get("reason"), "actual": report["actual"]}), flush=True)
     write_json(output / "raw_read_report.json", {"budget": asdict(budget), "actual": meter.snapshot(), "files": read_reports})
     write_json(output / "raw_window_evidence.json", all_records)
     futures = {f["path"]: f["sha256"] for f in manifest["files"]}

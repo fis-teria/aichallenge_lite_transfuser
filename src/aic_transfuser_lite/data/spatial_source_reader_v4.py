@@ -219,6 +219,9 @@ def read_mcap_windows(path: Path, windows: Sequence[tuple[int, int]], *, meter: 
     Partial records remain evidence, never imply complete window coverage.
     """
     from rosbags.typesys import Stores, get_typestore, get_types_from_msg
+    from rosbags.typesys.base import TypesysError
+    from rosbags.rosbag2.errors import ReaderError
+    import zstandard
     from .spatial_coverage_v4 import sha256_file
     store = get_typestore(Stores.ROS2_HUMBLE)
     schemas: dict[int, tuple[str, str]] = {}
@@ -284,7 +287,7 @@ def read_mcap_windows(path: Path, windows: Sequence[tuple[int, int]], *, meter: 
                     records.append(decode_message(raw, name, topic, stamp, store, meter, source_id))
                 except BudgetExceeded:
                     raise
-                except (ValueError, KeyError, AttributeError, AssertionError) as error:
+                except (ValueError, KeyError, AttributeError, AssertionError, TypesysError) as error:
                     result["decode_errors"].append({"topic": topic, "stamp_ns": stamp, "error": str(error)})
                 continue
             rec = BytesIO(_exact(stream, size))
@@ -346,7 +349,7 @@ def read_mcap_windows(path: Path, windows: Sequence[tuple[int, int]], *, meter: 
             result["status"] = "PARTIAL"
     except BudgetExceeded as error:
         result.update(status="BUDGET_EXCEEDED", reason=str(error))
-    except (OSError, ValueError, KeyError, AssertionError) as error:
+    except (OSError, ValueError, KeyError, AssertionError, ReaderError, TypesysError, zstandard.ZstdError) as error:
         result.update(status="BLOCKED", reason=f"{type(error).__name__}: {error}")
     result["actual"] = {key: value - before[key] for key, value in meter.snapshot().items()}
     result["source_stat_unchanged"] = (path.stat().st_size, path.stat().st_mtime_ns) == (file_stat.st_size, file_stat.st_mtime_ns)
