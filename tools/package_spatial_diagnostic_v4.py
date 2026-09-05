@@ -5,6 +5,7 @@ No model imports or training. Extraction verification is bounded and hash-based.
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
@@ -120,7 +121,13 @@ def package(repo: Path, run: Path, request: Path, report: Path, output: Path, ba
         blob = git("show", commit + ":" + name)
         add("repo/" + name, blob, "fixed executed source or test")
         if name.endswith(".py"):
-            for module in re.findall(r"(?:from|import)\s+(aic_transfuser_lite[\w.]*)", blob.decode("utf-8")):
+            modules = set(re.findall(r"(?:from|import)\s+(aic_transfuser_lite[\w.]*)", blob.decode("utf-8")))
+            for node in ast.walk(ast.parse(blob)):
+                if isinstance(node, ast.ImportFrom) and node.level and name.startswith("src/"):
+                    parent = list(PurePosixPath(name).parent.parts[1:])
+                    prefix = parent[:len(parent)-node.level+1]
+                    modules.add(".".join(prefix + ([node.module] if node.module else [])))
+            for module in modules:
                 candidate = "src/" + module.replace(".", "/")
                 for dependency in (candidate + ".py", candidate + "/__init__.py"):
                     if dependency in tracked and dependency not in seen:
