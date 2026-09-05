@@ -264,7 +264,7 @@ def test_ledger_unknown_missing_case_episode_counts(tmp_path: Path) -> None:
     assert [r for r in cases if r["split"] == "val" and r["side"] == "right" and r["near_far"] == "near"][0]["anchors"] == 0
     ledger = csv_rows(output / "anchor_audit_ledger.csv")
     assert {r["side"] for r in ledger} == {"unknown"}
-    summary = result["summaries"][0]
+    summary = next(s for s in result["summaries"] if s["split"] == "train")
     assert summary["estimated_episodes"] == 1
     assert summary["confirmed_episodes"] is None
     assert sum(summary["primary_exclusions"].values()) == summary["raw_anchors"]
