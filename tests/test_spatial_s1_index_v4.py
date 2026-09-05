@@ -50,20 +50,25 @@ def metadata() -> s1.MetadataInput:
 
 
 class GuardedSource(s1.MemorySource):
-    def __init__(self, data: bytes, forbidden: list[tuple[int, int]]):
+    def __init__(self, data: bytes, forbidden: list[tuple[int, int]],
+                 allowed_ranges: tuple[tuple[int, int], ...] = ()):
         super().__init__(data)
         self.forbidden = forbidden
         self.requests: list[tuple[int, int]] = []
         self.current_revision = 0
+        self.allowed_ranges = allowed_ranges
+        self.sentinel_rejections = 0
 
     @property
     def revision(self) -> object:
         return self.current_revision
 
     def read_at(self, offset: int, length: int) -> bytes:
+        self.requests.append((offset, length))  # Record issuance, even if sentinel rejects.
         assert length >= 0
-        assert not any(offset < end and offset + length > start for start, end in self.forbidden), "payload sentinel touched"
-        self.requests.append((offset, length))
+        if any(offset < end and offset + length > start for start, end in self.forbidden):
+            self.sentinel_rejections += 1
+            raise AssertionError("payload sentinel touched")
         return super().read_at(offset, length)
 
 
@@ -74,6 +79,7 @@ def fixture(*, spans: list[tuple[int, int]] | None = None, order: list[int] | No
     """The Chunk's sentinel bytes are deliberately opaque, not decodable messages."""
     spans = spans if spans is not None else [(0, 257_000_000_000)]
     data = s1.MAGIC + (header if header is not None else record(1, string("ros2") + string("synthetic-only")))
+    allowed = [(0, len(data))]  # Builder-owned positions, not parsed source declarations.
     descriptors, forbidden = [], []
     for start, end in spans:
         chunk_start = len(data)
@@ -88,6 +94,7 @@ def fixture(*, spans: list[tuple[int, int]] | None = None, order: list[int] | No
         mi_body = number("H", 2 if index_mutation == "channel" else 1) + number("I", len(entries)) + entries
         mi = record(7, mi_body)
         data += mi
+        allowed.append((index_start, len(data)))
         mapped_offset = chunk_start if index_mutation == "payload_offset" else index_start
         map_data = number("HQ", 1, mapped_offset)
         if index_mutation == "duplicate_channel":
@@ -116,12 +123,19 @@ def fixture(*, spans: list[tuple[int, int]] | None = None, order: list[int] | No
     checksum = zlib.crc32(summary + table + number("BQ", 2, 20) + footer_prefix) & 0xffffffff
     checksum = 0 if crc == "absent" else checksum if crc == "match" else checksum ^ 1
     data += summary + table + record(2, footer_prefix + number("I", checksum)) + s1.MAGIC
-    return GuardedSource(data, forbidden)
+    allowed.append((summary_start, len(data)))
+    return GuardedSource(data, forbidden, tuple(allowed))
+
+
+def layout_for(source: GuardedSource, c: s1.Contract | None = None) -> s1.SyntheticReadLayout:
+    return s1.SyntheticReadLayout(True, c or contract(), source, source.size, source.revision,
+                                  source.allowed_ranges, "hand-built fixture positions before serialization")
 
 
 def run(source: s1.ByteSource | None = None, *, c: s1.Contract | None = None,
         ledger: s1.Ledger | None = None, meta: s1.MetadataInput | None = None) -> dict:
-    return s1.inspect_s1_index(source or fixture(), meta or metadata(), c or contract(), ledger or s1.Ledger())
+    source, c = source or fixture(), c or contract()
+    return s1.inspect_s1_index(source, meta or metadata(), c, ledger or s1.Ledger(), layout_for(source, c))
 
 
 def assert_closed(result: dict) -> None:
@@ -223,8 +237,8 @@ def test_malformed_lengths_and_bounds(kind: str) -> None:
         data = source._stream.getvalue()
     else:
         data = data[:-28] + number("Q", s1.U64) + data[-20:]
-    result = run(GuardedSource(data, source.forbidden))
-    assert result["status"] in {"INVALID_S1_STRUCTURE", "UNSUPPORTED_S1_INPUT"}
+    result = run(GuardedSource(data, source.forbidden, source.allowed_ranges))
+    assert result["status"] in {"INVALID_S1_STRUCTURE", "UNSUPPORTED_S1_INPUT", "BLOCKED_READ_LAYOUT"}
     assert_closed(result)
 
 
@@ -497,18 +511,18 @@ def test_index_and_summary_field_corruption(failure: str) -> None:
         struct.pack_into("<I", data, index_start + 11, 9999)
     else:
         data[index_start] = 5  # Message opcode is rejected before its body is read.
-    result = run(GuardedSource(bytes(data), source.forbidden))
+    result = run(GuardedSource(bytes(data), source.forbidden, source.allowed_ranges))
     assert result["status"] in {"INVALID_S1_STRUCTURE", "UNSUPPORTED_S1_STRUCTURE"}
     assert_closed(result)
 
 
 def test_direct_reader_limits_and_forbidden_region() -> None:
     source, ledger = fixture(), s1.Ledger()
-    reader = s1.Reader(source, ledger)
+    reader = s1.Reader(source, ledger, contract(), layout_for(source))
     reader.forbidden = source.forbidden
     with pytest.raises(s1.S1Error) as error:
         reader.read(source.forbidden[0][0], 1)
-    assert error.value.status == "BLOCKED_PAYLOAD_BOUNDARY"
+    assert error.value.status == "BLOCKED_READ_RANGE"
     with pytest.raises(s1.S1Error):
         reader.read(0, -1)
     assert source.requests == []
@@ -523,3 +537,136 @@ def test_envelope_cannot_be_increased_or_rebound() -> None:
     before = ledger.returned_source_bytes
     assert run(ledger=ledger, c=replace(contract(), source_locator="other"))["status"] == "BLOCKED_CONTRACT"
     assert ledger.returned_source_bytes == before
+
+
+def inspect_with(source: GuardedSource, layout: s1.SyntheticReadLayout | None,
+                 c: s1.Contract | None = None) -> dict:
+    return s1.inspect_s1_index(source, metadata(), c or contract(), s1.Ledger(), layout)
+
+
+def test_layout_required_without_read_calls() -> None:
+    source = fixture()
+    result = inspect_with(source, None)
+    assert result["status"] == "BLOCKED_READ_LAYOUT"
+    assert source.requests == []
+    assert result["synthetic_io"]["read_calls"] == 0
+    assert_closed(result)
+
+
+@pytest.mark.parametrize("inside,crc_match", [(False, False), (True, False), (False, True), (True, True)])
+def test_forged_footer_blocked_in_core_before_source(inside: bool, crc_match: bool) -> None:
+    source = fixture()
+    layout = layout_for(source)  # Freeze BEFORE corrupting serialized declarations.
+    data = bytearray(source._stream.getvalue())
+    ss = source.forbidden[0][0] + (60 if inside else 0)
+    footer_pos = len(data) - 37
+    prefix = number("QQ", ss, 0)
+    crc = zlib.crc32(data[ss:footer_pos] + number("BQ", 2, 20) + prefix) & 0xffffffff if crc_match else 0
+    data[footer_pos:] = record(2, prefix + number("I", crc)) + s1.MAGIC
+    source._stream = io.BytesIO(bytes(data))
+    result = inspect_with(source, layout)
+    assert result["status"] == "BLOCKED_READ_RANGE"
+    assert result["synthetic_io"]["core_pre_read_range_rejections"] == 1
+    assert result["synthetic_io"]["rejected_ranges"] == [{"offset_bytes": ss, "length_bytes": footer_pos - ss}]
+    assert source.sentinel_rejections == 0
+    assert not any(start == ss for start, _ in source.requests)
+    assert result["synthetic_io"]["returned_source_bytes"] == sum(n for _, n in source.requests)
+    assert result["synthetic_io"]["read_calls"] == len(source.requests)
+    assert result["synthetic_io"]["accounting_known"]
+    assert_closed(result)
+
+
+def test_forged_header_length_blocked_before_source() -> None:
+    source = fixture()
+    layout = layout_for(source)
+    data = bytearray(source._stream.getvalue())
+    old_length = struct.unpack_from("<Q", data, 9)[0]
+    struct.pack_into("<Q", data, 9, old_length + 32)
+    source._stream = io.BytesIO(bytes(data))
+    result = inspect_with(source, layout)
+    assert result["status"] == "BLOCKED_READ_RANGE"
+    assert (17, old_length + 32) not in source.requests
+    assert source.sentinel_rejections == 0
+    assert result["synthetic_io"]["core_pre_read_range_rejections"] == 1
+
+
+def test_forged_message_index_unallowed_dataend_region() -> None:
+    source = fixture()
+    layout = layout_for(source)
+    data = bytearray(source._stream.getvalue())
+    ss = struct.unpack_from("<Q", data, len(data) - 28)[0]
+    descriptor = ss + len(schema()) + len(channel()) + 9
+    index_start = source.forbidden[0][1]
+    index_length = 9 + struct.unpack_from("<Q", data, index_start + 1)[0]
+    dataend_start = index_start + index_length
+    # Forge mutually consistent Chunk Index claims pointing at the unallowed DataEnd.
+    struct.pack_into("<Q", data, descriptor + 24, dataend_start - source.forbidden[0][0])
+    struct.pack_into("<Q", data, descriptor + 38, dataend_start)
+    struct.pack_into("<Q", data, descriptor + 46, 13)
+    source._stream = io.BytesIO(bytes(data))
+    result = inspect_with(source, layout)
+    assert result["status"] == "BLOCKED_READ_RANGE"
+    assert (dataend_start, 9) not in source.requests
+    assert source.sentinel_rejections == 0
+    assert result["schemas"] and result["selected_chunk_descriptors"]
+    assert result["synthetic_io"]["core_pre_read_range_rejections"] == 1
+
+
+@pytest.mark.parametrize("ranges", [((-1, 1),), ((False, 1),), ((0, True),), ((2, 1),), ((1, 1),),
+                                     ((0, s1.U64 + 1),), ((0, s1.U64),), ((0, 10), (9, 11)),
+                                     ((10, 11), (0, 1)), (), ([0, 1],)])
+def test_invalid_layout_ranges_no_source_calls(ranges: tuple) -> None:
+    source = fixture()
+    result = inspect_with(source, replace(layout_for(source), allowed_ranges=ranges))
+    assert result["status"] == "BLOCKED_READ_LAYOUT"
+    assert source.requests == []
+
+
+@pytest.mark.parametrize("kind", ["source", "contract", "probe", "size", "revision", "synthetic", "provenance"])
+def test_layout_binding_no_source_calls(kind: str) -> None:
+    source = fixture()
+    layout = layout_for(source)
+    if kind == "source":
+        layout = replace(layout, source=fixture())  # Same size/revision, different object.
+    elif kind == "contract":
+        layout = replace(layout, contract=replace(contract(), plan_identity="different"))
+    elif kind == "probe":
+        layout = replace(layout, contract=replace(contract(), probes=contract().probes[::-1]))
+    elif kind == "size":
+        layout = replace(layout, source_size=source.size + 1)
+    elif kind == "revision":
+        layout = replace(layout, source_revision=1)
+    elif kind == "synthetic":
+        layout = replace(layout, synthetic_only=False)
+    else:
+        layout = replace(layout, provenance="")
+    result = inspect_with(source, layout)
+    assert result["status"].startswith("BLOCKED_READ_LAYOUT")
+    assert source.requests == []
+
+
+@pytest.mark.parametrize("offset,length", [(0, 4), (-1, 1), (False, 1), (0, True), (0, -1),
+                                          (s1.U64, 1), (0, s1.U64 + 1)])
+def test_candidate_range_gap_or_invalid_rejected_before_call(offset: int, length: int) -> None:
+    source, ledger = fixture(), s1.Ledger()
+    layout = replace(layout_for(source), allowed_ranges=((0, 2), (3, 8)))
+    reader = s1.Reader(source, ledger, contract(), layout)
+    with pytest.raises(s1.S1Error) as error:
+        reader.read(offset, length)
+    assert error.value.status == "BLOCKED_READ_RANGE"
+    assert source.requests == [] and ledger.read_calls == ledger.returned_source_bytes == 0
+    assert len(ledger.range_rejections) == 1
+
+
+def test_adjacent_ranges_and_source_side_guard_are_distinct() -> None:
+    source, ledger = fixture(), s1.Ledger()
+    layout = replace(layout_for(source), allowed_ranges=((0, 4), (4, 8)))
+    reader = s1.Reader(source, ledger, contract(), layout)
+    assert reader.read(0, 8) == s1.MAGIC
+    assert ledger.read_calls == 1 and not ledger.range_rejections
+    assert source.sentinel_rejections == 0
+    # Test-only direct call proves the source guard would log and reject issuance.
+    with pytest.raises(AssertionError, match="sentinel"):
+        source.read_at(source.forbidden[0][0], 1)
+    assert source.sentinel_rejections == 1 and len(source.requests) == 2
+    assert ledger.read_calls == 1  # Deliberate test call is not a core read.

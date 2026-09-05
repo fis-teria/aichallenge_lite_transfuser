@@ -14,7 +14,7 @@ import time
 from typing import Any, Callable, Mapping, Protocol
 import zlib
 
-VERSION = "spatial_s1_index_v4_offline_v1"
+VERSION = "spatial_s1_index_v4_offline_v2_read_layout"
 PLAN_ID = "937cbbd09efa8e7fe729a0e58687a39157ca7ec1582c49b231f1a6fe82411597"
 PRIOR_ID = "394292c7c268715a5efc4cd408f0e9634835d5d4cf016729a01c9f4786dde71d"
 PLAN_COMMIT = "29c11b1c04e5cb40b237e4bfc4a747fc0b0658d1"
@@ -179,6 +179,57 @@ class MetadataInput:
     storage_format: str = "plain_mcap"
 
 
+@dataclass(frozen=True)
+class SyntheticReadLayout:
+    """External fixture authority, NOT raw authorization or source-derived evidence.
+
+    Ranges are sorted, non-overlapping [start, stop) byte intervals. The fixture
+    builder supplies them independently of serialized Footer/Index declarations.
+    Object identity binds this in-process layout, not a real-file identity proof.
+    """
+    synthetic_only: bool
+    contract: Contract
+    source: ByteSource
+    source_size: int
+    source_revision: object
+    allowed_ranges: tuple[tuple[int, int], ...]
+    provenance: str
+
+    def validate(self, source: ByteSource, contract: Contract) -> None:
+        check(self.synthetic_only is True and getattr(source, "synthetic", False) is True,
+              "layout is synthetic only", "BLOCKED_READ_LAYOUT")
+        check(self.contract == contract and self.source is source and
+              uint(self.source_size) and self.source_size == source.size and
+              self.source_revision == source.revision,
+              "layout contract/source/size/revision mismatch", "BLOCKED_READ_LAYOUT_BINDING")
+        check(type(self.provenance) is str and bool(self.provenance.strip()),
+              "layout provenance missing", "BLOCKED_READ_LAYOUT")
+        check(type(self.allowed_ranges) is tuple and bool(self.allowed_ranges),
+              "layout ranges missing or mutable", "BLOCKED_READ_LAYOUT")
+        previous_stop = 0
+        for interval in self.allowed_ranges:
+            check(type(interval) is tuple and len(interval) == 2,
+                  "invalid layout interval shape", "BLOCKED_READ_LAYOUT")
+            start, stop = interval
+            check(uint(start) and uint(stop) and previous_stop <= start < stop <= self.source_size,
+                  "layout interval outside uint64/source or overlapping/unsorted", "BLOCKED_READ_LAYOUT")
+            previous_stop = stop
+
+    def covers(self, offset: int, length: int) -> bool:
+        if not (uint(offset) and uint(length) and offset + length <= self.source_size):
+            return False
+        stop, cursor = offset + length, offset
+        for start, end in self.allowed_ranges:
+            if end < cursor:
+                continue
+            if start > cursor:
+                return False
+            cursor = max(cursor, end)
+            if cursor >= stop:
+                return True
+        return False
+
+
 @dataclass
 class Ledger:
     """One synthetic envelope across attempts. Human waiting time is not active time."""
@@ -189,6 +240,7 @@ class Ledger:
     parsed_index_records: int = 0
     parsed_index_entries: int = 0
     read_calls: int = 0
+    range_rejections: list[dict[str, int]] = field(default_factory=list)
     attempts: int = 0
     active_seconds: float = 0.0
     accounting_known: bool = True
@@ -220,6 +272,8 @@ class Ledger:
         return {"returned_source_bytes": self.returned_source_bytes, "metadata_bytes_hashed": self.metadata_bytes_hashed,
             "metadata_index_records": self.parsed_index_records, "index_entries": self.parsed_index_entries,
             "unique_intersecting_chunks_across_attempts": len(self.selected_chunks), "read_calls": self.read_calls,
+            "core_pre_read_range_rejections": len(self.range_rejections),
+            "rejected_ranges": [dict(item) for item in self.range_rejections],
             "attempts": self.attempts, "active_seconds": self.active_seconds, "accounting_known": self.accounting_known,
             "payload_acquisition_attempts": 0, "payload_expansion_attempts": 0, "decoded_messages": 0,
             "expanded_bytes": 0, "temporary_disk_bytes": 0}
@@ -249,7 +303,11 @@ class Cursor:
 
 
 class Reader:
-    def __init__(self, source: ByteSource, ledger: Ledger):
+    def __init__(self, source: ByteSource, ledger: Ledger, contract: Contract,
+                 layout: SyntheticReadLayout | None = None):
+        check(isinstance(layout, SyntheticReadLayout), "independent synthetic layout required", "BLOCKED_READ_LAYOUT")
+        layout.validate(source, contract)
+        self.layout = layout
         self.source, self.ledger = source, ledger
         self.size, self.revision = source.size, source.revision
         check(uint(self.size), "source size")
@@ -257,7 +315,11 @@ class Reader:
 
     def read(self, offset: int, length: int) -> bytes:
         self.ledger.check_time()
-        check(uint(offset) and uint(length) and offset + length <= self.size, "read offset/length outside source")
+        check(self.source.size == self.size and self.source.revision == self.revision,
+              "layout source changed before read", "BLOCKED_READ_LAYOUT_BINDING")
+        if not self.layout.covers(offset, length):
+            self.ledger.range_rejections.append({"offset_bytes": offset, "length_bytes": length})
+            raise S1Error("BLOCKED_READ_RANGE", "candidate read not fully covered by independent synthetic layout")
         check(length <= self.ledger.limits["single_record_bytes"], "allocation/read size exceeds cap", "PARTIAL_BUDGET")
         check(self.ledger.returned_source_bytes + length <= self.ledger.limits["source_bytes"], "source-byte envelope exceeded before read", "PARTIAL_BUDGET")
         check(not any(offset < end and offset + length > start for start, end in self.forbidden), "attempt to read declared chunk region", "BLOCKED_PAYLOAD_BOUNDARY")
@@ -362,12 +424,15 @@ def parse_summary(rows: list, result: dict, ledger: Ledger) -> None:
     result["same_name_different_schema"] = {name: ids for name, ids in names.items() if len({schemas[i]["definition_sha256"] for i in ids}) > 1}
 
 
-def inspect_s1_index(byte_source: ByteSource, metadata_input: MetadataInput, contract: Contract, ledger: Ledger) -> dict:
+def inspect_s1_index(byte_source: ByteSource, metadata_input: MetadataInput, contract: Contract, ledger: Ledger,
+                     layout: SyntheticReadLayout | None = None) -> dict:
     """Only synthetic random-access I/O; S1 readiness is never B/C/D/E success."""
     result: dict[str, Any] = {**FLAGS, "format": VERSION, "mode": "OFFLINE_SYNTHETIC_ONLY", "status": "NOT_EXECUTED",
         "schemas": {}, "channels": {}, "all_chunk_descriptors": [], "selected_chunk_descriptors": [],
         "message_indexes": [], "crc": {"summary": "NOT_INSPECTED", "chunk_and_data_crc": "NOT_INSPECTED_PAYLOAD_OUT_OF_SCOPE"},
         "s2_authorized": False, "s2_candidates_within_caps": False,
+        "read_boundary_basis": "INDEPENDENT_SYNTHETIC_LAYOUT_REQUIRED",
+        "read_layout_verified": False,
         "claims": {name: "NOT_EXECUTED" for name in ("B_RECORD_BINDING", "original_occurrence_uniqueness",
             "C_LISTED_PAIR_PROJECTION", "B_STREAM_REPLAY", "C_COMPLETE_CANDIDATE_INVARIANCE", "D_PHYSICAL_ACCURACY",
             "E_GEOMETRY_SUPERVISION", "E_STOP_LAUNCH_LABELS", "E_MOTION_PERMISSION_SAFETY", "E_CONTROLLER_ORACLE")},
@@ -388,7 +453,9 @@ def inspect_s1_index(byte_source: ByteSource, metadata_input: MetadataInput, con
         ledger.metadata_bytes_hashed += len(metadata_input.synthetic_bytes)
         check(sha(metadata_input.synthetic_bytes) == contract.metadata_sha256 and metadata_input.run_id == contract.source_run and
               metadata_input.source_id == contract.source_id, "synthetic metadata/source binding mismatch", "SOURCE_BINDING_MISMATCH")
-        r = Reader(byte_source, ledger)
+        r = Reader(byte_source, ledger, contract, layout)
+        result["read_layout_verified"] = True
+        result["read_layout_provenance"] = r.layout.provenance
         stamp = (r.size, r.revision)
         check(ledger._source_stamp in (None, stamp), "source changed between attempts", "SOURCE_CHANGED")
         ledger._source_stamp = stamp

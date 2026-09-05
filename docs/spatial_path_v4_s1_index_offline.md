@@ -25,7 +25,7 @@ mode: OFFLINE_SYNTHETIC_ONLY
 - 旧結果文書: `69d21d376ac95dde881fa75d5773827fb68fd04e`
 - 上記objectは全てローカルcommitとして存在し、作業前HEADの祖先だった。開始時working treeはclean。
 - 本依頼文は外部attachment `57303244-be82-44b8-878d-0545a4b69c5f`。独立した依頼文commitなし。
-- 今回reader版: `spatial_s1_index_v4_offline_v1`。実装commit／実測結果は末尾に別記する。
+- 初回reader版: `spatial_s1_index_v4_offline_v1`。今回修正版は `spatial_s1_index_v4_offline_v2_read_layout`。
 
 計画rootは `/home/thistle/e2e_autonomous/runs/spatial_v4_record_binding_plan_v2_20260905`。
 指定された7成果物だけを読み、既存plannerと同じcanonical JSON
@@ -56,7 +56,7 @@ metadata報告hash `087f45eb23b6e8aa846822b155d603bf7f40157d999a3396a55a9383751c
 ## API・構造対応
 
 - `validate_s1_contract(plan_mapping) -> Contract`: mappingのみを検査。固定identity、不変scope、未承認flag、envelopeを照合。不一致はBLOCKED_PLAN。
-- `inspect_s1_index(byte_source, metadata_input, contract, ledger) -> dict`: synthetic=Trueの明示protocolのみ。
+- `inspect_s1_index(byte_source, metadata_input, contract, ledger, layout=None) -> dict`: synthetic=Trueの明示protocolのみ。
   `read_at(offset_bytes, length_bytes)`、uint64の`size`、変更検知用`revision`が必要。
 - `MemorySource(bytes)`はBytesIO実装。path/stream引数を受けない。metadata hash検証も合成bytesだけ。
 - offsets/lengthはbytes、log_timeはuint64 ns、active時間は秒。inclusive→exclusiveはconsumer側上限も確認し、overflowを拒否。
@@ -69,7 +69,7 @@ schema definitionはhash/長さ、encodingは文字列として保持し、schem
 索引時刻順を仮定せず、bounded Summary全体を列挙して全4窓との交差を検査する。
 対象topicの索引entryがない窓はPARTIAL_SCOPE。entryの存在は候補record/payloadの存在証明ではない。
 
-Chunk本文はヘッダを含む全Chunk領域を読取禁止区間として扱う。Message Indexの場所はそのChunk直後の
+v2では後述の独立SyntheticReadLayoutを全readの信頼の起点とする。Chunk本文はヘッダを含む全Chunk領域を補助的な読取禁止区間として扱う。Message Indexの場所はそのChunk直後の
 宣言index領域内であること、次のindex境界までに一致することを確認する。Message.dataは扱わない。
 declared compressed/uncompressed sizeは報告値であり、実展開量・必要費用・payload正当性の保証ではない。
 その他topicのMessage Index本文は取得せず、clock/anchor/velocity endpointを追加しない。
@@ -82,9 +82,9 @@ declared compressed/uncompressed sizeは報告値であり、実展開量・必�
 - file-zstd、索引なし、必要summary定義なしは停止。scan/decode fallbackなし。
 - Statistics/AttachmentIndex/MetadataIndex等を含むSummary、record末尾の拡張field、index間のgap等は現状未対応。
   形式上正当でもUNSUPPORTEDとして扱い、壊れたMCAPとは断定しない。
-- footer宣言のSummary位置を入口とする。悪意ある偽装footerがpayload領域をSummaryと称する場合まで
-  非payload性を証明する仕組みではない。今回の手組みfixtureと明示source契約でのみ境界を検証している。
-  将来実adapterには信頼境界／許可read-range設計の独立審査が必要。
+- v1ではfooter宣言のSummary位置を入口とし、独立した読取許可がなかった。v2では候補範囲を独立layoutと
+  read_at発行前に照合する。任意の不正sourceや不正なlayoutに対して非payload性を証明したわけではない。
+  将来実adapterには独立した範囲根拠・信頼境界設計の審査が必要。根拠がなければ本番adapterへ進めない。
 - revision/sizeによる前後確認はfakeの変更検知。ABA、偽のrevision、不正なadapter、OS TOCTOUや原本全byte不変性の証明ではない。
 - full header候補完全性はUNKNOWN、original occurrence一意性、B_recordbinding、C、replay、D、4つのEはNOT_EXECUTED。
   geometry教師採用、stop/launch label、motion permission/Safety、controller oracleは別gate。
@@ -93,7 +93,8 @@ declared compressed/uncompressed sizeは報告値であり、実展開量・必�
 
 共通envelope候補はsource_bytes=67108864、expanded_bytes=134217728、messages=5000、seconds=60、
 temporary_disk_bytes=0、single_record_bytes=16777216、chunks=8。
-`Ledger`を同じsource/contractの全attemptで共有する。上限の引上げは拒否、過去raw残量は流用しない。
+`Ledger`を同じsource/contractの全attemptで共有する。ENVELOPE超過は拒否、過去raw残量は流用しない。
+一度縮小したlimitsのENVELOPE以内への再拡大は現状防いでいない（今回未修正）。
 S2は未実装であり、将来S2にこの台帳を共有する実装・永続化は別途必要。stageごとの新台帳作成は禁止条件。
 
 `synthetic_io`でreturned source bytes（再読取含む）、metadata hash bytes、metadata/index record解析数、index entry数、
@@ -152,3 +153,55 @@ synthetic planテストの一時identity置換はpytest monkeypatchの範囲内�
 (3)共通台帳の永続化・retry chunk計数・partial出力の設計とテスト、(4)4窓/8recordのみのS1明示承認が必要。
 その後のS1実結果をレビューし、S2は別のpayload承認が必要。自動移行しない。
 実Chunk位置・数・費用は未取得。合成数値を実計画に転載していない。pushは本依頼の範囲外につき行わない。
+
+## 2026-09-06：v2 読取前範囲契約の修正
+
+依頼attachment: `2399173d-4054-43b6-8877-f5e23d64ce75`（外部依頼、独立commitなし）。
+開始HEAD／前回梱包・結果文書版: `01d484272dffc391de9683c9bdc787d778451467`。
+指定5objectのcommit存在・祖先関係、origin/branch、clean working tree、前計画結果版からの3ファイル差分を確認。
+前回82 passedは上記e4078f7の記録であり、今回結果とは別扱い。
+
+### 信頼の起点とAPI
+
+`SyntheticReadLayout`はfrozen dataclass。synthetic_only、Contract全体（plan identity/probes含む）、
+sourceオブジェクト参照、size、revision、許可範囲tuple、provenanceを外部から明示的に渡す。
+各rangeはuint64 bytesの半開区間[start, stop)。非空・昇順・非重複・source size以内とし、bool/負値/逆転を拒否。
+接するrangeのunionは許可できるが、1byteでも隙間を横切るreadは拒否する。
+
+fixture組立側がHeader、Message Index、Summary/Offset/Footer/magicの出力位置を保持し、
+coreが読むbyte列と別の契約として渡す。FooterやIndexを解析してlayoutを生成するfallbackはない。
+Footer/Header/Indexの数値は候補にすぎず、Summary CRC一致やDataEndらしいbytesも許可根拠ではない。
+全source.read_at呼出しはReader.readの共通経路でlayout全範囲包含を検査してから行う。
+Header/record header/body、magic、Footer、Summary、Message Indexを例外にしない。
+
+layoutなし/不正はBLOCKED_READ_LAYOUT、別Contract/source/size/revisionはBLOCKED_READ_LAYOUT_BINDINGで
+source.read_atを発行せず停止。範囲未許可はBLOCKED_READ_RANGE。既存の予算・時間上限も維持する。
+source参照の`is`照合は合成プロセス内のlayout取り違え防止であり、原本の強いsource bindingではない。
+provenanceは呼出側の申告。coreがその真実性や悪意あるfixture作者を検証できるわけではない。
+
+`synthetic_io.read_calls`は実際のsource発行数、returned_source_bytesは返却bytes、
+core_pre_read_range_rejectionsは発行前拒否数、rejected_rangesはoffset/length診断。
+拒否だけでbytes/read_callsを増やさない。GuardedSourceも発行を先に記録し、sentinel拒否を別countする。
+core拒否試験ではsource側sentinel_rejections=0も検査する。固定payload counter=0だけでは境界成功の根拠にしない。
+read_layout_verifiedとread_boundary_basisは合成契約の確認であり、実rawアクセス0の不変fieldとは別。
+S1_SYNTHETIC_INDEX_INSPECTEDは独立に渡された合成layoutの下での結果に限定する。
+
+### 今回に混ぜない残課題（未修正）
+
+- Ledger.limits縮小後のENVELOPE以内への再拡大。
+- Ledger bindingに個別/union cap、source_run/source_idが含まれない点（layout照合は台帳修正ではない）。
+- finishで初めて時間超過が判明する場合、およびclockがfinishで例外になる場合の最終化。
+- 直接構築Contractと固定plan検証済みContractの区別。
+- 同size/revisionを持つ別source等に対する強い原本binding。新layoutの参照照合はこの問題全体を解消しない。
+- Message Indexの最低Message領域長等のdescriptor内部整合性。
+
+対応形式拡大、永続台帳、writer、S2、本番adapterは追加していない。
+4probe/8record/4窓、旧14claim、計画identity、B/C/D/E非昇格と全未承認flagを維持。
+今回は計画成果物を再生成・再分類していない。実raw/Datasetアクセス、学習/走行、pushはいずれも0。
+
+### 今回の検証
+
+実行対象とWindows commit→CheckOnly→sync→WSL lock手順は上記と同じ2テスト限定。
+新規反例は元layoutを固定し、FooterをChunk先頭/records内部に向ける、CRC一致の偽装、
+Header長増大、未許可Message Index、range欠落/異常値/隙間、別source/contract/size/revisionを検証する。
+実行結果は検証後に追記する。
