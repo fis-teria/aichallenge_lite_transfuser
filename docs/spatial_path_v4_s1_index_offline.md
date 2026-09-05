@@ -137,7 +137,16 @@ synthetic planテストの一時identity置換はpytest monkeypatchの範囲内�
 
 ## 実測結果・残条件
 
-初回実装時点: WSL合成テストはまだ未実行。実測後にcommit SHAと件数を追記する。
+2026-09-05の実測:
+
+- reader初回実装commit: `e208444b7a0fd77ffe776a998faa4153685bf2f6`。限定テスト72 passed in 0.19s。
+- 例外途中の診断保持・破損索引境界テスト追加版: `e4078f74c62567e24065f90169ecc1fb04d5b68c`。
+  このcommitでWindows/WSL同一SHA、CheckOnly→通常syncの成功を確認後、worktree lock付きで
+  **82 passed in 0.20s**（新規S1 72件＋既存同期数学10件）。失敗0。
+- この結果追記は上記実行版の後続文書commit。実装・テスト実行SHAと結果文書SHAを同一と偽装しない。
+- Windowsでの計画7成果物のcanonical identity照合は成功。各成果物の読取前後byte一致も確認。
+- 実raw/metadata/index、Dataset本体、学習・推論、ROS環境は未実行。旧14claim、4seed/8record/4窓は変更なし。
+- readiness判定: **合成入力の最小S1 coreを検証済み**。本番readerとしての適格性やS1実取得承認ではない。
 
 実sourceへ進む前には、(1)このcoreと範囲制約の独立レビュー、(2)source binding/immutabilityと実File adapterの別設計、
 (3)共通台帳の永続化・retry chunk計数・partial出力の設計とテスト、(4)4窓/8recordのみのS1明示承認が必要。
