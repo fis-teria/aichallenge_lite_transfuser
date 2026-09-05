@@ -299,7 +299,7 @@ def closure(claim_id: str, gids: set[str], dep_rows: list, run: str, groups: dic
         "missing_endpoint_evidence": missing, "exceeded_caps": over,
         "local_clock_window_bag_ns": window, "window_margin_ns_proposed": 250_000_000,
         "saved_clock_records": clock, "clock_scope": "local hypothesis only; not independently assigned domain",
-        "source_schema_requirements": sorted({(r["source_id"], r["topic"], r["type"]) for r in candidates}),
+        "source_schema_requirements": sorted({(r["source_id"], r["topic"], r["type"]) for r in candidates + clock}),
         "selection_policy_candidate_scope": {"observed_ids_complete_in_saved_JSON": candidate_ids,
             "source_completeness": "UNKNOWN", "whole_run_epoch_alias_absence": "UNKNOWN",
             "required": "all candidates in an independently bound source/domain partition; if not bounded, CLAIM_CLOSURE_BLOCKED, do not expand to whole run"},
@@ -308,7 +308,11 @@ def closure(claim_id: str, gids: set[str], dep_rows: list, run: str, groups: dic
 
 
 def acquisition_items(c: dict) -> list:
-    common = {"claim_id": c["claim_id"], "target_record_ids": [r["record_id"] for r in c["required_candidates"]],
+    common = {"claim_id": c["claim_id"], "run_id": c["run_id"],
+        "closure_status": c["status"], "target_group_ids": c["required_group_ids"],
+        "target_source_schema_bindings": c["source_schema_requirements"],
+        "target_clock_record_ids": [r["record_id"] for r in c["saved_clock_records"]],
+        "target_record_ids": [r["record_id"] for r in c["required_candidates"]],
         "window_bag_ns": c["local_clock_window_bag_ns"], "endpoint_hashes": sorted({e["reported_payload_sha256"] for e in c["endpoint_dependencies"]}),
         "saved_candidate_payload_hashes": sorted({r["payload_sha256"] for r in c["required_candidates"]}),
         "on_missing_extra_candidate_or_schema_change": "invalidate candidate binding/completeness; preserve old artifacts; record difference and BLOCK dependent claim, no silent replacement",
@@ -342,13 +346,17 @@ def build_plan(inputs: dict, limits: Limits) -> dict:
     for seed in selection["seeds"]:
         related = seed["related_anchor_steps"]
         # A separate single-target probe is never described as full-prefix verification.
-        preferred = sorted(related, key=lambda r: (not bool(r["strict_horizons"]), r["sample_id"], r["step"] or 0))
+        preferred = sorted(related, key=lambda r: (
+            not ("anchor_endpoint_nonzero" in seed["roles"] and r["kind"] == "anchor_pose"),
+            not bool(r["strict_horizons"]), r["sample_id"], r["step"] or 0))
         if preferred:
             ref = preferred[0]
             a = by_anchor[ref["sample_id"]]
             step = ref["step"] or (a["scopes"]["h30"]["existing_strict_prefix"]["target_steps"] or [s["step"] for s in a["steps"]])[0]
             deps = dependencies(a, [step])
-            target = {"sample_id": a["sample_id"], "target_steps": [step]}
+            target = {"sample_id": a["sample_id"], "target_steps": [step],
+                      "inside_saved_strict_prefix": step in a["scopes"]["h30"]["existing_strict_prefix"]["target_steps"],
+                      "selection_reason": "anchor-role uses its own anchor first, then strict membership, stable anchor ID and earliest step; invalid targets remain diagnostics"}
         else:
             deps, target = [], {"sample_id": None, "target_steps": [], "scope": "seed-only control; no prefix claim"}
         c = closure("partial_probe:" + seed["group_id"], {seed["group_id"]}, deps, seed["run_id"], lookup, records, limits)
@@ -374,6 +382,7 @@ def build_plan(inputs: dict, limits: Limits) -> dict:
         "probe_union": {"required_group_ids": union_gids, "required_record_ids": union_rids,
             "status": "CLAIM_CLOSURE_BLOCKED" if len(union_gids) > limits.union_groups or len(union_rids) > limits.union_candidates else "WITHIN_OBSERVED_UNION_CAPS_NOT_SOURCE_COMPLETENESS"},
         "acquisition_items": [item for c in closures for item in acquisition_items(c)],
+        "scheduling_scope": "full-prefix closures are alternative claims, not automatically scheduled work; blocked items cannot be acquired under these caps",
         "optional_projection_probe": {"predicate": "yaw projection provenance", "seed_group_ids": [s["group_id"] for s in selection["seeds"] if s["saved_maxima"].get("yaw_rad", 0) > 0],
             "fields": ["original quaternion", "projection convention and schema"], "stage": "same already approved candidate chunk only",
             "if_absent": "UNRESOLVABLE_FROM_THIS_SOURCE", "new_teacher_XY": False},
@@ -395,10 +404,21 @@ def build_plan(inputs: dict, limits: Limits) -> dict:
         "gates": {"independent_geometry_only_design": "SPECIFICATION_ONLY_NO_DATA_GENERATION",
             "real_data_adoption": "BLOCKED_SEPARATE_PROVENANCE_AND_SUPERVISION", "stop_teacher": "BLOCKED_INTENT_PERMISSION",
             "controller_mpc_oracle": "BLOCKED_ENVIRONMENT_VEHICLE_POLICY_NOT_IMPLEMENTED_BY_THIS_TASK"}}
+    duplicate_pose = [g for g in groups if g["topic"] == POSE and g["candidate_count"] > 1]
     facts = {"verification_scope": "saved classifications/dependencies/counts joined to allowlisted JSON; no geometric remeasurement",
         "record_count": len(records), "anchor_count": len(anchors), "pose_group_count": sum(g["topic"] == POSE for g in groups),
         "duplicate_pose_count": sum(g["topic"] == POSE and g["candidate_count"] > 1 for g in groups),
         "anchor_endpoint_observed_difference_count": sum(a["anchor_pose_dependency"]["observed_difference"] is True for a in anchors),
+        "saved_diagnostic_aggregation": {
+            "candidate_count_distribution": dict(Counter(str(g["candidate_count"]) for g in duplicate_pose)),
+            "classification_counts": dict(Counter(label for g in duplicate_pose for label in g["classification"])),
+            "different_payload_groups": sum(len(g["payload_hash_set"]) > 1 for g in duplicate_pose),
+            "positive_xy_at_most_1e8": sum(0 < g["all_pair_maxima"]["xy_m"] <= 1e-8 for g in duplicate_pose),
+            "positive_yaw": sum(g["all_pair_maxima"]["yaw_rad"] > 0 for g in duplicate_pose),
+            "xy_above_20um_not_safety": sum(g["all_pair_maxima"]["xy_m"] > 2e-5 for g in duplicate_pose),
+            "max_xy_m": max((g["all_pair_maxima"]["xy_m"] for g in duplicate_pose), default=None),
+            "max_yaw_rad": max((g["all_pair_maxima"]["yaw_rad"] for g in duplicate_pose), default=None),
+            "strict_prefix_affected_anchors": {h: sum(bool(a["scopes"][h]["existing_strict_prefix"].get("observed_difference_steps", [])) for a in anchors) for h in ("h15", "h30")}},
         "prior_summary_reported": {k: v for k, v in inputs["conflict/summary.json"].items() if k != "elapsed_analysis_sec"},
         "old_tiers_reported": inputs["evidence/execution_manifest.json"].get("tiers"),
         "Dataset_identity_reported_not_body_verified": inputs["evidence/execution_manifest.json"]["dataset_identity"]}
@@ -498,7 +518,7 @@ def run_plan(conflict_root: Path, evidence_root: Path, output: Path, repo: Path,
                 key = "evidence/" + prior["name"]
                 require(key in inputs["_hashes"] and inputs["_hashes"][key] == prior["sha256"], "prior artifact input hash join")
             result = build_plan(inputs, limits)
-        except (KeyError, TypeError, ValueError, IndexError, StopIteration) as error:
+        except (KeyError, TypeError, ValueError, IndexError, StopIteration, AttributeError, OverflowError) as error:
             reason = "schema_or_join:" + str(error)
             (partial if "LIMIT:" in str(error) else blockers).append(reason)
     # Revalidate paths and bounded content, including inputs rejected after hashing.

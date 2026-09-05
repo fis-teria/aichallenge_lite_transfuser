@@ -155,6 +155,9 @@ def test_local_clock_never_proves_domain_or_alias_absence() -> None:
     assert c["selection_policy_candidate_scope"]["whole_run_epoch_alias_absence"] == "UNKNOWN"
     assert c["complete_source_closure_status"].startswith("CLAIM_CLOSURE_BLOCKED")
     assert result["seeds"][0]["domain_status_reported"]["status"] == "UNKNOWN"
+    assert any(binding[1] == "/clock" for binding in c["source_schema_requirements"])
+    items = p.acquisition_items(c)
+    assert items[0]["target_clock_record_ids"] and items[0]["target_group_ids"]
 
 
 def test_claim_alternatives_and_unknown_cost_not_zero() -> None:
@@ -194,11 +197,13 @@ def test_allowlist_only_and_embedded_commands_never_followed(tmp_path: Path, mon
         assert field in unresolved["not_recorded_branches"]
 
 
-@pytest.mark.parametrize("case", ["missing", "hash", "schema", "count", "tier", "commit", "group_join", "endpoint", "partial", "limit"])
+@pytest.mark.parametrize("case", ["missing", "hash", "schema", "nested_schema", "count", "tier", "commit", "group_join", "endpoint", "partial", "limit"])
 def test_invalid_inputs_block_or_partial(tmp_path: Path, case: str) -> None:
     data = fixture()
     if case == "schema":
         data["conflict/pose_stamp_groups.json"] = []
+    if case == "nested_schema":
+        data["conflict/pose_stamp_groups.json"]["groups"][0]["all_pair_maxima"] = None
     if case == "count":
         data["conflict/summary.json"]["record_count"] += 1
     if case == "tier":
@@ -290,3 +295,36 @@ def test_duplicate_keys_and_nonfinite_JSON_rejected() -> None:
         json.loads('{"a": 1, "a": 2}', object_pairs_hook=p.unique_object)
     with pytest.raises(ValueError):
         json.loads('{"a": NaN}', parse_constant=p.reject_constant)
+
+
+def test_anchor_role_uses_own_anchor_even_when_earlier_future_depends_on_it() -> None:
+    data = fixture()
+    a = data["conflict/anchor_prefix_impact.json"][0]
+    earlier = deepcopy(a)
+    earlier["sample_id"] = "aaa_earlier"
+    earlier["anchor_pose_dependency"] = deepcopy(a["steps"][0]["pose_dependency"])
+    earlier["steps"][0]["pose_dependency"] = deepcopy(a["anchor_pose_dependency"])
+    data["conflict/anchor_prefix_impact.json"].append(earlier)
+    data["evidence/anchor_evidence.json"].append({"sample_id": earlier["sample_id"], "run_id": earlier["run_id"], "tier": "OBSERVED_ONLY"})
+    data["evidence/selection.json"]["selected"].append({"sample_id": earlier["sample_id"]})
+    data["conflict/summary.json"]["anchor_count"] = 2
+    data["evidence/execution_manifest.json"]["selected_anchor_count"] = 2
+    result = p.build_plan(data, p.Limits())["proposal"]
+    seed = next(s for s in result["seeds"] if "anchor_endpoint_nonzero" in s["roles"])
+    c = next(c for c in result["closures"] if c["claim_id"] == "partial_probe:" + seed["group_id"])
+    assert c["sample_id"] == "synthetic_anchor"
+
+
+def test_union_caps_separate_from_per_claim_caps() -> None:
+    proposal = p.build_plan(fixture(), replace(p.Limits(), union_groups=1))["proposal"]
+    assert proposal["probe_union"]["status"] == "CLAIM_CLOSURE_BLOCKED"
+    assert len(proposal["probe_union"]["required_group_ids"]) > 1
+    assert any(c["status"] == "BOUNDED_PROPOSAL_PENDING_DOMAIN_AND_COST" for c in proposal["closures"])
+
+
+def test_code_policy_and_inputs_bind_logical_identity(tmp_path: Path) -> None:
+    c, e, hashes = save_fixture(tmp_path)
+    result = p.run_plan(c, e, tmp_path / "out1", REPO, expected=hashes)
+    changed = p.run_plan(c, e, tmp_path / "out2", REPO, replace(p.Limits(), union_groups=63), expected=hashes)
+    assert result["logical_plan_identity"] != changed["logical_plan_identity"]
+    assert set(result["code_hashes"]) == {"spatial_pose_evidence_plan_v4.py", "plan_spatial_pose_evidence_v4.py"}
