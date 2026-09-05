@@ -7,6 +7,48 @@ from typing import Mapping, Sequence
 import numpy as np
 
 
+def screening_gate_status_v3(
+    baseline_summary: Mapping[str, object],
+    candidate_summary: Mapping[str, object],
+) -> dict[str, bool]:
+    """Combine launch readiness with waypoint-ADE non-regression.
+
+    Older standalone evaluation artifacts called the launch-only result
+    ``screening_gate_pass``.  Accept that key when reading historical artifacts,
+    but expose the two gates separately so launch readiness cannot be mistaken
+    for the complete research-candidate screen.
+    """
+
+    baseline_launch_pass = bool(
+        baseline_summary.get(
+            "launch_gate_pass", baseline_summary.get("screening_gate_pass", False)
+        )
+    )
+    candidate_launch_pass = bool(
+        candidate_summary.get(
+            "launch_gate_pass", candidate_summary.get("screening_gate_pass", False)
+        )
+    )
+    baseline_quality = baseline_summary["teacher_quality"]
+    candidate_quality = candidate_summary["teacher_quality"]
+    if not isinstance(baseline_quality, Mapping) or not isinstance(
+        candidate_quality, Mapping
+    ):
+        raise TypeError("teacher_quality summaries must be mappings")
+    baseline_ade = float(baseline_quality["trajectory_waypoint_weighted_ade_m"])
+    candidate_ade = float(candidate_quality["trajectory_waypoint_weighted_ade_m"])
+    if not math.isfinite(baseline_ade) or not math.isfinite(candidate_ade):
+        raise ValueError("trajectory waypoint ADE must be finite")
+    regression_pass = candidate_ade <= baseline_ade
+    return {
+        "baseline_launch_gate_pass": baseline_launch_pass,
+        "candidate_launch_gate_pass": candidate_launch_pass,
+        "candidate_trajectory_regression_gate_pass": regression_pass,
+        "baseline_screening_gate_pass": baseline_launch_pass,
+        "candidate_screening_gate_pass": candidate_launch_pass and regression_pass,
+    }
+
+
 def paired_run_bootstrap_v3(
     baseline_rows: Sequence[Mapping[str, object]],
     candidate_rows: Sequence[Mapping[str, object]],

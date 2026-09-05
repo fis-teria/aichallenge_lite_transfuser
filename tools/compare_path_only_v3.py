@@ -12,7 +12,10 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from aic_transfuser_lite.evaluation.compare_v3 import paired_run_bootstrap_v3
+from aic_transfuser_lite.evaluation.compare_v3 import (
+    paired_run_bootstrap_v3,
+    screening_gate_status_v3,
+)
 
 
 def _rows(path: Path) -> list[dict[str, str]]:
@@ -36,6 +39,7 @@ def main() -> int:
         raise ValueError("A0 and candidate cohort identities differ")
     baseline_rows = _rows(args.baseline / "per_sample.csv")
     candidate_rows = _rows(args.candidate / "per_sample.csv")
+    gate_status = screening_gate_status_v3(baseline_summary, candidate_summary)
     comparisons = {
         metric: paired_run_bootstrap_v3(
             baseline_rows,
@@ -52,8 +56,7 @@ def main() -> int:
         "baseline_checkpoint_sha256": baseline_summary["checkpoint_sha256"],
         "candidate_checkpoint_sha256": candidate_summary["checkpoint_sha256"],
         "paired_run_bootstrap": comparisons,
-        "baseline_screening_gate_pass": baseline_summary["screening_gate_pass"],
-        "candidate_screening_gate_pass": candidate_summary["screening_gate_pass"],
+        **gate_status,
         "baseline_teacher_quality": baseline_summary["teacher_quality"],
         "candidate_teacher_quality": candidate_summary["teacher_quality"],
         "baseline_launch": baseline_summary["stopped_commanded_motion"],

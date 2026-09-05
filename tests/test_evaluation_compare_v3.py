@@ -1,6 +1,9 @@
 import pytest
 
-from aic_transfuser_lite.evaluation.compare_v3 import paired_run_bootstrap_v3
+from aic_transfuser_lite.evaluation.compare_v3 import (
+    paired_run_bootstrap_v3,
+    screening_gate_status_v3,
+)
 
 
 def test_paired_bootstrap_resamples_runs_not_frames() -> None:
@@ -29,3 +32,37 @@ def test_paired_bootstrap_rejects_different_cohorts() -> None:
             [{"sample_id": "b", "run_id": "run", "ade_m": 1.0}],
             metric="ade_m",
         )
+
+
+def test_screening_gate_requires_launch_and_ade_non_regression() -> None:
+    baseline = {
+        "launch_gate_pass": False,
+        "teacher_quality": {"trajectory_waypoint_weighted_ade_m": 0.13},
+    }
+    candidate = {
+        "launch_gate_pass": True,
+        "teacher_quality": {"trajectory_waypoint_weighted_ade_m": 0.14},
+    }
+
+    result = screening_gate_status_v3(baseline, candidate)
+
+    assert result["candidate_launch_gate_pass"] is True
+    assert result["candidate_trajectory_regression_gate_pass"] is False
+    assert result["candidate_screening_gate_pass"] is False
+
+
+def test_screening_gate_reads_legacy_launch_only_key() -> None:
+    baseline = {
+        "screening_gate_pass": False,
+        "teacher_quality": {"trajectory_waypoint_weighted_ade_m": 0.13},
+    }
+    candidate = {
+        "screening_gate_pass": True,
+        "teacher_quality": {"trajectory_waypoint_weighted_ade_m": 0.12},
+    }
+
+    result = screening_gate_status_v3(baseline, candidate)
+
+    assert result["candidate_launch_gate_pass"] is True
+    assert result["candidate_trajectory_regression_gate_pass"] is True
+    assert result["candidate_screening_gate_pass"] is True

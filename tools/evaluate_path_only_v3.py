@@ -598,7 +598,7 @@ def main() -> int:
     quality_summary = _aggregate(rows, quality_only=True)
     unfiltered_summary = _aggregate(rows, quality_only=False)
     launch_summary = _launch_summary(rows, episode_gap_sec=gate.episode_gap_sec)
-    gate_pass = bool(
+    launch_gate_pass = bool(
         launch_summary["anchor_count"] >= gate.minimum_samples
         and launch_summary["ready_fraction"] >= gate.minimum_ready_fraction
         and launch_summary["run_count"] >= gate.minimum_runs
@@ -643,8 +643,8 @@ def main() -> int:
         "teacher_quality": quality_summary,
         "unfiltered_valid": unfiltered_summary,
         "stopped_commanded_motion": launch_summary,
-        "screening_gate_pass": gate_pass,
-        "screening_gate": gate.__dict__,
+        "launch_gate_pass": launch_gate_pass,
+        "launch_gate": gate.__dict__,
         "limitations": [
             "offline replay does not prove measured or closed-loop launch",
             "stop probability is not connected in the selected runtime profile",
@@ -665,7 +665,15 @@ def main() -> int:
         + "\n",
         encoding="utf-8",
     )
-    print(json.dumps({"status": "COMPLETE", "output": str(args.output), "gate_pass": gate_pass}))
+    print(
+        json.dumps(
+            {
+                "status": "COMPLETE",
+                "output": str(args.output),
+                "launch_gate_pass": launch_gate_pass,
+            }
+        )
+    )
     return 0
 
 
