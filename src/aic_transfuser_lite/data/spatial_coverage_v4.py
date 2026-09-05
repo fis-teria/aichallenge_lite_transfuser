@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 import csv
 import hashlib
 import json
@@ -344,16 +345,20 @@ def v3_row_status(row: dict[str, str], future: np.ndarray | None, model_config: 
     cfg = MotionTargetFilterConfigV3(**model_config["targets"]["motion_target_filter"])
     if not flags and future is not None:
         assert command is not None
-        assessment = assess_commanded_motion_target_v3(
-            future, current_speed_mps=float(row["velocity_longitudinal_mps"]),
-            commanded_speed_mps=float(command[0][1]), config=cfg).value
+        try:
+            assessment = assess_commanded_motion_target_v3(
+                future, current_speed_mps=float(row["velocity_longitudinal_mps"]),
+                commanded_speed_mps=float(command[0][1]), config=cfg).value
+        except ValueError:
+            # Preserve this raw anchor instead of aborting/dropping a corrupt label.
+            assessment = "UNREADABLE"
         if cfg.enabled and assessment == "contradictory_stationary":
             flags.append("contradictory_stationary")
     return {"ego_valid": bool(mask.all()), "command_source": command[1] if command else "unknown",
             "command_speed_mps": float(command[0][1]) if command else None,
             "base_exclusion_primary": base_primary, "exclusion_primary": flags[0] if flags else "none",
             "v3_exclusion_flags": flags, "v3_motion_assessment": assessment,
-            "v3_quality_member": (not flags) if future is not None else None}
+            "v3_quality_member": (not flags) if future is not None and assessment != "UNREADABLE" else None}
 
 
 def repository_provenance(repo: Path) -> dict[str, Any]:
@@ -400,8 +405,13 @@ def aggregate(rows: Sequence[Mapping[str, Any]], keys: Sequence[str]) -> list[di
             "estimated_episodes": len({r["estimated_episode_id"] for r in group if r["estimated_episode_id"]}),
             "confirmed_episodes": None, "confirmed_sessions": None,
             "primary_exclusions": dict(Counter(str(r["exclusion_primary"]) for r in group)),
+            "base_exclusions": dict(Counter(str(r["base_exclusion_primary"]) for r in group)),
+            "multiple_exclusion_flags": dict(Counter(f for r in group for f in r["v3_exclusion_flags"])),
+            "quality_flag_counts": dict(Counter(f for r in group for f in r["quality_flags"])),
             "motion_assessments": dict(Counter(str(r["v3_motion_assessment"]) for r in group)),
-            "v3_quality_members": sum(r["v3_quality_member"] is True for r in group)}
+            "v3_quality_assessed": sum(r["v3_quality_member"] is not None for r in group),
+            "v3_quality_members": (sum(r["v3_quality_member"] is True for r in group)
+                if any(r["v3_quality_member"] is not None for r in group) else None)}
         for horizon in ("h15", "h20", "h30"):
             for metric in ("raw_arc_m", "noise_filtered_arc_m_provisional"):
                 present = [r.get(f"{horizon}_{metric}") for r in group if r.get(f"{horizon}_{metric}") is not None]
@@ -412,7 +422,7 @@ def aggregate(rows: Sequence[Mapping[str, Any]], keys: Sequence[str]) -> list[di
                 for kind in ("raw", "provisional"):
                     name = f"{horizon}_{kind}_reaches_{distance:g}m"
                     known = [r[name] for r in group if r.get(name) is not None]
-                    counts[name] = {"count": sum(known), "denominator": len(known),
+                    counts[name] = {"count": sum(known) if known else None, "denominator": len(known),
                                     "fraction": sum(known) / len(known) if known else None}
         output.append({**dict(zip(keys, values)), **counts})
     return output
@@ -523,6 +533,7 @@ def run_audit(*, dataset_root: Path, split_manifest: Path, output: Path, repo: P
         ("phase_labels", phase_view / "phase_labels.csv" if phase_view else None),
         ("phase_parent_manifest", phase_parent / "manifest.yaml" if phase_parent else None))]
     report: dict[str, Any] = {"format": "spatial_coverage_audit_v4_v1", "status": "BLOCKED",
+        "started_at_utc": datetime.now(timezone.utc).isoformat(),
         "configuration": asdict(config), "threshold_status": "provisional_not_calibrated",
         "command": list(command), "environment": {"python": platform.python_version(),
         "platform": platform.platform(), "numpy": np.__version__, "yaml": yaml.__version__},
@@ -531,6 +542,8 @@ def run_audit(*, dataset_root: Path, split_manifest: Path, output: Path, repo: P
         report["repository"] = repository_provenance(repo.resolve())
         manifest, assignments, runs = validate_sources(root, split_manifest, expected_identity)
         report["dataset_manifest_identity"] = manifest["manifest_sha256"]
+        report["manifest_file_sha256"] = sha256_file(root / "manifest.yaml")
+        report["split_file_sha256"] = sha256_file(split_manifest)
         report["dataset_schema"] = manifest.get("schema_version")
         if manifest.get("schema_version") != "aic_canonical_dataset_v3":
             raise ValueError("unsupported canonical schema")
@@ -574,7 +587,8 @@ def run_audit(*, dataset_root: Path, split_manifest: Path, output: Path, repo: P
                 "collection_case": case, "side": side, "near_far": band, "case_label_provenance": "preflight_metadata",
                 "geometry": phase.get("geometry", "unknown"), "phase": phase.get("phase", "unknown"),
                 "phase_side": phase.get("side", "unknown"), "route_intent": "unknown",
-                "behavior_label": behavior.get(row["sample_id"], {}).get("behavior_label", "unknown"),
+                "behavior_label": (behavior[row["sample_id"]].get("behavior_label", "unknown")
+                    if behavior.get(row["sample_id"], {}).get("behavior_valid", "false").lower() == "true" else "unknown"),
                 "stop_intent": "unknown", "launch_permission": "unknown", "safety_reason": "unknown",
                 "teacher_source": "measured_canonical_future", "pose_reference": "base_link_not_verified_rear_axle",
                 "stored_steps_metadata": int(row["future_step_count"]), "stored_valid_metadata": int(row["future_valid_count"]),

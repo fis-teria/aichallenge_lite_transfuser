@@ -225,3 +225,73 @@ def test_annotation_identity_not_silently_joined(tmp_path: Path) -> None:
         labels_sha256=sha256_file(view / "labels.csv"))))
     with pytest.raises(ValueError, match="explicit parent"):
         load_annotations(view, "labels.csv", {"manifest_sha256": "actual"})
+
+
+def test_unreadable_v3_label_does_not_become_quality_member() -> None:
+    f = future(0)
+    f[0, 1] = np.inf
+    status = v3_row_status(row(), f, model_config())
+    assert status["v3_motion_assessment"] == "UNREADABLE"
+    assert status["v3_quality_member"] is None
+
+
+def test_source_leakage_is_recomputed_not_trusted(tmp_path: Path) -> None:
+    root, split, digest = fixture_dataset(tmp_path)
+    manifest = yaml.safe_load((root / "manifest.yaml").read_text())
+    manifest["runs"][1]["source_hash"] = manifest["runs"][0]["source_hash"]
+    write_csv(root / "other.csv", manifest["runs"], list(manifest["runs"][0]))
+    (root / "runs.csv").write_bytes((root / "other.csv").read_bytes())
+    for entry in manifest["files"]:
+        if entry["path"] == "runs.csv":
+            entry["sha256"] = sha256_file(root / "runs.csv")
+    manifest.pop("manifest_sha256")
+    digest = identity(manifest)
+    (root / "manifest.yaml").write_text(yaml.safe_dump({**manifest, "manifest_sha256": digest}))
+    split_meta = json.loads(split.read_text())
+    split_meta["dataset_manifest_sha256"] = digest
+    split.write_text(json.dumps(split_meta))
+    with pytest.raises(ValueError, match="source hash crosses"):
+        validate_sources(root, split, digest)
+
+
+def test_ledger_unknown_missing_case_episode_counts(tmp_path: Path) -> None:
+    root, split, digest = fixture_dataset(tmp_path)
+    output = tmp_path / "audit"
+    result = run_audit(dataset_root=root, split_manifest=split, expected_identity=digest,
+        output=output, repo=ROOT, model_config_path=CONFIG_PATH, config=SpatialAuditConfig())
+    assert result["status"] == "COMPLETE"
+    cases = json.loads((output / "recovery_case_matrix.json").read_text())
+    assert [r for r in cases if r["split"] == "val" and r["side"] == "right" and r["near_far"] == "near"][0]["anchors"] == 0
+    ledger = csv_rows(output / "anchor_audit_ledger.csv")
+    assert {r["side"] for r in ledger} == {"unknown"}
+    summary = result["summaries"][0]
+    assert summary["estimated_episodes"] == 1
+    assert summary["confirmed_episodes"] is None
+    assert sum(summary["primary_exclusions"].values()) == summary["raw_anchors"]
+    assert summary["multiple_exclusion_flags"]["contradictory_stationary"] == 1
+
+
+@pytest.mark.parametrize("side", [-1, 1])
+def test_left_right_curves_and_duplicate_endpoint_do_not_inflate_support(side: int) -> None:
+    f = future()
+    angles = np.arange(1, 31) * .1
+    f[:, 1] = np.sin(angles)
+    f[:, 2] = side * (1 - np.cos(angles))
+    f[20:, 1:3] = f[19, 1:3]
+    g = future_geometry(f, SpatialAuditConfig(), horizon_sec=3)
+    assert g["raw_arc_m"] == pytest.approx(20 * 2 * np.sin(.05))
+    assert g["duplicate_segments"] == 10
+    assert g["continuation_impossible_evidence"] == "unknown"
+
+
+def test_corrupt_asset_is_visible_partial_not_missing_zero(tmp_path: Path) -> None:
+    root, split, digest = fixture_dataset(tmp_path)
+    (root / "trajectories/s1.npy").write_bytes(b"bad")
+    output = tmp_path / "audit"
+    result = run_audit(dataset_root=root, split_manifest=split, expected_identity=digest,
+        output=output, repo=ROOT, model_config_path=CONFIG_PATH, config=SpatialAuditConfig())
+    assert result["status"] == "PARTIAL"
+    ledger = csv_rows(output / "anchor_audit_ledger.csv")
+    assert ledger[0]["geometry_status"] == "UNREADABLE"
+    assert ledger[0]["h15_raw_arc_m"] == ""
+    assert len(ledger) == 3
