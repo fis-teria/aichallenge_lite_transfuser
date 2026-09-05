@@ -270,8 +270,81 @@ bash tools/with_wsl_training_lock.sh .venv/bin/python tools/plan_spatial_pose_ev
   --conflict-root /home/thistle/e2e_autonomous/runs/spatial_v4_pose_conflicts_final_20260905 \
   --evidence-root /home/thistle/e2e_autonomous/runs/spatial_v4_evidence_run_v3_20260906 \
   --prior-plan-root /home/thistle/e2e_autonomous/runs/spatial_v4_pose_evidence_plan_v2_20260905 \
-  --output /home/thistle/e2e_autonomous/runs/spatial_v4_record_binding_plan_v1_20260905
+  --output /home/thistle/e2e_autonomous/runs/spatial_v4_record_binding_plan_v2_20260905
 ```
 
 必須6成果物にapproval_request.jsonを含み、取得不能分岐は補足unresolved_and_unrecoverable.jsonにも保存。
-今回の実行結果は検証後に追記。過去43 passedを今回の検証として流用しない。
+### record結合probe修正の実行結果
+
+初期修正commit: `c04574be77142c4ca15e37b8b7657a29ea6efd38`。
+最終コード/検証/計画生成commit: `29c11b1c04e5cb40b237e4bfc4a747fc0b0658d1`。
+この結果追記はその後のdoc-only commit。旧版・プロンプト版・今回の依頼添付とは区別する。
+Windows/WSLのGit状態・process・lockは既定syncで検査、各CheckOnly/通常sync成功。
+同期scriptの既存Datasetディレクトリ存在検査を除き、Dataset本体へアクセスしていない。
+raw sourceは存在確認/statもなし。source pathは保存された文字列としてのみ扱った。
+
+今回の最終focused結果: **67 passed in 0.92s**。
+計画moduleの合成57件 + 非学習synchronization10件であり、全pytest・raw fixture・optimizerなし。
+新規ケースは4pair結合、inclusive窓、旧claim保持、vacuous truth、h15 step16、
+UNKNOWNと既知0、deadline loop、Git/code hash失敗、出力途中失敗、共通envelope、
+raw pathをstat/resolveすらしないこと等を検証する。過去43 passedは流用していない。
+
+成果物root:
+
+- WSL: `/home/thistle/e2e_autonomous/runs/spatial_v4_record_binding_plan_v2_20260905`
+- Windows独立生成: `E:\workspace\e2e_lite_transfuser\tmp\spatial_v4_record_binding_plan_windows_v2_20260905`
+
+両方 **COMPLETE_PLAN_ONLY / exit 0**。論理identityは一致。
+
+| identity | 値 |
+|---|---|
+| 旧plan再計算値 | `394292c7c268715a5efc4cd408f0e9634835d5d4cf016729a01c9f4786dde71d` |
+| 新record-binding plan | `937cbbd09efa8e7fe729a0e58687a39157ca7ec1582c49b231f1a6fe82411597` |
+
+元9 JSONと旧plan6成果物を別検証し、15件すべて期待hash/前後hash一致。
+初回読取合計15,329,897 bytes (旧report_ja.mdを含む)。
+元9 JSONの各期待hashはコードの既存EXPECTEDに維持。
+旧6成果物の期待hashは今回読み取りで固定し、PRIOR_EXPECTEDへ記録。
+旧manifestのlogical identityを再計算し、依頼指定値と一致した。
+旧plan6件を読んだだけで元9件を検証したとは扱わず、manifestに別booleanを保存する。
+Dataset identity `181cf909b80589110574859990b0885005b7f9a0bb07cff1c24f38d6b090f388` は元manifest同士の文字列照合のみ。
+
+旧seed arrayと新seed array、旧closuresと新legacy_claimsは内容一致。
+旧partial4 + full-prefix10の全status/endpoint依存を保持。新claimは4群/8record。
+
+| group ID先頭 | 新log_time探索窓 ns (両端包含) | 新scope | 旧claimとの関係 |
+|---|---|---|---|
+| 8fbd120c | [5939999861, 6439999861] | 1群2候補、0.500秒 | 先頭欠損step1診断を保持 |
+| 208cfcac | [256009994272, 256509994272] | 1群2候補、0.500秒 | 旧step24の2.925秒BLOCKEDを維持 |
+| 353301a9 | [5199999878, 5699999878] | 1群2候補、0.500秒 | 旧補間依存と別claim |
+| ffe514be | [689999978, 1189999978] | 1群2候補、0.500秒 | anchorなしの対照を維持 |
+
+新4pairは `WITHIN_LISTED_CAPS_UNAPPROVED`。物理chunk数/実費用/取得可能性は未確認であり、raw実行PASSではない。
+source locatorはrun `20260902-131505`、basename `rosbag2_autoware_0.mcap`、metadata hash
+`087f45eb23b6e8aa846822b155d603bf7f40157d999a3396a55a9383751c4b05` と保存絶対path文字列が結合した。
+原本全hash、publisher、実ファイル同一性を検証したことにはしない。
+
+上限内の旧full-prefix6件はすべて **KNOWN_ZERO / retained steps=4**。
+旧full-prefix全10件の内訳はKNOWN_ZERO6 / KNOWN_PREFIX2 / UNKNOWN_FIRST_FUTURE_MISSING2。
+正のKNOWN_PREFIX2件は旧closure上限超過のまま。
+元29 anchorsで先頭欠損UNKNOWNは2件のまま。これらを正の経路採用可能性へ読み替えない。
+
+元anchor_evidenceから、関連5 anchorsの保存t_obs・target・saved_valid・左右endpoint契約を結合できた。
+例: 大差step24のanchor t_obsは253880859624ns、旧閾値probeは5328046729ns、
+anchor役割probeは6159218385ns。sample ID時刻の代用はしていない。
+source/domain/schema独立対応、区間内別stamp/境界完全性、歴史的AnyReader選択の根拠は
+MISSING_REPLAY_CONTRACTのまま。pair-only bindingをこれらの不足で一律に否定はしない。
+
+必須6件: claim_requirements.json、minimal_read_proposal.json、approval_request.json、
+input_manifest.json、execution_manifest.json、report_ja.md。
+補足: unresolved_and_unrecoverable.json。旧成果物・初期v1出力は上書きせず保存。
+
+S1はmetadata/indexのみ、定義/index/source不一致時は停止、payloadへのfallbackなし。
+S2はS1成果物と修正reader独立レビュー後の別承認。8候補の対応する承認済みchunkだけ。
+同hashの複数occurrenceは全対応を残し、限定範囲外の不存在・元occurrence一意性へ昇格しない。
+不足fieldは代替十分証拠を評価し、なければNOT_RECORDED/UNRESOLVABLE_FROM_THIS_SOURCE。
+旧残予算流用やstage/再試行ごとの予算複製なし。
+
+geometry教師採用、停止/発進label、走行許可/Safety、controller oracleはすべて別gate・対象外。
+raw/Dataset本体アクセス、新分類、新幾何計算、教師生成、tier変更、学習、推論、走行、pushは0。
+今回の完了は計画修正のみ。raw取得は未実行・未承認、S1/S2ともユーザーの明示承認待ち。
