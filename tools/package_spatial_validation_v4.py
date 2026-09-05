@@ -34,7 +34,7 @@ def package(repo: Path, run: Path, request: Path, report: Path, review: Path, ou
                 add(path.relative_to(run).as_posix(), ordinary_file(path), "evaluation evidence")
     changed = git("diff", "--name-only", base, commit).decode().splitlines()
     tracked = set(git("ls-tree", "-r", "--name-only", commit).decode().splitlines())
-    seeds = set(changed) | {"AGENTS.md", "pyproject.toml", "tests/test_spatial_diagnostic_geometry_v4.py",
+    seeds = set(changed) | {"AGENTS.md", "pyproject.toml", "tests/test_spatial_diagnostic_geometry_v4.py", "tests/test_spatial_diagnostic_package_v4.py",
         "tools/package_spatial_diagnostic_v4.py", "src/aic_transfuser_lite/training/spatial_diagnostic_v4.py"}
     todo, seen = list(seeds & tracked), set()
     while todo:
@@ -58,6 +58,9 @@ def package(repo: Path, run: Path, request: Path, report: Path, review: Path, ou
         if "repo/"+name in files and sha(files["repo/"+name][0]) != expected:
             raise ValueError("executed source mismatch")
     add("provenance/git_diff.patch", git("diff", "--binary", base, commit), "implementation diff")
+    add("provenance/post_execution_diff.patch", git("diff", "--binary", commit, report_commit), "postprocessing/reporting changes only", report_commit)
+    for name in ("tools/annotate_spatial_validation_results_v4.py", "tests/test_spatial_validation_annotation_addendum_v4.py", "tools/package_spatial_validation_v4.py"):
+        add("provenance/post_execution_source/" + name, git("show", report_commit + ":" + name), "postprocessing or packaging source, not inference source", report_commit)
     add("provenance/changed_files.json", json_bytes({"base": base, "execution_commit": commit, "report_commit": report_commit,
         "packaging_commit": report_commit, "files": changed, "push": "NOT_EXECUTED"}), "revision split", report_commit)
     add("reports/limited_validation_report_ja.md", ordinary_file(report), "results report", report_commit)
