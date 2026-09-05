@@ -5,16 +5,19 @@ random-access sources only. Returned descriptors are never actual-source results
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass
+from copy import deepcopy
 import hashlib
 import io
 import json
+import math
 import struct
 import time
 from typing import Any, Callable, Mapping, Protocol
+from types import MappingProxyType
 import zlib
 
-VERSION = "spatial_s1_index_v4_offline_v2_read_layout"
+VERSION = "spatial_s1_index_v4_offline_v3_ledger_lifecycle"
 PLAN_ID = "937cbbd09efa8e7fe729a0e58687a39157ca7ec1582c49b231f1a6fe82411597"
 PRIOR_ID = "394292c7c268715a5efc4cd408f0e9634835d5d4cf016729a01c9f4786dde71d"
 PLAN_COMMIT = "29c11b1c04e5cb40b237e4bfc4a747fc0b0658d1"
@@ -230,43 +233,139 @@ class SyntheticReadLayout:
         return False
 
 
-@dataclass
 class Ledger:
-    """One synthetic envelope across attempts. Human waiting time is not active time."""
-    limits: dict[str, int] = field(default_factory=lambda: dict(ENVELOPE))
-    clock: Callable[[], float] = time.monotonic
-    returned_source_bytes: int = 0
-    metadata_bytes_hashed: int = 0
-    parsed_index_records: int = 0
-    parsed_index_entries: int = 0
-    read_calls: int = 0
-    range_rejections: list[dict[str, int]] = field(default_factory=list)
-    attempts: int = 0
-    active_seconds: float = 0.0
-    accounting_known: bool = True
-    selected_chunks: set[int] = field(default_factory=set)
-    _started: float | None = None
-    _binding: tuple | None = None
-    _source_stamp: tuple | None = None
+    """In-process shared synthetic lifecycle; no persistence or global enforcement.
 
-    def begin(self, contract: Contract) -> None:
-        check(self._started is None and self.accounting_known, "ledger unavailable after unknown accounting", "UNKNOWN_ACCOUNTING")
-        check(set(self.limits) == set(ENVELOPE) and all(uint(v) and v <= ENVELOPE[k] for k, v in self.limits.items()), "envelope may only tighten", "BLOCKED_CONTRACT")
-        binding = (contract.plan_identity, contract.source_locator, contract.metadata_sha256, contract.probes)
-        check(self._binding in (None, binding), "ledger cannot change source/contract", "BLOCKED_CONTRACT")
+    Limits are integer bytes/counts/seconds. Only tighten() may update limits,
+    outside an attempt. Contract binding uses all dataclass fields by value.
+    """
+    def __init__(self, limits: Mapping[str, int] | None = None,
+                 clock: Callable[[], float] = time.monotonic):
+        adopted = dict(ENVELOPE if limits is None else limits)
+        self._validate_limits(adopted, ENVELOPE)
+        self._initial_limits = dict(adopted)
+        self._limits = dict(adopted)
+        self.clock = clock
+        self.returned_source_bytes = 0
+        self.metadata_bytes_hashed = 0
+        self.parsed_index_records = 0
+        self.parsed_index_entries = 0
+        self.read_calls = 0
+        self.range_rejections: list[dict[str, int]] = []
+        self.attempts = 0
+        self.active_seconds = 0.0
+        self.accounting_known = True  # Byte accounting, independent of time.
+        self.time_accounting_known = True
+        self.time_errors: list[str] = []
+        self.selected_chunks: set[int] = set()
+        self._started: float | None = None
+        self._token: object | None = None
+        self._last_clock: float | None = None
+        self._attempt_elapsed = 0.0
+        self._binding: str | None = None
+        self._source_stamp: tuple | None = None
+        self._history: list[dict] = []
+        self._tightenings: list[dict] = []
+
+    @staticmethod
+    def _validate_limits(values: dict, ceiling: Mapping[str, int]) -> None:
+        check(set(values) == set(ENVELOPE) and all(uint(v) and v <= ceiling[k] for k, v in values.items()),
+              "limits must be integer, nonnegative and no greater than current ceiling", "BLOCKED_CONTRACT")
+
+    @property
+    def limits(self) -> Mapping[str, int]:
+        return MappingProxyType(dict(self._limits))
+
+    @property
+    def initial_limits(self) -> Mapping[str, int]:
+        return MappingProxyType(dict(self._initial_limits))
+
+    def consumed(self) -> dict[str, int | float]:
+        return {"source_bytes": self.returned_source_bytes, "seconds": self.active_seconds + self._attempt_elapsed,
+                "chunks": len(self.selected_chunks), "expanded_bytes": 0, "messages": 0, "temporary_disk_bytes": 0}
+
+    def tighten(self, changes: Mapping[str, int]) -> None:
+        check(self._token is None, "cannot tighten during active attempt", "BLOCKED_ATTEMPT")
+        check(set(changes) <= set(ENVELOPE), "unknown limit dimension", "BLOCKED_CONTRACT")
+        candidate = {**self._limits, **changes}
+        self._validate_limits(candidate, self._limits)
+        if candidate != self._limits:
+            used = self.consumed()
+            self._tightenings.append({"after_attempt": self.attempts, "before": dict(self._limits),
+                "after": dict(candidate), "consumed": used,
+                "late_tightening": {k: v for k, v in used.items() if v > candidate[k]}})
+            self._limits = candidate
+
+    def _check_consumed(self) -> None:
+        exceeded = [k for k, v in self.consumed().items() if v > self._limits[k]]
+        check(not exceeded, "cumulative budget exceeded: " + ",".join(exceeded), "PARTIAL_BUDGET")
+
+    def _sample_clock(self) -> float:
+        try:
+            value = self.clock()
+            if type(value) not in (int, float) or not math.isfinite(value):
+                raise ValueError("clock must return finite numeric seconds")
+            if self._last_clock is not None and value < self._last_clock:
+                raise ValueError("clock moved backwards")
+        except Exception as error:
+            self.time_accounting_known = False
+            detail = type(error).__name__ + ": " + str(error)
+            self.time_errors.append(detail)
+            raise S1Error("UNKNOWN_TIME_ACCOUNTING", detail) from error
+        self._last_clock = float(value)
+        if self._started is not None:
+            self._attempt_elapsed = float(value) - self._started
+        return float(value)
+
+    def begin(self, contract: Contract) -> object:
+        check(self._token is None, "another attempt owns ledger", "BLOCKED_ATTEMPT")
+        check(self.time_accounting_known, "time accounting is sticky unknown", "UNKNOWN_TIME_ACCOUNTING")
+        check(self.accounting_known, "byte accounting is sticky unknown", "UNKNOWN_ACCOUNTING")
+        binding = identity(asdict(contract))
+        check(self._binding in (None, binding), "ledger Contract content changed", "BLOCKED_CONTRACT")
+        self._check_consumed()
+        started = self._sample_clock()  # Failure does not create an owner or attempt.
         self._binding = binding
+        self._started = started
+        self._attempt_elapsed = 0.0
+        self._token = object()
         self.attempts += 1
-        self._started = self.clock()
-        self.check_time()
+        self._history.append({"attempt": self.attempts, "state": "ACTIVE", "limits": dict(self._limits),
+                              "start_read_calls": self.read_calls, "start_returned_bytes": self.returned_source_bytes})
+        return self._token
 
     def check_time(self) -> None:
-        elapsed = self.active_seconds + (self.clock() - self._started if self._started is not None else 0)
-        check(elapsed <= self.limits["seconds"], "active-time envelope exceeded", "PARTIAL_BUDGET")
+        check(self.time_accounting_known, "time accounting is sticky unknown", "UNKNOWN_TIME_ACCOUNTING")
+        check(self.accounting_known, "byte accounting is sticky unknown", "UNKNOWN_ACCOUNTING")
+        if self._token is not None:
+            self._sample_clock()
+        self._check_consumed()
 
-    def finish(self) -> None:
-        if self._started is not None:
-            self.active_seconds += self.clock() - self._started
-            self._started = None
+    def finish(self, token: object) -> None:
+        check(token is not None and token is self._token, "invalid/already finished attempt token", "BLOCKED_ATTEMPT")
+        failure: S1Error | None = None
+        try:
+            check(self.time_accounting_known, "time accounting is sticky unknown", "UNKNOWN_TIME_ACCOUNTING")
+            self._sample_clock()
+        except S1Error as error:
+            failure = error
+        # Preserve the last known elapsed lower bound if the final sample failed.
+        elapsed = self._attempt_elapsed
+        self.active_seconds += elapsed
+        self._attempt_elapsed = 0.0
+        self._started = None
+        self._token = None
+        if failure is None:
+            try:
+                self._check_consumed()
+            except S1Error as error:
+                failure = error
+        self._history[-1].update(state="FINALIZED", active_seconds=elapsed,
+            time_accounting_known=self.time_accounting_known, byte_accounting_known=self.accounting_known,
+            end_read_calls=self.read_calls, end_returned_bytes=self.returned_source_bytes,
+            finalization_status=failure.status if failure else "FINALIZED")
+        if failure:
+            raise failure
 
     def snapshot(self) -> dict:
         return {"returned_source_bytes": self.returned_source_bytes, "metadata_bytes_hashed": self.metadata_bytes_hashed,
@@ -274,7 +373,11 @@ class Ledger:
             "unique_intersecting_chunks_across_attempts": len(self.selected_chunks), "read_calls": self.read_calls,
             "core_pre_read_range_rejections": len(self.range_rejections),
             "rejected_ranges": [dict(item) for item in self.range_rejections],
-            "attempts": self.attempts, "active_seconds": self.active_seconds, "accounting_known": self.accounting_known,
+            "attempts": self.attempts, "active_seconds": self.active_seconds,
+            "active_attempt_known_seconds": self._attempt_elapsed, "accounting_known": self.accounting_known,
+            "time_accounting_known": self.time_accounting_known, "time_errors": list(self.time_errors),
+            "initial_limits": dict(self._initial_limits), "effective_limits": dict(self._limits),
+            "attempt_history": deepcopy(self._history), "tightening_history": deepcopy(self._tightenings),
             "payload_acquisition_attempts": 0, "payload_expansion_attempts": 0, "decoded_messages": 0,
             "expanded_bytes": 0, "temporary_disk_bytes": 0}
 
@@ -439,7 +542,10 @@ def inspect_s1_index(byte_source: ByteSource, metadata_input: MetadataInput, con
         "all_record_header_candidate_completeness": "UNKNOWN", "actual_source_chunk_count": None,
         "declared_size_meaning": "reference only; not guaranteed actual expansion or required cost",
         "s2_retry_chunk_counting": "PENDING_EXPLICIT_POLICY_AND_REVIEW"}
-    already_active = ledger._started is not None
+    token: object | None = None
+    processing_error: dict[str, str] | None = None
+    finalization_error: dict[str, str] | None = None
+    inspected = False
     try:
         check(getattr(byte_source, "synthetic", False) is True, "only synthetic sources allowed", "UNSUPPORTED_S1_INPUT")
         check(metadata_input.storage_format == "plain_mcap", "file compression/other format unsupported, no fallback", "UNSUPPORTED_S1_INPUT")
@@ -448,7 +554,7 @@ def inspect_s1_index(byte_source: ByteSource, metadata_input: MetadataInput, con
         check(uint(contract.individual_chunk_cap) and uint(contract.union_chunk_cap), "invalid chunk caps", "BLOCKED_CONTRACT")
         for probe in contract.probes:
             exclusive_stop(*probe.window_ns)
-        ledger.begin(contract)
+        token = ledger.begin(contract)
         check(type(metadata_input.synthetic_bytes) is bytes and len(metadata_input.synthetic_bytes) <= ledger.limits["single_record_bytes"], "synthetic metadata size", "PARTIAL_BUDGET")
         ledger.metadata_bytes_hashed += len(metadata_input.synthetic_bytes)
         check(sha(metadata_input.synthetic_bytes) == contract.metadata_sha256 and metadata_input.run_id == contract.source_run and
@@ -569,14 +675,25 @@ def inspect_s1_index(byte_source: ByteSource, metadata_input: MetadataInput, con
         result["declared_size_sums"] = {k: sum(c[k] for c in selected) for k in ("declared_compressed_bytes", "declared_uncompressed_bytes")}
         check(byte_source.revision == r.revision and byte_source.size == r.size, "synthetic source changed", "SOURCE_CHANGED")
         ledger.check_time()
-        result["s2_candidates_within_caps"] = True
-        result["status"] = "S1_SYNTHETIC_INDEX_INSPECTED"
+        inspected = True  # Not success until finish has accounted final active time.
     except S1Error as error:
-        result.update(status=error.status, detail=str(error))
+        processing_error = {"status": error.status, "detail": str(error)}
     except Exception as error:
-        result.update(status="BLOCKED_CORE_EXCEPTION", detail=type(error).__name__ + ":" + str(error))
+        processing_error = {"status": "BLOCKED_CORE_EXCEPTION", "detail": type(error).__name__ + ":" + str(error)}
     finally:
-        if not already_active and ledger._started is not None:
-            ledger.finish()
+        if token is not None:
+            try:
+                ledger.finish(token)
+            except S1Error as error:
+                finalization_error = {"status": error.status, "detail": str(error)}
+        errors = [e for e in (processing_error, finalization_error) if e is not None]
+        result["diagnostics"] = {"processing_error": processing_error, "finalization_error": finalization_error}
+        # Unknown time > unknown bytes > original failure > finalization budget.
+        priorities = {"UNKNOWN_TIME_ACCOUNTING": 3, "UNKNOWN_ACCOUNTING": 2}
+        if errors:
+            result.update(max(errors, key=lambda e: priorities.get(e["status"], 0)))
+        elif inspected:
+            result["status"] = "S1_SYNTHETIC_INDEX_INSPECTED"
+            result["s2_candidates_within_caps"] = True
         result["synthetic_io"] = ledger.snapshot()
     return result

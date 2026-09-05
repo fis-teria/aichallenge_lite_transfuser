@@ -262,7 +262,7 @@ def test_separate_chunk_caps(predicate: str) -> None:
     elif predicate == "union":
         c = replace(c, union_chunk_cap=0)
     else:
-        ledger.limits["chunks"] = 0
+        ledger.tighten({"chunks": 0})
     result = run(c=c, ledger=ledger)
     assert result["status"] == "S1_INDEX_CAP_BLOCKED"
     key = "physical_envelope_pass" if predicate == "physical" else predicate + "_pass"
@@ -282,7 +282,7 @@ def test_nine_chunks_retained_not_truncated() -> None:
 @pytest.mark.parametrize("limit", ["source_bytes", "single_record_bytes"])
 def test_oversized_request_rejected_before_read(limit: str) -> None:
     source, ledger = fixture(), s1.Ledger()
-    ledger.limits[limit] = 7
+    ledger.tighten({limit: 7})
     result = run(source, ledger=ledger)
     assert result["status"] == "PARTIAL_BUDGET"
     assert source.requests == []
@@ -343,7 +343,7 @@ def test_retry_rereads_cumulative_budget_and_wait_excluded() -> None:
     assert run(source, ledger=ledger)["status"] == "S1_SYNTHETIC_INDEX_INSPECTED"
     assert ledger.returned_source_bytes == 2 * consumed
     assert ledger.active_seconds == 0 and len(ledger.selected_chunks) == 1
-    ledger.limits["source_bytes"] = ledger.returned_source_bytes
+    ledger.tighten({"source_bytes": ledger.returned_source_bytes})
     assert run(source, ledger=ledger)["status"] == "PARTIAL_BUDGET"
     assert ledger.returned_source_bytes == 2 * consumed
 
@@ -446,7 +446,7 @@ def test_no_external_io_or_forbidden_import(monkeypatch: pytest.MonkeyPatch) -> 
     tree = ast.parse(inspect.getsource(s1))
     imports = {node.module.split(".")[0] for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)}
     imports |= {alias.name.split(".")[0] for node in ast.walk(tree) if isinstance(node, ast.Import) for alias in node.names}
-    assert imports <= {"__future__", "dataclasses", "hashlib", "io", "json", "struct", "time", "typing", "zlib"}
+    assert imports <= {"__future__", "dataclasses", "copy", "hashlib", "io", "json", "math", "struct", "time", "types", "typing", "zlib"}
     def forbidden(*args: object, **kwargs: object) -> None:
         raise AssertionError("external I/O forbidden")
     with monkeypatch.context() as patch:
@@ -459,11 +459,12 @@ def test_no_external_io_or_forbidden_import(monkeypatch: pytest.MonkeyPatch) -> 
 
 def test_active_ledger_not_stolen() -> None:
     ledger = s1.Ledger()
-    ledger.begin(contract())
+    token = ledger.begin(contract())
     started = ledger._started
-    assert run(ledger=ledger)["status"] == "UNKNOWN_ACCOUNTING"
+    assert run(ledger=ledger)["status"] == "BLOCKED_ATTEMPT"
     assert ledger._started == started
-    ledger.finish()
+    assert ledger._token is token
+    ledger.finish(token)
 
 
 @pytest.mark.parametrize("failure", ["exception", "partial", "timeout"])
@@ -530,8 +531,8 @@ def test_direct_reader_limits_and_forbidden_region() -> None:
 
 def test_envelope_cannot_be_increased_or_rebound() -> None:
     ledger = s1.Ledger()
-    ledger.limits["source_bytes"] += 1
-    assert run(ledger=ledger)["status"] == "BLOCKED_CONTRACT"
+    with pytest.raises(s1.S1Error):
+        ledger.tighten({"source_bytes": s1.ENVELOPE["source_bytes"] + 1})
     ledger = s1.Ledger()
     assert run(ledger=ledger)["status"] == "S1_SYNTHETIC_INDEX_INSPECTED"
     before = ledger.returned_source_bytes
@@ -670,3 +671,225 @@ def test_adjacent_ranges_and_source_side_guard_are_distinct() -> None:
         source.read_at(source.forbidden[0][0], 1)
     assert source.sentinel_rejections == 1 and len(source.requests) == 2
     assert ledger.read_calls == 1  # Deliberate test call is not a core read.
+
+
+def test_limits_alias_and_readonly_snapshots() -> None:
+    adopted = dict(s1.ENVELOPE, source_bytes=8)
+    ledger = s1.Ledger(adopted)
+    adopted["source_bytes"] = 16
+    assert ledger.initial_limits["source_bytes"] == ledger.limits["source_bytes"] == 8
+    with pytest.raises(TypeError):
+        ledger.limits["source_bytes"] = 16
+    with pytest.raises(AttributeError):
+        ledger.limits = adopted
+    old = ledger.limits
+    ledger.tighten({"source_bytes": 4})
+    assert old["source_bytes"] == 8 and ledger.initial_limits["source_bytes"] == 8
+    assert ledger.limits["source_bytes"] == 4
+    with pytest.raises(s1.S1Error):
+        ledger.tighten({"source_bytes": 8})
+
+
+@pytest.mark.parametrize("dimension", list(s1.ENVELOPE))
+def test_all_limit_dimensions_tightening_and_no_expansion(dimension: str) -> None:
+    ledger = s1.Ledger()
+    ledger.tighten({dimension: ledger.limits[dimension]})
+    assert ledger.snapshot()["tightening_history"] == []
+    ledger.tighten({dimension: 0})
+    before = ledger.snapshot()
+    ledger.tighten({dimension: 0})
+    assert ledger.snapshot() == before
+    with pytest.raises(s1.S1Error):
+        ledger.tighten({dimension: 1})
+    assert ledger.snapshot() == before
+
+
+@pytest.mark.parametrize("dimension", list(s1.ENVELOPE))
+@pytest.mark.parametrize("invalid", [True, -1, float("nan"), float("inf"), 0.5, "0"])
+def test_invalid_limit_types_are_atomic(dimension: str, invalid: object) -> None:
+    ledger = s1.Ledger()
+    before = ledger.snapshot()
+    with pytest.raises(s1.S1Error):
+        ledger.tighten({dimension: invalid})
+    assert ledger.snapshot() == before
+    with pytest.raises(s1.S1Error):
+        s1.Ledger(dict(s1.ENVELOPE, **{dimension: invalid}))
+
+
+@pytest.mark.parametrize("dimension", ["source_bytes", "seconds", "chunks"])
+def test_late_tightening_preserves_consumption_blocks_next_attempt(dimension: str) -> None:
+    source = fixture()
+    now = [0.0]
+    ledger = s1.Ledger(clock=lambda: now[0])
+    assert run(source, ledger=ledger)["status"] == "S1_SYNTHETIC_INDEX_INSPECTED"
+    token = ledger.begin(contract())
+    now[0] = 5.0
+    ledger.finish(token)
+    before = ledger.snapshot()
+    ledger.tighten({dimension: 0})
+    requests = len(source.requests)
+    result = run(source, ledger=ledger)
+    assert result["status"] == "PARTIAL_BUDGET" and not result["s2_candidates_within_caps"]
+    assert len(source.requests) == requests
+    assert ledger.attempts == before["attempts"]
+    assert ledger.returned_source_bytes == before["returned_source_bytes"]
+    assert ledger.active_seconds == before["active_seconds"]
+    assert ledger.snapshot()["attempt_history"] == before["attempt_history"]
+    assert dimension in ledger.snapshot()["tightening_history"][-1]["late_tightening"]
+
+
+def test_per_request_limit_not_compared_to_cumulative_bytes() -> None:
+    ledger = s1.Ledger()
+    assert run(ledger=ledger)["status"] == "S1_SYNTHETIC_INDEX_INSPECTED"
+    ledger.tighten({"single_record_bytes": 1})
+    assert ledger.returned_source_bytes > 1
+    assert ledger.snapshot()["tightening_history"][-1]["late_tightening"] == {}
+    token = ledger.begin(contract())  # Per-read allocation checked on the read, not cumulative debit.
+    ledger.finish(token)
+
+
+@pytest.mark.parametrize("field", ["individual_chunk_cap", "union_chunk_cap", "source_run", "source_id", "source_locator",
+                                   "plan_identity", "metadata_sha256", "probe", "record", "hash", "window"])
+def test_full_contract_binding_rejects_single_field_changes(field: str) -> None:
+    source, ledger, c = fixture(), s1.Ledger(), contract()
+    assert run(source, ledger=ledger)["status"] == "S1_SYNTHETIC_INDEX_INSPECTED"
+    if field in ("probe", "record", "hash", "window"):
+        p = c.probes[0]
+        if field == "probe":
+            p = replace(p, group_id="different")
+        elif field == "window":
+            p = replace(p, window_ns=(p.window_ns[0], p.window_ns[1] + 1))
+        else:
+            pair = ("different", p.records[0][1]) if field == "record" else (p.records[0][0], "0" * 64)
+            p = replace(p, records=(pair, p.records[1]))
+        other = replace(c, probes=(p, *c.probes[1:]))
+    else:
+        value = 7 if field.endswith("_cap") else "different"
+        other = replace(c, **{field: value})
+    before = ledger.snapshot()
+    requests = len(source.requests)
+    result = run(source, c=other, ledger=ledger)  # Helper provides matching NEW layout; Ledger must reject independently.
+    assert result["status"] == "BLOCKED_CONTRACT"
+    assert ledger.snapshot() == before and len(source.requests) == requests
+
+
+def test_attempt_owner_double_finish_and_tighten_in_attempt() -> None:
+    now = [0.0]
+    ledger = s1.Ledger(clock=lambda: now[0])
+    first = ledger.begin(contract())
+    before = ledger.snapshot()
+    with pytest.raises(s1.S1Error):
+        ledger.tighten({"source_bytes": 8})
+    with pytest.raises(s1.S1Error):
+        ledger.finish(object())
+    assert ledger.snapshot() == before
+    now[0] = 2
+    ledger.finish(first)
+    before = ledger.snapshot()
+    with pytest.raises(s1.S1Error):
+        ledger.finish(first)
+    assert ledger.snapshot() == before
+    now[0] = 5000
+    second = ledger.begin(contract())
+    with pytest.raises(s1.S1Error):
+        ledger.finish(first)
+    assert ledger._token is second
+    now[0] += 1
+    ledger.finish(second)
+    assert ledger.active_seconds == 3 and ledger.attempts == 2
+
+
+def clock_calls_for_success() -> int:
+    calls = [0]
+    def clock() -> float:
+        calls[0] += 1
+        return 0.0
+    assert run(ledger=s1.Ledger(clock=clock))["status"] == "S1_SYNTHETIC_INDEX_INSPECTED"
+    return calls[0]
+
+
+@pytest.mark.parametrize("ending", [60.1, "exception", float("nan"), float("inf"), -1.0])
+def test_final_clock_controls_result_and_sticky_unknown(ending: object) -> None:
+    total_calls = clock_calls_for_success()
+    calls = [0]
+    def clock() -> float:
+        calls[0] += 1
+        if calls[0] == 1:
+            return 0.0
+        if calls[0] == total_calls:
+            if ending == "exception":
+                raise OSError("synthetic finish clock failure")
+            return ending
+        return 59.9
+    source, ledger = fixture(), s1.Ledger(clock=clock)
+    result = run(source, ledger=ledger)
+    expected = "PARTIAL_BUDGET" if ending == 60.1 else "UNKNOWN_TIME_ACCOUNTING"
+    assert result["status"] == expected
+    assert not result["s2_candidates_within_caps"]
+    assert result["diagnostics"]["processing_error"] is None
+    assert result["diagnostics"]["finalization_error"]["status"] == expected
+    assert result["selected_chunk_descriptors"] and result["message_indexes"]
+    assert ledger.returned_source_bytes == sum(n for _, n in source.requests)
+    assert ledger.accounting_known and ledger._token is None
+    assert ledger.active_seconds == (60.1 if ending == 60.1 else 59.9)
+    before_calls, before_attempts = len(source.requests), ledger.attempts
+    again = run(source, ledger=ledger)
+    assert again["status"] == expected
+    assert len(source.requests) == before_calls and ledger.attempts == before_attempts
+    assert_closed(result)
+
+
+@pytest.mark.parametrize("failure", ["source", "boundary", "read_timeout"])
+def test_processing_failure_and_final_clock_failure_both_retained(failure: str) -> None:
+    source = fixture()
+    now, finish_failure = [0.0], [False]
+    def clock() -> float:
+        if finish_failure[0]:
+            raise OSError("clock failed at finalization")
+        return now[0]
+    class FinalFailLedger(s1.Ledger):
+        def finish(self, token: object) -> None:
+            finish_failure[0] = True
+            super().finish(token)
+    ledger = FinalFailLedger(clock=clock)
+    original = source.read_at
+    if failure == "source":
+        def failing_read(offset: int, length: int) -> bytes:
+            if offset == source.forbidden[0][1]:
+                raise OSError("synthetic index read failed")
+            return original(offset, length)
+        source.read_at = failing_read
+    elif failure == "read_timeout":
+        def slow_read(offset: int, length: int) -> bytes:
+            data = original(offset, length)
+            now[0] = 61
+            return data
+        source.read_at = slow_read
+    else:
+        source.allowed_ranges = tuple((start + 1, stop) if i == 1 else (start, stop)
+                                      for i, (start, stop) in enumerate(source.allowed_ranges))
+    result = run(source, ledger=ledger)
+    assert result["status"] == "UNKNOWN_TIME_ACCOUNTING"
+    original_status = {"source": "UNKNOWN_ACCOUNTING", "boundary": "BLOCKED_READ_RANGE", "read_timeout": "PARTIAL_BUDGET"}[failure]
+    assert result["diagnostics"]["processing_error"]["status"] == original_status
+    assert result["diagnostics"]["finalization_error"]["status"] == "UNKNOWN_TIME_ACCOUNTING"
+    assert ledger.returned_source_bytes > 0 and ledger.read_calls > 0
+    assert ledger.accounting_known is (failure != "source")
+    assert not ledger.time_accounting_known and not result["s2_candidates_within_caps"]
+    assert source.sentinel_rejections == 0
+
+
+def test_snapshot_never_samples_clock_and_returns_detached_history() -> None:
+    ledger = s1.Ledger(clock=lambda: 1.0)
+    token = ledger.begin(contract())
+    before = ledger.snapshot()
+    def forbidden_clock() -> float:
+        raise AssertionError("snapshot sampled clock")
+    ledger.clock = forbidden_clock
+    assert ledger.snapshot() == ledger.snapshot() == before
+    copy = ledger.snapshot()
+    copy["attempt_history"][0]["limits"]["seconds"] = 0
+    copy["effective_limits"]["seconds"] = 0
+    assert ledger.snapshot() == before
+    ledger.clock = lambda: 1.0
+    ledger.finish(token)

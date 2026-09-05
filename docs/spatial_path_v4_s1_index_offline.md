@@ -25,7 +25,8 @@ mode: OFFLINE_SYNTHETIC_ONLY
 - 旧結果文書: `69d21d376ac95dde881fa75d5773827fb68fd04e`
 - 上記objectは全てローカルcommitとして存在し、作業前HEADの祖先だった。開始時working treeはclean。
 - 本依頼文は外部attachment `57303244-be82-44b8-878d-0545a4b69c5f`。独立した依頼文commitなし。
-- 初回reader版: `spatial_s1_index_v4_offline_v1`。今回修正版は `spatial_s1_index_v4_offline_v2_read_layout`。
+- 初回reader版: `spatial_s1_index_v4_offline_v1`。v2は `spatial_s1_index_v4_offline_v2_read_layout`。
+  今回修正版は `spatial_s1_index_v4_offline_v3_ledger_lifecycle`。
 
 計画rootは `/home/thistle/e2e_autonomous/runs/spatial_v4_record_binding_plan_v2_20260905`。
 指定された7成果物だけを読み、既存plannerと同じcanonical JSON
@@ -94,7 +95,7 @@ declared compressed/uncompressed sizeは報告値であり、実展開量・必�
 共通envelope候補はsource_bytes=67108864、expanded_bytes=134217728、messages=5000、seconds=60、
 temporary_disk_bytes=0、single_record_bytes=16777216、chunks=8。
 `Ledger`を同じsource/contractの全attemptで共有する。ENVELOPE超過は拒否、過去raw残量は流用しない。
-一度縮小したlimitsのENVELOPE以内への再拡大は現状防いでいない（今回未修正）。
+v2までは一度縮小したlimitsのENVELOPE以内への再拡大を防いでいなかった。v3で下記の単調縮小契約に修正。
 S2は未実装であり、将来S2にこの台帳を共有する実装・永続化は別途必要。stageごとの新台帳作成は禁止条件。
 
 `synthetic_io`でreturned source bytes（再読取含む）、metadata hash bytes、metadata/index record解析数、index entry数、
@@ -186,7 +187,7 @@ core拒否試験ではsource側sentinel_rejections=0も検査する。固定payl
 read_layout_verifiedとread_boundary_basisは合成契約の確認であり、実rawアクセス0の不変fieldとは別。
 S1_SYNTHETIC_INDEX_INSPECTEDは独立に渡された合成layoutの下での結果に限定する。
 
-### 今回に混ぜない残課題（未修正）
+### v2時点で修正に混ぜなかった残課題（履歴）
 
 - Ledger.limits縮小後のENVELOPE以内への再拡大。
 - Ledger bindingに個別/union cap、source_run/source_idが含まれない点（layout照合は台帳修正ではない）。
@@ -212,3 +213,66 @@ Windows/WSL同一SHAを確認してlock付きで実行し、**115 passed in 0.26
 source側sentinel拒否0で成功。未layout/不正layoutはsource発行0で停止。
 全pytest、実raw fixture、Dataset tests、合成学習/optimizer testsは未実行。
 この実測追記は上記実装・実行版の後続文書commitであり、実行SHAへ遡及的に含めない。
+
+## 2026-09-06：v3 Ledger lifecycle
+
+依頼attachment: `cce496bc-16fb-41ef-9413-6d2eeb44041e`。開始HEADはローカル履歴で
+`666c14c27272f66601cddc2ca523ffd4414530d1`と確認。これはv2実測追記commitで、実行commit
+`06f2b9381ee2057bf75b1ec4b9b75e6f0063442d`とは別。差分は結果文書9行だけだった。
+指定6objectの存在・祖先関係、origin/branch/clean状態を確認。v2 layoutの独立入力、全read前照合、
+core拒否とsentinel拒否の分離をコード/testsで確認した。提供報告115 passedは今回結果として流用しない。
+
+### 採用上限・縮小・binding
+
+ENVELOPEは従来通り。Ledger初期化でlimits mappingをコピーし、initial_limitsと実効limitsを分離。
+両propertyは読取専用の独立snapshotであり、呼出側の辞書変更が反映されない。
+`tighten({dimension: new_value})`だけが実効上限を変更する。attempt外のみ、全変更値が現在値以下であることを
+原子的に検証。bool、NaN/Infinity、負数、整数以外、未知keyを拒否。同値はno-op、正当な0は保持。
+private属性やcounterを故意に改変する呼出側に対するsecurity sandboxではない。
+
+累積予算はsource_bytes（返却bytes）、seconds（active秒）、chunks（unique交差offset数）。
+expanded_bytes、messages、temporary_disk_bytesはS1では消費0。metadata hash入力は既存メモリで別count。
+single_record_bytesは単一read/body等の要求上限で、累積source bytesとは比較しない。
+縮小が既消費未満ならtightening_historyへlate_tighteningとその時点の消費・前後上限を記録する。
+過去のattemptを違反だったと書き換えず、次attempt/readをPARTIAL_BUDGETで止める。
+
+初回begin時に`identity(asdict(contract))`で全dataclass fieldの論理内容を束縛。
+plan/probe/record/hash/window、source_locator/run/id/metadata hash、個別/union capも含む。
+後の不一致はsource読取前にBLOCKED_CONTRACT。layout側のContract照合も独立に維持する。
+同じLedgerは同じ論理Contractを意味し、size/revisionの既存照合やlayoutのsource参照照合を併用するが、
+publisher・全原本hash・物理source一意性を証明しない。
+
+### attempt状態・時計・結果確定
+
+`begin(contract) -> token`は検証と開始clock成功後だけ所有権を返し、attempt countを増やす。
+ACTIVE中の再入はBLOCKED_ATTEMPT。`finish(token)`は現在ownerだけが呼べ、二重finishや別tokenを拒否。
+拒否で所有権や消費を巻き戻さない。終了時のclockを計上してからFINALIZEDへ移り、その後で予算を判定する。
+最終check=59.9秒、finish=60.1秒ならPARTIAL_BUDGETでありS1成功ではない。
+
+clockは数値・有限・単調非減少を検査。例外/NaN/Infinity/逆行はUNKNOWN_TIME_ACCOUNTINGをstickyにする。
+最終sampleが失敗した場合は最後に確定できたactive秒の下限を残す。既知byte会計は別flag accounting_knownのまま。
+time_accounting_known=falseのLedgerで追加readは行わない。source例外によるUNKNOWN_ACCOUNTINGも解除しない。
+snapshotは時計を呼ばず、消費・状態変更なしで履歴のdeep copyを返す。attempt間の人の待機時間はactiveに含めない。
+
+inspectは処理完了を仮記録し、finishが成功してからS1_SYNTHETIC_INDEX_INSPECTEDと
+s2_candidates_within_caps=trueを設定する（S2承認は依然false）。失敗時に成功用trueを残さない。
+優先順位はUNKNOWN_TIME_ACCOUNTING > UNKNOWN_ACCOUNTING > 元の処理失敗 > 終了時予算失敗。
+diagnostics.processing_error/finalization_errorの両方を保持するので、元の境界拒否やsource例外を消さない。
+chunk_capsの個別predicateは観測時の診断であり、最終成功や後段採用を表さない。
+attempt_historyはstart/endの既知bytes/read calls・limits・時間・finalization statusを記録する。
+協調deadline、プロセス内の会計のみであり、電源断・OS I/O強制中断・永続耐障害性の保証はない。
+
+### 維持境界と残gate
+
+v2 layoutの取得方法・範囲検査は再設計していない。4probe/8record/4窓、旧14claim、計画identityを変更しない。
+全raw/Dataset読取0、未承認flag、B/C/D/E/S2非昇格を維持。学習/推論/optimizer/ROS/走行なし。未push。
+残るものは、検証済みContractと直接構築ContractのAPI区別、強い実source binding/immutabilityと独立範囲根拠、
+Message Index内部整合性、未対応Summary形式、永続台帳・別Ledger生成統制・S2 retry chunk policy、
+本番adapter、writer/CLI/partial-final manifest、S2 decoder。今回完了で本番adapter/S1取得へ進めるとは判定しない。
+
+### 今回の限定検証と資料
+
+前記Windows commit→既定CheckOnly→通常sync→WSL lockで、同じ2テストファイルだけを実行する。
+今回は`-vv`で試験名を含むpytest生ログを保存する。全pytest/実bag/Dataset/合成学習testsは実行しない。
+新規別directoryへ3対象ファイルとログ、再実行に必要な同期数学・package init・conftestだけをコピーしhash/sizeを記録する。
+実行commit・環境・今回の件数/時間・資料位置は実測後に追記する。
