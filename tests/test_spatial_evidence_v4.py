@@ -273,9 +273,9 @@ def test_source_protection_and_immutable_output(tmp_path: Path) -> None:
 def test_end_to_end_dry_partial_identity_and_source_immutability(tmp_path: Path) -> None:
     from aic_transfuser_lite.data.spatial_evidence_v4 import FIELDS
     from aic_transfuser_lite.data.spatial_coverage_v4 import csv_rows
-    root, prior, raw = tmp_path / "data", tmp_path / "prior", tmp_path / "raw"
+    root, prior, raw = tmp_path / "data", tmp_path / "prior", tmp_path / "raw/run/bag"
     (root / "trajectories").mkdir(parents=True)
-    prior.mkdir(); raw.mkdir()
+    prior.mkdir(); raw.mkdir(parents=True)
     (raw / "broken.mcap").write_bytes(b"not an MCAP file")
     (raw / "metadata.yaml").write_text(yaml.safe_dump({"rosbag2_bagfile_information": {
         "relative_file_paths": ["broken.mcap"], "topics_with_message_count": []}}))
