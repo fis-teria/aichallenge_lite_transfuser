@@ -450,3 +450,76 @@ def test_active_ledger_not_stolen() -> None:
     assert run(ledger=ledger)["status"] == "UNKNOWN_ACCOUNTING"
     assert ledger._started == started
     ledger.finish()
+
+
+@pytest.mark.parametrize("failure", ["exception", "partial", "timeout"])
+def test_late_failure_preserves_parsed_diagnostics(failure: str) -> None:
+    source = fixture()
+    now = [0.0]
+    ledger = s1.Ledger(clock=lambda: now[0])
+    original = source.read_at
+    index_start = source.forbidden[0][1]
+    def interrupted(offset: int, length: int) -> bytes:
+        data = original(offset, length)
+        if offset == index_start + 9:
+            if failure == "exception":
+                raise OSError("synthetic late failure")
+            if failure == "partial":
+                return data[:2]
+            now[0] += 61
+        return data
+    source.read_at = interrupted
+    result = run(source, ledger=ledger)
+    assert result["status"] == {"exception": "UNKNOWN_ACCOUNTING", "partial": "PARTIAL_READ", "timeout": "PARTIAL_BUDGET"}[failure]
+    assert result["schemas"] and result["channels"] and result["selected_chunk_descriptors"]
+    expected_bytes = sum(n for _, n in source.requests[:-1])
+    if failure == "partial":
+        expected_bytes += 2
+    elif failure == "timeout":
+        expected_bytes += source.requests[-1][1]
+    assert ledger.returned_source_bytes == expected_bytes
+    assert_closed(result)
+
+
+@pytest.mark.parametrize("failure", ["summary_offset", "entry_time", "entry_offset", "entry_length", "index_missing"])
+def test_index_and_summary_field_corruption(failure: str) -> None:
+    source = fixture()
+    data = bytearray(source._stream.getvalue())
+    index_start = source.forbidden[0][1]
+    if failure == "summary_offset":
+        summary_offset = struct.unpack_from("<Q", data, len(data) - 20)[0]
+        struct.pack_into("<Q", data, summary_offset + 10, s1.U64)
+    elif failure == "entry_time":
+        struct.pack_into("<Q", data, index_start + 15, s1.U64)
+    elif failure == "entry_offset":
+        struct.pack_into("<Q", data, index_start + 23, s1.U64)
+    elif failure == "entry_length":
+        struct.pack_into("<I", data, index_start + 11, 9999)
+    else:
+        data[index_start] = 5  # Message opcode is rejected before its body is read.
+    result = run(GuardedSource(bytes(data), source.forbidden))
+    assert result["status"] in {"INVALID_S1_STRUCTURE", "UNSUPPORTED_S1_STRUCTURE"}
+    assert_closed(result)
+
+
+def test_direct_reader_limits_and_forbidden_region() -> None:
+    source, ledger = fixture(), s1.Ledger()
+    reader = s1.Reader(source, ledger)
+    reader.forbidden = source.forbidden
+    with pytest.raises(s1.S1Error) as error:
+        reader.read(source.forbidden[0][0], 1)
+    assert error.value.status == "BLOCKED_PAYLOAD_BOUNDARY"
+    with pytest.raises(s1.S1Error):
+        reader.read(0, -1)
+    assert source.requests == []
+
+
+def test_envelope_cannot_be_increased_or_rebound() -> None:
+    ledger = s1.Ledger()
+    ledger.limits["source_bytes"] += 1
+    assert run(ledger=ledger)["status"] == "BLOCKED_CONTRACT"
+    ledger = s1.Ledger()
+    assert run(ledger=ledger)["status"] == "S1_SYNTHETIC_INDEX_INSPECTED"
+    before = ledger.returned_source_bytes
+    assert run(ledger=ledger, c=replace(contract(), source_locator="other"))["status"] == "BLOCKED_CONTRACT"
+    assert ledger.returned_source_bytes == before
