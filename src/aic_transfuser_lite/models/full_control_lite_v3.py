@@ -162,7 +162,8 @@ class FullControlLiteV3(nn.Module):
             else None
         )
 
-    def forward(self, batch: ModelBatchV3) -> ModelOutputV3:
+    def forward_features(self, batch: ModelBatchV3) -> torch.Tensor:
+        """Return existing fused representation [B,hidden_dim], without output heads."""
         batch.validate(require_current=True)
         if batch.image.shape[1] > self.max_sensor_history or batch.lidar.shape[1] > self.max_sensor_history:
             raise ValueError("Camera/LiDAR history exceeds configured maximum")
@@ -200,6 +201,11 @@ class FullControlLiteV3(nn.Module):
         _, pooled = self.fusion(
             camera_tokens_all[:, -1], lidar_tokens_all[:, -1], current_ego
         )
+        return pooled
+
+    def forward(self, batch: ModelBatchV3) -> ModelOutputV3:
+        pooled = self.forward_features(batch)
+        ego = batch.ego[:, -1]
         trajectory, candidate_logits = self.trajectory_head(pooled)
         speed = self.speed_profile_head(pooled)
         current_control = None

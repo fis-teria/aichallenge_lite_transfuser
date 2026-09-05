@@ -1,0 +1,24 @@
+dataset_root: /home/thistle/e2e_autonomous/datasets/d1log_recovery_mixed_20260904_v3
+split_manifest: /home/thistle/e2e_autonomous/datasets/d1log_recovery_mixed_20260904_split_manifest.json
+coverage_ledger: /home/thistle/e2e_autonomous/runs/spatial_v4_coverage_full_v2_20260905/anchor_audit_ledger.csv
+diagnostic:
+  seed: 42
+  max_candidates: 2048
+  max_train: 64
+  max_observation: 16
+  steps: 500
+  active_seconds: 1800
+  final_eval_reserve_seconds: 60
+  microbatch: 2
+  accumulation: 4
+  backbone_lr: 0.0001
+  head_lr: 0.001
+  weight_decay: 0.0
+  beta_m: 0.1
+  clip_norm: 1.0
+  eval_every: 50
+  precision: float32
+  augmentation: false
+  scheduler: null
+  initialization: scratch
+  smoke_steps: 1
