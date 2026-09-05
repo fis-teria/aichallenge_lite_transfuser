@@ -196,6 +196,7 @@ def classify_group(candidates: Sequence[Mapping[str, Any]], budget: Budget) -> d
     kind = candidates[0]["record"].get("topic")
     count = len(candidates)
     complete, measured, maxima, nonzero = True, 0, {}, False
+    first_maxima, adjacent_maxima = {}, {}
     legacy_all, legacy_first, legacy_adjacent = 0, 0, 0
     invalid = any(c["errors"] for c in candidates)
     for i, j in combinations(range(count), 2):
@@ -212,6 +213,8 @@ def classify_group(candidates: Sequence[Mapping[str, Any]], budget: Budget) -> d
         nonzero |= any(v > 0 for v in metrics.values())
         for key, value in metrics.items():
             maxima[key] = max(maxima.get(key, 0.0), value)
+            if i == 0: first_maxima[key] = max(first_maxima.get(key, 0.0), value)
+            if j == i + 1: adjacent_maxima[key] = max(adjacent_maxima.get(key, 0.0), value)
         if metrics.get("xy_m", 0) > 1e-8:
             legacy_all += 1
             legacy_first += i == 0
@@ -251,6 +254,8 @@ def classify_group(candidates: Sequence[Mapping[str, Any]], budget: Budget) -> d
         "bag_stamp_set_ns": sorted({v for v in bag_values if stamp(v)}),
         "classification": labels, "all_pairs_total": count * (count - 1) // 2,
         "pairs_measured": measured, "all_pair_maxima": maxima if complete and not invalid else None,
+        "first_to_later_maxima": first_maxima if complete and not invalid else None,
+        "array_adjacent_within_group_maxima": adjacent_maxima if complete and not invalid else None,
         "measured_pair_maxima_lower_bound": maxima, "all_pair_maximum_status": "PASS" if complete and not invalid else "UNKNOWN",
         "legacy_xy_gt_1e8": {"all_pairs_count": legacy_all if complete and not invalid else None,
             "first_to_later_count": legacy_first if complete and not invalid else None,
@@ -435,6 +440,8 @@ def anchor_impact(anchor: Mapping[str, Any], raw: Mapping[str, list], lookup: Ma
             observed_prefix += 1
         def aggregate(rows: Sequence[Mapping]) -> dict:
             return {"target_steps": [s["step"] for s in rows], "count": len(rows),
+                "original_numeric_reproduction_status_counts": dict(Counter(s["original_numeric_reproduction_status"] for s in rows)),
+                "original_reproduction_is_not_new_independent_verification": True,
                 "dependency": combine_dependencies([s["combined"] for s in rows]),
                 "observed_difference_steps": [s["step"] for s in rows if s["combined"]["observed_difference"]],
                 "status_counts": dict(Counter(s["combined"]["status"] for s in rows))}

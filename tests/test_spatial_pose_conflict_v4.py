@@ -118,6 +118,8 @@ def test_nonadjacent_three_candidates_all_pair_maxima() -> None:
     assert g["legacy_xy_gt_1e8"]["array_adjacent_within_group_count"] == 0
     assert g["legacy_xy_gt_1e8"]["all_pairs_count"] == 1
     assert g["all_pair_maxima"]["xy_m"] == 1.5e-8
+    assert g["array_adjacent_within_group_maxima"]["xy_m"] == .75e-8
+    assert g["first_to_later_maxima"]["xy_m"] == 1.5e-8
 
 
 @pytest.mark.parametrize("bad", [float("nan"), float("inf"), None, "0"])
