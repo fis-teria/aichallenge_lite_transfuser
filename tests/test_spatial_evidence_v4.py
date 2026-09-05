@@ -95,7 +95,18 @@ def test_explicit_safety_record_retains_time_source_value() -> None:
 def test_timestamp_shift_frame_mismatch_and_yaw_wrap() -> None:
     s = sample()
     s["camera_delta_ms"] = "200"
-    assert reproduce_future(future(), s, records(), EvidenceConfig())["status"] == "FAIL"
+    accelerating = records()
+    for r in accelerating:
+        elapsed = r["semantic_stamp_ns"] / 1e9 - 1
+        if r["topic"].endswith("kinematic_state"):
+            r["value"]["x_m"] += .1 * elapsed**2
+        elif r["topic"].endswith("velocity_status"):
+            r["value"]["longitudinal_mps"] += .2 * elapsed
+    f = future()
+    f[:, 1] += .1 * f[:, 0] ** 2
+    f[:, 4] += .2 * f[:, 0]
+    assert reproduce_future(f, sample(), accelerating, EvidenceConfig())["status"] == "PASS"
+    assert reproduce_future(f, s, accelerating, EvidenceConfig())["status"] == "FAIL"
     recs = [r for r in records() if r["topic"] == "/localization/kinematic_state"][:2]
     recs[0]["value"]["yaw_rad"] = math.pi - .1
     recs[1]["value"]["yaw_rad"] = -math.pi + .1
