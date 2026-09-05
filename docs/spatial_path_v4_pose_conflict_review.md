@@ -85,4 +85,136 @@ logical identityは処理時間・作成時刻・環境固有pathを除く。UNK
 
 ## 実測結果
 
-実行後に、群の分布、旧111組との数え方の比較、依存影響、テスト結果と不足fieldを追記する。
+### 1. 版・入力identity・完了scope
+
+実行・テスト版は `befc97dd98434843245b888fb6d1d7110acc8a93`。
+本結果の追記commitは文書のみ。Windows/WSLで同じ実装commitを使用し、pushしていない。
+旧実行版7ae8298、報告版428f30a、依頼文追加版ec255bcとは分離した。
+
+| allowlist入力 | bytes | SHA256 |
+|---|---:|---|
+| execution_manifest.json | 4,716 | `4261af73079fdaafa7b2478b94447ab904fbd9bfcd61b7ed8529bd0c449d340b` |
+| raw_window_evidence.json | 3,453,639 | `97d2ccd5992aacf7c20b894f30afc03de283ded61dd4e15cda3ea2b28d853d75` |
+| anchor_evidence.json | 1,193,073 | `98399b988b6c69fd7c47668f91d1388a62d46f3cb03d7a1e442ea8582db5c7df` |
+| raw_read_report.json | 8,004 | `e3da319b45ba62dbbfdea16dc2efa051c05c96010b5ba50d98f8e9a3e732f401` |
+| selection.json | 12,103 | `d2518ac717712ff2c8860b053114f6a478a2a1c8c757884dcee8d58ac3560295` |
+
+最初の3つは指定期待値と一致。後2つは今回hash記録であり、独立した過去実行へのhash結合ではない。
+旧manifestのcode、Dataset内部identity、29選択/8 groups/530追跡/72,697全件の報告値、暫定設定を確認した。
+Dataset本体、旧ledger、raw pathへはアクセスしていない。
+全6,600 JSON records、29 anchorsを処理し、invalid record/anchor、上限延期とも0。
+最終状態は `COMPLETE_DECLARED_SCOPE` / exit0。元raw抽出がPARTIALだった事実はそのまま保持。
+
+### 2. legacyの再現
+
+旧h30のstatus/flagsは**29/29で一致**。normal17件のlegacy FAILとrecovery12件のUNKNOWNを再現。
+これは旧述語の一致であり、旧FAILを危険判定として追認したり、誤りと確定したりするものではない。
+source再現PASS17/UNKNOWN12は旧版の報告として保持し、今回の独立した数値再現PASSは生成していない。
+元future全XYを読んでいないので、新canonical残差・新実長・新XY教師は未計算。
+
+### 3. 同stamp群の分類
+
+保存記録はpose857、velocity535、clock3,747、command919、gear535、AWSIM state7。
+pose685 candidate bucketsとvelocity535 buckets、計1,220群。pose重複172群は**すべて2候補**。
+velocityはこの抽出範囲で同stamp重複0。復帰3 runsはpayload0なので、重複数をnullにして未観測とした。
+
+| scope | 重複群 | XY差>1e-8mのpair | 備考 |
+|---|---:|---:|---|
+| normal 20260902-131505 | 139 | 111 | 旧「111組」はこのrunの閾値超過pair数 |
+| normal 20260902-132822 | 33 | 16 | こちらは旧111組の母数外 |
+| 合計 | 172 | 127 | 全群2候補なので先頭対後続と全pairが一致 |
+
+非ゼロ投影差171群、投影XY/yaw一致1群。全172群でpayload hashは候補間で異なる。
+XY非ゼロ171群のうち44群は1e-8m以下で、旧predicateには引っ掛からない。
+yaw差は170群。最大XY差0.1311721647999626m、最大最短yaw差0.015095404171680205rad。
+参考として20µmを超えるXY差は73群。ただし20µmは保存再現の許容値であり、physical noiseや競合採用の閾値ではない。
+既定material budgetは未設定なのでMATERIAL_DIFFERENCE_EVIDENCEDを付けた群は0。
+171群すべてNONZERO_DIFFERENCE_UNCALIBRATEDとして残した。
+frame/type競合、非有限候補は今回抽出範囲では未検出。微小差の発生原因は確定しない。
+全172群のsource/clock epochと物理順序は不明で、ORDER_OR_EPOCH_AMBIGUOUSを別軸に持つ。
+
+### 4. anchor・h15/h30・prefixへの依存影響
+
+依存は保存されたtarget/source stamp/payload hashを使い、候補IDへjoinした。
+ここで「差に依存」は保存stamp/hashを対応付けたときの数値差候補への依存であり、
+物理domain同一性の証明や、安全性FAILを意味しない。
+
+| scope | 保存valid targets | 数値差候補に依存するvalid targets | 既存strict保持targets | 数値差候補に依存する保持targets |
+|---|---:|---:|---:|---:|
+| h15 | 423 | 206 | 251 | 63 |
+| h30 | 853 | 409 | 446 | 70 |
+
+normal17 anchorsすべてのvalid target集合に数値差候補への依存を確認。
+anchor姿勢のendpoint自体に差があるのは10件で、その影響は全futureへ伝播する。
+既存strict prefixに数値差候補依存があるのは15 anchors。残りnormal2件は先頭欠損でprefix未成立。
+recovery12件はendpoint payloadがなく、差の有無もnull。正常な無競合例に数えていない。
+retained_stepsとelapsed time・保存validの整合は29件の両horizonで確認できた。
+
+各anchorにはwindow全体のlegacy再計算、h15/h30の依存、strict prefixの独自時間窓・境界根拠・抽出完全性を別々に保存した。
+現在の29件ではsource/epoch aliasが未解決のため、全horizonの独立依存適格性はUNKNOWN。
+「競合なしであることを証明したsource-consistent prefix候補」は全件step0で、支持長はnull。
+これは実幾何の長さ0という意味ではなく、証明できる範囲が未確定という意味。
+h30後半だけの競合を無関係h15に伝播しない条件、右endpoint→直前target、anchor→全futureは合成テストで確認した。
+実例全17件のh15にも依存差があるため、今回実例からh15救済の成功件数は主張しない。
+
+### 5. 確定事項・仮説・未記録
+
+確定できたのは「抽出JSONの同stamp候補に数値差があること」「旧predicateと元再現の依存関係」。
+最後の配列候補を選ぶと元endpoint hashに一致するかを診断しているが、AnyReaderと今回readerの列生成順序同一性は未証明。
+更新された推定値、丸め、再送、別publisher、epoch混在などの原因は仮説にとどまる。
+payload hash差をcovariance差やpublisher差と断定する情報もない。
+原quaternion、covariance、channel/schema、publish_time、sequence、offset、publisher、明示epochは未記録。
+COMPLETEなindexed抽出でもこれらの完全性・対応関係を抽出物だけでは証明できずUNKNOWNを維持した。
+
+### 6. UNKNOWN・既知0・比較母数
+
+旧strict policyで報告された支持は、両horizonとも既知prefix13件、既知0が14件、先頭欠損UNKNOWN2件。
+既知0は「旧縦速度hold/noise policyで採用されたpolylineの弧長が0」という報告であり、物理standstillの証明ではない。
+recoveryの既知prefix12件は旧保存geometryの報告値として保持し、source適格性は別のUNKNOWN。
+全29件中16件は共通gridが原点のみなのでNOT_COMPARABLE。残差0を新しい比較成功と扱わない。
+残り13件も正のgrid点数を報告値から数えただけで、新しいXY照合はしていない。
+旧FAIL、新たな投影差、domain UNKNOWN、NOT_INSPECTEDを単一のunknown_reasonsへ押し込んでいない。
+
+### 7. 独立gate
+
+- 非実行用geometry-only変換の採用：BLOCKED。保存済み支持の存在は確認できるが、独立したdomain/order/completenessが不足。
+- 停止/発進教師：BLOCKED。明示意図・許可・Safety根拠不足。
+- controller/MPC oracle：BLOCKED。環境・車体・入力policyの根拠不足。現行選択runtimeは縦横MPC実装済みではない。
+
+短さだけで幾何そのものを消さず、0.1m gateは独立に表示。今回の再分類で旧tierを書換えたり、新採用を行ったりしていない。
+
+### 8. テスト・実行結果・成果物
+
+実行版befc97dで**52 passed in 0.78s**。内訳は新規JSON監査42件＋既存synchronization非学習回帰10件。
+MCAP fixtureテスト、Dataset操作テスト、モデル/optimizer/学習テスト、full pytestは未実行。
+新moduleのsubprocess import試験でもtorch/rosbags/training moduleがロードされないことを確認した。
+CLIのBLOCKED exit3、PARTIAL exit2、immutable出力、原本前後hash一致、NaN/欠落/上限・決定性も試験した。
+
+最終WSL出力：`/home/thistle/e2e_autonomous/runs/spatial_v4_pose_conflicts_final_20260905`
+上のCLI例のoutputだけをこの新規directoryへ変更して実行した。解析約0.383秒、pair計算172/100,000、上限到達なし。
+初回/改良途中の新規出力directoryも残し、いずれも上書きなし。
+Windowsでも同一commit/入力/設定で標準PythonによるCLIを実行し、全論理結果が一致：
+`ccd1f4e830d4726fcb8fbef45ac83bc60a9f99ec9ca4233dce6f4590f6f4ba44`。
+Windows確認出力は `E:\workspace\e2e_lite_transfuser\tmp\spatial_v4_pose_conflicts_windows_final_20260905`（Git対象外）。
+
+| WSL成果物 | SHA256 |
+|---|---|
+| execution_manifest.json | `2a305ef80f4a9ae979644ff77d75fc8010b7b4e01db26ac4bfcd02b680255e3f` |
+| pose_stamp_groups.json | `c5734787fbd8a7bb14038c601398ac5ed098514e1cf9349d55a94cf26aa63f92` |
+| anchor_prefix_impact.json | `12a3115b46fe4de310b6bc8cfc1de9e64a358890cde607592917890415c11e00` |
+| summary.json | `da224114867d9d827212be5d179329564b759ba9dd3a8ba74d92c28427e1ef22` |
+
+allowlist入力の全5hashはWindows/WSL各実行の前後とも不変。
+新raw読取・reader実行・Dataset読取/生成・学習・推論・checkpoint・oracle・ROS/走行・制御変更・pushは0。
+
+### 9. 次に必要な最小field（追加取得は未実行・別承認）
+
+1. semantic stampが属する `clock_domain` と `clock_epoch`、その割当根拠となるreset/eventの参照。
+2. source publisher/domain IDとchannel IDの対応。recording source_idだけではpublisher識別にならない。
+3. channel→schema ID/definition hashの対応。型名一致だけでは同一定義を保証しない。
+4. 同時刻候補の順序を検証するphysical record/chunk offset、sequence、publish_timeと各fieldの意味。
+   欠けるfieldをhash辞書順で代替しない。
+5. 必要な候補に限定した元quaternion・covariance等。投影値一致/微小差の発生箇所を調べる場合に限る。
+
+これらは保存抽出物からは復元できない。原因確定やtier昇格には、必要fieldを限定した追加証拠の取得方針を
+別タスクで承認する必要がある。今回、その新規raw取得を実行していない。
