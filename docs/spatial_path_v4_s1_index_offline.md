@@ -204,4 +204,11 @@ S1_SYNTHETIC_INDEX_INSPECTEDは独立に渡された合成layoutの下での結�
 実行対象とWindows commit→CheckOnly→sync→WSL lock手順は上記と同じ2テスト限定。
 新規反例は元layoutを固定し、FooterをChunk先頭/records内部に向ける、CRC一致の偽装、
 Header長増大、未許可Message Index、range欠落/異常値/隙間、別source/contract/size/revisionを検証する。
-実行結果は検証後に追記する。
+実装・今回テスト実行commit: `06f2b9381ee2057bf75b1ec4b9b75e6f0063442d`。
+Windowsの対象processなし、既定CheckOnlyによるWSL clean/process/lock確認後、通常syncはSYNC_OK。
+Windows/WSL同一SHAを確認してlock付きで実行し、**115 passed in 0.26s**。
+内訳はS1 105件（従来72＋新規33）＋同期数学回帰10件。過去82 passedと区別する。
+偽装Footer（先頭/内部、CRCなし/一致）、Header、Indexの新規反例はBLOCKED_READ_RANGE、
+source側sentinel拒否0で成功。未layout/不正layoutはsource発行0で停止。
+全pytest、実raw fixture、Dataset tests、合成学習/optimizer testsは未実行。
+この実測追記は上記実装・実行版の後続文書commitであり、実行SHAへ遡及的に含めない。
