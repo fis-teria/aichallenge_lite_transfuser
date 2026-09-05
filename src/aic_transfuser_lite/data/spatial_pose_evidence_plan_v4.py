@@ -7,6 +7,7 @@ Embedded paths and commands are opaque and never passed to filesystem/process AP
 from __future__ import annotations
 
 from collections import Counter
+from copy import deepcopy
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 import hashlib
@@ -15,10 +16,26 @@ import math
 from pathlib import Path
 import stat
 import subprocess
+import sys
 import time
 from typing import Any, Mapping
 
-VERSION = "spatial_pose_evidence_plan_v4_v1"
+VERSION = "spatial_pose_evidence_plan_v4_v2_record_binding"
+PRIOR_IDENTITY = "394292c7c268715a5efc4cd408f0e9634835d5d4cf016729a01c9f4786dde71d"
+PRIOR_EXPECTED = {
+    "execution_manifest.json": "c94a3e6bb6330ae6abef547d3ee856e43098caddfed4833964a97b1b00ebee29",
+    "minimal_read_proposal.json": "de16bdd46787a97fbbb61107a299b035b8d3a91704779366b4db7111da2eee25",
+    "claim_requirements.json": "18d13e2060d976693215aef02d40b8b97719d19cea143b6f943caeb5d07c0342",
+    "input_manifest.json": "77b03e6e1517e14b5de2a58e6ac845ea94255f85667a49e37fe694eeae1f5fd6",
+    "unresolved_and_unrecoverable.json": "6f5afd399f499844fe539ae17bb3f4e490dd0b09e683b30b7d6173b90246a8ad",
+    "report_ja.md": "5a9f766bf67960fdaed8a0a39e49eaba5cce89e737d9addcb4fa8872d87cc64b",
+}
+FIXED_SEEDS = {
+    "8fbd120c37e872d2bc51ab58bc95813636caa7de04a335b560e9337c6993f12b": 6189999861,
+    "208cfcac87744ded9ef39f3c85ac2ae6d3f545255e81239e33e8819e1947b20c": 256259994272,
+    "353301a96a1f493e253091d78bef0c43c2b90818097aa892e392a5756250811d": 5449999878,
+    "ffe514be1a0f7756c75006e4066566bcaf025610e726962ed1ecb9c93fca65f7": 939999978,
+}
 OLD_COMMIT = "7ae8298b71aa7bdbacf1d1757798bf0de66bcfc4"
 CONFLICT_COMMIT = "befc97dd98434843245b888fb6d1d7110acc8a93"
 NORMAL_RUNS = ("20260902-131505", "20260902-132822")
@@ -75,6 +92,16 @@ def require(condition: bool, message: str) -> None:
         raise ValueError(message)
 
 
+class Deadline:
+    """Cooperative analysis deadline, not preemption of JSON parse or OS I/O."""
+
+    def __init__(self, seconds: int):
+        self.end = time.monotonic() + seconds
+
+    def check(self) -> None:
+        require(time.monotonic() <= self.end, "LIMIT: cooperative analysis deadline")
+
+
 def is_hash(value: Any) -> bool:
     return isinstance(value, str) and len(value) == 64 and all(c in "0123456789abcdef" for c in value)
 
@@ -93,7 +120,7 @@ def dependencies(anchor: dict, steps: list[int]) -> list[tuple[str, int | None, 
     return result
 
 
-def validate_inputs(inputs: dict, limits: Limits) -> tuple[list, list, dict]:
+def validate_inputs(inputs: dict, limits: Limits, deadline: Deadline | None = None) -> tuple[list, list, dict]:
     """Validate identities/joins; consume saved classifications, never recompute them."""
     new = inputs["conflict/execution_manifest.json"]
     old = inputs["evidence/execution_manifest.json"]
@@ -128,6 +155,7 @@ def validate_inputs(inputs: dict, limits: Limits) -> tuple[list, list, dict]:
     records = {}
     for run, rows in raw.items():
         for index, row in enumerate(rows):
+            if deadline: deadline.check()
             require(isinstance(row, dict) and is_hash(row["payload_sha256"]) and
                     is_stamp(row["bag_stamp_ns"]) and is_stamp(row["semantic_stamp_ns"]), "record schema")
             require(all(isinstance(row[k], str) and row[k] for k in ("topic", "type", "source_id")), "record binding")
@@ -136,6 +164,7 @@ def validate_inputs(inputs: dict, limits: Limits) -> tuple[list, list, dict]:
     lookup = {g["group_id"]: g for g in groups}
     require(len(lookup) == len(groups), "duplicate group IDs")
     for g in groups:
+        if deadline: deadline.check()
         require(is_hash(g["group_id"]) and is_stamp(g["semantic_stamp_ns"]), "group ID/stamp")
         require(isinstance(g["classification"], list) and all(isinstance(x, str) for x in g["classification"]), "classification schema")
         require(type(g["observed_nonzero_difference"]) is bool, "saved difference schema")
@@ -155,6 +184,7 @@ def validate_inputs(inputs: dict, limits: Limits) -> tuple[list, list, dict]:
             require(set(g["all_pair_maxima"]) == {"xy_m", "yaw_rad"}, "pose metric shape")
     previous = {a["sample_id"]: a for a in old_anchors}
     for a in anchors:
+        if deadline: deadline.check()
         require(a["processing"] == "PROCESSED" and a["run_id"] == previous[a["sample_id"]]["run_id"], "anchor processing/run")
         require(a["original_tier"] == previous[a["sample_id"]]["tier"], "tier join mismatch")
         step_ids = [s["step"] for s in a["steps"]]
@@ -162,13 +192,19 @@ def validate_inputs(inputs: dict, limits: Limits) -> tuple[list, list, dict]:
         for h in ("h15", "h30"):
             scope = a["scopes"][h]
             ts = scope["existing_strict_prefix"]["target_steps"]
-            require(isinstance(ts, list) and ts == list(range(1, len(ts) + 1)) and set(ts) <= set(step_ids), "prefix step shape")
+            require(isinstance(ts, list) and ts == list(range(1, len(ts) + 1)) and set(ts) <= set(step_ids)
+                    and len(ts) <= int(h[1:]), "prefix step shape/horizon")
             require(scope["spatial_support"]["support_kind"] in
                     ("KNOWN_PREFIX", "KNOWN_ZERO", "UNKNOWN_FIRST_FUTURE_MISSING"), "support knownness")
         for kind, _, dep in dependencies(a, step_ids):
             require(isinstance(dep["endpoints"], list) and len(dep["endpoints"]) <= 2, "endpoint shape")
             for endpoint in dep["endpoints"]:
                 require(is_stamp(endpoint["stamp_ns"]) and is_hash(endpoint["reported_payload_sha256"]), "endpoint identity")
+                if not endpoint["candidate_group_ids"]:
+                    require(endpoint.get("resolution_status") in ("UNKNOWN", "NOT_INSPECTED") and
+                            not endpoint["all_candidate_ids"] and not endpoint["matching_record_ids"],
+                            "empty endpoint references without explicit unresolved status")
+                    continue
                 expected_ids = set()
                 for gid in endpoint["candidate_group_ids"]:
                     g = lookup[gid]
@@ -176,6 +212,8 @@ def validate_inputs(inputs: dict, limits: Limits) -> tuple[list, list, dict]:
                             g["topic"] == (VELOCITY if kind == "velocity" else POSE), "endpoint group join")
                     expected_ids.update(g["candidate_ids"])
                 require(expected_ids == set(endpoint["all_candidate_ids"]), "endpoint candidate scope")
+                require(bool(endpoint["matching_record_ids"]) or endpoint.get("resolution_status") in
+                        ("UNKNOWN", "NOT_INSPECTED"), "missing endpoint match without explicit unresolved status")
                 require(set(endpoint["matching_record_ids"]) ==
                         {i for i in expected_ids if records[i]["payload_sha256"] == endpoint["reported_payload_sha256"]}, "endpoint hash join")
     require(dict(Counter(r["topic"] for r in records.values())) == summary["topic_counts"], "topic counts mismatch")
@@ -189,7 +227,7 @@ def validate_inputs(inputs: dict, limits: Limits) -> tuple[list, list, dict]:
     return groups, anchors, records
 
 
-def claim_requirements() -> dict:
+def legacy_claim_requirements() -> dict:
     return {
         "A": {"claim": "保存抽出物の候補差", "necessary_predicates": ["input_hash_join", "saved_projection_scope"],
               "alternative_sufficient_evidence": ["verified saved pair diagnostics; no new raw needed"],
@@ -199,7 +237,7 @@ def claim_requirements() -> dict:
               "unresolved": ["old converter requires historical AnyReader version, file/connection enumeration and equal-time tie evidence", "physical-last is not AnyReader-last; current library is not historical proof"],
               "acquisition_can_resolve": ["source/schema/record positions and local boundary hypotheses, conditional on actually recorded data"]},
         "C": {"claim": "候補選択への投影不変性・感度", "necessary_predicates": ["complete_candidate_scope", "compatible_frame_projection", "bounded_domain_assignment"],
-              "alternative_sufficient_evidence": ["all relevant projected values equal: order not necessary", "nonzero sensitivity quantified under explicit independent error budget: not automatic PASS"],
+              "alternative_sufficient_evidence": ["all relevant projected values equal: order not necessary", "sensitivity quantification needs no physical budget; acceptability is a separate budget predicate"],
               "unresolved": ["observed equality is not candidate completeness", "nonzero difference without calibrated budget", "no new teacher XY"],
               "acquisition_can_resolve": ["candidate set and projection provenance; quaternion only for yaw-projection hypothesis"]},
         "D": {"claim": "物理的に一意・正確なpose", "necessary_predicates": ["independent estimator semantics", "frame/time calibration", "physical validation evidence"],
@@ -425,6 +463,258 @@ def build_plan(inputs: dict, limits: Limits) -> dict:
     return {"proposal": proposal, "facts": facts}
 
 
+def claim_requirements() -> dict:
+    """Claim predicates are not interchangeable with a list of field names."""
+    legacy = legacy_claim_requirements()
+    specs = {
+        "A_SAVED_DIFFERENCE": ("saved JSON diagnostics", ["saved_hash_join"],
+            ["new raw", "physical accuracy", "safety"]),
+        "B_RECORD_BINDING": ("listed record IDs and payload hashes in one explicit source", [
+            "explicit_source", "record_locator", "payload_hash_binding",
+            {"any_of": ["channel to schema definition/encoding binding", "independently verified equivalent decoding definition binding"]}],
+            ["whole-run epoch alias absence", "complete candidate set", "historical AnyReader tie", "physical truth"]),
+        "B_STREAM_REPLAY": ("explicit partition and selection policy", [
+            {"any_of": ["explicit source/epoch partition", "record-defined partition", "independent interval correspondence"]},
+            "candidate completeness in that partition", "explicit selection policy",
+            {"any_of": ["order-independent policy", "policy-specific verified order"]}],
+            ["physical-last equals historical AnyReader-last", "current version proves historical version", "B_RECORD_BINDING implies replay"]),
+        "C_LISTED_PAIR_PROJECTION": ("exactly the two listed record ID/hash bindings", [
+            "schema/frame/projection interpretation consistency", "listed pair binding"],
+            ["physical order", "historical AnyReader tie", "all-candidate completeness", "physical budget required for numeric sensitivity", "unique physical pose"]),
+        "C_COMPLETE_CANDIDATE_INVARIANCE": ("all candidates in explicit comparison partition", [
+            {"any_of": ["explicit domain", "record-defined comparison partition", "independent interval correspondence"]},
+            "schema/frame/projection consistency",
+            {"any_of": ["complete candidate set plus equality for an invariance proof", "non-equal pair in the same comparison domain for a counterexample"]}],
+            ["two equal candidates prove complete-set invariance", "local clock monotonicity proves domain"]),
+        "D_PHYSICAL_ACCURACY": ("physical estimator claim", ["estimator semantics", "calibration", "independent physical validation"],
+            ["record binding or covariance proves accuracy"]),
+        "E_GEOMETRY_SUPERVISION": ("teacher adoption", ["independent supervision/adoption policy"], ["automatic B/C promotion"]),
+        "E_STOP_LAUNCH_LABELS": ("stop/launch labels", ["intent and permission evidence"], ["geometry implies intent"]),
+        "E_MOTION_PERMISSION_SAFETY": ("motion permission and safety", ["independent safety/clearance/permission validation"], ["Reference implies safety"]),
+        "E_CONTROLLER_ORACLE": ("controller execution", ["vehicle/environment/controller policy validation"], ["current runtime is already longitudinal/lateral MPC"]),
+    }
+    typed = {name: {"claim_type": name, "universe": universe, "necessary_conditions": conditions,
+                    "non_claims": nonclaims, "status": "NOT_EXECUTED"}
+             for name, (universe, conditions, nonclaims) in specs.items()}
+    typed["B_RECORD_BINDING"]["binding_outcomes"] = {
+        "existence": "one or more matched occurrences; retain every match in the approved scope",
+        "unique_occurrence": "requires independent locator/occurrence evidence; duplicate payload hash does not select original occurrence",
+        "unscanned_occurrences": "UNKNOWN outside approved scope; no automatic expansion"}
+    typed["B_STREAM_REPLAY"]["historical_converter_branch"] = ["historical AnyReader version", "file/connection enumeration",
+        "tie rules", "evidence that excluded records cannot change old dedup selection"]
+    typed["C_LISTED_PAIR_PROJECTION"]["acceptability"] = "separate calibrated budget predicate, not needed to quantify sensitivity"
+    return {**legacy, "typed_claims": typed}
+
+
+def verify_prior(prior: dict, inputs: dict, expected_identity: str) -> str:
+    """Recompute the exact v1 canonical JSON identity, without running old code."""
+    m = prior["execution_manifest.json"]
+    require(m["format"] == "spatial_pose_evidence_plan_v4_v1", "prior format")
+    require(m["status"] == "COMPLETE_PLAN_ONLY" and m["input_unchanged"] is True, "prior scope/integrity")
+    hashes = {e["name"]: e["sha256"] for e in m["input_files"]}
+    require(hashes == inputs["_hashes"], "prior original-nine-input binding mismatch")
+    require(prior["input_manifest.json"]["files"] == m["input_files"], "prior input manifests differ")
+    calculated = identity({"policy": m["format"], "limits": m["limits"], "input_hashes": hashes,
+        "code_hashes": m["code_hashes"], "result": {"proposal": prior["minimal_read_proposal.json"], "facts": m["facts"]},
+        "claims": prior["claim_requirements.json"], "status": m["status"]})
+    require(calculated == m["logical_plan_identity"] == expected_identity, "prior logical identity mismatch")
+    return calculated
+
+
+def replay_contract(a: dict, old: dict, selected_steps: list[int], inputs: dict, deadline: Deadline) -> dict:
+    """Reference stored interpolation contracts, never infer t_obs from a sample ID."""
+    source = old.get("source_reproduction", {})
+    if not isinstance(source, dict): source = {}
+    missing = []
+    t_obs = source.get("t_obs_ns")
+    if not is_stamp(t_obs) or not source.get("t_obs_source"):
+        missing.append("t_obs_ns_and_provenance")
+    old_steps = {s["step"]: s for s in source.get("steps", [])}
+    saved_steps = {s["step"]: s for s in a["steps"]}
+    rows = []
+    for kind, step, dep in dependencies(a, selected_steps):
+        deadline.check()
+        evidence = source.get("anchor_interpolation", {}) if step is None else old_steps.get(step, {}).get(kind, {})
+        if not isinstance(evidence, dict): evidence = {}
+        direct = dep.get("original_endpoint_evidence", {})
+        if evidence and direct:
+            require(evidence == direct, "old anchor interpolation contract mismatch")
+        if is_stamp(evidence.get("target_ns")) and step is None and is_stamp(t_obs):
+            require(evidence["target_ns"] == t_obs, "anchor target differs from stored t_obs")
+        stamps, hashes = evidence.get("source_stamps_ns", []), evidence.get("source_payload_hashes", [])
+        require(len(stamps) == len(hashes), "old interpolation endpoint array mismatch")
+        if stamps:
+            require(stamps == [e["stamp_ns"] for e in dep["endpoints"]] and
+                    hashes == [e["reported_payload_sha256"] for e in dep["endpoints"]], "removed/changed original endpoints")
+        if not evidence or not is_stamp(evidence.get("target_ns")) or len(stamps) != 2:
+            missing.append(f"{kind}:{step}:target_or_endpoints")
+        if any(not e["candidate_group_ids"] or not e["matching_record_ids"] for e in dep["endpoints"]):
+            missing.append(f"{kind}:{step}:unresolved_endpoint")
+        target = evidence.get("target_ns")
+        exact = len(stamps) == 2 and stamps[0] == stamps[1]
+        roles = []
+        for index, endpoint in enumerate(dep["endpoints"]):
+            roles.append({"role": "exact_match" if exact else "left" if index == 0 else "right", **endpoint})
+        valid = None if step is None else old_steps.get(step, {}).get("saved_valid")
+        if step is not None:
+            if type(valid) is not bool:
+                missing.append(f"step:{step}:saved_valid")
+            elif "saved_valid" in saved_steps[step]:
+                require(valid == saved_steps[step]["saved_valid"], "saved_valid join")
+        rows.append({"kind": kind, "step": step, "target_ns": target, "saved_valid": valid,
+            "endpoint_roles": roles, "bracket_kind": "EXACT_MATCH" if exact else "BRACKET" if len(stamps) == 2 else "UNKNOWN",
+            "old_reason": evidence.get("reason"),
+            "candidate_search_interval_header_ns": [min(stamps), max(stamps)] if len(stamps) == 2 else None,
+            "interval_meaning": "must verify no intervening source stamp and nearest endpoints in specified partition; hashes alone insufficient",
+            "intervening_records_complete": "UNKNOWN", "schema_frame_domain_binding": "UNKNOWN",
+            "clock_frame_boundary_evidence": "MISSING_REPLAY_CONTRACT",
+            "provenance": "evidence/anchor_evidence.json:source_reproduction joined to conflict dependency"})
+    config = inputs["evidence/execution_manifest.json"].get("configuration", {})
+    tolerance = config.get("interpolation_tolerance_ms")
+    if type(tolerance) not in (float, int) or not math.isfinite(tolerance) or tolerance <= 0:
+        missing.append("interpolation_tolerance_ms")
+    missing.extend(["independent partition/source/schema/frame binding", "candidate interval completeness and boundary evidence",
+                    "historical AnyReader version/enumeration/tie and excluded-record noninterference"])
+    return {"status": "MISSING_REPLAY_CONTRACT", "t_obs_ns": t_obs, "t_obs_provenance": source.get("t_obs_source"),
+        "rows": rows, "missing_predicates": sorted(set(missing)), "interpolation_tolerance_ms": tolerance,
+        "policy_identity": identity({"execution_commit": OLD_COMMIT, "configuration": config}),
+        "policy_identity_scope": "reported extraction policy; not historical AnyReader runtime provenance",
+        "does_not_block_listed_record_binding": True}
+
+
+def source_locator(seed: dict, reports: list) -> dict:
+    """Only inspect string contents. Never construct a Path from a source locator."""
+    bindings = {(r["run_id"], r["source_id"]) for r in seed["candidates"]}
+    report = next((r for r in reports if (r.get("run_id"), r.get("source_id")) in bindings), {})
+    text_path, source_id = report.get("path"), report.get("source_id", "")
+    parts = source_id.split(":metadata:")
+    metadata_hash = parts[1] if len(parts) == 2 and is_hash(parts[1]) else None
+    valid = (len(bindings) == 1 and isinstance(text_path, str) and text_path.startswith("/") and
+             ".." not in text_path.split("/") and text_path.rsplit("/", 1)[-1] == parts[0] and
+             seed["run_id"] in text_path.split("/") and metadata_hash is not None)
+    return {"status": "SAVED_LOCATOR_BOUND_NOT_SOURCE_INSPECTED" if valid else "SOURCE_LOCATOR_UNRESOLVED",
+        "absolute_path_opaque": text_path, "run_id": seed["run_id"], "source_id": source_id,
+        "metadata_sha256_reported": metadata_hash, "source_full_sha256": None,
+        "provenance": "evidence/raw_read_report.json literal string + saved candidate source_id",
+        "not_claimed": "not full raw hash or publisher ID; path never open/stat/resolve/existence-checked"}
+
+
+def pair_claim(seed: dict, locator: dict, limits: Limits) -> dict:
+    candidates = deepcopy(seed["candidates"])
+    require(len(candidates) == 2 and len({c["record_id"] for c in candidates}) == 2, "seed must retain two record IDs")
+    times = [r["bag_stamp_ns"] for r in candidates]
+    window = [max(0, min(times) - 250_000_000), max(times) + 250_000_000]
+    exceeded = [name for name, count, cap in (("groups", 1, limits.closure_groups),
+        ("candidates", 2, limits.closure_candidates), ("window_ns", window[1] - window[0], limits.closure_window_ns)) if count > cap]
+    requirements = claim_requirements()["typed_claims"]
+    return {**FLAGS, "claim_id": "record_pair_binding:" + seed["group_id"], "claim_type": "B_RECORD_BINDING",
+        "closure_kind": "listed_record_binding", "group_id": seed["group_id"], "roles": seed["roles"],
+        "parent_diagnostic_link": "partial_probe:" + seed["group_id"], "weaker_separate_claim": True,
+        "universe": {"source": locator, "listed_records": candidates}, "required_group_ids": [seed["group_id"]],
+        "required_candidates": candidates, "required_clock_records": [], "required_anchor_velocity_endpoints": [],
+        "search_window_log_time_ns_inclusive": window,
+        "future_api_interval_contract": {"inclusive_start_ns": window[0], "exclusive_stop_ns": window[1] + 1,
+            "checked_conversion_required": True, "meaning": "integer-ns inclusive window to start-inclusive/stop-exclusive API; not header-domain proof"},
+        "status": "CLAIM_CLOSURE_BLOCKED" if exceeded else "SOURCE_LOCATOR_UNRESOLVED" if locator["status"] == "SOURCE_LOCATOR_UNRESOLVED" else "WITHIN_LISTED_CAPS_UNAPPROVED",
+        "exceeded_caps": exceeded, "physical_chunk_count_estimate": None,
+        "necessary_conditions": requirements["B_RECORD_BINDING"]["necessary_conditions"],
+        "non_claims": requirements["B_RECORD_BINDING"]["non_claims"] + ["old partial/full-prefix proof", "relative target replay"],
+        "existence_binding": "NOT_EXECUTED", "unique_occurrence_binding": "NOT_EXECUTED",
+        "multiple_occurrences_policy": requirements["B_RECORD_BINDING"]["binding_outcomes"],
+        "fields_by_predicate": {
+            "source_record_binding": ["payload_sha256", "log_time", "header_stamp", "file_chunk_start_offset", "uncompressed_chunk_record_offset"],
+            "decoding_binding": ["channel_id", "schema_id", "schema_definition_hash", "schema/message encoding"],
+            "informational_only": ["sequence may be zero or recorder-defined", "publish_time may equal log_time", "channel ID is not publisher ID"]},
+        "can_update": ["existence of listed source record matches", "occurrence positions and decoding bindings within approved chunks"],
+        "missing_candidate_policy": "record NOT_FOUND_IN_APPROVED_SCOPE, no whole-source absence claim or automatic tracking",
+        "missing_field_policy": "any_of equivalent evidence if sufficient; else NOT_RECORDED/UNRESOLVABLE_FROM_THIS_SOURCE; stop",
+        "projection_claim": {**requirements["C_LISTED_PAIR_PROJECTION"], "claim_id": "listed_pair_projection:" + seed["group_id"],
+            "universe": [{"record_id": r["record_id"], "payload_sha256": r["payload_sha256"]} for r in candidates],
+            "saved_diagnostic_only": seed["saved_maxima"], "new_projection_computed": False,
+            "conditional_counterexample": "non-equal pair disproves invariance only with shared comparison-domain evidence; no domain inferred here"}}
+
+
+def revise_plan(inputs: dict, prior: dict, limits: Limits, deadline: Deadline,
+                expected_identity: str = PRIOR_IDENTITY, fixed_seeds: dict = FIXED_SEEDS) -> dict:
+    old_id = verify_prior(prior, inputs, expected_identity)
+    groups, anchors, records = validate_inputs(inputs, limits, deadline)
+    old_proposal = prior["minimal_read_proposal.json"]
+    seeds = deepcopy(old_proposal["seeds"])
+    require({s["group_id"] for s in seeds} == set(fixed_seeds) and len(seeds) == len(fixed_seeds) <= 4, "fixed four seed identity mismatch")
+    lookup = {g["group_id"]: g for g in groups}
+    for seed in seeds:
+        deadline.check()
+        group = lookup[seed["group_id"]]
+        require(group["semantic_stamp_ns"] == fixed_seeds[seed["group_id"]], "fixed seed stamp mismatch")
+        require(seed["candidates"] == [record_binding(r, records) for r in sorted(group["candidate_ids"])], "prior seed record/hash binding mismatch")
+    by_anchor = {a["sample_id"]: a for a in anchors}
+    old_anchors = {a["sample_id"]: a for a in inputs["evidence/anchor_evidence.json"]}
+    legacy = deepcopy(old_proposal["closures"])
+    supplements = []
+    for c in legacy:
+        deadline.check()
+        aid = c.get("sample_id")
+        supplement = {"claim_id": c["claim_id"], "legacy_status_unchanged": c["status"],
+            "closure_kind": "full_saved_prefix" if c["kind"] == "FULL_SAVED_PREFIX_B_C" else "interpolation_target",
+            "claim_types": ["B_STREAM_REPLAY", "C_COMPLETE_CANDIDATE_INVARIANCE"], "scheduled_for_acquisition": False}
+        if aid:
+            a = by_anchor[aid]
+            steps = c["target_steps"]
+            expected_deps = [{"kind": kind, "step": step, **e} for kind, step, dep in dependencies(a, steps) for e in dep["endpoints"]]
+            require(c["endpoint_dependencies"] == expected_deps, "prior dependency closure changed")
+            if c.get("horizon"):
+                require(steps == a["scopes"][c["horizon"]]["existing_strict_prefix"]["target_steps"], "prior prefix steps changed")
+            supplement["replay_contract"] = replay_contract(a, old_anchors[aid], steps, inputs, deadline)
+        else:
+            supplement["replay_contract"] = {"status": "NOT_APPLICABLE_NO_ANCHOR"}
+        supplements.append(supplement)
+    claims = []
+    for seed in seeds:
+        deadline.check()
+        claims.append(pair_claim(seed, source_locator(seed, inputs["evidence/raw_read_report.json"]["files"]), limits))
+    full = [c for c in legacy if c["kind"] == "FULL_SAVED_PREFIX_B_C"]
+    within = [c for c in full if c["status"] == "BOUNDED_PROPOSAL_PENDING_DOMAIN_AND_COST"]
+    summary = {"legacy_full_prefix_count": len(full), "within_observed_caps_support_kinds": dict(Counter(c["saved_support"]["support_kind"] for c in within)),
+        "within_caps_retained_steps": dict(Counter(str(len(c["target_steps"])) for c in within)),
+        "all_legacy_support_kinds": dict(Counter(c["saved_support"]["support_kind"] for c in full)),
+        "known_zero_is_not_positive_driving_path": True, "input_missing_first_future_anchors": sum(a["scopes"]["h30"]["spatial_support"]["support_kind"] == "UNKNOWN_FIRST_FUTURE_MISSING" for a in anchors)}
+    union_records = sorted({r["record_id"] for c in claims for r in c["required_candidates"]})
+    proposal = {**FLAGS, "policy": VERSION, "prior_logical_identity_recomputed": old_id,
+        "seeds": seeds, "legacy_claims": legacy, "legacy_replay_contracts": supplements,
+        "closures": claims, "acquisition_items": claims,
+        "claim_mapping": [{"parent_diagnostic_link": c["parent_diagnostic_link"], "new_claim_id": c["claim_id"], "weaker_separate_claim": True} for c in claims],
+        "global_saved_maximum": old_proposal["global_saved_maximum"], "summary": summary,
+        "scope_change": "listed record binding replaces no legacy claim; no unconditional order/domain/clock/anchor dependency for listed pairs",
+        "union": {"groups": len(claims), "record_ids": union_records, "status": "CLAIM_CLOSURE_BLOCKED" if
+            len(claims) > limits.max_seeds or len(claims) > limits.union_groups or len(union_records) > limits.union_candidates else "WITHIN_LISTED_CAPS_UNAPPROVED",
+            "does_not_override_individual_caps": True, "physical_chunks": None},
+        "optional_clock_claim": {"status": "NOT_REQUESTED", "required_count": 0, "possible_claim": "local diagnostic only; no thinning to prove absence of resets"},
+        "legacy_caps": old_proposal["closure_caps"], "current_caps": asdict(limits)}
+    budget = deepcopy(old_proposal["future_budget_proposals"])
+    envelope = {"envelope_id": "shared_S1_S2_and_retries", "limits": budget,
+        "ledger_contract": "all S1/S2 attempts and retries debit this one envelope; no per-stage reset or duplicate allocation; actual consumed bytes survive errors",
+        "historical_budget_reused": False, "estimates": "all null; never inferred from JSON count or window duration"}
+    approval = {**FLAGS, "claim_ids": [c["claim_id"] for c in claims], "sources": [source_locator(seeds[0], inputs["evidence/raw_read_report.json"]["files"])],
+        "windows": [{"claim_id": c["claim_id"], "log_time_ns_inclusive": c["search_window_log_time_ns_inclusive"]} for c in claims],
+        "envelope": envelope, "individual_statuses": {c["claim_id"]: c["status"] for c in claims}, "union_status": proposal["union"]["status"],
+        "stages": {
+            "S1": {"authorized": False, "scope": "only source binding, summary channel/schema, index, intersecting chunk descriptors and declared sizes",
+                "payload_decode_or_expansion": False, "automatic_fallback": False, "envelope_ref": envelope["envelope_id"],
+                "stop_on": ["no index", "missing definitions", "source mismatch", "individual/union/envelope cap", "unknown required locator"]},
+            "S2": {"authorized": False, "requires": ["persisted S1 result", "independent review of corrected reader", "separate explicit payload authorization"],
+                "scope": "only approved chunks, the eight listed record hashes and occurrence/schema/time/position bindings",
+                "envelope_ref": envelope["envelope_id"], "stop_on": ["missing candidate: no follow-up search", "schema/source mismatch", "budget/partial/error"]}},
+        "automatic_stage_transition": False, "physical_chunk_offsets": None, "dedup_physical_chunks": "only after S1; not from logical record count",
+        "declared_size_limitations": "reference cost only, not safe actual expansion bound",
+        "unresolved_fields": ["actual source binding", "channel/schema definitions", "chunk offsets/count/cost", "record occurrences", "reader implementation/review", "explicit stage permissions"],
+        "reader_preconditions": old_proposal["future_reader_preconditions"],
+        "forbidden_expansions": ["whole run", "other source", "additional window", "automatic missing-candidate tracking", "Dataset/training/drive"],
+        "all_D_E_gates": "OUT_OF_SCOPE_NOT_APPROVED"}
+    if any(c["status"] == "SOURCE_LOCATOR_UNRESOLVED" for c in claims):
+        approval["unresolved_fields"].append("SOURCE_LOCATOR_UNRESOLVED")
+    return {"proposal": proposal, "approval": approval, "facts": summary}
+
+
 def unique_object(pairs: list) -> dict:
     result = {}
     for key, value in pairs:
@@ -466,27 +756,37 @@ def write_json(path: Path, value: Any) -> None:
 
 
 def run_plan(conflict_root: Path, evidence_root: Path, output: Path, repo: Path,
-             limits: Limits = Limits(), *, expected: Mapping[str, str] = EXPECTED) -> dict:
-    """Open only nine fixed JSON names and two local code files, never embedded paths.
+             limits: Limits = Limits(), *, expected: Mapping[str, str] = EXPECTED,
+             prior_plan_root: Path | None = None, prior_expected: Mapping[str, str] = PRIOR_EXPECTED,
+             prior_identity: str = PRIOR_IDENTITY, fixed_seeds: dict = FIXED_SEEDS) -> dict:
+    """Fixed original-nine and explicitly supplied prior-six leaves only; no raw I/O.
 
-    Missing/schema/hash/limit failures generate a BLOCKED/PARTIAL plan, not fake seeds.
-    Unsafe output locations are rejected before any output write.
+    Static path/hash checks do not eliminate concurrent TOCTOU/ABA races.
+    The final COMPLETE manifest is published last by an atomic rename.
     """
     limits.validate()
     roots = {"conflict": safe_path(conflict_root), "evidence": safe_path(evidence_root)}
+    if prior_plan_root is not None:
+        roots["prior"] = safe_path(prior_plan_root)
     output = safe_path(output)
     for root in roots.values():
         require(not (output == root or output.is_relative_to(root) or root.is_relative_to(output)), "input/output containment")
     require(roots["conflict"] != roots["evidence"], "input roots must differ")
     if output.exists():
         raise FileExistsError("immutable output already exists")
-    started = time.monotonic()
+    deadline = Deadline(limits.max_seconds)
     entries, inputs, blockers, partial = [], {}, [], []
     total = 0
-    for key in EXPECTED:
+    expected_all = dict(expected)
+    if prior_plan_root is None:
+        blockers.append("MISSING_PRIOR_PLAN_ROOT: fixed seeds and legacy identity not invented")
+    else:
+        expected_all.update({"prior/" + name: prior_expected.get(name) for name in PRIOR_EXPECTED})
+    allowlist = list(EXPECTED) + (["prior/" + name for name in PRIOR_EXPECTED] if prior_plan_root is not None else [])
+    for key in allowlist:
         namespace, name = key.split("/")
         path = roots[namespace] / name
-        entry = {"name": key, "expected_sha256": expected.get(key),
+        entry = {"name": key, "expected_sha256": expected_all.get(key),
             "hash_binding_provenance": "provided_report_later_recorded_not_original_independent_binding" if
                 name in ("raw_read_report.json", "selection.json") else "provided_report_expected_hash"}
         entries.append(entry)
@@ -495,29 +795,36 @@ def run_plan(conflict_root: Path, evidence_root: Path, output: Path, repo: Path,
             size = path.stat().st_size
             entry["size_bytes"] = size
             require(size <= limits.max_file_bytes and total + size <= limits.max_total_bytes, "LIMIT: input bytes")
-            require(time.monotonic() - started <= limits.max_seconds, "LIMIT: plan seconds")
+            deadline.check()
             data = bounded_read(path, min(limits.max_file_bytes, limits.max_total_bytes - total))
             total += len(data)
             digest = hashlib.sha256(data).hexdigest()
             entry.update(sha256=digest, status="READ")
-            require(is_hash(expected.get(key)) and digest == expected[key], "input hash mismatch")
-            value = json.loads(data, object_pairs_hook=unique_object, parse_constant=reject_constant)
-            require(isinstance(value, (dict, list)), "JSON root type")
+            require(is_hash(expected_all.get(key)) and digest == expected_all[key], "input hash mismatch")
+            value = data.decode("utf-8") if name == "report_ja.md" else json.loads(data, object_pairs_hook=unique_object, parse_constant=reject_constant)
+            require(isinstance(value, (dict, list)) or name == "report_ja.md", "JSON root type")
+            deadline.check()
             inputs[key] = value
             entry.update(root_type=type(value).__name__, root_count=len(value))
         except (OSError, ValueError, RecursionError) as error:
             reason = key + ":" + str(error)
             (partial if "LIMIT:" in str(error) else blockers).append(reason)
             entry["status"] = "NOT_INSPECTED_LIMIT" if "LIMIT:" in str(error) else "BLOCKED"
-    inputs["_hashes"] = {e["name"]: e["sha256"] for e in entries if "sha256" in e}
-    result = {"proposal": {**FLAGS, "seeds": [], "closures": [], "status": "BLOCKED_DEPENDENT_INPUT"}, "facts": {}}
+            if "deadline" in str(error):
+                break
+    inputs["_hashes"] = {e["name"]: e["sha256"] for e in entries if "sha256" in e and not e["name"].startswith("prior/")}
+    def empty_result() -> dict:
+        return {"proposal": {**FLAGS, "seeds": [], "closures": [], "acquisition_items": [], "status": "BLOCKED_DEPENDENT_INPUT"},
+                "approval": {**FLAGS, "claim_ids": [], "sources": [], "windows": [], "stages": {}, "status": "BLOCKED"}, "facts": {}}
+    result = empty_result()
     if not blockers and not partial:
         try:
             # Bind the previous audit's observed inputs to this exact allowlist snapshot.
             for prior in inputs["conflict/execution_manifest.json"]["input_files"]:
                 key = "evidence/" + prior["name"]
                 require(key in inputs["_hashes"] and inputs["_hashes"][key] == prior["sha256"], "prior artifact input hash join")
-            result = build_plan(inputs, limits)
+            prior_inputs = {name: inputs["prior/" + name] for name in PRIOR_EXPECTED}
+            result = revise_plan(inputs, prior_inputs, limits, deadline, prior_identity, fixed_seeds)
         except (KeyError, TypeError, ValueError, IndexError, StopIteration, AttributeError, OverflowError) as error:
             reason = "schema_or_join:" + str(error)
             (partial if "LIMIT:" in str(error) else blockers).append(reason)
@@ -532,14 +839,21 @@ def run_plan(conflict_root: Path, evidence_root: Path, output: Path, repo: Path,
             entry["unchanged_after"] = False
         if not entry["unchanged_after"]:
             blockers.append("input changed:" + entry["name"])
-    if time.monotonic() - started > limits.max_seconds:
-        partial.append("LIMIT: plan seconds; generated scope not released")
-    if blockers or partial:
-        result = {"proposal": {**FLAGS, "seeds": [], "closures": [], "status": "BLOCKED_DEPENDENT_INPUT"}, "facts": {}}
-    status = "BLOCKED" if blockers else "PARTIAL" if partial else "COMPLETE_PLAN_ONLY"
+    try:
+        deadline.check()
+    except ValueError as error:
+        partial.append(str(error))
     code_paths = [Path(__file__).resolve(), repo / "tools/plan_spatial_pose_evidence_v4.py"]
-    code_hashes = {p.name: hashlib.sha256(bounded_read(p, 1024**2)).hexdigest() for p in code_paths}
-    git = lambda *args: subprocess.check_output(["git", "-C", str(repo), *args], text=True).strip()
+    code_hashes, commit, working_tree = {}, None, None
+    try:
+        code_hashes = {p.name: hashlib.sha256(bounded_read(p, 1024**2)).hexdigest() for p in code_paths}
+        git = lambda *args: subprocess.check_output(["git", "-C", str(repo), *args], text=True, timeout=10).strip()
+        commit, working_tree = git("rev-parse", "HEAD"), git("status", "--porcelain")
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        blockers.append("code_or_git_identity:" + type(error).__name__)
+    if blockers or partial:
+        result = empty_result()
+    status = "BLOCKED" if blockers else "PARTIAL" if partial else "COMPLETE_PLAN_ONLY"
     requirements = claim_requirements()
     unresolved = {"blockers": blockers, "limits": partial,
         "not_recorded_branches": {"sequence": "zero/recorder counter need not prove publisher order; use verified policy order instead",
@@ -549,29 +863,58 @@ def run_plan(conflict_root: Path, evidence_root: Path, output: Path, repo: Path,
             "covariance": "not estimator accuracy proof; not requested without hypothesis"},
         "terminal_branch": "NOT_RECORDED -> alternatives if sufficient else UNRESOLVABLE_FROM_THIS_SOURCE; no unlimited retry",
         "nonpromotion": "A/B/C never imply D/E; existing tiers unchanged"}
-    logical = identity({"policy": VERSION, "limits": asdict(limits), "input_hashes": inputs["_hashes"],
-        "code_hashes": code_hashes, "result": result, "claims": requirements, "status": status})
+    try:
+        logical = identity({"policy": VERSION, "limits": asdict(limits), "input_hashes": inputs["_hashes"],
+            "prior_hashes": {e["name"]: e.get("sha256") for e in entries if e["name"].startswith("prior/")},
+            "prior_logical_identity": prior_identity, "code_hashes": code_hashes, "result": result, "claims": requirements, "status": status})
+    except (ValueError, TypeError, RecursionError) as error:
+        blockers.append("logical_identity:" + type(error).__name__)
+        logical, result, status = None, empty_result(), "BLOCKED"
     manifest = {**FLAGS, "format": VERSION, "status": status, "logical_plan_identity": logical,
-        "plan_commit": git("rev-parse", "HEAD"), "working_tree": git("status", "--porcelain"),
+        "plan_commit": commit, "working_tree": working_tree,
         "code_hashes": code_hashes, "input_files": entries, "input_unchanged": all(e.get("unchanged_after") is True for e in entries),
         "created_at_utc": datetime.now(timezone.utc).isoformat(), "limits": asdict(limits),
         "old_execution_commit": OLD_COMMIT, "conflict_execution_commit": CONFLICT_COMMIT,
-        "result_document_commit": "abec800e031a07f2898612af5d8177651354fd84",
-        "request_document_commit": None, "request_provenance": "external user attachment, not a separate repository commit",
+        "prior_plan_commit": "17ead237de8f1a6b8e52fdc18bcf7c01e75e5403",
+        "result_document_commit": "69d21d376ac95dde881fa75d5773827fb68fd04e",
+        "request_document_commit": None, "request_provenance": "external attachment 57bc7198-655f-4a9c-914d-a7d5afc860b9; no separate request commit",
+        "prior_logical_identity_expected": prior_identity,
+        "prior_logical_identity_recomputed": result["proposal"].get("prior_logical_identity_recomputed"),
+        "original_nine_verified": all(e.get("unchanged_after") and e["status"] == "READ" for e in entries if not e["name"].startswith("prior/")) and len(inputs["_hashes"]) == 9,
+        "prior_six_verified": len([e for e in entries if e["name"].startswith("prior/") and e.get("unchanged_after") and e["status"] == "READ"]) == 6,
+        "io_limitations": "static path checks and before/after hashes do not exclude TOCTOU/ABA; cooperative deadlines cannot interrupt one JSON parse",
+        "blockers": blockers, "limit_reasons": partial,
         "facts": result["facts"], "exit_code": 0 if status == "COMPLETE_PLAN_ONLY" else 2 if status == "PARTIAL" else 3}
+    # Directory collisions remain strictly no-write; only this run owns a new directory.
     safe_path(output)
-    output.mkdir(parents=True, exist_ok=False)
-    for name, value in (("input_manifest.json", {"files": entries, "JSON_bytes_read_first_pass": total}),
-                        ("claim_requirements.json", requirements), ("minimal_read_proposal.json", result["proposal"]),
-                        ("unresolved_and_unrecoverable.json", unresolved), ("execution_manifest.json", manifest)):
-        write_json(output / name, value)
-    report = (f"# 最小追加pose証拠取得計画\n\n状態: {status}\n\nlogical identity: `{logical}`\n\n"
-        f"seed数: {len(result['proposal']['seeds'])}。選択理由・ID/hash・全endpoint closureはminimal_read_proposal.json。\n\n"
-        "Aは保存候補差、Bは指定policyの記録再現、Cは投影不変性/感度、Dは物理正確性、Eは採用・走行。相互昇格しない。\n\n"
-        "部分probeと全prefix closureは別claim。closure超過・domain未確定なら原本へ範囲拡大せずBLOCKED。\n\n"
-        "仕様参照: [MCAP](https://mcap.dev/spec)、[AnyReader](https://ternaris.gitlab.io/rosbags/api/rosbags.highlevel.html)。実ファイルの記録内容は未確認。\n\n"
-        "raw/Dataset読取・学習・推論・制御・走行・pushなし。既存tierは変更なし。\n\n"
-        "追加取得は未実行・未承認。対象source/stage/window/claim、独立予算、reader修正・試験、原本不変性と新規出力先を別途明示承認するまで取得しない。\n")
-    with (output / "report_ja.md").open("x", encoding="utf-8", newline="\n") as stream:
-        stream.write(report)
+    try:
+        output.mkdir(parents=True, exist_ok=False)
+    except OSError as error:
+        print("BLOCKED: cannot create immutable output; no error manifest saved: " + str(error), file=sys.stderr)
+        raise
+    try:
+        for name, value in (("input_manifest.json", {"files": entries, "bytes_read_first_pass": total}),
+                ("claim_requirements.json", requirements), ("minimal_read_proposal.json", result["proposal"]),
+                ("approval_request.json", result["approval"]), ("unresolved_and_unrecoverable.json", unresolved)):
+            write_json(output / name, value)
+        report = (f"# claim別record結合probe計画\n\n状態: {status}\n\n旧identity: {prior_identity}\n新版identity: {logical}\n\n"
+            f"seed数: {len(result['proposal']['seeds'])}。元9 JSON検証と旧6成果物検証をmanifestで分離。\n\n"
+            "4seed維持。新record_pair_bindingはより弱い別claim。旧partial/full-prefixの全依存・statusはlegacy_claimsに保持。\n\n"
+            "指定pairの存在結合と一意occurrence、投影差と許容性、全候補完全性、物理正確性、採用/実行gateを分離。\n\n"
+            "上限内の旧full-prefix KNOWN_ZEROは正の走行pathではない。source locatorは保存文字列のみ。\n\n"
+            "S1 metadata/index、S2 payloadは共通envelopeと別承認。rawのstat/存在確認も未実行。\n\n"
+            "raw/Dataset読取・再分類・教師生成・tier変更・学習・推論・走行・pushは0。追加取得は未実行・未承認。\n")
+        with (output / "report_ja.md").open("x", encoding="utf-8", newline="\n") as stream:
+            stream.write(report)
+        write_json(output / "execution_manifest.pending.json", manifest)
+        (output / "execution_manifest.pending.json").rename(output / "execution_manifest.json")
+    except (OSError, ValueError, TypeError) as error:
+        manifest.update(status="BLOCKED", exit_code=3, logical_plan_identity=None,
+                        blockers=blockers + ["output_finalization:" + type(error).__name__])
+        # Partial proposal files are never authoritative without a final COMPLETE manifest.
+        try:
+            write_json(output / "error_manifest.json", {**manifest, "application_scope": [], "partial_files_not_authoritative": True})
+        except (OSError, ValueError, TypeError) as manifest_error:
+            print("BLOCKED: output and error-manifest write failed; partial directory is incomplete: " + str(manifest_error), file=sys.stderr)
+        print("BLOCKED: output finalization failed: " + str(error), file=sys.stderr)
     return manifest

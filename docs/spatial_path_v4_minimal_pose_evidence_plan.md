@@ -1,5 +1,7 @@
 # Spatial Path V4: 最小追加pose証拠取得計画 (PLAN ONLY)
 
+> 以下の旧v1計画結果は履歴として保持する。末尾の「record結合probe修正」が現行の修正仕様。
+
 ## 1. 版と許可範囲
 
 正本: `E:\workspace\e2e_lite_transfuser`。
@@ -209,3 +211,67 @@ run均等化を目的としていない。recovery/test/未選択sessionへの�
 raw読取 (metadata/index含む)、Dataset本体読取、学習、推論、制御変更、走行、pushは0。
 
 追加取得は未実行・未承認。対象source/stage/window/claim・独立予算・reader修正と試験・原本不変性と新出力先の明示承認後に、別タスクとして判断する。
+
+## record結合probe修正 (schema v2、PLAN ONLY)
+
+依頼: 外部添付 `57bc7198-655f-4a9c-914d-a7d5afc860b9/pasted-text.txt`。
+開始HEAD `3fb4027a3d351672f2bf165b5b95ebca2f4526fb`、working tree clean。
+origin/branchは上記と同じ。指定7commitはローカルcommitとして存在し開始HEADの祖先。
+本依頼文だけの独立commitはない。旧計画実行版17ead237と結果追記版69d21d3を区別する。
+
+変更は計画module/CLI/合成tests/本書の4ファイルのみ。
+元9 JSONの固定allowlist/期待hashを維持し、明示prior-plan-rootの固定6成果物をhash結合して読む。
+旧logical identityを、旧manifestのpolicy/limits/input hash/code hash、proposal/facts/claims/statusを用いた
+canonical JSON (sort_keys、ensure_ascii=False、separators=(comma,colon)、allow_nan=False) のSHA256で再計算する。
+新identityは旧identityと入力/code/policy/cap/claimの内容に結合する。
+
+4seedのrecord ID・payload hash・役割は旧成果物から保持し再選択しない。
+旧partial_probe/full_saved_prefixはlegacy_claimsとして全依存・statusを保持。
+新 `record_pair_binding:<group_id>` は weaker_separate_claim であり置換ではない。
+listed_record_bindingにはanchor/velocity/clockの依存を付けず、各1群2候補。
+旧step24の約2.925秒の相対再現は上限超過のまま。旧先頭欠損step1も適格prefixにしない。
+
+探索窓案は保存bag時刻から±250ms、両端包含のlog_time窓。
+将来start包含/stop非包含APIへ渡すならstop=end+1nsをchecked conversionする契約のみ記載。
+rawのstat/存在確認・metadata/index・reader実装を含め、今回は一切取得しない。
+
+ClaimをA_SAVED_DIFFERENCE、B_RECORD_BINDING、B_STREAM_REPLAY、C_LISTED_PAIR_PROJECTION、
+C_COMPLETE_CANDIDATE_INVARIANCE、D_PHYSICAL_ACCURACYと4つのE gateに分ける。
+存在結合と元occurrence一意性を分離し、同hash複数対応を勝手に一つへ選ばない。
+指定pair比較には全候補完全性・順序・物理許容budgetを必須にしない。
+非同値pairの全候補不変性への反例には同じ比較domainの根拠が別途必要。
+数値感度の記述と許容判定を分離する。新たな幾何計算はしない。
+
+補間のt_obs/target/saved_valid/左右role/許容値は元anchor_evidenceの保存契約と照合する。
+sample IDをt_obsに代用しない。endpoint全空のvacuous truth、h15 step16、元依存削減を拒否。
+明示UNKNOWNは未充足predicateとして残す。endpoint間の別stamp不存在はhashだけでは証明せず
+MISSING_REPLAY_CONTRACTを残す。旧上限内6prefixのKNOWN_ZEROと正の支持を区別する。
+
+source locatorは旧raw_read_report内の絶対path文字列、run、source_id、metadata hashを結合するだけ。
+原本へopen/stat/resolve/存在確認しない。metadata hashは原本全hashやpublisher IDではない。
+不明ならSOURCE_LOCATOR_UNRESOLVED。
+
+approval_request.jsonでS1 (metadata/indexのみ、fallbackなし) とS2 (別承認の特定chunk payload) を分離。
+旧停止上限はS1+S2+全再試行に共通の単一envelope。各stageに満額を重複割当しない。
+source64MiB / expanded128MiB / 5000messages / 60秒 / temp0 / record16MiB / chunks8。
+estimate、実chunk位置・個数はnullのまま。物理重複排除はS1結果後のみ。
+declared sizeは実展開量の安全保証ではない。raw取得・stage自動遷移のCLI入口はない。
+
+保全: 固定allowlist、component symlink/reparse、包含、期待hash/前後hash、既存output拒否。
+これらはTOCTOU/ABA完全排除ではない。協調的deadlineを解析loopで検査するがJSON parse単体は割込み不可。
+Git/code hash失敗はBLOCKEDと空の申請scope。出力は全成果物の後に最終manifestをrenameして確定。
+途中失敗の部分ファイルは非authoritative。error manifestも保存不能ならstderrへ明示する。
+
+実行はWindows commit → sync CheckOnly → 通常sync → 同一commit WSL lock付き、pushなし。
+
+```bash
+bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q tests/test_spatial_pose_evidence_plan_v4.py tests/test_synchronization_v3.py
+bash tools/with_wsl_training_lock.sh .venv/bin/python tools/plan_spatial_pose_evidence_v4.py \
+  --conflict-root /home/thistle/e2e_autonomous/runs/spatial_v4_pose_conflicts_final_20260905 \
+  --evidence-root /home/thistle/e2e_autonomous/runs/spatial_v4_evidence_run_v3_20260906 \
+  --prior-plan-root /home/thistle/e2e_autonomous/runs/spatial_v4_pose_evidence_plan_v2_20260905 \
+  --output /home/thistle/e2e_autonomous/runs/spatial_v4_record_binding_plan_v1_20260905
+```
+
+必須6成果物にapproval_request.jsonを含み、取得不能分岐は補足unresolved_and_unrecoverable.jsonにも保存。
+今回の実行結果は検証後に追記。過去43 passedを今回の検証として流用しない。

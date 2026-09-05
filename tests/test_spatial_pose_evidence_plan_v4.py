@@ -90,7 +90,43 @@ def save_fixture(tmp_path: Path, data: dict | None = None) -> tuple:
         (roots[namespace] / name).write_bytes(payload)
         hashes[key] = hashlib.sha256(payload).hexdigest()
     assert hashes["evidence/raw_window_evidence.json"] == data["_hashes"]["evidence/raw_window_evidence.json"]
+    prior = tmp_path / "prior"
+    prior.mkdir()
+    base = fixture()
+    result = p.build_plan(base, p.Limits())
+    # Prior artifacts are synthetic, not obtained by executing any old reader.
+    claims = p.legacy_claim_requirements()
+    entries = [{"name": key, "sha256": value, "unchanged_after": True} for key, value in hashes.items()]
+    manifest = {"format": "spatial_pose_evidence_plan_v4_v1", "status": "COMPLETE_PLAN_ONLY",
+        "input_unchanged": True, "input_files": entries, "limits": p.asdict(p.Limits()),
+        "code_hashes": {"synthetic_old_code": p.identity("old")}, "facts": result["facts"]}
+    manifest["logical_plan_identity"] = p.identity({"policy": manifest["format"], "status": manifest["status"],
+        "limits": manifest["limits"], "input_hashes": hashes, "code_hashes": manifest["code_hashes"], "result": result, "claims": claims})
+    values = {"execution_manifest.json": manifest, "minimal_read_proposal.json": result["proposal"],
+        "claim_requirements.json": claims, "input_manifest.json": {"files": entries},
+        "unresolved_and_unrecoverable.json": {}, "report_ja.md": "synthetic prior report"}
+    for name, value in values.items():
+        (prior / name).write_text(value if name.endswith(".md") else json.dumps(value), encoding="utf-8")
     return roots["conflict"], roots["evidence"], hashes
+
+
+@pytest.fixture(autouse=True)
+def supply_explicit_synthetic_prior(monkeypatch):
+    """Existing I/O regressions use explicitly bound synthetic prior-six artifacts."""
+    original = p.run_plan
+
+    def wrapped(c, e, out, repo, *args, **kwargs):
+        if "prior_plan_root" not in kwargs:
+            root = c.parent / "prior"
+            payloads = {name: (root / name).read_bytes() for name in p.PRIOR_EXPECTED}
+            m = json.loads(payloads["execution_manifest.json"])
+            proposal = json.loads(payloads["minimal_read_proposal.json"])
+            kwargs.update(prior_plan_root=root, prior_expected={name: hashlib.sha256(b).hexdigest() for name, b in payloads.items()},
+                prior_identity=m["logical_plan_identity"],
+                fixed_seeds={s["group_id"]: s["candidates"][0]["semantic_stamp_ns"] for s in proposal["seeds"]})
+        return original(c, e, out, repo, *args, **kwargs)
+
+    monkeypatch.setattr(p, "run_plan", wrapped)
 
 
 def test_deterministic_selection_merges_roles_and_keeps_global_max_scope() -> None:
@@ -191,7 +227,7 @@ def test_allowlist_only_and_embedded_commands_never_followed(tmp_path: Path, mon
     assert first["logical_plan_identity"] == second["logical_plan_identity"]
     assert first["input_unchanged"] is True
     assert all(path.name in {k.split("/")[1] for k in p.EXPECTED} |
-               {"spatial_pose_evidence_plan_v4.py", "plan_spatial_pose_evidence_v4.py"} for path in opened)
+               set(p.PRIOR_EXPECTED) | {"spatial_pose_evidence_plan_v4.py", "plan_spatial_pose_evidence_v4.py"} for path in opened)
     unresolved = json.loads((tmp_path / "out1/unresolved_and_unrecoverable.json").read_text())
     for field in ("sequence", "publish_time", "publisher_id", "channel_id"):
         assert field in unresolved["not_recorded_branches"]
@@ -257,14 +293,14 @@ def test_symlink_leaf_is_not_read(tmp_path: Path) -> None:
 
 def test_changed_input_invalidates_already_built_plan(tmp_path: Path, monkeypatch) -> None:
     c, e, hashes = save_fixture(tmp_path)
-    original = p.build_plan
+    original = p.revise_plan
 
-    def changed(inputs, limits):
-        result = original(inputs, limits)
+    def changed(*args, **kwargs):
+        result = original(*args, **kwargs)
         (e / "selection.json").write_text("{}")
         return result
 
-    monkeypatch.setattr(p, "build_plan", changed)
+    monkeypatch.setattr(p, "revise_plan", changed)
     result = p.run_plan(c, e, tmp_path / "out", REPO, expected=hashes)
     assert result["status"] == "BLOCKED" and result["input_unchanged"] is False
     assert json.loads((tmp_path / "out/minimal_read_proposal.json").read_text())["seeds"] == []
@@ -328,3 +364,173 @@ def test_code_policy_and_inputs_bind_logical_identity(tmp_path: Path) -> None:
     changed = p.run_plan(c, e, tmp_path / "out2", REPO, replace(p.Limits(), union_groups=63), expected=hashes)
     assert result["logical_plan_identity"] != changed["logical_plan_identity"]
     assert set(result["code_hashes"]) == {"spatial_pose_evidence_plan_v4.py", "plan_spatial_pose_evidence_v4.py"}
+
+
+def revision_inputs(tmp_path: Path) -> tuple:
+    c, e, hashes = save_fixture(tmp_path)
+    data = fixture()
+    data["_hashes"] = hashes
+    prior = {name: (tmp_path / "prior" / name).read_text() if name.endswith(".md") else
+             json.loads((tmp_path / "prior" / name).read_text()) for name in p.PRIOR_EXPECTED}
+    pid = prior["execution_manifest.json"]["logical_plan_identity"]
+    seeds = {s["group_id"]: s["candidates"][0]["semantic_stamp_ns"] for s in prior["minimal_read_proposal.json"]["seeds"]}
+    return data, prior, pid, seeds
+
+
+def test_revised_pairs_preserve_seeds_roles_records_and_legacy(tmp_path: Path) -> None:
+    data, prior, pid, seeds = revision_inputs(tmp_path)
+    before = deepcopy(prior)
+    result = p.revise_plan(data, prior, p.Limits(), p.Deadline(60), pid, seeds)
+    plan = result["proposal"]
+    assert prior == before
+    assert plan["prior_logical_identity_recomputed"] == pid
+    assert plan["seeds"] == prior["minimal_read_proposal.json"]["seeds"]
+    assert plan["legacy_claims"] == prior["minimal_read_proposal.json"]["closures"]
+    for claim in plan["closures"]:
+        assert claim["closure_kind"] == "listed_record_binding"
+        assert len(claim["required_group_ids"]) == 1 and len(claim["required_candidates"]) == 2
+        assert claim["required_clock_records"] == claim["required_anchor_velocity_endpoints"] == []
+        assert claim["weaker_separate_claim"] is True and "replaces_claim" not in claim
+        assert claim["existence_binding"] == claim["unique_occurrence_binding"] == "NOT_EXECUTED"
+    assert result == p.revise_plan(data, prior, p.Limits(), p.Deadline(60), pid, seeds)
+
+
+@pytest.mark.parametrize("gid,stamp", list(p.FIXED_SEEDS.items()))
+def test_fixed_four_pair_windows_are_exact_inclusive_ns(gid: str, stamp: int) -> None:
+    source = fixture()
+    old = p.build_plan(source, p.Limits())["proposal"]["seeds"][0]
+    seed = deepcopy(old)
+    seed["group_id"] = gid
+    for r in seed["candidates"]:
+        r["bag_stamp_ns"] = r["semantic_stamp_ns"] = stamp
+    claim = p.pair_claim(seed, {"status": "SOURCE_LOCATOR_UNRESOLVED"}, p.Limits())
+    assert claim["search_window_log_time_ns_inclusive"] == [stamp - 250_000_000, stamp + 250_000_000]
+    assert claim["future_api_interval_contract"]["exclusive_stop_ns"] == stamp + 250_000_001
+    assert claim["physical_chunk_count_estimate"] is None
+
+
+def test_claim_specific_predicates_and_counterexample_direction() -> None:
+    c = p.claim_requirements()["typed_claims"]
+    listed = str(c["C_LISTED_PAIR_PROJECTION"]["necessary_conditions"])
+    assert all(word not in listed for word in ("order", "AnyReader", "budget", "complete"))
+    assert "counterexample" in str(c["C_COMPLETE_CANDIDATE_INVARIANCE"]["necessary_conditions"])
+    assert "any_of" in str(c["B_STREAM_REPLAY"])
+    assert "unique_occurrence" in c["B_RECORD_BINDING"]["binding_outcomes"]
+
+
+def test_old_blocked_relative_probe_stays_blocked(tmp_path: Path) -> None:
+    data, prior, _, seeds = revision_inputs(tmp_path)
+    old = prior["minimal_read_proposal.json"]
+    old["closures"][0]["status"] = "CLAIM_CLOSURE_BLOCKED"
+    old["closures"][0]["exceeded_caps"] = [{"dimension": "window_ns", "required": 2924999946, "proposed_cap": 1000000000}]
+    m = prior["execution_manifest.json"]
+    pid = p.identity({"policy": m["format"], "status": m["status"], "limits": m["limits"], "input_hashes": data["_hashes"],
+        "code_hashes": m["code_hashes"], "result": {"proposal": old, "facts": m["facts"]}, "claims": prior["claim_requirements.json"]})
+    m["logical_plan_identity"] = pid
+    result = p.revise_plan(data, prior, p.Limits(), p.Deadline(60), pid, seeds)
+    assert result["proposal"]["legacy_claims"][0] == old["closures"][0]
+    assert result["proposal"]["closures"][0]["exceeded_caps"] == []
+
+
+def test_replay_missing_contract_not_required_for_binding(tmp_path: Path) -> None:
+    data, prior, pid, seeds = revision_inputs(tmp_path)
+    result = p.revise_plan(data, prior, p.Limits(), p.Deadline(60), pid, seeds)
+    contract = next(c["replay_contract"] for c in result["proposal"]["legacy_replay_contracts"] if c["replay_contract"]["status"] == "MISSING_REPLAY_CONTRACT")
+    assert contract["t_obs_ns"] is None and "t_obs_ns_and_provenance" in contract["missing_predicates"]
+    assert all(r["intervening_records_complete"] == "UNKNOWN" for r in contract["rows"])
+    assert contract["does_not_block_listed_record_binding"] is True
+
+
+def test_empty_endpoint_vacuity_rejected_but_explicit_unknown_kept() -> None:
+    data = fixture()
+    e = data["conflict/anchor_prefix_impact.json"][0]["anchor_pose_dependency"]["endpoints"][0]
+    for k in ("candidate_group_ids", "all_candidate_ids", "matching_record_ids"):
+        e[k] = []
+    with pytest.raises(ValueError, match="empty endpoint"):
+        p.validate_inputs(data, p.Limits())
+    e["resolution_status"] = "UNKNOWN"
+    p.validate_inputs(data, p.Limits())
+
+
+def test_h15_step16_rejected() -> None:
+    data = fixture()
+    a = data["conflict/anchor_prefix_impact.json"][0]
+    a["steps"] = [{**deepcopy(a["steps"][0]), "step": i} for i in range(1, 17)]
+    a["scopes"]["h15"]["existing_strict_prefix"]["target_steps"] = list(range(1, 17))
+    with pytest.raises(ValueError, match="horizon"):
+        p.validate_inputs(data, p.Limits())
+
+
+def test_removed_original_endpoint_is_not_replay_complete() -> None:
+    data = fixture()
+    a = data["conflict/anchor_prefix_impact.json"][0]
+    old = {"source_reproduction": {"t_obs_ns": 1, "t_obs_source": "stored", "anchor_interpolation": {
+        "target_ns": 1, "source_stamps_ns": [1, 2], "source_payload_hashes": [p.identity(1), p.identity(2)]}}}
+    a["anchor_pose_dependency"]["endpoints"] = []
+    with pytest.raises(ValueError, match="removed/changed"):
+        p.replay_contract(a, old, [1], data, p.Deadline(60))
+
+
+def test_shared_stage_envelope_and_no_automatic_payload(tmp_path: Path) -> None:
+    data, prior, pid, seeds = revision_inputs(tmp_path)
+    result = p.revise_plan(data, prior, p.Limits(), p.Deadline(60), pid, seeds)
+    approval = result["approval"]
+    assert approval["automatic_stage_transition"] is False
+    assert {s["envelope_ref"] for s in approval["stages"].values()} == {approval["envelope"]["envelope_id"]}
+    assert all(s["authorized"] is False for s in approval["stages"].values())
+    assert approval["stages"]["S1"]["automatic_fallback"] is False
+    assert all(b["estimate"] is None for b in approval["envelope"]["limits"].values())
+    assert approval["envelope"]["limits"]["chunks"]["proposed_limit"] == 8
+    assert approval["physical_chunk_offsets"] is None
+
+
+def test_git_failure_returns_empty_blocked_scope(tmp_path: Path, monkeypatch) -> None:
+    c, e, hashes = save_fixture(tmp_path)
+    def fail(*args, **kwargs):
+        raise p.subprocess.CalledProcessError(1, "git")
+    monkeypatch.setattr(p.subprocess, "check_output", fail)
+    result = p.run_plan(c, e, tmp_path / "out", REPO, expected=hashes)
+    assert result["status"] == "BLOCKED"
+    assert json.loads((tmp_path / "out/approval_request.json").read_text())["claim_ids"] == []
+
+
+def test_deadline_interrupts_analysis_with_partial_scope(tmp_path: Path, monkeypatch) -> None:
+    c, e, hashes = save_fixture(tmp_path)
+    def fail(self):
+        raise ValueError("LIMIT: cooperative analysis deadline")
+    monkeypatch.setattr(p.Deadline, "check", fail)
+    result = p.run_plan(c, e, tmp_path / "out", REPO, expected=hashes)
+    assert result["status"] == "PARTIAL"
+    assert json.loads((tmp_path / "out/approval_request.json").read_text())["sources"] == []
+
+
+@pytest.mark.parametrize("failed_name", ["minimal_read_proposal.json", "execution_manifest.pending.json"])
+def test_mid_output_failure_cannot_publish_complete_manifest(tmp_path: Path, monkeypatch, failed_name: str) -> None:
+    c, e, hashes = save_fixture(tmp_path)
+    original = p.write_json
+    def fail(path, value):
+        if path.name == failed_name:
+            raise OSError("synthetic disk error")
+        return original(path, value)
+    monkeypatch.setattr(p, "write_json", fail)
+    result = p.run_plan(c, e, tmp_path / "out", REPO, expected=hashes)
+    assert result["status"] == "BLOCKED"
+    assert not (tmp_path / "out/execution_manifest.json").exists()
+    assert json.loads((tmp_path / "out/error_manifest.json").read_text())["application_scope"] == []
+
+
+def test_unwritable_error_manifest_reports_stderr(tmp_path: Path, monkeypatch, capsys) -> None:
+    c, e, hashes = save_fixture(tmp_path)
+    def fail(*args):
+        raise OSError("unwritable")
+    monkeypatch.setattr(p, "write_json", fail)
+    result = p.run_plan(c, e, tmp_path / "out", REPO, expected=hashes)
+    assert result["status"] == "BLOCKED"
+    assert "error-manifest write failed" in capsys.readouterr().err
+
+
+def test_prior_canonical_identity_tamper_rejected(tmp_path: Path) -> None:
+    data, prior, pid, _ = revision_inputs(tmp_path)
+    prior["minimal_read_proposal.json"]["seeds"][0]["roles"].append("injected")
+    with pytest.raises(ValueError, match="prior logical identity"):
+        p.verify_prior(prior, data, pid)

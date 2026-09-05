@@ -15,9 +15,12 @@ def main() -> int:
     parser.add_argument("--conflict-root", required=True, type=Path)
     parser.add_argument("--evidence-root", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--prior-plan-root", required=True, type=Path,
+                        help="Explicit prior v2 plan root; fixed six filenames and pinned hashes only")
     args = parser.parse_args()
     try:
-        manifest = run_plan(args.conflict_root, args.evidence_root, args.output, ROOT)
+        manifest = run_plan(args.conflict_root, args.evidence_root, args.output, ROOT,
+                            prior_plan_root=args.prior_plan_root)
     except (OSError, ValueError) as error:
         parser.exit(3, "BLOCKED: " + str(error) + "\n")
     print(json.dumps({k: manifest[k] for k in ("status", "plan_commit", "logical_plan_identity", "exit_code")}, indent=2))
