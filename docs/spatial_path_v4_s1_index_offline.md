@@ -275,4 +275,20 @@ Message Index内部整合性、未対応Summary形式、永続台帳・別Ledger
 前記Windows commit→既定CheckOnly→通常sync→WSL lockで、同じ2テストファイルだけを実行する。
 今回は`-vv`で試験名を含むpytest生ログを保存する。全pytest/実bag/Dataset/合成学習testsは実行しない。
 新規別directoryへ3対象ファイルとログ、再実行に必要な同期数学・package init・conftestだけをコピーしhash/sizeを記録する。
-実行commit・環境・今回の件数/時間・資料位置は実測後に追記する。
+実行commit: `16b180998ef11b0bbe1fa8b4773cf8b05fa6d17e`。
+Windows/WSL同一SHA、CheckOnly→通常sync成功後、次を実行してexit code 0。
+
+```powershell
+wsl -d Ubuntu-22.04-Recovered -- bash -lc 'cd /home/thistle/e2e_autonomous/e2e_lite_transfuser && bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -vv tests/test_spatial_s1_index_v4.py tests/test_synchronization_v3.py' 2>&1 |
+  Tee-Object -FilePath tmp/s1_ledger_v3_review_20260906/pytest_16b1809.log
+```
+
+今回の実測は **190 passed in 0.56s**。S1 180件（v2 105＋今回75）＋同期数学10件。
+環境はWSL Ubuntu-22.04-Recovered、Linux、Python 3.10.12、pytest 9.1.1、pluggy 1.6.0。
+生ログに全190試験名と結果を保存。終了時60.1秒、時計例外/NaN/Infinity/逆行、重複失敗の診断保持、
+上限7次元、Contract全field変更、snapshot無副作用、v2読取境界の回帰を検証した。
+Windowsの対象processなし、WSLのGit/process/lockは既定sync事前確認で問題なし。
+結果文書はこの実行commitの後続commitへ追記し、そのSHAをレビュー資料manifestのdocument_commitに記録する。
+資料directory: `tmp/s1_ledger_v3_review_20260906/`（Git対象外）。
+この文書・core・testsと限定再実行の依存コード、ログを保存し、各fileのSHA-256/sizeをmanifestに記載する。
+原本/計画JSONは追加しない。今回の保証は同じLedgerを正しく共有する合成process内に限定する。
