@@ -1,0 +1,40 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 1
+      Plane Cell Count: 40
+    - Class: rviz_default_plugins/LaserScan
+      Name: Actual AWSIM LiDAR
+      Enabled: true
+      Topic:
+        Value: /sensing/lidar/scan
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Size (Pixels): 3
+      Style: Points
+      Color Transformer: FlatColor
+      Color: 255; 80; 30
+  Global Options:
+    Fixed Frame: lidar
+    Frame Rate: 20
+    Background Color: 35; 35; 35
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Scale: 25
+      Target Frame: lidar
+Window Geometry:
+  Width: 960
+  Height: 720

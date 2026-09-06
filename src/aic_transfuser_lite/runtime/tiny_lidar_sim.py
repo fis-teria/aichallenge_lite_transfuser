@@ -19,6 +19,9 @@ OFFICIAL_COMMIT = "1f54dff995d02625566341f9e1be1c39369224f2"
 WEIGHT_SHA256 = "7a3f2702fe652a14970710aefde775d5328105d1a5370d4abf1fc88611043963"
 TINY_AUTH_PROFILE = "TINY_READY_LAP_20260907"
 AUTH_REQUEST_SHA256 = "3210c97ce30a8af18abb9633378a0c9993f55c01f2231dda262142f17a646bcd"
+TINY_GUI_PROFILE = "TINY_GUI_SHORT_20260907"
+GUI_AUTH_SHA256 = "b7d722c01979958ed92aa2e2d4cf21b8098d6edb56ed27b086eea106ef6283a7"
+GUI_CONTROL_METHOD = "tiny_lidar_net_guarded"
 # 2026-09-07 09:50 JST, never rolled forward to another date.
 DRIVE_CUTOFF_UNIX_S = 1788742200
 SOURCE_SHA256 = {
@@ -198,13 +201,17 @@ def finite_number(value: Any, name: str, *, integer: bool = False) -> float:
     return value
 
 
-def tiny_phase_caps(phase: str) -> dict:
+def tiny_phase_caps(phase: str, profile: str = TINY_AUTH_PROFILE) -> dict:
     """Fresh per-call limits, scoped solely to the explicit Tiny authorization."""
     caps = {
         "stationary": dict(wall_seconds=120, forward_limit=12, single_episode_sim_limit_s=0.),
         "short": dict(wall_seconds=120, forward_limit=300, single_episode_sim_limit_s=20.),
         "lap": dict(wall_seconds=600, forward_limit=5200, single_episode_sim_limit_s=240.),
     }
+    if profile == TINY_GUI_PROFILE:
+        caps = {"short": dict(wall_seconds=120, forward_limit=600, single_episode_sim_limit_s=20.)}
+    elif profile != TINY_AUTH_PROFILE:
+        raise ValueError("UNKNOWN_TINY_PROFILE")
     if phase not in caps:
         raise ValueError("UNKNOWN_TINY_PHASE")
     return caps[phase].copy()
@@ -212,9 +219,13 @@ def tiny_phase_caps(phase: str) -> dict:
 
 def validate_tiny_config(cfg: dict) -> None:
     """Shared host/runtime entry check. No boolean/NaN budgets or policy drift."""
-    if cfg.get("authorization_profile") != TINY_AUTH_PROFILE or cfg.get("authorization_request_sha256") != AUTH_REQUEST_SHA256:
+    profile = cfg.get("authorization_profile")
+    expected_hash = {TINY_AUTH_PROFILE: AUTH_REQUEST_SHA256, TINY_GUI_PROFILE: GUI_AUTH_SHA256}.get(profile)
+    if expected_hash is None or cfg.get("authorization_request_sha256") != expected_hash:
         raise ValueError("EXPLICIT_TINY_AUTHORIZATION_PROFILE_REQUIRED")
-    caps = tiny_phase_caps(cfg["phase"])
+    caps = tiny_phase_caps(cfg["phase"], profile)
+    if profile == TINY_GUI_PROFILE and cfg.get("control_method") != GUI_CONTROL_METHOD:
+        raise ValueError("GUI_CONTROL_METHOD_REQUIRED")
     for key, maximum in caps.items():
         value = finite_number(cfg[key], key, integer=key == "forward_limit")
         if value > maximum or (key != "single_episode_sim_limit_s" and value <= 0):
@@ -239,8 +250,9 @@ def validate_tiny_config(cfg: dict) -> None:
             raise ValueError("SIM_ONLY_POLICY_CHANGED:"+key)
 
 
-def bounded_runtime_wall(phase: str, requested: float, available_wall: float, now_unix: float) -> int:
-    cap = tiny_phase_caps(phase)["wall_seconds"]
+def bounded_runtime_wall(phase: str, requested: float, available_wall: float, now_unix: float,
+                         profile: str = TINY_AUTH_PROFILE) -> int:
+    cap = tiny_phase_caps(phase, profile)["wall_seconds"]
     for name, value in (("requested", requested), ("available_wall", available_wall), ("now_unix", now_unix)):
         finite_number(value, name)
     if not 10 <= requested <= cap:
@@ -259,15 +271,34 @@ def motion_limit_reason(cfg: dict, powered_sim_seconds: float) -> str | None:
     return None
 
 
-def verify_container_contract(items: list[dict], project: str) -> None:
+def host_arm_status(arm: dict, *, project: str, observed_ns: int) -> dict:
+    """Compare only a post-read monotonic time; expose the precise failed branch."""
+    stamp = arm.get("monotonic_ns")
+    age = observed_ns-stamp if type(stamp) is int else None
+    reason = ("IDENTITY" if arm.get("token") != project else
+              "NOT_ARMED" if arm.get("armed") is not True else
+              "STOP_PROOF_MISSING" if arm.get("paused_kill_verified") is not True else
+              "STAMP_INVALID" if age is None else
+              "FUTURE_STAMP" if age < 0 else
+              "EXPIRED" if age >= 750_000_000 else "OK")
+    return dict(allowed=reason == "OK", reason=reason, observed_ns=observed_ns,
+                arm_stamp_ns=stamp, age_ns=age, token=arm.get("token"),
+                armed=arm.get("armed"), paused_kill_verified=arm.get("paused_kill_verified"))
+
+
+def verify_container_contract(items: list[dict], project: str, *, gui: bool = False) -> None:
     """Pure check of current selected Docker inspect, before ROS initialization."""
     if len(items) != 2 or not project.startswith("codex-tiny-dev-"):
         raise ValueError("UNEXPECTED_COMPOSE_SCOPE")
     indexed = {c["Config"]["Labels"]["com.docker.compose.service"]: c for c in items}
-    if set(indexed) != {"simulator", "tiny"}:
+    runtime_service = "autoware" if gui else "tiny"
+    if set(indexed) != {"simulator", runtime_service}:
         raise ValueError("UNEXPECTED_SERVICES")
     allowed = {"/v4", "/evidence", "/official_tiny", "/aichallenge/simulator/AWSIM",
                "/aichallenge/run_simulator.bash", "/xvfb", "/tmp/.X11-unix", "/usr/bin/xkbcomp"}
+    if gui:
+        allowed = {"/v4", "/evidence", "/official_tiny", "/aichallenge/simulator/AWSIM",
+                   "/aichallenge/run_simulator.bash", "/tmp/.X11-unix", "/desktop_xauth", "/tiny_install"}
     for name, c in indexed.items():
         h = c["HostConfig"]
         if (c["Config"]["Labels"].get("com.docker.compose.project") != project or h["Privileged"]
@@ -283,3 +314,10 @@ def verify_container_contract(items: list[dict], project: str) -> None:
                 raise ValueError("UNEXPECTED_MOUNT")
             if mount["RW"] and mount["Destination"] not in ("/evidence", "/tmp/.X11-unix"):
                 raise ValueError("WRITABLE_SOURCE_OR_SIMULATOR")
+        if gui:
+            mounts = {m["Destination"]: m for m in c["Mounts"]}
+            required = {"/v4", "/evidence", "/tmp/.X11-unix", "/desktop_xauth"}
+            required |= {"/tiny_install", "/official_tiny"} if name == "autoware" else {
+                "/aichallenge/simulator/AWSIM", "/aichallenge/run_simulator.bash"}
+            if not required <= mounts.keys() or any(mounts[p]["RW"] for p in required-{"/evidence"}):
+                raise ValueError("GUI_REQUIRED_READONLY_MOUNTS")

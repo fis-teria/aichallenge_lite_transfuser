@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]/"src"))
 from aic_transfuser_lite.runtime.tiny_lidar_sim import (
     WEIGHT_SHA256, digest, TINY_AUTH_PROFILE, AUTH_REQUEST_SHA256, DRIVE_CUTOFF_UNIX_S,
     finite_number, tiny_phase_caps, validate_tiny_config, bounded_runtime_wall,
+    TINY_GUI_PROFILE, GUI_AUTH_SHA256, GUI_CONTROL_METHOD,
 )
 from spatial_dev_host_v4 import HostWatch, AttemptBudget, atomic_json, cleanup_owned
 
@@ -36,11 +37,13 @@ ORIGINAL_SCRIPT = "0a8c3442bbe5f31a267926845e18039438ad8a1b1c35654225c5b9d819f4d
 class TinyBudget(AttemptBudget):
     """Preserve legacy V4 count; separate Tiny counter under same total ceiling."""
     def __init__(self, path: Path, *, profile: str):
-        if profile != TINY_AUTH_PROFILE:
+        if profile not in (TINY_AUTH_PROFILE, TINY_GUI_PROFILE):
             raise ValueError("EXPLICIT_TINY_BUDGET_PROFILE_REQUIRED")
         super().__init__(path)
         # Instance copy, never mutate AttemptBudget.limits or another profile.
         self.limits = dict(AttemptBudget.limits, forward=6000, powered_s=300.)
+        if profile == TINY_GUI_PROFILE:
+            self.limits["powered"] = 4
         self.profile = profile
 
     def authorize(self) -> dict:
@@ -50,17 +53,21 @@ class TinyBudget(AttemptBudget):
             finite_number(self.value["used"].get(key), "used."+key,
                           integer=key not in ("wall_s", "powered_s"))
         records = self.value.setdefault("authorization_changes", [])
+        gui = self.profile == TINY_GUI_PROFILE
+        request_hash = GUI_AUTH_SHA256 if gui else AUTH_REQUEST_SHA256
         prior = next((r for r in records if r.get("profile") == self.profile), None)
         if prior is not None:
-            if prior.get("request_sha256") != AUTH_REQUEST_SHA256 or prior.get("new_limits") != self.limits:
+            if prior.get("request_sha256") != request_hash or prior.get("new_limits") != self.limits:
                 raise ValueError("CONFLICTING_TINY_AUTHORIZATION_RECORD")
             return prior
-        record = dict(profile=self.profile, request_sha256=AUTH_REQUEST_SHA256,
-            request_attachment="f7325d22-7b3c-494e-bf56-ca4464746cef/pasted-text.txt",
+        record = dict(profile=self.profile, request_sha256=request_hash,
+            request_attachment=("configs/control/tiny_gui_authorization_20260907.json" if gui else
+                                "f7325d22-7b3c-494e-bf56-ca4464746cef/pasted-text.txt"),
             applied_unix_ns=time.time_ns(), applied_utc=datetime.now(timezone.utc).isoformat(),
             authorization_source="USER_SUPPLIED_EXECUTION_REQUEST", author_name=None,
-            old_limits=dict(AttemptBudget.limits), new_limits=dict(self.limits),
-            old_episode_sim_seconds=60., new_episode_sim_seconds=240.,
+            old_limits=dict(self.value.get("tiny_authorized_limits", AttemptBudget.limits)) if gui else dict(AttemptBudget.limits),
+            new_limits=dict(self.limits),
+            old_episode_sim_seconds=240. if gui else 60., new_episode_sim_seconds=20. if gui else 240.,
             used_at_change=dict(self.value["used"]), prior_attempt_count=len(self.value.get("attempts", [])),
             prior_active=self.value.get("active"), applied_retroactively=False)
         records.append(record)
@@ -73,20 +80,25 @@ class TinyBudget(AttemptBudget):
         if self.value.get("tiny_authorized_profile") != self.profile:
             raise ValueError("TINY_AUTHORIZATION_NOT_RECORDED")
         finite_number(tiny_limit, "tiny_limit", integer=True)
-        if not 1 <= tiny_limit <= 5200:
+        gui = self.profile == TINY_GUI_PROFILE
+        if gui and any(a.get("authorization_profile") == self.profile for a in self.value.get("attempts", [])):
+            raise ValueError("GUI_SINGLE_ATTEMPT_ALREADY_USED")
+        if not 1 <= tiny_limit <= (600 if gui else 5200):
             raise ValueError("TINY_FORWARD_RESERVATION_CAP")
         for key in self.limits:
             finite_number(reservation[key], "reservation."+key, integer=key not in ("wall_s", "powered_s"))
             finite_number(self.value["used"][key], "used."+key, integer=key not in ("wall_s", "powered_s"))
-        if reservation["forward"] != 0 or reservation["mpc"] != 0 or reservation["snapshots"] != 0:
+        if reservation["forward"] != 0 or reservation["mpc"] != 0 or not 0 <= reservation["snapshots"] <= (2 if gui else 0):
             raise ValueError("TINY_ONLY_RESERVATION")
-        if reservation["powered"] not in (0, 1) or reservation["powered_s"] > 240 or reservation["wall_s"] > 710:
+        if (reservation["powered"] not in (0, 1) or reservation["powered_s"] > (20 if gui else 240)
+                or reservation["wall_s"] > (230 if gui else 710)):
             raise ValueError("TINY_ATTEMPT_RESERVATION_CAP")
         previous = finite_number(self.value["used"].get("tiny_forward"), "used.tiny_forward", integer=True)
         if self.value["used"]["forward"]+previous+tiny_limit > self.limits["forward"]:
             raise ValueError("COMMON_FORWARD_LIMIT_INCLUDING_TINY")
         self.reserve(attempt, reservation)
         self.value["active"]["tiny_forward_reserved"] = tiny_limit
+        self.value["active"]["authorization_profile"] = self.profile
         self.value["used"]["tiny_forward"] = previous
         atomic_json(self.path, self.value)
 
@@ -171,20 +183,34 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--sim-repo", type=Path, required=True)
     ap.add_argument("--official-package", type=Path, required=True)
-    ap.add_argument("--xvfb-root", type=Path, required=True)
+    ap.add_argument("--xvfb-root", type=Path)
+    ap.add_argument("--control-method", choices=(GUI_CONTROL_METHOD,))
+    ap.add_argument("--install-root", type=Path)
+    ap.add_argument("--display")
+    ap.add_argument("--xauthority", type=Path)
     ap.add_argument("--output", type=Path, required=True)
     ap.add_argument("--commit", required=True)
     ap.add_argument("--phase", choices=("stationary", "short", "lap"), default="stationary")
     ap.add_argument("--wall-seconds", type=int, default=120)
     ap.add_argument("--budget", type=Path, required=True)
     args = ap.parse_args()
+    gui = args.control_method == GUI_CONTROL_METHOD
+    profile = TINY_GUI_PROFILE if gui else TINY_AUTH_PROFILE
     if os.name != "posix" or not re.fullmatch("[0-9a-f]{40}", args.commit):
         raise ValueError("LINUX_FIXED_COMMIT_REQUIRED")
-    if not 10 <= args.wall_seconds <= tiny_phase_caps(args.phase)["wall_seconds"]:
+    if not 10 <= args.wall_seconds <= tiny_phase_caps(args.phase, profile)["wall_seconds"]:
         raise ValueError("FINITE_WALL_REQUIRED")
     if time.time() >= DRIVE_CUTOFF_UNIX_S-120:
         raise ValueError("NO_STARTUP_CLEANUP_RESERVE_BEFORE_CUTOFF")
     source, sim = Path(__file__).resolve().parents[1], args.sim_repo.resolve()
+    if gui:
+        from tiny_gui_integration import compose_gui, make_command, window_candidates, visible_owned_windows
+        if args.install_root is None or args.xauthority is None or args.display is None:
+            raise ValueError("EXPLICIT_GUI_INSTALL_AND_DISPLAY_REQUIRED")
+        if digest(source/"configs/control/tiny_gui_authorization_20260907.json") != GUI_AUTH_SHA256:
+            raise ValueError("GUI_AUTHORIZATION_BYTES_CHANGED")
+    elif args.xvfb_root is None:
+        raise ValueError("XVFB_ROOT_REQUIRED_FOR_LEGACY_PROFILE")
     output = args.output.resolve()
     if output.exists():
         raise FileExistsError(output)
@@ -201,9 +227,14 @@ def main() -> int:
     if not re.fullmatch("[a-z0-9-]+", project):
         raise ValueError("PROJECT_NAME")
     cfg = yaml.safe_load((source/"configs/control/tiny_lidar_sim.yaml").read_text())
-    cfg.update(tiny_phase_caps(args.phase), phase=args.phase, wall_seconds=args.wall_seconds)
+    cfg.update(tiny_phase_caps(args.phase, profile), phase=args.phase, wall_seconds=args.wall_seconds)
+    if gui:
+        cfg.update(authorization_profile=profile, authorization_request_sha256=GUI_AUTH_SHA256,
+                   control_method=GUI_CONTROL_METHOD, source_commit=args.commit)
     validate_tiny_config(cfg)
-    spec = compose_definition(source, sim, args.xvfb_root, output, args.official_package, project, args.commit)
+    spec = (compose_gui(source, sim, args.install_root, output, args.official_package, project, args.commit,
+                        args.display, args.xauthority, IMAGE) if gui else
+            compose_definition(source, sim, args.xvfb_root, output, args.official_package, project, args.commit))
     atomic_json(output/"compose.json", spec)
     command = ["docker", "compose", "-p", project, "-f", str(output/"compose.json")]
     log = (output/"host.jsonl").open("x", buffering=1)
@@ -220,12 +251,18 @@ def main() -> int:
     if run(command+["ps", "-aq"]).stdout.strip():
         raise ValueError("PROJECT_EXISTS")
     (output/"compose_resolved.json").write_text(run(command+["config", "--format", "json"]).stdout)
+    if gui:
+        os.environ.update(DISPLAY=args.display, XAUTHORITY=str(args.xauthority))
+        initial_tree = run(["xwininfo", "-root", "-tree"]).stdout
+        atomic_json(output/"gui_before.json", dict(tree=initial_tree, candidates=window_candidates(initial_tree)))
+        if any(window_candidates(initial_tree).values()):
+            raise ValueError("OTHER_AWSIM_OR_RVIZ_WINDOWS_PRESENT")
     budget = TinyBudget(args.budget, profile=cfg["authorization_profile"])
     atomic_json(output/"budget_before_authorization.json", budget.value)
     authorization = budget.authorize()
     atomic_json(output/"budget_authorization_change.json", authorization)
     cfg["wall_seconds"] = bounded_runtime_wall(args.phase, args.wall_seconds,
-        budget.limits["wall_s"]-budget.value["used"]["wall_s"], time.time())
+        budget.limits["wall_s"]-budget.value["used"]["wall_s"], time.time(), profile)
     validate_tiny_config(cfg)
     atomic_json(output/"resolved_config.json", cfg)
     pause_proof = json.loads((args.budget.parent/"binding.json").read_text())["host_paused_kill"]
@@ -236,7 +273,7 @@ def main() -> int:
     # No V4 forward/MPC reservation. A distinct Tiny counter shares, but does
     # not reset or rewrite, the explicitly authorized shared forward bound.
     atomic_json(output/"budget_before_reservation.json", budget.value)
-    budget.reserve_tiny(output.name, dict(wall_s=cfg["wall_seconds"]+110., forward=0, mpc=0, snapshots=0,
+    budget.reserve_tiny(output.name, dict(wall_s=cfg["wall_seconds"]+110., forward=0, mpc=0, snapshots=2 if gui else 0,
         powered=int(args.phase != "stationary"), powered_s=cfg["single_episode_sim_limit_s"],
         log_bytes=96*1024**2), cfg["forward_limit"])
     atomic_json(output/"budget_before.json", budget.value)
@@ -251,10 +288,27 @@ def main() -> int:
     exitcode = None
     freeze_started = None
     pause_verified = False
+    gui_windows = {}
+    gui_last_check = 0.
+    snapshot_calls = 0
+    def capture_windows() -> None:
+        nonlocal snapshot_calls
+        if not gui:
+            return
+        for kind, window in gui_windows.items():
+            snapshot_calls += 1
+            run(["xwd", "-silent", "-id", window["window_id"], "-out", str(output/("gui_"+kind+".xwd"))],
+                timeout=2, check=False)
     try:
-        run(command+["up", "-d", "--no-build", "--pull", "never", "simulator", "tiny"])
+        if gui:
+            argv = make_command(source, sim, output, project)
+            atomic_json(output/"make_invocation.json", dict(command=argv, existing_makefile=str(sim/"Makefile"),
+                additional_makefile=str(source/"integrations/tiny_gui/Makefile"), source_root=str(source)))
+            run(argv, timeout=60)
+        else:
+            run(command+["up", "-d", "--no-build", "--pull", "never", "simulator", "tiny"])
         sim_id = run(command+["ps", "-q", "simulator"]).stdout.strip()
-        runtime_id = run(command+["ps", "-q", "tiny"]).stdout.strip()
+        runtime_id = run(command+["ps", "-q", "autoware" if gui else "tiny"]).stdout.strip()
         if not all(re.fullmatch("[0-9a-f]{64}", value) for value in (sim_id, runtime_id)):
             raise ValueError("OWNED_CONTAINER_IDENTITY")
         atomic_json(output/"instance_inspect.json", json.loads(run(["docker", "inspect", sim_id, runtime_id]).stdout))
@@ -286,11 +340,19 @@ def main() -> int:
                     error = fault
                     break
                 freeze_started = time.monotonic()
+                capture_windows()
                 continue
             if watch.armed:
                 atomic_json(output/"host_armed.json", dict(token=project, armed=True, monotonic_ns=time.monotonic_ns(),
                     sim_id=sim_id, runtime_id=runtime_id, paused_kill_verified=True,
                     paused_kill_evidence_sha256="f7d1f227cafe340ca702aa3e974deb485db935e6c374313f39c89a2d778a3f32"))
+            if gui and not gui_windows and time.monotonic()-gui_last_check >= .5:
+                gui_last_check = time.monotonic()
+                tree = run(["xwininfo", "-root", "-tree"], timeout=2).stdout
+                gui_windows = visible_owned_windows(run, tree, sim_id, runtime_id)
+                if gui_windows:
+                    atomic_json(output/"gui_ready.json", dict(token=project, windows=gui_windows,
+                        monotonic_ns=time.monotonic_ns(), display=args.display, tree=tree))
             unity = output/"awsim_unity.log"
             if unity.exists():
                 if unity.stat().st_size < judge_offset:
@@ -327,6 +389,20 @@ def main() -> int:
             if proc.returncode:
                 raise RuntimeError(proc.stderr)
             return proc
+        # A make failure may occur after simulator-up but before autoware-up.
+        # Resolve only our compose scope so that such a partial startup is stopped.
+        for service, present in (("simulator", sim_id), ("autoware" if gui else "tiny", runtime_id)):
+            if present is None:
+                try:
+                    candidate = cleanup_run(command+["ps", "-aq", service], timeout=3).stdout.strip()
+                    if candidate and not re.fullmatch(r"[0-9a-f]{64}", candidate):
+                        raise ValueError("CLEANUP_OWNED_CONTAINER_IDENTITY")
+                    if service == "simulator":
+                        sim_id = candidate or None
+                    else:
+                        runtime_id = candidate or None
+                except Exception as exc:
+                    error = error or "PARTIAL_STARTUP_IDENTITY:"+str(exc)
         cleanup = cleanup_owned(cleanup_run, sim_id, runtime_id, paused_kill_verified=True)
         after = {str(p): digest(p) for p in assets}
         summary = dict(source_commit=args.commit, phase=args.phase, error=error, runtime_exitcode=exitcode,
@@ -336,18 +412,27 @@ def main() -> int:
             host_armed=watch.armed, host_pause_verified=pause_verified,
             cleanup=cleanup, judge_section_events=judge.section_events, judge_laps=judge.laps,
             judge_order_invalid=judge.invalid, judge_lap_confirmed=judge.completed,
-            control_claim_requires_supervisor_log=True, normal_racingkart_makefile_executed=False,
+            control_claim_requires_supervisor_log=True, normal_racingkart_makefile_executed=gui,
+            guarded_method_include_used=gui, gui_windows=gui_windows, snapshot_calls=snapshot_calls,
             judge_log_consumed_bytes=judge_offset, judge_unterminated_tail_bytes=len(judge_pending),
-            authorization_profile=cfg["authorization_profile"], authorization_request_sha256=AUTH_REQUEST_SHA256,
+            authorization_profile=cfg["authorization_profile"], authorization_request_sha256=cfg["authorization_request_sha256"],
             awsimmutation=False, original_start_command="bash /aichallenge/run_simulator.bash dev")
         atomic_json(output/"host_summary.json", summary)
-        consumption = dict(wall_s=summary["wall_s"], forward=0, mpc=0, snapshots=0,
+        consumption = dict(wall_s=summary["wall_s"], forward=0, mpc=0, snapshots=snapshot_calls,
             log_bytes=sum(p.stat().st_size for p in output.rglob("*") if p.is_file())+1024**2)
         worker_file, supervisor_file = output/"tiny_worker_summary.json", output/"tiny_supervisor_summary.json"
         tiny_calls = json.loads(worker_file.read_text())["tiny_forward_calls"] if worker_file.exists() else None
         if supervisor_file.exists():
             final = json.loads(supervisor_file.read_text())
             consumption.update(powered=final["powered_episode_count"], powered_s=final["powered_sim_seconds"])
+            if gui:
+                summary["supervisor_exception"] = final["exception"]
+                if final["exception"] or not final["observed_motion"] or not final["observed_braking_stop"]:
+                    error = error or "GUI_SHORT_NOT_COMPLETE:"+str(final["stop_reason"])
+        elif gui:
+            error = error or "GUI_SUPERVISOR_SUMMARY_MISSING"
+        summary["error"] = error
+        atomic_json(output/"host_summary.json", summary)
         budget.finish_tiny(consumption, tiny_calls, exact=tiny_calls is not None and len(consumption) == 7)
         atomic_json(output/"budget_after.json", budget.value)
         budget.close()

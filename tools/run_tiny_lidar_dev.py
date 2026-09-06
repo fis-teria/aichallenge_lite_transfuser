@@ -13,6 +13,7 @@ import queue
 import signal
 import socket
 import subprocess
+import sys
 import time
 
 import numpy as np
@@ -20,6 +21,7 @@ import numpy as np
 from aic_transfuser_lite.runtime.tiny_lidar_sim import (
     OfficialTiny, speed_acceleration, validate_scan, validate_operation, verify_container_contract, input_clock_ready,
     SimReadiness, validate_tiny_config, DRIVE_CUTOFF_UNIX_S, motion_limit_reason,
+    host_arm_status, TINY_GUI_PROFILE,
 )
 from spatial_dev_host_v4 import atomic_json
 
@@ -79,11 +81,14 @@ def main() -> int:
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--project", required=True)
     parser.add_argument("--authorize-sim-session", action="store_true")
-    args = parser.parse_args()
+    # ROS launch appends its own --ros-args; rclpy receives those unchanged.
+    own_args = sys.argv[1:sys.argv.index("--ros-args")] if "--ros-args" in sys.argv else None
+    args = parser.parse_args(own_args)
     if not args.authorize_sim_session:
         raise ValueError("EXPLICIT_SIM_SESSION_REQUIRED")
     cfg = json.loads(args.config.read_text())
     validate_tiny_config(cfg)
+    gui = cfg["authorization_profile"] == TINY_GUI_PROFILE
     if time.time() >= DRIVE_CUTOFF_UNIX_S-10:
         raise ValueError("CUTOFF_NO_NEW_RUNTIME")
     inspection = args.output / "instance_inspect.json"
@@ -91,10 +96,12 @@ def main() -> int:
     while not inspection.exists() and time.monotonic()-waiting < 30:
         time.sleep(.05)
     items = json.loads(inspection.read_text())
-    verify_container_contract(items, args.project)
-    runtime = next(c for c in items if c["Config"]["Labels"]["com.docker.compose.service"] == "tiny")
+    verify_container_contract(items, args.project, gui=gui)
+    runtime_service = "autoware" if gui else "tiny"
+    runtime = next(c for c in items if c["Config"]["Labels"]["com.docker.compose.service"] == runtime_service)
+    expected_command = ["/v4/integrations/tiny_gui/runtime.sh"] if gui else ["/v4/integrations/tiny_dev/runtime.sh"]
     if (socket.gethostname() != runtime["Config"]["Hostname"]
-            or runtime["Config"]["Cmd"] != ["/v4/integrations/tiny_dev/runtime.sh"]
+            or runtime["Config"]["Cmd"] != expected_command
             or os.environ.get("ROS_DOMAIN_ID") != "1"):
         raise ValueError("WRONG_CURRENT_CONTAINER")
     if sorted(p.name for p in Path("/sys/class/net").iterdir()) != ["lo"]:
@@ -149,6 +156,7 @@ def main() -> int:
     natural_stop_sim_ns = None
     stop_reason = None
     logger_ok = True
+    gui_verified = not gui
     context = mp.get_context("spawn")
     inbox, outbox = context.Queue(1), context.Queue(2)
     stop_event = context.Event()
@@ -174,12 +182,14 @@ def main() -> int:
                 logger_ok=logger_ok, phase=phase, powered=powered_start is not None))
             last_heartbeat = now
 
-    def host_armed(now: int) -> bool:
+    def host_armed() -> bool:
         p = args.output / "host_armed.json"
         arm = json.loads(p.read_text()) if p.exists() else {}
-        return bool(arm.get("token") == args.project and arm.get("armed") is True
-            and arm.get("paused_kill_verified") is True
-            and 0 <= now-arm.get("monotonic_ns", 0) < 750_000_000)
+        # Sampling BEFORE this read can reject a concurrent, fresher ARM as future.
+        status = host_arm_status(arm, project=args.project, observed_ns=time.monotonic_ns())
+        if not status["allowed"] and pubs:
+            log("HOST_ARM_REJECTED", **status)
+        return status["allowed"]
 
     def receive(role: str, msg) -> None:
         nonlocal sim_ns, clock_rx, clock_change_rx, fault, frame, max_speed
@@ -288,7 +298,7 @@ def main() -> int:
 
     def send(acceleration: float, steering: float, source: str, output: dict | None = None) -> None:
         nonlocal last_send, last_steering_sent, powered_start
-        if not host_armed(time.monotonic_ns()):
+        if not host_armed():
             raise RuntimeError("HOST_MONITOR_NOT_ARMED")
         msg = AckermannControlCommand()
         for field in (msg.stamp, msg.longitudinal.stamp, msg.lateral.stamp):
@@ -374,7 +384,7 @@ def main() -> int:
             except queue.Empty:
                 pass
             if not pubs:
-                if (ready and host_armed(now) and all(k in latest for k in ("scan", "velocity", "steering"))
+                if (ready and host_armed() and all(k in latest for k in ("scan", "velocity", "steering"))
                         and sim_ns >= 0 and graph_check(initializing=True)):
                     if abs(latest["velocity"]["speed_mps"]) > .03:
                         raise ValueError("START_NOT_STATIONARY")
@@ -386,7 +396,7 @@ def main() -> int:
                     raise RuntimeError("STARTUP_MODEL_SCAN_CONSUMER_TIMEOUT")
                 else:
                     continue
-            if not host_armed(now):
+            if not host_armed():
                 raise RuntimeError("HOST_MONITOR_STALE")
             if now-last_graph >= 250_000_000:
                 graph_check()
@@ -434,6 +444,18 @@ def main() -> int:
             # First three fresh results while stationary, then first actuation.
             if counts["tiny_outputs"] < 3:
                 continue
+            if not gui_verified:
+                proof = args.output/"gui_ready.json"
+                if proof.exists():
+                    visible = json.loads(proof.read_text())
+                    if visible.get("token") != args.project or set(visible.get("windows", {})) != {"awsim", "rviz"}:
+                        raise ValueError("GUI_READY_IDENTITY")
+                    gui_verified = True
+                    log("GUI_READY_BEFORE_DRIVE", evidence=visible)
+                else:
+                    if now-last_send >= cfg["command_period_s"]*1e9:
+                        send(0., 0., "WAIT_VISIBLE_AWSIM_AND_RVIZ")
+                    continue
             if powered_start is not None:
                 duration = (sim_ns-powered_start)/1e9
                 limit_reason = motion_limit_reason(cfg, duration)
@@ -463,7 +485,7 @@ def main() -> int:
                 heartbeat("STOPPING")
                 rclpy.spin_once(node, timeout_sec=.005)
                 now = time.monotonic_ns()
-                if not host_armed(now) or not logger_ok:
+                if not host_armed() or not logger_ok:
                     break
                 if (now-clock_change_rx > 500_000_000 or "velocity" not in latest
                         or now-latest["velocity"]["received_ns"] > 500_000_000):
