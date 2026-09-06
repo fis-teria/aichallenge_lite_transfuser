@@ -57,6 +57,21 @@ def test_no_deviation_relaxation():
     assert constrained_reference(raw_curve(),config,np.zeros(5)).reason=='DEVIATION_POLICY'
 
 
+def test_coincident_first_raw_point_retains_index_zero():
+    c=raw_curve(); c.raw_xy[:,0]-=np.float32(.1)
+    p=constrained_reference(c,cfg(),np.zeros(5))
+    assert p.reason is None and p.source_indices[0]==0
+
+
+def test_probe_rejects_host_network_before_ros_import():
+    import importlib.util
+    tool=Path(__file__).parents[1]/'tools/probe_spatial_sim_v4.py'
+    spec=importlib.util.spec_from_file_location('finite_probe',tool)
+    module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+    with pytest.raises(ValueError,match='BLOCKED_SIM_ISOLATION'):
+        module.verify_isolation([{'Id':'x','HostConfig':{'NetworkMode':'host'}}],'x')
+
+
 def test_world_transform_epoch_and_rear_offset():
     p=constrained_reference(raw_curve(),cfg(),np.array([-.03,0,0,0,0]))
     assert p.reason is None

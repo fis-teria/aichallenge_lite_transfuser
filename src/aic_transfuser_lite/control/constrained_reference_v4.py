@@ -154,7 +154,8 @@ def constrained_reference(candidate: SpatialPathCandidate, cfg: dict,
                 reference_id=sha(candidate.raw_xy.tobytes()+xy.tobytes()),
                 reference_yaw_rad=yaw.tolist(), reference_frame='base_link@t_obs',
                 raw_unchanged=candidate.raw_xy.tobytes().hex()==diag['raw_bits_hex'])
-    source_indices = np.searchsorted(target_s, q, side='right')-2
+    source_indices = np.where(q < connection, -1,
+                              np.minimum(np.searchsorted(raw_s[:count], q-connection, side='right')-1, count-1))
     curvature = np.r_[np.tan(delta)/cfg['wheelbase_m'], np.tan(delta[-1])/cfg['wheelbase_m']]
     return PreparedPath(xy, actual_s, source_indices, yaw[:-1], curvature, diag, None)
 
