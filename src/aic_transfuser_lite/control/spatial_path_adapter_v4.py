@@ -74,7 +74,8 @@ def prepare(candidate: SpatialPathCandidate, cfg: dict, scene: dict) -> Prepared
     for i in range(len(xy)-1):
         for j in range(i+2,len(xy)-1):
             a,b,c,d=xy[i],xy[i+1],xy[j],xy[j+1]
-            if cross(b-a,c-a)*cross(b-a,d-a)<0 and cross(d-c,a-c)*cross(d-c,b-c)<0:
+            overlap=np.all(np.maximum(np.minimum(a,b),np.minimum(c,d))<=np.minimum(np.maximum(a,b),np.maximum(c,d))+1e-12)
+            if overlap and cross(b-a,c-a)*cross(b-a,d-a)<=0 and cross(d-c,a-c)*cross(d-c,b-c)<=0:
                 return rejected('SELF_INTERSECTION')
     # No local tiny denominator is hidden by a wide-window smoother.
     if np.max(np.abs(k))>np.tan(cfg['steering_limit_rad'])/cfg['wheelbase_m']:
