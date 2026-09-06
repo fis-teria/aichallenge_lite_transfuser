@@ -63,6 +63,7 @@ class GridObservation:
     sample_id: str = 'transport_only'
     range_min_m: float = 0.0
     range_max_m: float = 25.0
+    slot_valid: bool = True
 
 
 def freeze_batch(batch: ModelBatchV3, device: str = 'cpu') -> ModelBatchV3:
@@ -82,12 +83,17 @@ def freeze_batch(batch: ModelBatchV3, device: str = 'cpu') -> ModelBatchV3:
 class SpatialInputV4:
     """At most 11 grid slots / 64 passive commands; epoch reset clears both."""
     def __init__(self, *, command_binding_known: bool = False, final_fallback_verified: bool = False,
-                 command_policy: str = 'PASSIVE'):
+                 command_policy: str = 'PASSIVE', history_policy: str = 'OBSERVED_FRAMES_V1'):
         if command_policy not in ('PASSIVE', 'SIM_ONLY_POLICY_CHANGED'):
             raise ValueError('unknown command policy')
         if command_policy != 'PASSIVE' and final_fallback_verified:
             raise ValueError('sim sent history must not mix passive fallback')
         self.command_policy = command_policy
+        if history_policy not in ('OBSERVED_FRAMES_V1', 'SIM_GRID_MISSING_V2'):
+            raise ValueError('unknown history policy')
+        if history_policy == 'SIM_GRID_MISSING_V2' and command_policy != 'SIM_ONLY_POLICY_CHANGED':
+            raise ValueError('missing-slot adapter is simulator-only')
+        self.history_policy = history_policy
         self.command_binding_known = command_binding_known
         self.final_fallback_verified = final_fallback_verified
         self.frames: deque = deque(maxlen=11)
@@ -129,6 +135,18 @@ class SpatialInputV4:
                 self.reset('CLOCK_RESET')
             elif item.grid_ns < prev.grid_ns or item.camera.header_ns < prev.camera.header_ns:
                 self.reset('CLOCK_REGRESSION')
+            elif self.history_policy == 'SIM_GRID_MISSING_V2':
+                if item.camera.header_ns-prev.camera.header_ns > 1_000_000_000:
+                    self.reset('TRUE_SENSOR_GAP_RESET')
+                else:
+                    # No source observations are fabricated for absent slots.
+                    # Transport from the prior frame is only a masked storage
+                    # placeholder; sample_id/slot_valid explicitly mark MISSING.
+                    for grid in range(prev.grid_ns+100_000_000,item.grid_ns,100_000_000):
+                        f = self.frames[-1]
+                        missing = replace(f[0],grid_ns=grid,slot_valid=False,sample_id='MISSING_GRID_SOURCE')
+                        self.frames.append((missing,torch.zeros_like(f[1]),torch.zeros_like(f[2]),
+                            torch.zeros_like(f[3]),torch.zeros_like(f[4]),torch.zeros_like(f[5])))
             elif item.grid_ns - prev.grid_ns > 200_000_000:
                 self.reset('GAP_RESET')
         if np.asarray(item.rgb).ndim != 3 or np.asarray(item.rgb).shape[-1] != 3 or item.rgb.dtype != np.uint8:
@@ -190,14 +208,14 @@ class SpatialInputV4:
         def padded(n: int):
             selected = frames[-n:]
             pad = n-len(selected)
-            return [selected[0]]*pad+selected, [False]*pad+[True]*len(selected)
+            return [selected[0]]*pad+selected, [False]*pad+[f[0].slot_valid for f in selected]
         sensor, sm = padded(4)
         ego, em = padded(10)
         past = frames[:-1][-10:]
         commands, cm, cp = [], [], []
         for frame in past:
             anchor = frame[0].camera
-            selected, command = self._command_for(anchor, current.camera, finalized_ns)
+            selected, command = self._command_for(anchor, current.camera, finalized_ns) if frame[0].slot_valid else (None,None)
             commands.append(selected[0] if selected else torch.zeros(3))
             cm.append(selected is not None)
             cp.append(command)
@@ -216,4 +234,7 @@ class SpatialInputV4:
             'selection_cutoff_ns':finalized_ns, 't_obs_ns':current.camera.header_ns,
             'reset_count':self.reset_count, 'source':'SYNTHETIC_OR_PASSIVE_TRANSPORT'
             if self.command_policy == 'PASSIVE' else 'SIM_ONLY_POLICY_CHANGED',
-            'command_policy':self.command_policy}
+            'command_policy':self.command_policy,'history_policy':self.history_policy,
+            'slots':[dict(grid_ns=f[0].grid_ns, valid=f[0].slot_valid,
+                          source_camera_ns=f[0].camera.header_ns if f[0].slot_valid else None) for f in frames],
+            'stable_grid_history':len(frames)==11 and frames[-1][0].grid_ns-frames[0][0].grid_ns==1_000_000_000}

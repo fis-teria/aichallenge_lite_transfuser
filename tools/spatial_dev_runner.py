@@ -16,6 +16,7 @@ import subprocess
 import time
 
 import yaml
+from spatial_dev_host_v4 import HostWatch, AttemptBudget, atomic_json, cleanup_owned
 
 IMAGE = 'sha256:8c650c13157ffabbc3a72bab08865ccff8338f9025b43a8f4405b4c6b96d1ba7'
 EXPECTED_CHECKPOINT = '0316692543a901d9d6b96718c5651d6739367aa851f83fb3a133c126ccc8919f'
@@ -66,6 +67,8 @@ def main() -> int:
     ap.add_argument('--commit', required=True)
     ap.add_argument('--phase', choices=('stationary', 'run'), default='stationary')
     ap.add_argument('--wall-seconds', type=int, default=60)
+    ap.add_argument('--budget', type=Path, required=True)
+    ap.add_argument('--binding', type=Path, required=True)
     args = ap.parse_args()
     if os.name != 'posix' or not re.fullmatch('[0-9a-f]{40}', args.commit):
         raise ValueError('LINUX_AND_FIXED_SOURCE_COMMIT_REQUIRED')
@@ -82,21 +85,37 @@ def main() -> int:
         vehicle_yaml: '5b66e58691091c82d5511535ca458d4c89e85f3b59fa0d0c4a2c7eee47887244',
         sim/'aichallenge/simulator/AWSIM/AWSIM_Data/Managed/Assembly-CSharp.dll':
             '859e5560dbffd7d0833cd1fe5eb1f36b87fa8d22f6e45eb0e1203d04a1ea6d13',
+        sim/'aichallenge/simulator/AWSIM/AWSIM_Data/level1':
+            '9ab2e1e8865c02885594e0bbdde372302530f047b5a2e89c455be6a18f3e090b',
+        sim/'aichallenge/simulator/AWSIM/AWSIM_Data/sharedassets1.assets':
+            '932d21250cfe685c9599acf33cca2d00d17e4141676fec236b813a069d9df34c',
+        sim/'aichallenge/simulator/AWSIM/AWSIM_Data/globalgamemanagers.assets':
+            '9b19aa2e22e004049272dd9c9ee2a58bddef4c8f055c44540023a3de98d9cfbd',
+        sim/'aichallenge/simulator/AWSIM/AWSIM_Data/resources.assets':
+            '1bbe49232479849779814fb4d1259d179d6466dc7a95f21f99382e168c5ad84f',
     }
     before = {str(p):digest(p) for p in expected_assets}
     if any(before[str(p)] != sha for p, sha in expected_assets.items()):
         raise ValueError('SELECTED_SIMULATOR_CHANGED')
+    binding = json.loads(args.binding.read_text())
+    if binding.get('assembly_sha256') != expected_assets[sim/'aichallenge/simulator/AWSIM/AWSIM_Data/Managed/Assembly-CSharp.dll']:
+        raise ValueError('BINDING_ASSET_MISMATCH')
+    expected_assets[sim/'aichallenge/run_simulator.bash']=digest(sim/'aichallenge/run_simulator.bash')
+    before[str(sim/'aichallenge/run_simulator.bash')]=expected_assets[sim/'aichallenge/run_simulator.bash']
     output.mkdir(parents=True)
     (output/'x11').mkdir(); (output/'x11').chmod(0o1777)
     project = 'codex-v4-dev-'+output.name.lower().replace('_', '-')
     if not re.fullmatch('[a-z0-9-]+', project): raise ValueError('INVALID_PROJECT')
     cfg = yaml.safe_load((source/'configs/control/spatial_sim_e2e_v4.yaml').read_text())
     cfg.update(enabled=args.phase == 'run', rear_x_in_base_m=.0010000169,
-               lidar_x_in_base_m=1.6499999762, lidar_y_in_base_m=0.)
-    cfg['dev'] = dict(wall_limit_s=args.wall_seconds, forward_limit=60, footprint_profile_verified=False,
+               lidar_x_in_base_m=1.6499999762, lidar_y_in_base_m=0.,command_schedule_s=.05)
+    for key in ('body_width_m','rear_overhang_m','front_overhang_m'):
+        cfg[key]=max(cfg[key],binding['body'][key])
+    forward_limit=240 if args.phase=='run' else 40
+    cfg['dev'] = dict(wall_limit_s=args.wall_seconds, forward_limit=forward_limit,
                       stage=args.phase, geometry_source='UNCHANGED_AWSIM_LEVEL1_GOKART1',
-                      pose_timing='PENDING_FULL_BINDING', collision_monitor='MISSING',
-                      input_policy='SIM_ONLY_POLICY_CHANGED')
+                      input_policy='SIM_ONLY_POLICY_CHANGED', history_policy='SIM_GRID_MISSING_V2',
+                      evidence_binding=binding, binding_sha256=digest(args.binding), snapshots_limit=2)
     (output/'resolved_config.yaml').write_text(yaml.safe_dump(cfg, sort_keys=False))
     spec = compose_definition(source, sim, args.xvfb_root, output, args.checkpoint, project, args.commit)
     spec_path = output/'compose.json'
@@ -113,6 +132,10 @@ def main() -> int:
     resolved = run(command+['config', '--format', 'json'])
     (output/'compose_resolved.json').write_text(resolved.stdout)
     runtime_id = sim_id = None
+    budget = AttemptBudget(args.budget)
+    budget.reserve(output.name,dict(wall_s=args.wall_seconds+110.,forward=forward_limit,mpc=forward_limit,snapshots=2,
+                                   powered=int(args.phase=='run'),powered_s=60. if args.phase=='run' else 0.))
+    watch = HostWatch(project)
     started = time.monotonic()
     pause_verified = False
     error = None
@@ -124,43 +147,67 @@ def main() -> int:
         if not re.fullmatch('[0-9a-f]{64}', sim_id) or not re.fullmatch('[0-9a-f]{64}', runtime_id):
             raise ValueError('OWNED_CONTAINER_IDENTIFICATION')
         inspected = run(['docker', 'inspect', sim_id, runtime_id])
-        (output/'instance_inspect.json').write_text(inspected.stdout)
+        atomic_json(output/'instance_inspect.json',json.loads(inspected.stdout))
         while time.monotonic()-started < args.wall_seconds+60:
             state = json.loads(run(['docker', 'inspect', runtime_id, '--format', '{{json .State}}']).stdout)
             if not state['Running']:
                 exitcode = state['ExitCode']
                 break
             heartbeat = output/'heartbeat.json'
-            if heartbeat.exists():
-                heartbeat_data = json.loads(heartbeat.read_text())
-                age = (time.monotonic_ns()-heartbeat_data['monotonic_ns'])*1e-9
-                if age > .75 and heartbeat_data['powered']:
-                    run(['docker', 'pause', sim_id])
-                    paused = json.loads(run(['docker', 'inspect', sim_id, '--format', '{{json .State}}']).stdout)
-                    pause_verified = paused['Paused'] is True
-                    error = 'SUPERVISOR_HEARTBEAT_STALE_SIM_PROCESS_PAUSED'
-                    break
+            heartbeat_data = json.loads(heartbeat.read_text()) if heartbeat.exists() else None
+            fault = watch.check(heartbeat_data,time.monotonic_ns())
+            if fault:
+                run(['docker','pause',sim_id])
+                paused = json.loads(run(['docker','inspect',sim_id,'--format','{{json .State}}']).stdout)
+                pause_verified = paused['Paused'] is True
+                error = fault
+                break
+            if watch.armed:
+                atomic_json(output/'host_armed.json',dict(token=project,armed=True,monotonic_ns=time.monotonic_ns(),
+                    sim_id=sim_id,runtime_id=runtime_id,paused_kill_verified=binding['host_paused_kill']['verified']))
             time.sleep(.20)
         else: error = 'HOST_FINITE_TIMEOUT'
     except BaseException as exc:
         error = type(exc).__name__+': '+str(exc)
     finally:
-        # Exact task-owned services only; no down/remove-orphans and no broad pkill.
-        run(command+['logs', '--no-color', '--tail', '300', 'autoware'], check=False)
-        if pause_verified and sim_id: run(['docker', 'unpause', sim_id], check=False)
-        run(command+['stop', '-t', '12', 'autoware', 'simulator'], timeout=35, check=False)
-        after = {str(p):digest(p) for p in expected_assets}
+        # Shutdown operations still execute if writing host.log has failed.
+        def cleanup_run(argv,timeout=15):
+            proc = subprocess.run(argv,capture_output=True,text=True,timeout=timeout)
+            try:
+                stdout.write(json.dumps(dict(cleanup_command=argv,returncode=proc.returncode,
+                                            stdout=proc.stdout,stderr=proc.stderr))+'\n'); stdout.flush()
+            except Exception:
+                pass  # resource cleanup outcome retained separately below
+            if proc.returncode: raise RuntimeError(proc.stderr)
+            return proc
+        cleanup = cleanup_owned(cleanup_run,sim_id,runtime_id,
+            paused_kill_verified=binding['host_paused_kill']['verified'] is True)
+        after = {}
+        for p in expected_assets:
+            try: after[str(p)] = digest(p)
+            except Exception as exc: cleanup['errors'].append(dict(stage='asset_hash',error=str(exc)))
         summary = dict(error=error, runtime_exitcode=exitcode, source_commit=args.commit, project=project,
             simulator_assets_before=before, simulator_assets_after=after, simulator_assets_unchanged=before == after,
             simulator_container_id=sim_id, runtime_container_id=runtime_id,
-            simulator_wall_seconds=time.monotonic()-started, prior_task_simulator_wall_seconds=1005.283827104,
+            simulator_wall_seconds=time.monotonic()-started, cleanup=cleanup,host_armed=watch.armed,
             host_pause_verified=pause_verified, pause_is_not_natural_braking_stop=True,
             normal_racingkart_makefile_executed=False, entrypoint='LITE_TRANSFUSER_MAKE_DEV',
             original_simulator_script='aichallenge/run_simulator.bash dev', awsimmutation=False)
         (output/'host_summary.json').write_text(json.dumps(summary, indent=2))
+        consumption = dict(wall_s=summary['simulator_wall_seconds'])
+        worker_summary, supervisor_summary = output/'worker_summary.json',output/'supervisor_summary.json'
+        if worker_summary.exists():
+            w=json.loads(worker_summary.read_text())
+            consumption.update(forward=w['forward_calls'],mpc=w['mpc_calls'],snapshots=w['sensor_tensor_snapshots'])
+        if supervisor_summary.exists():
+            s=json.loads(supervisor_summary.read_text())
+            consumption.update(powered=s['powered_episode_count'],powered_s=s['powered_sim_seconds'])
+        budget.finish(consumption,exact=len(consumption)==6)
+        (output/'budget_after.json').write_text(args.budget.read_text())
+        budget.close()
         stdout.close()
     print(json.dumps(summary))
-    return 1 if error or exitcode != 0 else 0
+    return 1 if error or exitcode != 0 or cleanup['errors'] else 0
 
 
 if __name__ == '__main__': raise SystemExit(main())

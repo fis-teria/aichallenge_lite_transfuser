@@ -74,6 +74,43 @@ class MotionEvidence:
         return None
 
 
+def scene_aabb_evidence(states: np.ndarray, cfg: dict, binding: dict, *, state_ns: int,
+                        now_sim_ns: int, epoch: str) -> dict:
+    """Independent static exclusion diagnostic, NOT an invented collision event.
+
+    Outside every enclosing obstacle AABB implies no static mesh intersection.
+    Inside an AABB remains UNKNOWN, not a collision or free-space assertion.
+    Unmonitored movable actors prevent a complete runtime safety certificate.
+    The saved scene bounds are in the fixed spawn-local ROS world frame.
+    """
+    states=np.asarray(states,dtype=float)
+    info=binding['scene_space']
+    boxes=info.get('obstacle_local_world_xy_bounds_m')
+    fresh=0 <= now_sim_ns-state_ns <= 200_000_000
+    if states.ndim!=2 or states.shape[1]!=5 or not np.isfinite(states).all():
+        raise ValueError('SCENE_STATE_SHAPE_OR_FINITE')
+    result=dict(policy='STATIC_AABB_EXCLUSION_NOT_TRIANGLE_COLLISION_V1',epoch=epoch,
+        state_ns=state_ns,now_sim_ns=now_sim_ns,source_metadata_sha256=binding['scene_metadata_sha256'],
+        checked_footprints=len(states),status='UNKNOWN',verified=False,
+        current_pose_fresh=fresh,dynamic_coverage=info['dynamic_coverage_verified'],
+        unknown_is_free=False,heartbeat_sim_ns=now_sim_ns)
+    if not boxes: return dict(result,reason='STATIC_OBSTACLE_BOUNDS_MISSING')
+    corners=np.array([[-cfg['rear_overhang_m'],-cfg['body_width_m']/2],
+        [-cfg['rear_overhang_m'],cfg['body_width_m']/2],
+        [cfg['wheelbase_m']+cfg['front_overhang_m'],-cfg['body_width_m']/2],
+        [cfg['wheelbase_m']+cfg['front_overhang_m'],cfg['body_width_m']/2]])
+    # Whole polygon's enclosing world rectangle, not just corner point tests.
+    potential=0
+    margin=.05+cfg['maximum_speed_mps']*binding['pose']['assumed_acquisition_bound_s']
+    for state in states:
+        points=transform(corners,state[:3]);lo=points.min(0)-margin;hi=points.max(0)+margin
+        potential+=int(any(np.all(hi>=np.asarray(box[0])) and np.all(lo<=np.asarray(box[1])) for box in boxes))
+    reason=('STALE_POSE' if not fresh else 'STATIC_MESH_INTERIOR_UNRESOLVED' if potential else
+            'MOVABLE_ACTOR_COVERAGE_UNVERIFIED' if not info['dynamic_coverage_verified'] else None)
+    return dict(result,potential_overlap_footprints=potential,inflation_m=margin,
+                verified=reason is None,status='STATIC_CLEAR' if reason is None else 'UNKNOWN',reason=reason)
+
+
 class OperationLease:
     """Independent supervisor gate; late results cannot renew an expired lease.
 

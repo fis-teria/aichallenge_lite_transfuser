@@ -26,6 +26,8 @@ import yaml
 from aic_transfuser_lite.control.spatial_sim_guard_v4 import OperationLease
 from aic_transfuser_lite.control.spatial_tracking_contracts_v4 import plain
 from aic_transfuser_lite.runtime.spatial_sim_adapter_v4 import Sample, base_pose_from_gnss_imu, interpolate
+from aic_transfuser_lite.control.sim_dispatch_v4 import AckermannDispatch, SimControlSchedule, StopObservation
+from aic_transfuser_lite.control.spatial_path_adapter_v4 import transform
 
 
 def verify_dev_isolation(items: list[dict], project: str) -> None:
@@ -79,7 +81,7 @@ def main() -> int:
     if not args.authorize_sim_session:
         raise ValueError('EXPLICIT_SIM_SESSION_REQUIRED')
     cfg = yaml.safe_load(args.config.read_text())
-    if not (0 < cfg['dev']['wall_limit_s'] <= 120 and 0 < cfg['dev']['forward_limit'] <= 60):
+    if not (0 < cfg['dev']['wall_limit_s'] <= 120 and 0 < cfg['dev']['forward_limit'] <= 240):
         raise ValueError('FINITE_SESSION_REQUIRED')
     inspection = args.output/'instance_inspect.json'
     waiting = time.monotonic()
@@ -118,10 +120,16 @@ def main() -> int:
     grid_phase = None
     trace = (args.output/'supervisor.jsonl').open('x', buffering=1)
     lease = OperationLease(cfg['maximum_speed_mps'])
+    schedule = SimControlSchedule(cfg)
+    schedule.reset(epoch)
+    dispatch = AckermannDispatch(cfg)
+    stop_observation = StopObservation()
+    stopping = False
     context = mp.get_context('spawn')
     inbox, outbox = context.Queue(1), context.Queue(2)
+    statebox = context.Queue(1)
     stop = context.Event()
-    worker = context.Process(target=worker_main, args=(inbox, outbox, stop, str(args.config), str(args.output)))
+    worker = context.Process(target=worker_main, args=(inbox, outbox, stop, str(args.config), str(args.output),statebox))
     start_ns = time.monotonic_ns()
     worker.start()
     ready = False
@@ -141,6 +149,9 @@ def main() -> int:
     distance = 0.
     motion_first_sim_ns = None
     stopped_since = None
+    host_ready = False
+    last_state_push_ns = 0
+    moving_forward_ids: set[str] = set()
 
     def log(event: dict) -> None:
         nonlocal logger_ok
@@ -164,6 +175,7 @@ def main() -> int:
                 epoch = str(int(epoch)+1)
                 for b in buffers.values(): b.clear()
                 commands.clear()
+                schedule.reset(epoch)
                 grid_phase = pose_origin = None
                 lease.fault = 'CLOCK_RESET'
             sim_ns = ns
@@ -191,7 +203,9 @@ def main() -> int:
             if frame != 'base_link': raise ValueError('VELOCITY_FRAME')
             value = [message.longitudinal_velocity, message.lateral_velocity, message.heading_rate]
             max_speed = max(max_speed, abs(value[0]))
-            if counts[role] % 3 == 0: log(dict(event='OBSERVED_VELOCITY', source_ns=ns, value=value))
+            log(dict(event='OBSERVED_VELOCITY', source_ns=ns, value=value,stopping=stopping))
+            if stopping:
+                stop_observation.add(ns,value[0],fresh=now-time.monotonic_ns() > -250_000_000)
         elif role == 'steering': value = [message.steering_tire_angle]
         elif role == 'imu':
             if frame != 'imu_link': raise ValueError('IMU_FRAME')
@@ -233,7 +247,7 @@ def main() -> int:
                 buffers['pose'].append(Sample(ns, max(now, basis['available_ns']), p, 'utm_local_base', epoch))
                 if len(pose_points) < 4000: pose_points.append([ns, *p.tolist()])
                 log(dict(event='GNSS_IMU_POSE', source_ns=ns, pose=p, basis=basis,
-                         source='CURRENT_GNSS_IMU_NO_ROUTE', timing_verified=False))
+                         source='CURRENT_GNSS_IMU_NO_ROUTE', timing_policy=cfg['dev']['evidence_binding']['pose']))
             except ValueError:
                 counts['pose_alignment_missing'] += 1
 
@@ -256,11 +270,13 @@ def main() -> int:
     def stamp_message(target: object, ns: int) -> None:
         target.sec, target.nanosec = divmod(max(ns, 0), 1_000_000_000)
 
-    def publish(a: float, delta: float, speed: float, operation_id: str, source: str) -> None:
+    def publish(a: float, delta: float, speed: float, operation_id: str, source: str,
+                rate: float = 0., observation_ns: int | None = None) -> dict:
         nonlocal last_sent_sim, last_send_ns
         msg = AckermannControlCommand()
         for field in (msg.stamp, msg.lateral.stamp, msg.longitudinal.stamp): stamp_message(field, sim_ns)
         msg.lateral.steering_tire_angle = float(delta)
+        msg.lateral.steering_tire_rotation_rate = float(rate)
         msg.longitudinal.acceleration = float(a)
         msg.longitudinal.speed = float(speed)  # desired reference; AWSIM ignores it
         pub.publish(msg)
@@ -272,7 +288,9 @@ def main() -> int:
                        policy='SIM_ONLY_POLICY_CHANGED', status='SENT_NOT_APPLIED_CONFIRMED', source=source)
         commands.append(receipt)
         last_sent_sim, last_send_ns = sim_ns, sent
+        schedule.sent(sim_ns,a,operation_id=operation_id,observation_ns=observation_ns)
         log(dict(event='COMMAND_SENT', receipt=receipt))
+        return receipt
 
     try:
         log(dict(event='SESSION_START', scope='SIM_E2E_CONTROLLED_TEST', config=cfg,
@@ -285,10 +303,23 @@ def main() -> int:
             update_pose()
             if now-last_heartbeat_ns >= 100_000_000:
                 heartbeat_tmp = args.output/'heartbeat.tmp'
-                heartbeat_tmp.write_text(json.dumps(dict(monotonic_ns=now, powered=lease.powered,
+                heartbeat_tmp.write_text(json.dumps(dict(monotonic_ns=now,token=args.project,powered=lease.powered,
                                                          logger_ok=logger_ok, phase='RUNNING')))
                 heartbeat_tmp.replace(args.output/'heartbeat.json')
                 last_heartbeat_ns = now
+            arm_path=args.output/'host_armed.json'
+            arm=json.loads(arm_path.read_text()) if arm_path.exists() else None
+            host_ready=bool(arm and arm.get('token')==args.project and arm.get('armed') is True
+                and arm.get('paused_kill_verified') is True and 0 <= now-arm['monotonic_ns'] < 750_000_000)
+            if lease.powered and not host_ready: raise RuntimeError('HOST_MONITOR_NOT_FRESH')
+            if now-last_state_push_ns >= 20_000_000:
+                state_update={k:list(buffers[k]) for k in ('pose','velocity','steering')}
+                state_update.update(epoch=epoch,sim_ns=sim_ns,cutoff_ns=now,previous_acceleration=schedule.last_a)
+                try:
+                    statebox.put_nowait(state_update);last_state_push_ns=now
+                except queue.Full:
+                    try: statebox.get_nowait()
+                    except queue.Empty: pass
             try:
                 answer = outbox.get_nowait()
                 if answer['event'] == 'READY': ready = True
@@ -296,20 +327,23 @@ def main() -> int:
                     log(answer)
                     first_error = answer.get('reason')
                     break
-                elif answer['event'] == 'CYCLE': current_result = answer
+                elif answer['event'] == 'CYCLE':
+                    if current_result is None or answer['observed_sim_ns'] >= current_result['observed_sim_ns']:
+                        current_result=answer
+                    else: log(dict(event='OUT_OF_ORDER_RESULT',input_id=answer['input_id']))
                 counts['worker_results'] += 1
             except queue.Empty:
                 pass
             if pub is None:
                 endpoints = node.get_subscriptions_info_by_topic('/control/command/control_cmd')
                 publisher_count = node.count_publishers('/control/command/control_cmd')
-                if (ready and len(endpoints) == 1 and endpoints[0].node_name == 'awsim_d1'
+                if (ready and host_ready and len(endpoints) == 1 and endpoints[0].node_name == 'awsim_d1'
                         and publisher_count == 0 and buffers['velocity'] and buffers['steering'] and sim_ns >= 0):
                     for topic in ('/awsim/control_mode_request_topic', '/control/command/gear_cmd'):
                         e = node.get_subscriptions_info_by_topic(topic)
                         if len(e) != 1 or e[0].node_name != 'awsim_d1' or node.count_publishers(topic):
                             raise ValueError('UNVERIFIED_MODE_OR_GEAR_CONSUMER')
-                    log(dict(event='CONSUMER_VERIFIED', control_subscriber=endpoints[0].node_name,
+                    log(dict(event='CONSUMER_VERIFIED',host_arm=arm,control_subscriber=endpoints[0].node_name,
                              endpoint_gid=list(endpoints[0].endpoint_gid), qos=str(endpoints[0].qos_profile)))
                     pub = node.create_publisher(AckermannControlCommand, '/control/command/control_cmd', 32)
                     mode_pub = node.create_publisher(Bool, '/awsim/control_mode_request_topic', 1)
@@ -333,11 +367,11 @@ def main() -> int:
                 if now-cam.received_ns >= 35_000_000:
                     input_id = f'{epoch}:camera:{cam.ns}'
                     bundle = {name:list(b) for name, b in buffers.items()}
-                    bundle.update(epoch=epoch, cutoff_ns=now, grid_phase_ns=grid_phase, input_id=input_id,
+                    bundle.update(epoch=epoch,sim_ns=sim_ns,cutoff_ns=now, grid_phase_ns=grid_phase, input_id=input_id,
                         sent_commands=list(commands), isolation=True, consumer=True,
-                        pose_timing_verified=False, collision_monitor_healthy=False,
+                        drive_gear_sent=counts['gear_publish_calls']>0,
                         run_requested=cfg['enabled'], previous_acceleration=commands[-1]['acceleration_mps2'],
-                        control_dt_s=.1 if last_sent_sim < 0 else (sim_ns-last_sent_sim)*1e-9)
+                        model_dt_s=cfg['controller_dt_s'])
                     try:
                         inbox.put_nowait(bundle)
                         latest_input_id = input_id
@@ -352,29 +386,53 @@ def main() -> int:
                                  worker_alive=worker.is_alive(), logger_ok=logger_ok)
             if lease.fault: break
             if current_result is not None:
-                rejection = lease.reject(current_result, now_ns=now, now_sim_ns=sim_ns, epoch=epoch,
-                    current_input_id=latest_input_id, current_state_ns=velocity.ns, healthy=logger_ok)
+                rejection='NO_ACCEPTED_MPC_REQUEST'
+                latest_state=None
+                if current_result.get('operation_id'):
+                    try:
+                        state_ns=min(buffers[k][-1].ns for k in ('pose','velocity','steering'))
+                        p,_=interpolate(list(buffers['pose']),state_ns,angle_columns=(2,))
+                        v,_=interpolate(list(buffers['velocity']),state_ns)
+                        d,_=interpolate(list(buffers['steering']),state_ns,angle_columns=(0,))
+                        rear=transform(np.array([[cfg['rear_x_in_base_m'],0.]]),p)[0]
+                        latest_state=np.r_[rear,p[2],v[0],d[0]]
+                        rejection=schedule.rejection(current_result,epoch=epoch,now_ns=now,sim_ns=sim_ns,
+                            state=latest_state,state_ns=state_ns)
+                        if not host_ready: rejection='HOST_MONITOR_NOT_FRESH'
+                    except (ValueError,IndexError) as exc: rejection='DISPATCH_STATE:'+str(exc)
                 log(dict(event='DISPATCH_DECISION', input_id=current_result['input_id'], rejection=rejection,
+                         latest_received_input_id=latest_input_id,adopted_observation_ns=schedule.adopted_observation_ns,
                          worker_reason=current_result.get('reason'), motion_rejection=current_result.get('motion_rejection')))
                 if rejection is None:
-                    request = current_result['request']
+                    timing=schedule.timing(sim_ns)
+                    request=dispatch.request(current_result['operation_id'],np.asarray(current_result['first_control']),
+                        measured_delta_rad=latest_state[4],control_dt_s=timing['control_interval_s'],
+                        target_speed_mps=current_result['target_speed_reference_mps'])
+                    request.update(timing)
+                    log(dict(event='CONTROL_REQUEST',request=request,input_id=current_result['input_id'],
+                        observed_sim_ns=current_result['observed_sim_ns'],state_source_ns=state_ns,
+                        latest_state=latest_state,deadline_monotonic_ns=current_result['deadline_monotonic_ns']))
                     # Recheck expiry immediately before sole-authority publication.
                     if time.monotonic_ns() >= current_result['deadline_monotonic_ns']:
                         lease.fault = 'EXPIRED_BEFORE_PUBLISH'
                         break
-                    publish(request['acceleration_mps2'], request['steering_tire_angle_rad'],
-                            request['desired_speed_reference_mps'], request['operation_id'], 'MPC')
+                    receipt=publish(request['acceleration_mps2'], request['steering_tire_angle_rad'],
+                            request['desired_speed_reference_mps'], request['operation_id'], 'MPC',
+                            rate=request['steering_tire_rotation_rate_rad_s'],observation_ns=current_result['observed_sim_ns'])
+                    dispatch.acknowledge_sent(request,sent_sim_ns=receipt['sim_ns'],sent_monotonic_ns=receipt['monotonic_ns'])
                     lease.sent(request); last_accepted_ns = time.monotonic_ns()
+                    if abs(speed) > .03: moving_forward_ids.add(current_result['forward_id'])
                     accepted_deadline_ns = current_result['deadline_monotonic_ns']
                     if lease.powered and motion_first_sim_ns is None: motion_first_sim_ns = sim_ns
-                current_result = None
-            if now-last_send_ns >= 50_000_000 and (not lease.powered or why or now >= accepted_deadline_ns):
+                if rejection != 'WAIT_POSITIVE_CONTROL_TICK': current_result = None
+            if schedule.due(sim_ns) and (not lease.powered or why or now >= accepted_deadline_ns):
                 # Never replay a worker's positive control. On expiry the independent
                 # publisher immediately sends braking, while the worker may block.
                 acceleration = -cfg['braking_max_mps2'] if speed > .01 or why == 'STATE_STALE' else 0.
                 publish(acceleration, buffers['steering'][-1].value[0], 0.,
                         f'hold:{counts["control_publish_calls"]}', 'SUPERVISOR_HOLD')
             if motion_first_sim_ns is not None and sim_ns-motion_first_sim_ns >= 60_000_000_000: break
+            if lease.powered and buffers['pose'] and np.linalg.norm(buffers['pose'][-1].value[:2]) >= 2.: break
         log(dict(event='STOP_REQUESTED', reason=lease.fault or first_error or 'FINITE_SESSION_END'))
     except BaseException as exc:
         first_error = type(exc).__name__+': '+str(exc)
@@ -382,29 +440,45 @@ def main() -> int:
         except Exception: pass
     finally:
         # Solver is not awaited before this independent stop loop.
+        stopping=True
+        stopping_start_ns=time.monotonic_ns()
         stop.set()
         stop_deadline = time.monotonic()+3.
         try:
             while pub is not None and time.monotonic() < stop_deadline:
                 rclpy.spin_once(node, timeout_sec=.02)
+                stop_now=time.monotonic_ns()
+                if stop_now-last_heartbeat_ns >= 100_000_000:
+                    heartbeat_tmp=args.output/'heartbeat.tmp'
+                    heartbeat_tmp.write_text(json.dumps(dict(monotonic_ns=stop_now,token=args.project,
+                        powered=lease.powered,logger_ok=logger_ok,phase='STOPPING')))
+                    heartbeat_tmp.replace(args.output/'heartbeat.json')
+                    last_heartbeat_ns=stop_now
                 if not buffers['velocity']: break
                 v = float(buffers['velocity'][-1].value[0])
-                publish(-cfg['braking_max_mps2'] if v > .01 else 0., buffers['steering'][-1].value[0],
-                        0., f'stop:{counts["control_publish_calls"]}', 'SUPERVISOR_STOP')
+                # Emergency policy: interrupt on wall-clock cadence even if sim
+                # clock stalls. Opposite acceleration is forbidden near zero.
+                if time.monotonic_ns()-last_send_ns >= 50_000_000:
+                    braking=-cfg['braking_max_mps2'] if v > .01 else 0.
+                    publish(braking,buffers['steering'][-1].value[0],0.,
+                            f'stop:{counts["control_publish_calls"]}','SUPERVISOR_STOP')
                 fresh = time.monotonic_ns()-buffers['velocity'][-1].received_ns < 250_000_000
-                if fresh and abs(v) <= .03:
-                    if stopped_since is None: stopped_since = sim_ns
-                    if sim_ns-stopped_since >= 1_000_000_000: break
-                else: stopped_since = None
+                if fresh and stop_observation.confirmed: break
         except Exception as exc:
             first_error = first_error or 'STOP_LOOP:'+str(exc)
-        worker.join(timeout=8)
+        join_deadline=time.monotonic()+8.
+        while worker.is_alive() and time.monotonic()<join_deadline:
+            worker.join(timeout=.05)
+            heartbeat_tmp=args.output/'heartbeat.tmp'
+            heartbeat_tmp.write_text(json.dumps(dict(monotonic_ns=time.monotonic_ns(),token=args.project,
+                powered=lease.powered,logger_ok=logger_ok,phase='STOP_WORKER_JOIN')))
+            heartbeat_tmp.replace(args.output/'heartbeat.json')
         if worker.is_alive():
             # Stop confirmation unavailable or blocked worker: host runner stops
             # only the owned simulator container. Do not pretend the vehicle stopped.
             first_error = first_error or 'WORKER_DID_NOT_EXIT'
             worker.terminate(); worker.join(timeout=2)
-        stopped = stopped_since is not None and sim_ns-stopped_since >= 1_000_000_000
+        stopped=stop_observation.confirmed and time.monotonic_ns()-buffers['velocity'][-1].received_ns < 250_000_000 if buffers['velocity'] else False
         observed_displacement = float(np.linalg.norm(buffers['pose'][-1].value[:2])) if buffers['pose'] else None
         summary = dict(scope='SIM_E2E_CONTROLLED_TEST', counts=dict(counts), first_error=first_error,
             watchdog_fault=lease.fault, worker_exitcode=worker.exitcode, maximum_observed_speed_mps=max_speed,
@@ -412,7 +486,10 @@ def main() -> int:
             pose_points=pose_points, stationary_stop_confirmed=stopped, powered_episode_count=int(lease.powered),
             powered_sim_seconds=0 if motion_first_sim_ns is None else (sim_ns-motion_first_sim_ns)*1e-9,
             wall_seconds=(time.monotonic_ns()-start_ns)*1e-9, clocks=list(clocks),
-            E2E_SIM_CLOSED_LOOP_EXECUTED=False, LOW_SPEED_RUN_AND_STOP_PASSED=False,
+            moving_forward_ids=sorted(moving_forward_ids),stop_source_start_ns=stop_observation.start_ns,
+            E2E_SIM_CLOSED_LOOP_EXECUTED=len(moving_forward_ids)>1,
+            LOW_SPEED_RUN_AND_STOP_PASSED=bool(stopped and observed_displacement is not None and observed_displacement>=2.
+                and len(moving_forward_ids)>=10 and not first_error and not lease.fault),
             REALTIME_AT_1X='NOT_ESTABLISHED', collision_status='UNKNOWN',
             note='Stationary HOLD is not a powered E2E run; live state timing and footprint gates remain explicit')
         (args.output/'supervisor_summary.json').write_text(json.dumps(plain(summary), indent=2, allow_nan=False))

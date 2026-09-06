@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import math
+import queue
+import time
 import numpy as np
 
 from aic_transfuser_lite.data.synchronization_v3 import (
@@ -113,3 +115,56 @@ def base_pose_from_gnss_imu(gnss_utm_xy: np.ndarray, imu_q: list[float]) -> np.n
         raise ValueError('INVALID_GNSS_POSITION')
     yaw = (quaternion_yaw(imu_q)-math.pi/2+math.pi) % (2*math.pi)-math.pi
     return np.r_[xy+.26*np.array([math.cos(yaw), math.sin(yaw)]), yaw]
+
+
+def join_control_state(bundle: dict, observation_ns: int, scan_ns: int) -> dict:
+    """Late control-only join; callers never rebuild or re-forward model input."""
+    pose, source = interpolate(bundle['pose'], observation_ns, angle_columns=(2,))
+    scan_pose, scan_source = interpolate(bundle['pose'], scan_ns, angle_columns=(2,))
+    current_ns = min(bundle[k][-1].ns for k in ('pose','velocity','steering'))
+    current_pose, p = interpolate(bundle['pose'], current_ns, angle_columns=(2,))
+    velocity, v = interpolate(bundle['velocity'],current_ns)
+    steering, d = interpolate(bundle['steering'],current_ns,angle_columns=(0,))
+    return dict(pose_at_observation=pose, pose_provenance=source, scan_pose=scan_pose,
+                scan_pose_provenance=scan_source, current_pose=current_pose, current_ns=current_ns,
+                velocity=velocity, steering=steering[0], current_provenance=dict(pose=p,velocity=v,steering=d))
+
+
+def await_control_join(original: dict, observation_ns: int, scan_ns: int, deadline_ns: int,
+                       read_update, stopped, *, clock=time.monotonic_ns) -> tuple[dict,dict]:
+    """Fixed deadline and immutable original input; only state updates are used."""
+    current=original
+    while True:
+        if clock() >= deadline_ns: raise ValueError('POSE_JOIN_EXPIRED')
+        if stopped(): raise ValueError('POSE_JOIN_STOPPED')
+        try:
+            joined=join_control_state(current,observation_ns,scan_ns)
+            if clock() >= deadline_ns: raise ValueError('POSE_JOIN_EXPIRED')
+            return current,joined
+        except (ValueError,IndexError) as exc:
+            if str(exc)=='POSE_JOIN_EXPIRED': raise
+            try: update=read_update()
+            except queue.Empty: continue
+            if update['epoch'] != original['epoch']: raise ValueError('POSE_JOIN_EPOCH_RESET')
+            # Never permit a state update to replace Camera/LiDAR/command input.
+            allowed={k:update[k] for k in ('pose','velocity','steering','cutoff_ns','previous_acceleration')}
+            if 'sim_ns' in update: allowed['sim_ns']=update['sim_ns']
+            current=dict(original,**allowed)
+
+
+def stopped_forward_initial_speed(raw_speed: float, samples: list[Sample], *, drive_gear_sent: bool) -> tuple[float,dict]:
+    """One sim-only controller state policy; model ego and signed raw stay intact.
+
+    Only numerical negative drift <=1 mm/s after a continuous 1 s observed
+    stop band (the existing .03 m/s stop criterion) in requested Drive is zeroed.
+    A real backward measurement below -1 mm/s is never converted by abs/clamp.
+    """
+    proof = dict(raw_signed_mps=float(raw_speed),policy='SIM_STOPPED_DRIVE_NUMERICAL_DRIFT_V1',changed=False)
+    recent = [s for s in samples if samples[-1].ns-s.ns <= 1_100_000_000] if samples else []
+    continuous = (len(recent)>1 and recent[-1].ns-recent[0].ns >= 1_000_000_000
+        and all(0 < b.ns-a.ns <= 100_000_000 for a,b in zip(recent,recent[1:]))
+        and all(np.isfinite(s.value[0]) and -.001 <= s.value[0] <= .03 for s in recent))
+    if -.001 <= raw_speed < 0 and drive_gear_sent and continuous:
+        proof['changed'] = True
+        return 0.,proof
+    return raw_speed,proof
