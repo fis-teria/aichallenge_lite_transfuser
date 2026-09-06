@@ -8,10 +8,13 @@ def stopping_distance(v: float, a: float, cfg: dict, delay_s: float=0.0) -> floa
     """Numerical jerk-limited bounded braking, including supplied synthetic delay."""
     x=0.; h=cfg['plant_substep_s']; elapsed=0.
     for _ in range(1000):
-        if v<=1e-8: break
+        # A delayed positive command can start a currently stationary vehicle.
+        if v<=1e-8 and a<=0: break
         desired=a if elapsed<delay_s else -cfg['braking_max_mps2']
         a=float(np.clip(desired,a-cfg['jerk_limit_mps3']*h,a+cfg['jerk_limit_mps3']*h))
         nv=max(0,v+a*h); x+=(v+nv)*h/2; v=nv; elapsed+=h
+    else:
+        return float('inf')  # finite integration budget is not a stop certificate
     return x
 
 
@@ -89,6 +92,8 @@ def rolling_horizon(path, cfg: dict, *, progress_s: float, current_v: float,
         a = float(np.clip(desired,a-cfg['jerk_limit_mps3']*dt,a+cfg['jerk_limit_mps3']*dt))
         nv = max(0., v+a*dt)
         s += (v+nv)*dt/2; v=nv
+        if s>endpoint+1e-8 and reason is None:
+            reason='REFERENCE_HORIZON_OVERSHOOT'
         rows.append((min(s,endpoint),v,a))
     rows=np.array(rows); xy,yaw,index=sample_path(path,rows[:,0])
     return dict(xy=xy,yaw=yaw,speed=rows[:,1],acceleration=rows[:,2],s=rows[:,0],index=index,

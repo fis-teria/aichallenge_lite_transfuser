@@ -6,7 +6,7 @@ import yaml
 
 from aic_transfuser_lite.control.constrained_reference_v4 import constrained_reference, reference_to_world
 from aic_transfuser_lite.control.spatial_tracking_contracts_v4 import SpatialPathCandidate
-from aic_transfuser_lite.control.spatial_speed_profile_v4 import rolling_horizon, plan
+from aic_transfuser_lite.control.spatial_speed_profile_v4 import rolling_horizon, plan, stopping_distance
 from aic_transfuser_lite.control.sim_dispatch_v4 import SnapshotKey, send_rejection, AckermannDispatch, sent_history_sample
 
 
@@ -78,6 +78,11 @@ def test_rolling_launch_update_and_hold_cap():
     end=rolling_horizon(p,config,progress_s=p.actual_s[-1],current_v=.2,previous_a=.1,delay_s=.5,permission='RUN',safety_cap_mps=.3)
     assert end['reason']=='STOPPING_DISTANCE_INSUFFICIENT'
     assert end['stop_target_overshoot_m']>0 and end['usable_end_overshoot_m']==0
+
+
+def test_delayed_positive_acceleration_at_rest_is_not_zero_stop_distance():
+    assert stopping_distance(0,.6,cfg(),delay_s=.2)>0
+    assert stopping_distance(0,0,cfg(),delay_s=.2)==0
 
 
 def gate_args():
