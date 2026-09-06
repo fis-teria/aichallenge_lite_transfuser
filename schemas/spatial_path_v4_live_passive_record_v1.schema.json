@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:aic:spatial-path-v4:live-passive-record:v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "mode",
+    "execution",
+    "passive_scope",
+    "payload"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "spatial_path_v4_live_passive_record_v1"
+    },
+    "mode": {
+      "enum": [
+        "LIVE_PASSIVE",
+        "LIVE_PASSIVE_FIXTURE"
+      ]
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "forward_calls",
+        "live_sensor_connection_authorized",
+        "control_connection_enabled"
+      ],
+      "properties": {
+        "forward_calls": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "live_sensor_connection_authorized": {
+          "type": "boolean"
+        },
+        "control_connection_enabled": {
+          "const": false
+        }
+      }
+    },
+    "passive_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "config_sha256",
+        "binding_sha256",
+        "code_sha256",
+        "authorization_sha256",
+        "checkpoint_sha256",
+        "fixture",
+        "authorized_by",
+        "authorized_at"
+      ],
+      "properties": {
+        "config_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "binding_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "code_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "authorization_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "checkpoint_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "fixture": {
+          "type": "boolean"
+        },
+        "authorized_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authorized_at": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "payload": {
+      "$ref": "urn:aic:spatial-path-v4:shadow-record:design-v2#/$defs/event"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "LIVE_PASSIVE_FIXTURE"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "execution": {
+            "properties": {
+              "live_sensor_connection_authorized": {
+                "const": false
+              }
+            }
+          },
+          "passive_scope": {
+            "properties": {
+              "fixture": {
+                "const": true
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "execution": {
+            "properties": {
+              "live_sensor_connection_authorized": {
+                "const": true
+              }
+            }
+          },
+          "passive_scope": {
+            "properties": {
+              "fixture": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -223,7 +223,7 @@ def test_mock_wrapper_forbidden_endpoints():
     types={k:object for k in roles}; types['sensor_qos']='synthetic_best_effort'
     module.SpatialPathShadowWrapperV4(node,SpatialRuntimeV4(Fake(),records()),SpatialInputV4(command_binding_known=True),types,{k:'/fake/'+k for k in roles})
     assert len(node.subs)==5
-    with pytest.raises(RuntimeError,match='LIVE_BOOTSTRAP_BLOCKED'): module.main()
+    assert module.main([])==2  # Explicit config and bound approval, still no DDS by default.
 
 
 def test_launch_and_static_nonactuation():

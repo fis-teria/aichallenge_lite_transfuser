@@ -94,12 +94,27 @@ def geometry(xy: np.ndarray) -> dict:
 
 class Records:
     """Only uses design-v2 field templates, not its design-only authorization envelope."""
-    def __init__(self, schema_dir: Path, *, mode: str, clock=time.monotonic_ns):
-        if mode not in ('SYNTHETIC','OFFLINE_TENSOR_REPLAY'):
+    def __init__(self, schema_dir: Path, *, mode: str, clock=time.monotonic_ns, passive_scope: dict | None = None):
+        passive=mode in ('LIVE_PASSIVE','LIVE_PASSIVE_FIXTURE')
+        if mode not in ('SYNTHETIC','OFFLINE_TENSOR_REPLAY') and not passive:
             raise ValueError('live mode not authorized')
+        if passive:
+            keys={'config_sha256','binding_sha256','code_sha256','authorization_sha256','checkpoint_sha256','fixture','authorized_by','authorized_at'}
+            if not isinstance(passive_scope,dict) or set(passive_scope)!=keys:
+                raise ValueError('passive execution requires explicit bound scope')
+            if type(passive_scope['fixture']) is not bool or passive_scope['fixture']!=(mode=='LIVE_PASSIVE_FIXTURE'):
+                raise ValueError('passive fixture/mode mismatch')
+            for key in keys-{'fixture','authorized_by','authorized_at'}:
+                value=passive_scope[key]
+                if not isinstance(value,str) or len(value)!=64 or any(c not in '0123456789abcdef' for c in value):
+                    raise ValueError('passive scope hash: '+key)
+        elif passive_scope is not None:
+            raise ValueError('passive scope cannot disguise offline/synthetic mode')
+        self.passive_scope=deepcopy(passive_scope)
         self.mode, self.clock = mode, clock
         self.design = json.loads((schema_dir/'spatial_path_v4_shadow_record_v1.schema.json').read_text())
-        self.schema = json.loads((schema_dir/'spatial_path_v4_runtime_record_v1.schema.json').read_text())
+        schema_name='spatial_path_v4_live_passive_record_v1.schema.json' if passive else 'spatial_path_v4_runtime_record_v1.schema.json'
+        self.schema = json.loads((schema_dir/schema_name).read_text())
         self.session = str(uuid.uuid4())
         self.clock_epoch = '0'
         self.counts = {k:set() for k in ('accepted','input_built','forward_started','forward_returned','enqueued','saved','dropped')}
@@ -147,8 +162,13 @@ class Records:
             for key, values in self.counts.items():
                 c[key] = dict(status='KNOWN',value=len(values),reason='unique candidate transitions in this harness')
             p['stage_counts'] = c
-        return dict(schema_version='spatial_path_v4_runtime_record_v1',mode=self.mode,
+        event=dict(schema_version='spatial_path_v4_runtime_record_v1',mode=self.mode,
                     execution=dict(forward_calls=0,live_sensor_connection_authorized=False,control_connection_enabled=False),payload=p)
+        if self.passive_scope is not None:
+            event.update(schema_version='spatial_path_v4_live_passive_record_v1',passive_scope=deepcopy(self.passive_scope))
+            event['execution']['live_sensor_connection_authorized']=not self.passive_scope['fixture']
+            p['reason']='FAKE_BOOTSTRAP_FIXTURE' if self.passive_scope['fixture'] else 'LIVE_PASSIVE_AUTHORIZED_SCOPE'
+        return event
 
     def now(self) -> dict:
         return stamp(self.clock(),clock=self.session,epoch=self.clock_epoch,source='harness_monotonic')
@@ -255,7 +275,13 @@ class Records:
 
     def validate_semantics(self, e: dict) -> None:
         p, out = e['payload'], e['payload']['output']
-        if e['mode'] not in ('SYNTHETIC','OFFLINE_TENSOR_REPLAY') or e['execution']['live_sensor_connection_authorized'] or e['execution']['control_connection_enabled']:
+        if self.passive_scope is not None:
+            valid=(e['mode']==self.mode and e.get('passive_scope')==self.passive_scope and
+                   e['schema_version']=='spatial_path_v4_live_passive_record_v1' and
+                   e['execution']['live_sensor_connection_authorized'] is (not self.passive_scope['fixture']))
+        else:
+            valid=e['mode'] in ('SYNTHETIC','OFFLINE_TENSOR_REPLAY') and not e['execution']['live_sensor_connection_authorized']
+        if not valid or e['execution']['control_connection_enabled']:
             raise ValueError('unauthorized execution')
         if out['status']=='NOT_INFERRED' and any(out[k] is not None for k in ('forward_invocation_id','output_id','actual_shape','dtype','source_device','model_xy_m','float32_le_hex')):
             raise ValueError('unobserved metadata fabricated')

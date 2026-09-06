@@ -1,15 +1,131 @@
-/**:
-  ros__parameters:
-    live_sensor_connection_authorized: false
-    real_input_binding_verified: false
-    image_topic: ''
-    lidar_topic: ''
-    velocity_topic: ''
-    steering_topic: ''
-    passive_nominal_topic: ''
-    final_fallback_verified: false
-    grid_period_ns: 100000000
-    queue_capacity: 4
-    max_record_bytes: 131072
-    max_file_bytes: 8388608
-    checkpoint_sha256: 0316692543a901d9d6b96718c5651d6739367aa851f83fb3a133c126ccc8919f
+# Application config, not ROS parameter overrides. Disabled, unresolved, no approval.
+{
+  "version": "spatial_bootstrap_v4_v1",
+  "mode": "LIVE_PASSIVE",
+  "enabled": false,
+  "code_sha256": null,
+  "checkpoint_sha256": "0316692543a901d9d6b96718c5651d6739367aa851f83fb3a133c126ccc8919f",
+  "input_contract_sha256": "77fff3f9c5875b6f116cebe35fde88d42d459aa04c195676c44e5c6caca5edc7",
+  "ros": {
+    "environment": "UNKNOWN",
+    "namespace": "/v4_input_only",
+    "domain_id": null
+  },
+  "output_dir": null,
+  "limits": {
+    "grid_period_ns": null,
+    "max_sync_wait_ns": null,
+    "candidate_capacity": null,
+    "queue_capacity": null,
+    "max_record_bytes": null,
+    "max_file_bytes": null,
+    "max_candidates": null,
+    "max_forward_calls": null,
+    "session_duration_s": null,
+    "poll_period_s": null,
+    "shutdown_grace_s": null
+  },
+  "bindings": {
+    "image": {
+      "topic": "",
+      "message_type": "sensor_msgs/msg/Image",
+      "fields": {
+        "encoding": "rgb8",
+        "height": "px",
+        "width": "px",
+        "step": "bytes",
+        "data": "uint8"
+      },
+      "frame": "UNKNOWN",
+      "source_clock": "ROS_SIM",
+      "qos": "SENSOR_DATA",
+      "producer_role": "UNKNOWN",
+      "evidence": "UNKNOWN",
+      "sensor": {
+        "height": null,
+        "width": null,
+        "step": null,
+        "encoding": "rgb8"
+      }
+    },
+    "lidar": {
+      "topic": "",
+      "message_type": "sensor_msgs/msg/LaserScan",
+      "fields": {
+        "ranges": "m",
+        "angle_min": "rad",
+        "angle_max": "rad",
+        "angle_increment": "rad",
+        "range_min": "m",
+        "range_max": "m"
+      },
+      "frame": "UNKNOWN",
+      "source_clock": "ROS_SIM",
+      "qos": "SENSOR_DATA",
+      "producer_role": "UNKNOWN",
+      "evidence": "UNKNOWN",
+      "sensor": {
+        "beams": 750,
+        "angle_min": null,
+        "angle_max": null,
+        "angle_increment": null,
+        "range_min": null,
+        "range_max": null
+      }
+    },
+    "velocity": {
+      "topic": "",
+      "message_type": "autoware_auto_vehicle_msgs/msg/VelocityReport",
+      "fields": {
+        "longitudinal_velocity": "m/s",
+        "lateral_velocity": "m/s",
+        "heading_rate": "rad/s"
+      },
+      "frame": "UNKNOWN",
+      "source_clock": "ROS_SIM",
+      "qos": "RELIABLE_VOLATILE_DEPTH10",
+      "producer_role": "UNKNOWN",
+      "evidence": "UNKNOWN",
+      "sensor": {}
+    },
+    "steering": {
+      "topic": "",
+      "message_type": "autoware_auto_vehicle_msgs/msg/SteeringReport",
+      "fields": {
+        "steering_tire_angle": "rad"
+      },
+      "frame": "UNKNOWN",
+      "source_clock": "ROS_SIM",
+      "qos": "RELIABLE_VOLATILE_DEPTH10",
+      "producer_role": "UNKNOWN",
+      "evidence": "UNKNOWN",
+      "sensor": {}
+    },
+    "nominal": {
+      "topic": "",
+      "message_type": "autoware_auto_control_msgs/msg/AckermannControlCommand",
+      "fields": {
+        "lateral.steering_tire_angle": "rad",
+        "longitudinal.speed": "m/s",
+        "longitudinal.acceleration": "m/s^2"
+      },
+      "frame": "UNKNOWN",
+      "source_clock": "ROS_SIM",
+      "qos": "RELIABLE_VOLATILE_DEPTH10",
+      "producer_role": "PASSIVE_NOMINAL_BEFORE_ACTUATION",
+      "evidence": "UNKNOWN",
+      "sensor": {}
+    }
+  },
+  "synchronization": {
+    "grid_phase": "UNKNOWN",
+    "ego": "EXACT_CAMERA_HEADER",
+    "lidar": "NEAREST_WITHIN_30000000_NS",
+    "sensor_dt": [
+      "camera_header-grid",
+      "lidar_header-camera_header"
+    ],
+    "evidence": "UNKNOWN"
+  },
+  "control_connection_enabled": false
+}

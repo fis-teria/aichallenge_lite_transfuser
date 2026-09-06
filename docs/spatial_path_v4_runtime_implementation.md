@@ -1,5 +1,82 @@
 # 固定step500 V4 runtime：実装と限定検証
 
+## 現在の変更：単独bootstrap・受動binding（基準4aae81e、合成限定）
+
+以下の履歴にある「mainが無条件BLOCKED」は前段の状態。今回、default disabledを保ちつつ、
+正しいconfigと別途承認manifestが揃えば専用bootstrapへ到達する実装に変更する。
+配布configは未許可・未解決であり、実ROS・checkpoint・sensorを今回使用しない。
+
+### 接続と検査
+
+- `spatial_bootstrap_v4.check_config`: 明示した小configだけを解析し、code/config/binding/input/checkpoint hash、
+  ROS domain/namespace、出力先、全上限、producer根拠file/commit/basisと別承認manifestを照合する。
+  hash参照先のcheckpoint/Datasetを開かない。期待contractの設定と実graph観測は別状態。
+- `spatial_bootstrap_v4.run`: 新規private directory→既存固定loader→Records/writer/adapter/core→
+  自分のcontext/node/wrapper/executor→bounded spin_once/monotonic tick→共通終了。
+  固定loader自体は変更なし。device=cpu、同じ9 tensorsと未補正snapshot。許可はretry/resetで増やさない。
+- `BindingGuard.check/ready`: header整数・frame・画像shape/stride・750点と角度配置/range metadata・
+  ego/commandのfinite fieldを検査。全roleの内容確認と過去nominal受信前はforwardしない。
+  header時刻は取得時刻・monotonic receipt/availabilityとは別。内容一致でもproducer意味や実input parityの証明ではない。
+- wrapper: optional guardでcallback前の受付上限とforward前の停止条件を確認。stopは新受付を止めて
+  pendingを同じIDでterminal化し、shutdown中の入力再構成/forwardを行わない。
+- 終了: executor→node→所有context→writerの有限処理。元例外とcleanup errorを分離。
+  healthy時だけhealth/endを試行。FAILED/CLOSEDへ再書込みしない。I/O/forwardのhard realtime中断は保証しない。
+  shutdown_graceはexecutor待機と終了超過検出の予算であり、同期I/Oを強制cancelする上限ではない。
+
+### 受動入力の対応（実graphは全role NOT_OBSERVED）
+
+| role | topic | message / field・単位 | frame・source clock・QoS | producer/根拠 |
+|---|---|---|---|---|
+| image | MISSING | sensor_msgs/Image; rgb8,height,width,step,data | frame/実shape UNKNOWN; ROS_SIM期待、SENSOR_DATA | wrapper.receive/tick (基準60b3da3)、producer UNKNOWN |
+| lidar | MISSING | sensor_msgs/LaserScan; ranges[m],angles[rad],range_min/max[m] | frame/実角配置 UNKNOWN; ROS_SIM期待、SENSOR_DATA | wrapper.tick/SpatialInputV4.append (60b3da3)、producer UNKNOWN |
+| velocity | MISSING | autoware_auto_vehicle_msgs/VelocityReport; longitudinal/lateral_velocity[m/s],heading_rate[rad/s] | frame UNKNOWN; ROS_SIM期待、RELIABLE/VOLATILE/depth10 | wrapper.tick (60b3da3)、producer UNKNOWN |
+| steering | MISSING | autoware_auto_vehicle_msgs/SteeringReport; steering_tire_angle[rad] | frame UNKNOWN; ROS_SIM期待、RELIABLE/VOLATILE/depth10 | wrapper.tick (60b3da3)、producer UNKNOWN |
+| nominal | MISSING | autoware_auto_control_msgs/AckermannControlCommand; stamp,lateral.steering_tire_angle[rad],longitudinal.speed[m/s],acceleration[m/s²] | 意味上のframe UNKNOWN（messageにframeなし）; ROS_SIM期待、RELIABLE/VOLATILE/depth10 | passive nominal before actuationを要求。実producer UNKNOWN、final/appliedへのalias禁止 |
+
+実環境用evidenceはfile/40桁commit/basisの明示参照が必要。チェック時にそのpathを辿らない。
+boolのverified flagでは代用しない。testのFAKE根拠をlive用に昇格しない。
+gridは既存100ms/ROS epoch原点へのnearest、egoはcamera exact、LiDARは±30ms内nearestという
+コード上の期待。実grid phase適合の根拠はUNKNOWN。新しい補間は導入しない。
+sensor_dt[4,2]はcamera_header-gridとlidar_header-camera_headerを維持。
+LiDARのrange validityはsensor min/max、正規化は0..25mであり別物。750点だけを正しいscanと認定しない。
+final_fallback_verified=false固定、command恒常欠測をwarm-up完了にせず、controllerを呼ばない。
+
+### mode・package・無制御性
+
+旧design-v2/runtime-v1 schemaを変更せず、新live-passive envelopeを追加。
+LIVE_PASSIVEとLIVE_PASSIVE_FIXTUREを分離し、fixtureでは実ROS/checkpoint実行はfalse。
+scopeのauthorization/config/binding/code/checkpoint hashと承認者を記録し、payloadは既存design-v2 eventを使う。
+実施結果はattemptと成功/UNKNOWNを分ける。control/training/promotionを有効にする設定は追加しない。
+entry pointは既存spatial_path_shadow_node_v4を使用。setupに3 schemaの静的install登録を追加。
+source checkout/標準ament_python layoutからV4 canonical codeを選び、V3 vendorへfallbackしない。
+launchはenable=false、明示configとauthorizationをCLIへ渡す。ROS topic/namespace/parameter remapは拒否し、
+launchが追加する固定node名だけを冗長引数として許す。構成対象nodeはuse_global_arguments=false。
+アプリはsubscriberのみで制御/Path/speed/preflightのpublisher/client/service/actionを作らない。
+ROS Humble Node内部のparameter-event publisher等までmockでゼロと証明しない。
+参照: https://raw.githubusercontent.com/ros2/rclpy/humble/rclpy/rclpy/node.py
+（Node constructor）、同context.py（所有Context.init/try_shutdown）、executors.py（SingleThreadedExecutor）。
+実ROS import/build/launch/graph確認はNOT_EXECUTED。
+
+### 今回だけの検証手順
+
+Windowsで今回変更をcommit後、既定sync CheckOnly→通常sync、同じSHAで共有lock付きの次の3ファイルのみ。
+
+```sh
+tools/with_wsl_training_lock.sh env V4_BOOTSTRAP_TRACE_DIR=NEW_RUN/bootstrap V4_TRACE_DIR=NEW_RUN/runtime .venv/bin/python -m pytest -q tests/test_spatial_bootstrap_v4.py tests/test_spatial_runtime_v4.py tests/test_runtime_input_history_v3.py --junitxml=NEW_RUN/junit.xml
+```
+
+check-configは明示configを使って実行可能だが、ROS/weightsへ触れる起動コマンドは今回実行禁止。
+new testはRealDependencies/load_fixed/ROS import/checkpoint・Dataset path open/statを失敗sentinelへ置換する。
+fake許可fixtureだけを使用し、実環境の承認ファイルは生成しない。
+同期scriptのDataset操作は既定ルートへのtest -dのみであることを静的確認。ユーザーの訂正に従い、
+CheckOnly/通常syncでこの存在確認だけを許可する。script自体は変更しない。
+「既定同期によるDatasetルートの存在確認」と「Dataset内容・raw・sensor・checkpoint未読取」を別記する。
+結果件数・実行版・trace/export版・文書版は今回実行後の成果物に記載。旧82passを今回結果に流用しない。
+
+REAL_ROS_RUNTIME_TESTED=NOT_EXECUTED、REAL_CHECKPOINT_READ_PERFORMED=false、
+LIVE_INPUT_INFERENCE_TESTED=NOT_EXECUTED、CONTROL_CONNECTION=NOT_IMPLEMENTED。
+実装と合成確認はlive起動/取得/走行の承認ではない。geometry教師/Safety/controller oracleは別gateのまま。
+
 ## 候補処理修正（合成限定、基準19c6be9/結果f7c9f39）
 
 今回のHEAD確認はf7c9f39b6c7071cbcee502b57ecbb86ec7380894、working tree clean。

@@ -8,6 +8,19 @@ from __future__ import annotations
 from collections import deque
 from copy import deepcopy
 import time
+from pathlib import Path
+
+if __package__:
+    # Source checkout or standard ament_python install layout, without importing
+    # ROS/ament merely to check config. Never fall back to the old V3 vendor copy.
+    import sys
+    prefix=Path(__file__).resolve().parents[4]
+    for source in (prefix/'src',prefix/'share/aic_e2e_runtime/python_src'):
+        if (source/'aic_transfuser_lite/runtime/spatial_bootstrap_v4.py').is_file():
+            sys.path.insert(0,str(source))
+            break
+    else:
+        raise RuntimeError('V4 canonical Python source is not installed')
 
 import numpy as np
 
@@ -19,7 +32,7 @@ class SpatialPathShadowWrapperV4:
     def __init__(self, node: object, runtime: object, adapter: SpatialInputV4, message_types: dict,
                  topics: dict, *, clock=None, clock_id: str | None = None,
                  grid_period_ns: int=100_000_000, max_sync_wait_ns: int=300_000_000,
-                 candidate_capacity: int=16):
+                 candidate_capacity: int=16, guard: object | None = None):
         if any(not topics.get(k) for k in ('image','lidar','velocity','steering','nominal')):
             raise ValueError('BLOCKED_REAL_INPUT_BINDING: explicit topics required')
         for name,value in (('grid_period_ns',grid_period_ns),('max_sync_wait_ns',max_sync_wait_ns),
@@ -27,6 +40,8 @@ class SpatialPathShadowWrapperV4:
             if type(value) is not int or value<=0:
                 raise ValueError(name+' must be a positive Python int (bool excluded)')
         self.runtime,self.adapter=runtime,adapter
+        self.guard=guard
+        self.stopped=False
         self.clock=clock if clock is not None else runtime.records.clock
         # Different clock callables are NOT relabeled as the Records clock.
         self.transport_id=clock_id or (runtime.records.session if self.clock==runtime.records.clock else 'wrapper:'+str(id(self.clock)))
@@ -63,6 +78,13 @@ class SpatialPathShadowWrapperV4:
         self.adapter.reset(reason)
 
     def receive(self, role: str, msg: object) -> None:
+        if self.stopped:
+            return
+        if self.guard:
+            reason=self.guard.admission_stop()
+            if reason:
+                self.stop(reason)
+                return
         received=self.clock()
         if self.last_tick is not None and received<self.last_tick:
             self.tick(received)  # Establish new epoch before assigning this receipt.
@@ -72,6 +94,8 @@ class SpatialPathShadowWrapperV4:
         # Expire before admitting late ego/scan: a dropped camera cannot revive.
         self.tick(received)
         try:
+            if self.guard:
+                self.guard.check(role,msg)
             header=getattr(msg,'header',None)
             value=header.stamp if header is not None else getattr(msg,'stamp',None)
             if value is None:
@@ -110,8 +134,17 @@ class SpatialPathShadowWrapperV4:
     def drain(self) -> None:
         self.tick()
 
+    def stop(self, reason: str) -> None:
+        """Stop admission before terminating pending IDs; never synchronize/forward."""
+        if self.stopped:
+            return
+        self.stopped=True
+        self._clear_waiting(reason)
+
     def tick(self, now_ns: int | None = None) -> None:
         """Pure polling entry; no ROS timer or background worker is created."""
+        if self.stopped:
+            return
         cutoff=self.clock() if now_ns is None else now_ns
         if self.last_tick is not None and cutoff<self.last_tick:
             self.monotonic_epoch+=1
@@ -122,6 +155,11 @@ class SpatialPathShadowWrapperV4:
             self.last_image=None
         self.last_tick=cutoff
         while self.pending:
+            if self.guard:
+                reason=self.guard.forward_stop()
+                if reason:
+                    self.stop(reason)
+                    return
             context,camera,msg=self.pending[0]
             if cutoff-camera.received_ns>=self.max_sync_wait_ns:
                 self.pending.popleft()
@@ -131,6 +169,8 @@ class SpatialPathShadowWrapperV4:
                 self.pending.popleft()
                 self._complete(context,'LOGGER_'+self.runtime.writer.state)
                 continue
+            if self.guard and not self.guard.ready(camera.header_ns):
+                return  # Receive-only checks; no synthetic command or inferred proof.
             matched={}
             for role in ('velocity','steering'):
                 matches=[v for v in self.buffers[role] if v[0].header_ns==camera.header_ns and v[0].epoch==camera.epoch and v[0].available_ns<=cutoff]
@@ -186,8 +226,9 @@ def create_ros_node(runtime: object, adapter: SpatialInputV4, topics: dict) -> o
     return node
 
 
-def main(args: list[str] | None = None) -> None:
-    # Deliberately before importing rclpy: current task authorizes no DDS session.
-    # Wrapper above is usable with a ROS Node supplied by separately approved
-    # live bootstrap, or the fake interface in the current test harness.
-    raise RuntimeError('LIVE_BOOTSTRAP_BLOCKED: passive binding, live envelope and explicit authorization required; no ROS initialization performed')
+def main(args: list[str] | None = None) -> int:
+    from aic_transfuser_lite.runtime.spatial_bootstrap_v4 import main as bootstrap_main
+    schema_dir=Path(__file__).resolve().parents[4]/'schemas'
+    if not schema_dir.is_dir():
+        schema_dir=Path(__file__).resolve().parents[4]/'share/aic_e2e_runtime/schemas'
+    return bootstrap_main(args,wrapper_file=Path(__file__),wrapper_factory=SpatialPathShadowWrapperV4,schema_dir=schema_dir)
