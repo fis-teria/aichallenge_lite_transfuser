@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:aic:spatial-path-v4:runtime-record:v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "mode", "execution", "payload"],
+  "properties": {
+    "schema_version": {"const": "spatial_path_v4_runtime_record_v1"},
+    "mode": {"enum": ["SYNTHETIC", "OFFLINE_TENSOR_REPLAY"]},
+    "execution": {
+      "type": "object", "additionalProperties": false,
+      "required": ["forward_calls", "live_sensor_connection_authorized", "control_connection_enabled"],
+      "properties": {
+        "forward_calls": {"type": "integer", "minimum": 0},
+        "live_sensor_connection_authorized": {"const": false},
+        "control_connection_enabled": {"const": false}
+      }
+    },
+    "payload": {"$ref": "urn:aic:spatial-path-v4:shadow-record:design-v2#/$defs/event"}
+  }
+}
