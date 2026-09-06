@@ -115,3 +115,31 @@ live入力/実時間性能/実graph/Safety/走行可能性はNOT_EXECUTED。
 CONTROL_CONNECTION=NOT_IMPLEMENTED。MPC完成や全raw監査を前提にしない。
 次段には受動source、時刻/epoch、grid phase、ego整合、beam geometry/QoS、容量・停止条件、live envelope/bootstrapの別承認が必要。
 将来MPCには基準点、現在時刻への変換、速度参照、必要経路長・validityの別interface検証が必要。今回実装しない。
+
+## 候補処理の残存2点修正（2026-09-06、合成限定）
+
+基準99892cd、開始HEAD 2026941（差分は前回結果文書のみ、作業開始時clean）。
+修正前は静的反例として確認し、修正前コードの新反例testは実行していない。
+
+- wrapper.__init__: min比較を廃止し、grid_period_ns/max_sync_wait_ns/candidate_capacityを
+  それぞれtype(value) is intかつ正数へ限定。bool/float/NaN/Infinity/string/Noneを副作用前にValueError。
+  既定100000000/300000000/16、同期選択・期限・容量アルゴリズムは変更なし。上限の追加やlive校正なし。
+- PrivateWriter.drain: 主recordの書込み完了が確認済みなら、後続receipt失敗時のfailにcandidateを渡さない。
+  savedは維持し、既存の処理DROP所属も消さない。主record失敗と未保存queueは従来どおりdropped。
+  receipt_writeは検証/encode/size確認後、実write直前にUNKNOWNへ移す。準備失敗はNOT_ATTEMPTED。
+  主record完了のsaved加算は後続の時計観測より先。OS write完了はdurable保証ではない。
+- tests: 3引数×11不正値、既定/正整数、FRAME/DROP×receipt成否、部分主record失敗、
+  receipt失敗と未保存queue、receipt準備失敗を検証。7段階candidate ID集合、first error、
+  terminal/forward/persistenceを段階付きで既存trace exporterへ保存し、実際の一時JSONL bytesも別保存。
+
+今回の実行対象は次の2ファイルのみ（上記の過去offlineコマンドは今回実行禁止）。
+
+```sh
+tools/with_wsl_training_lock.sh env V4_TRACE_DIR=NEW_VERSIONED_RUN/traces .venv/bin/python -m pytest -q tests/test_spatial_runtime_v4.py tests/test_runtime_input_history_v3.py --junitxml=NEW_VERSIONED_RUN/junit.xml
+```
+
+Windows局所commit後、既定CheckOnly→通常sync→同一SHAのWSL lock下で限定検証する。
+生stdout/stderr、exit code、環境・実際のコマンド・SHAは新規runへ保存。結果は実行後追記する。
+model/loader/9 tensors/未補正bits/design-v2/V3/Safetyは変更しない。
+固定checkpoint読取/固定forward/実Dataset内容/raw/学習/ROS接続/走行/pushは禁止。
+LIVE_BOOTSTRAP_BLOCKED、disabled launch、PENDING_EXPLICIT_AUTHORIZATIONを維持。

@@ -22,8 +22,10 @@ class SpatialPathShadowWrapperV4:
                  candidate_capacity: int=16):
         if any(not topics.get(k) for k in ('image','lidar','velocity','steering','nominal')):
             raise ValueError('BLOCKED_REAL_INPUT_BINDING: explicit topics required')
-        if min(grid_period_ns,max_sync_wait_ns,candidate_capacity)<=0:
-            raise ValueError('positive finite synchronization policy required')
+        for name,value in (('grid_period_ns',grid_period_ns),('max_sync_wait_ns',max_sync_wait_ns),
+                           ('candidate_capacity',candidate_capacity)):
+            if type(value) is not int or value<=0:
+                raise ValueError(name+' must be a positive Python int (bool excluded)')
         self.runtime,self.adapter=runtime,adapter
         self.clock=clock if clock is not None else runtime.records.clock
         # Different clock callables are NOT relabeled as the Records clock.

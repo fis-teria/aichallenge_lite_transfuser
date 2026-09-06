@@ -376,22 +376,25 @@ class PrivateWriter:
                 outcome['data_write']='UNKNOWN'  # May partially write before failing.
                 self._write(blob)
                 outcome['data_write']='KNOWN_WRITE_COMPLETED_NOT_DURABLE'
-                confirmed=self.records.now()
                 if p['candidate_sequence'] is not None:
                     self.records.counts['saved'].add(p['candidate_sequence'])
+                confirmed=self.records.now()
                 receipt=self.records.event('WRITER_RECEIPT')
                 receipt['payload']['commit_receipt']=dict(target_record_id=p['record_id'],target_session_id=p['session_id'],
                     target_candidate_sequence=p['candidate_sequence'],original_bytes_hash=sha(blob),writer_id=self.records.session,
                     confirmed_at=confirmed,commit_level='WRITE_COMPLETED_NOT_DURABLE',reason='OS write completed; no fsync')
-                outcome['receipt_write']='UNKNOWN'
                 self.records.validate(receipt)
                 receipt_blob=encoded(receipt)
                 if len(receipt_blob)>self.max_record_bytes:
                     raise OSError('RECEIPT_BYTE_LIMIT')
+                outcome['receipt_write']='UNKNOWN'  # Only after preparation, before possible partial write.
                 self._write(receipt_blob)
                 outcome['receipt_write']='KNOWN_WRITE_COMPLETED_NOT_DURABLE'
             except Exception as exc:
-                self.fail(type(exc).__name__+': '+str(exc)[:500],p['candidate_sequence'])
+                # Receipt failure does not lose an already completed main record.
+                # Do not remove any pre-existing processing DROP membership.
+                lost=p['candidate_sequence'] if outcome['data_write']!='KNOWN_WRITE_COMPLETED_NOT_DURABLE' else None
+                self.fail(type(exc).__name__+': '+str(exc)[:500],lost)
                 outcome['error']=outcome['error'] or self.error
         if self.state=='FAILED':
             for event,_,outcome in self.queue:

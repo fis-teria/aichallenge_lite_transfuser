@@ -333,6 +333,54 @@ def trace_evidence(name, contexts, extra=None):
         with (root/(name+'.json')).open('xb') as stream: stream.write(encoded(value)+b'\n')
 
 
+def writer_stage(stage: str, writer: PrivateWriter, contexts: list) -> dict:
+    """Synthetic memory observation, never a replacement receipt or durable claim."""
+    return dict(stage=stage,writer_state=writer.state,first_error=writer.error,
+                counters={k:dict(ids=sorted(v),count=len(v)) for k,v in writer.records.counts.items()},
+                candidates=[c.trace() for c in contexts],
+                queue_candidate_ids=[e['payload']['candidate_sequence'] for e,_,_ in writer.queue])
+
+
+def export_test_bytes(name: str, path: Path) -> None:
+    """Copy actual temporary test bytes unchanged, including any partial JSONL."""
+    folder=os.environ.get('V4_TRACE_DIR')
+    if folder:
+        root=Path(folder); root.mkdir(parents=True,exist_ok=True)
+        with (root/(name+'.jsonl')).open('xb') as stream: stream.write(path.read_bytes())
+
+
+@pytest.mark.parametrize('name',['grid_period_ns','max_sync_wait_ns','candidate_capacity'])
+@pytest.mark.parametrize('value',[True,False,0,-1,1.0,1.5,float('nan'),float('inf'),-float('inf'),'100',None])
+def test_sync_policy_rejects_before_side_effects(name, value):
+    node=SimpleNamespace(subs=[])
+    node.create_subscription=lambda *args: node.subs.append(args)
+    r=records(); core=SpatialRuntimeV4(Fake(),r)
+    roles=('image','lidar','velocity','steering','nominal')
+    types={k:object for k in roles}; types['sensor_qos']=object()
+    with pytest.raises(ValueError,match=name+' must be a positive Python int'):
+        wrapper_module().SpatialPathShadowWrapperV4(node,core,SpatialInputV4(command_binding_known=True),
+            types,{k:'/fake/'+k for k in roles},**{name:value})
+    assert node.subs==[] and r.sequence==0 and all(not v for v in r.counts.values())
+    assert core.forward_calls==core.model.calls==0
+    trace_evidence('policy_reject_'+name+'_'+repr(value),[],dict(argument=name,value_repr=repr(value),
+        subscriptions=0,accepted_ids=sorted(r.counts['accepted']),forward_calls=core.forward_calls))
+
+
+@pytest.mark.parametrize('policy',[{},dict(grid_period_ns=1,max_sync_wait_ns=1,candidate_capacity=1),
+    dict(grid_period_ns=10**400,max_sync_wait_ns=10**400,candidate_capacity=10**400)])
+def test_sync_policy_accepts_positive_ints_and_defaults(policy):
+    node=SimpleNamespace(subs=[])
+    node.create_subscription=lambda *args: node.subs.append(args)
+    r=records(); core=SpatialRuntimeV4(Fake(),r)
+    roles=('image','lidar','velocity','steering','nominal')
+    types={k:object for k in roles}; types['sensor_qos']=object()
+    w=wrapper_module().SpatialPathShadowWrapperV4(node,core,SpatialInputV4(command_binding_known=True),
+        types,{k:'/fake/'+k for k in roles},**policy)
+    for key,default in dict(grid_period_ns=100_000_000,max_sync_wait_ns=300_000_000,candidate_capacity=16).items():
+        assert getattr(w,key)==policy.get(key,default)
+    assert len(node.subs)==5 and r.sequence==0 and core.forward_calls==0
+
+
 def test_deadline_releases_m1_on_tick_and_late_sources_do_not_revive(tmp_path):
     clock,r,writer,core,w=candidate_harness(tmp_path)
     w.receive('image',fake_message('image',1_000_000_000))  # M0: no ego
@@ -453,21 +501,139 @@ def test_closed_writer_stops_new_forward_and_close_is_idempotent(tmp_path):
 
 def test_receipt_failure_preserves_known_data_and_first_error(tmp_path,monkeypatch):
     r=records(); w=PrivateWriter(tmp_path/'receipt_fail.jsonl',r); core=SpatialRuntimeV4(Fake(),r,w)
-    original=w._write; n=0
+    original=w._write; n=0; stages=[]; returned=[]
     def fail_receipt(blob):
         nonlocal n
         n+=1
-        if n==2: raise OSError('RECEIPT_FAIL_FIRST')
+        if n==2:
+            stages.append(writer_stage('MAIN_COMPLETE_RECEIPT_WRITE_ATTEMPT',w,[c]))
+            returned.append(deepcopy(c.event))
+            raise OSError('RECEIPT_FAIL_FIRST')
         original(blob)
     monkeypatch.setattr(w,'_write',fail_receipt)
     c=core.accept_candidate(); core.infer(batch(),candidate=c)
     assert c.persistence['data_write']=='KNOWN_WRITE_COMPLETED_NOT_DURABLE' and c.persistence['receipt_write']=='UNKNOWN'
     assert core.forward_calls==1 and c.event['payload']['output']['status']=='SHAPE_FINITE_ONLY'
+    i=c.event['payload']['candidate_sequence']
+    assert i in r.counts['saved'] and i not in r.counts['dropped']
+    assert c.event==returned[0] and c.terminal
+    stages.append(writer_stage('RECEIPT_FAILED',w,[c]))
     w.fail('SECOND'); assert 'RECEIPT_FAIL_FIRST' in w.error
     d=core.accept_candidate(); core.infer(batch(),candidate=d)
     assert core.forward_calls==1 and w.state=='FAILED'
-    trace_evidence('receipt_failure',[c,d])
+    assert r.counts['saved']=={i} and r.counts['dropped']=={d.event['payload']['candidate_sequence']}
+    stages.append(writer_stage('NEXT_CANDIDATE_REJECTED',w,[c,d]))
+    counts=deepcopy(r.counts)
+    assert core.finish(c) is c.event and core.infer(batch(),candidate=c) is c.event
+    assert core.finish(d) is d.event and r.counts==counts and r.sequence==2 and core.forward_calls==1
+    stages.append(writer_stage('REPEATED_FINISH_NO_CHANGE',w,[c,d]))
+    trace_evidence('receipt_failure',[c,d],dict(stages=stages))
     w.close(); w.close()
+    export_test_bytes('receipt_failure_written',tmp_path/'receipt_fail.jsonl')
+
+
+@pytest.mark.parametrize('processing_drop',[False,True])
+@pytest.mark.parametrize('receipt_failure',[False,True])
+def test_saved_and_processing_drop_memberships(tmp_path,monkeypatch,processing_drop,receipt_failure):
+    path=tmp_path/'memberships.jsonl'
+    r=records(); w=PrivateWriter(path,r); core=SpatialRuntimeV4(Fake(),r,w)
+    stages=[]; original=w._write; n=0
+    def write(blob):
+        nonlocal n
+        n+=1
+        if n==2:
+            stages.append(writer_stage('MAIN_COMPLETE_RECEIPT_WRITE_ATTEMPT',w,[c]))
+            if receipt_failure: raise OSError('RECEIPT_ONLY')
+        original(blob)
+    monkeypatch.setattr(w,'_write',write)
+    c=core.accept_candidate(); i=c.event['payload']['candidate_sequence']
+    if processing_drop: core.finish(c,'SYNTHETIC_PROCESSING_DROP')
+    else: core.infer(batch(),candidate=c)
+    assert r.counts['saved']=={i}
+    assert r.counts['dropped']==({i} if processing_drop else set())
+    assert c.persistence['data_write']=='KNOWN_WRITE_COMPLETED_NOT_DURABLE'
+    assert c.persistence['receipt_write']==('UNKNOWN' if receipt_failure else 'KNOWN_WRITE_COMPLETED_NOT_DURABLE')
+    assert c.terminal and core.forward_calls==(0 if processing_drop else 1)
+    assert w.state==('FAILED' if receipt_failure else 'OPEN')
+    stages.append(writer_stage('DRAIN_COMPLETE',w,[c]))
+    counts=deepcopy(r.counts); core.finish(c); assert counts==r.counts and r.sequence==1
+    w.close(); w.close()
+    lines=path.read_bytes().splitlines()
+    assert len(lines)==(1 if receipt_failure else 2)
+    assert json.loads(lines[0])['payload']['record_id']==c.event['payload']['record_id']
+    if not receipt_failure:
+        assert json.loads(lines[1])['payload']['commit_receipt']['original_bytes_hash']==sha(lines[0])
+    name=f'membership_drop_{processing_drop}_receipt_failure_{receipt_failure}'
+    trace_evidence(name,[c],dict(stages=stages)); export_test_bytes(name+'_written',path)
+
+
+def test_partial_main_failure_is_not_saved(tmp_path,monkeypatch):
+    path=tmp_path/'partial.jsonl'
+    r=records(); w=PrivateWriter(path,r); core=SpatialRuntimeV4(Fake(),r,w)
+    def partial_write(blob):
+        assert os.write(w.fd,blob[:17])==17  # Deliberately leave unrepaired raw test bytes.
+        raise OSError('PARTIAL_MAIN_WRITE')
+    monkeypatch.setattr(w,'_write',partial_write)
+    c=core.accept_candidate(); core.infer(batch(),candidate=c)
+    i=c.event['payload']['candidate_sequence']
+    assert r.counts['saved']==set() and r.counts['dropped']=={i}
+    assert c.persistence['data_write']=='UNKNOWN' and c.persistence['receipt_write']=='NOT_ATTEMPTED'
+    assert w.state=='FAILED' and c.terminal and core.forward_calls==1
+    stages=[writer_stage('PARTIAL_MAIN_FAILED',w,[c])]
+    d=core.accept_candidate(); core.infer(batch(),candidate=d)
+    assert core.forward_calls==1 and r.counts['dropped']=={i,d.event['payload']['candidate_sequence']}
+    stages.append(writer_stage('NEXT_CANDIDATE_REJECTED',w,[c,d]))
+    w.close(); assert len(path.read_bytes())==17
+    trace_evidence('partial_main_failure',[c,d],dict(stages=stages,raw_bytes=17))
+    export_test_bytes('partial_main_failure_written',path)
+
+
+def test_receipt_failure_drops_unsaved_queue_only(tmp_path,monkeypatch):
+    path=tmp_path/'queue_receipt.jsonl'
+    r=records(); w=PrivateWriter(path,r); core=SpatialRuntimeV4(Fake(),r)
+    c=core.accept_candidate(); core.infer(batch(),candidate=c)
+    d=core.accept_candidate(); core.infer(batch(),candidate=d)
+    for context in (c,d): assert w.enqueue(context.event,context.persistence)
+    original=w._write; n=0; stages=[writer_stage('TWO_TERMINAL_CANDIDATES_QUEUED',w,[c,d])]
+    def fail_receipt(blob):
+        nonlocal n
+        n+=1
+        if n==2:
+            stages.append(writer_stage('FIRST_MAIN_COMPLETE_SECOND_STILL_QUEUED',w,[c,d]))
+            raise OSError('QUEUED_RECEIPT_FIRST')
+        original(blob)
+    monkeypatch.setattr(w,'_write',fail_receipt)
+    w.drain()
+    i,j=(v.event['payload']['candidate_sequence'] for v in (c,d))
+    assert r.counts['saved']=={i} and r.counts['dropped']=={j} and not w.queue
+    assert c.persistence['data_write']=='KNOWN_WRITE_COMPLETED_NOT_DURABLE' and c.persistence['receipt_write']=='UNKNOWN'
+    assert d.persistence['data_write']==d.persistence['receipt_write']=='NOT_ATTEMPTED'
+    assert d.persistence['error']==w.error and 'QUEUED_RECEIPT_FIRST' in w.error
+    stages.append(writer_stage('RECEIPT_FAILED_QUEUE_ABORTED',w,[c,d]))
+    core.writer=w; e=core.accept_candidate(); core.infer(batch(),candidate=e)
+    assert core.forward_calls==2 and r.counts['saved']=={i} and r.counts['dropped']=={j,e.event['payload']['candidate_sequence']}
+    counts=deepcopy(r.counts)
+    core.finish(c); core.finish(d); w.fail('SECOND'); w.close(); w.close()
+    assert r.counts==counts and 'QUEUED_RECEIPT_FIRST' in w.error
+    stages.append(writer_stage('NEXT_REJECTED_REPEATED_FINISH_AND_CLOSE',w,[c,d,e]))
+    trace_evidence('receipt_failure_queue',[c,d,e],dict(stages=stages))
+    export_test_bytes('receipt_failure_queue_written',path)
+
+
+def test_receipt_preparation_failure_is_not_write_attempt(tmp_path,monkeypatch):
+    path=tmp_path/'receipt_prepare.jsonl'
+    r=records(); w=PrivateWriter(path,r); core=SpatialRuntimeV4(Fake(),r,w)
+    original=r.validate
+    def reject_receipt(event):
+        if event['payload']['event_type']=='WRITER_RECEIPT': raise ValueError('RECEIPT_PREPARATION')
+        original(event)
+    monkeypatch.setattr(r,'validate',reject_receipt)
+    c=core.accept_candidate(); core.infer(batch(),candidate=c)
+    assert r.counts['saved']=={c.event['payload']['candidate_sequence']} and not r.counts['dropped']
+    assert c.persistence['data_write']=='KNOWN_WRITE_COMPLETED_NOT_DURABLE'
+    assert c.persistence['receipt_write']=='NOT_ATTEMPTED' and w.state=='FAILED'
+    trace_evidence('receipt_preparation_failure',[c],dict(stages=[writer_stage('PREPARATION_FAILED_BEFORE_WRITE',w,[c])]))
+    w.close(); export_test_bytes('receipt_preparation_failure_written',path)
 
 
 def test_missing_command_and_invalid_ego_are_not_padding():
