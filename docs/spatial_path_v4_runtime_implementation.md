@@ -52,6 +52,20 @@ approval_gate=PENDING_EXPLICIT_AUTHORIZATION_FOR_LIVE_SHADOW。
 今回、固定weight本体/旧fixture/raw/Dataset/実ROSへのアクセスやfixed forwardは行わない。
 下のofflineコマンドは前段履歴であり、今回の実行対象ではない。
 
+### 今回の合成確認結果
+
+実装・テスト・trace生成版: 99892cd8f72a1d0dabf7da446a8808dbd8887dc6。
+限定pytestは39 passed / 1 skipped（4.95s）。skipは既存venvにDraft2020 validatorがないためで、installなし。
+初回b099c2bは37 passed / 1 skipped、その後monotonic epoch反例を追加した。旧runtimeの26passは流用しない。
+traceは同じpytestから9ファイル・20候補。代表trace内のfake forward合計7回、各候補0または1回・全terminal。
+これは全pytest内のmodel呼出し総数ではなく、選んだ合成traceの実数。
+期限M0/M1、late source、header欠損/重複/overflow/reset、時刻境界、callback/記録例外、
+close/receipt失敗、非padding欠損を新規確認した。実checkpoint読取0、fixed forward0、学習0、実ROS0。
+schema全文validationはNOT_EXECUTED（skip）。今回Draft7互換checkerも再実行していない。
+field間意味検証・既存のraw bits/6状態/幾何/receiptのテストは今回の限定実行に含まれる。
+実装完了と合成確認は上記範囲。liveはNOT_EXECUTED、standalone bootstrapは引き続きBLOCKED/未完成。
+結果追記commitとZIP梱包時HEADはpacket manifestへ記録し、repo/はテスト版へ固定する。
+
 参照HEAD/design-v2: da8f5dc90e45f2bc80dce6651d84b509a9441042。
 学習f33b197→validation153a22a→注釈2386f0f→結果7acc1ef→残差9b01b1e→記録設計da8f5dc。
 モデル/入力の既存コードは変更しない。design-v2原本も変更しない。
