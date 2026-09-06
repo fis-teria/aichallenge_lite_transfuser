@@ -225,17 +225,34 @@ class Records:
             slot['causality'] = 'PROVEN_PAST_AND_AVAILABLE'
 
     def validate(self, e: dict) -> None:
+        # Full draft2020 validation is an explicit optional verification stage;
+        # absence must not masquerade as validation success or block pure core.
+        self.validate_semantics(e)
+
+    def validate_schema(self, e: dict) -> None:
         from jsonschema import Draft202012Validator
         from referencing import Registry, Resource
         registry = Registry().with_resource(self.design['$id'],Resource.from_contents(self.design))
         Draft202012Validator(self.schema,registry=registry).validate(e)
+
+    def validate_semantics(self, e: dict) -> None:
         p, out = e['payload'], e['payload']['output']
+        if e['mode'] not in ('SYNTHETIC','OFFLINE_TENSOR_REPLAY') or e['execution']['live_sensor_connection_authorized'] or e['execution']['control_connection_enabled']:
+            raise ValueError('unauthorized execution')
+        if out['status']=='NOT_INFERRED' and any(out[k] is not None for k in ('forward_invocation_id','output_id','actual_shape','dtype','source_device','model_xy_m','float32_le_hex')):
+            raise ValueError('unobserved metadata fabricated')
+        if out['status']=='FORWARD_EXCEPTION' and (out['forward_invocation_id'] is None or out['output_id'] is not None):
+            raise ValueError('forward exception identity')
+        if out['status'] in ('SNAPSHOT_ERROR','OUTPUT_CONTRACT_ERROR') and (out['forward_invocation_id'] is None or out['output_id'] is None or out['model_xy_m'] is not None):
+            raise ValueError('returned failure identity/payload')
         if p['history']['status'] == 'BUILT':
             if sha(descriptor_preimage(p['history']['input_descriptors'])) != p['history']['tensor_hash']['sha256']:
                 raise ValueError('input descriptor hash')
             if p['history']['sensor_timing']['input_builder_id'] != p['history']['input_builder_id']:
                 raise ValueError('snapshot identity')
         if out['status'] in ('NONFINITE','SHAPE_FINITE_ONLY'):
+            if out['actual_shape'] != [1,20,2] or out['dtype'] != 'float32' or out['forward_invocation_id'] is None or out['output_id'] is None:
+                raise ValueError('output contract/identity')
             raw = bytes.fromhex(out['float32_le_hex'])
             xy = np.frombuffer(raw,dtype='<f4').reshape(20,2)
             if sha(raw) != out['tensor_hash']['sha256'] or numeric(xy) != out['model_xy_m']:

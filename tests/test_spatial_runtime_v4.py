@@ -1,5 +1,6 @@
 """Synthetic only. No checkpoint, ROS initialization, Dataset, training or optimizer."""
 from copy import deepcopy
+from dataclasses import replace
 import importlib.util
 import io
 import json
@@ -199,7 +200,7 @@ def test_transport_record_and_no_teacher():
     b,p=a.build(2_000_000_000)
     e=SpatialRuntimeV4(Fake(),records()).infer(b,p)
     assert e['payload']['output']['status']=='SHAPE_FINITE_ONLY'
-    b.targets=object()
+    b=replace(b,targets=object())
     second=SpatialRuntimeV4(Fake(),records()).infer(b)
     assert e['payload']['output']['float32_le_hex']==second['payload']['output']['float32_le_hex']
 
@@ -234,3 +235,14 @@ def test_launch_and_static_nonactuation():
     banned={'create_publisher','create_client','create_service','set_parameters','publish','call_async'}
     assert not any(isinstance(n,ast.Call) and isinstance(n.func,ast.Attribute) and n.func.attr in banned for n in ast.walk(tree))
     assert 'inference_node_v3' not in source
+
+
+def test_full_draft2020_schema():
+    module=pytest.importorskip('jsonschema',reason='existing environment lacks jsonschema; no dependency installation authorized')
+    if not hasattr(module,'Draft202012Validator'):
+        pytest.skip('existing validator lacks draft2020-12')
+    r=records()
+    for mode in ('normal','nan','scalar','dtype','exception'):
+        r.validate_schema(SpatialRuntimeV4(Fake(mode),r).infer(batch()))
+    for kind in ('LOGGER_HEALTH','SESSION_END','RESET'):
+        r.validate_schema(r.event(kind))

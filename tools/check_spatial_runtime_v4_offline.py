@@ -52,7 +52,8 @@ def run(output: Path) -> int:
         live_sensor_connection_authorized=False,new_collection_authorized=False,shadow_connection_authorized=False,control_connection_enabled=False,
         raw_execution_authorized=False,training_authorized=False,runtime_promotion_authorized=False,approval_gate='PENDING_EXPLICIT_AUTHORIZATION_FOR_LIVE_SHADOW',
         execution_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
-        status='STARTED',offline_forward_calls=0,training_steps=0,live_connections=0,log_writes=0)
+        status='STARTED',offline_forward_calls=0,training_steps=0,live_connections=0,log_writes=0,
+        schema_validation='NOT_EXECUTED_missing_draft2020_validator',semantic_validation='PENDING')
     write(output/'artifacts/execution_manifest.json',manifest)
     write(output/'artifacts/input_binding_report.json',binding_report())
     write(output/'artifacts/resolved_config.json',dict(queue_capacity=4,max_record_bytes=131072,max_file_bytes=8388608,
@@ -124,7 +125,7 @@ def run(output: Path) -> int:
         if before!=after: raise ValueError('model state mutated')
         records.validate(records.event('SESSION_END'))
         writer.enqueue(records.event('SESSION_END')); writer.drain()
-        manifest.update(status='OFFLINE_PARITY_PASS' if passed else 'OFFLINE_PARITY_FAIL',state_unchanged=True,real_input_binding='BLOCKED',live_input_runtime_tested='NOT_EXECUTED',control_connection='NOT_IMPLEMENTED')
+        manifest.update(status='OFFLINE_PARITY_PASS' if passed else 'OFFLINE_PARITY_FAIL',state_unchanged=True,semantic_validation='PASSED',real_input_binding='BLOCKED',live_input_runtime_tested='NOT_EXECUTED',control_connection='NOT_IMPLEMENTED')
     except Exception as exc:
         manifest.update(status='BLOCKED',error=type(exc).__name__+': '+str(exc))
         traceback.print_exc()
