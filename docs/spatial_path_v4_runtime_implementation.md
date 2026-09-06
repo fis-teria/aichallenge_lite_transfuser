@@ -143,3 +143,22 @@ Windows局所commit後、既定CheckOnly→通常sync→同一SHAのWSL lock下�
 model/loader/9 tensors/未補正bits/design-v2/V3/Safetyは変更しない。
 固定checkpoint読取/固定forward/実Dataset内容/raw/学習/ROS接続/走行/pushは禁止。
 LIVE_BOOTSTRAP_BLOCKED、disabled launch、PENDING_EXPLICIT_AUTHORIZATIONを維持。
+
+### 今回の限定実行結果
+
+実装/test/trace版: `60b3da378b1dee37bfcd3d8841b519b1d07e8d0c`。
+CheckOnly=CHECK_OK、通常sync=SYNC_OK。WSLは同一SHA・clean・共有lock下で実行。
+出力: `/home/thistle/e2e_autonomous/runs/spatial_two_fixes_60b3da3`。
+`82 passed, 1 skipped, 1 warning in 5.97s`、pytest終了コード0。
+Python3.10.12、torch2.7.1+cu128、numpy2.2.6、pytest9.1.1、Pillow12.2.0。
+skipはjsonschema未導入。完全Draft2020検証と別途Draft7互換checkerは今回未実行。
+前回39 passedの流用ではない。修正前反例は静的確認のみ。
+今回生成したtrace JSON49（うち不正設定33）、一時JSONL8（うち17bytesの部分書込み1）。
+代表候補trace30・fake forward13（選択trace内のみ。pytest全体や固定checkpoint推論総数ではない）。
+receipt-only失敗直後はsaved={0}, dropped={}。その後の拒否候補1のみdroppedへ加算。
+処理DROPのreceipt失敗はsaved={0}, dropped={0}を維持。
+部分主record失敗直後はsaved={}, dropped={0}、data=UNKNOWN/receipt=NOT_ATTEMPTED。
+未保存queue付きreceipt失敗直後はsaved={0}, dropped={1}、queue空、候補1のdata/receiptはNOT_ATTEMPTED。
+receipt準備失敗はdata既知/receipt=NOT_ATTEMPTED、saved={0}, dropped={}。
+各集合は別test/session。first error・失敗後forward禁止・再finish不変をassertした。
+自己点検/合成確認であり独立レビュー合格ではない。固定checkpoint読取/固定forward/実接続/学習/走行0、pushなし。
