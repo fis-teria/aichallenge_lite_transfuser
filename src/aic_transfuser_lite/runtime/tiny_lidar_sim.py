@@ -17,6 +17,10 @@ import numpy as np
 
 OFFICIAL_COMMIT = "1f54dff995d02625566341f9e1be1c39369224f2"
 WEIGHT_SHA256 = "7a3f2702fe652a14970710aefde775d5328105d1a5370d4abf1fc88611043963"
+TINY_AUTH_PROFILE = "TINY_READY_LAP_20260907"
+AUTH_REQUEST_SHA256 = "3210c97ce30a8af18abb9633378a0c9993f55c01f2231dda262142f17a646bcd"
+# 2026-09-07 09:50 JST, never rolled forward to another date.
+DRIVE_CUTOFF_UNIX_S = 1788742200
 SOURCE_SHA256 = {
     "__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "tiny_lidar_net_controller_core.py": "1bc7dbfee5d2e37861cc3245056654a0e6b004a2b1267a6bb8941d256d67b5a2",
@@ -164,10 +168,16 @@ class SimReadiness:
     """Existing AWSIM Ready notification gates first positive send, not ML input."""
     def __init__(self):
         self.ready_sim_ns: int | None = None
+        self.ready_received_ns: int | None = None
+        self.ready_scan_sequence: int | None = None
 
-    def observe(self, phase: str, sim_ns: int) -> None:
+    def observe(self, phase: str, sim_ns: int, received_ns: int, scan_sequence: int) -> None:
         if phase == "Ready" and self.ready_sim_ns is None and sim_ns >= 0:
+            if type(received_ns) is not int or type(scan_sequence) is not int or min(received_ns, scan_sequence) < 0:
+                raise ValueError("READY_RECEIPT_FENCE_INVALID")
             self.ready_sim_ns = sim_ns
+            self.ready_received_ns = received_ns
+            self.ready_scan_sequence = scan_sequence
         elif self.ready_sim_ns is not None and phase in ("Spawned", "Grounded"):
             raise ValueError("SIM_REINITIALIZED_AFTER_READY")
 
@@ -176,7 +186,77 @@ class SimReadiness:
 
     def allow_drive(self, result: dict | None) -> bool:
         return bool(self.ready_sim_ns is not None and result is not None
-                    and result["source_ns"] >= self.ready_sim_ns)
+                    and result["source_ns"] >= self.ready_sim_ns
+                    and result["received_ns"] > self.ready_received_ns
+                    and result["scan_sequence"] > self.ready_scan_sequence)
+
+
+def finite_number(value: Any, name: str, *, integer: bool = False) -> float:
+    if (type(value) not in (int, float) or not math.isfinite(value) or value < 0
+            or (integer and type(value) is not int)):
+        raise ValueError("INVALID_NONNEGATIVE_FINITE_NUMBER:"+name)
+    return value
+
+
+def tiny_phase_caps(phase: str) -> dict:
+    """Fresh per-call limits, scoped solely to the explicit Tiny authorization."""
+    caps = {
+        "stationary": dict(wall_seconds=120, forward_limit=12, single_episode_sim_limit_s=0.),
+        "short": dict(wall_seconds=120, forward_limit=300, single_episode_sim_limit_s=20.),
+        "lap": dict(wall_seconds=600, forward_limit=5200, single_episode_sim_limit_s=240.),
+    }
+    if phase not in caps:
+        raise ValueError("UNKNOWN_TINY_PHASE")
+    return caps[phase].copy()
+
+
+def validate_tiny_config(cfg: dict) -> None:
+    """Shared host/runtime entry check. No boolean/NaN budgets or policy drift."""
+    if cfg.get("authorization_profile") != TINY_AUTH_PROFILE or cfg.get("authorization_request_sha256") != AUTH_REQUEST_SHA256:
+        raise ValueError("EXPLICIT_TINY_AUTHORIZATION_PROFILE_REQUIRED")
+    caps = tiny_phase_caps(cfg["phase"])
+    for key, maximum in caps.items():
+        value = finite_number(cfg[key], key, integer=key == "forward_limit")
+        if value > maximum or (key != "single_episode_sim_limit_s" and value <= 0):
+            raise ValueError("TINY_PHASE_CAP:"+key)
+    if cfg["wall_seconds"] < 10:
+        raise ValueError("TINY_RUNTIME_WALL_TOO_SHORT")
+    if cfg["phase"] == "short" and cfg["single_episode_sim_limit_s"] < 14:
+        raise ValueError("SHORT_BRAKING_RESERVE_MISSING")
+    if cfg["phase"] == "lap" and cfg["single_episode_sim_limit_s"] <= 6:
+        raise ValueError("LAP_BRAKING_RESERVE_MISSING")
+    fixed = dict(target_speed_mps=2., maximum_speed_mps=2.4, command_period_s=.05,
+        steering_limit_rad=math.pi/6, scan_wall_expiry_s=.5, scan_sim_expiry_s=.35,
+        stop_wall_seconds=6., short_motion_sim_seconds=8., stationary_forwards=8)
+    for key, expected in fixed.items():
+        value = finite_number(cfg[key], key, integer=key == "stationary_forwards")
+        if not math.isclose(value, expected, rel_tol=0., abs_tol=1e-12):
+            raise ValueError("FIXED_TINY_CONTROL_POLICY_CHANGED:"+key)
+    if cfg.get("official_commit") != OFFICIAL_COMMIT or cfg.get("weight_sha256") != WEIGHT_SHA256:
+        raise ValueError("TINY_CONFIG_MODEL_IDENTITY")
+    for key in ("physical_vehicle_authorized", "awsim_modification_authorized", "v4_or_mpc_used"):
+        if cfg.get(key) is not False:
+            raise ValueError("SIM_ONLY_POLICY_CHANGED:"+key)
+
+
+def bounded_runtime_wall(phase: str, requested: float, available_wall: float, now_unix: float) -> int:
+    cap = tiny_phase_caps(phase)["wall_seconds"]
+    for name, value in (("requested", requested), ("available_wall", available_wall), ("now_unix", now_unix)):
+        finite_number(value, name)
+    if not 10 <= requested <= cap:
+        raise ValueError("PHASE_RUNTIME_WALL_CAP")
+    wall = math.floor(min(requested, available_wall-110., DRIVE_CUTOFF_UNIX_S-now_unix-110.))
+    if wall < 10:
+        raise ValueError("NO_FINITE_RESERVATION_BEFORE_CUTOFF")
+    return wall
+
+
+def motion_limit_reason(cfg: dict, powered_sim_seconds: float) -> str | None:
+    finite_number(powered_sim_seconds, "powered_sim_seconds")
+    limit = cfg["short_motion_sim_seconds"] if cfg["phase"] == "short" else cfg["single_episode_sim_limit_s"]-6.
+    if powered_sim_seconds >= limit:
+        return "SHORT_MOTION_COMPLETE" if cfg["phase"] == "short" else "EPISODE_LIMIT_NO_LAP"
+    return None
 
 
 def verify_container_contract(items: list[dict], project: str) -> None:

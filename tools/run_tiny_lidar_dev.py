@@ -19,7 +19,7 @@ import numpy as np
 
 from aic_transfuser_lite.runtime.tiny_lidar_sim import (
     OfficialTiny, speed_acceleration, validate_scan, validate_operation, verify_container_contract, input_clock_ready,
-    SimReadiness,
+    SimReadiness, validate_tiny_config, DRIVE_CUTOFF_UNIX_S, motion_limit_reason,
 )
 from spatial_dev_host_v4 import atomic_json
 
@@ -51,7 +51,7 @@ def worker_main(inbox, outbox, stop, output: str, forward_limit: int) -> None:
             calls += 1  # Includes failed forward, never just successful results.
             steer = model.process(scan["ranges"])
             finished = time.monotonic_ns()
-            result = {key: scan[key] for key in ("input_id", "source_ns", "received_ns", "frame", "ranges_sha256")}
+            result = {key: scan[key] for key in ("input_id", "source_ns", "received_ns", "scan_sequence", "frame", "ranges_sha256")}
             result.update(event="TINY_OUTPUT", tiny_forward_index=calls, started_ns=started,
                           finished_ns=finished, steering_rad=steer, acceleration_ai_used=False)
             trace.write(json.dumps(result, allow_nan=False)+"\n")
@@ -64,7 +64,8 @@ def worker_main(inbox, outbox, stop, output: str, forward_limit: int) -> None:
             pass  # Summary and process exit still expose this fault.
     finally:
         atomic_json(destination / "tiny_worker_summary.json", dict(tiny_forward_calls=calls,
-            exception=reason, official_weight_forward_only=True, v4_forward_calls=0))
+            exception=reason, official_weight_forward_only=True, v4_forward_calls=0,
+            forward_limit_reached=calls >= forward_limit, forward_limit=forward_limit))
         trace.close()
         # Never block interpreter exit on a queue whose supervisor has stopped.
         for transport in (inbox, outbox):
@@ -82,9 +83,9 @@ def main() -> int:
     if not args.authorize_sim_session:
         raise ValueError("EXPLICIT_SIM_SESSION_REQUIRED")
     cfg = json.loads(args.config.read_text())
-    if not (10 <= cfg["wall_seconds"] <= 240 and 1 <= cfg["forward_limit"] <= 1300
-            and 0 < cfg["single_episode_sim_limit_s"] <= 60):
-        raise ValueError("FINITE_AUTHORIZED_BUDGET_REQUIRED")
+    validate_tiny_config(cfg)
+    if time.time() >= DRIVE_CUTOFF_UNIX_S-10:
+        raise ValueError("CUTOFF_NO_NEW_RUNTIME")
     inspection = args.output / "instance_inspect.json"
     waiting = time.monotonic()
     while not inspection.exists() and time.monotonic()-waiting < 30:
@@ -139,6 +140,7 @@ def main() -> int:
     stopped_after_motion = False
     stopping = False
     start_ns = time.monotonic_ns()
+    start_unix_ns = time.time_ns()
     last_heartbeat = last_send = last_graph = 0
     last_mode = 0
     last_steering_sent = 0.
@@ -193,8 +195,11 @@ def main() -> int:
             sim_ns, clock_rx = stamp, now
             return
         if role == "phase":
-            readiness_gate.observe(msg.data, sim_ns)
-            log("AWSIM_PHASE", value=msg.data)
+            readiness_gate.observe(msg.data, sim_ns, now, counts["scan"])
+            log("AWSIM_PHASE", value=msg.data, received_ns=now,
+                ready_sim_ns=readiness_gate.ready_sim_ns,
+                ready_received_ns=readiness_gate.ready_received_ns,
+                ready_scan_sequence=readiness_gate.ready_scan_sequence)
             return
         if role == "collision":
             log("COLLISION_MESSAGE", value=msg.data)
@@ -211,7 +216,7 @@ def main() -> int:
             ranges = np.asarray(msg.ranges, dtype=np.float32).copy()
             record.update(ranges=ranges, frame=msg.header.frame_id, angle_min=msg.angle_min,
                 angle_increment=msg.angle_increment, range_min=msg.range_min, range_max=msg.range_max,
-                scan_time=msg.scan_time, input_id=f"scan:{source_ns}",
+                scan_time=msg.scan_time, input_id=f"scan:{source_ns}", scan_sequence=counts["scan"],
                 ranges_sha256=hashlib.sha256(ranges.tobytes()).hexdigest())
             validate_scan(record)
             if frame is not None and frame != record["frame"]:
@@ -299,7 +304,14 @@ def main() -> int:
             source=source, input_id=output.get("input_id") if output else None,
             tiny_forward_index=output.get("tiny_forward_index") if output else None,
             output_source_ns=output.get("source_ns") if output else None,
+            output_received_ns=output.get("received_ns") if output else None,
+            output_scan_sequence=output.get("scan_sequence") if output else None,
+            ready_sim_ns=readiness_gate.ready_sim_ns, ready_received_ns=readiness_gate.ready_received_ns,
+            ready_scan_sequence=readiness_gate.ready_scan_sequence,
+            first_positive_request=acceleration > 0 and powered_start is None,
             velocity_source_ns=latest.get("velocity", {}).get("source_ns"))
+        if acceleration > 0 and not readiness_gate.allow_drive(output):
+            raise RuntimeError("POSITIVE_REQUEST_WITHOUT_POST_READY_RECEIPT_SCAN")
         log("COMMAND_REQUEST", **value)
         if acceleration > 0 and powered_start is None:
             # Conservative: a publisher exception cannot prove no delivery.
@@ -320,7 +332,7 @@ def main() -> int:
     signal.signal(signal.SIGINT, shutdown_signal)
     worker.start()
     try:
-        log("SESSION_START", source_commit=os.environ["TINY_SOURCE_COMMIT"], config=cfg)
+        log("SESSION_START", source_commit=os.environ["TINY_SOURCE_COMMIT"], config=cfg, unix_ns=start_unix_ns)
         while time.monotonic_ns()-start_ns < cfg["wall_seconds"]*1e9:
             heartbeat("ACTIVE")
             rclpy.spin_once(node, timeout_sec=.002)
@@ -328,6 +340,9 @@ def main() -> int:
             if fault:
                 raise RuntimeError(fault)
             if requested_stop:
+                break
+            if time.time() >= DRIVE_CUTOFF_UNIX_S-10:
+                stop_reason = "DEADLINE_BRAKE_RESERVE"
                 break
             request_path = args.output / "stop_request.json"
             if request_path.exists():
@@ -337,6 +352,10 @@ def main() -> int:
                 stop_reason = request["reason"]
                 break
             if not worker.is_alive():
+                worker_final = args.output/"tiny_worker_summary.json"
+                if worker_final.exists() and json.loads(worker_final.read_text()).get("forward_limit_reached") is True:
+                    stop_reason = "FORWARD_LIMIT_REACHED"
+                    break
                 raise RuntimeError("MODEL_WORKER_EXITED")
             try:
                 answer = outbox.get_nowait()
@@ -417,9 +436,9 @@ def main() -> int:
                 continue
             if powered_start is not None:
                 duration = (sim_ns-powered_start)/1e9
-                motion_limit = cfg["short_motion_sim_seconds"] if cfg["phase"] == "short" else cfg["single_episode_sim_limit_s"]-6.
-                if duration >= motion_limit:
-                    stop_reason = "SHORT_MOTION_COMPLETE" if cfg["phase"] == "short" else "EPISODE_LIMIT_NO_LAP"
+                limit_reason = motion_limit_reason(cfg, duration)
+                if limit_reason:
+                    stop_reason = limit_reason
                     break
             if now-last_send >= cfg["command_period_s"]*1e9:
                 acceleration = speed_acceleration(latest["velocity"]["speed_mps"],
@@ -483,6 +502,9 @@ def main() -> int:
             distinct_tiny_inputs_sent=len(controls_with_tiny), worker_terminated=worker_terminated,
             logger_ok=logger_ok, source_frame=frame, full_sensor_saved=False,
             awsim_ready_sim_ns=readiness_gate.ready_sim_ns,
+            awsim_ready_received_ns=readiness_gate.ready_received_ns,
+            awsim_ready_scan_sequence=readiness_gate.ready_scan_sequence,
+            start_unix_ns=start_unix_ns, finish_unix_ns=time.time_ns(),
             hash_does_not_reproduce_sensor=True, host_pause_not_braking_proof=True,
             lap_result="HOST_JUDGE_LOG_REQUIRED", v4_forwards=0, mpc_calls=0,
             learned_acceleration_used=False, physical_device_control=False)
