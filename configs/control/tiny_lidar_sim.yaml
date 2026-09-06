@@ -1,0 +1,18 @@
+version: TINY_OFFICIAL_SIM_ONLY_V1
+official_commit: 1f54dff995d02625566341f9e1be1c39369224f2
+weight_sha256: 7a3f2702fe652a14970710aefde775d5328105d1a5370d4abf1fc88611043963
+target_speed_mps: 2.0
+maximum_speed_mps: 2.4
+steering_limit_rad: 0.5235987755982988
+command_period_s: 0.05
+scan_wall_expiry_s: 0.5
+scan_sim_expiry_s: 0.35
+stop_wall_seconds: 6.0
+stationary_forwards: 8
+short_motion_sim_seconds: 8.0
+# The inherited single-episode authorization is still 60 sim seconds. A lap
+# needs ordered checkpoint evidence, NOT expiry or proximity to the start.
+single_episode_sim_limit_s: 60.0
+physical_vehicle_authorized: false
+awsim_modification_authorized: false
+v4_or_mpc_used: false
