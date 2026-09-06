@@ -72,8 +72,8 @@ Windows編集・commit→未変更同期CheckOnly/通常同期→WSL lock付き�
 
 ユーザーの「もう一回やりましょう」に基づきprofile `TINY_GUI_RETRY_20260907`を別記録。
 承認hash `90b60a4c99c6e17e490454a9410755b33b1f5fa36e5b3c29f27d46d69795156d`。
-適用unix ns `1788732001927474902`、記録ISO `2026-09-07T07:00:01.927479+09:00`。
-保存欄名は`applied_utc`だが実文字列には+09:00が付いているため、UTC文字列とは扱わない。
+適用unix ns `1788732001927474902`、保存rawの`applied_utc`は`2026-09-06T22:00:01.927479+00:00`。
+初稿の+09:00表記はPowerShellのJSON日時変換表示によるもので、rawはUTCだった（同一時点）。台帳は変更していない。
 旧9 attemptと消費を保持し、powered上限4→5以外の共通上限は不変。
 
 runtime最終summaryがないため、従来規則で今回もTiny600forward・駆動1回・20sim秒を保守計上。
