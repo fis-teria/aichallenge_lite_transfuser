@@ -29,9 +29,10 @@ class Stamp:
     epoch: str = '0'
     monotonic_id: str = 'synthetic_process'
     acquisition_ns: int | None = None
+    monotonic_epoch: str = '0'
 
     def usable(self, finalized_ns: int, reference: Stamp) -> bool:
-        return (self.clock_id, self.epoch, self.monotonic_id) == (reference.clock_id, reference.epoch, reference.monotonic_id) and self.received_ns <= self.available_ns <= finalized_ns
+        return (self.clock_id, self.epoch, self.monotonic_id, self.monotonic_epoch) == (reference.clock_id, reference.epoch, reference.monotonic_id, reference.monotonic_epoch) and self.received_ns <= self.available_ns <= finalized_ns
 
 
 @dataclass(frozen=True)

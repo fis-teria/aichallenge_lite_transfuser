@@ -30,6 +30,7 @@ class SpatialPathShadowWrapperV4:
         self.transport_id=clock_id or (runtime.records.session if self.clock==runtime.records.clock else 'wrapper:'+str(id(self.clock)))
         self.grid_period_ns,self.max_sync_wait_ns,self.candidate_capacity=grid_period_ns,max_sync_wait_ns,candidate_capacity
         self.epoch=0
+        self.monotonic_epoch=0
         self.last_image=None
         self.last_tick=None
         self.pending=deque()
@@ -43,7 +44,7 @@ class SpatialPathShadowWrapperV4:
             node.create_subscription(message_types[role],topics[role],lambda msg,r=role:self.receive(r,msg),qos)
 
     def _received(self, ns: int) -> dict:
-        return stamp(ns,clock=self.transport_id,source='wrapper camera callback monotonic')
+        return stamp(ns,clock=self.transport_id,epoch=str(self.monotonic_epoch),source='wrapper camera callback monotonic')
 
     def _complete(self, context: object, reason: str | None = None) -> None:
         self.runtime.finish(context,reason)
@@ -61,6 +62,8 @@ class SpatialPathShadowWrapperV4:
 
     def receive(self, role: str, msg: object) -> None:
         received=self.clock()
+        if self.last_tick is not None and received<self.last_tick:
+            self.tick(received)  # Establish new epoch before assigning this receipt.
         context=self.runtime.accept_candidate(self._received(received)) if role=='image' else None
         if role in self.sensor_received:
             self.sensor_received[role]+=1
@@ -80,7 +83,7 @@ class SpatialPathShadowWrapperV4:
                     self._complete(context,'DUPLICATE_IMAGE')
                     return
                 self.last_image=ns
-            s=Stamp(ns,received,self.clock(),clock_id='ros_header',epoch=str(self.epoch),monotonic_id=self.transport_id)
+            s=Stamp(ns,received,self.clock(),clock_id='ros_header',epoch=str(self.epoch),monotonic_id=self.transport_id,monotonic_epoch=str(self.monotonic_epoch))
             if role=='nominal':
                 result=self.adapter.add_command(PassiveCommand(s,float(msg.lateral.steering_tire_angle),float(msg.longitudinal.speed),float(msg.longitudinal.acceleration)))
                 if result!='ACCEPTED':
@@ -109,6 +112,9 @@ class SpatialPathShadowWrapperV4:
         """Pure polling entry; no ROS timer or background worker is created."""
         cutoff=self.clock() if now_ns is None else now_ns
         if self.last_tick is not None and cutoff<self.last_tick:
+            self.monotonic_epoch+=1
+            if self.transport_id==self.runtime.records.session and self.clock==self.runtime.records.clock:
+                self.runtime.records.clock_epoch=str(self.monotonic_epoch)
             self._clear_waiting('MONOTONIC_CLOCK_RESET')
             self.epoch+=1
             self.last_image=None
@@ -134,7 +140,7 @@ class SpatialPathShadowWrapperV4:
                 return
             lidar,scan=min(scans,key=lambda v:(abs(v[0].header_ns-camera.header_ns),v[0].header_ns))
             self.pending.popleft()
-            context.selection_cutoff=stamp(cutoff,clock=self.transport_id,source='selection cutoff before preprocessing')
+            context.selection_cutoff=stamp(cutoff,clock=self.transport_id,epoch=str(self.monotonic_epoch),source='selection cutoff before preprocessing')
             try:
                 if msg.encoding!='rgb8' or msg.step<msg.width*3:
                     raise ValueError('RGB8_REQUIRED_NO_ENCODING_GUESS')

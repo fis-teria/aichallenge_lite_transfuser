@@ -101,6 +101,7 @@ class Records:
         self.design = json.loads((schema_dir/'spatial_path_v4_shadow_record_v1.schema.json').read_text())
         self.schema = json.loads((schema_dir/'spatial_path_v4_runtime_record_v1.schema.json').read_text())
         self.session = str(uuid.uuid4())
+        self.clock_epoch = '0'
         self.counts = {k:set() for k in ('accepted','input_built','forward_started','forward_returned','enqueued','saved','dropped')}
         self.sequence = 0
 
@@ -150,7 +151,7 @@ class Records:
                     execution=dict(forward_calls=0,live_sensor_connection_authorized=False,control_connection_enabled=False),payload=p)
 
     def now(self) -> dict:
-        return stamp(self.clock(),clock=self.session,source='harness_monotonic')
+        return stamp(self.clock(),clock=self.session,epoch=self.clock_epoch,source='harness_monotonic')
 
     def accept(self, received: dict | None = None) -> dict:
         i = self.sequence
@@ -205,9 +206,9 @@ class Records:
         def fill(slot,s):
             slot.update(source='PASSIVE_OR_SYNTHETIC_TRANSPORT',header_time=source_stamp(s),
                 acquisition_time=stamp(s.acquisition_ns,domain='DEVICE',clock=s.clock_id,epoch=s.epoch,source='transport_acquisition'),
-                receipt_monotonic_time=stamp(s.received_ns,clock=s.monotonic_id),available_monotonic_time=stamp(s.available_ns,clock=s.monotonic_id))
+                receipt_monotonic_time=stamp(s.received_ns,clock=s.monotonic_id,epoch=s.monotonic_epoch),available_monotonic_time=stamp(s.available_ns,clock=s.monotonic_id,epoch=s.monotonic_epoch))
             finalized=p['timing']['input_finalized']
-            same=finalized['status']=='KNOWN' and finalized['clock_id']==s.monotonic_id and finalized['epoch_id']=='0'
+            same=finalized['status']=='KNOWN' and finalized['clock_id']==s.monotonic_id and finalized['epoch_id']==s.monotonic_epoch
             age=int(finalized['ns'])-s.available_ns if same else None
             slot['age_at_input']=dict(status='KNOWN' if age is not None and age>=0 else 'UNKNOWN',ns=str(age) if age is not None and age>=0 else None,
                 basis='input finalized minus available',reason='transport availability age' if same else 'CLOCK_MAPPING_UNKNOWN')
@@ -220,7 +221,7 @@ class Records:
         p['output']['t_obs'] = source_stamp(reference)
         p['reset_id'] = str(provenance['reset_count'])
         finalized = p['timing']['input_finalized']
-        p['history']['reason']='selection_cutoff_ns='+str(provenance['selection_cutoff_ns'])+'; clock_id='+reference.monotonic_id+'; epoch=0; not input_finalized'
+        p['history']['reason']='selection_cutoff_ns='+str(provenance['selection_cutoff_ns'])+'; clock_id='+reference.monotonic_id+'; epoch='+reference.monotonic_epoch+'; not input_finalized'
         for j,f in enumerate(provenance['sensor_frames']):
             for k,(left,right) in enumerate(((source_stamp(f.camera),stamp(f.grid_ns,domain='ROS_SIM',clock=f.camera.clock_id,epoch=f.camera.epoch,source='grid')), (source_stamp(f.lidar),source_stamp(f.camera)))):
                 p['history']['sensor_timing']['components'][j][k].update(operation='LHS_MINUS_RHS_SECONDS',lhs_time=left,rhs_time=right,reference='transport grid/camera/lidar; ns -> s',clock_mapping_evidence=identity(sha(encoded([left,right])),'same clock/epoch transport'))
@@ -235,7 +236,7 @@ class Records:
             slot['source'] = c.source
             for name,lhs,rhs,ok in (
                 ('command_source_past',source_stamp(c.stamp),source_stamp(reference),c.stamp.header_ns<reference.header_ns),
-                ('command_available_before_input',stamp(c.stamp.available_ns,clock=c.stamp.monotonic_id),finalized,finalized['ns'] is not None and c.stamp.available_ns<=int(finalized['ns']))):
+                ('command_available_before_input',stamp(c.stamp.available_ns,clock=c.stamp.monotonic_id,epoch=c.stamp.monotonic_epoch),finalized,finalized['ns'] is not None and c.stamp.available_ns<=int(finalized['ns']))):
                 same=lhs['status']==rhs['status']=='KNOWN' and (lhs['clock_id'],lhs['epoch_id'],lhs['domain'])==(rhs['clock_id'],rhs['epoch_id'],rhs['domain'])
                 slot[name].update(status=('PROVEN' if ok else 'VIOLATION') if same else 'UNKNOWN',lhs_time=lhs,rhs_time=rhs,lhs_reference=name,rhs_reference='t_obs' if name=='command_source_past' else 'input_finalized',clock_mapping_evidence=identity(sha(encoded([lhs,rhs])) if same else None,'same clock/epoch' if same else 'CLOCK_MAPPING_UNKNOWN'))
             statuses=[slot[k]['status'] for k in ('command_source_past','command_available_before_input')]

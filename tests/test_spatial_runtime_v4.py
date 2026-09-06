@@ -491,3 +491,29 @@ def test_missing_command_and_invalid_ego_are_not_padding():
 def test_tensor_only_padding_stays_unknown():
     e=SpatialRuntimeV4(Fake(),records()).infer(batch())
     assert 'PADDING_UNKNOWN' in e['payload']['history']['command'][0]['reason']
+
+
+def test_monotonic_reset_terminates_pending_and_changes_epoch(tmp_path):
+    clock,r,writer,core,w=candidate_harness(tmp_path)
+    w.receive('image',fake_message('image'))
+    clock.ns-=50; w.tick()
+    old=w.completed[0]
+    assert old.event['payload']['reason']=='MONOTONIC_CLOCK_RESET'
+    assert old.event['payload']['timing']['candidate_received']['epoch_id']=='0'
+    assert old.event['payload']['timing']['event_observed']['epoch_id']=='1'
+    sources(w,1_100_000_000); w.receive('image',fake_message('image',1_100_000_000))
+    new=w.completed[-1]
+    assert new.event['payload']['timing']['candidate_received']['epoch_id']=='1'
+    assert new.event['payload']['timing']['input_finalized']['epoch_id']=='1'
+    assert core.forward_calls==1 and r.sequence==2
+    trace_evidence('monotonic_reset',[old,new])
+    writer.close()
+
+
+def test_negative_elapsed_time_is_unknown_not_clipped():
+    clock=ManualClock(); r=Records(ROOT/'schemas',mode='SYNTHETIC',clock=clock)
+    core=SpatialRuntimeV4(Fake(),r)
+    received=r.now(); received['ns']=str(clock.ns+100)
+    c=core.accept_candidate(received); core.infer(batch(),candidate=c)
+    assert c.event['payload']['timing']['end_to_end_age']['status']=='UNKNOWN'
+    assert c.event['payload']['timing']['end_to_end_age']['ns'] is None
