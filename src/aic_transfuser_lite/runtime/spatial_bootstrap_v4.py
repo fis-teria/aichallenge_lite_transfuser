@@ -280,6 +280,10 @@ def run(config: dict, authorization: dict, *, actual_code_id: str, schema_dir: P
         if core and core.forward_calls>=limits['max_forward_calls']: return 'FORWARD_LIMIT'
         if include_candidates and records and records.sequence>=limits['max_candidates']: return 'CANDIDATE_LIMIT'
         return None
+    def startup_budget_exhausted() -> bool:
+        reason=stopping()
+        if reason: result.update(reason=reason,exit_code=0)
+        return reason is not None
     try:
         out=Path(config['output_dir'])
         parent=out.parent.resolve(strict=True)
@@ -299,6 +303,7 @@ def run(config: dict, authorization: dict, *, actual_code_id: str, schema_dir: P
         result['operations']['real_checkpoint_read']=not fixture
         if inventory.get('before_sha256')!=CHECKPOINT_ID or inventory.get('after_sha256')!=CHECKPOINT_ID:
             raise ValueError('loader inventory identity mismatch')
+        if startup_budget_exhausted(): return result
         scope=dict(config_sha256=checked['config_sha256'],binding_sha256=checked['binding_sha256'],code_sha256=actual_code_id,
                    authorization_sha256=digest(authorization),checkpoint_sha256=CHECKPOINT_ID,fixture=fixture,
                    authorized_by=authorization['approved_by'],authorized_at=authorization['approved_at'])
@@ -310,12 +315,15 @@ def run(config: dict, authorization: dict, *, actual_code_id: str, schema_dir: P
         adapter=SpatialInputV4(command_binding_known=True,final_fallback_verified=False)
         core=SpatialRuntimeV4(model,records,writer,checkpoint_hash=CHECKPOINT_ID,forward_limit=limits['max_forward_calls'])
         event('adapter_core_owned')
+        if startup_budget_exhausted(): return result
         context=deps.context(); event('context_owned')
         result['operations']['real_ros_init_attempted']=not fixture
         result['operations']['real_ros_initialized']=False if fixture else None
         context.init(args=[],domain_id=config['ros']['domain_id'],initialize_logging=False); event('context_initialized')
         result['operations']['real_ros_initialized']=not fixture
+        if startup_budget_exhausted(): return result
         node=deps.node(context,config); event('node_owned')
+        if startup_budget_exhausted(): return result
         guard=BindingGuard(config,stopping,lambda:stopping(False))
         wrapper=wrapper_factory(node,core,adapter,deps.message_types(),{r:config['bindings'][r]['topic'] for r in ROLES},
             grid_period_ns=limits['grid_period_ns'],max_sync_wait_ns=limits['max_sync_wait_ns'],candidate_capacity=limits['candidate_capacity'],guard=guard)
@@ -347,7 +355,11 @@ def run(config: dict, authorization: dict, *, actual_code_id: str, schema_dir: P
         if wrapper:
             cleanup('wrapper_stopped',lambda:wrapper.stop('SESSION_END:'+result['reason']))
             result['binding_observations']=dict(wrapper.guard.observed)
-        if executor: cleanup('executor_shutdown',lambda:executor.shutdown(timeout_sec=limits['shutdown_grace_s']))
+        if executor:
+            def shutdown_executor():
+                if executor.shutdown(timeout_sec=limits['shutdown_grace_s']) is False:
+                    raise TimeoutError('executor shutdown grace exhausted')
+            cleanup('executor_shutdown',shutdown_executor)
         if node: cleanup('node_destroyed',node.destroy_node)
         if context:
             cleanup('context_shutdown',context.try_shutdown)

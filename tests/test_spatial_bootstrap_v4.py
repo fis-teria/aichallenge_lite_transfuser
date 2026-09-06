@@ -397,6 +397,32 @@ def test_shutdown_grace_overrun_is_not_silent_success(tmp_path):
     evidence('shutdown_grace',cfg,deps,result)
 
 
+@pytest.mark.parametrize('stage',['loader','context_init','node_factory'])
+def test_startup_time_limit_prevents_following_factories(tmp_path,stage):
+    cfg=config(tmp_path); deps=Dependencies(); original=deps.step
+    def slow_step(name):
+        original(name)
+        if name==stage: deps.clock.advance(1_000_000_000)
+    deps.step=slow_step; result=execute(cfg,deps)
+    assert result['reason']=='SESSION_DURATION_LIMIT' and deps.model.calls==0
+    if stage=='loader': assert 'context_factory' not in deps.log
+    if stage=='context_init': assert 'node_factory' not in deps.log
+    assert 'subscription' not in deps.log and 'spin_once' not in deps.log
+    evidence('startup_deadline_'+stage,cfg,deps,result)
+
+
+def test_executor_shutdown_false_is_reported(tmp_path):
+    cfg=config(tmp_path); deps=Dependencies(); original=deps.executor
+    def executor(context):
+        obj=original(context)
+        def timeout(**kwargs): deps.step('executor_shutdown'); return False
+        obj.shutdown=timeout; return obj
+    deps.executor=executor; result=execute(cfg,deps)
+    assert result['exit_code']==6 and any('TimeoutError' in e for e in result['cleanup_errors'])
+    assert deps.log.count('node_destroy')==1 and deps.writer_object.fd is None
+    evidence('executor_shutdown_timeout',cfg,deps,result)
+
+
 def test_existing_output_is_not_overwritten(tmp_path):
     cfg=config(tmp_path); out=Path(cfg['output_dir']); out.mkdir(); marker=out/'keep.txt'; marker.write_text('USER')
     deps=Dependencies(); result=execute(cfg,deps)
