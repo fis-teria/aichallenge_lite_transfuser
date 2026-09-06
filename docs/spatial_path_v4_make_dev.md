@@ -105,4 +105,5 @@ strict load map、全state前後hash、最大1 tensor snapshotを別runへ保存
 元のpowered最大3/180sim秒、fixed forward3000、MPC6000、logs512MiBは引き続き上限。
 固定値の許可fieldだけを動作証拠としない。今回の7判定は実ログから別報告する。
 
-実行結果は検証後に追記する。実車・競技全般・Safety認証は未検証。
+実行結果は `docs/spatial_path_v4_make_dev_result.md` を参照。
+実車・競技全般・Safety認証は未検証。
