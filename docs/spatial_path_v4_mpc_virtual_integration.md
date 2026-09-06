@@ -165,6 +165,16 @@ fault unitではsolver failure / timeout / nonfiniteを棄却しbrakingへ切替
 HOLD/staleは外部合成入力でありstop head/teacher代用なし。
 brakingの停止可能な低速caseはplantのv=0接触を確認、停止不能caseはshort_switchでovershootを測定した。
 
+
+実行コマンド（既存runを上書きしない。OUTは新規、BUDGETはtask共通の既存ファイル）:
+
+```bash
+tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q tests/test_spatial_mpc_v4.py tests/test_spatial_tracking_sim_v4.py tests/test_spatial_bootstrap_v4.py --junitxml=NEW_JUNIT
+tools/with_wsl_training_lock.sh .venv/bin/python tools/evaluate_spatial_mpc_v4.py --packet EXPLICIT_PACKET --config configs/control/spatial_mpc_virtual_v4.yaml --output NEW_OUT --budget SAME_TASK_BUDGET --mode main
+```
+
+実際の展開済みpath・commit・環境変数はpackage logsのvalidation/main driverを参照。レビュー担当への実行許可ではない。
+
 ## first_error、未実行境界、次工程
 
 bootstrap finally入口で、既知writer.errorがありfirst_errorが空の場合だけ先に保存する2行修正。
