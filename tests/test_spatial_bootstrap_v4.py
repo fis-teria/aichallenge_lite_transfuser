@@ -149,6 +149,9 @@ def evidence(name,cfg,deps,result):
     path=Path(cfg['output_dir'])/'events.jsonl'
     if path.is_file():
         with (root/(name+'.jsonl')).open('xb') as f: f.write(path.read_bytes())
+    manifest=Path(cfg['output_dir'])/'run_manifest.json'
+    if manifest.is_file():
+        with (root/(name+'_run_manifest.json')).open('xb') as f: f.write(manifest.read_bytes())
 
 
 def test_default_main_and_check_config_have_no_real_factories(tmp_path,capsys):
@@ -160,6 +163,51 @@ def test_default_main_and_check_config_have_no_real_factories(tmp_path,capsys):
     assert any('code_sha256' in e for e in report['errors'])
     assert all(v=='NOT_OBSERVED' for v in report['live_observation'].values())
     assert not Path(cfg['output_dir']).exists()
+
+
+def test_distributed_config_exports_unresolved_expectations(capsys):
+    module=wrapper_module()
+    path=ROOT/'ros2_ws/src/aic_e2e_runtime/config/spatial_path_shadow_v4.param.yaml'
+    assert module.main(['--config',str(path),'--check-config'])==2
+    report=json.loads(capsys.readouterr().out)
+    cfg=boot.load_config(path)
+    assert not report['authorization_valid'] and report['unresolved']
+    assert all(v=='NOT_OBSERVED' for v in report['live_observation'].values())
+    folder=os.environ.get('V4_BOOTSTRAP_TRACE_DIR')
+    if folder:
+        import inspect
+        root=Path(folder); root.mkdir(parents=True,exist_ok=True)
+        with (root/'resolved_config.json').open('xb') as f: f.write(boot.canonical(dict(config=cfg,check=report,real_operations_performed=False)))
+        rows=[]
+        for role in boot.ROLES:
+            rows.append(dict(role=role,expected=cfg['bindings'][role],observed='NOT_OBSERVED',
+                source_file='src/aic_transfuser_lite/runtime/spatial_bootstrap_v4.py',function='BindingGuard.check',
+                line=inspect.getsourcelines(boot.BindingGuard.check)[1],prior_contract_commit='60b3da378b1dee37bfcd3d8841b519b1d07e8d0c',
+                prior_source='SpatialPathShadowWrapperV4.receive/tick; SpatialInputV4.append/build',
+                unresolved=[v for v in report['unresolved'] if role in v]))
+        with (root/'input_binding.json').open('xb') as f: f.write(boot.canonical(dict(rows=rows,synchronization=cfg['synchronization'],state='EXPECTED_CODE_ONLY_NOT_LIVE_OBSERVATION')))
+
+
+def test_no_approval_and_ros_remaps_reject_real_entry_before_factories(tmp_path,capsys):
+    cfg=config(tmp_path); module=wrapper_module()
+    cfg['code_sha256']=boot.code_identity(Path(module.__file__))
+    path=tmp_path/'unapproved.json'; path.write_bytes(boot.canonical(cfg))
+    assert module.main(['--config',str(path)])==2
+    assert not Path(cfg['output_dir']).exists()
+    assert module.main(['--config',str(path),'--ros-args','-r','/fake/image:=/other'])==2
+    assert 'ROS remaps/overrides not authorized' in capsys.readouterr().err
+
+
+def test_main_cli_reaches_authorized_fake_assembly(tmp_path,capsys):
+    cfg=config(tmp_path); deps=Dependencies([complete_input]); module=wrapper_module()
+    cfg['code_sha256']=boot.code_identity(Path(module.__file__))
+    path=tmp_path/'config.json'; auth_path=tmp_path/'fixture_authorization.json'
+    path.write_bytes(boot.canonical(cfg)); auth_path.write_bytes(boot.canonical(approval(cfg)))
+    code=boot.main(['--config',str(path),'--authorization',str(auth_path)],wrapper_file=Path(module.__file__),
+        wrapper_factory=deps.wrapper,schema_dir=ROOT/'schemas',dependencies=deps)
+    result=json.loads(capsys.readouterr().out)
+    assert code==0 and result['operations']['fake_forward_calls']==1 and result['fixture'] is True
+    evidence('main_cli_fake',cfg,deps,result)
 
 
 @pytest.mark.parametrize('field,value',[('mode','SYNTHETIC'),('checkpoint_sha256','b'*64),('input_contract_sha256','b'*64),
@@ -237,6 +285,24 @@ def test_tick_without_callbacks_releases_m1(tmp_path):
     evidence('m0_m1_poll',cfg,deps,result)
 
 
+@pytest.mark.parametrize('kind',['camera_reset','history_gap','monotonic_reset'])
+def test_reset_does_not_reuse_old_command_readiness_or_budget(tmp_path,kind):
+    cfg=config(tmp_path)
+    def initial(d): complete_input(d,2_000_000_000)
+    def next_input(d):
+        if kind=='monotonic_reset': d.clock.ns=-1; return
+        ns=1_500_000_000 if kind=='camera_reset' else 2_500_000_000
+        # No fresh command in the new history/epoch.
+        if kind=='camera_reset': d.send('image',ns)
+        for role in ('velocity','steering','lidar'): d.send(role,ns)
+        if kind=='history_gap': d.send('image',ns)
+    deps=Dependencies([initial,next_input]); result=execute(cfg,deps)
+    assert deps.model.calls==1 and result['counters']['forward_started']['ids']==[0]
+    if kind=='monotonic_reset': assert result['reason']=='MONOTONIC_RESET_STOP'
+    else: assert result['counters']['dropped']['ids']==[1]
+    evidence(kind,cfg,deps,result)
+
+
 @pytest.mark.parametrize('scenario',['zero','drop_only','command_absent','wrong_geometry','future_command'])
 def test_no_input_or_unusable_input_stops_on_monotonic_time(tmp_path,scenario):
     cfg=config(tmp_path)
@@ -260,11 +326,12 @@ def test_no_input_or_unusable_input_stops_on_monotonic_time(tmp_path,scenario):
 
 @pytest.mark.parametrize('limit',['max_candidates','max_forward_calls','max_file_bytes'])
 def test_run_limits_stop_admission_and_forward(tmp_path,limit):
-    cfg=config(tmp_path); cfg['limits'][limit]=1
+    cfg=config(tmp_path); cfg['limits'][limit]=8192 if limit=='max_file_bytes' else 1
     deps=Dependencies([complete_input,lambda d:complete_input(d,1_100_000_000)])
     result=execute(cfg,deps)
     assert result['counters']['accepted']['count']==1 and deps.model.calls<=1
     assert all(c.terminal for c in deps.wrappers[0].completed)
+    assert result['known_saved_bytes']<=cfg['limits']['max_file_bytes']
     assert result['reason']=={'max_candidates':'CANDIDATE_LIMIT','max_forward_calls':'FORWARD_LIMIT','max_file_bytes':'RECORDING_FAILED'}[limit]
     evidence('limit_'+limit,cfg,deps,result)
 
@@ -306,6 +373,37 @@ def test_cleanup_error_does_not_replace_first_error(tmp_path):
     evidence('cleanup_error',cfg,deps,result)
 
 
+def test_missing_dependency_is_distinct_and_closes_writer(tmp_path):
+    cfg=config(tmp_path); deps=Dependencies()
+    def missing(): raise ImportError('FAKE_MISSING_RCLPY')
+    deps.context=missing
+    result=execute(cfg,deps)
+    assert result['exit_code']==3 and result['reason']=='DEPENDENCY_MISSING'
+    assert deps.writer_object.fd is None and deps.model.calls==0
+    evidence('dependency_missing',cfg,deps,result)
+
+
+def test_shutdown_grace_overrun_is_not_silent_success(tmp_path):
+    cfg=config(tmp_path); deps=Dependencies(); original=deps.executor
+    def executor(context):
+        obj=original(context); shutdown=obj.shutdown
+        def slow_shutdown(**kwargs):
+            deps.clock.advance(200_000_000); return shutdown(**kwargs)
+        obj.shutdown=slow_shutdown; return obj
+    deps.executor=executor
+    result=execute(cfg,deps)
+    assert result['shutdown_grace_exceeded'] and result['exit_code']==6
+    assert deps.writer_object.fd is None
+    evidence('shutdown_grace',cfg,deps,result)
+
+
+def test_existing_output_is_not_overwritten(tmp_path):
+    cfg=config(tmp_path); out=Path(cfg['output_dir']); out.mkdir(); marker=out/'keep.txt'; marker.write_text('USER')
+    deps=Dependencies(); result=execute(cfg,deps)
+    assert result['exit_code']==4 and not deps.log and marker.read_text()=='USER'
+    evidence('output_exists',cfg,deps,result)
+
+
 @pytest.mark.parametrize('mode',['receipt','closed'])
 def test_logger_failure_or_closed_stops_future_forward(tmp_path,mode):
     cfg=config(tmp_path); deps=Dependencies([complete_input,complete_input],writer_mode=mode)
@@ -321,6 +419,13 @@ def test_modes_are_distinct_and_design_unchanged():
     with pytest.raises(ValueError): Records(ROOT/'schemas',mode='LIVE_PASSIVE')
     old=Records(ROOT/'schemas',mode='SYNTHETIC').event('SESSION_END')
     assert old['schema_version']=='spatial_path_v4_runtime_record_v1' and 'passive_scope' not in old
+
+
+def test_live_passive_fixture_full_schema_if_available(tmp_path):
+    pytest.importorskip('jsonschema',reason='existing environment lacks full Draft2020 validator; no install')
+    cfg=config(tmp_path); deps=Dependencies([complete_input]); execute(cfg,deps)
+    records=deps.writer_object.records
+    for row in (Path(cfg['output_dir'])/'events.jsonl').read_bytes().splitlines(): records.validate_schema(json.loads(row))
 
 
 def test_static_no_control_and_explicit_owned_ros_factories():

@@ -22,6 +22,9 @@
 - 終了: executor→node→所有context→writerの有限処理。元例外とcleanup errorを分離。
   healthy時だけhealth/endを試行。FAILED/CLOSEDへ再書込みしない。I/O/forwardのhard realtime中断は保証しない。
   shutdown_graceはexecutor待機と終了超過検出の予算であり、同期I/Oを強制cancelする上限ではない。
+  超過した場合は成功exitにしない。camera/monotonic epoch reset時は受信確認をclearし、
+  adapterのgap resetでcommandが消えた場合も旧確認だけでwarm-up forwardへ進まない。
+  private run_manifest.jsonは設定・別承認・未観測状態を保持し、events.jsonlと合わせて保存bytes上限内に制約する。
 
 ### 受動入力の対応（実graphは全role NOT_OBSERVED）
 

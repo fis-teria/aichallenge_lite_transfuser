@@ -76,6 +76,8 @@ class SpatialPathShadowWrapperV4:
         for q in self.buffers.values():
             q.clear()
         self.adapter.reset(reason)
+        if self.guard and reason in ('CAMERA_CLOCK_RESET','MONOTONIC_CLOCK_RESET'):
+            self.guard.reset_epoch()
 
     def receive(self, role: str, msg: object) -> None:
         if self.stopped:
@@ -104,6 +106,7 @@ class SpatialPathShadowWrapperV4:
             if role=='image' and self.last_image is not None and ns<self.last_image:
                 self._clear_waiting('CAMERA_CLOCK_RESET')
                 self.epoch+=1
+                if self.guard: self.guard.check(role,msg)
             if role=='image':
                 if ns==self.last_image:
                     self._complete(context,'DUPLICATE_IMAGE')
@@ -196,6 +199,8 @@ class SpatialPathShadowWrapperV4:
                 status=self.adapter.append(item,cutoff)
                 if status!='ACCEPTED':
                     raise ValueError(status)
+                if self.guard and not self.adapter.commands:
+                    raise ValueError('COMMAND_MISSING_AFTER_HISTORY_RESET; no warm-up substitution')
                 batch,provenance=self.adapter.build(cutoff)
                 self.runtime.infer(batch,provenance,candidate=context)
                 self._complete(context)

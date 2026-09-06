@@ -182,6 +182,10 @@ class BindingGuard:
         self.rejected=0
         self.nominal_header_ns=None
 
+    def reset_epoch(self) -> None:
+        self.observed={role:'NOT_OBSERVED_CURRENT_EPOCH' for role in ROLES}
+        self.nominal_header_ns=None
+
     def check(self, role: str, msg: object) -> None:
         b=self.config['bindings'][role]
         try:
@@ -282,6 +286,13 @@ def run(config: dict, authorization: dict, *, actual_code_id: str, schema_dir: P
         if shutil.disk_usage(parent).free<limits['max_file_bytes']: raise OSError('OUTPUT_CAPACITY_INSUFFICIENT')
         out.mkdir(mode=0o700)  # Exclusive directory acquisition; never overwrite/reuse.
         event('output_directory_owned')
+        metadata=canonical(dict(version='spatial_bootstrap_session_v1',fixture=fixture,config=config,
+                                authorization=authorization,resolved_expectations=checked))
+        if len(metadata)>limits['max_record_bytes'] or len(metadata)>=limits['max_file_bytes']:
+            raise ValueError('OUTPUT_MANIFEST_BYTE_LIMIT')
+        with (out/'run_manifest.json').open('xb') as stream:
+            stream.write(metadata)
+        result['manifest_bytes']=len(metadata); event('manifest_written_not_durable')
         result['operations']['real_checkpoint_read_attempted']=not fixture
         result['operations']['real_checkpoint_read']=False if fixture else None
         model,inventory=deps.load_model(); event('fixed_loader_returned_fake' if fixture else 'fixed_loader_returned')
@@ -295,7 +306,7 @@ def run(config: dict, authorization: dict, *, actual_code_id: str, schema_dir: P
         event('records_owned')
         writer_factory=getattr(deps,'writer',PrivateWriter)
         writer=writer_factory(out/'events.jsonl',records,capacity=limits['queue_capacity'],
-            max_record_bytes=limits['max_record_bytes'],max_file_bytes=limits['max_file_bytes']); event('writer_owned')
+            max_record_bytes=limits['max_record_bytes'],max_file_bytes=limits['max_file_bytes']-len(metadata)); event('writer_owned')
         adapter=SpatialInputV4(command_binding_known=True,final_fallback_verified=False)
         core=SpatialRuntimeV4(model,records,writer,checkpoint_hash=CHECKPOINT_ID,forward_limit=limits['max_forward_calls'])
         event('adapter_core_owned')
@@ -352,6 +363,7 @@ def run(config: dict, authorization: dict, *, actual_code_id: str, schema_dir: P
                 cleanup('health_end_attempted',end_records)
             cleanup('writer_closed',writer.close)
             result['writer_state']=writer.state; result['writer_error']=writer.error
+            result['known_saved_bytes']=result.get('manifest_bytes',0)+writer.bytes_written
             if writer.error:
                 if result['first_error'] is None: result['first_error']=writer.error
                 result['reason']='RECORDING_FAILED'; result['exit_code']=5
@@ -361,6 +373,7 @@ def run(config: dict, authorization: dict, *, actual_code_id: str, schema_dir: P
             result['forward_return_observed']=bool(records.counts['forward_returned'])
         if result['cleanup_errors'] and result['exit_code']==0: result['exit_code']=6
         result['shutdown_grace_exceeded']=(deps.clock()-end_start)*1e-9>limits['shutdown_grace_s']
+        if result['shutdown_grace_exceeded'] and result['exit_code']==0: result['exit_code']=6
         result['input_result']='NO_INPUT' if not records or not records.sequence else ('NO_FORWARD' if not core or not core.forward_calls else 'FORWARD_ATTEMPTED_NOT_PATH_VALIDITY')
     return result
 
