@@ -17,6 +17,7 @@ from aic_transfuser_lite.runtime.tiny_lidar_sim import (
     TINY_GUI_PROFILE, GUI_AUTH_SHA256, GUI_CONTROL_METHOD, TINY_AUTH_PROFILE,
     host_arm_status, tiny_phase_caps, validate_tiny_config, bounded_runtime_wall, digest,
     verify_container_contract,
+    TINY_GUI_RETRY_PROFILE, GUI_RETRY_AUTH_SHA256,
 )
 from tiny_dev_runner import TinyBudget, IMAGE
 from tiny_gui_integration import compose_gui, narrow_fingerprint, make_command, window_candidates
@@ -113,6 +114,46 @@ def test_gui_missing_consumption_charged_not_reset(tmp_path):
     assert budget.value["used"]["tiny_forward"] == used["tiny_forward"]+600
     assert budget.value["used"]["wall_s"] == used["wall_s"]+230
     budget.close()
+
+
+def test_explicit_retry_preserves_failed_charge_and_adds_exactly_one_attempt(tmp_path):
+    path, _ = ledger(tmp_path)
+    original = dict(AttemptBudget.limits)
+    first = TinyBudget(path, profile=TINY_GUI_PROFILE)
+    first.authorize(); first.reserve_tiny("failed_gui", reservation(), 600)
+    first.finish_tiny(dict(forward=0, mpc=0), None, exact=False)
+    prior = copy.deepcopy(first.value)
+    first.close()
+    retry = TinyBudget(path, profile=TINY_GUI_RETRY_PROFILE)
+    record = retry.authorize()
+    assert record["old_limits"]["powered"] == 4 and record["new_limits"]["powered"] == 5
+    assert record["old_episode_sim_seconds"] == record["new_episode_sim_seconds"] == 20
+    assert record["request_sha256"] == GUI_RETRY_AUTH_SHA256
+    assert retry.value["used"] == prior["used"] and retry.value["attempts"] == prior["attempts"]
+    assert retry.authorize() == record
+    retry.reserve_tiny("approved_retry", reservation(), 600)
+    retry.finish_tiny(dict(forward=0, mpc=0), None, exact=False)
+    assert retry.value["used"]["powered"] == 5
+    assert retry.value["used"]["tiny_forward"] == prior["used"]["tiny_forward"]+600
+    with pytest.raises(ValueError, match="SINGLE_ATTEMPT"):
+        retry.reserve_tiny("unapproved_third", reservation(), 600)
+    retry.close()
+    assert AttemptBudget.limits == original
+
+
+def test_retry_requires_previous_grant_and_exact_request(tmp_path):
+    path, _ = ledger(tmp_path)
+    retry = TinyBudget(path, profile=TINY_GUI_RETRY_PROFILE)
+    with pytest.raises(ValueError, match="PREVIOUS_GUI_AUTHORIZATION"):
+        retry.authorize()
+    retry.close()
+    assert digest(ROOT/"configs/control/tiny_gui_retry_authorization_20260907.json") == GUI_RETRY_AUTH_SHA256
+    cfg = config(); cfg["authorization_profile"] = TINY_GUI_RETRY_PROFILE
+    with pytest.raises(ValueError): validate_tiny_config(cfg)
+    cfg["authorization_request_sha256"] = GUI_RETRY_AUTH_SHA256
+    validate_tiny_config(cfg)
+    assert tiny_phase_caps("short", TINY_GUI_RETRY_PROFILE) == tiny_phase_caps("short", TINY_GUI_PROFILE)
+    with pytest.raises(ValueError): tiny_phase_caps("lap", TINY_GUI_RETRY_PROFILE)
 
 
 @pytest.mark.parametrize("field,value", [("wall_s",231.), ("powered_s",21.), ("snapshots",3), ("mpc",1)])

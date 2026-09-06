@@ -10,7 +10,7 @@ import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/"src"))
 from aic_transfuser_lite.runtime.tiny_lidar_sim import (
-    digest, GUI_CONTROL_METHOD, GUI_AUTH_SHA256, TINY_GUI_PROFILE,
+    digest, GUI_CONTROL_METHOD, GUI_AUTHORIZATIONS,
 )
 from spatial_dev_host_v4 import atomic_json
 
@@ -64,13 +64,14 @@ def make_command(source: Path, sim: Path, output: Path, project: str) -> list[st
 
 def narrow_fingerprint(source: Path, sim: Path, output: Path) -> dict:
     config = json.loads((output/"resolved_config.json").read_text())
-    if (config.get("control_method") != GUI_CONTROL_METHOD or config.get("authorization_profile") != TINY_GUI_PROFILE
-            or config.get("authorization_request_sha256") != GUI_AUTH_SHA256):
+    authorization = GUI_AUTHORIZATIONS.get(config.get("authorization_profile"))
+    if (config.get("control_method") != GUI_CONTROL_METHOD or authorization is None
+            or config.get("authorization_request_sha256") != authorization[0]):
         raise ValueError("NARROW_FINGERPRINT_ONLY_FOR_EXPLICIT_GUI_PROFILE")
     relative = ["tools/run_tiny_lidar_dev.py", "tools/tiny_dev_runner.py", "tools/tiny_gui_integration.py",
         "tools/spatial_dev_host_v4.py", "src/aic_transfuser_lite/runtime/tiny_lidar_sim.py",
         "integrations/tiny_gui/Makefile", "integrations/tiny_gui/runtime.sh", "integrations/tiny_gui/simulator.sh",
-        "configs/control/tiny_gui_authorization_20260907.json",
+        authorization[1],
         "ros2_ws/src/aic_tiny_sim_test/package.xml", "ros2_ws/src/aic_tiny_sim_test/setup.py",
         "ros2_ws/src/aic_tiny_sim_test/launch/guarded_tiny.launch.py",
         "ros2_ws/src/aic_tiny_sim_test/config/tiny_scan.rviz",

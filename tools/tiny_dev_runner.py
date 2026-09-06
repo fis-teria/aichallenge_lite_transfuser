@@ -18,6 +18,7 @@ from aic_transfuser_lite.runtime.tiny_lidar_sim import (
     WEIGHT_SHA256, digest, TINY_AUTH_PROFILE, AUTH_REQUEST_SHA256, DRIVE_CUTOFF_UNIX_S,
     finite_number, tiny_phase_caps, validate_tiny_config, bounded_runtime_wall,
     TINY_GUI_PROFILE, GUI_AUTH_SHA256, GUI_CONTROL_METHOD,
+    TINY_GUI_RETRY_PROFILE, GUI_AUTHORIZATIONS,
 )
 from spatial_dev_host_v4 import HostWatch, AttemptBudget, atomic_json, cleanup_owned
 
@@ -37,13 +38,15 @@ ORIGINAL_SCRIPT = "0a8c3442bbe5f31a267926845e18039438ad8a1b1c35654225c5b9d819f4d
 class TinyBudget(AttemptBudget):
     """Preserve legacy V4 count; separate Tiny counter under same total ceiling."""
     def __init__(self, path: Path, *, profile: str):
-        if profile not in (TINY_AUTH_PROFILE, TINY_GUI_PROFILE):
+        if profile not in (TINY_AUTH_PROFILE, *GUI_AUTHORIZATIONS):
             raise ValueError("EXPLICIT_TINY_BUDGET_PROFILE_REQUIRED")
         super().__init__(path)
         # Instance copy, never mutate AttemptBudget.limits or another profile.
         self.limits = dict(AttemptBudget.limits, forward=6000, powered_s=300.)
         if profile == TINY_GUI_PROFILE:
             self.limits["powered"] = 4
+        elif profile == TINY_GUI_RETRY_PROFILE:
+            self.limits["powered"] = 5
         self.profile = profile
 
     def authorize(self) -> dict:
@@ -53,21 +56,27 @@ class TinyBudget(AttemptBudget):
             finite_number(self.value["used"].get(key), "used."+key,
                           integer=key not in ("wall_s", "powered_s"))
         records = self.value.setdefault("authorization_changes", [])
-        gui = self.profile == TINY_GUI_PROFILE
-        request_hash = GUI_AUTH_SHA256 if gui else AUTH_REQUEST_SHA256
+        gui = self.profile in GUI_AUTHORIZATIONS
+        request_hash = GUI_AUTHORIZATIONS[self.profile][0] if gui else AUTH_REQUEST_SHA256
         prior = next((r for r in records if r.get("profile") == self.profile), None)
         if prior is not None:
             if prior.get("request_sha256") != request_hash or prior.get("new_limits") != self.limits:
                 raise ValueError("CONFLICTING_TINY_AUTHORIZATION_RECORD")
             return prior
+        if self.profile == TINY_GUI_RETRY_PROFILE:
+            expected_previous = dict(self.limits, powered=4)
+            if (self.value.get("tiny_authorized_profile") != TINY_GUI_PROFILE or
+                    self.value.get("tiny_authorized_limits") != expected_previous):
+                raise ValueError("GUI_RETRY_REQUIRES_PREVIOUS_GUI_AUTHORIZATION")
         record = dict(profile=self.profile, request_sha256=request_hash,
-            request_attachment=("configs/control/tiny_gui_authorization_20260907.json" if gui else
+            request_attachment=(GUI_AUTHORIZATIONS[self.profile][1] if gui else
                                 "f7325d22-7b3c-494e-bf56-ca4464746cef/pasted-text.txt"),
             applied_unix_ns=time.time_ns(), applied_utc=datetime.now(timezone.utc).isoformat(),
             authorization_source="USER_SUPPLIED_EXECUTION_REQUEST", author_name=None,
             old_limits=dict(self.value.get("tiny_authorized_limits", AttemptBudget.limits)) if gui else dict(AttemptBudget.limits),
             new_limits=dict(self.limits),
-            old_episode_sim_seconds=240. if gui else 60., new_episode_sim_seconds=20. if gui else 240.,
+            old_episode_sim_seconds=(20. if self.profile == TINY_GUI_RETRY_PROFILE else 240. if gui else 60.),
+            new_episode_sim_seconds=20. if gui else 240.,
             used_at_change=dict(self.value["used"]), prior_attempt_count=len(self.value.get("attempts", [])),
             prior_active=self.value.get("active"), applied_retroactively=False)
         records.append(record)
@@ -80,7 +89,7 @@ class TinyBudget(AttemptBudget):
         if self.value.get("tiny_authorized_profile") != self.profile:
             raise ValueError("TINY_AUTHORIZATION_NOT_RECORDED")
         finite_number(tiny_limit, "tiny_limit", integer=True)
-        gui = self.profile == TINY_GUI_PROFILE
+        gui = self.profile in GUI_AUTHORIZATIONS
         if gui and any(a.get("authorization_profile") == self.profile for a in self.value.get("attempts", [])):
             raise ValueError("GUI_SINGLE_ATTEMPT_ALREADY_USED")
         if not 1 <= tiny_limit <= (600 if gui else 5200):
@@ -185,6 +194,7 @@ def main() -> int:
     ap.add_argument("--official-package", type=Path, required=True)
     ap.add_argument("--xvfb-root", type=Path)
     ap.add_argument("--control-method", choices=(GUI_CONTROL_METHOD,))
+    ap.add_argument("--gui-retry", action="store_true", help="Explicit one-shot 4-to-5 authorization; GUI short only")
     ap.add_argument("--install-root", type=Path)
     ap.add_argument("--display")
     ap.add_argument("--xauthority", type=Path)
@@ -195,7 +205,9 @@ def main() -> int:
     ap.add_argument("--budget", type=Path, required=True)
     args = ap.parse_args()
     gui = args.control_method == GUI_CONTROL_METHOD
-    profile = TINY_GUI_PROFILE if gui else TINY_AUTH_PROFILE
+    if args.gui_retry and not gui:
+        raise ValueError("GUI_RETRY_REQUIRES_GUARDED_METHOD")
+    profile = (TINY_GUI_RETRY_PROFILE if args.gui_retry else TINY_GUI_PROFILE) if gui else TINY_AUTH_PROFILE
     if os.name != "posix" or not re.fullmatch("[0-9a-f]{40}", args.commit):
         raise ValueError("LINUX_FIXED_COMMIT_REQUIRED")
     if not 10 <= args.wall_seconds <= tiny_phase_caps(args.phase, profile)["wall_seconds"]:
@@ -207,7 +219,7 @@ def main() -> int:
         from tiny_gui_integration import compose_gui, make_command, window_candidates, visible_owned_windows
         if args.install_root is None or args.xauthority is None or args.display is None:
             raise ValueError("EXPLICIT_GUI_INSTALL_AND_DISPLAY_REQUIRED")
-        if digest(source/"configs/control/tiny_gui_authorization_20260907.json") != GUI_AUTH_SHA256:
+        if digest(source/GUI_AUTHORIZATIONS[profile][1]) != GUI_AUTHORIZATIONS[profile][0]:
             raise ValueError("GUI_AUTHORIZATION_BYTES_CHANGED")
     elif args.xvfb_root is None:
         raise ValueError("XVFB_ROOT_REQUIRED_FOR_LEGACY_PROFILE")
@@ -229,7 +241,7 @@ def main() -> int:
     cfg = yaml.safe_load((source/"configs/control/tiny_lidar_sim.yaml").read_text())
     cfg.update(tiny_phase_caps(args.phase, profile), phase=args.phase, wall_seconds=args.wall_seconds)
     if gui:
-        cfg.update(authorization_profile=profile, authorization_request_sha256=GUI_AUTH_SHA256,
+        cfg.update(authorization_profile=profile, authorization_request_sha256=GUI_AUTHORIZATIONS[profile][0],
                    control_method=GUI_CONTROL_METHOD, source_commit=args.commit)
     validate_tiny_config(cfg)
     spec = (compose_gui(source, sim, args.install_root, output, args.official_package, project, args.commit,

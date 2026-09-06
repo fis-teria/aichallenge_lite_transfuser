@@ -21,7 +21,7 @@ import numpy as np
 from aic_transfuser_lite.runtime.tiny_lidar_sim import (
     OfficialTiny, speed_acceleration, validate_scan, validate_operation, verify_container_contract, input_clock_ready,
     SimReadiness, validate_tiny_config, DRIVE_CUTOFF_UNIX_S, motion_limit_reason,
-    host_arm_status, TINY_GUI_PROFILE,
+    host_arm_status, GUI_AUTHORIZATIONS,
 )
 from spatial_dev_host_v4 import atomic_json
 
@@ -88,7 +88,7 @@ def main() -> int:
         raise ValueError("EXPLICIT_SIM_SESSION_REQUIRED")
     cfg = json.loads(args.config.read_text())
     validate_tiny_config(cfg)
-    gui = cfg["authorization_profile"] == TINY_GUI_PROFILE
+    gui = cfg["authorization_profile"] in GUI_AUTHORIZATIONS
     if time.time() >= DRIVE_CUTOFF_UNIX_S-10:
         raise ValueError("CUTOFF_NO_NEW_RUNTIME")
     inspection = args.output / "instance_inspect.json"

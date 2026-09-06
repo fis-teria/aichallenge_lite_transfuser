@@ -21,6 +21,12 @@ TINY_AUTH_PROFILE = "TINY_READY_LAP_20260907"
 AUTH_REQUEST_SHA256 = "3210c97ce30a8af18abb9633378a0c9993f55c01f2231dda262142f17a646bcd"
 TINY_GUI_PROFILE = "TINY_GUI_SHORT_20260907"
 GUI_AUTH_SHA256 = "b7d722c01979958ed92aa2e2d4cf21b8098d6edb56ed27b086eea106ef6283a7"
+TINY_GUI_RETRY_PROFILE = "TINY_GUI_RETRY_20260907"
+GUI_RETRY_AUTH_SHA256 = "90b60a4c99c6e17e490454a9410755b33b1f5fa36e5b3c29f27d46d69795156d"
+GUI_AUTHORIZATIONS = {
+    TINY_GUI_PROFILE: (GUI_AUTH_SHA256, "configs/control/tiny_gui_authorization_20260907.json"),
+    TINY_GUI_RETRY_PROFILE: (GUI_RETRY_AUTH_SHA256, "configs/control/tiny_gui_retry_authorization_20260907.json"),
+}
 GUI_CONTROL_METHOD = "tiny_lidar_net_guarded"
 # 2026-09-07 09:50 JST, never rolled forward to another date.
 DRIVE_CUTOFF_UNIX_S = 1788742200
@@ -208,7 +214,7 @@ def tiny_phase_caps(phase: str, profile: str = TINY_AUTH_PROFILE) -> dict:
         "short": dict(wall_seconds=120, forward_limit=300, single_episode_sim_limit_s=20.),
         "lap": dict(wall_seconds=600, forward_limit=5200, single_episode_sim_limit_s=240.),
     }
-    if profile == TINY_GUI_PROFILE:
+    if profile in GUI_AUTHORIZATIONS:
         caps = {"short": dict(wall_seconds=120, forward_limit=600, single_episode_sim_limit_s=20.)}
     elif profile != TINY_AUTH_PROFILE:
         raise ValueError("UNKNOWN_TINY_PROFILE")
@@ -220,11 +226,12 @@ def tiny_phase_caps(phase: str, profile: str = TINY_AUTH_PROFILE) -> dict:
 def validate_tiny_config(cfg: dict) -> None:
     """Shared host/runtime entry check. No boolean/NaN budgets or policy drift."""
     profile = cfg.get("authorization_profile")
-    expected_hash = {TINY_AUTH_PROFILE: AUTH_REQUEST_SHA256, TINY_GUI_PROFILE: GUI_AUTH_SHA256}.get(profile)
+    expected_hash = {TINY_AUTH_PROFILE: AUTH_REQUEST_SHA256,
+                     **{key: value[0] for key, value in GUI_AUTHORIZATIONS.items()}}.get(profile)
     if expected_hash is None or cfg.get("authorization_request_sha256") != expected_hash:
         raise ValueError("EXPLICIT_TINY_AUTHORIZATION_PROFILE_REQUIRED")
     caps = tiny_phase_caps(cfg["phase"], profile)
-    if profile == TINY_GUI_PROFILE and cfg.get("control_method") != GUI_CONTROL_METHOD:
+    if profile in GUI_AUTHORIZATIONS and cfg.get("control_method") != GUI_CONTROL_METHOD:
         raise ValueError("GUI_CONTROL_METHOD_REQUIRED")
     for key, maximum in caps.items():
         value = finite_number(cfg[key], key, integer=key == "forward_limit")
