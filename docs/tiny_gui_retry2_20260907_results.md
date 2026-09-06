@@ -127,7 +127,9 @@ pwsh -NoProfile -File tools/build_tiny_gui_retry2_review_packet.ps1
 ```
 
 既存の解析出力やZIPは上書きしない。Windows Python3.10/Pillow10.2.0で保存済み画像を変換。
-レビューZIPには実行source tar、限定tests、全生ログ、実画面PNG/XWD、manifestを含める。
+レビューZIPには実行source tar、限定tests、制御/推論/host/ROS生ログ、実画面PNG/XWD、manifestを含める。
+Unityが生成したprefs/Analyticsは配布対象外とし、元attempt archiveに保全。
+初回梱包はこれらの拡張子なしfile検出で停止し、未完成v1を残したまま明示除外したv2を作成した。
 次の修正候補はRViz設定保存先・正常終了と、実scanが表示されるwindowの確認。
 今回のheap破損原因や終了改善は未確定・未実装であり、再走行での解消を主張しない。
 

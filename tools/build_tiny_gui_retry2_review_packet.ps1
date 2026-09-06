@@ -1,6 +1,6 @@
 #requires -Version 7.0
 [CmdletBinding()]
-param([string]$OutputName = "review_tiny_gui_retry2_31f4e5a_v1")
+param([string]$OutputName = "review_tiny_gui_retry2_31f4e5a_v2")
 $ErrorActionPreference = "Stop"
 $repository = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $taskRoot = Join-Path $repository "tmp/tiny_gui_retry2_20260907"
@@ -51,8 +51,11 @@ foreach ($relative in @("tools/summarize_tiny_gui_retry2.py", "tests/test_tiny_g
 foreach ($folder in @("evidence", "saved_check", $attempt)) {
     $sourceRoot = Join-Path $taskRoot $folder
     foreach ($file in Get-ChildItem -LiteralPath $sourceRoot -Recurse -File) {
-        if ($file.Extension -notin @(".txt", ".json", ".jsonl", ".xml", ".log", ".png", ".xwd")) { throw "Unexpected evidence $($file.Name)" }
         $relative = [IO.Path]::GetRelativePath($sourceRoot, $file.FullName).Replace('\', '/')
+        # Unity-generated local preferences/analytics remain in the raw archive,
+        # but do not belong in the small control/inference review distribution.
+        if ($folder -eq $attempt -and $relative.StartsWith("playerconfig/")) { continue }
+        if ($file.Extension -notin @(".txt", ".json", ".jsonl", ".xml", ".log", ".png", ".xwd")) { throw "Unexpected evidence $($file.Name)" }
         Copy-Review $file.FullName "$folder/$relative"
     }
 }
@@ -70,6 +73,7 @@ $versions = [ordered]@{
 $versions | ConvertTo-Json -Depth 8 | Set-Content (Join-Path $packet "versions.json") -Encoding utf8NoBOM
 $manifest = [ordered]@{schema="TINY_GUI_RETRY2_MANIFEST_V1"; versions=$versions
     weights_included=$false; sensor_included=$false; video_included=$false
+    excluded_prefixes=@("$attempt/playerconfig/"); excluded_preserved_in="original gui_retry2_31f4e5a_01.tar"
     manifest_self_excluded=$true; files=@()}
 foreach ($file in Get-ChildItem -LiteralPath $packet -Recurse -File | Sort-Object FullName) {
     $relative = [IO.Path]::GetRelativePath($packet, $file.FullName).Replace('\', '/')
