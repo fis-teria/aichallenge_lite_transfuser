@@ -14,7 +14,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/"tools"))
 from aic_transfuser_lite.runtime.tiny_lidar_sim import (
     OfficialTiny, strict_parameters, validate_scan, validate_operation,
-    speed_acceleration, verify_container_contract, SOURCE_SHA256, WEIGHT_SHA256, input_clock_ready,
+    speed_acceleration, verify_container_contract, SOURCE_SHA256, WEIGHT_SHA256, input_clock_ready, SimReadiness,
 )
 from tiny_dev_runner import JudgeLog, TinyBudget, ASSETS, ORIGINAL_SCRIPT
 from spatial_dev_host_v4 import HostWatch, cleanup_owned
@@ -100,6 +100,26 @@ def test_clock_callback_order_waits_without_rewriting_stamp():
         input_clock_ready(record, now_ns=1_500_000_001, sim_ns=70_000_000)
     with pytest.raises(ValueError):
         input_clock_ready(record, now_ns=1_000_000_001, sim_ns=421_000_000)
+
+
+def test_ready_gate_does_not_drive_during_spawn_or_use_pre_ready_output():
+    gate = SimReadiness()
+    gate.observe("Spawned", -1)
+    gate.observe("Grounded", 1_000_000_000)
+    assert not gate.allow_drive(dict(source_ns=2_000_000_000))
+    assert gate.allow_inference(2, False)
+    assert not gate.allow_inference(3, False)
+    assert gate.allow_inference(8, True)  # Stationary check does not drive.
+    gate.observe("Ready", 6_000_000_000)
+    assert not gate.allow_drive(dict(source_ns=5_000_000_000))
+    assert gate.allow_drive(dict(source_ns=6_000_000_000))
+    with pytest.raises(ValueError): gate.observe("Grounded", 7_000_000_000)
+
+
+def test_runtime_entrypoint_parses_without_ros_imports():
+    import ast
+    source = Path(__file__).resolve().parents[1]/"tools/run_tiny_lidar_dev.py"
+    ast.parse(source.read_text())
 
 
 def test_host_monitor_arms_before_power_and_remains_armed():

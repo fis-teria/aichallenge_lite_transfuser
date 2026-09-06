@@ -160,6 +160,25 @@ def input_clock_ready(record: dict, *, now_ns: int, sim_ns: int) -> bool:
     return age >= 0
 
 
+class SimReadiness:
+    """Existing AWSIM Ready notification gates first positive send, not ML input."""
+    def __init__(self):
+        self.ready_sim_ns: int | None = None
+
+    def observe(self, phase: str, sim_ns: int) -> None:
+        if phase == "Ready" and self.ready_sim_ns is None and sim_ns >= 0:
+            self.ready_sim_ns = sim_ns
+        elif self.ready_sim_ns is not None and phase in ("Spawned", "Grounded"):
+            raise ValueError("SIM_REINITIALIZED_AFTER_READY")
+
+    def allow_inference(self, completed: int, stationary: bool) -> bool:
+        return stationary or self.ready_sim_ns is not None or completed < 3
+
+    def allow_drive(self, result: dict | None) -> bool:
+        return bool(self.ready_sim_ns is not None and result is not None
+                    and result["source_ns"] >= self.ready_sim_ns)
+
+
 def verify_container_contract(items: list[dict], project: str) -> None:
     """Pure check of current selected Docker inspect, before ROS initialization."""
     if len(items) != 2 or not project.startswith("codex-tiny-dev-"):

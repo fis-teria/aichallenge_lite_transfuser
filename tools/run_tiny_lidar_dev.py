@@ -19,6 +19,7 @@ import numpy as np
 
 from aic_transfuser_lite.runtime.tiny_lidar_sim import (
     OfficialTiny, speed_acceleration, validate_scan, validate_operation, verify_container_contract, input_clock_ready,
+    SimReadiness,
 )
 from spatial_dev_host_v4 import atomic_json
 
@@ -118,6 +119,7 @@ def main() -> int:
                         durability=DurabilityPolicy.TRANSIENT_LOCAL)
     trace = (args.output / "tiny_supervisor.jsonl").open("x", buffering=1)
     counts: Counter = Counter()
+    readiness_gate = SimReadiness()
     latest: dict = {}
     sim_ns = -1
     clock_rx = 0
@@ -191,6 +193,7 @@ def main() -> int:
             sim_ns, clock_rx = stamp, now
             return
         if role == "phase":
+            readiness_gate.observe(msg.data, sim_ns)
             log("AWSIM_PHASE", value=msg.data)
             return
         if role == "collision":
@@ -388,13 +391,18 @@ def main() -> int:
                 log("MODE_GEAR_SENT", autonomous=True, gear_command=2)
                 last_mode = now
             scan = latest["scan"]
-            if pending_id is None and scan["source_ns"] > last_inference_seen:
+            if (pending_id is None and scan["source_ns"] > last_inference_seen
+                    and readiness_gate.allow_inference(counts["tiny_outputs"], cfg["phase"] == "stationary")):
                 try:
                     inbox.put_nowait(scan)
                     pending_id = scan["input_id"]
                     log("INFERENCE_INPUT_QUEUED", input_id=pending_id)
                 except queue.Full:
                     counts["input_queue_full"] += 1
+            if cfg["phase"] != "stationary" and not readiness_gate.allow_drive(result):
+                if now-last_send >= cfg["command_period_s"]*1e9:
+                    send(0., 0., "WAIT_AWSIM_READY_AND_FRESH_TINY")
+                continue
             if result is None:
                 continue
             validate_operation(result, now_ns=now, sim_ns=sim_ns,
@@ -474,6 +482,7 @@ def main() -> int:
             observed_braking_stop=stopped_after_motion, natural_stop_sim_ns=natural_stop_sim_ns,
             distinct_tiny_inputs_sent=len(controls_with_tiny), worker_terminated=worker_terminated,
             logger_ok=logger_ok, source_frame=frame, full_sensor_saved=False,
+            awsim_ready_sim_ns=readiness_gate.ready_sim_ns,
             hash_does_not_reproduce_sensor=True, host_pause_not_braking_proof=True,
             lap_result="HOST_JUDGE_LOG_REQUIRED", v4_forwards=0, mpc_calls=0,
             learned_acceleration_used=False, physical_device_control=False)
