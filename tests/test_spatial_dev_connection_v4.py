@@ -150,3 +150,23 @@ def test_make_entry_and_no_existing_classic_controller_or_dataset():
     assert "network_mode='service:simulator'" in runner
     script = (ROOT/'integrations/awsim_dev_v4/simulator.sh').read_text()
     assert 'run_simulator.bash dev' in script
+
+
+def test_shared_network_hostname_is_checked_against_inspect(monkeypatch):
+    spec = importlib.util.spec_from_file_location('dev_identity_test', ROOT/'tools/run_spatial_sim_dev_v4.py')
+    module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+    project = 'codex-v4-dev-test'
+    def container(service, cid, network):
+        return dict(Id=cid, Image='sha256:8c650c13157ffabbc3a72bab08865ccff8338f9025b43a8f4405b4c6b96d1ba7',
+            Config=dict(Hostname='shared-sim-hostname', Cmd=['/v4/integrations/awsim_dev_v4/runtime.sh'],
+                Labels={'com.docker.compose.service':service, 'com.docker.compose.project':project}),
+            HostConfig=dict(Privileged=False, Devices=[], CapAdd=None, CapDrop=['ALL'], PidMode='',
+                IpcMode='private', SecurityOpt=['no-new-privileges:true'], NetworkMode=network), Mounts=[])
+    items = [container('simulator', 'a'*64, 'none'), container('autoware', 'b'*64, 'container:'+'a'*64)]
+    monkeypatch.setattr(module.socket, 'gethostname', lambda:'shared-sim-hostname')
+    monkeypatch.setattr(module.Path, 'iterdir', lambda p: iter([Path('lo')] if str(p) == '/sys/class/net' else []))
+    monkeypatch.setattr(module.subprocess, 'run', lambda *a, **kw: type('Result', (), {'stdout':''})())
+    module.verify_dev_isolation(items, project)
+    monkeypatch.setattr(module.socket, 'gethostname', lambda:'unexpected')
+    with pytest.raises(ValueError, match='WRONG_CURRENT_CONTAINER'):
+        module.verify_dev_isolation(items, project)

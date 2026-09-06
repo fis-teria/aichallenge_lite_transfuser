@@ -55,7 +55,11 @@ def verify_dev_isolation(items: list[dict], project: str) -> None:
             if mount['Destination'] not in ('/evidence', '/tmp/.X11-unix') and mount['RW']:
                 raise ValueError('WRITABLE_SOURCE_OR_SIMULATOR')
     current = indexed['autoware']
-    if not current['Id'].startswith(socket.gethostname()):
+    # Shared-network Docker services can inherit the simulator's hostname.
+    # Compare the actual inspected setting, not an assumed ID prefix. This
+    # check is supplementary to the complete namespace/mount checks above.
+    if (socket.gethostname() != current['Config']['Hostname']
+            or current['Config']['Cmd'] != ['/v4/integrations/awsim_dev_v4/runtime.sh']):
         raise ValueError('WRONG_CURRENT_CONTAINER')
     if [p.name for p in Path('/sys/class/net').iterdir()] != ['lo']:
         raise ValueError('EXTERNAL_INTERFACE')
