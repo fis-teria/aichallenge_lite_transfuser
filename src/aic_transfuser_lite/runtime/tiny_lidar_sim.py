@@ -146,6 +146,20 @@ def validate_operation(result: dict, *, now_ns: int, sim_ns: int, steering_limit
         raise ValueError("TINY_STEERING_PHYSICAL_LIMIT")
 
 
+def input_clock_ready(record: dict, *, now_ns: int, sim_ns: int) -> bool:
+    """A source report may arrive before /clock; wait, never rewrite its stamp.
+
+    Do not accept a future-stamped sample for actuation. Bounded 100ms lead is
+    only a transport wait, NOT extended operation validity or interpolation.
+    """
+    if not 0 <= now_ns-record["received_ns"] <= 500_000_000:
+        raise ValueError("INPUT_WALL_STALE")
+    age = sim_ns-record["source_ns"]
+    if age < -100_000_000 or age > 350_000_000:
+        raise ValueError("INPUT_SIM_STALE_OR_CLOCK_DOMAIN")
+    return age >= 0
+
+
 def verify_container_contract(items: list[dict], project: str) -> None:
     """Pure check of current selected Docker inspect, before ROS initialization."""
     if len(items) != 2 or not project.startswith("codex-tiny-dev-"):

@@ -108,3 +108,13 @@ sensor/tensor全保存は既定にせずhashとmetadataを残す。hashだけで
 Judge/実画面の有無、接触telemetry、逸脱、pause/reset/介入を明示。診断図を実画面と呼ばない。
 レビューZIPはREADME_REVIEWとmanifest、固定コード/設定、全attemptログ、出典を含める。
 独立監査済み・実車安全性・競技採用保証を意味しない。
+
+### 初回停止中確認からの限定修正
+
+`stationary_7b88981_01` は公式forward1回、操舵-0.207975745rad、約1.28ms。
+実scanは750点、frame=lidar、scan_time=0.05s。全18 parameter150286要素のload照合成立。
+操舵report stamp=69999998nsが`/clock`64999998nsより5ms先に到着し、初版はstaleとして終了した。
+駆動0回、実速度は数値誤差範囲、AWSIM前後hash一致、所有instance終了済み。
+修正はclockがreport時刻へ到達するまで送信を待つ処理。stamp改変/古い入力期限緩和なし。
+観測した20Hz scanに合わせ、short/lapの予約forwardを220/1250へ算定。
+これは既存合計3000枠内の予約配分であり、共通上限や1回60sim秒を拡張していない。

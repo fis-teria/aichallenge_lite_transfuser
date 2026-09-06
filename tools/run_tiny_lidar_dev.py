@@ -18,7 +18,7 @@ import time
 import numpy as np
 
 from aic_transfuser_lite.runtime.tiny_lidar_sim import (
-    OfficialTiny, speed_acceleration, validate_scan, validate_operation, verify_container_contract,
+    OfficialTiny, speed_acceleration, validate_scan, validate_operation, verify_container_contract, input_clock_ready,
 )
 from spatial_dev_host_v4 import atomic_json
 
@@ -81,7 +81,7 @@ def main() -> int:
     if not args.authorize_sim_session:
         raise ValueError("EXPLICIT_SIM_SESSION_REQUIRED")
     cfg = json.loads(args.config.read_text())
-    if not (10 <= cfg["wall_seconds"] <= 240 and 1 <= cfg["forward_limit"] <= 700
+    if not (10 <= cfg["wall_seconds"] <= 240 and 1 <= cfg["forward_limit"] <= 1300
             and 0 < cfg["single_episode_sim_limit_s"] <= 60):
         raise ValueError("FINITE_AUTHORIZED_BUDGET_REQUIRED")
     inspection = args.output / "instance_inspect.json"
@@ -371,10 +371,16 @@ def main() -> int:
                 last_graph = now
             if now-clock_rx > 500_000_000 or now-clock_change_rx > 500_000_000:
                 raise RuntimeError("SIM_CLOCK_STALE_OR_FROZEN")
-            for role in ("scan", "velocity", "steering"):
-                if (not 0 <= now-latest[role]["received_ns"] <= 500_000_000
-                        or not 0 <= sim_ns-latest[role]["source_ns"] <= 350_000_000):
-                    raise RuntimeError("INPUT_STALE:"+role)
+            # Report callbacks and /clock are independent. Wait for the clock
+            # watermark without changing stamps or extending a powered lease.
+            if powered_start is not None and result is not None:
+                validate_operation(result, now_ns=now, sim_ns=sim_ns,
+                                   steering_limit_rad=cfg["steering_limit_rad"])
+            readiness = [input_clock_ready(latest[role], now_ns=now, sim_ns=sim_ns)
+                         for role in ("scan", "velocity", "steering")]
+            if not all(readiness):
+                counts["clock_watermark_wait"] += 1
+                continue
             # Repeated mode/gear asserts only our declared selected consumer.
             if now-last_mode > 500_000_000:
                 mode = Bool(); mode.data = True; pubs["mode"].publish(mode)

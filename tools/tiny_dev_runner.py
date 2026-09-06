@@ -135,7 +135,7 @@ def main() -> int:
         raise ValueError("PROJECT_NAME")
     cfg = yaml.safe_load((source/"configs/control/tiny_lidar_sim.yaml").read_text())
     cfg.update(phase=args.phase, wall_seconds=args.wall_seconds,
-               forward_limit={"stationary": 12, "short": 160, "lap": 650}[args.phase])
+               forward_limit={"stationary": 12, "short": 220, "lap": 1250}[args.phase])
     atomic_json(output/"resolved_config.json", cfg)
     spec = compose_definition(source, sim, args.xvfb_root, output, args.official_package, project, args.commit)
     atomic_json(output/"compose.json", spec)
