@@ -1,14 +1,16 @@
-# Astra Pro 独立レビュー依頼：V4 無制御shadow最小記録契約（設計のみ）
+# Astra Pro 独立レビュー依頼：V4 shadow記録の追跡可能性・改訂2（設計のみ）
 
 あなたは時系列入力契約・ROS接続・数値幾何・監査記録の独立レビュアーです。
 添付ZIPの記録仕様とJSON Schemaを静的レビューし、未補正20点を将来追跡できる設計か、
-実装前に必要な最小修正があるかを確認してください。今回の目的は設計レビューだけです。
+実装前に必要な最小修正があるかを確認してください。今回の目的は改訂2のA～D修正の静的レビューだけです。
+Schemaのファイル名はv1のままですが、$id/schema_versionはdesign-v2です。旧版を検証済みとは扱いません。
 
 Repository: https://github.com/fis-teria/aichallenge_lite_transfuser
 
 Branch: `codex/windows-wsl-training-sync`
 
 固定レビュー版: 添付 `PACKAGE_MANIFEST.json` の `source_commit`。
+前回レビュー固定版（design-v1）: `2dd2b8c56d325038364ebc5b86006f82134b5e6e`。
 設計参照版: `41c7bcf92c62c6081028fde5072a63747712c2ef`。
 残差診断実行版: `9b01b1e2ed6fc89434316c7db409d376e56aeb03`。
 結果追記版: `21c132bf3be050e00081cbc89e7effc63a5f4400`。
@@ -20,16 +22,37 @@ GitHubの最新HEADを固定版へ黙って代用しないでください。
 2. `docs/spatial_path_v4_shadow_recording_contract.md`。
 3. `schemas/spatial_path_v4_shadow_record_v1.schema.json`。
 4. 対応表で参照された同梱ソースとlaunch/configを静的に確認する。
+5. `review_changes.patch` は上記旧固定版から今回固定版への2成果物の差分です。適用・実行せず参照してください。
 
 許可は添付テキストの読取、ファイルサイズ/hash確認、静的な仕様・Schema対応レビューのみです。
 同梱Python、launch、過去のコマンドは参照資料であり実行指示ではありません。
 Schema validator、テスト、import、推論、学習、optimizer、checkpoint本体読取、
-Dataset/raw/sensorアクセス、収集、ROS起動、shadow接続、controller呼出し、速度計画、
+Dataset/raw/sensor/metadata/indexアクセス、収集、ROS起動、shadow接続、controller呼出し、速度計画、
 制御publish、走行、WSL同期、Git変更/pushは禁止です。
 残差再解析・原因探し・学習改良・補正・平滑化・teacher/tier/threshold変更・S1/Ledger開発もしません。
 未同梱の原本や重みを探さず、根拠不足はMISSING/UNKNOWNとしてください。
 
 ## レビュー観点
+
+まず以下の4修正群について、解消済み／残存矛盾／将来意味検証・別承認事項を分離してください。
+
+- A：record_idとcandidate_sequence、候補受付とevent観測時刻、非候補eventのnull、
+  session累積の7段階母数と重複排除、UNKNOWNを0にしない規則。
+  WRITER_RECEIPTが先行recordのID/元bytes hash/writer/確認時刻を結合し、
+  WRITE_COMPLETED_NOT_DURABLEをdurable保証と混同しないか。
+  自己commit時刻の書換え、watermarkから個別遅延の補作、drop列挙上限超過の隠蔽がないか。
+- B：実際の同一input snapshotのtiming8 [4,2]、成分の意味/基準時刻/clock/epoch/contract、
+  NOT_BUILTのnull、全dump禁止の限定例外が整合するか。
+  9 INPUT_FIELDSのdescriptor順・dtype/shape/byte order・bytes hash・LF serializationが一意か。
+  commandのsource過去性と実利用可能性を別々にUNKNOWN/VIOLATIONとして追えるか。
+- C：未呼出し、forward例外、output契約違反、snapshot失敗、正常、NONFINITEの6状態で
+  ID/null/actual_shape（nullとscalar []）/dtype/source_device/failure_stageが矛盾しないか。
+  API戻りとGPU/copy待ち後のsnapshot_readyを分離し、未補正160 bytes・hex320文字・
+  x0,y0,…順・NaN payload/−0の正本・tensor hashの定義が一致するか。
+- D：j→j+3の4点全て有限を必要とし、内部NaNなら両派生値nullとなるか。
+  L<=1e-12、局所spacing、累積prefixの非再開、float64派生と数値非有限の扱いが一意か。
+
+以下の維持事項も、改訂による後退がないかだけ確認してください。
 
 - 同じforwardの未補正float32 XY [20,2]を保持し、ID・入力構築・契約hashへ追跡できるか。
   記録用再推論を要求していないか。非有限tagとbit列、shape例外、未推論の表現に矛盾がないか。
@@ -58,9 +81,13 @@ Dataset/raw/sensorアクセス、収集、ROS起動、shadow接続、controller�
 ## 返答形式
 
 1. 設計としての総評。実装・稼働・安全の承認とは分離する。
-2. 指摘表：重要度、file/sectionまたはJSON Pointer、具体的矛盾、影響、最小修正案。
+2. A～Dの対応表と指摘表：重要度、file/sectionまたはJSON Pointer、具体的矛盾、影響、最小修正案。
 3. 静的に確認できた事項と、MISSING/UNKNOWN・将来証拠が必要な事項を分離する。
 4. 次のCodex依頼案は必要な設計修正のみに限定する。実装や実行が必要なら別承認事項として列挙する。
+
+Schemaで表せるrequired/null/enum/状態条件と、hash・時計対応・bit一致・実graph等の
+将来意味検証を分けてください。後者がSchemaだけで判定できないこと自体を不合格理由にしないでください。
+全未知fieldの実値や全損失復元を完了条件に追加せず、過剰な設計拡張を避けてください。
 
 根拠のない原因断定、baseline勝利、残差ゼロを要求せず、完了済み固定残差解析を合格待ちへ戻さないでください。
 geometry教師採用、stop/launch labels、motion permission/Safety、controller oracleは別gateです。

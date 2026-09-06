@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:aic:spatial-path-v4:shadow-record:design-v1",
-  "title": "Spatial Path V4 shadow recording design v1 (NOT execution authorization)",
+  "$id": "urn:aic:spatial-path-v4:shadow-record:design-v2",
+  "title": "Spatial Path V4 shadow recording design v2 (NOT execution authorization)",
   "description": "Design-only envelope. Cross-field temporal, geometric, hash and no-control invariants additionally require the companion document's future semantic tests, not executed in this task.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "authorization", "kind", "record"],
   "properties": {
-    "schema_version": {"const": "spatial_path_v4_shadow_record_design_v1"},
+    "schema_version": {"const": "spatial_path_v4_shadow_record_design_v2"},
     "authorization": {"$ref": "#/$defs/authorization"},
     "kind": {"enum": ["shadow_event", "offline_join_sidecar"]},
     "record": {"type": "object"}
@@ -55,9 +55,15 @@
     "nullable20": {"type": "array", "minItems": 20, "maxItems": 20, "items": {"type": ["number", "null"]}},
     "bool20": {"type": "array", "minItems": 20, "maxItems": 20, "items": {"type": "boolean"}},
     "grid": {"const": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0]},
+    "counter": {"type":"object","additionalProperties":false,"required":["status","value","reason"],"properties":{"status":{"enum":["KNOWN","UNKNOWN","MISSING"]},"value":{"type":["integer","null"],"minimum":0},"reason":{"$ref":"#/$defs/reason"}},"allOf":[{"if":{"properties":{"status":{"const":"KNOWN"}}},"then":{"properties":{"value":{"type":"integer"}}},"else":{"properties":{"value":{"type":"null"}}}}]},
+    "causalityCheck": {"type":"object","additionalProperties":false,"required":["status","lhs_time","rhs_time","lhs_reference","rhs_reference","clock_mapping_evidence","reason"],"properties":{"status":{"enum":["PROVEN","UNKNOWN","VIOLATION","NOT_APPLICABLE"]},"lhs_time":{"$ref":"#/$defs/time"},"rhs_time":{"$ref":"#/$defs/time"},"lhs_reference":{"$ref":"#/$defs/reason"},"rhs_reference":{"$ref":"#/$defs/reason"},"clock_mapping_evidence":{"$ref":"#/$defs/hash"},"reason":{"$ref":"#/$defs/reason"}}},
+    "inputDescriptor": {"type":"object","additionalProperties":false,"required":["field","dtype","shape","byte_order","bytes_sha256"],"properties":{"field":{"enum":["image","image_mask","lidar","lidar_mask","ego","ego_feature_mask","command_history","command_mask","sensor_dt_sec"]},"dtype":{"enum":["float32","bool"]},"shape":{"type":"array","minItems":1,"maxItems":8,"items":{"type":"integer","minimum":0}},"byte_order":{"const":"little"},"bytes_sha256":{"$ref":"#/$defs/sha"}}},
+    "sensorTiming": {"type":"object","additionalProperties":false,"required":["status","values_s","input_builder_id","input_contract_version","input_contract_hash","components","reason"],"properties":{"status":{"enum":["BUILT","NOT_BUILT"]},"values_s":{"oneOf":[{"type":"array","minItems":4,"maxItems":4,"items":{"type":"array","minItems":2,"maxItems":2,"items":{"$ref":"#/$defs/numericCell"}}},{"type":"null"}]},"input_builder_id":{"$ref":"#/$defs/nullableId"},"input_contract_version":{"$ref":"#/$defs/nullableId"},"input_contract_hash":{"$ref":"#/$defs/hash"},"components":{"oneOf":[{"type":"array","minItems":4,"maxItems":4,"items":{"type":"array","minItems":2,"maxItems":2,"items":{"type":"object","additionalProperties":false,"required":["component_index","meaning","operation","lhs_time","rhs_time","reference","clock_mapping_evidence"],"properties":{"component_index":{"type":"integer","minimum":0,"maximum":1},"meaning":{"$ref":"#/$defs/reason"},"operation":{"enum":["LHS_MINUS_RHS_SECONDS","CONSTANT_SECONDS","UNKNOWN"]},"lhs_time":{"$ref":"#/$defs/time"},"rhs_time":{"$ref":"#/$defs/time"},"reference":{"$ref":"#/$defs/reason"},"clock_mapping_evidence":{"$ref":"#/$defs/hash"}}}}},{"type":"null"}]},"reason":{"$ref":"#/$defs/reason"}},"allOf":[{"if":{"properties":{"status":{"enum":["BUILT"]}}},"then":{"properties":{"values_s":{"type":"array","minItems":4,"maxItems":4,"items":{"type":"array","minItems":2,"maxItems":2,"items":{"$ref":"#/$defs/numericCell"}}},"input_builder_id":{"$ref":"#/$defs/id"},"input_contract_version":{"$ref":"#/$defs/id"},"components":{"type":"array","minItems":4,"maxItems":4,"items":{"type":"array","minItems":2,"maxItems":2,"items":{"type":"object","additionalProperties":false,"required":["component_index","meaning","operation","lhs_time","rhs_time","reference","clock_mapping_evidence"],"properties":{"component_index":{"type":"integer","minimum":0,"maximum":1},"meaning":{"$ref":"#/$defs/reason"},"operation":{"enum":["LHS_MINUS_RHS_SECONDS","CONSTANT_SECONDS","UNKNOWN"]},"lhs_time":{"$ref":"#/$defs/time"},"rhs_time":{"$ref":"#/$defs/time"},"reference":{"$ref":"#/$defs/reason"},"clock_mapping_evidence":{"$ref":"#/$defs/hash"}}}}}}}},{"if":{"properties":{"status":{"enum":["NOT_BUILT"]}}},"then":{"properties":{"values_s":{"type":"null"},"input_builder_id":{"type":"null"},"input_contract_version":{"type":"null"},"components":{"type":"null"}}}}]},
+    "stageCounts": {"type":"object","additionalProperties":false,"required":["scope_session_id","scope","reset_policy","observed_at","observer_id","accepted","input_built","forward_started","forward_returned","enqueued","saved","dropped","reason"],"properties":{"scope_session_id":{"$ref":"#/$defs/id"},"scope":{"const":"SESSION_TO_OBSERVATION"},"reset_policy":{"const":"NEVER_RESET_IN_SESSION"},"observed_at":{"$ref":"#/$defs/time"},"observer_id":{"$ref":"#/$defs/id"},"accepted":{"$ref":"#/$defs/counter"},"input_built":{"$ref":"#/$defs/counter"},"forward_started":{"$ref":"#/$defs/counter"},"forward_returned":{"$ref":"#/$defs/counter"},"enqueued":{"$ref":"#/$defs/counter"},"saved":{"$ref":"#/$defs/counter"},"dropped":{"$ref":"#/$defs/counter"},"reason":{"$ref":"#/$defs/reason"}}},
+    "commitReceipt": {"type":"object","additionalProperties":false,"required":["target_record_id","target_session_id","target_candidate_sequence","original_bytes_hash","writer_id","confirmed_at","commit_level","reason"],"properties":{"target_record_id":{"$ref":"#/$defs/id"},"target_session_id":{"$ref":"#/$defs/id"},"target_candidate_sequence":{"type":["integer","null"],"minimum":0},"original_bytes_hash":{"$ref":"#/$defs/sha"},"writer_id":{"$ref":"#/$defs/id"},"confirmed_at":{"allOf":[{"$ref":"#/$defs/time"},{"properties":{"status":{"const":"KNOWN"},"domain":{"const":"MONOTONIC"}}}]},"commit_level":{"const":"WRITE_COMPLETED_NOT_DURABLE"},"reason":{"$ref":"#/$defs/reason"}}},
     "slot": {
       "type": "object", "additionalProperties": false,
-      "required": ["slot_index", "sample_id", "source", "padding", "mask_used", "feature_mask_used", "acquisition_time", "header_time", "receipt_ros_time", "receipt_monotonic_time", "available_monotonic_time", "age_at_input", "causality", "payload_hash", "reason"],
+      "required": ["slot_index", "sample_id", "source", "padding", "mask_used", "feature_mask_used", "acquisition_time", "header_time", "receipt_ros_time", "receipt_monotonic_time", "available_monotonic_time", "age_at_input", "causality", "command_source_past", "command_available_before_input", "payload_hash", "reason"],
       "properties": {
         "slot_index": {"type": "integer", "minimum": 0, "maximum": 9}, "sample_id": {"$ref": "#/$defs/nullableId"},
         "source": {"$ref": "#/$defs/reason"}, "padding": {"type": "boolean"}, "mask_used": {"type": "boolean"},
@@ -66,26 +72,29 @@
         "receipt_ros_time": {"$ref": "#/$defs/time"}, "receipt_monotonic_time": {"$ref": "#/$defs/time"},
         "available_monotonic_time": {"$ref": "#/$defs/time"}, "age_at_input": {"$ref": "#/$defs/duration"},
         "causality": {"enum": ["PROVEN_PAST_AND_AVAILABLE", "NOT_APPLICABLE", "UNKNOWN", "VIOLATION"]},
+        "command_source_past": {"$ref": "#/$defs/causalityCheck"}, "command_available_before_input": {"$ref": "#/$defs/causalityCheck"},
         "payload_hash": {"$ref": "#/$defs/hash"}, "reason": {"$ref": "#/$defs/reason"}
       }
     },
     "history": {
-      "type": "object", "additionalProperties": false, "required": ["status", "camera", "lidar", "ego", "command", "tensor_hash", "input_builder_id", "reason"],
+      "type": "object", "additionalProperties": false, "required": ["status", "camera", "lidar", "ego", "command", "tensor_hash", "input_builder_id", "input_descriptors", "sensor_timing", "reason"],
       "properties": {
         "status": {"enum": ["BUILT", "NOT_BUILT"]}, "camera": {"type": "array", "maxItems": 4, "items": {"$ref": "#/$defs/slot"}},
         "lidar": {"type": "array", "maxItems": 4, "items": {"$ref": "#/$defs/slot"}}, "ego": {"type": "array", "maxItems": 10, "items": {"$ref": "#/$defs/slot"}},
         "command": {"type": "array", "maxItems": 10, "items": {"$ref": "#/$defs/slot"}}, "tensor_hash": {"$ref": "#/$defs/hash"},
+        "input_descriptors": {"oneOf": [{"type": "array", "minItems": 9, "maxItems": 9, "items": {"$ref": "#/$defs/inputDescriptor"}}, {"type": "null"}]},
+        "sensor_timing": {"$ref": "#/$defs/sensorTiming"},
         "input_builder_id": {"$ref": "#/$defs/nullableId"}, "reason": {"$ref": "#/$defs/reason"}
       },
-      "allOf": [{"if": {"properties": {"status": {"const": "BUILT"}}}, "then": {"properties": {"camera": {"minItems": 4}, "lidar": {"minItems": 4}, "ego": {"minItems": 10}, "command": {"minItems": 10}, "input_builder_id": {"$ref": "#/$defs/id"}}}}]
+      "allOf": [{"if":{"properties":{"status":{"enum":["BUILT"]}}},"then":{"properties":{"camera":{"minItems":4},"lidar":{"minItems":4},"ego":{"minItems":10},"command":{"minItems":10},"input_builder_id":{"$ref":"#/$defs/id"},"input_descriptors":{"type":"array"},"tensor_hash":{"properties":{"status":{"const":"KNOWN"}}},"sensor_timing":{"properties":{"status":{"const":"BUILT"}}}}}},{"if":{"properties":{"status":{"enum":["NOT_BUILT"]}}},"then":{"properties":{"input_builder_id":{"type":"null"},"input_descriptors":{"type":"null"},"tensor_hash":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}},"sensor_timing":{"properties":{"status":{"const":"NOT_BUILT"}}}}}}]
     },
     "chord": {
       "type": "object", "additionalProperties": false,
       "required": ["j", "start_s_m", "end_s_m", "length_m", "direction_rad", "status", "reason"],
       "properties": {"j": {"type": "integer", "minimum": 0, "maximum": 16}, "start_s_m": {"type": "number"}, "end_s_m": {"type": "number"},
         "length_m": {"type": ["number", "null"], "minimum": 0}, "direction_rad": {"type": ["number", "null"], "minimum": -3.141592653589793, "maximum": 3.141592653589793},
-        "status": {"enum": ["DEFINED", "UNKNOWN_NONFINITE", "UNKNOWN_DEGENERATE", "NOT_COMPUTED"]}, "reason": {"$ref": "#/$defs/reason"}},
-      "allOf": [{"if": {"properties": {"status": {"const": "DEFINED"}}}, "then": {"properties": {"length_m": {"type": "number", "exclusiveMinimum": 0}, "direction_rad": {"type": "number"}}}, "else": {"properties": {"direction_rad": {"type": "null"}}}}]
+        "status": {"enum": ["DEFINED", "UNKNOWN_NONFINITE", "UNKNOWN_NUMERIC", "UNKNOWN_DEGENERATE", "NOT_COMPUTED"]}, "reason": {"$ref": "#/$defs/reason"}},
+      "allOf": [{"if":{"properties":{"status":{"enum":["DEFINED"]}}},"then":{"properties":{"length_m":{"type":"number","exclusiveMinimum":1e-12},"direction_rad":{"type":"number"}}}},{"if":{"properties":{"status":{"enum":["UNKNOWN_NONFINITE","UNKNOWN_NUMERIC","NOT_COMPUTED"]}}},"then":{"properties":{"length_m":{"type":"null"},"direction_rad":{"type":"null"}}}},{"if":{"properties":{"status":{"enum":["UNKNOWN_DEGENERATE"]}}},"then":{"properties":{"length_m":{"type":"number","minimum":0,"maximum":1e-12},"direction_rad":{"type":"null"}}}}]
     },
     "geometry": {
       "type": "object", "additionalProperties": false,
@@ -95,22 +104,360 @@
         "status": {"enum": ["COMPUTED", "PARTIAL", "NOT_COMPUTED"]}, "reason": {"$ref": "#/$defs/reason"}}
     },
     "output": {
-      "type": "object", "additionalProperties": false,
-      "required": ["status", "reason", "output_id", "forward_invocation_id", "model_xy_m", "nominal_s_m", "frame", "t_obs", "pose_reference_point", "rear_axle_alignment", "actual_shape", "dtype", "float32_le_hex", "tensor_hash", "geometry"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason",
+        "failure_stage",
+        "output_id",
+        "forward_invocation_id",
+        "model_xy_m",
+        "nominal_s_m",
+        "frame",
+        "t_obs",
+        "pose_reference_point",
+        "rear_axle_alignment",
+        "actual_shape",
+        "dtype",
+        "source_device",
+        "metadata_reason",
+        "float32_le_hex",
+        "tensor_hash",
+        "geometry"
+      ],
       "properties": {
-        "status": {"enum": ["NOT_INFERRED", "EXCEPTION", "SHAPE_ERROR", "NONFINITE", "SHAPE_FINITE_ONLY"]}, "reason": {"$ref": "#/$defs/reason"},
-        "output_id": {"$ref": "#/$defs/nullableId"}, "forward_invocation_id": {"$ref": "#/$defs/nullableId"},
-        "model_xy_m": {"oneOf": [{"$ref": "#/$defs/xy20"}, {"type": "null"}]}, "nominal_s_m": {"$ref": "#/$defs/grid"},
-        "frame": {"$ref": "#/$defs/nullableId"}, "t_obs": {"$ref": "#/$defs/time"},
-        "pose_reference_point": {"enum": ["BASE_LINK_ORIGIN", "UNKNOWN"]}, "rear_axle_alignment": {"const": "UNKNOWN_NOT_ASSUMED"},
-        "actual_shape": {"type": "array", "maxItems": 8, "items": {"type": "integer", "minimum": 0}}, "dtype": {"type": ["string", "null"], "maxLength": 64},
-        "float32_le_hex": {"type": ["string", "null"], "pattern": "^[a-f0-9]{320}$"}, "tensor_hash": {"$ref": "#/$defs/hash"},
-        "geometry": {"oneOf": [{"$ref": "#/$defs/geometry"}, {"type": "null"}]}
+        "status": {
+          "enum": [
+            "NOT_INFERRED",
+            "FORWARD_EXCEPTION",
+            "OUTPUT_CONTRACT_ERROR",
+            "SNAPSHOT_ERROR",
+            "NONFINITE",
+            "SHAPE_FINITE_ONLY"
+          ]
+        },
+        "reason": {
+          "$ref": "#/$defs/reason"
+        },
+        "failure_stage": {
+          "enum": [
+            "NONE",
+            "FORWARD",
+            "OUTPUT_CONTRACT",
+            "SNAPSHOT"
+          ]
+        },
+        "output_id": {
+          "$ref": "#/$defs/nullableId"
+        },
+        "forward_invocation_id": {
+          "$ref": "#/$defs/nullableId"
+        },
+        "model_xy_m": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/xy20"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nominal_s_m": {
+          "$ref": "#/$defs/grid"
+        },
+        "frame": {
+          "$ref": "#/$defs/nullableId"
+        },
+        "t_obs": {
+          "$ref": "#/$defs/time"
+        },
+        "pose_reference_point": {
+          "enum": [
+            "BASE_LINK_ORIGIN",
+            "UNKNOWN"
+          ]
+        },
+        "rear_axle_alignment": {
+          "const": "UNKNOWN_NOT_ASSUMED"
+        },
+        "actual_shape": {
+          "oneOf": [
+            {
+              "type": "array",
+              "maxItems": 8,
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dtype": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 64
+        },
+        "source_device": {
+          "$ref": "#/$defs/nullableId"
+        },
+        "metadata_reason": {
+          "$ref": "#/$defs/reason"
+        },
+        "float32_le_hex": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{320}$"
+        },
+        "tensor_hash": {
+          "$ref": "#/$defs/hash"
+        },
+        "geometry": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/geometry"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
       },
       "allOf": [
-        {"if": {"properties": {"status": {"enum": ["SHAPE_FINITE_ONLY", "NONFINITE"]}}}, "then": {"properties": {"model_xy_m": {"$ref": "#/$defs/xy20"}, "output_id": {"$ref": "#/$defs/id"}, "forward_invocation_id": {"$ref": "#/$defs/id"}, "actual_shape": {"const": [1, 20, 2]}, "dtype": {"const": "float32"}, "float32_le_hex": {"type": "string"}, "frame": {"const": "base_link"}, "pose_reference_point": {"const": "BASE_LINK_ORIGIN"}, "geometry": {"$ref": "#/$defs/geometry"}}}},
-        {"if": {"properties": {"status": {"const": "SHAPE_FINITE_ONLY"}}}, "then": {"properties": {"model_xy_m": {"$ref": "#/$defs/finiteXY20"}}}},
-        {"if": {"properties": {"status": {"enum": ["NOT_INFERRED", "EXCEPTION", "SHAPE_ERROR"]}}}, "then": {"properties": {"model_xy_m": {"type": "null"}, "float32_le_hex": {"type": "null"}, "geometry": {"type": "null"}}}}
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "NOT_INFERRED"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "forward_invocation_id": {
+                "type": "null"
+              },
+              "output_id": {
+                "type": "null"
+              },
+              "actual_shape": {
+                "type": "null"
+              },
+              "dtype": {
+                "type": "null"
+              },
+              "source_device": {
+                "type": "null"
+              },
+              "failure_stage": {
+                "const": "NONE"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "FORWARD_EXCEPTION"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "forward_invocation_id": {
+                "$ref": "#/$defs/id"
+              },
+              "output_id": {
+                "type": "null"
+              },
+              "actual_shape": {
+                "type": "null"
+              },
+              "dtype": {
+                "type": "null"
+              },
+              "source_device": {
+                "type": "null"
+              },
+              "failure_stage": {
+                "const": "FORWARD"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "OUTPUT_CONTRACT_ERROR"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "forward_invocation_id": {
+                "$ref": "#/$defs/id"
+              },
+              "output_id": {
+                "$ref": "#/$defs/id"
+              },
+              "failure_stage": {
+                "const": "OUTPUT_CONTRACT"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "SNAPSHOT_ERROR"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "forward_invocation_id": {
+                "$ref": "#/$defs/id"
+              },
+              "output_id": {
+                "$ref": "#/$defs/id"
+              },
+              "failure_stage": {
+                "const": "SNAPSHOT"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "NOT_INFERRED",
+                  "FORWARD_EXCEPTION",
+                  "OUTPUT_CONTRACT_ERROR",
+                  "SNAPSHOT_ERROR"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "model_xy_m": {
+                "type": "null"
+              },
+              "float32_le_hex": {
+                "type": "null"
+              },
+              "geometry": {
+                "type": "null"
+              },
+              "tensor_hash": {
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "MISSING",
+                      "UNKNOWN"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "SHAPE_FINITE_ONLY",
+                  "NONFINITE"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "model_xy_m": {
+                "$ref": "#/$defs/xy20"
+              },
+              "output_id": {
+                "$ref": "#/$defs/id"
+              },
+              "forward_invocation_id": {
+                "$ref": "#/$defs/id"
+              },
+              "actual_shape": {
+                "const": [
+                  1,
+                  20,
+                  2
+                ]
+              },
+              "dtype": {
+                "const": "float32"
+              },
+              "float32_le_hex": {
+                "type": "string"
+              },
+              "frame": {
+                "const": "base_link"
+              },
+              "pose_reference_point": {
+                "const": "BASE_LINK_ORIGIN"
+              },
+              "geometry": {
+                "$ref": "#/$defs/geometry"
+              },
+              "failure_stage": {
+                "const": "NONE"
+              },
+              "tensor_hash": {
+                "properties": {
+                  "status": {
+                    "const": "KNOWN"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "SHAPE_FINITE_ONLY"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "model_xy_m": {
+                "$ref": "#/$defs/finiteXY20"
+              }
+            }
+          }
+        }
       ]
     },
     "transform": {
@@ -124,32 +471,30 @@
     },
     "event": {
       "type": "object", "additionalProperties": false,
-      "required": ["record_id", "session_id", "sequence", "reset_id", "process_boot_id", "event_type", "status", "reason", "identities", "timing", "history", "output", "transforms", "drift", "logger", "no_control_evidence"],
+      "required": ["record_id", "session_id", "candidate_sequence", "candidate_reason", "stage_counts", "commit_receipt", "reset_id", "process_boot_id", "event_type", "status", "reason", "identities", "timing", "history", "output", "transforms", "drift", "logger", "no_control_evidence"],
       "properties": {
-        "record_id": {"$ref": "#/$defs/id"}, "session_id": {"$ref": "#/$defs/id"}, "sequence": {"type": "integer", "minimum": 0}, "reset_id": {"$ref": "#/$defs/id"}, "process_boot_id": {"$ref": "#/$defs/id"},
-        "event_type": {"enum": ["FRAME", "RESET", "DROP", "LOGGER_HEALTH", "SESSION_END"]},
+        "record_id": {"$ref": "#/$defs/id"}, "session_id": {"$ref": "#/$defs/id"}, "candidate_sequence": {"type": ["integer", "null"], "minimum": 0}, "candidate_reason": {"$ref": "#/$defs/reason"},
+        "stage_counts": {"oneOf": [{"$ref": "#/$defs/stageCounts"}, {"type": "null"}]}, "commit_receipt": {"oneOf": [{"$ref": "#/$defs/commitReceipt"}, {"type": "null"}]}, "reset_id": {"$ref": "#/$defs/id"}, "process_boot_id": {"$ref": "#/$defs/id"},
+        "event_type": {"enum": ["FRAME", "RESET", "DROP", "LOGGER_HEALTH", "SESSION_END", "WRITER_RECEIPT"]},
         "status": {"enum": ["OBSERVED", "WARM_UP", "STALE", "DUPLICATE", "CLOCK_RESET", "EXCEPTION", "DROPPED", "LOGGER_STOPPED", "INCOMPLETE"]}, "reason": {"$ref": "#/$defs/reason"},
         "identities": {"type": "object", "additionalProperties": false, "required": ["code", "model", "checkpoint", "config", "input_contract", "output_contract", "schema"],
           "properties": {"code": {"$ref": "#/$defs/hash"}, "model": {"$ref": "#/$defs/hash"}, "checkpoint": {"$ref": "#/$defs/hash"}, "config": {"$ref": "#/$defs/hash"}, "input_contract": {"$ref": "#/$defs/hash"}, "output_contract": {"$ref": "#/$defs/hash"}, "schema": {"$ref": "#/$defs/hash"}}},
-        "timing": {"type": "object", "additionalProperties": false,
-          "required": ["input_finalized", "inference_start", "inference_end", "record_enqueued", "record_committed", "inference_duration", "end_to_end_age"],
-          "properties": {"input_finalized": {"$ref": "#/$defs/time"}, "inference_start": {"$ref": "#/$defs/time"}, "inference_end": {"$ref": "#/$defs/time"}, "record_enqueued": {"$ref": "#/$defs/time"}, "record_committed": {"$ref": "#/$defs/time"}, "inference_duration": {"$ref": "#/$defs/duration"}, "end_to_end_age": {"$ref": "#/$defs/duration"}}},
+        "timing": {"type":"object","additionalProperties":false,"required":["candidate_received","event_observed","input_finalized","inference_start","inference_api_return","snapshot_ready","inference_failed_at","snapshot_failed_at","record_enqueued","inference_duration","end_to_end_age"],"properties":{"candidate_received":{"$ref":"#/$defs/time"},"event_observed":{"$ref":"#/$defs/time"},"input_finalized":{"$ref":"#/$defs/time"},"inference_start":{"$ref":"#/$defs/time"},"inference_api_return":{"$ref":"#/$defs/time"},"snapshot_ready":{"$ref":"#/$defs/time"},"inference_failed_at":{"$ref":"#/$defs/time"},"snapshot_failed_at":{"$ref":"#/$defs/time"},"record_enqueued":{"$ref":"#/$defs/time"},"inference_duration":{"$ref":"#/$defs/duration"},"end_to_end_age":{"$ref":"#/$defs/duration"}}},
         "history": {"$ref": "#/$defs/history"}, "output": {"$ref": "#/$defs/output"},
         "transforms": {"type": "array", "maxItems": 2, "items": {"$ref": "#/$defs/transform"}},
         "drift": {"type": "object", "additionalProperties": false, "required": ["status", "reason", "reference_output_id", "transform_ids", "comparison_frame", "comparison_time"],
           "properties": {"status": {"enum": ["UNKNOWN", "ELIGIBLE_FOR_SEPARATE_DIAGNOSTIC"]}, "reason": {"$ref": "#/$defs/reason"}, "reference_output_id": {"$ref": "#/$defs/nullableId"}, "transform_ids": {"type": "array", "maxItems": 2, "items": {"$ref": "#/$defs/id"}}, "comparison_frame": {"$ref": "#/$defs/nullableId"}, "comparison_time": {"$ref": "#/$defs/time"}}},
-        "logger": {"type": "object", "additionalProperties": false,
-          "required": ["state", "queue_capacity", "queue_depth", "dropped_total", "drop_sequence_ranges", "backpressure", "write_failure", "last_committed_sequence", "health_evidence", "payload_policy", "reason"],
-          "properties": {"state": {"enum": ["HEALTHY", "OVERFLOW", "FAILED", "UNKNOWN"]}, "queue_capacity": {"type": ["integer", "null"], "minimum": 1}, "queue_depth": {"type": ["integer", "null"], "minimum": 0}, "dropped_total": {"type": ["integer", "null"], "minimum": 0}, "drop_sequence_ranges": {"type": "array", "maxItems": 64, "items": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "integer", "minimum": 0}}}, "backpressure": {"$ref": "#/$defs/reason"}, "write_failure": {"type": ["string", "null"], "maxLength": 2048}, "last_committed_sequence": {"type": ["integer", "null"], "minimum": 0}, "health_evidence": {"$ref": "#/$defs/hash"}, "payload_policy": {"const": "NO_SENSOR_OR_INPUT_TENSOR_FULL_DUMP"}, "reason": {"$ref": "#/$defs/reason"}}},
+        "logger": {"type":"object","additionalProperties":false,"required":["state","queue_capacity","queue_depth","drop_candidate_ranges","backpressure","write_failure","health_evidence","payload_policy","reason"],"properties":{"state":{"enum":["HEALTHY","OVERFLOW","FAILED","UNKNOWN"]},"queue_capacity":{"type":["integer","null"],"minimum":1},"queue_depth":{"type":["integer","null"],"minimum":0},"drop_candidate_ranges":{"type":"object","additionalProperties":false,"required":["status","ranges","reason"],"properties":{"status":{"enum":["COMPLETE","PARTIAL","UNKNOWN"]},"ranges":{"type":"array","maxItems":64,"items":{"type":"array","minItems":2,"maxItems":2,"items":{"type":"integer","minimum":0}}},"reason":{"$ref":"#/$defs/reason"}}},"backpressure":{"$ref":"#/$defs/reason"},"write_failure":{"type":["string","null"],"maxLength":2048},"health_evidence":{"$ref":"#/$defs/hash"},"payload_policy":{"const":"NO_FULL_INPUT_DUMP_EXCEPT_TIMING8"},"reason":{"$ref":"#/$defs/reason"}}},
         "no_control_evidence": {"type": "object", "additionalProperties": false,
           "required": ["status", "source_callgraph", "resolved_launch_remaps", "graph_endpoints", "write_attempt_audit", "permission_policy", "reason"],
           "properties": {"status": {"enum": ["NOT_VERIFIED", "EVIDENCE_COLLECTED_NOT_SAFETY_APPROVAL"]}, "source_callgraph": {"$ref": "#/$defs/hash"}, "resolved_launch_remaps": {"$ref": "#/$defs/hash"}, "graph_endpoints": {"$ref": "#/$defs/hash"}, "write_attempt_audit": {"$ref": "#/$defs/hash"}, "permission_policy": {"$ref": "#/$defs/hash"}, "reason": {"$ref": "#/$defs/reason"}}}
-      }
+      },
+      "allOf": [{"if":{"properties":{"event_type":{"enum":["FRAME","DROP"]}}},"then":{"properties":{"candidate_sequence":{"type":"integer"}}}},{"if":{"properties":{"event_type":{"enum":["LOGGER_HEALTH","SESSION_END"]}}},"then":{"properties":{"stage_counts":{"$ref":"#/$defs/stageCounts"}}}},{"if":{"properties":{"event_type":{"enum":["WRITER_RECEIPT"]}}},"then":{"properties":{"commit_receipt":{"$ref":"#/$defs/commitReceipt"}}}},{"if":{"properties":{"event_type":{"enum":["FRAME","DROP","RESET","LOGGER_HEALTH","SESSION_END"]}}},"then":{"properties":{"commit_receipt":{"type":"null"}}}},{"if":{"properties":{"event_type":{"enum":["RESET","LOGGER_HEALTH","SESSION_END","WRITER_RECEIPT"]}}},"then":{"properties":{"candidate_sequence":{"type":"null"},"history":{"properties":{"status":{"const":"NOT_BUILT"},"camera":{"maxItems":0},"lidar":{"maxItems":0},"ego":{"maxItems":0},"command":{"maxItems":0}}},"output":{"properties":{"status":{"const":"NOT_INFERRED"}}},"transforms":{"maxItems":0},"drift":{"properties":{"status":{"const":"UNKNOWN"}}}}}},{"if":{"properties":{"event_type":{"enum":["RESET","LOGGER_HEALTH","SESSION_END","WRITER_RECEIPT"]}}},"then":{"properties":{"timing":{"properties":{"candidate_received":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}},"input_finalized":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}},"inference_start":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}},"inference_api_return":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}},"snapshot_ready":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}},"inference_failed_at":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}},"snapshot_failed_at":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}}}}}}},{"if":{"properties":{"output":{"properties":{"status":{"const":"NOT_INFERRED"}}}}},"then":{"properties":{"timing":{"properties":{"inference_start":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}},"inference_api_return":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}},"snapshot_ready":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}},"inference_failed_at":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}},"snapshot_failed_at":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}}}}}}},{"if":{"properties":{"output":{"properties":{"status":{"const":"FORWARD_EXCEPTION"}}}}},"then":{"properties":{"timing":{"properties":{"inference_api_return":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}},"snapshot_ready":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}},"snapshot_failed_at":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}}}}}}},{"if":{"properties":{"output":{"properties":{"status":{"enum":["OUTPUT_CONTRACT_ERROR","SNAPSHOT_ERROR"]}}}}},"then":{"properties":{"timing":{"properties":{"snapshot_ready":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}},"inference_failed_at":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}}}}}}},{"if":{"properties":{"output":{"properties":{"status":{"enum":["SHAPE_FINITE_ONLY","NONFINITE"]}}}}},"then":{"properties":{"history":{"properties":{"status":{"const":"BUILT"}}},"timing":{"properties":{"inference_failed_at":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}},"snapshot_failed_at":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}}}}}}},{"if":{"properties":{"history":{"properties":{"status":{"const":"NOT_BUILT"}}}}},"then":{"properties":{"output":{"properties":{"status":{"const":"NOT_INFERRED"}}},"timing":{"properties":{"input_finalized":{"properties":{"status":{"enum":["MISSING","UNKNOWN"]}}}}}}}}]
     },
     "sidecar": {
       "type": "object", "additionalProperties": false,
-      "required": ["session_id", "reset_id", "sequence", "input_builder_id", "output_id", "original_record_hash", "teacher_contract", "teacher_status", "teacher_xy_m", "teacher_mask", "cut_reason", "annotation_basis", "postprocessing_code", "join_status", "reason"],
-      "properties": {"session_id": {"$ref": "#/$defs/id"}, "reset_id": {"$ref": "#/$defs/id"}, "sequence": {"type": "integer", "minimum": 0}, "input_builder_id": {"$ref": "#/$defs/nullableId"}, "output_id": {"$ref": "#/$defs/nullableId"}, "original_record_hash": {"$ref": "#/$defs/hash"}, "teacher_contract": {"$ref": "#/$defs/hash"},
+      "required": ["session_id", "reset_id", "candidate_sequence", "input_builder_id", "output_id", "original_record_hash", "teacher_contract", "teacher_status", "teacher_xy_m", "teacher_mask", "cut_reason", "annotation_basis", "postprocessing_code", "join_status", "reason"],
+      "properties": {"session_id": {"$ref": "#/$defs/id"}, "reset_id": {"$ref": "#/$defs/id"}, "candidate_sequence": {"type": "integer", "minimum": 0}, "input_builder_id": {"$ref": "#/$defs/nullableId"}, "output_id": {"$ref": "#/$defs/nullableId"}, "original_record_hash": {"$ref": "#/$defs/hash"}, "teacher_contract": {"$ref": "#/$defs/hash"},
         "teacher_status": {"enum": ["OBSERVED_SUPPORT", "KNOWN_ZERO", "UNKNOWN", "MISSING"]}, "teacher_xy_m": {"oneOf": [{"$ref": "#/$defs/finiteXY20"}, {"type": "null"}]}, "teacher_mask": {"$ref": "#/$defs/bool20"}, "cut_reason": {"$ref": "#/$defs/reason"}, "annotation_basis": {"$ref": "#/$defs/hash"}, "postprocessing_code": {"$ref": "#/$defs/hash"}, "join_status": {"enum": ["JOINED", "AMBIGUOUS", "MISSING"]}, "reason": {"$ref": "#/$defs/reason"}}
     }
   }
