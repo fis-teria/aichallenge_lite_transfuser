@@ -1,0 +1,57 @@
+version: SIM_E2E_CONTROLLED_TEST_V1
+enabled: false
+profile_kind: SIM_PROFILE_PENDING_FRAME_AND_FOOTPRINT_BINDING
+# Dimensions: remote racing_kart_description/vehicle_info.param.yaml.
+# Physical steering is the STRICTER actual AWSIM vehicle.yaml value (30 deg),
+# not the 0.64 rad URDF/controller value. Motion limits below are stricter test caps.
+wheelbase_m: 1.087
+body_width_m: 1.30
+rear_overhang_m: 0.510
+front_overhang_m: 0.467
+steering_limit_rad: 0.5235987755982988
+steering_rate_limit_rad_s: 0.80
+nominal_speed_mps: 0.20
+maximum_speed_mps: 0.30
+acceleration_max_mps2: 0.60
+braking_max_mps2: 1.00
+jerk_limit_mps3: 2.00
+lateral_acceleration_limit_mps2: 0.50
+controller_dt_s: 0.10
+prediction_steps: 15
+plant_substep_s: 0.02
+endpoint_margin_m: 0.10
+minimum_segment_m: 0.00001
+maximum_segment_m: 0.50
+geometry_support_m: 0.10
+cusp_angle_rad: 1.57
+footprint_sample_m: 0.02
+reference_max_deviation_m: 0.10
+reference_max_connection_m: 0.30
+reference_min_support_m: 0.40
+reference_wall_limit_s: 0.50
+solver:
+  method: SLSQP
+  maxiter: 45
+  ftol: 0.000001
+  constraint_tolerance: 0.00001
+  wall_time_limit_s: 0.50
+  weights: {position: 35.0, yaw: 3.0, speed: 8.0, acceleration: 0.08, steering_rate: 0.08, acceleration_change: 0.15, steering_rate_change: 0.10, terminal_position: 70.0}
+  scales: {position_m: 1.0, yaw_rad: 1.0, speed_mps: 1.0, acceleration_mps2: 1.0, steering_rate_rad_s: 1.0}
+binding:
+  selected_container: codex-v4-e2e-20260906
+  ros_domain_id: 191
+  base_to_rear_axle: null
+  lidar_to_base: null
+  body_footprint_in_sim: null
+  measured_command_mapping: null
+  status: PENDING_EXACT_INSTANCE_PREFLIGHT
+budgets:
+  powered_episodes: 3
+  total_sim_seconds: 180
+  per_episode_sim_seconds: 60
+  total_simulator_wall_seconds: 3600
+  offline_control_cycles: 1500
+  fixed_forwards: 3000
+  mpc_solves: 6000
+  log_bytes: 536870912
+  snapshots: 16
