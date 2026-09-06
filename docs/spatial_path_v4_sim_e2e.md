@@ -27,6 +27,11 @@
 AWSIM executableだけへSIGTERMを送り、2026-09-06 12:13:29 UTCにcontainerの終了を確認。
 Autoware/RViz停止指示は出していない。
 
+その後ユーザーの追加指示でAutoware/RVizも終了。
+Autowareは親run scriptへSIGINT→既存のlaunch協調終了、RVizは確認済みPIDへSIGINT。
+2026-09-06 12:17:31 UTCにAutoware container終了、残るRViz専用の空containerも停止。
+削除・自動再起動設定の変更はしない。
+
 当タスク専用container `codex-v4-e2e-20260906` は network none / private IPC /
 cap-drop ALL / no-new-privileges / GPUのみ。外部route、CAN/serial、host X11/socket mountなし。
 旧AWSIM実行物をread-only mount。作業記録のみ別bind mount。
@@ -69,3 +74,15 @@ python3 /evidence/probe_spatial_sim_v4.py \
 独立停止watchdog、実sim controlled wrapper、固定checkpoint strictload/新forward/走行・停止。
 幾何単体testやhelperの存在からこれらを完了にしない。
 現在の既定configはdisabled。実車/本番昇格・学習・Dataset化は未許可。
+
+固定12配列の追加確認（前回のrow集合を固定。選び直しなし）:
+
+```bash
+tools/with_wsl_training_lock.sh .venv/bin/python tools/evaluate_constrained_reference_v4.py \
+  --packet /mnt/e/workspace/e2e_lite_transfuser/tmp/spatial_v4_validation_review_20260906_153a22a.zip \
+  --config configs/control/spatial_sim_e2e_v4.yaml \
+  --output /home/thistle/e2e_autonomous/runs/spatial_sim_e2e_20260906/<commit>/fixed12
+```
+
+この確認のrear=base原点は合成前提であってlive frameの補完ではない。
+既存receipt/policy/first_error回帰は runtime/bootstrap の2fileを該当`-k`に限定する。
