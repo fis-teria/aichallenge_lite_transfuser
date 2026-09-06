@@ -495,6 +495,13 @@ def main() -> int:
             REALTIME_AT_1X='NOT_ESTABLISHED', collision_status='UNKNOWN',
             note='Stationary HOLD is not a powered E2E run; live state timing and footprint gates remain explicit')
         (args.output/'supervisor_summary.json').write_text(json.dumps(plain(summary), indent=2, allow_nan=False))
+        # No further command writes follow. Ask host to freeze the owned sim
+        # before potentially slow ROS/process finalizers, keeping supervision
+        # active until host has verified pause. This does NOT certify braking.
+        heartbeat_tmp=args.output/'heartbeat.tmp'
+        heartbeat_tmp.write_text(json.dumps(dict(monotonic_ns=time.monotonic_ns(),token=args.project,
+            powered=lease.powered,logger_ok=logger_ok,phase='HOST_FREEZE_REQUESTED')))
+        heartbeat_tmp.replace(args.output/'heartbeat.json')
         trace.close(); node.destroy_node(); rclpy.shutdown()
     return 1 if first_error else 0
 

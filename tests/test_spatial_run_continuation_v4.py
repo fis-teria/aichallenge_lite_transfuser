@@ -137,6 +137,17 @@ def test_host_is_armed_even_when_heartbeat_says_not_powered():
     assert w.check(h,800_000_101)=='HEARTBEAT_STALE'
     assert w.check(None,800_000_101)=='HEARTBEAT_MISSING'
 
+
+def test_finalization_request_does_not_disable_watchdog_or_mask_errors():
+    w=host.HostWatch('session')
+    h=dict(token='session',monotonic_ns=100,powered=False,logger_ok=True,phase='HOST_FREEZE_REQUESTED')
+    assert w.check(h,101) is None and w.armed and w.freeze_requested
+    # Only verified host pause can allow process finalization without heartbeat.
+    assert w.check(h,800_000_101)=='HEARTBEAT_STALE'
+    assert w.check(dict(h,logger_ok=False),102)=='LOGGER_FAILED'
+    assert w.check(dict(h,token='other'),102)=='HEARTBEAT_IDENTITY'
+    assert w.check(dict(h,phase='STOPPING'),102) is None and not w.freeze_requested
+
 @pytest.mark.parametrize('fault',['logs','runtime_stop','inspect','none'])
 def test_frozen_cleanup_never_unpauses_and_other_failures_do_not_skip(fault):
     calls=[]

@@ -142,6 +142,7 @@ def main() -> int:
     pause_verified = False
     error = None
     exitcode = None
+    finalization_freeze_ns = None
     try:
         run(command+['up', '-d', '--no-build', '--pull', 'never', 'simulator', 'autoware'])
         sim_id = run(command+['ps', '-q', 'simulator']).stdout.strip()
@@ -157,6 +158,13 @@ def main() -> int:
             if not state['Running']:
                 exitcode = state['ExitCode']
                 break
+            if finalization_freeze_ns is not None:
+                # Heartbeats may end ONLY after host verified the owned simulator
+                # frozen. This is process cleanup, never proof of vehicle braking.
+                if time.monotonic_ns()-finalization_freeze_ns > 5_000_000_000:
+                    raise RuntimeError('RUNTIME_FINALIZE_TIMEOUT_WHILE_SIM_FROZEN')
+                time.sleep(.10)
+                continue
             heartbeat = output/'heartbeat.json'
             heartbeat_data = json.loads(heartbeat.read_text()) if heartbeat.exists() else None
             fault = watch.check(heartbeat_data,time.monotonic_ns())
@@ -166,6 +174,17 @@ def main() -> int:
                 pause_verified = paused['Paused'] is True
                 error = fault
                 break
+            if watch.freeze_requested:
+                run(['docker','pause',sim_id])
+                paused = json.loads(run(['docker','inspect',sim_id,'--format','{{json .State}}']).stdout)
+                if paused.get('Paused') is not True:
+                    raise RuntimeError('FINALIZATION_FREEZE_NOT_VERIFIED')
+                pause_verified = True
+                finalization_freeze_ns = time.monotonic_ns()
+                atomic_json(output/'finalization_freeze.json',dict(monotonic_ns=finalization_freeze_ns,
+                    token=project,sim_id=sim_id,runtime_id=runtime_id,paused=True,
+                    reason='SUPERVISOR_FINISHED_STOP_POLICY_NOT_BRAKING_PROOF'))
+                continue
             if watch.armed:
                 atomic_json(output/'host_armed.json',dict(token=project,armed=True,monotonic_ns=time.monotonic_ns(),
                     sim_id=sim_id,runtime_id=runtime_id,paused_kill_verified=binding['host_paused_kill']['verified']))
@@ -194,6 +213,7 @@ def main() -> int:
             simulator_assets_before=before, simulator_assets_after=after, simulator_assets_unchanged=before == after,
             simulator_container_id=sim_id, runtime_container_id=runtime_id,
             simulator_wall_seconds=time.monotonic()-started, cleanup=cleanup,host_armed=watch.armed,
+            finalization_freeze_ns=finalization_freeze_ns,
             host_pause_verified=pause_verified, pause_is_not_natural_braking_stop=True,
             normal_racingkart_makefile_executed=False, entrypoint='LITE_TRANSFUSER_MAKE_DEV',
             original_simulator_script='aichallenge/run_simulator.bash dev', awsimmutation=False)

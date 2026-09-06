@@ -16,6 +16,7 @@ class HostWatch:
     def __init__(self, token: str):
         self.token = token
         self.armed = False
+        self.freeze_requested = False
 
     def check(self, heartbeat: dict | None, now_ns: int) -> str | None:
         if heartbeat is None:
@@ -27,6 +28,7 @@ class HostWatch:
         if heartbeat.get('logger_ok') is not True:
             return 'LOGGER_FAILED'
         self.armed = True
+        self.freeze_requested = heartbeat.get('phase') == 'HOST_FREEZE_REQUESTED'
         return None
 
 
