@@ -70,7 +70,7 @@ def cleanup_owned(run, sim_id: str | None, runtime_id: str | None, *, paused_kil
 
 class AttemptBudget:
     """Small task JSON with one outstanding reservation; no reset on retry."""
-    limits = dict(wall_s=3600., forward=3000, mpc=6000, snapshots=16, powered=3, powered_s=180.)
+    limits = dict(wall_s=3600., forward=3000, mpc=6000, snapshots=16, powered=3, powered_s=180.,log_bytes=512*1024**2)
     def __init__(self, path: Path):
         import fcntl
         self.path = path

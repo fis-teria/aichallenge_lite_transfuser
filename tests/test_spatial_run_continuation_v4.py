@@ -163,12 +163,12 @@ def test_unknown_paused_exit_method_keeps_sim_frozen():
 
 def test_budget_reservation_is_not_reset_by_a_restart(tmp_path):
     pytest.importorskip('fcntl')
-    path=tmp_path/'budget.json';path.write_text(json.dumps(dict(used=dict(wall_s=1039.9,forward=60,mpc=1,snapshots=1,powered=0,powered_s=0),active=None)))
+    path=tmp_path/'budget.json';path.write_text(json.dumps(dict(used=dict(wall_s=1039.9,forward=60,mpc=1,snapshots=1,powered=0,powered_s=0,log_bytes=100),active=None)))
     budget=host.AttemptBudget(path)
-    reservation=dict(wall_s=170,forward=40,mpc=40,snapshots=2,powered=0,powered_s=0)
+    reservation=dict(wall_s=170,forward=40,mpc=40,snapshots=2,powered=0,powered_s=0,log_bytes=1000)
     budget.reserve('one',reservation)
     with pytest.raises(ValueError,match='UNRESOLVED'):budget.reserve('two',reservation)
-    budget.finish(dict(wall_s=20,forward=2,mpc=0,snapshots=1,powered=0,powered_s=0),exact=True)
+    budget.finish(dict(wall_s=20,forward=2,mpc=0,snapshots=1,powered=0,powered_s=0,log_bytes=500),exact=True)
     assert budget.value['used']['forward']==62 and budget.value['used']['wall_s']==1059.9
     budget.close()
 

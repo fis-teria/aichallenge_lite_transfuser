@@ -134,7 +134,7 @@ def main() -> int:
     runtime_id = sim_id = None
     budget = AttemptBudget(args.budget)
     budget.reserve(output.name,dict(wall_s=args.wall_seconds+110.,forward=forward_limit,mpc=forward_limit,snapshots=2,
-                                   powered=int(args.phase=='run'),powered_s=60. if args.phase=='run' else 0.))
+                                   powered=int(args.phase=='run'),powered_s=60. if args.phase=='run' else 0.,log_bytes=208*1024**2))
     watch = HostWatch(project)
     started = time.monotonic()
     pause_verified = False
@@ -149,6 +149,8 @@ def main() -> int:
         inspected = run(['docker', 'inspect', sim_id, runtime_id])
         atomic_json(output/'instance_inspect.json',json.loads(inspected.stdout))
         while time.monotonic()-started < args.wall_seconds+60:
+            if sum(p.stat().st_size for p in output.rglob('*') if p.is_file()) >= 207*1024**2:
+                raise RuntimeError('ATTEMPT_LOG_RESERVATION_LIMIT')
             state = json.loads(run(['docker', 'inspect', runtime_id, '--format', '{{json .State}}']).stdout)
             if not state['Running']:
                 exitcode = state['ExitCode']
@@ -195,6 +197,9 @@ def main() -> int:
             original_simulator_script='aichallenge/run_simulator.bash dev', awsimmutation=False)
         (output/'host_summary.json').write_text(json.dumps(summary, indent=2))
         consumption = dict(wall_s=summary['simulator_wall_seconds'])
+        # Charge an extra 1 MiB for summary/budget file finalization, explicitly
+        # conservative rather than understating bytes written after this count.
+        consumption['log_bytes']=sum(p.stat().st_size for p in output.rglob('*') if p.is_file())+1024**2
         worker_summary, supervisor_summary = output/'worker_summary.json',output/'supervisor_summary.json'
         if worker_summary.exists():
             w=json.loads(worker_summary.read_text())
@@ -202,7 +207,7 @@ def main() -> int:
         if supervisor_summary.exists():
             s=json.loads(supervisor_summary.read_text())
             consumption.update(powered=s['powered_episode_count'],powered_s=s['powered_sim_seconds'])
-        budget.finish(consumption,exact=len(consumption)==6)
+        budget.finish(consumption,exact=len(consumption)==7)
         (output/'budget_after.json').write_text(args.budget.read_text())
         budget.close()
         stdout.close()
