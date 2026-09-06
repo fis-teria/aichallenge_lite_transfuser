@@ -38,7 +38,8 @@ def compose_definition(source: Path, sim: Path, xvfb: Path, output: Path, checkp
                   gpus='all', stop_grace_period='12s', working_dir='/evidence')
     env = dict(ROS_LOCALHOST_ONLY='0', RMW_IMPLEMENTATION='rmw_cyclonedds_cpp',
                CYCLONEDDS_URI='file:///v4/integrations/awsim_dev_v4/cyclonedds.xml',
-               V4_SOURCE_COMMIT=commit, V4_PROJECT=project)
+               V4_SOURCE_COMMIT=commit, V4_PROJECT=project,
+               ROS_LOG_DIR='/evidence/ros_logs')
     def volume(path: Path, target: str, ro: bool = True) -> dict:
         return dict(type='bind', source=str(path.resolve()), target=target, read_only=ro)
     shared = [volume(source, '/v4'), volume(output, '/evidence', False)]
