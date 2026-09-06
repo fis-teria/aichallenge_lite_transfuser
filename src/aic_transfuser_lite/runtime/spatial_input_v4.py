@@ -81,7 +81,13 @@ def freeze_batch(batch: ModelBatchV3, device: str = 'cpu') -> ModelBatchV3:
 
 class SpatialInputV4:
     """At most 11 grid slots / 64 passive commands; epoch reset clears both."""
-    def __init__(self, *, command_binding_known: bool = False, final_fallback_verified: bool = False):
+    def __init__(self, *, command_binding_known: bool = False, final_fallback_verified: bool = False,
+                 command_policy: str = 'PASSIVE'):
+        if command_policy not in ('PASSIVE', 'SIM_ONLY_POLICY_CHANGED'):
+            raise ValueError('unknown command policy')
+        if command_policy != 'PASSIVE' and final_fallback_verified:
+            raise ValueError('sim sent history must not mix passive fallback')
+        self.command_policy = command_policy
         self.command_binding_known = command_binding_known
         self.final_fallback_verified = final_fallback_verified
         self.frames: deque = deque(maxlen=11)
@@ -96,7 +102,8 @@ class SpatialInputV4:
         self.last_reason = reason
 
     def add_command(self, command: PassiveCommand) -> str:
-        if command.source not in ('nominal', 'final_fallback'):
+        allowed = ('sim_sent',) if self.command_policy == 'SIM_ONLY_POLICY_CHANGED' else ('nominal', 'final_fallback')
+        if command.source not in allowed:
             raise ValueError('unknown command source')
         if self.frames:
             reference = self.frames[-1][0].camera
@@ -146,7 +153,11 @@ class SpatialInputV4:
     def _command_for(self, anchor: Stamp, current: Stamp, finalized_ns: int) -> tuple:
         row = {'nominal_command': '{}', 'final_command': '{}'}
         chosen = {}
-        for source, field in (('nominal','nominal_command'), ('final_fallback','final_command')):
+        sources = (('sim_sent', 'nominal_command'),) if self.command_policy == 'SIM_ONLY_POLICY_CHANGED' else (
+            ('nominal', 'nominal_command'), ('final_fallback', 'final_command'))
+        # Reuse feature validation only. The actual producer remains sim_sent in
+        # provenance; nominal_command is an internal parser key, NOT a parity claim.
+        for source, field in sources:
             if source == 'final_fallback' and not self.final_fallback_verified:
                 continue
             eligible = [c for c in self.commands if c.source == source and c.stamp.usable(finalized_ns, current)
@@ -157,6 +168,8 @@ class SpatialInputV4:
                 chosen[source] = c
                 row[field] = json.dumps(dict(valid=c.valid, steering_rad=c.steering_rad, speed_mps=c.speed_mps, acceleration_mps2=c.acceleration_mps2))
         selected = _selected_command(row, bounds=BOUNDS)
+        if selected and self.command_policy == 'SIM_ONLY_POLICY_CHANGED':
+            return (selected[0], 'sim_sent'), chosen['sim_sent']
         return selected, chosen[selected[1]] if selected else None
 
     def command_ready(self, camera: Stamp, finalized_ns: int) -> bool:
@@ -201,4 +214,6 @@ class SpatialInputV4:
             'command_padding':[True]*pad+[False]*len(past),
             'command_frames':[None]*pad+[f[0] for f in past],
             'selection_cutoff_ns':finalized_ns, 't_obs_ns':current.camera.header_ns,
-            'reset_count':self.reset_count, 'source':'SYNTHETIC_OR_PASSIVE_TRANSPORT'}
+            'reset_count':self.reset_count, 'source':'SYNTHETIC_OR_PASSIVE_TRANSPORT'
+            if self.command_policy == 'PASSIVE' else 'SIM_ONLY_POLICY_CHANGED',
+            'command_policy':self.command_policy}
