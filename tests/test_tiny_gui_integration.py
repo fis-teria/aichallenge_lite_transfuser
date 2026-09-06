@@ -150,6 +150,8 @@ def test_gui_compose_isolated_real_display_and_method(tmp_path):
         assert not any("/dev/" in v["target"] or v["target"] == "/aichallenge" for v in service["volumes"])
     assert spec["services"]["simulator"]["network_mode"] == "none"
     assert spec["services"]["autoware"]["network_mode"] == "service:simulator"
+    assert "hostname" not in spec["services"]["autoware"]
+    assert spec["services"]["autoware"]["environment"]["XAUTHLOCALHOSTNAME"] == os.uname().nodename
 
 
 def test_make_uses_existing_recipe_and_new_method_only(tmp_path):

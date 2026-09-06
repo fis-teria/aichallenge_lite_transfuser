@@ -34,6 +34,7 @@ def compose_gui(source: Path, sim: Path, install: Path, output: Path, official: 
         CYCLONEDDS_URI="file:///v4/integrations/awsim_dev_v4/cyclonedds.xml",
         TINY_SOURCE_COMMIT=commit, TINY_PROJECT=project, CONTROL_METHOD=GUI_CONTROL_METHOD,
         DISPLAY=display, XAUTHORITY="/desktop_xauth", QT_X11_NO_MITSHM="1", ROS_LOG_DIR="/evidence/ros_logs",
+        XAUTHLOCALHOSTNAME=os.uname().nodename,
         __NV_PRIME_RENDER_OFFLOAD="1", PYTHONDONTWRITEBYTECODE="1")
     simulator = dict(common, command=["/v4/integrations/tiny_gui/simulator.sh"],
         environment=dict(env, ROS_DOMAIN_ID="0", AWSIM_START_MODE="off", AWSIM_VEHICLES="1",
@@ -44,6 +45,10 @@ def compose_gui(source: Path, sim: Path, install: Path, output: Path, official: 
     autoware = dict(common, network_mode="service:simulator", depends_on=["simulator"],
         command=["/v4/integrations/tiny_gui/runtime.sh"], environment=dict(env, ROS_DOMAIN_ID="1"),
         volumes=shared+[mount(install, "/tiny_install"), mount(official, "/official_tiny")])
+    # Docker forbids explicit Hostname with container:/service: network sharing.
+    # Keep cookie lookup local to the desktop hostname via XAUTHLOCALHOSTNAME;
+    # do not disable X authentication or expose a host network to work around it.
+    autoware.pop("hostname")
     return dict(name=project, services=dict(simulator=simulator, autoware=autoware))
 
 
