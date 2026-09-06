@@ -70,9 +70,9 @@ def execute_scene(scene: dict, cfg: dict, consume_cycle, emit) -> dict:
     reference=plan(path,cfg,scene['permission']); emit('speed_profile',reference.__dict__)
     z=np.array(scene['initial_state'],dtype=float); u=np.zeros(2); mpc=SpatialMPC(cfg); progress=0.
     errors=[]; posts=[]; timings=[]; fallback=0; collision=False; maximum_violation=0.; rows=0; switched=False; insuff=False
-    goal=cfg['goals']; endpoint=reference.endpoint_s
+    goal=cfg['goals']; endpoint=reference.endpoint_s; budget_stopped=False
     for cycle in range(cfg['budgets']['scene_cycles']):
-        if not consume_cycle(): break
+        if not consume_cycle(): budget_stopped=True; break
         t=cycle*cfg['controller_dt_s']
         projection=project_progress(path,z,progress,cfg); progress=projection['s']
         if scene.get('switch_time_s') is not None and not switched and t>=scene['switch_time_s']:
@@ -128,7 +128,7 @@ def execute_scene(scene: dict, cfg: dict, consume_cycle, emit) -> dict:
     success=bool(rows and progress_ok and posts and rms(posts)<=goal['cross_track_rms_m'] and max(posts)<=goal['cross_track_max_m']
         and endpoint_error<=goal['endpoint_error_m'] and z[3]<=goal['final_speed_mps'] and not collision and not insuff
         and maximum_violation<=cfg['solver']['constraint_tolerance'] and fallback==0)
-    return dict(scene_id=scene['id'],execution='COMPLETE' if rows else 'NOT_EXECUTED_BUDGET',
+    return dict(scene_id=scene['id'],execution=('PARTIAL_BUDGET' if rows else 'NOT_EXECUTED_BUDGET') if budget_stopped else 'COMPLETE',
         tracking_success=success,cycles=rows,solver_calls=mpc.calls,fallback_cycles=fallback,mpc_accepted_cycles=rows-fallback,
         raw_length_m=float(path.actual_s[-1]),endpoint_s_m=endpoint,progress_s_m=progress,progress_ok=progress_ok,
         cte_rms_all_m=rms(errors),cte_max_all_m=max(errors) if errors else None,cte_rms_post_m=rms(posts),

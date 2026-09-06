@@ -58,3 +58,19 @@ def test_stop_distance_jerk_delay_not_constant_deceleration_claim():
     cfg=config()
     assert stopping_distance(.5,0,cfg)>.5**2/2
     assert stopping_distance(.5,0,cfg,.3)>stopping_distance(.5,0,cfg)
+
+def test_cli_help_without_pythonpath():
+    import os,subprocess,sys
+    env=dict(os.environ); env.pop('PYTHONPATH',None)
+    result=subprocess.run([sys.executable,str(Path(__file__).parents[1]/'tools/evaluate_spatial_mpc_v4.py'),'--help'],
+        env=env,capture_output=True,text=True)
+    assert result.returncode==0, result.stderr
+
+def test_missing_input_and_self_intersection_reject():
+    cfg=config()
+    assert prepare(SpatialPathCandidate(np.empty((0,2),dtype='float32'),np.empty(0),'missing'),cfg,{}).reason=='SHAPE_DTYPE'
+    # Dense crossing polyline, loose steering/cusp checks only to isolate intersection detection.
+    vertices=np.array([[0,0],[1,1],[0,1],[1,0]],dtype=float)
+    xy=np.concatenate([np.linspace(a,b,11)[1:] for a,b in zip(vertices[:-1],vertices[1:])]).astype('float32')
+    cfg['cusp_angle_rad']=3.2; cfg['steering_limit_rad']=1.56
+    assert prepare(SpatialPathCandidate(xy,np.arange(len(xy)), 'cross'),cfg,{}).reason=='SELF_INTERSECTION'

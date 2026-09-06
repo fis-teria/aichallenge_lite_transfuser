@@ -4,12 +4,14 @@ import argparse
 import io
 import json
 import os
+import sys
 from pathlib import Path, PurePosixPath
 import time
 import zipfile
 import importlib.metadata
 import numpy as np
 import yaml
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
 from aic_transfuser_lite.control.spatial_tracking_contracts_v4 import canonical, sha, plain
 from aic_transfuser_lite.evaluation.spatial_tracking_sim_v4 import synthetic_scenes, execute_scene
 
