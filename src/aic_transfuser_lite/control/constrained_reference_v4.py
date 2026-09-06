@@ -1,7 +1,7 @@
 """Separate, bounded SIM diagnostic reference; never edits model output.
 
 One seven-knot steering shooting fit. Ordered raw arc-length correspondence,
-fixed prefix selection, and conservative continuous polyline error certificate.
+fixed prefix selection, and union-breakpoint continuous polyline certificate.
 Acceptance here is geometry only, NEVER a live permission or free-space claim.
 """
 from __future__ import annotations
@@ -14,19 +14,41 @@ from .spatial_path_adapter_v4 import prepare, transform, wrap
 from .spatial_tracking_contracts_v4 import PreparedPath, SpatialPathCandidate, sha
 
 
+def ordered_polyline_error(reference_s: np.ndarray, reference_xy: np.ndarray,
+                           target_s: np.ndarray, target_xy: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Return all breakpoints [K] and ordered XY errors [K,2], in metres.
+
+    On each union interval both polylines are affine in the same parameter.
+    Their difference is affine and its Euclidean norm is convex. Therefore its
+    maximum occurs at an endpoint; no Lipschitz grid-gap penalty is needed.
+    This certifies these interpolated polylines only, not a vehicle trajectory,
+    time correspondence, teacher validity, or free space.
+    """
+    arrays = [np.asarray(a, dtype=float) for a in (reference_s, reference_xy, target_s, target_xy)]
+    rs, rx, ts, tx = arrays
+    for s, xy in ((rs, rx), (ts, tx)):
+        if (s.ndim != 1 or len(s) < 2 or xy.shape != (len(s), 2) or
+                not np.isfinite(s).all() or not np.isfinite(xy).all() or np.any(np.diff(s) <= 0)):
+            raise ValueError('INVALID_ORDERED_POLYLINE')
+    if rs[0] != ts[0] or rs[-1] != ts[-1]:
+        raise ValueError('POLYLINE_DOMAIN_MISMATCH')
+    check = np.unique(np.r_[rs, ts])
+    diff = np.column_stack([np.interp(check, rs, rx[:, k])-np.interp(check, ts, tx[:, k]) for k in (0, 1)])
+    return check, diff
+
+
 def constrained_reference(candidate: SpatialPathCandidate, cfg: dict,
                           initial_rear_in_base: np.ndarray) -> PreparedPath:
     """Input raw float32[20,2], rear [x_m,y_m,yaw_rad,v_mps,delta_rad].
 
     Seven steering knots are integrated with midpoint bicycle geometry on a
-    <= 0.02 m grid. Chord length <= parameter interval; both compared polylines
-    are 1-Lipschitz in this parameter, so sampled error + max check gap bounds
-    the intervening error. The bound includes corners, not just the 20 points.
+    <= 0.02 m grid. The union of reference and target breakpoints certifies
+    the maximum ordered polyline error, including corners and the connection.
     Clearance must subsequently be checked from a current sensor observation.
     """
     raw = candidate.raw_xy
     z = np.asarray(initial_rear_in_base, dtype=float)
-    diag = dict(policy='SIM_BOUNDED_STEERING_SHOOTING_V1', raw_hash=candidate.raw_hash,
+    diag = dict(policy='SIM_BOUNDED_STEERING_SHOOTING_V2', raw_hash=candidate.raw_hash,
                 raw_bits_hex=raw.tobytes().hex(), nominal_s_m=candidate.nominal_s.tolist(),
                 raw_unchanged=True, clearance_verified=False, runtime_permission=False,
                 fit_solve_count=0, origin_in_raw=False)
@@ -93,7 +115,9 @@ def constrained_reference(candidate: SpatialPathCandidate, cfg: dict,
     target = np.column_stack([np.interp(q, target_s, target_xy[:, k]) for k in (0,1)])
     check = np.unique(np.r_[q, target_s])
     target_check = np.column_stack([np.interp(check, target_s, target_xy[:, k]) for k in (0,1)])
-    certificate_gap = float(np.diff(check).max())
+    check_gap = float(np.diff(check).max())
+    # Retain a small numerical margin, not an arbitrary discretization penalty.
+    certificate_gap = 1e-9
     allowed_at_samples = deviation - certificate_gap
     if allowed_at_samples <= 0:
         return reject('CERTIFICATE_RESOLUTION')
@@ -137,6 +161,9 @@ def constrained_reference(candidate: SpatialPathCandidate, cfg: dict,
                     ordered_parameter_m=q.tolist(), raw_correspondence_s_m=(q-connection).tolist(),
                     raw_correspondence_mask=(q>=connection).tolist(),
                     ordered_error_samples_m=error.tolist(), certificate_gap_m=certificate_gap,
+                    certificate_policy='UNION_BREAKPOINT_CONVEX_NORM_V2',
+                    check_parameter_m=check.tolist(), max_check_spacing_m=check_gap,
+                    legacy_lipschitz_bound_m=float(error.max()+check_gap),
                     maximum_deviation_bound_m=float(error.max()+certificate_gap),
                     initial_connection_fit_error_m=float(error[check<=connection].max()),
                     constraint_residual=residual, steering_knots_rad=np.r_[z[4],result.x].tolist())

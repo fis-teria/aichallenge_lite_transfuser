@@ -87,8 +87,16 @@ def scene_aabb_evidence(states: np.ndarray, cfg: dict, binding: dict, *, state_n
     info=binding['scene_space']
     boxes=info.get('obstacle_local_world_xy_bounds_m')
     fresh=0 <= now_sim_ns-state_ns <= 200_000_000
-    if states.ndim!=2 or states.shape[1]!=5 or not np.isfinite(states).all():
+    if states.ndim!=2 or states.shape[1]!=5 or not len(states) or not np.isfinite(states).all():
         raise ValueError('SCENE_STATE_SHAPE_OR_FINITE')
+    if boxes is not None and len(boxes):
+        bounds = np.asarray(boxes, dtype=float)
+        if (bounds.ndim != 3 or bounds.shape[1:] != (2, 2) or not np.isfinite(bounds).all()
+                or np.any(bounds[:, 0] > bounds[:, 1])):
+            raise ValueError('INVALID_STATIC_OBSTACLE_BOUNDS')
+    acquisition_bound = binding['pose']['assumed_acquisition_bound_s']
+    if (isinstance(acquisition_bound, bool) or not np.isfinite(acquisition_bound) or acquisition_bound < 0):
+        raise ValueError('INVALID_POSE_ACQUISITION_BOUND')
     result=dict(policy='STATIC_AABB_EXCLUSION_NOT_TRIANGLE_COLLISION_V1',epoch=epoch,
         state_ns=state_ns,now_sim_ns=now_sim_ns,source_metadata_sha256=binding['scene_metadata_sha256'],
         checked_footprints=len(states),status='UNKNOWN',verified=False,
@@ -106,7 +114,7 @@ def scene_aabb_evidence(states: np.ndarray, cfg: dict, binding: dict, *, state_n
         points=transform(corners,state[:3]);lo=points.min(0)-margin;hi=points.max(0)+margin
         potential+=int(any(np.all(hi>=np.asarray(box[0])) and np.all(lo<=np.asarray(box[1])) for box in boxes))
     reason=('STALE_POSE' if not fresh else 'STATIC_MESH_INTERIOR_UNRESOLVED' if potential else
-            'MOVABLE_ACTOR_COVERAGE_UNVERIFIED' if not info['dynamic_coverage_verified'] else None)
+            'MOVABLE_ACTOR_COVERAGE_UNVERIFIED' if info['dynamic_coverage_verified'] is not True else None)
     return dict(result,potential_overlap_footprints=potential,inflation_m=margin,
                 verified=reason is None,status='STATIC_CLEAR' if reason is None else 'UNKNOWN',reason=reason)
 
