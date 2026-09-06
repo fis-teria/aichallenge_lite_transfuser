@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -9,7 +10,7 @@ import torch
 
 from aic_transfuser_lite.models.spatial_path_diagnostic_v4 import SpatialPathDiagnosticV4
 from .spatial_input_v4 import freeze_batch
-from .spatial_recording_v4 import Records, PrivateWriter, geometry, identity, numeric, sha
+from .spatial_recording_v4 import Records, PrivateWriter, geometry, identity, numeric, sha, stamp
 
 CHECKPOINT = Path('/home/thistle/e2e_autonomous/runs/spatial_diagnostic_v4_20260906_f33b197/checkpoints/final.pt')
 CHECKPOINT_SHA = '0316692543a901d9d6b96718c5651d6739367aa851f83fb3a133c126ccc8919f'
@@ -51,6 +52,24 @@ def load_fixed(device: str = 'cpu') -> tuple[torch.nn.Module, dict]:
                       weights_only=True,strict=True,loaded=list(state),missing=[],unexpected=[],state=state_inventory(model))
 
 
+@dataclass
+class CandidateContext:
+    """One camera (or offline tensor) acceptance; terminal contexts cannot re-enter."""
+    event: dict
+    claimed: bool = False
+    terminal: bool = False
+    selection_cutoff: dict | None = None
+    persistence: dict = field(default_factory=lambda: dict(data_write='NOT_ATTEMPTED',receipt_write='NOT_ATTEMPTED',error=None))
+
+    def trace(self) -> dict:
+        p=self.event['payload']
+        return dict(candidate_sequence=p['candidate_sequence'],record_id=p['record_id'],
+                    candidate_received=p['timing']['candidate_received'],selection_cutoff=self.selection_cutoff,
+                    input_finalized=p['timing']['input_finalized'],event_observed=p['timing']['event_observed'],
+                    forward_calls=self.event['execution']['forward_calls'],terminal=self.terminal,
+                    terminal_status=p['status'],reason=p['reason'],output_status=p['output']['status'],persistence=dict(self.persistence))
+
+
 class SpatialRuntimeV4:
     def __init__(self, model: torch.nn.Module, records: Records, writer: PrivateWriter | None = None,
                  *, device: str = 'cpu', checkpoint_hash: str | None = None, forward_limit: int = 6):
@@ -60,24 +79,54 @@ class SpatialRuntimeV4:
         self.forward_calls=0
         self.forward_limit=forward_limit
 
-    def infer(self, batch: object, provenance: dict | None = None) -> dict:
-        event=self.records.accept()
+    def accept_candidate(self, received: dict | None = None) -> CandidateContext:
+        return CandidateContext(self.records.accept(received))
+
+    def finish(self, context: CandidateContext, reason: str | None = None) -> dict:
+        """One terminal transition, including rejection and recording exceptions."""
+        if context.terminal:
+            return context.event
+        event=context.event
         p=event['payload']
-        if self.writer and self.writer.failed:
-            p.update(event_type='DROP',status='DROPPED',reason='LOGGER_FAILED_NEW_INFERENCE_STOPPED')
+        if reason:
+            p.update(event_type='DROP',status='DROPPED',reason=reason[:1500])
             self.records.counts['dropped'].add(p['candidate_sequence'])
-            return event
+        p['timing']['event_observed']=self.records.now()
+        p['timing']['event_observed']['source']='terminal processing state observed'
+        context.terminal=True  # BEFORE serializer/writer; failure cannot retry forward.
+        try:
+            self.records.validate(event)
+            if self.writer:
+                self.writer.enqueue(event,context.persistence)
+                self.writer.drain()
+        except Exception as exc:
+            error='RECORDING_ERROR:'+type(exc).__name__+': '+str(exc)[:500]
+            context.persistence['error']=context.persistence['error'] or error
+            if self.writer:
+                self.writer.fail(error,p['candidate_sequence'])
+            self.records.counts['dropped'].add(p['candidate_sequence'])
+        return event
+
+    def infer(self, batch: object, provenance: dict | None = None, *, candidate: CandidateContext | None = None) -> dict:
+        context=candidate if candidate is not None else self.accept_candidate()
+        if context.terminal or context.claimed:
+            return context.event
+        context.claimed=True
+        event=context.event
+        p=event['payload']
+        if self.writer and self.writer.state!='OPEN':
+            return self.finish(context,'LOGGER_'+self.writer.state+'_NEW_INFERENCE_STOPPED')
         if self.forward_calls>=self.forward_limit:
-            p.update(event_type='DROP',status='DROPPED',reason='FORWARD_BUDGET')
-            self.records.counts['dropped'].add(p['candidate_sequence'])
-            return event
+            return self.finish(context,'FORWARD_BUDGET')
         try:
             frozen=freeze_batch(batch,self.device)
-            self.records.bind(event,frozen,provenance)
-        except (ValueError,RuntimeError) as exc:
-            p.update(event_type='DROP',status='DROPPED',reason=str(exc))
-            self.records.counts['dropped'].add(p['candidate_sequence'])
-            return event
+            if frozen.image.device.type=='cuda':
+                torch.cuda.synchronize(frozen.image.device)
+            # Actual completion of the nine-tensor immutable copy, not selection cutoff.
+            finalized=self.records.now()
+            self.records.bind(event,frozen,provenance,finalized=finalized)
+        except Exception as exc:
+            return self.finish(context,'INPUT_ERROR:'+type(exc).__name__+': '+str(exc))
         out=p['output']
         out['forward_invocation_id']=p['record_id']+':forward'
         p['identities']['checkpoint']=identity(self.checkpoint_hash,'fixed file verified' if self.checkpoint_hash else 'synthetic model')
@@ -117,13 +166,12 @@ class SpatialRuntimeV4:
                            model_xy_m=None,float32_le_hex=None,geometry=None,tensor_hash=identity())
             for field,left,right in (('inference_duration','inference_start','inference_api_return'),('end_to_end_age','candidate_received','snapshot_ready')):
                 l,r=p['timing'][left],p['timing'][right]
-                if l['status']==r['status']=='KNOWN' and (l['clock_id'],l['epoch_id'])==(r['clock_id'],r['epoch_id']):
-                    p['timing'][field]=dict(status='KNOWN',ns=str(int(r['ns'])-int(l['ns'])),basis=right+' minus '+left,reason='harness monotonic')
-        self.records.validate(event)
-        if self.writer:
-            self.writer.enqueue(event)
-            self.writer.drain()
-        return event
+                same=(l['clock_id'],l['epoch_id'],l['domain'])==(r['clock_id'],r['epoch_id'],r['domain'])
+                if l['status']==r['status']=='KNOWN' and same and int(r['ns'])>=int(l['ns']):
+                    p['timing'][field]=dict(status='KNOWN',ns=str(int(r['ns'])-int(l['ns'])),basis=right+' minus '+left,reason='same clock/epoch monotonic')
+                elif l['status']==r['status']=='KNOWN':
+                    p['timing'][field]=dict(status='UNKNOWN',ns=None,basis=right+' minus '+left,reason='CLOCK_MISMATCH_OR_REGRESSION; no clipping')
+        return self.finish(context)
 
     @staticmethod
     def snapshot(result: torch.Tensor) -> np.ndarray:

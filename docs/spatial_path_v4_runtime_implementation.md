@@ -1,5 +1,57 @@
 # 固定step500 V4 runtime：実装と限定検証
 
+## 候補処理修正（合成限定、基準19c6be9/結果f7c9f39）
+
+今回のHEAD確認はf7c9f39b6c7071cbcee502b57ecbb86ec7380894、working tree clean。
+19c6be9との差はexporter1件と結果/依頼文2件のみ。旧26passは今回の結果に代用しない。
+checkpoint loader/model/前処理数値/9 tensors/既存V3/design-v2/disabled launch/main BLOCKEDは変更しない。
+
+| 修正 | 実装対応 |
+|---|---|
+| A 受付 | camera callbackでCandidateContextを一度作成。core.infer(candidate=...)が引継ぎ、terminal/claimedで再forward禁止 |
+| B 有限待ち | pending候補上限16、max_sync_wait_ns=300000000（合成policy、校正なし）。pure tickで期限以上をDROP後に次候補へ進む |
+| C 時刻 | context.selection_cutoffは選別境界。input_finalizedはcoreの9 tensor freeze/device copy完了後。event_observedはterminal処理状態を観測した時刻 |
+| D 終了 | core.finishで一度terminal化してから保存。拒否DROPもhealthy writerへ。記録失敗時にも同context/output/forward countを保持 |
+| E padding | adapterのsensor/ego選択mask（構造上の実在）とcommand_padding/command_framesをtransport provenanceへ。tensor maskは変更しない |
+
+同期待ちの期限はcamera受信monotonicから評価し、期限時刻ちょうどでもDROPする。
+late ego/scanをbufferへ追加する前にtickするため、期限切れcameraは復活しない。
+FIFOを維持し、先頭欠損は期限までだけ待つ。pollが呼ばれることは将来bootstrap側の責任。
+実ROS timerは追加/起動しない。受信停止時はpure tickをfake clockで検証する。
+header逆行/monotonic逆行時は待機全候補を理由付きterminal化してからcommand含めreset。
+queue overflowも旧cameraを明示DROP。非camera callbackの拒否は候補母数に加算しない。
+
+選別cutoffはCandidateContextの独立traceとhistory.reasonに記録する（design-v2にfield追加なし）。
+同じclock_id/epoch/domainの比較根拠がないdurationはUNKNOWN。別clock callableは明示指定なしに
+Records時計のIDへ付け替えない。取得済み受付時刻を構築時刻へ変更しない。
+input_finalizedは推論入力freeze完了境界で、後続descriptor生成の終了時刻ではない。
+
+writer.stateはOPEN/CLOSED/FAILED。正常closeも新forwardを拒否、closeはidempotent。
+最初の失敗reasonを保持。context.persistenceでdata_writeとreceipt_writeを独立記録し、
+receipt失敗だけで既知の対象writeを取り消さない。write完了はdurable/fsync保証ではない。
+メモリtraceには保存不能でも終端と出力を残す。bounded completed64/results4の範囲で保持し、
+永続障害時の全履歴復元は保証しない。既存7段階counterは維持し、再送で増やさない。
+
+真のwarm-upはslot.reason=WARM_UP_PADDING、存在する無効/欠損slotはPRESENT_INVALID_OR_MISSING。
+commandが欠けてもpast frameのsample IDを残す。ego全feature無効でもpaddingにはしない。
+tensor-onlyでprovenanceがない場合はreason=PADDING_UNKNOWN。
+旧design-v2のpaddingはbooleanしかないためfalseを互換sentinelとし、その場合は実在の証拠と解釈しない。
+UNKNOWNの根拠はreasonに残し、旧schemaを変更して未知を解決したふりをしない。
+
+合成反例とtrace出力はtests/test_spatial_runtime_v4.pyに同居し、別exporter版は不要。
+既定テストはファイル出力しない。V4_TRACE_DIRを新規directoryへ明示した時だけ実行中のfake eventを保存。
+使用する限定コマンド例（COMMITは今回commit、既存出力は上書きしない）：
+
+```sh
+tools/with_wsl_training_lock.sh env V4_TRACE_DIR=/home/thistle/e2e_autonomous/runs/spatial_candidates_COMMIT/traces .venv/bin/python -m pytest -q tests/test_spatial_runtime_v4.py tests/test_runtime_input_history_v3.py --junitxml=/home/thistle/e2e_autonomous/runs/spatial_candidates_COMMIT/junit.xml
+```
+
+raw_execution_authorized=false、live_sensor_connection_authorized=false、shadow_connection_authorized=false、
+control_connection_enabled=false、training_authorized=false、fixed_checkpoint_replay_authorized=false、runtime_promotion_authorized=false。
+approval_gate=PENDING_EXPLICIT_AUTHORIZATION_FOR_LIVE_SHADOW。
+今回、固定weight本体/旧fixture/raw/Dataset/実ROSへのアクセスやfixed forwardは行わない。
+下のofflineコマンドは前段履歴であり、今回の実行対象ではない。
+
 参照HEAD/design-v2: da8f5dc90e45f2bc80dce6651d84b509a9441042。
 学習f33b197→validation153a22a→注釈2386f0f→結果7acc1ef→残差9b01b1e→記録設計da8f5dc。
 モデル/入力の既存コードは変更しない。design-v2原本も変更しない。

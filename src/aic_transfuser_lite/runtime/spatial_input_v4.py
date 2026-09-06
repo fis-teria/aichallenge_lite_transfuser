@@ -187,5 +187,7 @@ class SpatialInputV4:
             sensor_dt_sec=torch.stack([f[5] for f in sensor])[None], targets=None, requested_outputs=frozenset({'trajectory'}))
         return freeze_batch(batch), {'sensor_frames': [f[0] for f in sensor], 'sensor_masks':sm,
             'ego_frames':[f[0] for f in ego], 'ego_masks':em, 'commands':[None]*pad+cp,
-            'input_finalized_ns':finalized_ns, 't_obs_ns':current.camera.header_ns,
+            'command_padding':[True]*pad+[False]*len(past),
+            'command_frames':[None]*pad+[f[0] for f in past],
+            'selection_cutoff_ns':finalized_ns, 't_obs_ns':current.camera.header_ns,
             'reset_count':self.reset_count, 'source':'SYNTHETIC_OR_PASSIVE_TRANSPORT'}

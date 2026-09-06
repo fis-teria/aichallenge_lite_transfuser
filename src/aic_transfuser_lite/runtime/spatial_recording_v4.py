@@ -152,17 +152,17 @@ class Records:
     def now(self) -> dict:
         return stamp(self.clock(),clock=self.session,source='harness_monotonic')
 
-    def accept(self) -> dict:
+    def accept(self, received: dict | None = None) -> dict:
         i = self.sequence
         self.sequence += 1
         self.counts['accepted'].add(i)
         e = self.event(candidate=i)
-        e['payload']['timing']['candidate_received'] = self.now()
+        e['payload']['timing']['candidate_received'] = deepcopy(received) if received is not None else self.now()
         return e
 
-    def bind(self, e: dict, batch: object, provenance: dict | None = None) -> None:
+    def bind(self, e: dict, batch: object, provenance: dict | None = None, *, finalized: dict | None = None) -> None:
         p, h = e['payload'], self.blank('history')
-        p['timing']['input_finalized'] = self.now()
+        p['timing']['input_finalized'] = deepcopy(finalized) if finalized is not None else self.now()
         h.update(status='BUILT',input_builder_id=str(uuid.uuid4()))
         h['input_descriptors'], digest = input_descriptors(batch)
         h['tensor_hash'] = identity(digest,'descriptor preimage v2')
@@ -178,7 +178,14 @@ class Records:
             h[role] = []
             for j in range(n):
                 slot = self.blank('slot')
-                slot.update(slot_index=j,padding=not bool(mask[j]),mask_used=bool(mask[j]),source='FIXTURE_METADATA_MISSING',sample_id=None)
+                # design-v2 has only a boolean padding field. With no provenance,
+                # false is a compatibility sentinel, NOT evidence of a real slot.
+                slot.update(slot_index=j,padding=False,mask_used=bool(mask[j]),source='FIXTURE_METADATA_MISSING',sample_id=None,
+                            reason='PADDING_UNKNOWN; boolean false is not evidence; tensor mask retained')
+                if provenance:
+                    pads=provenance['command_padding'] if role=='command' else [not m for m in provenance['ego_masks' if role=='ego' else 'sensor_masks']]
+                    slot['padding']=pads[j]
+                    slot['reason']='WARM_UP_PADDING' if pads[j] else ('PRESENT_VALID' if bool(mask[j]) else 'PRESENT_INVALID_OR_MISSING')
                 if role == 'ego':
                     slot['feature_mask_used'] = batch.ego_feature_mask[0,j].tolist()
                 if role != 'command' or slot['padding']:
@@ -199,7 +206,11 @@ class Records:
             slot.update(source='PASSIVE_OR_SYNTHETIC_TRANSPORT',header_time=source_stamp(s),
                 acquisition_time=stamp(s.acquisition_ns,domain='DEVICE',clock=s.clock_id,epoch=s.epoch,source='transport_acquisition'),
                 receipt_monotonic_time=stamp(s.received_ns,clock=s.monotonic_id),available_monotonic_time=stamp(s.available_ns,clock=s.monotonic_id))
-            slot['age_at_input']=dict(status='KNOWN',ns=str(provenance['input_finalized_ns']-s.available_ns),basis='input finalized minus available; same process monotonic',reason='transport availability age, not physical sensor age')
+            finalized=p['timing']['input_finalized']
+            same=finalized['status']=='KNOWN' and finalized['clock_id']==s.monotonic_id and finalized['epoch_id']=='0'
+            age=int(finalized['ns'])-s.available_ns if same else None
+            slot['age_at_input']=dict(status='KNOWN' if age is not None and age>=0 else 'UNKNOWN',ns=str(age) if age is not None and age>=0 else None,
+                basis='input finalized minus available',reason='transport availability age' if same else 'CLOCK_MAPPING_UNKNOWN')
         for role in ('camera','lidar','ego'):
             frames = provenance['ego_frames' if role == 'ego' else 'sensor_frames']
             for slot,f in zip(p['history'][role],frames):
@@ -208,21 +219,27 @@ class Records:
         reference = provenance['sensor_frames'][-1].camera
         p['output']['t_obs'] = source_stamp(reference)
         p['reset_id'] = str(provenance['reset_count'])
-        finalized = stamp(provenance['input_finalized_ns'],clock=reference.monotonic_id)
-        p['timing']['input_finalized'] = finalized
+        finalized = p['timing']['input_finalized']
+        p['history']['reason']='selection_cutoff_ns='+str(provenance['selection_cutoff_ns'])+'; clock_id='+reference.monotonic_id+'; epoch=0; not input_finalized'
         for j,f in enumerate(provenance['sensor_frames']):
             for k,(left,right) in enumerate(((source_stamp(f.camera),stamp(f.grid_ns,domain='ROS_SIM',clock=f.camera.clock_id,epoch=f.camera.epoch,source='grid')), (source_stamp(f.lidar),source_stamp(f.camera)))):
                 p['history']['sensor_timing']['components'][j][k].update(operation='LHS_MINUS_RHS_SECONDS',lhs_time=left,rhs_time=right,reference='transport grid/camera/lidar; ns -> s',clock_mapping_evidence=identity(sha(encoded([left,right])),'same clock/epoch transport'))
-        for slot,c in zip(p['history']['command'],provenance['commands']):
+        for slot,c,frame in zip(p['history']['command'],provenance['commands'],provenance['command_frames']):
+            if frame is not None:
+                slot['sample_id']=frame.sample_id
             if c is None:
+                if not slot['padding']:
+                    slot['source']='COMMAND_MISSING_OR_INVALID'
                 continue
             fill(slot,c.stamp)
             slot['source'] = c.source
             for name,lhs,rhs,ok in (
                 ('command_source_past',source_stamp(c.stamp),source_stamp(reference),c.stamp.header_ns<reference.header_ns),
-                ('command_available_before_input',stamp(c.stamp.available_ns,clock=c.stamp.monotonic_id),finalized,c.stamp.available_ns<=provenance['input_finalized_ns'])):
-                slot[name].update(status='PROVEN' if ok else 'VIOLATION',lhs_time=lhs,rhs_time=rhs,lhs_reference=name,rhs_reference='t_obs' if name=='command_source_past' else 'input_finalized',clock_mapping_evidence=identity(sha(encoded([lhs,rhs])),'same clock/epoch checked by adapter'))
-            slot['causality'] = 'PROVEN_PAST_AND_AVAILABLE'
+                ('command_available_before_input',stamp(c.stamp.available_ns,clock=c.stamp.monotonic_id),finalized,finalized['ns'] is not None and c.stamp.available_ns<=int(finalized['ns']))):
+                same=lhs['status']==rhs['status']=='KNOWN' and (lhs['clock_id'],lhs['epoch_id'],lhs['domain'])==(rhs['clock_id'],rhs['epoch_id'],rhs['domain'])
+                slot[name].update(status=('PROVEN' if ok else 'VIOLATION') if same else 'UNKNOWN',lhs_time=lhs,rhs_time=rhs,lhs_reference=name,rhs_reference='t_obs' if name=='command_source_past' else 'input_finalized',clock_mapping_evidence=identity(sha(encoded([lhs,rhs])) if same else None,'same clock/epoch' if same else 'CLOCK_MAPPING_UNKNOWN'))
+            statuses=[slot[k]['status'] for k in ('command_source_past','command_available_before_input')]
+            slot['causality'] = 'PROVEN_PAST_AND_AVAILABLE' if statuses==['PROVEN','PROVEN'] else ('VIOLATION' if 'VIOLATION' in statuses else 'UNKNOWN')
 
     def validate(self, e: dict) -> None:
         # Full draft2020 validation is an explicit optional verification stage;
@@ -284,7 +301,7 @@ class Records:
 
 
 class PrivateWriter:
-    """Bounded explicit drain. Fail-closed halts NEW inference, never sends a stop command."""
+    """Bounded queue; OPEN/CLOSED/FAILED, no recursive receipts or async workers."""
     def __init__(self, path: Path, records: Records, *, capacity: int=4, max_record_bytes: int=131072, max_file_bytes: int=8388608):
         if min(capacity,max_record_bytes,max_file_bytes)<=0:
             raise ValueError('finite positive recording budgets required')
@@ -292,35 +309,53 @@ class PrivateWriter:
         self.queue: deque = deque()
         self.fd = os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
         self.bytes_written = 0
-        self.failed = False
+        self.state = 'OPEN'
         self.error: str | None = None
         self.log_writes = 0
 
+    @property
+    def failed(self) -> bool:
+        return self.state=='FAILED'
+
     def fail(self, reason: str, candidate: int | None = None) -> None:
-        self.failed,self.error = True,reason
+        self.state='FAILED'
+        if self.error is None:
+            self.error=reason
         if candidate is not None:
             self.records.counts['dropped'].add(candidate)
 
-    def enqueue(self, event: dict) -> bool:
+    def enqueue(self, event: dict, outcome: dict | None = None) -> bool:
+        outcome=outcome if outcome is not None else dict(data_write='NOT_ATTEMPTED',receipt_write='NOT_ATTEMPTED',error=None)
         candidate=event['payload']['candidate_sequence']
-        if self.failed or len(self.queue)>=self.capacity:
-            self.fail('QUEUE_FULL_OR_FAILED',candidate)
+        if self.state!='OPEN' or len(self.queue)>=self.capacity:
+            reason='LOGGER_'+self.state if self.state!='OPEN' else 'QUEUE_FULL'
+            if self.state=='OPEN':
+                self.fail(reason,candidate)
+            outcome['error']=outcome['error'] or self.error or reason
+            if candidate is not None:
+                self.records.counts['dropped'].add(candidate)
             return False
-        event=deepcopy(event)
-        p=event['payload']
-        p['timing']['record_enqueued']=self.records.now()
-        p['logger'].update(state='HEALTHY',queue_capacity=self.capacity,queue_depth=len(self.queue)+1)
-        self.records.validate(event)
-        blob=encoded(event)
-        if len(blob)>self.max_record_bytes:
-            self.fail('RECORD_BYTE_LIMIT',candidate)
+        try:
+            event=deepcopy(event)
+            p=event['payload']
+            p['timing']['record_enqueued']=self.records.now()
+            p['logger'].update(state='HEALTHY',queue_capacity=self.capacity,queue_depth=len(self.queue)+1)
+            self.records.validate(event)
+            blob=encoded(event)
+            if len(blob)>self.max_record_bytes:
+                raise ValueError('RECORD_BYTE_LIMIT')
+        except Exception as exc:
+            self.fail(type(exc).__name__+': '+str(exc)[:500],candidate)
+            outcome['error']=outcome['error'] or self.error
             return False
-        self.queue.append((event,blob))
+        self.queue.append((event,blob,outcome))
         if candidate is not None:
             self.records.counts['enqueued'].add(candidate)
         return True
 
     def _write(self, blob: bytes) -> None:
+        if self.fd is None or self.state!='OPEN':
+            raise OSError('WRITER_NOT_OPEN')
         if self.bytes_written+len(blob)+1>self.max_file_bytes:
             raise OSError('FILE_BYTE_LIMIT')
         data=memoryview(blob+b'\n')
@@ -333,11 +368,13 @@ class PrivateWriter:
         self.log_writes+=1
 
     def drain(self) -> None:
-        while self.queue and not self.failed:
-            event,blob=self.queue.popleft()
+        while self.queue and self.state=='OPEN':
+            event,blob,outcome=self.queue.popleft()
             p=event['payload']
             try:
+                outcome['data_write']='UNKNOWN'  # May partially write before failing.
                 self._write(blob)
+                outcome['data_write']='KNOWN_WRITE_COMPLETED_NOT_DURABLE'
                 confirmed=self.records.now()
                 if p['candidate_sequence'] is not None:
                     self.records.counts['saved'].add(p['candidate_sequence'])
@@ -345,22 +382,34 @@ class PrivateWriter:
                 receipt['payload']['commit_receipt']=dict(target_record_id=p['record_id'],target_session_id=p['session_id'],
                     target_candidate_sequence=p['candidate_sequence'],original_bytes_hash=sha(blob),writer_id=self.records.session,
                     confirmed_at=confirmed,commit_level='WRITE_COMPLETED_NOT_DURABLE',reason='OS write completed; no fsync')
+                outcome['receipt_write']='UNKNOWN'
                 self.records.validate(receipt)
                 receipt_blob=encoded(receipt)
                 if len(receipt_blob)>self.max_record_bytes:
                     raise OSError('RECEIPT_BYTE_LIMIT')
                 self._write(receipt_blob)
-            except OSError as exc:
-                self.fail(str(exc),p['candidate_sequence'])
-        if self.failed:
-            for event,_ in self.queue:
+                outcome['receipt_write']='KNOWN_WRITE_COMPLETED_NOT_DURABLE'
+            except Exception as exc:
+                self.fail(type(exc).__name__+': '+str(exc)[:500],p['candidate_sequence'])
+                outcome['error']=outcome['error'] or self.error
+        if self.state=='FAILED':
+            for event,_,outcome in self.queue:
                 i=event['payload']['candidate_sequence']
                 if i is not None:
                     self.records.counts['dropped'].add(i)
+                outcome['error']=outcome['error'] or self.error
             self.queue.clear()
 
     def close(self) -> None:
+        if self.fd is None:
+            return
         try:
             self.drain()
         finally:
-            os.close(self.fd)
+            fd,self.fd=self.fd,None
+            try:
+                os.close(fd)
+            except OSError as exc:
+                self.fail('CLOSE_ERROR:'+str(exc))
+            if self.state=='OPEN':
+                self.state='CLOSED'

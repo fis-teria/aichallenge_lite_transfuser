@@ -4,6 +4,7 @@ from dataclasses import replace
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -285,3 +286,208 @@ def test_wrapper_fake_stream_reaches_same_forward_once():
     w.receive('lidar',SimpleNamespace(header=header,ranges=[5.]*750,range_min=0.,range_max=25.))
     w.receive('image',SimpleNamespace(header=header,encoding='rgb8',height=8,width=12,step=36,data=bytes(8*12*3)))
     assert core.forward_calls==1 and w.results[-1]['payload']['output']['status']=='SHAPE_FINITE_ONLY'
+
+
+class ManualClock:
+    def __init__(self, ns=1_000_000): self.ns=ns
+    def __call__(self): return self.ns
+    def advance(self, ns): self.ns+=ns
+
+
+def candidate_harness(tmp_path, *, capacity=16, wait=100):
+    clock=ManualClock()
+    r=Records(ROOT/'schemas',mode='SYNTHETIC',clock=clock)
+    writer=PrivateWriter(tmp_path/'candidate_events.jsonl',r)
+    core=SpatialRuntimeV4(Fake(),r,writer)
+    class Node:
+        def create_subscription(self,*args): pass
+        def __getattr__(self,name): raise AssertionError('forbidden endpoint '+name)
+    roles=('image','lidar','velocity','steering','nominal')
+    types={k:object for k in roles}; types['sensor_qos']=object()
+    w=wrapper_module().SpatialPathShadowWrapperV4(Node(),core,SpatialInputV4(command_binding_known=True),types,
+        {k:'/fake/'+k for k in roles},max_sync_wait_ns=wait,candidate_capacity=capacity)
+    return clock,r,writer,core,w
+
+
+def fake_message(role, ns=1_000_000_000):
+    value=SimpleNamespace(sec=ns//1_000_000_000,nanosec=ns%1_000_000_000)
+    fields=dict(header=SimpleNamespace(stamp=value))
+    if role=='image': fields.update(encoding='rgb8',height=8,width=12,step=36,data=bytes(8*12*3))
+    if role=='lidar': fields.update(ranges=[5.]*750,range_min=0.,range_max=25.)
+    if role=='velocity': fields.update(longitudinal_velocity=1.,lateral_velocity=0.,heading_rate=0.)
+    if role=='steering': fields.update(steering_tire_angle=0.)
+    return SimpleNamespace(**fields)
+
+
+def sources(w, ns):
+    for role in ('velocity','steering','lidar'): w.receive(role,fake_message(role,ns))
+
+
+def trace_evidence(name, contexts, extra=None):
+    """Write only fake events from this test run, to an explicitly requested new dir."""
+    folder=os.environ.get('V4_TRACE_DIR')
+    if folder:
+        root=Path(folder); root.mkdir(parents=True,exist_ok=True)
+        value=dict(mode='SYNTHETIC',fixed_checkpoint_reads=0,fixed_checkpoint_forward_calls=0,
+                   traces=[c.trace() for c in contexts],events=[c.event for c in contexts],extra=extra)
+        with (root/(name+'.json')).open('xb') as stream: stream.write(encoded(value)+b'\n')
+
+
+def test_deadline_releases_m1_on_tick_and_late_sources_do_not_revive(tmp_path):
+    clock,r,writer,core,w=candidate_harness(tmp_path)
+    w.receive('image',fake_message('image',1_000_000_000))  # M0: no ego
+    clock.advance(50)
+    sources(w,1_100_000_000)
+    w.receive('image',fake_message('image',1_100_000_000))  # M1: complete, behind M0
+    assert core.forward_calls==0 and len(r.counts['accepted'])==2
+    clock.advance(50); w.tick()  # No callback needed.
+    assert [c.event['payload']['reason'] for c in w.completed][0]=='SYNC_DEADLINE'
+    assert core.forward_calls==1 and len(w.pending)==0 and len(w.completed)==2
+    sources(w,1_000_000_000); w.tick()
+    assert core.forward_calls==1 and len(r.counts['accepted'])==2
+    assert [c.event['execution']['forward_calls'] for c in w.completed]==[0,1]
+    trace_evidence('deadline_m0_m1',list(w.completed))
+    writer.close()
+
+
+def test_missing_duplicate_overflow_reset_each_camera_terminal_once(tmp_path):
+    clock,r,writer,core,w=candidate_harness(tmp_path,capacity=1)
+    w.receive('image',SimpleNamespace())
+    w.receive('image',fake_message('image',2_000_000_000))
+    w.receive('image',fake_message('image',2_000_000_000))
+    w.receive('image',fake_message('image',2_100_000_000))
+    w.receive('image',fake_message('image',1_000_000_000))
+    clock.advance(100); w.tick()
+    assert r.sequence==5 and len(w.completed)==5 and core.forward_calls==0
+    reasons=[c.event['payload']['reason'] for c in w.completed]
+    assert any('MISSING_HEADER' in v for v in reasons)
+    assert 'DUPLICATE_IMAGE' in reasons and 'CAMERA_QUEUE_OVERFLOW' in reasons and 'CAMERA_CLOCK_RESET' in reasons
+    assert len({c.event['payload']['record_id'] for c in w.completed})==5
+    assert w.completed[0].event['payload']['output']['t_obs']['status']=='MISSING'
+    trace_evidence('rejections_reset',list(w.completed))
+    writer.close()
+
+
+def test_real_finalize_after_preprocess_and_copy(tmp_path,monkeypatch):
+    clock,r,writer,core,w=candidate_harness(tmp_path)
+    original=w.adapter.append
+    def slow_append(*args):
+        result=original(*args); clock.advance(20); return result
+    monkeypatch.setattr(w.adapter,'append',slow_append)
+    original_forward=core.model.forward
+    def slow_forward(b):
+        clock.advance(10); return original_forward(b)
+    monkeypatch.setattr(core.model,'forward',slow_forward)
+    original_snapshot=core.snapshot
+    def slow_snapshot(t):
+        clock.advance(10); return original_snapshot(t)
+    monkeypatch.setattr(core,'snapshot',slow_snapshot)
+    sources(w,1_000_000_000); w.receive('image',fake_message('image'))
+    c=w.completed[0]; t=c.event['payload']['timing']
+    assert int(c.selection_cutoff['ns'])<int(t['input_finalized']['ns'])<=int(t['inference_start']['ns'])<int(t['inference_api_return']['ns'])<int(t['snapshot_ready']['ns'])
+    assert int(t['candidate_received']['ns'])<=int(c.selection_cutoff['ns'])
+    assert int(t['event_observed']['ns'])>=int(t['snapshot_ready']['ns'])
+    assert t['end_to_end_age']['status']=='KNOWN'
+    trace_evidence('cutoff_finalize_copy',[c])
+    writer.close()
+
+
+@pytest.mark.parametrize('different', ['clock','epoch'])
+def test_different_clock_or_epoch_duration_unknown(different):
+    clock=ManualClock(); r=Records(ROOT/'schemas',mode='SYNTHETIC',clock=clock)
+    core=SpatialRuntimeV4(Fake(),r)
+    received=r.now()
+    received['clock_id' if different=='clock' else 'epoch_id']='other'
+    c=core.accept_candidate(received)
+    core.infer(batch(),candidate=c)
+    assert c.event['payload']['timing']['end_to_end_age']['status']=='UNKNOWN'
+    assert c.event['payload']['timing']['candidate_received']==received
+
+
+def test_shape_and_budget_drop_are_persisted_with_same_context(tmp_path):
+    r=records(); writer=PrivateWriter(tmp_path/'drops.jsonl',r)
+    core=SpatialRuntimeV4(Fake(),r,writer,forward_limit=0)
+    c=core.accept_candidate(); core.infer(batch(),candidate=c); core.infer(batch(),candidate=c)
+    assert r.sequence==1 and core.forward_calls==0 and c.terminal
+    core.forward_limit=1
+    bad=replace(batch(),image=torch.zeros(1))
+    d=core.accept_candidate(); core.infer(bad,candidate=d)
+    writer.close()
+    lines=[json.loads(x) for x in (tmp_path/'drops.jsonl').read_text().splitlines()]
+    assert [e['payload']['event_type'] for e in lines]==['DROP','WRITER_RECEIPT','DROP','WRITER_RECEIPT']
+    trace_evidence('shape_budget_drop',[c,d])
+
+
+def test_callback_errors_and_recording_error_do_not_reaccept(tmp_path,monkeypatch):
+    clock,r,writer,core,w=candidate_harness(tmp_path)
+    w.receive('image',SimpleNamespace(header=SimpleNamespace()))  # AttributeError
+    w.receive('nominal',SimpleNamespace(header=fake_message('image').header))  # noncamera rejection
+    assert r.sequence==1 and w.sensor_received['nominal']==1
+    sources(w,1_000_000_000)
+    bad=fake_message('image'); bad.data=None
+    w.receive('image',bad)  # TypeError, same camera context
+    assert r.sequence==2 and core.forward_calls==0
+    sources(w,1_100_000_000)
+    monkeypatch.setattr(r,'validate',lambda _: (_ for _ in ()).throw(TypeError('synthetic serializer failure')))
+    w.receive('image',fake_message('image',1_100_000_000))
+    c=w.completed[-1]
+    assert r.sequence==3 and core.forward_calls==1 and c.terminal
+    assert c.event['payload']['output']['status']=='SHAPE_FINITE_ONLY'
+    assert c.event['execution']['forward_calls']==1 and c.persistence['error'] is not None
+    core.infer(batch(),candidate=c)
+    assert core.forward_calls==1 and r.sequence==3
+    trace_evidence('callback_and_recording_errors',list(w.completed))
+    writer.close()
+
+
+def test_closed_writer_stops_new_forward_and_close_is_idempotent(tmp_path):
+    r=records(); w=PrivateWriter(tmp_path/'closed.jsonl',r); core=SpatialRuntimeV4(Fake(),r,w)
+    first=core.accept_candidate(); core.infer(batch(),candidate=first)
+    w.close(); w.close()
+    second=core.accept_candidate(); core.infer(batch(),candidate=second)
+    assert w.state=='CLOSED' and core.forward_calls==1
+    assert second.event['payload']['output']['status']=='NOT_INFERRED'
+    assert second.persistence['error']=='LOGGER_CLOSED'
+    trace_evidence('logger_closed',[first,second])
+
+
+def test_receipt_failure_preserves_known_data_and_first_error(tmp_path,monkeypatch):
+    r=records(); w=PrivateWriter(tmp_path/'receipt_fail.jsonl',r); core=SpatialRuntimeV4(Fake(),r,w)
+    original=w._write; n=0
+    def fail_receipt(blob):
+        nonlocal n
+        n+=1
+        if n==2: raise OSError('RECEIPT_FAIL_FIRST')
+        original(blob)
+    monkeypatch.setattr(w,'_write',fail_receipt)
+    c=core.accept_candidate(); core.infer(batch(),candidate=c)
+    assert c.persistence['data_write']=='KNOWN_WRITE_COMPLETED_NOT_DURABLE' and c.persistence['receipt_write']=='UNKNOWN'
+    assert core.forward_calls==1 and c.event['payload']['output']['status']=='SHAPE_FINITE_ONLY'
+    w.fail('SECOND'); assert 'RECEIPT_FAIL_FIRST' in w.error
+    d=core.accept_candidate(); core.infer(batch(),candidate=d)
+    assert core.forward_calls==1 and w.state=='FAILED'
+    trace_evidence('receipt_failure',[c,d])
+    w.close(); w.close()
+
+
+def test_missing_command_and_invalid_ego_are_not_padding():
+    a=SpatialInputV4(command_binding_known=True)
+    for i in range(3):
+        f=frame(i)
+        if i==0: a.add_command(PassiveCommand(f.camera,.1,1.,0.))
+        if i==1: f=replace(f,ego_si=(float('nan'),)*4,steering_valid=False)
+        a.append(f,2_000_000_000)
+    b,p=a.build(2_000_000_000)
+    r=records(); core=SpatialRuntimeV4(Fake(),r); c=core.accept_candidate(); core.infer(b,p,candidate=c)
+    h=c.event['payload']['history']
+    assert h['command'][0]['padding'] and h['command'][0]['reason']=='WARM_UP_PADDING'
+    assert not h['command'][-1]['padding'] and not h['command'][-1]['mask_used']
+    assert h['command'][-1]['sample_id']=='1' and h['command'][-1]['source']=='COMMAND_MISSING_OR_INVALID'
+    assert not h['ego'][-2]['padding'] and h['ego'][-2]['feature_mask_used']==[False]*4
+    assert not b.command_mask[0,-1] and not b.ego_feature_mask[0,-2].any()
+    trace_evidence('missing_not_padding',[c])
+
+
+def test_tensor_only_padding_stays_unknown():
+    e=SpatialRuntimeV4(Fake(),records()).infer(batch())
+    assert 'PADDING_UNKNOWN' in e['payload']['history']['command'][0]['reason']

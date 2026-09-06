@@ -6,75 +6,135 @@ until passive bindings and a live execution envelope receive separate approval.
 from __future__ import annotations
 
 from collections import deque
+from copy import deepcopy
 import time
 
 import numpy as np
 
 from aic_transfuser_lite.runtime.spatial_input_v4 import GridObservation, PassiveCommand, SpatialInputV4, Stamp
+from aic_transfuser_lite.runtime.spatial_recording_v4 import stamp
 
 
 class SpatialPathShadowWrapperV4:
     def __init__(self, node: object, runtime: object, adapter: SpatialInputV4, message_types: dict,
-                 topics: dict, *, clock=time.monotonic_ns, grid_period_ns: int=100_000_000):
+                 topics: dict, *, clock=None, clock_id: str | None = None,
+                 grid_period_ns: int=100_000_000, max_sync_wait_ns: int=300_000_000,
+                 candidate_capacity: int=16):
         if any(not topics.get(k) for k in ('image','lidar','velocity','steering','nominal')):
             raise ValueError('BLOCKED_REAL_INPUT_BINDING: explicit topics required')
-        self.runtime,self.adapter,self.clock=runtime,adapter,clock
-        self.grid_period_ns=grid_period_ns
+        if min(grid_period_ns,max_sync_wait_ns,candidate_capacity)<=0:
+            raise ValueError('positive finite synchronization policy required')
+        self.runtime,self.adapter=runtime,adapter
+        self.clock=clock if clock is not None else runtime.records.clock
+        # Different clock callables are NOT relabeled as the Records clock.
+        self.transport_id=clock_id or (runtime.records.session if self.clock==runtime.records.clock else 'wrapper:'+str(id(self.clock)))
+        self.grid_period_ns,self.max_sync_wait_ns,self.candidate_capacity=grid_period_ns,max_sync_wait_ns,candidate_capacity
         self.epoch=0
         self.last_image=None
-        self.buffers={k:deque(maxlen=16) for k in ('image','lidar','velocity','steering')}
+        self.last_tick=None
+        self.pending=deque()
+        self.buffers={k:deque(maxlen=16) for k in ('lidar','velocity','steering')}
         self.results=deque(maxlen=4)
-        self.rejections=deque(maxlen=64)
-        self.transport_id=runtime.records.session
+        self.completed=deque(maxlen=64)
+        self.rejections=deque(maxlen=64)  # Other-topic diagnostics, not camera candidates.
+        self.sensor_received={k:0 for k in ('lidar','velocity','steering','nominal')}
         for role in ('image','lidar','velocity','steering','nominal'):
-            # QoS matches existing V3 sensor best-effort and vehicle depth10;
-            # exact live compatibility remains unverified.
             qos=message_types['sensor_qos'] if role in ('image','lidar') else 10
             node.create_subscription(message_types[role],topics[role],lambda msg,r=role:self.receive(r,msg),qos)
 
+    def _received(self, ns: int) -> dict:
+        return stamp(ns,clock=self.transport_id,source='wrapper camera callback monotonic')
+
+    def _complete(self, context: object, reason: str | None = None) -> None:
+        self.runtime.finish(context,reason)
+        if not any(c is context for c in self.completed):
+            self.completed.append(context)
+            self.results.append(context.event)
+
+    def _clear_waiting(self, reason: str) -> None:
+        while self.pending:
+            context,_,_=self.pending.popleft()
+            self._complete(context,reason)
+        for q in self.buffers.values():
+            q.clear()
+        self.adapter.reset(reason)
+
     def receive(self, role: str, msg: object) -> None:
         received=self.clock()
-        header=getattr(msg,'header',None)
-        value=header.stamp if header is not None else getattr(msg,'stamp',None)
-        if value is None:
-            self.rejections.append('MISSING_HEADER:'+role)
-            return
-        ns=int(value.sec)*1_000_000_000+int(value.nanosec)
-        if role=='image' and self.last_image is not None and ns<self.last_image:
-            self.epoch+=1
-            self.adapter.reset('WRAPPER_CLOCK_RESET')
-            for q in self.buffers.values():
-                q.clear()
-        if role=='image':
-            if ns==self.last_image:
-                self.rejections.append('DUPLICATE_IMAGE')
-                return
-            self.last_image=ns
-        s=Stamp(ns,received,self.clock(),clock_id='ros_header',epoch=str(self.epoch),monotonic_id=self.transport_id)
-        if role=='nominal':
-            self.adapter.add_command(PassiveCommand(s,float(msg.lateral.steering_tire_angle),float(msg.longitudinal.speed),float(msg.longitudinal.acceleration)))
-        else:
-            if len(self.buffers[role])==self.buffers[role].maxlen:
-                self.rejections.append('TRANSPORT_QUEUE_DROP:'+role)
-            self.buffers[role].append((s,msg))
-        self.drain()
+        context=self.runtime.accept_candidate(self._received(received)) if role=='image' else None
+        if role in self.sensor_received:
+            self.sensor_received[role]+=1
+        # Expire before admitting late ego/scan: a dropped camera cannot revive.
+        self.tick(received)
+        try:
+            header=getattr(msg,'header',None)
+            value=header.stamp if header is not None else getattr(msg,'stamp',None)
+            if value is None:
+                raise ValueError('MISSING_HEADER:'+role)
+            ns=int(value.sec)*1_000_000_000+int(value.nanosec)
+            if role=='image' and self.last_image is not None and ns<self.last_image:
+                self._clear_waiting('CAMERA_CLOCK_RESET')
+                self.epoch+=1
+            if role=='image':
+                if ns==self.last_image:
+                    self._complete(context,'DUPLICATE_IMAGE')
+                    return
+                self.last_image=ns
+            s=Stamp(ns,received,self.clock(),clock_id='ros_header',epoch=str(self.epoch),monotonic_id=self.transport_id)
+            if role=='nominal':
+                result=self.adapter.add_command(PassiveCommand(s,float(msg.lateral.steering_tire_angle),float(msg.longitudinal.speed),float(msg.longitudinal.acceleration)))
+                if result!='ACCEPTED':
+                    self.rejections.append(result)
+            elif role=='image':
+                if len(self.pending)>=self.candidate_capacity:
+                    old,_,_=self.pending.popleft()
+                    self._complete(old,'CAMERA_QUEUE_OVERFLOW')
+                self.pending.append((context,s,deepcopy(msg)))
+            else:
+                if len(self.buffers[role])==self.buffers[role].maxlen:
+                    self.rejections.append('TRANSPORT_QUEUE_DROP:'+role)
+                self.buffers[role].append((s,deepcopy(msg)))
+        except Exception as exc:
+            reason='CALLBACK_ERROR:'+type(exc).__name__+': '+str(exc)[:500]
+            if context is not None:
+                self._complete(context,reason)
+            else:
+                self.rejections.append(reason)
+        self.tick()
 
     def drain(self) -> None:
-        while self.buffers['image']:
-            camera,msg=self.buffers['image'][0]
+        self.tick()
+
+    def tick(self, now_ns: int | None = None) -> None:
+        """Pure polling entry; no ROS timer or background worker is created."""
+        cutoff=self.clock() if now_ns is None else now_ns
+        if self.last_tick is not None and cutoff<self.last_tick:
+            self._clear_waiting('MONOTONIC_CLOCK_RESET')
+            self.epoch+=1
+            self.last_image=None
+        self.last_tick=cutoff
+        while self.pending:
+            context,camera,msg=self.pending[0]
+            if cutoff-camera.received_ns>=self.max_sync_wait_ns:
+                self.pending.popleft()
+                self._complete(context,'SYNC_DEADLINE')
+                continue
+            if self.runtime.writer and self.runtime.writer.state!='OPEN':
+                self.pending.popleft()
+                self._complete(context,'LOGGER_'+self.runtime.writer.state)
+                continue
             matched={}
-            # Minimal safe binding: exact ego-time match only. No unapproved
-            # interpolation/nearest-value relabeling or assumed timing parity.
             for role in ('velocity','steering'):
-                matches=[v for v in self.buffers[role] if v[0].header_ns==camera.header_ns and v[0].epoch==camera.epoch]
+                matches=[v for v in self.buffers[role] if v[0].header_ns==camera.header_ns and v[0].epoch==camera.epoch and v[0].available_ns<=cutoff]
                 if not matches:
                     return
                 matched[role]=matches[-1]
-            scans=[v for v in self.buffers['lidar'] if abs(v[0].header_ns-camera.header_ns)<=30_000_000 and v[0].epoch==camera.epoch]
+            scans=[v for v in self.buffers['lidar'] if abs(v[0].header_ns-camera.header_ns)<=30_000_000 and v[0].epoch==camera.epoch and v[0].available_ns<=cutoff]
             if not scans:
                 return
             lidar,scan=min(scans,key=lambda v:(abs(v[0].header_ns-camera.header_ns),v[0].header_ns))
-            self.buffers['image'].popleft()
+            self.pending.popleft()
+            context.selection_cutoff=stamp(cutoff,clock=self.transport_id,source='selection cutoff before preprocessing')
             try:
                 if msg.encoding!='rgb8' or msg.step<msg.width*3:
                     raise ValueError('RGB8_REQUIRED_NO_ENCODING_GUESS')
@@ -85,21 +145,16 @@ class SpatialPathShadowWrapperV4:
                 item=GridObservation(grid,camera,lidar,matched['velocity'][0],image,np.asarray(scan.ranges,dtype=np.float32),
                     (float(velocity.longitudinal_velocity),float(velocity.lateral_velocity),float(velocity.heading_rate),float(steering.steering_tire_angle)),
                     range_min_m=float(scan.range_min),range_max_m=float(scan.range_max))
-                finalized=self.clock()
-                status=self.adapter.append(item,finalized)
+                status=self.adapter.append(item,cutoff)
                 if status!='ACCEPTED':
                     raise ValueError(status)
-                batch,provenance=self.adapter.build(finalized)
-                self.results.append(self.runtime.infer(batch,provenance))
-            except (ValueError,RuntimeError) as exc:
-                self.rejections.append(str(exc))
-                event=self.runtime.records.accept()
-                event['payload'].update(event_type='DROP',status='DROPPED',reason=str(exc))
-                self.runtime.records.counts['dropped'].add(event['payload']['candidate_sequence'])
-                self.results.append(event)
-                if self.runtime.writer:
-                    self.runtime.writer.enqueue(event)
-                    self.runtime.writer.drain()
+                batch,provenance=self.adapter.build(cutoff)
+                self.runtime.infer(batch,provenance,candidate=context)
+                self._complete(context)
+            except Exception as exc:
+                # The same context retains any forward/output already obtained.
+                self._complete(context,'PROCESSING_ERROR:'+type(exc).__name__+': '+str(exc)[:500])
+            cutoff=self.clock()
 
 
 def create_ros_node(runtime: object, adapter: SpatialInputV4, topics: dict) -> object:
