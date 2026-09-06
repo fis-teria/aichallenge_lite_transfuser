@@ -213,13 +213,14 @@ class BindingGuard:
     def check(self, role: str, msg: object) -> int:
         b=self.config['bindings'][role]
         observation=dict(role=role,message_type=b['message_type'],stamp_source=b['interface']['stamp_source'],
-                         message_frame_present=b['interface']['message_frame'] is not None,
+                         expected_message_frame_field=b['interface']['message_frame'],
+                         message_frame_present=hasattr(getattr(msg,'header',None),'frame_id'),
                          observed_frame=None,expected_semantic_frame=b['frame'],status='NOT_EXTRACTED')
         self.message_contract_observations[role]=observation
         try:
             ns,frame=extract_message_stamp(role,msg,b['interface'])
             observation.update(observed_frame=frame,header_ns=ns,status='EXTRACTED')
-            if observation['message_frame_present'] and frame!=b['frame']: raise ValueError('frame mismatch')
+            if b['interface']['message_frame'] is not None and frame!=b['frame']: raise ValueError('frame mismatch')
             if role=='image':
                 for field,value in b['sensor'].items():
                     if getattr(msg,field)!=value: raise ValueError('image.'+field)
@@ -453,7 +454,9 @@ def run(config: dict, authorization: dict, *, actual_code_id: str, schema_dir: P
         elif end_finish<end_start or (last_time is not None and end_start<last_time): timing_reason='CLOCK_REGRESSION'
         elif records and records.clock_epoch!=cleanup_epoch: timing_reason='CLOCK_EPOCH_CHANGED'
         result['shutdown_timing']=dict(start_ns=end_start,end_ns=end_finish,reason=timing_reason,
+            start_epoch=cleanup_epoch,end_epoch=records.clock_epoch if records else None,
             duration_s=None if timing_reason else (end_finish-end_start)*1e-9)
+        result['terminal_accounting_status']='UNKNOWN_CLEANUP_FAILED' if any(a['status']=='FAILED' and a['name']=='wrapper_stopped' for a in result['cleanup_attempts']) else ('NOT_CONSTRUCTED' if records is None else 'OBSERVED_COUNTER_SETS_NOT_DURABILITY')
         result['shutdown_grace_exceeded']=None if timing_reason else result['shutdown_timing']['duration_s']>limits['shutdown_grace_s']
         if (timing_reason or result['timing_errors']) and result['exit_code']==0: result['exit_code']=6
         if result['shutdown_grace_exceeded'] and result['exit_code']==0: result['exit_code']=6

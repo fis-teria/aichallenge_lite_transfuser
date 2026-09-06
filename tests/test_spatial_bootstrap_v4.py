@@ -303,6 +303,7 @@ def test_tick_without_callbacks_releases_m1(tmp_path):
     cfg=config(tmp_path)
     def first(d): d.send('nominal',950_000_000); d.send('image')
     def second(d):
+        d.send('nominal',1_050_000_000)  # Eligible M1 warm-up; M0 remains blocked by missing exact ego.
         for role in ('lidar','velocity','steering','image'): d.send(role,1_100_000_000)
     deps=Dependencies([first,second]); result=execute(cfg,deps)
     w=deps.wrappers[0]
