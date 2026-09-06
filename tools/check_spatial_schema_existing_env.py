@@ -15,6 +15,21 @@ KEYWORDS={'$schema','$id','$ref','$defs','title','description','type','additiona
           'pattern','minimum','maximum','exclusiveMinimum'}
 
 
+class LocalResolver(RefResolver):
+    """No URL resolution: every payload reference must target the pinned design."""
+    def resolve(self, ref):
+        document,fragment=ref.split('#',1)
+        if document not in ('',self.design['$id']) or not fragment.startswith('/$defs/'):
+            raise ValueError('nonlocal or unexpected schema reference')
+        value=self.design
+        for part in fragment.strip('/').split('/'):
+            value=value[part]
+        return self.design['$id']+'#'+fragment,value
+
+    def resolve_remote(self, uri):
+        raise ValueError('remote schema retrieval forbidden')
+
+
 def check_schema(s):
     if set(s)-KEYWORDS:
         raise ValueError('unsupported keywords '+str(set(s)-KEYWORDS))
@@ -32,7 +47,8 @@ if __name__=='__main__':
     design=json.loads((root/'schemas/spatial_path_v4_shadow_record_v1.schema.json').read_text())
     runtime=json.loads((root/'schemas/spatial_path_v4_runtime_record_v1.schema.json').read_text())
     check_schema(design); check_schema(runtime)
-    resolver=RefResolver.from_schema(runtime,store={design['$id']:design},handlers={'http':lambda u: (_ for _ in ()).throw(ValueError('network forbidden')),'https':lambda u: (_ for _ in ()).throw(ValueError('network forbidden'))})
+    resolver=LocalResolver.from_schema(runtime)
+    resolver.design=design
     validator=Draft7Validator(runtime,resolver=resolver)
     count=0
     for line in args.events.read_text().splitlines():
