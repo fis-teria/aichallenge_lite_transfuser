@@ -17,6 +17,8 @@
 | body/frameの固定false | 同じscene/colliderの境界と取付けへ結合。旧幅1.3mより保守的な約1.536m |
 | scanで現在全車体を見る要求 | 旧scan診断を保持し、static AABB exclusionと現在車体を別判定。AABB内はUNKNOWN |
 | 再起動ごとの定数budget | 指定の累積JSONへ予約/終了、未回収counterは予約上限を課金、active未解決なら次回拒否 |
+| 未消費Queueによる終了待ち | worker停止後cancel_join_thread/close。未消費推定数と打切りを記録 |
+| ROS終了処理中のheartbeat途絶 | 終了要求→host pause実確認→有限runtime終了待ち。pause前に監視を無効化しない |
 
 SIM_GRID_MISSING_V2はsim限定の意味差であり、学習時完全parityとはしない。
 欠損slotのsourceはgrid_slotsでnull、内部transport再利用はmask=falseの保管用で有効複製ではない。
@@ -58,3 +60,6 @@ make dev SIM_REPO=/home/graneple/git/autononous_ai/aichallenge-racingkart \
 ```
 
 実行値と試験結果は新規report/packetへ記録する。実装や合成passを走行成功へ昇格しない。pushしない。
+
+最終実行版af1c7f12d99b1889fb8ea4ead395a4b6458c1b45。
+実測結果は `spatial_path_v4_run_continuation_result.md`。
