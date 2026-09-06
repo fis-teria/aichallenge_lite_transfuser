@@ -65,7 +65,7 @@ def evaluate(path: PreparedPath, initial: np.ndarray, cfg: dict, *, force_stop_s
             p=project_progress(path,state,progress,cfg)
             if p['reason']: violations.add(p['reason'])
             else: max_error=max(max_error,p['cross_track'])
-        moving |= z[3]>.1
+        moving |= bool(z[3]>.1)
         negative_brakes+=int(stop_reason is not None and a<0)
         stopped_s=stopped_s+dt if stop_reason and z[3]<=.03 else 0.
         rows.append(dict(t_s=t,state_before=before.tolist(),state_after=z.tolist(),progress_s_m=progress,

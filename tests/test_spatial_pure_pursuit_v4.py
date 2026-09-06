@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import numpy as np
 import pytest
 import yaml
@@ -18,6 +19,7 @@ def test_straight_moves_and_brakes_with_limits():
     assert r['tracking_stop_pass'] and r['negative_brake_cycles']>0
     assert r['max_steering_rad']==0 and r['max_speed_mps']<=.3
     assert r['max_jerk_mps3']<=2.+1e-9 and not r['violations']
+    assert json.loads(json.dumps(r,allow_nan=False))['tracking_stop_pass'] is True
 
 
 def test_explicit_stop_not_called_endpoint_success():
