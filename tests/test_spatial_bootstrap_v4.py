@@ -597,3 +597,22 @@ def test_f4_cleanup_survives_broken_clock(tmp_path,kind):
     assert [a['name'] for a in result['cleanup_attempts']][:4]==['wrapper_stopped','executor_shutdown','node_destroyed','context_shutdown']
     if kind=='clock_and_timeout': assert any('TimeoutError' in e for e in result['cleanup_errors'])
     evidence('f4_'+kind,cfg,deps,result)
+
+
+def test_known_receipt_error_precedes_cleanup_clock_error(tmp_path):
+    import inspect
+    cfg=config(tmp_path); deps=Dependencies([complete_input],writer_mode='receipt'); clock=deps.clock
+    class Clock:
+        def __call__(self):
+            caller=inspect.currentframe().f_back
+            if caller.f_code.co_name=='timing_sample' and caller.f_locals.get('stage')=='cleanup_entry':
+                raise RuntimeError('LATER_CLEANUP_CLOCK')
+            return clock()
+        def advance(self,n): clock.advance(n)
+    deps.clock=Clock(); result=execute(cfg,deps)
+    assert result['first_error']=='OSError: FAKE_RECEIPT_FAILURE'
+    assert any('LATER_CLEANUP_CLOCK' in e for e in result['timing_errors'])
+    assert result['counters']['saved']['ids']==[0] and result['counters']['dropped']['ids']==[]
+    assert result['exit_code']!=0 and deps.writer_object.fd is None
+    assert deps.log.count('node_destroy')==1 and deps.log.count('context_destroy')==1
+    evidence('receipt_then_cleanup_clock',cfg,deps,result)

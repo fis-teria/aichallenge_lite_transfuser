@@ -396,6 +396,8 @@ def run(config: dict, authorization: dict, *, actual_code_id: str, schema_dir: P
         result['reason']='STARTUP_OR_RUN_EXCEPTION'; result['exit_code']=4; fail(exc)
     finally:
         result['stop_reason_before_cleanup']=result['reason']
+        if writer and writer.error and result['first_error'] is None:
+            result['first_error']=writer.error  # Known earlier I/O failure precedes cleanup clock sampling.
         result['owned_resources']={name:value is not None for name,value in
             (('records',records),('writer',writer),('core',core),('context',context),('node',node),('wrapper',wrapper),('executor',executor))}
         def timing_sample(stage: str) -> int | None:

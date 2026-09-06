@@ -1,0 +1,45 @@
+version: spatial_mpc_virtual_v4_v1
+profile_kind: VIRTUAL_TEST_ONLY
+virtual_reference_assumption: base_link_equals_virtual_rear_axle
+wheelbase_m: 1.0
+body_width_m: 0.60
+rear_overhang_m: 0.20
+front_overhang_m: 0.20
+nominal_speed_mps: 0.50
+maximum_speed_mps: 0.75
+steering_limit_rad: 0.50
+steering_rate_limit_rad_s: 0.80
+acceleration_max_mps2: 0.60
+braking_max_mps2: 1.00
+jerk_limit_mps3: 2.00
+lateral_acceleration_limit_mps2: 0.50
+controller_dt_s: 0.10
+prediction_steps: 15
+plant_substep_s: 0.02
+endpoint_margin_m: 0.10
+minimum_segment_m: 0.00001
+maximum_segment_m: 0.50
+geometry_support_m: 0.10
+cusp_angle_rad: 1.57
+footprint_sample_m: 0.02
+solver:
+  method: SLSQP
+  version: 1.15.3
+  maxiter: 45
+  ftol: 0.000001
+  constraint_tolerance: 0.00001
+  wall_time_limit_s: 0.50
+  weights: {position: 35.0, yaw: 3.0, speed: 8.0, acceleration: 0.08, steering_rate: 0.08, acceleration_change: 0.15, steering_rate_change: 0.10, terminal_position: 70.0}
+  scales: {position_m: 1.0, yaw_rad: 1.0, speed_mps: 1.0, acceleration_mps2: 1.0, steering_rate_rad_s: 1.0}
+goals:
+  progress_fraction: 0.90
+  convergence_after_s: 2.0
+  cross_track_rms_m: 0.05
+  cross_track_max_m: 0.10
+  endpoint_error_m: 0.10
+  final_speed_mps: 0.03
+budgets:
+  scene_cycles: 150
+  total_cycles: 3000
+  active_seconds: 3600
+  main_runs: 2
