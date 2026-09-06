@@ -80,6 +80,26 @@ REAL_ROS_RUNTIME_TESTED=NOT_EXECUTED、REAL_CHECKPOINT_READ_PERFORMED=false、
 LIVE_INPUT_INFERENCE_TESTED=NOT_EXECUTED、CONTROL_CONNECTION=NOT_IMPLEMENTED。
 実装と合成確認はlive起動/取得/走行の承認ではない。geometry教師/Safety/controller oracleは別gateのまま。
 
+### 今回の最終合成結果（bootstrap）
+
+実装/test/trace版: `ba63c15ce99574ff73324e58d00824d5f1707e1e`。
+最終run: `/home/thistle/e2e_autonomous/runs/spatial_bootstrap_ba63c15`。
+同一SHAのWSL共有lock下、指定3ファイルで `235 passed, 2 skipped, 1 warning in 7.10s`、終了コード0。
+初回4a6a3e0は222pass/1skip、途中ac29365は231pass/2skip。各runは別directory、上書きなし。
+2skipはjsonschema未導入による旧runtime/new passiveの完全Draft2020検証。別途Draft7互換検証は未実行。
+Python3.10.12、torch2.7.1+cu128、numpy2.2.6、pytest9.1.1、Pillow12.2.0。
+bootstrap代表trace37ケース、JSONL33ファイル、代表fake forward10（全pytestの総数ではない）。
+M0期限DROP後のM1出力、入力ゼロ/command欠測での時間終了、起動途中期限、全取得段階の失敗、
+SIGINT相当、writer CLOSED/receipt失敗、cleanup first error/timeoutの区別を合成で確認。
+正常主recordのreceipt失敗はsaved={0},dropped={}。上限で主record未保存はsaved={},dropped={0}。
+STANDALONE_BOOTSTRAP_IMPLEMENTED、PASSIVE_BINDING_CONFIG_IMPLEMENTED、FIXED_LOADER_WIRING_TESTED_WITH_FAKE、
+PERIODIC_TICK_AND_STOP_TESTED、RESOURCE_CLEANUP_TESTED、NONACTUATION_STATIC_AND_MOCK_CHECKED。
+LIVE_BINDING_REQUIRED_FIELDSは配布configのtopic/frame/producer/evidence/beam geometry/shape/grid根拠/実ROS環境/明示予算・出力先・承認。
+実graph観測・sensor parity・実ROS build/import/launchは未実施。自己点検を独立レビュー合格とは呼ばない。
+既定同期によるDatasetルートの存在確認を実施（CheckOnly/通常syncを各3回）。同期scriptの変更なし。
+Dataset内容・raw・sensor・checkpointの読取りは未実施。固定forward/学習/走行/pushなし。
+結果文書commitは実行版と別。レビューZIPのrepoはba63c15固定、fake exporterも同一版。
+
 ## 候補処理修正（合成限定、基準19c6be9/結果f7c9f39）
 
 今回のHEAD確認はf7c9f39b6c7071cbcee502b57ecbb86ec7380894、working tree clean。
