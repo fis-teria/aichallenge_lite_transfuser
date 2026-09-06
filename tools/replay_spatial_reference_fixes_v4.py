@@ -5,8 +5,10 @@ from collections import Counter
 import hashlib
 import json
 from pathlib import Path
+import sys
 import numpy as np
 import yaml
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'src'))
 from aic_transfuser_lite.control.constrained_reference_v4 import constrained_reference, ordered_polyline_error
 from aic_transfuser_lite.control.spatial_tracking_contracts_v4 import SpatialPathCandidate, plain
 
