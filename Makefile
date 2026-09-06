@@ -9,7 +9,7 @@ TINY_PHASE ?= stationary
 TINY_WALL_SECONDS ?= 120
 dev:
 ifeq ($(CONTROL_METHOD),tiny_lidar_net_guarded)
-	python3 tools/tiny_dev_runner.py --control-method tiny_lidar_net_guarded $(if $(filter 1,$(TINY_GUI_RETRY)),--gui-retry,) $(if $(filter 2,$(TINY_GUI_RETRY)),--gui-retry2,) --sim-repo "$(SIM_REPO)" --official-package "$(TINY_PACKAGE)" --install-root "$(TINY_INSTALL)" --display "$(DISPLAY)" --xauthority "$(XAUTHORITY)" --output "$(TINY_OUTPUT)" --commit "$(TINY_COMMIT)" --phase short --wall-seconds 120 --budget "$(TINY_BUDGET)"
+	python3 tools/tiny_dev_runner.py --control-method tiny_lidar_net_guarded $(if $(filter 1,$(TINY_GUI_RETRY)),--gui-retry,) $(if $(filter 2,$(TINY_GUI_RETRY)),--gui-retry2,) $(if $(filter 1,$(TINY_GUI_LAP)),--gui-lap,) --sim-repo "$(SIM_REPO)" --official-package "$(TINY_PACKAGE)" --install-root "$(TINY_INSTALL)" --display "$(DISPLAY)" --xauthority "$(XAUTHORITY)" --output "$(TINY_OUTPUT)" --commit "$(TINY_COMMIT)" --phase $(if $(filter 1,$(TINY_GUI_LAP)),lap,short) --wall-seconds $(if $(filter 1,$(TINY_GUI_LAP)),600,120) --budget "$(TINY_BUDGET)"
 else
 ifeq ($(DEV_CONTROLLER),tiny)
 	python3 tools/tiny_dev_runner.py --sim-repo "$(SIM_REPO)" --official-package "$(TINY_PACKAGE)" --xvfb-root "$(XVFB_ROOT)" --output "$(TINY_OUTPUT)" --commit "$(TINY_COMMIT)" --phase "$(TINY_PHASE)" --wall-seconds "$(TINY_WALL_SECONDS)" --budget "$(TINY_BUDGET)"

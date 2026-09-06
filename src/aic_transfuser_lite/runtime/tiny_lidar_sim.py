@@ -25,7 +25,10 @@ TINY_GUI_RETRY_PROFILE = "TINY_GUI_RETRY_20260907"
 GUI_RETRY_AUTH_SHA256 = "90b60a4c99c6e17e490454a9410755b33b1f5fa36e5b3c29f27d46d69795156d"
 TINY_GUI_RETRY2_PROFILE = "TINY_GUI_RETRY2_20260907"
 GUI_RETRY2_AUTH_SHA256 = "599eee1622043222bef50de1288de693ec192055809d039f175d2eb26f9bef8b"
+TINY_GUI_LAP_PROFILE = "TINY_GUI_LAP_20260907"
+GUI_LAP_AUTH_SHA256 = "a799ad8000a8540660a7d905abbe3b2fa59a708be3928c1395f1bfb2001b62be"
 GUI_AUTHORIZATIONS = {
+    TINY_GUI_LAP_PROFILE: (GUI_LAP_AUTH_SHA256, "configs/control/tiny_gui_lap_authorization_20260907.json"),
     TINY_GUI_PROFILE: (GUI_AUTH_SHA256, "configs/control/tiny_gui_authorization_20260907.json"),
     TINY_GUI_RETRY_PROFILE: (GUI_RETRY_AUTH_SHA256, "configs/control/tiny_gui_retry_authorization_20260907.json"),
     TINY_GUI_RETRY2_PROFILE: (GUI_RETRY2_AUTH_SHA256, "configs/control/tiny_gui_retry2_authorization_20260907.json"),
@@ -217,7 +220,9 @@ def tiny_phase_caps(phase: str, profile: str = TINY_AUTH_PROFILE) -> dict:
         "short": dict(wall_seconds=120, forward_limit=300, single_episode_sim_limit_s=20.),
         "lap": dict(wall_seconds=600, forward_limit=5200, single_episode_sim_limit_s=240.),
     }
-    if profile in GUI_AUTHORIZATIONS:
+    if profile == TINY_GUI_LAP_PROFILE:
+        caps = {"lap": caps["lap"]}
+    elif profile in GUI_AUTHORIZATIONS:
         caps = {"short": dict(wall_seconds=120, forward_limit=600, single_episode_sim_limit_s=20.)}
     elif profile != TINY_AUTH_PROFILE:
         raise ValueError("UNKNOWN_TINY_PROFILE")
@@ -308,7 +313,7 @@ def verify_container_contract(items: list[dict], project: str, *, gui: bool = Fa
                "/aichallenge/run_simulator.bash", "/xvfb", "/tmp/.X11-unix", "/usr/bin/xkbcomp"}
     if gui:
         allowed = {"/v4", "/evidence", "/official_tiny", "/aichallenge/simulator/AWSIM",
-                   "/aichallenge/run_simulator.bash", "/tmp/.X11-unix", "/desktop_xauth", "/tiny_install"}
+                   "/aichallenge/run_simulator.bash", "/tmp/.X11-unix", "/desktop_xauth", "/tiny_install", "/.rviz2"}
     for name, c in indexed.items():
         h = c["HostConfig"]
         if (c["Config"]["Labels"].get("com.docker.compose.project") != project or h["Privileged"]
@@ -322,7 +327,10 @@ def verify_container_contract(items: list[dict], project: str, *, gui: bool = Fa
         for mount in c["Mounts"]:
             if mount["Destination"] not in allowed:
                 raise ValueError("UNEXPECTED_MOUNT")
-            if mount["RW"] and mount["Destination"] not in ("/evidence", "/tmp/.X11-unix"):
+            writable = {"/evidence", "/tmp/.X11-unix"}
+            if gui and name == "autoware":
+                writable.add("/.rviz2")
+            if mount["RW"] and mount["Destination"] not in writable:
                 raise ValueError("WRITABLE_SOURCE_OR_SIMULATOR")
         if gui:
             mounts = {m["Destination"]: m for m in c["Mounts"]}
@@ -331,3 +339,8 @@ def verify_container_contract(items: list[dict], project: str, *, gui: bool = Fa
                 "/aichallenge/simulator/AWSIM", "/aichallenge/run_simulator.bash"}
             if not required <= mounts.keys() or any(mounts[p]["RW"] for p in required-{"/evidence"}):
                 raise ValueError("GUI_REQUIRED_READONLY_MOUNTS")
+            if name == "autoware":
+                rviz = mounts.get("/.rviz2", {})
+                if (not rviz.get("RW") or rviz.get("Source") !=
+                        str(Path(mounts["/evidence"]["Source"])/"rviz_config")):
+                    raise ValueError("GUI_RVIZ_CONFIG_MUST_BE_OWN_EVIDENCE")

@@ -43,8 +43,10 @@ def compose_gui(source: Path, sim: Path, install: Path, output: Path, official: 
         volumes=shared+[mount(sim/"aichallenge/simulator/AWSIM", "/aichallenge/simulator/AWSIM"),
                         mount(sim/"aichallenge/run_simulator.bash", "/aichallenge/run_simulator.bash")])
     autoware = dict(common, network_mode="service:simulator", depends_on=["simulator"],
-        command=["/v4/integrations/tiny_gui/runtime.sh"], environment=dict(env, ROS_DOMAIN_ID="1"),
-        volumes=shared+[mount(install, "/tiny_install"), mount(official, "/official_tiny")])
+        command=["/v4/integrations/tiny_gui/runtime.sh"],
+        environment=dict(env, ROS_DOMAIN_ID="1", __GLX_VENDOR_LIBRARY_NAME="nvidia"),
+        volumes=shared+[mount(install, "/tiny_install"), mount(official, "/official_tiny"),
+                        mount(output/"rviz_config", "/.rviz2", False)])
     # Docker forbids explicit Hostname with container:/service: network sharing.
     # Keep cookie lookup local to the desktop hostname via XAUTHLOCALHOSTNAME;
     # do not disable X authentication or expose a host network to work around it.
@@ -124,7 +126,8 @@ def visible_owned_windows(run, tree: str, sim_id: str, runtime_id: str) -> dict:
             prop = run(["xprop", "-id", window, "_NET_WM_PID"], timeout=2, check=False).stdout
             pid = re.search(r"=\s*(\d+)", prop)
             info = run(["xwininfo", "-id", window], timeout=2, check=False).stdout
-            if pid and int(pid[1]) in internal and "Map State: IsViewable" in info:
+            configured = kind != "rviz" or "tiny_scan.rviz" in info
+            if pid and int(pid[1]) in internal and "Map State: IsViewable" in info and configured:
                 result[kind] = dict(window_id=window, namespace_pid=int(pid[1]), container_id=container,
                                     viewable=True, details=info, property=prop)
                 break

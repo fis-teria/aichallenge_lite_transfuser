@@ -18,7 +18,7 @@ from aic_transfuser_lite.runtime.tiny_lidar_sim import (
     WEIGHT_SHA256, digest, TINY_AUTH_PROFILE, AUTH_REQUEST_SHA256, DRIVE_CUTOFF_UNIX_S,
     finite_number, tiny_phase_caps, validate_tiny_config, bounded_runtime_wall,
     TINY_GUI_PROFILE, GUI_AUTH_SHA256, GUI_CONTROL_METHOD,
-    TINY_GUI_RETRY_PROFILE, TINY_GUI_RETRY2_PROFILE, GUI_AUTHORIZATIONS,
+    TINY_GUI_RETRY_PROFILE, TINY_GUI_RETRY2_PROFILE, TINY_GUI_LAP_PROFILE, GUI_AUTHORIZATIONS,
 )
 from spatial_dev_host_v4 import HostWatch, AttemptBudget, atomic_json, cleanup_owned
 
@@ -49,6 +49,8 @@ class TinyBudget(AttemptBudget):
             self.limits["powered"] = 5
         elif profile == TINY_GUI_RETRY2_PROFILE:
             self.limits["powered"] = 6
+        elif profile == TINY_GUI_LAP_PROFILE:
+            self.limits.update(powered=7, forward=7100, powered_s=320.)
         self.profile = profile
 
     def authorize(self) -> dict:
@@ -71,6 +73,11 @@ class TinyBudget(AttemptBudget):
             if (self.value.get("tiny_authorized_profile") != previous_profile or
                     self.value.get("tiny_authorized_limits") != expected_previous):
                 raise ValueError("GUI_RETRY_REQUIRES_PREVIOUS_GUI_AUTHORIZATION")
+        if self.profile == TINY_GUI_LAP_PROFILE:
+            expected_previous = dict(self.limits, powered=6, forward=6000, powered_s=300.)
+            if (self.value.get("tiny_authorized_profile") != TINY_GUI_RETRY2_PROFILE or
+                    self.value.get("tiny_authorized_limits") != expected_previous):
+                raise ValueError("GUI_LAP_REQUIRES_PREVIOUS_GUI_AUTHORIZATION")
         record = dict(profile=self.profile, request_sha256=request_hash,
             request_attachment=(GUI_AUTHORIZATIONS[self.profile][1] if gui else
                                 "f7325d22-7b3c-494e-bf56-ca4464746cef/pasted-text.txt"),
@@ -78,8 +85,8 @@ class TinyBudget(AttemptBudget):
             authorization_source="USER_SUPPLIED_EXECUTION_REQUEST", author_name=None,
             old_limits=dict(self.value.get("tiny_authorized_limits", AttemptBudget.limits)) if gui else dict(AttemptBudget.limits),
             new_limits=dict(self.limits),
-            old_episode_sim_seconds=(20. if self.profile in (TINY_GUI_RETRY_PROFILE, TINY_GUI_RETRY2_PROFILE) else 240. if gui else 60.),
-            new_episode_sim_seconds=20. if gui else 240.,
+            old_episode_sim_seconds=(20. if self.profile in (TINY_GUI_RETRY_PROFILE, TINY_GUI_RETRY2_PROFILE, TINY_GUI_LAP_PROFILE) else 240. if gui else 60.),
+            new_episode_sim_seconds=20. if gui and self.profile != TINY_GUI_LAP_PROFILE else 240.,
             used_at_change=dict(self.value["used"]), prior_attempt_count=len(self.value.get("attempts", [])),
             prior_active=self.value.get("active"), applied_retroactively=False)
         records.append(record)
@@ -95,15 +102,16 @@ class TinyBudget(AttemptBudget):
         gui = self.profile in GUI_AUTHORIZATIONS
         if gui and any(a.get("authorization_profile") == self.profile for a in self.value.get("attempts", [])):
             raise ValueError("GUI_SINGLE_ATTEMPT_ALREADY_USED")
-        if not 1 <= tiny_limit <= (600 if gui else 5200):
+        short_gui = gui and self.profile != TINY_GUI_LAP_PROFILE
+        if not 1 <= tiny_limit <= (600 if short_gui else 5200):
             raise ValueError("TINY_FORWARD_RESERVATION_CAP")
         for key in self.limits:
             finite_number(reservation[key], "reservation."+key, integer=key not in ("wall_s", "powered_s"))
             finite_number(self.value["used"][key], "used."+key, integer=key not in ("wall_s", "powered_s"))
         if reservation["forward"] != 0 or reservation["mpc"] != 0 or not 0 <= reservation["snapshots"] <= (2 if gui else 0):
             raise ValueError("TINY_ONLY_RESERVATION")
-        if (reservation["powered"] not in (0, 1) or reservation["powered_s"] > (20 if gui else 240)
-                or reservation["wall_s"] > (230 if gui else 710)):
+        if (reservation["powered"] not in (0, 1) or reservation["powered_s"] > (20 if short_gui else 240)
+                or reservation["wall_s"] > (230 if short_gui else 710)):
             raise ValueError("TINY_ATTEMPT_RESERVATION_CAP")
         previous = finite_number(self.value["used"].get("tiny_forward"), "used.tiny_forward", integer=True)
         if self.value["used"]["forward"]+previous+tiny_limit > self.limits["forward"]:
@@ -200,6 +208,7 @@ def main() -> int:
     retry_args = ap.add_mutually_exclusive_group()
     retry_args.add_argument("--gui-retry", action="store_true", help="Explicit one-shot 4-to-5 authorization; GUI short only")
     retry_args.add_argument("--gui-retry2", action="store_true", help="Explicit one-shot 5-to-6 authorization; GUI short only")
+    retry_args.add_argument("--gui-lap", action="store_true", help="Explicit one-shot 6-to-7 authorization; GUI lap only")
     ap.add_argument("--install-root", type=Path)
     ap.add_argument("--display")
     ap.add_argument("--xauthority", type=Path)
@@ -210,11 +219,13 @@ def main() -> int:
     ap.add_argument("--budget", type=Path, required=True)
     args = ap.parse_args()
     gui = args.control_method == GUI_CONTROL_METHOD
-    if (args.gui_retry or args.gui_retry2) and not gui:
+    if (args.gui_retry or args.gui_retry2 or args.gui_lap) and not gui:
         raise ValueError("GUI_RETRY_REQUIRES_GUARDED_METHOD")
     profile = (TINY_GUI_RETRY_PROFILE if args.gui_retry else TINY_GUI_PROFILE) if gui else TINY_AUTH_PROFILE
     if args.gui_retry2:
         profile = TINY_GUI_RETRY2_PROFILE
+    if args.gui_lap:
+        profile = TINY_GUI_LAP_PROFILE
     if os.name != "posix" or not re.fullmatch("[0-9a-f]{40}", args.commit):
         raise ValueError("LINUX_FIXED_COMMIT_REQUIRED")
     if not 10 <= args.wall_seconds <= tiny_phase_caps(args.phase, profile)["wall_seconds"]:
@@ -241,6 +252,8 @@ def main() -> int:
     if any(before[str(p)] != value for p, value in assets.items()):
         raise ValueError("UNCHANGED_AWSIM_IDENTITY_FAILED")
     output.mkdir(parents=True)
+    if gui:
+        (output/"rviz_config").mkdir()
     (output/"x11").mkdir(); (output/"x11").chmod(0o1777)
     project = "codex-tiny-dev-"+output.name.lower().replace("_", "-")
     if not re.fullmatch("[a-z0-9-]+", project):
@@ -447,7 +460,9 @@ def main() -> int:
             if gui:
                 summary["supervisor_exception"] = final["exception"]
                 if final["exception"] or not final["observed_motion"] or not final["observed_braking_stop"]:
-                    error = error or "GUI_SHORT_NOT_COMPLETE:"+str(final["stop_reason"])
+                    error = error or "GUI_MOTION_STOP_NOT_COMPLETE:"+str(final["stop_reason"])
+                if args.phase == "lap" and not judge.completed:
+                    error = error or "GUI_LAP_NOT_CONFIRMED"
         elif gui:
             error = error or "GUI_SUPERVISOR_SUMMARY_MISSING"
         summary["error"] = error

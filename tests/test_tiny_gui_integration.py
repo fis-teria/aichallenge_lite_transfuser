@@ -19,6 +19,7 @@ from aic_transfuser_lite.runtime.tiny_lidar_sim import (
     verify_container_contract,
     TINY_GUI_RETRY_PROFILE, GUI_RETRY_AUTH_SHA256,
     TINY_GUI_RETRY2_PROFILE, GUI_RETRY2_AUTH_SHA256,
+    TINY_GUI_LAP_PROFILE, GUI_LAP_AUTH_SHA256,
 )
 from tiny_dev_runner import TinyBudget, IMAGE
 from tiny_gui_integration import compose_gui, narrow_fingerprint, make_command, window_candidates
@@ -224,12 +225,60 @@ def test_gui_compose_isolated_real_display_and_method(tmp_path):
         assert not service["privileged"] and service["cap_drop"] == ["ALL"]
         assert service["environment"]["DISPLAY"] == ":1"
         assert service["environment"]["CONTROL_METHOD"] == GUI_CONTROL_METHOD
-        assert all(not v["read_only"] == (v["target"] == "/evidence") for v in service["volumes"])
+        assert all((not v["read_only"]) == (v["target"] in {"/evidence", "/.rviz2"}) for v in service["volumes"])
         assert not any("/dev/" in v["target"] or v["target"] == "/aichallenge" for v in service["volumes"])
     assert spec["services"]["simulator"]["network_mode"] == "none"
     assert spec["services"]["autoware"]["network_mode"] == "service:simulator"
     assert "hostname" not in spec["services"]["autoware"]
     assert spec["services"]["autoware"]["environment"]["XAUTHLOCALHOSTNAME"] == os.uname().nodename
+    assert spec["services"]["autoware"]["environment"]["__GLX_VENDOR_LIBRARY_NAME"] == "nvidia"
+    assert "__GLX_VENDOR_LIBRARY_NAME" not in spec["services"]["simulator"]["environment"]
+    items = []
+    for name, service in spec["services"].items():
+        items.append(dict(Id=name, Image=IMAGE, Config=dict(Labels={
+            "com.docker.compose.service": name, "com.docker.compose.project": "codex-tiny-dev-test"}),
+            HostConfig=dict(Privileged=False, Devices=[], CapAdd=[], CapDrop=["ALL"], PidMode="",
+                IpcMode="private", SecurityOpt=["no-new-privileges:true"],
+                NetworkMode="none" if name == "simulator" else "container:simulator"),
+            Mounts=[dict(Destination=v["target"], Source=v["source"], RW=not v["read_only"]) for v in service["volumes"]]))
+    verify_container_contract(items, "codex-tiny-dev-test", gui=True)
+    next(m for m in items[1]["Mounts"] if m["Destination"] == "/.rviz2")["Source"] = "/unowned"
+    with pytest.raises(ValueError, match="OWN_EVIDENCE"):
+        verify_container_contract(items, "codex-tiny-dev-test", gui=True)
+
+
+def test_lap_exact_grant_caps_and_prior_consumption(tmp_path):
+    assert digest(ROOT/"configs/control/tiny_gui_lap_authorization_20260907.json") == GUI_LAP_AUTH_SHA256
+    path, _ = ledger(tmp_path)
+    premature = TinyBudget(path, profile=TINY_GUI_LAP_PROFILE)
+    with pytest.raises(ValueError, match="PREVIOUS_GUI_AUTHORIZATION"): premature.authorize()
+    premature.close()
+    for profile in (TINY_GUI_PROFILE, TINY_GUI_RETRY_PROFILE, TINY_GUI_RETRY2_PROFILE):
+        old = TinyBudget(path, profile=profile)
+        old.authorize(); old.reserve_tiny(profile, reservation(), 600)
+        old.finish_tiny(dict(wall_s=40., forward=0, mpc=0, snapshots=0, powered=1, powered_s=10., log_bytes=1000), 200, exact=True)
+        old.close()
+    budget = TinyBudget(path, profile=TINY_GUI_LAP_PROFILE)
+    before = copy.deepcopy(budget.value)
+    record = budget.authorize()
+    assert record["old_limits"] == dict(budget.limits, powered=6, forward=6000, powered_s=300.)
+    assert record["new_limits"]["powered"] == 7
+    assert record["new_episode_sim_seconds"] == 240
+    assert budget.value["used"] == before["used"] and budget.value["attempts"] == before["attempts"]
+    reserve = dict(reservation(), wall_s=710., powered_s=240.)
+    for key, value in (("wall_s", 711.), ("powered_s", 241.)):
+        with pytest.raises(ValueError): budget.reserve_tiny("bad", dict(reserve, **{key:value}), 5200)
+    with pytest.raises(ValueError): budget.reserve_tiny("bad", reserve, 5201)
+    budget.reserve_tiny("lap", reserve, 5200)
+    budget.finish_tiny(dict(wall_s=300., forward=0, mpc=0, snapshots=2, powered=1, powered_s=200., log_bytes=1000), 4000, exact=True)
+    with pytest.raises(ValueError, match="SINGLE_ATTEMPT"): budget.reserve_tiny("again", reserve, 1)
+    budget.close()
+    cfg = config()
+    cfg.update(tiny_phase_caps("lap", TINY_GUI_LAP_PROFILE), phase="lap",
+               authorization_profile=TINY_GUI_LAP_PROFILE, authorization_request_sha256=GUI_LAP_AUTH_SHA256)
+    validate_tiny_config(cfg)
+    with pytest.raises(ValueError): tiny_phase_caps("short", TINY_GUI_LAP_PROFILE)
+    assert tiny_phase_caps("short", TINY_GUI_RETRY2_PROFILE)["forward_limit"] == 600
 
 
 def test_make_uses_existing_recipe_and_new_method_only(tmp_path):
