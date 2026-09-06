@@ -18,7 +18,7 @@ from aic_transfuser_lite.runtime.tiny_lidar_sim import (
     WEIGHT_SHA256, digest, TINY_AUTH_PROFILE, AUTH_REQUEST_SHA256, DRIVE_CUTOFF_UNIX_S,
     finite_number, tiny_phase_caps, validate_tiny_config, bounded_runtime_wall,
     TINY_GUI_PROFILE, GUI_AUTH_SHA256, GUI_CONTROL_METHOD,
-    TINY_GUI_RETRY_PROFILE, GUI_AUTHORIZATIONS,
+    TINY_GUI_RETRY_PROFILE, TINY_GUI_RETRY2_PROFILE, GUI_AUTHORIZATIONS,
 )
 from spatial_dev_host_v4 import HostWatch, AttemptBudget, atomic_json, cleanup_owned
 
@@ -47,6 +47,8 @@ class TinyBudget(AttemptBudget):
             self.limits["powered"] = 4
         elif profile == TINY_GUI_RETRY_PROFILE:
             self.limits["powered"] = 5
+        elif profile == TINY_GUI_RETRY2_PROFILE:
+            self.limits["powered"] = 6
         self.profile = profile
 
     def authorize(self) -> dict:
@@ -63,9 +65,10 @@ class TinyBudget(AttemptBudget):
             if prior.get("request_sha256") != request_hash or prior.get("new_limits") != self.limits:
                 raise ValueError("CONFLICTING_TINY_AUTHORIZATION_RECORD")
             return prior
-        if self.profile == TINY_GUI_RETRY_PROFILE:
-            expected_previous = dict(self.limits, powered=4)
-            if (self.value.get("tiny_authorized_profile") != TINY_GUI_PROFILE or
+        if self.profile in (TINY_GUI_RETRY_PROFILE, TINY_GUI_RETRY2_PROFILE):
+            previous_profile = TINY_GUI_RETRY_PROFILE if self.profile == TINY_GUI_RETRY2_PROFILE else TINY_GUI_PROFILE
+            expected_previous = dict(self.limits, powered=self.limits["powered"]-1)
+            if (self.value.get("tiny_authorized_profile") != previous_profile or
                     self.value.get("tiny_authorized_limits") != expected_previous):
                 raise ValueError("GUI_RETRY_REQUIRES_PREVIOUS_GUI_AUTHORIZATION")
         record = dict(profile=self.profile, request_sha256=request_hash,
@@ -75,7 +78,7 @@ class TinyBudget(AttemptBudget):
             authorization_source="USER_SUPPLIED_EXECUTION_REQUEST", author_name=None,
             old_limits=dict(self.value.get("tiny_authorized_limits", AttemptBudget.limits)) if gui else dict(AttemptBudget.limits),
             new_limits=dict(self.limits),
-            old_episode_sim_seconds=(20. if self.profile == TINY_GUI_RETRY_PROFILE else 240. if gui else 60.),
+            old_episode_sim_seconds=(20. if self.profile in (TINY_GUI_RETRY_PROFILE, TINY_GUI_RETRY2_PROFILE) else 240. if gui else 60.),
             new_episode_sim_seconds=20. if gui else 240.,
             used_at_change=dict(self.value["used"]), prior_attempt_count=len(self.value.get("attempts", [])),
             prior_active=self.value.get("active"), applied_retroactively=False)
@@ -194,7 +197,9 @@ def main() -> int:
     ap.add_argument("--official-package", type=Path, required=True)
     ap.add_argument("--xvfb-root", type=Path)
     ap.add_argument("--control-method", choices=(GUI_CONTROL_METHOD,))
-    ap.add_argument("--gui-retry", action="store_true", help="Explicit one-shot 4-to-5 authorization; GUI short only")
+    retry_args = ap.add_mutually_exclusive_group()
+    retry_args.add_argument("--gui-retry", action="store_true", help="Explicit one-shot 4-to-5 authorization; GUI short only")
+    retry_args.add_argument("--gui-retry2", action="store_true", help="Explicit one-shot 5-to-6 authorization; GUI short only")
     ap.add_argument("--install-root", type=Path)
     ap.add_argument("--display")
     ap.add_argument("--xauthority", type=Path)
@@ -205,9 +210,11 @@ def main() -> int:
     ap.add_argument("--budget", type=Path, required=True)
     args = ap.parse_args()
     gui = args.control_method == GUI_CONTROL_METHOD
-    if args.gui_retry and not gui:
+    if (args.gui_retry or args.gui_retry2) and not gui:
         raise ValueError("GUI_RETRY_REQUIRES_GUARDED_METHOD")
     profile = (TINY_GUI_RETRY_PROFILE if args.gui_retry else TINY_GUI_PROFILE) if gui else TINY_AUTH_PROFILE
+    if args.gui_retry2:
+        profile = TINY_GUI_RETRY2_PROFILE
     if os.name != "posix" or not re.fullmatch("[0-9a-f]{40}", args.commit):
         raise ValueError("LINUX_FIXED_COMMIT_REQUIRED")
     if not 10 <= args.wall_seconds <= tiny_phase_caps(args.phase, profile)["wall_seconds"]:

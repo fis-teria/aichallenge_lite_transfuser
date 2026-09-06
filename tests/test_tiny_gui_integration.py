@@ -18,6 +18,7 @@ from aic_transfuser_lite.runtime.tiny_lidar_sim import (
     host_arm_status, tiny_phase_caps, validate_tiny_config, bounded_runtime_wall, digest,
     verify_container_contract,
     TINY_GUI_RETRY_PROFILE, GUI_RETRY_AUTH_SHA256,
+    TINY_GUI_RETRY2_PROFILE, GUI_RETRY2_AUTH_SHA256,
 )
 from tiny_dev_runner import TinyBudget, IMAGE
 from tiny_gui_integration import compose_gui, narrow_fingerprint, make_command, window_candidates
@@ -154,6 +155,42 @@ def test_retry_requires_previous_grant_and_exact_request(tmp_path):
     validate_tiny_config(cfg)
     assert tiny_phase_caps("short", TINY_GUI_RETRY_PROFILE) == tiny_phase_caps("short", TINY_GUI_PROFILE)
     with pytest.raises(ValueError): tiny_phase_caps("lap", TINY_GUI_RETRY_PROFILE)
+
+
+def test_second_retry_adds_one_without_rewriting_failed_attempts(tmp_path):
+    path, _ = ledger(tmp_path)
+    premature = TinyBudget(path, profile=TINY_GUI_RETRY2_PROFILE)
+    with pytest.raises(ValueError, match="PREVIOUS_GUI_AUTHORIZATION"): premature.authorize()
+    premature.close()
+    for profile in (TINY_GUI_PROFILE, TINY_GUI_RETRY_PROFILE):
+        old = TinyBudget(path, profile=profile)
+        old.authorize(); old.reserve_tiny(profile, reservation(), 600)
+        old.finish_tiny(dict(forward=0, mpc=0), None, exact=False)
+        old.close()
+    retry = TinyBudget(path, profile=TINY_GUI_RETRY2_PROFILE)
+    before = copy.deepcopy(retry.value)
+    record = retry.authorize()
+    assert record["old_limits"]["powered"] == 5 and record["new_limits"]["powered"] == 6
+    assert retry.value["used"] == before["used"] and retry.value["attempts"] == before["attempts"]
+    assert retry.authorize() == record
+    retry.reserve_tiny("approved_retry2", reservation(), 600)
+    retry.finish_tiny(dict(forward=0, mpc=0), None, exact=False)
+    assert retry.value["used"]["powered"] == 6
+    with pytest.raises(ValueError, match="SINGLE_ATTEMPT"):
+        retry.reserve_tiny("not_approved", reservation(), 600)
+    retry.close()
+
+
+def test_second_retry_request_caps_and_method_are_fixed():
+    assert digest(ROOT/"configs/control/tiny_gui_retry2_authorization_20260907.json") == GUI_RETRY2_AUTH_SHA256
+    cfg = config(); cfg["authorization_profile"] = TINY_GUI_RETRY2_PROFILE
+    with pytest.raises(ValueError): validate_tiny_config(cfg)
+    cfg["authorization_request_sha256"] = GUI_RETRY2_AUTH_SHA256
+    validate_tiny_config(cfg)
+    assert tiny_phase_caps("short", TINY_GUI_RETRY2_PROFILE) == tiny_phase_caps("short", TINY_GUI_PROFILE)
+    with pytest.raises(ValueError): tiny_phase_caps("lap", TINY_GUI_RETRY2_PROFILE)
+    cfg["control_method"] = "tiny_lidar_net"
+    with pytest.raises(ValueError): validate_tiny_config(cfg)
 
 
 @pytest.mark.parametrize("field,value", [("wall_s",231.), ("powered_s",21.), ("snapshots",3), ("mpc",1)])
