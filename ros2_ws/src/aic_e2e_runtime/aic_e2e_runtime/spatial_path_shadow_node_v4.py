@@ -18,7 +18,7 @@ class SpatialPathShadowWrapperV4:
                  topics: dict, *, clock=time.monotonic_ns, grid_period_ns: int=100_000_000):
         if any(not topics.get(k) for k in ('image','lidar','velocity','steering','nominal')):
             raise ValueError('BLOCKED_REAL_INPUT_BINDING: explicit topics required')
-        self.runtime,self.adapter,self.clock=node and runtime,adapter,clock
+        self.runtime,self.adapter,self.clock=runtime,adapter,clock
         self.grid_period_ns=grid_period_ns
         self.epoch=0
         self.last_image=None
@@ -83,7 +83,8 @@ class SpatialPathShadowWrapperV4:
                 steering=matched['steering'][1]
                 grid=((camera.header_ns+self.grid_period_ns//2)//self.grid_period_ns)*self.grid_period_ns
                 item=GridObservation(grid,camera,lidar,matched['velocity'][0],image,np.asarray(scan.ranges,dtype=np.float32),
-                    (float(velocity.longitudinal_velocity),float(velocity.lateral_velocity),float(velocity.heading_rate),float(steering.steering_tire_angle)))
+                    (float(velocity.longitudinal_velocity),float(velocity.lateral_velocity),float(velocity.heading_rate),float(steering.steering_tire_angle)),
+                    range_min_m=float(scan.range_min),range_max_m=float(scan.range_max))
                 finalized=self.clock()
                 status=self.adapter.append(item,finalized)
                 if status!='ACCEPTED':
@@ -99,6 +100,27 @@ class SpatialPathShadowWrapperV4:
                 if self.runtime.writer:
                     self.runtime.writer.enqueue(event)
                     self.runtime.writer.drain()
+
+
+def create_ros_node(runtime: object, adapter: SpatialInputV4, topics: dict) -> object:
+    """Construction hook for separately approved bootstrap; never called here.
+
+    No rclpy.init/spin inside this function. Caller owns an authorized context.
+    Tests inject a fake Node into SpatialPathShadowWrapperV4 instead.
+    """
+    from rclpy.node import Node
+    from rclpy.qos import qos_profile_sensor_data
+    from sensor_msgs.msg import Image, LaserScan
+    from autoware_auto_vehicle_msgs.msg import VelocityReport, SteeringReport
+    from autoware_auto_control_msgs.msg import AckermannControlCommand
+    node=Node('spatial_path_shadow_v4',enable_rosout=False,start_parameter_services=False)
+    try:
+        node.v4_wrapper=SpatialPathShadowWrapperV4(node,runtime,adapter,
+            dict(image=Image,lidar=LaserScan,velocity=VelocityReport,steering=SteeringReport,nominal=AckermannControlCommand,sensor_qos=qos_profile_sensor_data),topics)
+    except Exception:
+        node.destroy_node()
+        raise
+    return node
 
 
 def main(args: list[str] | None = None) -> None:

@@ -168,7 +168,6 @@ class Records:
         h['tensor_hash'] = identity(digest,'descriptor preimage v2')
         st = h['sensor_timing'] = self.blank('sensorTiming')
         st.update(status='BUILT',values_s=numeric(batch.sensor_dt_sec[0].cpu().numpy()),input_builder_id=h['input_builder_id'],input_contract_version='spatial_diagnostic_inputs_v4_v1',input_contract_hash=identity(INPUT_ID))
-        component_schema = self.design['$defs']['sensorTiming']['properties']['components']['oneOf'][0]['items']['items']
         st['components'] = []
         for j in range(4):
             row = []
@@ -200,6 +199,7 @@ class Records:
             slot.update(source='PASSIVE_OR_SYNTHETIC_TRANSPORT',header_time=source_stamp(s),
                 acquisition_time=stamp(s.acquisition_ns,domain='DEVICE',clock=s.clock_id,epoch=s.epoch,source='transport_acquisition'),
                 receipt_monotonic_time=stamp(s.received_ns,clock=s.monotonic_id),available_monotonic_time=stamp(s.available_ns,clock=s.monotonic_id))
+            slot['age_at_input']=dict(status='KNOWN',ns=str(provenance['input_finalized_ns']-s.available_ns),basis='input finalized minus available; same process monotonic',reason='transport availability age, not physical sensor age')
         for role in ('camera','lidar','ego'):
             frames = provenance['ego_frames' if role == 'ego' else 'sensor_frames']
             for slot,f in zip(p['history'][role],frames):
@@ -265,6 +265,8 @@ class Records:
             for j,s in enumerate(p['history'][role]):
                 if s['slot_index'] != j:
                     raise ValueError('slot order')
+                if s['causality']=='PROVEN_PAST_AND_AVAILABLE' and any(s[k]['status']!='PROVEN' for k in ('command_source_past','command_available_before_input')):
+                    raise ValueError('causality summary')
                 for field,strict in (('command_source_past',True),('command_available_before_input',False)):
                     check=s[field]
                     if check['status']=='PROVEN':

@@ -246,3 +246,42 @@ def test_full_draft2020_schema():
         r.validate_schema(SpatialRuntimeV4(Fake(mode),r).infer(batch()))
     for kind in ('LOGGER_HEALTH','SESSION_END','RESET'):
         r.validate_schema(r.event(kind))
+
+
+def test_range_validity_is_sensor_geometry_not_normalization_limit():
+    a=SpatialInputV4(command_binding_known=True)
+    f=replace(frame(0),ranges_m=np.full(750,30,dtype=np.float32),range_max_m=40.)
+    a.append(f,2_000_000_000)
+    b,_=a.build(2_000_000_000)
+    assert torch.all(b.lidar[0,-1]==1)  # clipped range 1, but valid channel still 1
+
+
+def test_future_clock_mismatch_and_nominal_precedence():
+    a=SpatialInputV4(command_binding_known=True,final_fallback_verified=True)
+    a.append(frame(0),2_000_000_000)
+    s=frame(0).camera
+    a.add_command(PassiveCommand(s,.1,1.,0.))
+    a.add_command(PassiveCommand(s,.2,2.,0.,source='final_fallback'))
+    assert a.add_command(PassiveCommand(replace(s,epoch='other'),.3,3.,0.))=='COMMAND_EPOCH_REJECTED'
+    a.append(frame(1),2_000_000_000)
+    b,p=a.build(2_000_000_000)
+    assert b.command_history[0,-1,1]==1 and p['commands'][-1].source=='nominal'
+
+
+def test_wrapper_fake_stream_reaches_same_forward_once():
+    from dataclasses import replace
+    r=records(); core=SpatialRuntimeV4(Fake(),r)
+    class Node:
+        def create_subscription(self,*args): pass
+        def __getattr__(self,name): raise AssertionError(name)
+    roles=('image','lidar','velocity','steering','nominal')
+    types={k:object for k in roles}; types['sensor_qos']=object()
+    ticks=iter(range(2_000_000_000,2_000_000_200))
+    w=wrapper_module().SpatialPathShadowWrapperV4(Node(),core,SpatialInputV4(command_binding_known=True),types,{k:'/fake/'+k for k in roles},clock=lambda:next(ticks))
+    stamp=SimpleNamespace(sec=1,nanosec=0)
+    header=SimpleNamespace(stamp=stamp)
+    w.receive('velocity',SimpleNamespace(header=header,longitudinal_velocity=1.,lateral_velocity=0.,heading_rate=0.))
+    w.receive('steering',SimpleNamespace(header=header,steering_tire_angle=0.))
+    w.receive('lidar',SimpleNamespace(header=header,ranges=[5.]*750,range_min=0.,range_max=25.))
+    w.receive('image',SimpleNamespace(header=header,encoding='rgb8',height=8,width=12,step=36,data=bytes(8*12*3)))
+    assert core.forward_calls==1 and w.results[-1]['payload']['output']['status']=='SHAPE_FINITE_ONLY'

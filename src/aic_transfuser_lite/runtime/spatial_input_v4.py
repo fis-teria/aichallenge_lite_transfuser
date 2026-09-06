@@ -60,6 +60,8 @@ class GridObservation:
     ego_si: tuple[float, float, float, float]
     steering_valid: bool = True
     sample_id: str = 'transport_only'
+    range_min_m: float = 0.0
+    range_max_m: float = 25.0
 
 
 def freeze_batch(batch: ModelBatchV3, device: str = 'cpu') -> ModelBatchV3:
@@ -126,7 +128,9 @@ class SpatialInputV4:
         ranges = np.asarray(item.ranges_m, dtype=np.float32)
         if ranges.shape != (750,):
             raise ValueError('LiDAR must be 750 beams; resampling not authorized')
-        valid = np.isfinite(ranges) & (ranges >= 0) & (ranges <= 25)
+        if not np.isfinite([item.range_min_m,item.range_max_m]).all() or item.range_min_m>=item.range_max_m:
+            raise ValueError('invalid sensor range geometry')
+        valid = np.isfinite(ranges) & (ranges >= item.range_min_m) & (ranges <= item.range_max_m)
         image = preprocess_image(item.rgb, height=224, width=384)
         lidar = torch.from_numpy(normalize_lidar_range_and_validity(ranges, valid, min_range_m=0, max_range_m=25))
         row = dict(zip(('velocity_longitudinal_mps','velocity_lateral_mps','yaw_rate_rps','actual_steering_rad'), map(str, item.ego_si)))
@@ -164,7 +168,7 @@ class SpatialInputV4:
                     continue
                 eligible = [c for c in self.commands if c.source == source and c.stamp.usable(finalized_ns, current.camera)
                             and c.stamp.header_ns <= anchor.header_ns and c.stamp.header_ns < current.camera.header_ns
-                            and anchor.header_ns-c.stamp.header_ns <= 200_000_000]
+                            and anchor.header_ns-c.stamp.header_ns <= 50_000_000]
                 if eligible:
                     c = max(eligible, key=lambda c: c.stamp.header_ns)
                     chosen[source] = c
