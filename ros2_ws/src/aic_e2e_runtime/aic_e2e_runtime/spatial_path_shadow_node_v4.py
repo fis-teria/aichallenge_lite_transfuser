@@ -97,12 +97,13 @@ class SpatialPathShadowWrapperV4:
         self.tick(received)
         try:
             if self.guard:
-                self.guard.check(role,msg)
-            header=getattr(msg,'header',None)
-            value=header.stamp if header is not None else getattr(msg,'stamp',None)
-            if value is None:
-                raise ValueError('MISSING_HEADER:'+role)
-            ns=int(value.sec)*1_000_000_000+int(value.nanosec)
+                ns=self.guard.check(role,msg)
+            else:
+                # Unbound legacy synthetic hook; not standalone/live authority.
+                header=getattr(msg,'header',None)
+                value=header.stamp if header is not None else getattr(msg,'stamp',None)
+                if value is None: raise ValueError('MISSING_HEADER:'+role)
+                ns=int(value.sec)*1_000_000_000+int(value.nanosec)
             if role=='image' and self.last_image is not None and ns<self.last_image:
                 self._clear_waiting('CAMERA_CLOCK_RESET')
                 self.epoch+=1
@@ -172,7 +173,7 @@ class SpatialPathShadowWrapperV4:
                 self.pending.popleft()
                 self._complete(context,'LOGGER_'+self.runtime.writer.state)
                 continue
-            if self.guard and not self.guard.ready(camera.header_ns):
+            if self.guard and (not self.guard.ready() or not self.adapter.command_ready(camera,cutoff)):
                 return  # Receive-only checks; no synthetic command or inferred proof.
             matched={}
             for role in ('velocity','steering'):

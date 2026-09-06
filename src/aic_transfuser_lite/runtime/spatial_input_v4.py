@@ -143,6 +143,28 @@ class SpatialInputV4:
         self.frames.append((transport,image,lidar,ego,mask,timing))
         return 'ACCEPTED'
 
+    def _command_for(self, anchor: Stamp, current: Stamp, finalized_ns: int) -> tuple:
+        row = {'nominal_command': '{}', 'final_command': '{}'}
+        chosen = {}
+        for source, field in (('nominal','nominal_command'), ('final_fallback','final_command')):
+            if source == 'final_fallback' and not self.final_fallback_verified:
+                continue
+            eligible = [c for c in self.commands if c.source == source and c.stamp.usable(finalized_ns, current)
+                        and c.stamp.header_ns <= anchor.header_ns and c.stamp.header_ns < current.header_ns
+                        and anchor.header_ns-c.stamp.header_ns <= 50_000_000]
+            if eligible:
+                c = max(eligible, key=lambda c: c.stamp.header_ns)
+                chosen[source] = c
+                row[field] = json.dumps(dict(valid=c.valid, steering_rad=c.steering_rad, speed_mps=c.speed_mps, acceleration_mps2=c.acceleration_mps2))
+        selected = _selected_command(row, bounds=BOUNDS)
+        return selected, chosen[selected[1]] if selected else None
+
+    def command_ready(self, camera: Stamp, finalized_ns: int) -> bool:
+        """Read-only existing selection, before append; warm-up is not a past slot."""
+        anchors=[f[0].camera for f in list(self.frames)[-10:]] or [camera]
+        return any(self._command_for(anchor,camera,finalized_ns)[0] is not None for anchor in anchors)
+
+
     def build(self, finalized_ns: int) -> tuple[ModelBatchV3, dict]:
         if not self.frames:
             raise ValueError('NO_FRAME')
@@ -162,22 +184,10 @@ class SpatialInputV4:
         commands, cm, cp = [], [], []
         for frame in past:
             anchor = frame[0].camera
-            row = {'nominal_command': '{}', 'final_command': '{}'}
-            chosen = {}
-            for source, field in (('nominal','nominal_command'), ('final_fallback','final_command')):
-                if source == 'final_fallback' and not self.final_fallback_verified:
-                    continue
-                eligible = [c for c in self.commands if c.source == source and c.stamp.usable(finalized_ns, current.camera)
-                            and c.stamp.header_ns <= anchor.header_ns and c.stamp.header_ns < current.camera.header_ns
-                            and anchor.header_ns-c.stamp.header_ns <= 50_000_000]
-                if eligible:
-                    c = max(eligible, key=lambda c: c.stamp.header_ns)
-                    chosen[source] = c
-                    row[field] = json.dumps(dict(valid=c.valid, steering_rad=c.steering_rad, speed_mps=c.speed_mps, acceleration_mps2=c.acceleration_mps2))
-            selected = _selected_command(row, bounds=BOUNDS)
+            selected, command = self._command_for(anchor, current.camera, finalized_ns)
             commands.append(selected[0] if selected else torch.zeros(3))
             cm.append(selected is not None)
-            cp.append(chosen[selected[1]] if selected else None)
+            cp.append(command)
         pad = 10-len(commands)
         if len(frames) > 1 and not any(cm):
             raise ValueError('COMMAND_SOURCE_STALE_OR_MISSING')

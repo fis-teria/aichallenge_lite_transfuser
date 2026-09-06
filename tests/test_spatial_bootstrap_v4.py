@@ -1,5 +1,6 @@
 """Bootstrap integration uses ONLY fake ROS/loader and synthetic temporary records."""
 from copy import deepcopy
+from dataclasses import asdict
 import builtins
 import json
 import os
@@ -48,6 +49,9 @@ def config(tmp_path):
         b.update(topic='/fake/'+role,frame='camera' if role=='image' else 'laser' if role=='lidar' else 'base_link',
                  producer_role='PASSIVE_NOMINAL_BEFORE_ACTUATION' if role=='nominal' else 'FAKE_'+role,
                  evidence=deepcopy(proof))
+        b['interface']=dict(stamp_source='stamp' if role in ('steering','nominal') else 'header.stamp',
+                            message_frame=None if role in ('steering','nominal') else 'header.frame_id',
+                            evidence=deepcopy(proof))  # Fictional interface contract, not ROS type parity.
     cfg['bindings']['image']['sensor']=dict(height=8,width=12,step=36,encoding='rgb8')
     cfg['bindings']['lidar']['sensor']=dict(beams=750,angle_min=-1.,angle_max=1.996,angle_increment=.004,range_min=0.,range_max=25.)
     return cfg
@@ -67,6 +71,7 @@ def message(role, ns=1_000_000_000):
             lateral=SimpleNamespace(steering_tire_angle=.1),longitudinal=SimpleNamespace(speed=1.,acceleration=0.))
     msg=fake_message(role,ns)
     msg.header.frame_id='camera' if role=='image' else 'laser' if role=='lidar' else 'base_link'
+    if role=='steering': msg.stamp=msg.header.stamp; del msg.header
     if role=='lidar': msg.angle_min=-1.; msg.angle_max=1.996; msg.angle_increment=.004
     return msg
 
@@ -76,6 +81,7 @@ class Dependencies:
     def __init__(self, actions=(), fail=None, writer_mode=None):
         self.clock=ManualClock(0); self.actions=list(actions); self.fail_at=fail; self.log=[]; self.writer_mode=writer_mode
         self.node_object=None; self.model=None; self.writer_object=None; self.wrappers=[]
+        self.command_receipts=[]; self.selected_inputs=[]
     def step(self,stage):
         self.log.append(stage)
         if self.fail_at==stage: raise RuntimeError('FAKE_FAILURE:'+stage)
@@ -124,6 +130,21 @@ class Dependencies:
         return w
     def wrapper(self,*args,**kwargs):
         self.step('wrapper_factory'); w=wrapper_module().SpatialPathShadowWrapperV4(*args,**kwargs)
+        original_add=w.adapter.add_command
+        def add(command):
+            status=original_add(command)
+            self.command_receipts.append(dict(order=len(self.command_receipts),command=asdict(command),status=status))
+            return status
+        w.adapter.add_command=add
+        original_infer=w.runtime.infer
+        def infer(batch,provenance,**kw):
+            self.selected_inputs.append(dict(candidate_id=kw['candidate'].event['payload']['candidate_sequence'],
+                t_obs_ns=provenance['t_obs_ns'],cutoff_ns=provenance['selection_cutoff_ns'],
+                command_mask=batch.command_mask.tolist(),command_padding=provenance['command_padding'],
+                commands=[asdict(c) if c else None for c in provenance['commands']],
+                anchors=[f.camera.header_ns if f else None for f in provenance['command_frames']]))
+            return original_infer(batch,provenance,**kw)
+        w.runtime.infer=infer
         self.wrappers.append(w); return w
     def send(self,role,ns=1_000_000_000): self.node_object.callbacks[role](message(role,ns))
 
@@ -144,11 +165,17 @@ def evidence(name,cfg,deps,result):
     root=Path(folder); root.mkdir(parents=True,exist_ok=True)
     traces=[c.trace() for w in deps.wrappers for c in w.completed]
     value=dict(fixture=True,config=cfg,authorization_fixture=approval(cfg),result=result,resource_trace=deps.log,candidates=traces,
+               scenario=name,code_commit=os.environ.get('V4_TEST_COMMIT','UNKNOWN'),
+               fixture_kind='FICTIONAL_INTERFACE_NOT_ROS_TYPE_PARITY',
+               command_receipts=deps.command_receipts,selected_inputs=deps.selected_inputs,
+               expected_assertions='See pinned test function; fields here are observed synthetic state',
+               writer=None if deps.writer_object is None else dict(state=deps.writer_object.state,error=deps.writer_object.error,
+                   queue_candidate_ids=[e['payload']['candidate_sequence'] for e,_,_ in deps.writer_object.queue]),
                real_ros_calls=0,real_checkpoint_reads=0)
     with (root/(name+'.json')).open('xb') as f: f.write(boot.canonical(value))
     path=Path(cfg['output_dir'])/'events.jsonl'
     if path.is_file():
-        with (root/(name+'.jsonl')).open('xb') as f: f.write(path.read_bytes())
+        with (root/(name+'_written.jsonl')).open('xb') as f: f.write(path.read_bytes())
     manifest=Path(cfg['output_dir'])/'run_manifest.json'
     if manifest.is_file():
         with (root/(name+'_run_manifest.json')).open('xb') as f: f.write(manifest.read_bytes())
@@ -397,7 +424,7 @@ def test_shutdown_grace_overrun_is_not_silent_success(tmp_path):
     evidence('shutdown_grace',cfg,deps,result)
 
 
-@pytest.mark.parametrize('stage',['loader','context_init','node_factory'])
+@pytest.mark.parametrize('stage',['loader','writer_factory','context_factory','context_init','node_factory','message_types','wrapper_factory','executor_factory','add_node'])
 def test_startup_time_limit_prevents_following_factories(tmp_path,stage):
     cfg=config(tmp_path); deps=Dependencies(); original=deps.step
     def slow_step(name):
@@ -407,7 +434,12 @@ def test_startup_time_limit_prevents_following_factories(tmp_path,stage):
     assert result['reason']=='SESSION_DURATION_LIMIT' and deps.model.calls==0
     if stage=='loader': assert 'context_factory' not in deps.log
     if stage=='context_init': assert 'node_factory' not in deps.log
-    assert 'subscription' not in deps.log and 'spin_once' not in deps.log
+    successors=dict(loader='writer_factory',writer_factory='context_factory',context_factory='context_init',
+        context_init='node_factory',node_factory='message_types',message_types='wrapper_factory',
+        wrapper_factory='executor_factory',executor_factory='add_node',add_node='spin_once')
+    assert successors[stage] not in deps.log and 'spin_once' not in deps.log
+    assert result['stage_boundaries'][-1]['stop_reason']=='SESSION_DURATION_LIMIT'
+    if deps.writer_object: assert deps.writer_object.fd is None
     evidence('startup_deadline_'+stage,cfg,deps,result)
 
 
@@ -465,3 +497,102 @@ def test_static_no_control_and_explicit_owned_ros_factories():
     source=Path(boot.__file__).read_text()
     assert 'SingleThreadedExecutor' in source and 'use_global_arguments=False' in source
     assert 'enable_rosout=False' in source and 'start_parameter_services=False' in source
+
+
+@pytest.mark.parametrize('kind',['past_then_future','future_only','late','stale','epoch','missing','invalid','final_fallback'])
+def test_f2_existing_past_slot_not_invalidated_by_future(tmp_path,kind):
+    cfg=config(tmp_path)
+    def next_candidate(d):
+        w=d.wrappers[0]
+        # First frame at 1.0 is a real retained past slot for camera 1.1.
+        if kind!='past_then_future': w.adapter.commands.clear()
+        if kind in ('past_then_future','future_only'): d.send('nominal',1_200_000_000)
+        if kind in ('late','stale','epoch','invalid','final_fallback'):
+            from aic_transfuser_lite.runtime.spatial_input_v4 import Stamp, PassiveCommand
+            s=Stamp(900_000_000 if kind=='stale' else 980_000_000,d.clock.ns,
+                10_000_000_000 if kind=='late' else d.clock.ns,clock_id='ros_header',
+                epoch='old' if kind=='epoch' else '0',monotonic_id=w.transport_id,monotonic_epoch='0')
+            w.adapter.add_command(PassiveCommand(s,.1,1.,0.,source='final_fallback' if kind=='final_fallback' else 'nominal',valid=kind!='invalid'))
+        for role in ('velocity','steering','lidar','image'): d.send(role,1_100_000_000)
+    deps=Dependencies([complete_input,next_candidate]); result=execute(cfg,deps)
+    expected=2 if kind=='past_then_future' else 1
+    assert deps.model.calls==expected
+    assert result['counters']['accepted']['ids']==[0,1]
+    assert len(deps.wrappers[0].completed)==2
+    assert all(c.terminal and c.event['execution']['forward_calls']<=1 for c in deps.wrappers[0].completed)
+    if kind=='past_then_future':
+        selected=deps.selected_inputs[-1]
+        assert selected['candidate_id']==1 and selected['t_obs_ns']==1_100_000_000
+        assert selected['anchors'][-1]==1_000_000_000
+        assert selected['commands'][-1]['stamp']['header_ns']==950_000_000
+        assert selected['command_mask']==[[False]*9+[True]]
+        assert selected['command_padding']==[True]*9+[False]
+    else: assert result['counters']['dropped']['ids']==[1]
+    evidence('f2_'+kind,cfg,deps,result)
+
+
+@pytest.mark.parametrize('kind',['header','stamp_only','missing_stamp','missing_header','wrong_frame'])
+def test_f3_fictional_interface_contract(tmp_path,kind):
+    cfg=config(tmp_path); deps=Dependencies()
+    role='steering' if kind in ('stamp_only','missing_stamp') else 'image'
+    guard=boot.BindingGuard(cfg,lambda:None,lambda:None)
+    msg=message(role)
+    if kind=='missing_stamp': del msg.stamp
+    if kind=='missing_header': del msg.header
+    if kind=='wrong_frame': msg.header.frame_id='WRONG'
+    if kind in ('header','stamp_only'):
+        assert guard.check(role,msg)==1_000_000_000
+    else:
+        with pytest.raises(ValueError,match='INPUT_BINDING'): guard.check(role,msg)
+    observed=guard.message_contract_observations[role]
+    if kind=='stamp_only':
+        assert not observed['message_frame_present'] and observed['observed_frame'] is None
+        assert observed['expected_semantic_frame']=='base_link' and not hasattr(msg,'header')
+    evidence('f3_'+kind,cfg,deps,dict(message_contract=observed,real_type_definition='MISSING_INTERFACE_DEFINITION'))
+
+
+@pytest.mark.parametrize('kind',['entry_once','end_only','permanent','regression','clock_and_timeout'])
+def test_f4_cleanup_survives_broken_clock(tmp_path,kind):
+    cfg=config(tmp_path); deps=Dependencies()
+    class Clock:
+        ns=0; broken=False; once=False
+        def advance(self,ns): self.ns+=ns
+        def __call__(self):
+            if self.broken:
+                if self.once: self.broken=False
+                raise RuntimeError('CLOCK_Y')
+            return self.ns
+    clock=Clock(); deps.clock=clock
+    original_writer=deps.writer
+    def writer(*args,**kw):
+        w=original_writer(*args,**kw); close=w.close
+        def close_and_fault():
+            close()
+            if kind=='end_only': clock.broken=True
+        w.close=close_and_fault
+        return w
+    deps.writer=writer
+    if kind!='end_only':
+        def fault(d):
+            if kind=='regression': clock.ns=-1
+            else: clock.broken=True; clock.once=kind=='entry_once'
+            raise RuntimeError('RUN_X')
+        deps.actions=[lambda d:d.send('image'),fault]
+    if kind=='clock_and_timeout':
+        original_executor=deps.executor
+        def executor(context):
+            obj=original_executor(context)
+            def shutdown(**kwargs): deps.step('executor_shutdown'); return False
+            obj.shutdown=shutdown
+            return obj
+        deps.executor=executor
+    result=execute(cfg,deps)
+    assert result['exit_code']!=0 and result['shutdown_grace_exceeded'] is None
+    assert result['shutdown_timing']['duration_s'] is None
+    assert ('CLOCK_Y' if kind=='end_only' else 'RUN_X') in result['first_error']
+    for stage in ('executor_shutdown','node_destroy','context_shutdown','context_destroy'):
+        assert deps.log.count(stage)==1
+    assert deps.writer_object.fd is None and deps.model.calls==0
+    assert [a['name'] for a in result['cleanup_attempts']][:4]==['wrapper_stopped','executor_shutdown','node_destroyed','context_shutdown']
+    if kind=='clock_and_timeout': assert any('TimeoutError' in e for e in result['cleanup_errors'])
+    evidence('f4_'+kind,cfg,deps,result)

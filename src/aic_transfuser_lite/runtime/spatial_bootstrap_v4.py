@@ -81,7 +81,7 @@ def check_config(config: dict, actual_code_id: str, authorization: dict | None =
         return dict(valid=False,errors=['config: mapping required'],unresolved=[],authorization_valid=False,status='INVALID_CONFIG')
     allowed={'version','mode','enabled','code_sha256','checkpoint_sha256','input_contract_sha256','ros','output_dir','limits','bindings','synchronization','control_connection_enabled'}
     if set(config)!=allowed: error('config.keys','missing or unknown fields: '+str(sorted(map(str,set(config)^allowed))))
-    if config.get('version')!='spatial_bootstrap_v4_v1': error('version','unsupported')
+    if config.get('version')!='spatial_bootstrap_v4_v2': error('version','unsupported')
     if config.get('mode')!='LIVE_PASSIVE': error('mode','LIVE_PASSIVE required; fixture is an injected execution fact')
     if type(config.get('enabled')) is not bool: error('enabled','bool required')
     if config.get('control_connection_enabled') is not False: error('control_connection_enabled','must be false')
@@ -125,7 +125,7 @@ def check_config(config: dict, actual_code_id: str, authorization: dict | None =
         b=bindings.get(role,{})
         if not isinstance(b,dict): error('bindings.'+role,'mapping required'); continue
         prefix='bindings.'+role
-        keys={'topic','message_type','fields','frame','source_clock','qos','producer_role','evidence','sensor'}
+        keys={'topic','message_type','fields','frame','source_clock','qos','producer_role','evidence','sensor','interface'}
         if set(b)!=keys: error(prefix+'.keys','missing or unknown field')
         topic=b.get('topic')
         if not isinstance(topic,str) or not re.fullmatch(r'/[A-Za-z_][A-Za-z_0-9]*(/[A-Za-z_][A-Za-z_0-9]*)*',topic): unresolved.append(prefix+'.topic')
@@ -137,6 +137,14 @@ def check_config(config: dict, actual_code_id: str, authorization: dict | None =
         for key in ('frame','producer_role'):
             if not text(b.get(key)): unresolved.append(prefix+'.'+key)
         if not evidence(b.get('evidence')): unresolved.append(prefix+'.evidence')
+        interface=b.get('interface')
+        if not isinstance(interface,dict) or set(interface)!={'stamp_source','message_frame','evidence'}:
+            unresolved.append(prefix+'.interface.MISSING_INTERFACE_DEFINITION')
+        else:
+            pair=(interface.get('stamp_source'),interface.get('message_frame'))
+            allowed_pairs=(('header.stamp','header.frame_id'),) if role in ('image','lidar','velocity') else (('header.stamp','header.frame_id'),('stamp',None))
+            if pair not in allowed_pairs: error(prefix+'.interface','unsupported role stamp/frame contract')
+            if not evidence(interface.get('evidence')): unresolved.append(prefix+'.interface.evidence')
         if role=='nominal' and b.get('producer_role')!='PASSIVE_NOMINAL_BEFORE_ACTUATION': unresolved.append(prefix+'.producer_role')
         sensor=b.get('sensor')
         if role=='image':
@@ -174,26 +182,44 @@ def check_config(config: dict, actual_code_id: str, authorization: dict | None =
                 live_observation={role:'NOT_OBSERVED' for role in ROLES},fixture=fixture)
 
 
+def extract_message_stamp(role: str, msg: object, interface: dict) -> tuple[int, str | None]:
+    """Explicit, shared extraction; never substitute receipt time or expected frame."""
+    source=interface['stamp_source']
+    if source=='header.stamp' and interface['message_frame']=='header.frame_id':
+        stamp=msg.header.stamp
+        frame=msg.header.frame_id
+        if not isinstance(frame,str): raise ValueError('frame must be a string')
+    elif source=='stamp' and interface['message_frame'] is None and role in ('steering','nominal'):
+        stamp=msg.stamp; frame=None
+    else:
+        raise ValueError('unsupported role stamp/frame contract')
+    if type(stamp.sec) is not int or type(stamp.nanosec) is not int or stamp.sec<0 or not 0<=stamp.nanosec<1_000_000_000:
+        raise ValueError('header stamp integer/range')
+    return stamp.sec*1_000_000_000+stamp.nanosec,frame
+
+
 class BindingGuard:
     """Bounded latest-message checks, not producer/graph verification or sensor parity."""
     def __init__(self, config: dict, admission_stop: Callable, forward_stop: Callable):
         self.config=config; self.admission_stop=admission_stop; self.forward_stop=forward_stop
         self.observed={role:'NOT_OBSERVED' for role in ROLES}
         self.rejected=0
-        self.nominal_header_ns=None
+        self.message_contract_observations={}
 
     def reset_epoch(self) -> None:
         self.observed={role:'NOT_OBSERVED_CURRENT_EPOCH' for role in ROLES}
-        self.nominal_header_ns=None
+        self.message_contract_observations={}
 
-    def check(self, role: str, msg: object) -> None:
+    def check(self, role: str, msg: object) -> int:
         b=self.config['bindings'][role]
+        observation=dict(role=role,message_type=b['message_type'],stamp_source=b['interface']['stamp_source'],
+                         message_frame_present=b['interface']['message_frame'] is not None,
+                         observed_frame=None,expected_semantic_frame=b['frame'],status='NOT_EXTRACTED')
+        self.message_contract_observations[role]=observation
         try:
-            header=getattr(msg,'header',None)
-            stamp=header.stamp if header is not None else msg.stamp
-            if type(stamp.sec) is not int or type(stamp.nanosec) is not int or stamp.sec<0 or not 0<=stamp.nanosec<1_000_000_000:
-                raise ValueError('header stamp integer/range')
-            if role!='nominal' and header.frame_id!=b['frame']: raise ValueError('frame mismatch')
+            ns,frame=extract_message_stamp(role,msg,b['interface'])
+            observation.update(observed_frame=frame,header_ns=ns,status='EXTRACTED')
+            if observation['message_frame_present'] and frame!=b['frame']: raise ValueError('frame mismatch')
             if role=='image':
                 for field,value in b['sensor'].items():
                     if getattr(msg,field)!=value: raise ValueError('image.'+field)
@@ -208,16 +234,18 @@ class BindingGuard:
                     value=msg
                     for part in field.split('.'): value=getattr(value,part)
                     if type(value) not in (int,float) or not math.isfinite(value): raise ValueError(role+'.'+field)
-            if role=='nominal': self.nominal_header_ns=stamp.sec*1_000_000_000+stamp.nanosec
             self.observed[role]='MESSAGE_CONTENT_MATCHED_NOT_PRODUCER_PROVEN'
+            observation['status']=self.observed[role]
+            return ns
         except Exception as exc:
             self.observed[role]='CONTENT_REJECTED:'+str(exc)[:200]
+            observation['status']=self.observed[role]
             self.rejected+=1
             raise ValueError('INPUT_BINDING:'+role+':'+str(exc)[:200]) from exc
 
-    def ready(self, camera_header_ns: int) -> bool:
-        return (all(v=='MESSAGE_CONTENT_MATCHED_NOT_PRODUCER_PROVEN' for v in self.observed.values()) and
-                self.nominal_header_ns is not None and self.nominal_header_ns<camera_header_ns)
+    def ready(self) -> bool:
+        # Content receipt is separate from adapter-owned per-slot eligibility.
+        return all(v=='MESSAGE_CONTENT_MATCHED_NOT_PRODUCER_PROVEN' for v in self.observed.values())
 
 
 class RealDependencies:
@@ -260,7 +288,8 @@ def run(config: dict, authorization: dict, *, actual_code_id: str, schema_dir: P
     result=dict(check=checked,fixture=fixture,reason='NOT_STARTED',first_error=None,cleanup_errors=[],
                 operations=dict(real_ros_init_attempted=False,real_ros_initialized=False,real_checkpoint_read_attempted=False,
                                 real_checkpoint_read=False,fixed_forward_calls=0,fake_forward_calls=0),
-                lifecycle=[],counters={},binding_observations={},tick_calls=0,exit_code=2)
+                lifecycle=[],counters=None,binding_observations={},tick_calls=0,exit_code=2,
+                stage_boundaries=[],cleanup_attempts=[],timing_errors=[])
     if not checked['valid'] or checked['unresolved'] or not checked['authorization_valid']:
         result['reason']=checked['status'] if checked['unresolved'] or not checked['valid'] else 'AUTHORIZATION_REQUIRED'
         return result
@@ -268,67 +297,85 @@ def run(config: dict, authorization: dict, *, actual_code_id: str, schema_dir: P
     from .spatial_recording_v4 import Records, PrivateWriter
     from .spatial_runtime_v4 import SpatialRuntimeV4
     limits=config['limits']; context=node=executor=writer=wrapper=core=records=None
-    first_time=deps.clock()
+    first_time=None; last_time=None
     def event(name: str) -> None: result['lifecycle'].append(name)
     def fail(exc: BaseException) -> None:
         if result['first_error'] is None: result['first_error']=type(exc).__name__+': '+str(exc)[:500]
     def stopping(include_candidates: bool=True) -> str | None:
+        nonlocal last_time
         now=deps.clock()
-        if now<first_time: return 'MONOTONIC_RESET_STOP'
+        previous=last_time; last_time=now
+        if now<first_time or (previous is not None and now<previous): return 'MONOTONIC_RESET_STOP'
         if (now-first_time)*1e-9>=limits['session_duration_s']: return 'SESSION_DURATION_LIMIT'
         if writer and writer.state!='OPEN': return 'LOGGER_'+writer.state
         if core and core.forward_calls>=limits['max_forward_calls']: return 'FORWARD_LIMIT'
         if include_candidates and records and records.sequence>=limits['max_candidates']: return 'CANDIDATE_LIMIT'
         return None
-    def startup_budget_exhausted() -> bool:
+    def startup_budget_exhausted(stage: str) -> bool:
         reason=stopping()
+        result['stage_boundaries'].append(dict(stage=stage,monotonic_ns=last_time,stop_reason=reason))
         if reason: result.update(reason=reason,exit_code=0)
         return reason is not None
     try:
+        first_time=last_time=deps.clock()
         out=Path(config['output_dir'])
         parent=out.parent.resolve(strict=True)
         if shutil.disk_usage(parent).free<limits['max_file_bytes']: raise OSError('OUTPUT_CAPACITY_INSUFFICIENT')
+        if startup_budget_exhausted('output_preflight'): return result
         out.mkdir(mode=0o700)  # Exclusive directory acquisition; never overwrite/reuse.
         event('output_directory_owned')
+        if startup_budget_exhausted('output_directory'): return result
         metadata=canonical(dict(version='spatial_bootstrap_session_v1',fixture=fixture,config=config,
                                 authorization=authorization,resolved_expectations=checked))
         if len(metadata)>limits['max_record_bytes'] or len(metadata)>=limits['max_file_bytes']:
             raise ValueError('OUTPUT_MANIFEST_BYTE_LIMIT')
+        if startup_budget_exhausted('manifest_serialized'): return result
         with (out/'run_manifest.json').open('xb') as stream:
             stream.write(metadata)
         result['manifest_bytes']=len(metadata); event('manifest_written_not_durable')
+        if startup_budget_exhausted('manifest_written'): return result
         result['operations']['real_checkpoint_read_attempted']=not fixture
         result['operations']['real_checkpoint_read']=False if fixture else None
         model,inventory=deps.load_model(); event('fixed_loader_returned_fake' if fixture else 'fixed_loader_returned')
         result['operations']['real_checkpoint_read']=not fixture
         if inventory.get('before_sha256')!=CHECKPOINT_ID or inventory.get('after_sha256')!=CHECKPOINT_ID:
             raise ValueError('loader inventory identity mismatch')
-        if startup_budget_exhausted(): return result
+        if startup_budget_exhausted('loader'): return result
         scope=dict(config_sha256=checked['config_sha256'],binding_sha256=checked['binding_sha256'],code_sha256=actual_code_id,
                    authorization_sha256=digest(authorization),checkpoint_sha256=CHECKPOINT_ID,fixture=fixture,
                    authorized_by=authorization['approved_by'],authorized_at=authorization['approved_at'])
         records=Records(schema_dir,mode='LIVE_PASSIVE_FIXTURE' if fixture else 'LIVE_PASSIVE',clock=deps.clock,passive_scope=scope)
         event('records_owned')
+        if startup_budget_exhausted('records'): return result
         writer_factory=getattr(deps,'writer',PrivateWriter)
         writer=writer_factory(out/'events.jsonl',records,capacity=limits['queue_capacity'],
             max_record_bytes=limits['max_record_bytes'],max_file_bytes=limits['max_file_bytes']-len(metadata)); event('writer_owned')
+        if startup_budget_exhausted('writer'): return result
         adapter=SpatialInputV4(command_binding_known=True,final_fallback_verified=False)
+        if startup_budget_exhausted('adapter'): return result
         core=SpatialRuntimeV4(model,records,writer,checkpoint_hash=CHECKPOINT_ID,forward_limit=limits['max_forward_calls'])
         event('adapter_core_owned')
-        if startup_budget_exhausted(): return result
+        if startup_budget_exhausted('core'): return result
         context=deps.context(); event('context_owned')
+        if startup_budget_exhausted('context_factory'): return result
         result['operations']['real_ros_init_attempted']=not fixture
         result['operations']['real_ros_initialized']=False if fixture else None
         context.init(args=[],domain_id=config['ros']['domain_id'],initialize_logging=False); event('context_initialized')
         result['operations']['real_ros_initialized']=not fixture
-        if startup_budget_exhausted(): return result
+        if startup_budget_exhausted('context_init'): return result
         node=deps.node(context,config); event('node_owned')
-        if startup_budget_exhausted(): return result
+        if startup_budget_exhausted('node_factory'): return result
         guard=BindingGuard(config,stopping,lambda:stopping(False))
-        wrapper=wrapper_factory(node,core,adapter,deps.message_types(),{r:config['bindings'][r]['topic'] for r in ROLES},
+        message_types=deps.message_types()
+        if startup_budget_exhausted('message_types'): return result
+        wrapper=wrapper_factory(node,core,adapter,message_types,{r:config['bindings'][r]['topic'] for r in ROLES},
             grid_period_ns=limits['grid_period_ns'],max_sync_wait_ns=limits['max_sync_wait_ns'],candidate_capacity=limits['candidate_capacity'],guard=guard)
         event('wrapper_bound')
-        executor=deps.executor(context); event('executor_owned'); executor.add_node(node)
+        if startup_budget_exhausted('wrapper_factory'): return result
+        executor=deps.executor(context); event('executor_owned')
+        if startup_budget_exhausted('executor_factory'): return result
+        executor.add_node(node); event('executor_node_registered')
+        if startup_budget_exhausted('add_node'): return result
         while True:
             reason=stopping()
             if reason: result['reason']=reason; break
@@ -348,13 +395,27 @@ def run(config: dict, authorization: dict, *, actual_code_id: str, schema_dir: P
         result['reason']='STARTUP_OR_RUN_EXCEPTION'; result['exit_code']=4; fail(exc)
     finally:
         result['stop_reason_before_cleanup']=result['reason']
-        end_start=deps.clock()
+        result['owned_resources']={name:value is not None for name,value in
+            (('records',records),('writer',writer),('core',core),('context',context),('node',node),('wrapper',wrapper),('executor',executor))}
+        def timing_sample(stage: str) -> int | None:
+            try: return deps.clock()
+            except Exception as exc:
+                fail(exc)
+                result['timing_errors'].append(stage+': '+type(exc).__name__+': '+str(exc)[:300])
+                return None
+        end_start=timing_sample('cleanup_entry')
+        cleanup_epoch=records.clock_epoch if records else None
         def cleanup(name: str, callback: Callable) -> None:
-            try: callback(); event(name)
-            except Exception as exc: result['cleanup_errors'].append(name+': '+type(exc).__name__+': '+str(exc)[:300])
+            attempt=dict(name=name,status='ATTEMPTED')
+            result['cleanup_attempts'].append(attempt)
+            try: callback(); event(name); attempt['status']='COMPLETED'
+            except Exception as exc:
+                fail(exc); attempt['status']='FAILED'
+                result['cleanup_errors'].append(name+': '+type(exc).__name__+': '+str(exc)[:300])
         if wrapper:
             cleanup('wrapper_stopped',lambda:wrapper.stop('SESSION_END:'+result['reason']))
             result['binding_observations']=dict(wrapper.guard.observed)
+            result['message_contract_observations']=deepcopy(wrapper.guard.message_contract_observations)
         if executor:
             def shutdown_executor():
                 if executor.shutdown(timeout_sec=limits['shutdown_grace_s']) is False:
@@ -363,7 +424,9 @@ def run(config: dict, authorization: dict, *, actual_code_id: str, schema_dir: P
         if node: cleanup('node_destroyed',node.destroy_node)
         if context:
             cleanup('context_shutdown',context.try_shutdown)
-            if context.handle is not None: cleanup('context_destroyed',context.destroy)
+            def destroy_context():
+                if context.handle is not None: context.destroy()
+            cleanup('context_destroy_checked',destroy_context)
         if writer:
             if writer.error and result['first_error'] is None: result['first_error']=writer.error
             if writer.state=='OPEN':
@@ -384,7 +447,15 @@ def run(config: dict, authorization: dict, *, actual_code_id: str, schema_dir: P
             result['operations']['fake_forward_calls' if fixture else 'fixed_forward_calls']=core.forward_calls
             result['forward_return_observed']=bool(records.counts['forward_returned'])
         if result['cleanup_errors'] and result['exit_code']==0: result['exit_code']=6
-        result['shutdown_grace_exceeded']=(deps.clock()-end_start)*1e-9>limits['shutdown_grace_s']
+        end_finish=timing_sample('cleanup_end')
+        timing_reason=None
+        if end_start is None or end_finish is None: timing_reason='CLOCK_READ_FAILED'
+        elif end_finish<end_start or (last_time is not None and end_start<last_time): timing_reason='CLOCK_REGRESSION'
+        elif records and records.clock_epoch!=cleanup_epoch: timing_reason='CLOCK_EPOCH_CHANGED'
+        result['shutdown_timing']=dict(start_ns=end_start,end_ns=end_finish,reason=timing_reason,
+            duration_s=None if timing_reason else (end_finish-end_start)*1e-9)
+        result['shutdown_grace_exceeded']=None if timing_reason else result['shutdown_timing']['duration_s']>limits['shutdown_grace_s']
+        if (timing_reason or result['timing_errors']) and result['exit_code']==0: result['exit_code']=6
         if result['shutdown_grace_exceeded'] and result['exit_code']==0: result['exit_code']=6
         result['input_result']='NO_INPUT' if not records or not records.sequence else ('NO_FORWARD' if not core or not core.forward_calls else 'FORWARD_ATTEMPTED_NOT_PATH_VALIDITY')
     return result
