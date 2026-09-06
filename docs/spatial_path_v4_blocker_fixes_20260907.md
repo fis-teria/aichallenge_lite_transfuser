@@ -28,4 +28,7 @@ bash tools/with_wsl_training_lock.sh .venv/bin/python tools/replay_spatial_refer
 inputはWindowsの既存attemptからworker.jsonlとresolved_config.yamlだけを専有folderへコピーする。
 固定出力46件の追加fit（MPCではない）は旧実験のfit数へ混ぜず別計上する。
 全pytestは学習/データaccess testを避け未実施。限定合成と固定出力replayを用いる。
-受理増加を合格条件にしない。まだ10cm超なら拒否を保持し、追加fit探索や制限緩和を自動継続しない。
+受理増加を合格条件にしない。まだ10cm超なら拒否を保持する。
+初回46fitでSLSQP成功だが最終boundが0.100000000000002mとなる境界丸め拒否を確認。
+optimizer側の余裕をfeasibility tolerance 1e-8より大きい1e-7mにし、最終証明余裕1e-9mと分離。
+これを修正後の追加46fitで一度確認する（合計92fit、学習/MPC/推論0）。10cm基準は不変。

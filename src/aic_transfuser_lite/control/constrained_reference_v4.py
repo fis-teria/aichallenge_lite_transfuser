@@ -118,7 +118,11 @@ def constrained_reference(candidate: SpatialPathCandidate, cfg: dict,
     check_gap = float(np.diff(check).max())
     # Retain a small numerical margin, not an arbitrary discretization penalty.
     certificate_gap = 1e-9
-    allowed_at_samples = deviation - certificate_gap
+    # SLSQP feasibility tolerance below is 1e-8. Its optimization margin must
+    # exceed that tolerance plus the certificate rounding allowance; otherwise
+    # a successful boundary solution can fail the strict final 0.10 m check.
+    optimizer_margin = 1e-7
+    allowed_at_samples = deviation - optimizer_margin
     if allowed_at_samples <= 0:
         return reject('CERTIFICATE_RESOLUTION')
 
@@ -162,6 +166,7 @@ def constrained_reference(candidate: SpatialPathCandidate, cfg: dict,
                     raw_correspondence_mask=(q>=connection).tolist(),
                     ordered_error_samples_m=error.tolist(), certificate_gap_m=certificate_gap,
                     certificate_policy='UNION_BREAKPOINT_CONVEX_NORM_V2',
+                    optimizer_margin_m=optimizer_margin,
                     check_parameter_m=check.tolist(), max_check_spacing_m=check_gap,
                     legacy_lipschitz_bound_m=float(error.max()+check_gap),
                     maximum_deviation_bound_m=float(error.max()+certificate_gap),
