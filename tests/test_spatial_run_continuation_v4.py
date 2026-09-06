@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 import yaml
 from aic_transfuser_lite.runtime.spatial_input_v4 import SpatialInputV4, GridObservation, Stamp, PassiveCommand
-from aic_transfuser_lite.runtime.spatial_sim_adapter_v4 import Sample, await_control_join, stopped_forward_initial_speed
+from aic_transfuser_lite.runtime.spatial_sim_adapter_v4 import Sample, await_control_join, stopped_forward_initial_speed, close_transport_queues
 from aic_transfuser_lite.control.sim_dispatch_v4 import SimControlSchedule, AckermannDispatch, StopObservation
 from aic_transfuser_lite.control.spatial_sim_guard_v4 import scene_aabb_evidence
 
@@ -181,3 +181,23 @@ def test_aabb_interior_and_unmonitored_actors_remain_unknown():
     b['scene_space']['obstacle_local_world_xy_bounds_m']=[[[10,10],[20,20]]]
     b['scene_space']['dynamic_coverage_verified']=False
     assert scene_aabb_evidence(np.zeros((1,5)),cfg(),b,state_ns=1,now_sim_ns=1,epoch='0')['reason']=='MOVABLE_ACTOR_COVERAGE_UNVERIFIED'
+
+
+def _unused_pipe_child(ready,repair):
+    import multiprocessing as mp
+    channel=mp.Queue(1);channel.put(b'x'*(4*1024*1024));ready.set()
+    if repair:close_transport_queues({'camera':channel})
+
+
+def test_unconsumed_camera_pipe_does_not_block_repaired_process_exit():
+    import multiprocessing as mp
+    if 'fork' not in mp.get_all_start_methods():pytest.skip('finite Linux process regression')
+    ctx=mp.get_context('fork')
+    for repair in (False,True):
+        ready=ctx.Event();child=ctx.Process(target=_unused_pipe_child,args=(ready,repair));child.start()
+        try:
+            assert ready.wait(3)
+            child.join(timeout=.5)
+            assert child.is_alive() is (not repair)
+        finally:
+            if child.is_alive():child.terminate();child.join(timeout=2)

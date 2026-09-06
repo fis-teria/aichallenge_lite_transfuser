@@ -69,10 +69,12 @@ def main() -> int:
     ap.add_argument('--wall-seconds', type=int, default=60)
     ap.add_argument('--budget', type=Path, required=True)
     ap.add_argument('--binding', type=Path, required=True)
+    ap.add_argument('--forward-limit',type=int,default=0,help='0 selects phase default; otherwise finite 1..240')
     args = ap.parse_args()
     if os.name != 'posix' or not re.fullmatch('[0-9a-f]{40}', args.commit):
         raise ValueError('LINUX_AND_FIXED_SOURCE_COMMIT_REQUIRED')
     if not 10 <= args.wall_seconds <= 120: raise ValueError('WALL_BUDGET')
+    if not 0 <= args.forward_limit <= 240: raise ValueError('FORWARD_BUDGET')
     source = Path(__file__).resolve().parents[1]
     sim = args.sim_repo.resolve()
     output = args.output.resolve()
@@ -111,7 +113,7 @@ def main() -> int:
                lidar_x_in_base_m=1.6499999762, lidar_y_in_base_m=0.,command_schedule_s=.05)
     for key in ('body_width_m','rear_overhang_m','front_overhang_m'):
         cfg[key]=max(cfg[key],binding['body'][key])
-    forward_limit=240 if args.phase=='run' else 40
+    forward_limit=args.forward_limit or (240 if args.phase=='run' else 40)
     cfg['dev'] = dict(wall_limit_s=args.wall_seconds, forward_limit=forward_limit,
                       stage=args.phase, geometry_source='UNCHANGED_AWSIM_LEVEL1_GOKART1',
                       input_policy='SIM_ONLY_POLICY_CHANGED', history_policy='SIM_GRID_MISSING_V2',

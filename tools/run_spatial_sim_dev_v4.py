@@ -25,7 +25,7 @@ import yaml
 
 from aic_transfuser_lite.control.spatial_sim_guard_v4 import OperationLease
 from aic_transfuser_lite.control.spatial_tracking_contracts_v4 import plain
-from aic_transfuser_lite.runtime.spatial_sim_adapter_v4 import Sample, base_pose_from_gnss_imu, interpolate
+from aic_transfuser_lite.runtime.spatial_sim_adapter_v4 import Sample, base_pose_from_gnss_imu, interpolate, close_transport_queues
 from aic_transfuser_lite.control.sim_dispatch_v4 import AckermannDispatch, SimControlSchedule, StopObservation
 from aic_transfuser_lite.control.spatial_path_adapter_v4 import transform
 
@@ -478,9 +478,11 @@ def main() -> int:
             # only the owned simulator container. Do not pretend the vehicle stopped.
             first_error = first_error or 'WORKER_DID_NOT_EXIT'
             worker.terminate(); worker.join(timeout=2)
+        queue_cleanup=close_transport_queues(dict(input=inbox,state=statebox,result=outbox))
         stopped=stop_observation.confirmed and time.monotonic_ns()-buffers['velocity'][-1].received_ns < 250_000_000 if buffers['velocity'] else False
         observed_displacement = float(np.linalg.norm(buffers['pose'][-1].value[:2])) if buffers['pose'] else None
         summary = dict(scope='SIM_E2E_CONTROLLED_TEST', counts=dict(counts), first_error=first_error,
+            queue_cleanup=queue_cleanup,
             watchdog_fault=lease.fault, worker_exitcode=worker.exitcode, maximum_observed_speed_mps=max_speed,
             observed_net_displacement_m=observed_displacement, gnss_noisy_accumulated_distance_m=distance,
             pose_points=pose_points, stationary_stop_confirmed=stopped, powered_episode_count=int(lease.powered),

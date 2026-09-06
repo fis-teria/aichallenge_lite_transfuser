@@ -5,7 +5,7 @@
 V4_PHASE ?= stationary
 V4_WALL_SECONDS ?= 60
 dev:
-	python3 tools/spatial_dev_runner.py --sim-repo "$(SIM_REPO)" --checkpoint "$(V4_CHECKPOINT)" --xvfb-root "$(XVFB_ROOT)" --output "$(V4_OUTPUT)" --commit "$(V4_COMMIT)" --phase "$(V4_PHASE)" --wall-seconds "$(V4_WALL_SECONDS)" --budget "$(V4_BUDGET)" --binding "$(V4_BINDING)"
+	python3 tools/spatial_dev_runner.py --sim-repo "$(SIM_REPO)" --checkpoint "$(V4_CHECKPOINT)" --xvfb-root "$(XVFB_ROOT)" --output "$(V4_OUTPUT)" --commit "$(V4_COMMIT)" --phase "$(V4_PHASE)" --wall-seconds "$(V4_WALL_SECONDS)" --budget "$(V4_BUDGET)" --binding "$(V4_BINDING)" --forward-limit "$(if $(V4_FORWARD_LIMIT),$(V4_FORWARD_LIMIT),0)"
 
 test-v3:
 	python -m pytest -q

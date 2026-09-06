@@ -168,3 +168,22 @@ def stopped_forward_initial_speed(raw_speed: float, samples: list[Sample], *, dr
         proof['changed'] = True
         return 0.,proof
     return raw_speed,proof
+
+
+def close_transport_queues(queues: dict) -> dict:
+    """After worker termination: discard pending transport, never join its feeder.
+
+    A no-longer-consumed camera bundle can exceed a pipe buffer and indefinitely
+    block Python's exit finalizer. Authoritative records are already in files;
+    buffered transport is not a sent control or a new inference.
+    """
+    result={}
+    for name,channel in queues.items():
+        errors=[]
+        try: pending=channel.qsize()
+        except (NotImplementedError,OSError): pending=None
+        for action in ('cancel_join_thread','close'):
+            try: getattr(channel,action)()
+            except Exception as exc: errors.append(type(exc).__name__+': '+str(exc))
+        result[name]=dict(pending_estimate=pending,discarded_after_worker_stop=True,errors=errors)
+    return result
