@@ -44,3 +44,11 @@ make dev CONTROL_METHOD=tiny_lidar_net_guarded TINY_GUI_RETRY=1 \
 
 履歴commandは追加試行許可ではない。実行結果は生ログと別の結果文書へ保存する。
 自動push、Dataset内容/raw/学習sensor/V4checkpoint読取、学習はしない。
+
+## 起動失敗後の限定修正
+
+実行版3bddc66は両container作成後、既存recipeの再帰`$(MAKE)`が追加`-f`を
+継承せず、source checkoutの別Makefileを読んで`autoware-command-mode-run`不在で終了した。
+新methodだけ`MAKE`に同じincludeの`-f`を明示する修正を追加し、
+合成Makefileで子・孫makeとcommand variableの継承を検証する。
+この修正後にROS再起動・追加駆動はしていない。予算を再追加するものではない。

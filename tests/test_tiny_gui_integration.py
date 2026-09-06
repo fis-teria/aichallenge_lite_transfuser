@@ -222,6 +222,26 @@ def test_narrow_fingerprint_does_not_walk_other_weights(tmp_path):
     assert len(value["files"]) == 18
 
 
+def test_guarded_recursive_make_keeps_include_and_command_variables(tmp_path):
+    # Match the real recipe's recursive command-mode call, but no Docker/ROS.
+    fake = tmp_path/"racing"; fake.mkdir()
+    source = tmp_path/"source"; source.mkdir()
+    (source/"Makefile").write_text("dev:\n\t@echo WRONG_SOURCE_MAKEFILE\n")
+    (fake/"Makefile").write_text(
+        "dev: autoware-simulator\n"
+        "autoware-simulator:\n"
+        "\t@$(MAKE) autoware-command-mode-run AUTOWARE_SERVICE=autoware\n"
+        "autoware-command-mode-run:\n"
+        "\t@$(MAKE) synthetic-grandchild\n"
+        "synthetic-grandchild:\n"
+        "\t@echo GUARDED_CHILD $(CONTROL_METHOD) $(AUTOWARE_SERVICE)\n")
+    result = subprocess.run(["make", "--no-print-directory", "-f", str(ROOT/"integrations/tiny_gui/Makefile"),
+        "dev", "RACINGKART_REPO="+str(fake), "CONTROL_METHOD="+GUI_CONTROL_METHOD],
+        cwd=source, capture_output=True, text=True, check=True)
+    assert "GUARDED_CHILD tiny_lidar_net_guarded autoware" in result.stdout
+    assert "WRONG_SOURCE_MAKEFILE" not in result.stdout
+
+
 def test_windows_require_both_distinct_titles():
     tree = ' 0x100 "AWSIM": ("AWSIM" "AWSIM")\n 0x200 "tiny_scan.rviz - RViz": ()\n 0x300 "Terminal": ()'
     assert window_candidates(tree) == {"awsim":["0x100"], "rviz":["0x200"]}
