@@ -262,3 +262,138 @@ receipt-only失敗直後はsaved={0}, dropped={}。その後の拒否候補1の�
 receipt準備失敗はdata既知/receipt=NOT_ATTEMPTED、saved={0}, dropped={}。
 各集合は別test/session。first error・失敗後forward禁止・再finish不変をassertした。
 自己点検/合成確認であり独立レビュー合格ではない。固定checkpoint読取/固定forward/実接続/学習/走行0、pushなし。
+
+# V4 bootstrap 残存4点：限定合成検証結果
+
+## 版と範囲
+
+origin: https://github.com/fis-teria/aichallenge_lite_transfuser.git
+branch: codex/windows-wsl-training-sync
+開始HEAD: 1a6f558513227ca83e5021857678a63c87e45ba4、clean。
+ba63c15ce99574ff73324e58d00824d5f1707e1eとの差分は既存報告書20行のみ。
+60b3da3 / 4aae81e / da8f5dcもローカルobjectが存在し、開始HEADの祖先。
+初回修正・検証: c889b73821a93682011cb130c6a137f575f78349。
+最終実装・test・trace: cfc419bede6f285ead250f5705a56bcb75ce1caa。
+結果文書版はこの節を追加する後続commit（正確なSHAはpackage_versions.json）。
+梱包はlocal未commit ZIP spatial_bootstrap_fixes_review_cfc419b.zip。自動pushなし。
+
+変更はbootstrap / wrapper / input adapterのread-only問い合わせ / bootstrap config / bootstrap testsの5ファイルと、この既存報告書だけ。
+model・fixed loader・9 tensors・head・幾何・V3・controller/Safety・同期scriptは未変更。
+
+## F1–F4 対応
+
+|指摘|実行版の対応箇所|変更と合成結果|
+|---|---|---|
+|F1|spatial_bootstrap_v4.py run L283以降、test L429|共通停止判定をoutput preflight/directory/manifest serialization/write、loader、Records、writer、adapter/core、context/init、node、message types、wrapper、executor/add_nodeの境界へ追加。9遅延caseで後続factoryまたはspin未呼出し、取得済み資源の終了を確認。|
+|F2|spatial_input_v4.py _command_for L146 / command_ready L162、BindingGuard.ready L247、wrapper.tick L148、test L504|従来build内の選択を同じhelperへ抽出。最新stampを捨て、同一adapter buffer・既存age/availability/epoch/source規則で候補を問い合わせる。build/append/forwardを増やさない。8caseで適格過去+未来のみ成功、不適格7対照は対象候補のforward 0。|
+|F3|extract_message_stamp L185 / BindingGuard.check L213、wrapper.receive L82、test L536|standalone wrapperはguardが共有helperで抽出したnsをそのまま使用。header必須roleと、明示契約を持つsteering/nominalのstamp-onlyを区別。observed_frameとexpected_semantic_frameを分離。5caseで正常header、架空stamp-only、stamp欠損、header欠損、frame不一致を確認。|
+|F4|run finally、test L556|entry/end clockを保護し、時計失敗とは独立にcleanupを順次試行。一次errorを保存、cleanup/timing errorを別列へ。5caseで単発/継続/末尾時計失敗、逆行、timeout併発時にもnode/context/writer終了を確認。duration/graceはnull、非成功exitを維持。|
+
+修正前4反例は静的指摘であり、修正前コードの反例testはNOT_EXECUTED。
+初回修正後runは258 passed / 2 skipped / 1 failed (11.11s, exit 1)。
+失敗は旧M0→M1 fixtureのcommand 0.95sが初回M1 camera 1.1sに対して150ms古かったこと。
+M1に1.05s commandを追加し、50ms以内の過去性を満たすfixtureへ修正した。
+待機中M0はexact ego欠損で引き続きblocked。M0期限DROP後のpollでM1を処理する目的と予算は維持。
+初回warm-upでも恒常欠損/不適格commandを通さない問い合わせになったが、履歴slotの選択規則・mask・padding意味は変更していない。
+最初のframeには過去slotがなくcommand mask全false。これは10slot有効の主張ではない。
+
+F1は関数復帰後の協調的停止。同期I/O、wrapper内部のsubscription生成、forwardをhard cancelできるという意味ではない。
+factoryが返さずblockした場合の停止保証はない。出力directory/manifestは診断証拠として保持する。
+F4の恒久clock failureではwrapper.stopと終了event生成が失敗し得るが、後続資源のcleanupを継続する。
+terminal_accounting_status=UNKNOWN_CLEANUP_FAILEDを残し、counter集合や空JSONLを完全終了・durable保存の証明にしない。
+context_destroy_checkedはhandle検査までの成功を表し、handle未取得時にdestroyが呼ばれた意味ではない。
+未呼出しfactoryはresource_traceに現れず、owned_resources=false。未構築Recordsのcounters=nullと観測0を区別する。
+未呼出し理由はstage_boundariesのstop_reasonまたはfirst_errorへ結合する。
+
+## 型定義の根拠・未確認
+
+repoのtracked .msg/.idlは0。候補interface rootとして明示した /opt/ros/humble/share/ 以下の
+sensor_msgs / autoware_auto_vehicle_msgs / autoware_auto_control_msgs のpackage.xmlと対象msgを静的に確認したが、該当本文を取得できなかった。
+MISSING_INTERFACE_DEFINITION。package version、本文hash、実行予定版との一致はいずれもUNKNOWN。
+これ以上の探索、外部取得、ROS import / ros2 interface / graph照会は未実施。
+fixtureではimage/lidar/velocity=header.stamp+header.frame_id、
+steering/nominal=stamp+message frameなしと明示した架空契約を使う。実ROS型の証拠ではない。
+従来の非nominal全roleへheaderを足すfixtureは廃止し、steeringは実際にheaderなしで検証した。
+guardなしの既存合成wrapper hookは従来抽出を維持し、standalone/live authorityとして使わない。
+内容適合は合成message内容のみ。実型適合、producer、実graph、センサparityは全て未確認。
+
+config versionはspatial_bootstrap_v4_v2へ変更。各bindingにinterfaceを追加し、
+stamp_source / message_frame / evidenceを要求。配布defaultは全interface=null、実値を補作せずdisabled。
+frameはproducer契約の意味的frame。stamp-onlyのobserved_frameはnullでありbase_linkを観測値にしない。
+新config/binding/code hashにfixture専用approvalを結合。実live承認は未作成。
+
+## 代表trace（各行は別sessionの合成観測）
+
+|scenario|accepted / forward_started / saved / dropped ID集合|first error / exit|
+|---|---|---|
+|main_cli_fake|{0}/{0}/{0}/{}|null / 0|
+|startup_deadline_context_factory|{}/{}/{}/{}|null / 0、境界1.0s > 0.8s、init未呼出し|
+|startup_deadline_message_types|{}/{}/{}/{}|null / 0、wrapper/subscriptions未呼出し|
+|startup_deadline_wrapper_factory|{}/{}/{}/{}|null / 0、executor未呼出し|
+|startup_deadline_executor_factory / add_node|{}/{}/{}/{}|null / 0、add_nodeまたはspin未呼出し、executor終了|
+|f2_past_then_future|{0,1}/{0,1}/{0,1}/{}|null / 0|
+|m0_m1_poll|{0,1}/{1}/{0,1}/{0}|null / 0|
+|writer_receipt|{0}/{0}/{0}/{}|OSError: FAKE_RECEIPT_FAILURE / 5|
+|f4_entry_once / regression|{0}/{}/{0}/{0}|RuntimeError: RUN_X / 4|
+|f4_permanent / clock_and_timeout|{0}/{}/{}/{0}|RuntimeError: RUN_X / 4、終了計数の完全性UNKNOWN|
+|f4_end_only|{}/{}/{}/{}|RuntimeError: CLOCK_Y / 6|
+
+F2候補1: t_obs=1.1s、past anchor=1.0s、command header=0.95s、age=50ms。
+command available=50ms monotonic、cutoff=100ms monotonic。未来nominal header=1.2sが最後に来ても元commandを選択。
+ROS header秒とmonotonic秒を引き算しない。maskは末尾1slotのみtrue、先頭9slotはpadding。
+command IDは別bufferや採番を追加せず、receipt orderと(source, header clock/epoch/ns, monotonic id/epoch, receipt/availability)で同定する。
+採用command全fieldとanchor、mask、cutoffはselected_inputsに記録。
+
+F4 cleanup順は wrapper.stop → executor.shutdown → node.destroy_node → context.try_shutdown →
+handleがある場合context.destroy → health/end試行 → writer.close。
+clock failureでも後続試行が残る。各結果はcleanup_attempts、factory実呼出しはresource_traceへ。
+記録成功frameだけで測った遅延ではない。clock異常時duration/graceはUNKNOWN/null。
+時計もstderrも永久に失われる環境で、全ログ保存を保証しない。
+
+## 限定検証と運用
+
+最終run: /home/thistle/e2e_autonomous/runs/spatial_bootstrap_fixes_cfc419b
+cfc419b同一commit・clean WSLでworktree lockを保持し、次の3ファイルだけを実行。
+
+```text
+tools/with_wsl_training_lock.sh bash -s
+V4_TEST_COMMIT=cfc419bede6f285ead250f5705a56bcb75ce1caa
+V4_BOOTSTRAP_TRACE_DIR=RUN/bootstrap V4_TRACE_DIR=RUN/runtime
+.venv/bin/python -m pytest -q tests/test_spatial_bootstrap_v4.py tests/test_spatial_runtime_v4.py tests/test_runtime_input_history_v3.py --junitxml=RUN/junit.xml
+```
+
+実際のdriver、stdout/stderr、JUnit、exit、環境、commitを同梱。RUNは上記run。
+259 passed / 2 skipped / 1 warning in 8.15s、exit 0。
+skipは既存runtimeとLIVE_PASSIVEの完全Draft2020 validator（jsonschema未導入）。依存追加なし。
+warningは既存Transformer norm_firstのnested tensor警告。全pytest・optimizer・固定checkpoint推論は未実行。
+bootstrapの代表traceは61case、実writer出力52file、代表fake forward合計19。
+これはpytest全体のforward合計ではなく、既存runtime回帰traceのforward合計とも混ぜない。
+生JSONLの部分fileやreceipt欠落を修復しない。savedは既知writeでありdurable保証ではない。
+test内のfake/既存未学習forwardのみ。固定checkpoint forwardは0。
+
+既定sync scriptを全文静的確認：Datasetへの操作は固定root test -dのみ。
+Windows対象processとWSL Git/process/lockを確認、競合なし。
+CheckOnly→通常syncを2回（各実装commit）行い、既定同期によるDatasetルートの存在確認を実施。
+Dataset内容・raw・sensor・checkpointの読取りは未実施。checkpointのstat/exists/hashも未実施。
+sync scriptの変更、process停止、lock削除、reset、pushなし。
+
+## identityと引継ぎ
+
+assembly5（定義不変）: 95191c5fab982c23a3b72b395f8144d7c2c1b9e0f1b600a44f9f0488fbca4b06
+default config canonical hash: 004858acd6e9843799b02b11435179096259eaedd970804b841bc39b0c17b107
+default binding canonical hash: 58db20353ea9376589341c95ca324a87c72b8f7e15ce8c5af4c5abe9d3aeb910
+main_cli_fake config: 42364c2ec7e559836c0d1f20ad598a0b015516fbc5b0dfaeb7684ad6a677b81b
+main_cli_fake binding: 80a4d348c407978d35d9f32cecd48f349e56d110d7f56bb80b5caa702f3ee4f6
+input contract: 77fff3f9c5875b6f116cebe35fde88d42d459aa04c195676c44e5c6caca5edc7
+checkpoint期待hash: 0316692543a901d9d6b96718c5651d6739367aa851f83fb3a133c126ccc8919f（現物未読取）。
+出力契約・20点/160bytes・17弦・9 tensorsは変更なし。
+他の局所fake caseのcode_sha256=a×64は従来の依存注入fixture。実assembly identity確認はmain_cli_fakeで実施。
+
+liveへ残るのは各実message定義とversion/hash、実producer/topic/frame/clock/QoS、
+sensor geometry/encoding、grid位相、namespace/domain、保存先と予算、およびそれらに結合した別の実行承認。
+実装完了は実起動・取得・shadow接続・走行承認ではない。
+raw_execution_authorized=false、new_live_inference_authorized=false、shadow_connection_authorized=false、
+control_connection_enabled=false、runtime_promotion_authorized=false、deployment_or_training_approved=false、
+approval_gate=PENDING_EXPLICIT_AUTHORIZATION。
+自己点検であり独立レビュー合格ではない。現runtimeを縦横MPC完成済みとしない。
+geometry教師採用、stop/launch labels、motion permission/Safety、controller oracleは別gate。
