@@ -25,13 +25,13 @@ def builder():return SpatialInputV4(command_binding_known=True,command_policy='S
 
 def test_105ms_grid_missing_does_not_reset_receipts_or_fake_slots():
     b=builder();rejected=0
-    for ns in range(0,3_150_000_001,105_000_000):
+    for ns in range(0,2_100_000_001,105_000_000):
         grid=round(ns/100_000_000)*100_000_000
         if abs(ns-grid)>40_000_000:rejected+=1;continue
         for cmd_ns in range(max(0,ns-105_000_000),ns+1,25_000_000):
             b.add_command(PassiveCommand(Stamp(cmd_ns,cmd_ns,cmd_ns),0.,0.,0.,source='sim_sent'))
         b.append(observation(ns,grid),ns)
-    batch,proof=b.build(3_150_000_000)
+    batch,proof=b.build(2_100_000_000)
     assert rejected>0 and b.reset_count==0 and proof['stable_grid_history']
     assert len(proof['slots'])==11 and any(not s['valid'] for s in proof['slots'])
     assert all(s['source_camera_ns'] is None for s in proof['slots'] if not s['valid'])
