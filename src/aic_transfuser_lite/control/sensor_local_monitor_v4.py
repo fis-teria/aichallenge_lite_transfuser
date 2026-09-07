@@ -221,6 +221,13 @@ def _finite(*values: float) -> bool:
 
 def _validate(r: Request, now: float) -> tuple[Status, str] | None:
     p, s = r.profile, r.state
+    def missing(record: object) -> bool:
+        return any(v is None or (isinstance(v, str) and v in ('MISSING', 'UNKNOWN'))
+                   for v in asdict(record).values())
+    if missing(p) or missing(r.stop):
+        return 'UNKNOWN', 'PROFILE_MISSING_OR_NONSTATIC'
+    if any(missing(record) for record in (s, r.previous, r.candidate)):
+        return 'UNKNOWN', 'STATE_OR_OPERATION_MISSING'
     for record in (s, r.previous, r.candidate, r.stop, p):
         for v in asdict(record).values():
             if isinstance(v, (int, float)) and not isinstance(v, bool) and not math.isfinite(v):
@@ -237,7 +244,7 @@ def _validate(r: Request, now: float) -> tuple[Status, str] | None:
                    s.speed_error_mps, r.previous.duration_s, r.candidate.duration_s,
                    s.steer_error_rad, s.acceleration_error_mps2,
                    r.stop.monitor_delay_s, r.stop.communication_delay_s, r.stop.brake_response_s)
-    if min(positive) <= 0 or min(nonnegative) < 0 or not 0 < p.max_steer_rad < 1.3:
+    if not _finite(*positive, *nonnegative) or min(positive) <= 0 or min(nonnegative) < 0 or not 0 < p.max_steer_rad < 1.3:
         return 'FAULT', 'INVALID_BOUNDS'
     for value, maximum in ((p.max_steps, 2000), (p.max_cells, 20000), (p.max_rays, 4096),
                             (p.max_scans, 32), (p.max_checks, 5_000_000)):
@@ -278,7 +285,10 @@ def _validate(r: Request, now: float) -> tuple[Status, str] | None:
         ids.add(scan.id)
         if (scan.instance, scan.epoch, scan.frame, scan.tf_version) != (r.instance, r.epoch, r.frame, r.tf_version):
             return 'UNKNOWN', 'SCAN_FRAME_EPOCH_TF_CHANGED'
-        numbers = [v for k, v in asdict(scan).items() if k not in ('ranges_m',) and type(v) in (float, int)]
+        numbers = [v for k, v in asdict(scan).items()
+                   if k not in ('ranges_m', 'id', 'instance', 'epoch', 'frame', 'tf_version')]
+        if any(v is None or (isinstance(v, str) and v in ('MISSING', 'UNKNOWN')) for v in numbers):
+            return 'UNKNOWN', 'SCAN_BOUNDS_MISSING'
         if (not _finite(*numbers) or not 2 <= len(scan.ranges_m) <= p.max_rays or
                 scan.angle_increment_rad <= 0 or (len(scan.ranges_m)-1)*scan.angle_increment_rad > 2*math.pi or
                 not 0 <= scan.range_min_m < scan.range_max_m or

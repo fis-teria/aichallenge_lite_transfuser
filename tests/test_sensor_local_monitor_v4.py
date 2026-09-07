@@ -323,3 +323,12 @@ def test_between_pose_coverage_is_explicit(check):
     at_pose = m._footprint_cells(t, r.profile, 0., m._Checks(10000))
     between = m._footprint_cells(t, r.profile, .05, m._Checks(10000))
     assert at_pose < between
+
+
+def test_unset_numeric_real_profile_is_unknown(check):
+    r = fixture_request()
+    check(replace(r, profile=replace(r.profile, wheelbase_m=None)), 'UNKNOWN')
+    check(replace(r, profile=replace(r.profile, calibration_source='MISSING')), 'UNKNOWN')
+    scan = replace(r.history.scans[0], acquisition_error_s=None)
+    check(replace(r, history=m.History('unmeasured', (scan,))), 'UNKNOWN', 'SCAN_BOUNDS_MISSING')
+    check(replace(r, state=replace(r.state, xy_error_m=None)), 'UNKNOWN', 'STATE_OR_OPERATION_MISSING')
