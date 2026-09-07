@@ -69,6 +69,7 @@ def main() -> int:
     ap.add_argument('--wall-seconds', type=int, default=60)
     ap.add_argument('--budget', type=Path, required=True)
     ap.add_argument('--binding', type=Path, required=True)
+    ap.add_argument('--pure-pursuit', action='store_true', help='Explicit four-trial V4 PP authorization')
     ap.add_argument('--forward-limit',type=int,default=0,help='0 selects phase default; otherwise finite 1..240')
     args = ap.parse_args()
     if os.name != 'posix' or not re.fullmatch('[0-9a-f]{40}', args.commit):
@@ -118,6 +119,9 @@ def main() -> int:
                       stage=args.phase, geometry_source='UNCHANGED_AWSIM_LEVEL1_GOKART1',
                       input_policy='SIM_ONLY_POLICY_CHANGED', history_policy='SIM_GRID_MISSING_V2',
                       evidence_binding=binding, binding_sha256=digest(args.binding), snapshots_limit=2)
+    if args.pure_pursuit:
+        cfg['dev'].update(controller='PURE_PURSUIT', length_policy='ENDPOINT_NORMALIZED_LENGTH_V1',
+                          snapshots_limit=0, powered_brake_at_s=6., powered_limit_s=10.)
     (output/'resolved_config.yaml').write_text(yaml.safe_dump(cfg, sort_keys=False))
     spec = compose_definition(source, sim, args.xvfb_root, output, args.checkpoint, project, args.commit)
     spec_path = output/'compose.json'
@@ -134,9 +138,19 @@ def main() -> int:
     resolved = run(command+['config', '--format', 'json'])
     (output/'compose_resolved.json').write_text(resolved.stdout)
     runtime_id = sim_id = None
-    budget = AttemptBudget(args.budget)
-    budget.reserve(output.name,dict(wall_s=args.wall_seconds+110.,forward=forward_limit,mpc=forward_limit,snapshots=2,
-                                   powered=int(args.phase=='run'),powered_s=60. if args.phase=='run' else 0.,log_bytes=208*1024**2))
+    if args.pure_pursuit:
+        from spatial_pp_budget_v4 import PPBudget
+        budget = PPBudget(args.budget)
+        authorization = budget.authorize()
+        atomic_json(output/'authorization.json', authorization)
+        cfg['dev']['driving_cutoff_unix_s'] = authorization['driving_cutoff_unix_s']
+        (output/'resolved_config.yaml').write_text(yaml.safe_dump(cfg, sort_keys=False))
+    else:
+        budget = AttemptBudget(args.budget)
+    budget.reserve(output.name,dict(wall_s=args.wall_seconds+110.,forward=forward_limit,
+        mpc=0 if args.pure_pursuit else forward_limit,snapshots=cfg['dev']['snapshots_limit'],
+        powered=int(args.phase=='run'),powered_s=(10. if args.pure_pursuit else 60.) if args.phase=='run' else 0.,
+        log_bytes=208*1024**2))
     watch = HostWatch(project)
     started = time.monotonic()
     pause_verified = False
@@ -168,6 +182,10 @@ def main() -> int:
             heartbeat = output/'heartbeat.json'
             heartbeat_data = json.loads(heartbeat.read_text()) if heartbeat.exists() else None
             fault = watch.check(heartbeat_data,time.monotonic_ns())
+            if args.pure_pursuit and time.time() >= authorization['driving_cutoff_unix_s']:
+                fault = 'PP_AUTHORIZATION_CUTOFF'
+            if args.pure_pursuit and heartbeat_data and heartbeat_data.get('powered_sim_s',0.) >= 9.:
+                fault = 'PP_POWERED_RESERVATION_FREEZE'
             if fault:
                 run(['docker','pause',sim_id])
                 paused = json.loads(run(['docker','inspect',sim_id,'--format','{{json .State}}']).stdout)
@@ -229,7 +247,11 @@ def main() -> int:
         if supervisor_summary.exists():
             s=json.loads(supervisor_summary.read_text())
             consumption.update(powered=s['powered_episode_count'],powered_s=s['powered_sim_seconds'])
-        budget.finish(consumption,exact=len(consumption)==7)
+        if args.pure_pursuit and consumption.get('powered'):
+            # Include possible source-clock tail between last ROS sample and
+            # host freeze. Preserve overrun rather than clamping it away.
+            consumption['powered_s'] = max(10., consumption.get('powered_s',10.))
+        budget.finish(consumption,exact=len(consumption)==7 and not (args.pure_pursuit and consumption.get('powered')))
         (output/'budget_after.json').write_text(args.budget.read_text())
         budget.close()
         stdout.close()

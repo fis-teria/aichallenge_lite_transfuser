@@ -102,7 +102,8 @@ def main() -> int:
     from aic_transfuser_lite.runtime.spatial_sim_worker_v4 import worker_main
 
     rclpy.init()
-    node = rclpy.create_node('lite_transfuser_mpc_supervisor', enable_rosout=False, start_parameter_services=False)
+    controller = cfg['dev'].get('controller', 'MPC')
+    node = rclpy.create_node('lite_transfuser_'+controller.lower()+'_supervisor', enable_rosout=False, start_parameter_services=False)
     sensor_qos = QoSProfile(depth=5, reliability=ReliabilityPolicy.BEST_EFFORT,
                             durability=DurabilityPolicy.VOLATILE)
     latched_qos = QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE,
@@ -283,6 +284,7 @@ def main() -> int:
         sent = time.monotonic_ns()
         counts['control_publish_calls'] += 1
         counts['mpc_publish_calls'] += int(source == 'MPC')
+        counts['pp_publish_calls'] += int(source == 'PURE_PURSUIT')
         receipt = dict(operation_id=operation_id, sim_ns=sim_ns, monotonic_ns=sent, epoch=epoch,
                        steering_rad=delta, acceleration_mps2=a, desired_speed_reference_mps=speed,
                        policy='SIM_ONLY_POLICY_CHANGED', status='SENT_NOT_APPLIED_CONFIRMED', source=source)
@@ -300,11 +302,15 @@ def main() -> int:
         while not requested_stop and time.monotonic_ns() < deadline:
             rclpy.spin_once(node, timeout_sec=.005)
             now = time.monotonic_ns()
+            if time.time() >= cfg['dev'].get('driving_cutoff_unix_s',float('inf')):
+                first_error = 'AUTHORIZATION_CUTOFF'
+                break
             update_pose()
             if now-last_heartbeat_ns >= 100_000_000:
                 heartbeat_tmp = args.output/'heartbeat.tmp'
                 heartbeat_tmp.write_text(json.dumps(dict(monotonic_ns=now,token=args.project,powered=lease.powered,
-                                                         logger_ok=logger_ok, phase='RUNNING')))
+                    powered_sim_s=0. if motion_first_sim_ns is None else (sim_ns-motion_first_sim_ns)*1e-9,
+                    logger_ok=logger_ok, phase='RUNNING')))
                 heartbeat_tmp.replace(args.output/'heartbeat.json')
                 last_heartbeat_ns = now
             arm_path=args.output/'host_armed.json'
@@ -417,7 +423,7 @@ def main() -> int:
                         lease.fault = 'EXPIRED_BEFORE_PUBLISH'
                         break
                     receipt=publish(request['acceleration_mps2'], request['steering_tire_angle_rad'],
-                            request['desired_speed_reference_mps'], request['operation_id'], 'MPC',
+                            request['desired_speed_reference_mps'], request['operation_id'], controller,
                             rate=request['steering_tire_rotation_rate_rad_s'],observation_ns=current_result['observed_sim_ns'])
                     dispatch.acknowledge_sent(request,sent_sim_ns=receipt['sim_ns'],sent_monotonic_ns=receipt['monotonic_ns'])
                     lease.sent(request); last_accepted_ns = time.monotonic_ns()
@@ -431,7 +437,7 @@ def main() -> int:
                 acceleration = -cfg['braking_max_mps2'] if speed > .01 or why == 'STATE_STALE' else 0.
                 publish(acceleration, buffers['steering'][-1].value[0], 0.,
                         f'hold:{counts["control_publish_calls"]}', 'SUPERVISOR_HOLD')
-            if motion_first_sim_ns is not None and sim_ns-motion_first_sim_ns >= 60_000_000_000: break
+            if motion_first_sim_ns is not None and sim_ns-motion_first_sim_ns >= int(cfg['dev'].get('powered_brake_at_s',60.)*1e9): break
             if lease.powered and buffers['pose'] and np.linalg.norm(buffers['pose'][-1].value[:2]) >= 2.: break
         log(dict(event='STOP_REQUESTED', reason=lease.fault or first_error or 'FINITE_SESSION_END'))
     except BaseException as exc:
@@ -451,7 +457,8 @@ def main() -> int:
                 if stop_now-last_heartbeat_ns >= 100_000_000:
                     heartbeat_tmp=args.output/'heartbeat.tmp'
                     heartbeat_tmp.write_text(json.dumps(dict(monotonic_ns=stop_now,token=args.project,
-                        powered=lease.powered,logger_ok=logger_ok,phase='STOPPING')))
+                        powered=lease.powered,logger_ok=logger_ok,phase='STOPPING',
+                        powered_sim_s=0. if motion_first_sim_ns is None else (sim_ns-motion_first_sim_ns)*1e-9)))
                     heartbeat_tmp.replace(args.output/'heartbeat.json')
                     last_heartbeat_ns=stop_now
                 if not buffers['velocity']: break
@@ -466,12 +473,22 @@ def main() -> int:
                 if fresh and stop_observation.confirmed: break
         except Exception as exc:
             first_error = first_error or 'STOP_LOOP:'+str(exc)
+        stop_evidence_at_loop_end = bool(buffers['velocity'] and stop_observation.confirmed
+            and time.monotonic_ns()-buffers['velocity'][-1].received_ns < 250_000_000)
+        # PP requests host freeze before worker cleanup, avoiding unaccounted
+        # simulator progression while waiting for ML process shutdown.
+        if controller == 'PURE_PURSUIT':
+            heartbeat_tmp=args.output/'heartbeat.tmp'
+            heartbeat_tmp.write_text(json.dumps(dict(monotonic_ns=time.monotonic_ns(),token=args.project,
+                powered=lease.powered,logger_ok=logger_ok,phase='HOST_FREEZE_REQUESTED')))
+            heartbeat_tmp.replace(args.output/'heartbeat.json')
         join_deadline=time.monotonic()+8.
         while worker.is_alive() and time.monotonic()<join_deadline:
             worker.join(timeout=.05)
             heartbeat_tmp=args.output/'heartbeat.tmp'
             heartbeat_tmp.write_text(json.dumps(dict(monotonic_ns=time.monotonic_ns(),token=args.project,
-                powered=lease.powered,logger_ok=logger_ok,phase='STOP_WORKER_JOIN')))
+                powered=lease.powered,logger_ok=logger_ok,
+                phase='HOST_FREEZE_REQUESTED' if controller=='PURE_PURSUIT' else 'STOP_WORKER_JOIN')))
             heartbeat_tmp.replace(args.output/'heartbeat.json')
         if worker.is_alive():
             # Stop confirmation unavailable or blocked worker: host runner stops
@@ -480,8 +497,9 @@ def main() -> int:
             worker.terminate(); worker.join(timeout=2)
         queue_cleanup=close_transport_queues(dict(input=inbox,state=statebox,result=outbox))
         stopped=stop_observation.confirmed and time.monotonic_ns()-buffers['velocity'][-1].received_ns < 250_000_000 if buffers['velocity'] else False
+        if controller == 'PURE_PURSUIT': stopped = stop_evidence_at_loop_end
         observed_displacement = float(np.linalg.norm(buffers['pose'][-1].value[:2])) if buffers['pose'] else None
-        summary = dict(scope='SIM_E2E_CONTROLLED_TEST', counts=dict(counts), first_error=first_error,
+        summary = dict(scope='SIM_E2E_CONTROLLED_TEST', controller=controller, counts=dict(counts), first_error=first_error,
             queue_cleanup=queue_cleanup,
             watchdog_fault=lease.fault, worker_exitcode=worker.exitcode, maximum_observed_speed_mps=max_speed,
             observed_net_displacement_m=observed_displacement, gnss_noisy_accumulated_distance_m=distance,

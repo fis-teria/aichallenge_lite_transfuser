@@ -22,6 +22,7 @@ from aic_transfuser_lite.control.spatial_path_adapter_v4 import transform
 from aic_transfuser_lite.control.spatial_tracking_contracts_v4 import SpatialPathCandidate, plain, sha
 from aic_transfuser_lite.control.spatial_sim_guard_v4 import MotionEvidence, scan_coverage, scene_aabb_evidence
 from aic_transfuser_lite.control.sim_dispatch_v4 import AckermannDispatch
+from aic_transfuser_lite.control.spatial_live_pp_v4 import propose
 from .spatial_input_v4 import SpatialInputV4, PassiveCommand, Stamp, freeze_batch, INPUT_FIELDS
 from .spatial_runtime_v4 import load_fixed, state_inventory, SpatialRuntimeV4
 from .spatial_sim_adapter_v4 import Sample, align_observation, interpolate, await_control_join, stopped_forward_initial_speed
@@ -153,7 +154,8 @@ def worker_main(inbox: object, outbox: object, stop: object, config_path: str, o
                 result['initial_velocity_policy'] = init_policy
                 initial = np.array([cfg['rear_x_in_base_m'], 0., 0., init_v, ego[3]])
                 candidate = SpatialPathCandidate(raw, np.arange(1, 21)/10, result['forward_id'], t_obs=last_camera)
-                path = constrained_reference(candidate, cfg, initial)
+                path = constrained_reference(candidate, cfg, initial,
+                    length_policy=cfg['dev'].get('length_policy', 'FIXED_ARCLENGTH'))
                 fit_calls += path.diagnostics.get('fit_solve_count', 0)
                 result['reference'] = dict(xy_m=path.world_xy, actual_s_m=path.actual_s,
                                            reason=path.reason, diagnostics=path.diagnostics)
@@ -217,10 +219,29 @@ def worker_main(inbox: object, outbox: object, stop: object, config_path: str, o
                               motion_rejection=motion_reason or ('RUN_NOT_REQUESTED' if permission != 'RUN' else None))
                 if reference['reason']:
                     raise ValueError(reference['reason'])
-                solved = mpc.solve(z, reference, previous, {})
-                result['mpc'] = dict(diagnostics=solved.diagnostics, states=solved.states, controls=solved.controls)
-                result['solver_accepted'] = solved.accepted
-                if solved.accepted:
+                if cfg['dev'].get('controller') == 'PURE_PURSUIT':
+                    pp = propose(world_path, z, previous[0], cfg, permission=permission)
+                    result['pure_pursuit'] = pp
+                    rollout_scan = pp['states'].copy()
+                    rollout_scan[:, :2] = transform(rollout_scan[:, :2], scan_pose, inverse=True)
+                    rollout_scan[:, 2] -= scan_pose[2]
+                    result['rollout_coverage'] = scan_coverage(rollout_scan, scan_sample.value, cfg)
+                    result['rollout_static_evidence'] = scene_aabb_evidence(pp['states'], cfg, binding,
+                        state_ns=joined['current_ns'], now_sim_ns=control_bundle.get('sim_ns',joined['current_ns']),epoch=epoch)
+                    if not (result['rollout_coverage']['verified'] or result['rollout_static_evidence']['verified']):
+                        result['motion_rejection'] = 'ROLLOUT_FREE_SPACE_UNVERIFIED'
+                    result.update(solver_accepted=True, controller='PURE_PURSUIT',
+                        operation_id=result['forward_id']+':pp', first_control=pp['first_control'],
+                        target_speed_reference_mps=pp['target_speed_reference_mps'],
+                        model_dt_s=cfg['controller_dt_s'], request={'status':'PP_PROPOSED_NOT_SENT'})
+                    # Shared completion path below still records/notifies this same forward.
+                    solved = None
+                else:
+                    solved = mpc.solve(z, reference, previous, {})
+                if solved is not None:
+                    result['mpc'] = dict(diagnostics=solved.diagnostics, states=solved.states, controls=solved.controls)
+                    result['solver_accepted'] = solved.accepted
+                if solved is not None and solved.accepted:
                     rollout_scan = solved.states.copy()
                     rollout_scan[:, :2] = transform(solved.states[:, :2], scan_pose, inverse=True)
                     rollout_scan[:, 2] -= scan_pose[2]
