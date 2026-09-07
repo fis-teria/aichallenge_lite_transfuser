@@ -15,6 +15,7 @@ def main() -> None:
     ap.add_argument('--input',type=Path,required=True)
     ap.add_argument('--map-yaml',type=Path,required=True)
     ap.add_argument('--output',type=Path,required=True)
+    ap.add_argument('--comparison-map-yaml',type=Path)
     args=ap.parse_args();log=args.input/'supervisor.jsonl'
     if log.stat().st_size>64*1024**2: raise ValueError('BOUNDED_LOG_REQUIRED')
     rows=[];commands=[]
@@ -41,6 +42,16 @@ def main() -> None:
         supervisor_summary=summary,positive_acceleration_sends=sum(c['acceleration_mps2']>0 for c in commands),
         control_publish_count=len(commands),runtime_permission=False,
         static_only_not_collision_free_proof=True,geometry_match='NOT_CERTIFIED')
+    if args.comparison_map_yaml:
+        other=load_map(args.comparison_map_yaml)
+        alternate=[]
+        for row in rows:
+            hits=np.asarray(row['comparison']['hit_map_xy_m'])
+            values=other.query(hits)
+            alternate.append(dict(pose_ns=row['pose_ns'],hits=len(hits),
+                occupied=int((values==100).sum()),free=int((values==0).sum()),unknown=int((values==-1).sum())))
+        result['alternate_map_comparison']=dict(provenance=other.provenance,rows=alternate,
+            selection_changed=False,pose_or_hits_refitted=False)
     (args.output/'summary.json').write_text(json.dumps(result,indent=2),encoding='utf-8')
     import matplotlib
     matplotlib.use('Agg')
