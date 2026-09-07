@@ -38,13 +38,17 @@ def ordered_polyline_error(reference_s: np.ndarray, reference_xy: np.ndarray,
 
 
 def constrained_reference(candidate: SpatialPathCandidate, cfg: dict,
-                          initial_rear_in_base: np.ndarray) -> PreparedPath:
+                          initial_rear_in_base: np.ndarray, *,
+                          length_policy: str = 'FIXED_ARCLENGTH') -> PreparedPath:
     """Input raw float32[20,2], rear [x_m,y_m,yaw_rad,v_mps,delta_rad].
 
     Seven steering knots are integrated with midpoint bicycle geometry on a
     <= 0.02 m grid. The union of reference and target breakpoints certifies
     the maximum ordered polyline error, including corners and the connection.
     Clearance must subsequently be checked from a current sensor observation.
+    ENDPOINT_NORMALIZED_LENGTH_V1 is an explicit offline opt-in: a positive
+    global scale changes integration length, not the selected raw prefix.
+    Common target-arc parameter endpoints still pair start-to-start/end-to-end.
     """
     raw = candidate.raw_xy
     z = np.asarray(initial_rear_in_base, dtype=float)
@@ -57,6 +61,12 @@ def constrained_reference(candidate: SpatialPathCandidate, cfg: dict,
         return PreparedPath(np.empty((0, 2)), np.empty(0), np.empty(0, dtype=int),
                             np.empty(0), np.empty(0), diag, reason)
 
+    if length_policy not in ('FIXED_ARCLENGTH', 'ENDPOINT_NORMALIZED_LENGTH_V1'):
+        return reject('LENGTH_POLICY')
+    variable_length = length_policy == 'ENDPOINT_NORMALIZED_LENGTH_V1'
+    diag['length_policy'] = length_policy
+    if variable_length:
+        diag['policy'] = 'SIM_ENDPOINT_NORMALIZED_STEERING_SHOOTING_V3'
     if raw.shape != (20, 2) or raw.dtype != np.float32 or z.shape != (5,):
         return reject('SHAPE_DTYPE')
     if not np.isfinite(raw).all() or not np.isfinite(z).all():
@@ -109,6 +119,11 @@ def constrained_reference(candidate: SpatialPathCandidate, cfg: dict,
     if connection < 1e-9:
         target_s = target_s[1:]; target_xy = target_xy[1:]
     total = target_s[-1]
+    endpoint_chord = float(np.linalg.norm(target_xy[-1]-z[:2]))
+    minimum_length = max(cfg['reference_min_support_m'], endpoint_chord-deviation)
+    minimum_scale = minimum_length/total
+    if variable_length and minimum_scale > 1:
+        return reject('LENGTH_BOUNDS')
     q = np.linspace(0, total, int(np.ceil(total/.02))+1)
     ds = np.diff(q); mid = (q[:-1]+q[1:])/2
     knots = np.linspace(0, total, 7)
@@ -126,12 +141,17 @@ def constrained_reference(candidate: SpatialPathCandidate, cfg: dict,
     if allowed_at_samples <= 0:
         return reject('CERTIFICATE_RESOLUTION')
 
+    def unpack(free: np.ndarray) -> tuple[np.ndarray, float]:
+        return free[:6], float(free[6]) if variable_length else 1.
+
     def shoot(free: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        delta = np.interp(mid, knots, np.r_[z[4], free])
-        dyaw = ds*np.tan(delta)/cfg['wheelbase_m']
+        steering, scale = unpack(free)
+        delta = np.interp(mid, knots, np.r_[z[4], steering])
+        physical_ds = ds*scale
+        dyaw = physical_ds*np.tan(delta)/cfg['wheelbase_m']
         yaw = z[2] + np.r_[0., np.cumsum(dyaw)]
         angle = yaw[:-1] + dyaw/2
-        xy = z[:2] + np.vstack([np.zeros(2), np.cumsum(ds[:,None]*np.c_[np.cos(angle),np.sin(angle)], axis=0)])
+        xy = z[:2] + np.vstack([np.zeros(2), np.cumsum(physical_ds[:,None]*np.c_[np.cos(angle),np.sin(angle)], axis=0)])
         return xy, yaw, delta
 
     def errors(free: np.ndarray) -> np.ndarray:
@@ -141,25 +161,33 @@ def constrained_reference(candidate: SpatialPathCandidate, cfg: dict,
 
     def constraints(free: np.ndarray) -> np.ndarray:
         # Largest possible test speed, not a claimed applied speed.
-        rate = np.diff(np.r_[z[4], free])/np.diff(knots)*cfg['maximum_speed_mps']
-        lateral = cfg['maximum_speed_mps']**2*np.tan(np.r_[z[4], free])/cfg['wheelbase_m']
+        steering, scale = unpack(free)
+        rate = np.diff(np.r_[z[4], steering])/(np.diff(knots)*scale)*cfg['maximum_speed_mps']
+        lateral = cfg['maximum_speed_mps']**2*np.tan(np.r_[z[4], steering])/cfg['wheelbase_m']
         return np.r_[allowed_at_samples-errors(free),
                      cfg['steering_rate_limit_rad_s']-np.abs(rate),
                      cfg['lateral_acceleration_limit_mps2']-np.abs(lateral)]
 
     def objective(free: np.ndarray) -> float:
         xy, _, _ = shoot(free)
-        return float(np.sum((xy-target)**2)+.001*np.sum(np.diff(np.r_[z[4],free])**2))
+        steering, _ = unpack(free)
+        return float(np.sum((xy-target)**2)+.001*np.sum(np.diff(np.r_[z[4],steering])**2))
 
     start = time.monotonic(); diag['fit_solve_count'] = 1
     try:
-        result = minimize(objective, np.full(6, z[4]), method='SLSQP',
-                          bounds=[(-delta_max, delta_max)]*6,
+        guess = np.full(6, z[4])
+        bounds = [(-delta_max, delta_max)]*6
+        if variable_length:
+            guess = np.r_[guess, np.clip(endpoint_chord/total, minimum_scale, 1.)]
+            bounds.append((minimum_scale, 1.))
+        result = minimize(objective, guess, method='SLSQP',
+                          bounds=bounds,
                           constraints=[{'type':'ineq','fun':constraints}],
                           options={'maxiter':60,'ftol':1e-9})
         xy, yaw, delta = shoot(result.x)
         error = errors(result.x)
         residual = float(max(0., -np.min(constraints(result.x))))
+        steering, scale = unpack(result.x)
         diag.update(fit_wall_s=time.monotonic()-start, fit_success=bool(result.success),
                     fit_message=str(result.message), fit_iterations=int(result.nit),
                     ordered_parameter_m=q.tolist(), raw_correspondence_s_m=(q-connection).tolist(),
@@ -171,7 +199,16 @@ def constrained_reference(candidate: SpatialPathCandidate, cfg: dict,
                     legacy_lipschitz_bound_m=float(error.max()+check_gap),
                     maximum_deviation_bound_m=float(error.max()+certificate_gap),
                     initial_connection_fit_error_m=float(error[check<=connection].max()),
-                    constraint_residual=residual, steering_knots_rad=np.r_[z[4],result.x].tolist())
+                    constraint_residual=residual, steering_knots_rad=np.r_[z[4],steering].tolist(),
+                    length_scale=scale, integration_length_m=float(total*scale),
+                    integration_parameter_s_m=(q*scale).tolist(),
+                    correspondence_parameter_kind='TARGET_PREFIX_ARCLENGTH_WITH_CONNECTION_NOT_TIME',
+                    correspondence_scale_target_to_reference=scale,
+                    target_prefix_length_with_connection_m=float(total),
+                    endpoint_error_m=float(error[-1]), start_error_m=float(error[0]),
+                    selected_raw_endpoint_index=count-1,
+                    selected_raw_endpoint_xy_m=target_xy[-1].tolist(),
+                    fit_endpoint_xy_m=xy[-1].tolist())
         if not np.isfinite(xy).all() or not np.isfinite(error).all():
             return reject('NONFINITE_REFERENCE')
         if not result.success or residual > 1e-8 or error.max()+certificate_gap > deviation:
