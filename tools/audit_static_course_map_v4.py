@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'src'))
 import numpy as np
 from scipy.ndimage import label, find_objects
 from aic_transfuser_lite.control.static_course_map_v4 import load_map, OCCUPIED, FREE, UNKNOWN
