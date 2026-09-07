@@ -183,3 +183,46 @@ UNKNOWN/STALE/FAULT/OBSTRUCTEDでは正加速を許可せず、停止処理と�
 読み取り専用で上記関数・fieldと結合箇所を確認し、本文の対応表を作成。
 設計Markdownのみ追加。合成test、pytest、推論、WSL/SSH接続、AWSIM試験は未実施。
 この文書の完成は、新監視の実装完了・旧gate解除・走行承認を意味しない。
+
+## 10. 次タスク承認後の合成core実装追記（2026-09-07）
+
+変更範囲は `control/sensor_local_monitor_v4.py`、専用test、本節のみ。
+既存worker/supervisor/controllerは未接続・未変更。以下は合成profile上の契約であり、
+実scan・現AWSIMの校正済みprofileではない。
+
+- A: `InitialEvidence.confirmed_box_m` と現在 `State` を別に保持。
+  初期anchorと異なる状態は、直前LOCAL_CLEARの時刻付きtubeへの誤差込み包含、
+  検査済み領域への現在footprint包含、前回操作・profile/instance/epoch/TFの一致、
+  元証拠期限の継続が必要。新しいhitは初期証拠を否定する。毎tickのF0追加は禁止。
+- B: 固定local frameの有限セル方式。hitは誤差disk、FREEはセル全体が誤差分縮小した
+  観測扇形に含まれることを要求。ray間は `OPAQUE_MIN_WIDTH_V1` と高さ・静的条件を
+  明示した合成profile限定。最小障害物幅よりbeam gapが大きければUNKNOWN。
+  TTLは `Scan.observed_s` 固定。再投影・受信時刻更新で延長しない。
+  期限切れhitも保守的に保持し、古いUNKNOWNで消さない。履歴欠落/evictionは
+  `History.complete=False` としてUNKNOWN。自動hit消去・履歴無限蓄積は未実装。
+- C: state時刻からの前回操作、残り遅延、候補duration、監視/通信/応答遅延、jerk制限制動を
+  順に計算。候補a>0は初期v=a=0でも省略しない。速度誤差上限も停止まで含める。
+  command最大制動とprofile上のeffective制動を別値にし、停止時は操舵保持のみ対応。
+  sample間を速度/yaw-rate上限で覆い、数値積分・状態/追従誤差を車体側へ加算。
+  センサpose/range/角度/取得時刻誤差はhit/FREE側のみへ適用。計算打切りはUNKNOWN。
+- D: Request全内容hash（候補、state、前操作、方策、scan履歴世代、epoch/TF等）と
+  有効期限をDecisionに保持。`revalidate`は送信しない純粋確認。
+  わずかなadapter変更でも旧判定は失効。monitor停止、新hit、期限切れも再推論なしで失効。
+  `runtime_permission=False`、接触telemetryは常にMISSING。LOCAL_CLEARも条件付き幾何判定のみ。
+
+実profileのcalibration、detectability、高さ、実効制動が未根拠ならUNKNOWN。
+今回の幾何方式は意図的に保守的で、セル全体や光線間条件のためUNKNOWNが残り得る。
+状態/証拠はcallerからの宣言値であり、coreは真実性を実測しない。hashは認証署名ではない。
+固定local frameの相対poseをcallerが提供する。TF推定やセンサ接続は追加していない。
+履歴更新・停止方策の実車追従・実効誤差限界の確立は将来の別検証事項。
+
+限定検証コマンド（Windows commit→既定CheckOnly/sync後、WSL）:
+
+```bash
+bash tools/with_wsl_training_lock.sh env SENSOR_LOCAL_TRACE_DIR=ABSOLUTE_NEW_RUN/traces \
+ .venv/bin/python -m pytest -q tests/test_sensor_local_monitor_v4.py \
+ --junitxml=ABSOLUTE_NEW_RUN/junit.xml
+```
+
+全pytest・実ROS・モデル推論・sim接続は今回の許可に含めない。
+run成果物にstdout/stderr、JUnit、各合成入力/期待status/実出力trace、実行commitを保存する。
