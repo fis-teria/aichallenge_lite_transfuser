@@ -41,3 +41,44 @@ bash tools/with_wsl_training_lock.sh .venv/bin/python tools/audit_static_course_
 
 既定同期scriptは変更せず、Dataset固定rootの存在確認のみを許可。
 地図の空きセルは実時刻の空き領域を保証しない。動的/地図未掲載物体監視は別途必要。
+
+## 結果
+
+実装版76605bd82f850e19b0190c154997ae9fee15ed44で限定テスト43 passed / 6.63s。
+初回CLIはpackage import解決で停止（地図読取/出力作成前）。
+c6f1b50bf13f8818fc543a830a54d84ffb1a6129でsrc参照を明示し、両地図のCLI完了を確認。
+固定元4ファイルのGit状態はclean（元checkout全体の既存dirtyは保全）。
+
+| 候補 | 格子[H,W] | 解像度 | 占有セル | 空きセル | 不明セル | 占有4近傍成分 |
+|---|---|---|---:|---:|---:|---:|
+| official | 766,755 | 0.1m | 309887 | 268443 | 0 | 6 |
+| final_ver3 | 759,751 | 0.1m | 320418 | 249591 | 0 | 5 |
+
+両地図はサイズ・origin・画素が異なり、同じグリッドとして重ねない。
+official origin=[89608.61776988552,43116.40095341299,0]、
+final_ver3 origin=[89608.69387016428,43117.15165326744,0]。
+official図版を目視し、主にコース通行領域/外側を分ける形状であることを確認。
+個別物体の意味ラベルはなく、6/5成分を「障害物6/5個」と呼ばない。
+既定のコーン/タイヤ/追加障害物が完全収録されている根拠もない。
+**地図上の静的占有認識は実装済みだが、AWSIMの既定障害物との同定は未完了。**
+地図内不明0も実環境の未知領域0という意味ではない。
+
+| 原本 | SHA256 |
+|---|---|
+| official YAML | 2977e3b241ef4f1ce3527212fb0733679939d2d2cb87af40742ac76b002da212 |
+| official PGM | 403ac8d681f5ab8ecba9df8892ff72bba13f7351016bf108f1145133f0d6a12a |
+| final_ver3 YAML | 39d5aba44234c1e09fc57421d467d64c1769259cd3c3656032f008d2db4e6a79 |
+| final_ver3 PGM | c24af2130a8df96047a49d5b7759af7a0b29645c023e7f3bc6d4ba436275725a |
+
+Windows成果物は `tmp/static_course_map_20260907/`。
+`results_official/` と `results_final_ver3/` にsummary.json、static_grid.npz、static_map.png。
+validation.log、tests.xml、失敗を含むaudit.log/audit_retry.logを保存。
+元地図はofficial/・final_ver3/へ保存、Gitには追加しない。
+WSL原本/結果は `/home/thistle/e2e_autonomous/static_course_map_20260907/`。
+summary SHA256 official=bbb7c9888f13ccbe109f4f60031c3e1a8fc05287952b693945e2f33945c8f924、
+final_ver3=8bb325d861274851327191906bf44f26ff67430a781c7dd45ec0508a8243d579。
+
+既定同期によるDataset固定ルート存在確認を実施。Dataset内容/raw/sensor/checkpoint読取は未実施。
+AWSIM変更/起動、制御publish、駆動、学習、監視gate変更、pushはいずれも未実施。
+次は選択AWSIMコースと地図の対応、座標変換、既定配置との突合が必要。
+その後も占有地図単独で動的物体や地図差分を無視した駆動許可は出さない。
