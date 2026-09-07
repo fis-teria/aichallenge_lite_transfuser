@@ -36,10 +36,46 @@
 既存 `SpatialInputV4.build()` はcommand bindingと利用可能な過去commandを要求する。
 旧sim runnerはHOLD等を実際に送信して履歴を作っていた。送信ゼロの試験で同じ履歴を
 捏造するとモデル入力契約を変えてしまう。
-このため、新sessionは本当に受動取得したnominalがない場合に
+このため、新sessionは本当に受動取得したcommandがない場合に
 `PASSIVE_COMMAND_MISSING` としてforwardを呼ばない。
 静止していることだけからcommand=0とは推定しない。
-現AWSIMが無送信状態でこの入力を提供できるかはUNKNOWN。
+ただし「送信ゼロ」はV4 shadow側に対する条件。別制御器MPC/PPが唯一の実制御を
+担当する構成では、その指令を受動取得する。システム全体の制御送信ゼロは要求しない。
+
+## 外部制御器commandの受動取得（2026-09-08追記）
+
+起点 `3184ddc1474002a35d7ac3ec651ac28b0a4baaea`。新規
+`runtime/passive_controller_command_v4.py` の `ControllerCommandBinding` は
+選択topic・外部publisher identity・契約根拠・field意味を必須とする。
+`decode()` は AckermannControlCommand の `stamp`、
+`lateral.steering_tire_angle` [tire rad]、`longitudinal.speed` [target m/s]、
+`longitudinal.acceleration` [m/s^2] を既存PassiveCommandへ変換する。
+既存 `spatial_bootstrap_v4.py` の型/単位契約を使用。実速度・実操舵reportで代用しない。
+
+`create_input_only_node(..., command_binding=binding)` のcommand roleを選択topicへ
+接続し、受信callbackがpublisher identityを照合してdecodeする。受信/利用可能monotonic
+時刻とmessage stampを分離して渡し、既存observationのpassive_commandsへ渡す。
+adapterは `command_binding_known=True`、final採用時に限って根拠確認後
+`final_fallback_verified=True` とする。実producerの同定を文字列指定だけで証明済みにしない。
+
+学習selector `dataset_view_v3._selected_command` に合わせnominal優先、確認済みfinal
+のみfinal_fallbackで採用。finalをnominalへ読み替えない。nominalは選択制御器の
+actuation前要求であり、最終送信と同一とは主張しない。final topicの例は
+`/control/command/control_cmd` だが現在graphのproducer・意味・競合は未確認。
+shadow自身の生成指令をこのcallbackへ戻さない。既存50 ms過去slot対応、利用可能時刻、
+epoch、64件上限を再利用し、現在時刻へのrestampや期限延長は追加しない。
+PLAN記録には選択されたcommandとstamp/sourceのprovenanceを保存する。
+
+外部制御器の起動、実ROS subscription組立、publisher GIDの現在graph照合は今回未実施。
+実transport runner未完成のためlive CLIの拒否は維持。MPC/PP起動・AWSIM操作・走行・
+実推論・実入力収集はNOT_RUN。これは外部指令の受動取得hookと合成検証の変更。
+
+追加検証（Windows commit→既定CheckOnly/sync→WSL lock）：
+```bash
+bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q \
+ tests/test_passive_controller_command_v4.py tests/test_publisherless_shadow_v4.py \
+ tests/test_path_control_bridge.py --junitxml=runs/passive_external_command_01/junit.xml
+```
 
 ## 実行結果とコマンド
 

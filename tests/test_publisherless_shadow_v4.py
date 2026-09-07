@@ -40,6 +40,15 @@ def test_no_fake_command_no_forward():
     assert not any(x['event']=='FORWARD_STARTED' for x in e)
 
 
+def test_verified_external_final_command_and_shadow_rejection():
+    r,_,_=setup()
+    assert 'FINAL_COMMAND_BINDING_UNVERIFIED' in apply(r,1,[Obj(source='final_fallback')])['reason']
+    r.adapter.final_fallback_verified=True
+    assert apply(r,2,[Obj(source='final_fallback')])['event']=='PLAN'
+    assert 'PASSIVE_EXTERNAL_SOURCE_REQUIRED' in apply(r,3,[Obj(source='sim_sent')])['reason']
+    assert r.forward_calls==1
+
+
 def test_exact_forty_including_errors():
     def fail(batch): raise RuntimeError('synthetic forward failure')
     r,e,_=setup(fail)

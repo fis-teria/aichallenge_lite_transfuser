@@ -5,7 +5,7 @@ No command-history feedback from shadow controls. No ROS imports or asset reads
 at import time. Outer process supervision is required for a blocked forward.
 """
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 import math
 import time
 import numpy as np
@@ -84,8 +84,10 @@ class ShadowSession:
                 raise ValueError('INPUT_'+status)
             # Explicit source: never fabricated zero commands or own shadow result.
             for command in passive_commands:
-                if command.source != 'nominal':
-                    raise ValueError('PASSIVE_NOMINAL_SOURCE_REQUIRED')
+                if command.source not in ('nominal', 'final_fallback'):
+                    raise ValueError('PASSIVE_EXTERNAL_SOURCE_REQUIRED')
+                if command.source == 'final_fallback' and not getattr(self.adapter, 'final_fallback_verified', False):
+                    raise ValueError('FINAL_COMMAND_BINDING_UNVERIFIED')
                 self.adapter.add_command(command)
             if not self.adapter.commands:
                 raise ValueError('PASSIVE_COMMAND_MISSING')
@@ -122,6 +124,8 @@ class ShadowSession:
                                accepted=accepted, raw_xy_m=raw.tolist(), source_s=source_s,
                                generated_monotonic_s=generated, inference_s=generated-before,
                                command_policy=provenance.get('command_policy'),
+                               command_provenance=[asdict(c) if c is not None else None
+                                                   for c in provenance.get('commands', [])],
                                control_publish_count=0, gear_publish_count=0, mode_publish_count=0)
         except Exception as exc:
             self.bridge._invalidate('INPUT_OR_FORWARD_REJECTED')
@@ -155,15 +159,21 @@ def fixed_infer_factory():
     return infer, identity
 
 
-def create_input_only_node(node_factory, message_types: dict, topics: dict, callback):
+def create_input_only_node(node_factory, message_types: dict, topics: dict, callback,
+                           *, command_binding=None):
     """Auditable ROS construction boundary. No publishers, clients, actions, timers.
 
-    ROS parameter events also disabled; callbacks do not access the node object.
+    ROS middleware-internal endpoints still require independent verification.
     Sensor synchronizer is caller-supplied and must provide real provenance.
     """
-    roles = ('image', 'lidar', 'velocity', 'steering', 'nominal', 'odometry', 'clock')
+    command_role = 'command' if command_binding is not None else 'nominal'
+    roles = ('image', 'lidar', 'velocity', 'steering', command_role, 'odometry', 'clock')
     if set(topics) != set(roles) or any(not isinstance(t, str) or not t.startswith('/') for t in topics.values()):
         raise ValueError('EXPLICIT_PASSIVE_TOPICS_REQUIRED')
+    if command_binding is not None:
+        command_binding.validate()
+        if topics['command'] != command_binding.topic:
+            raise ValueError('COMMAND_TOPIC_BINDING_MISMATCH')
     # Factory must independently attest middleware-internal endpoints: rclpy's
     # parameter-event behavior varies by version. No invented disable keyword.
     node = node_factory('v4_publisherless_shadow', enable_rosout=False,
