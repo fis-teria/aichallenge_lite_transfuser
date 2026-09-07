@@ -45,23 +45,32 @@ def clean_json(value):
 @pytest.fixture
 def check(request, tmp_path):
     counter = 0
-    def run(r, expected, reason=None, *, now=1., prior=None):
+    def save(record):
         nonlocal counter
-        result = m.evaluate(r, now_s=now, prior=prior)
         target = Path(os.environ.get('SENSOR_LOCAL_TRACE_DIR', str(tmp_path)))
         target.mkdir(parents=True, exist_ok=True)
         name = m.content_hash({'test': request.node.nodeid, 'call': counter})[:20]+'.json'
         counter += 1
+        record.update(test=request.node.nodeid, synthetic_only=True)
+        (target/name).write_text(json.dumps(clean_json(record), indent=2), encoding='utf8')
+    def run(r, expected, reason=None, *, now=1., prior=None):
+        result = m.evaluate(r, now_s=now, prior=prior)
         record = dict(test=request.node.nodeid, synthetic_only=True, now_s=now,
                       expected_status=expected, expected_reason=reason, input=asdict(r),
                       output=asdict(result), prior=None if prior is None else asdict(prior))
-        (target/name).write_text(json.dumps(clean_json(record), indent=2), encoding='utf8')
+        save(record)
         assert result.status == expected, result.reason
         if reason is not None:
             assert result.reason == reason
         assert result.runtime_permission is False
         assert result.contact_telemetry == 'MISSING'
         return result
+    def validate(d, r, now, alive, expected):
+        actual = m.revalidate(d, r, now_s=now, monitor_alive=alive)
+        save(dict(action='PRE_SEND_REVALIDATION_NO_PUBLISH', decision_hash=d.binding_hash,
+                  input=asdict(r), now_s=now, monitor_alive=alive, expected=expected, actual=actual))
+        assert actual == expected
+    run.validate = validate
     return run
 
 
@@ -209,7 +218,7 @@ def test_budget_is_not_stopped_success(check, budget):
 def test_decision_content_binding(check, change):
     r = fixture_request()
     d = check(r, 'LOCAL_CLEAR')
-    assert m.revalidate(d, r, now_s=1.01, monitor_alive=True)[0]
+    check.validate(d, r, 1.01, True, (True, 'MATCHED_CONDITIONAL_DECISION_NOT_PUBLISH'))
     if change == 'candidate':
         altered = replace(r, candidate=replace(r.candidate, steering_rate_rps=1e-9))
     elif change == 'stop':
@@ -223,15 +232,17 @@ def test_decision_content_binding(check, change):
     else:
         scan = replace(r.history.scans[0], ranges_m=(.3,)*61)
         altered = replace(r, history=m.History('new-hit', (scan,)))
-    assert m.revalidate(d, altered, now_s=1.01, monitor_alive=True) == (False, 'BINDING_CHANGED')
-    assert m.revalidate(d, r, now_s=d.valid_until_s, monitor_alive=True) == (False, 'DECISION_EXPIRED')
-    assert m.revalidate(d, r, now_s=1.01, monitor_alive=False) == (False, 'MONITOR_STOPPED')
+    check.validate(d, altered, 1.01, True, (False, 'BINDING_CHANGED'))
+    check.validate(d, r, d.valid_until_s, True, (False, 'DECISION_EXPIRED'))
+    check.validate(d, r, 1.01, False, (False, 'MONITOR_STOPPED'))
 
 
 def test_sensor_error_does_not_inflate_vehicle_twice(check):
     r = fixture_request()
     low = check(r, 'LOCAL_CLEAR')
-    scan = replace(r.history.scans[0], pose_error_m=.5)
+    # >1m uncertainty covers the origin of the newly swept cells, so their
+    # whole-cell visibility cannot be certified even with a wide frontal FOV.
+    scan = replace(r.history.scans[0], pose_error_m=1.5)
     high_r = replace(r, history=m.History('error-large', (scan,)))
     high = check(high_r, 'UNKNOWN')
     assert low.checked_cells == high.checked_cells  # uncertainty belongs only to sensor
@@ -276,3 +287,16 @@ def test_interval_sweep_not_only_pose_rectangles(check):
     assert set(d.checked_cells)-cells
     stationary = replace(r, candidate=replace(r.candidate, acceleration_mps2=0., duration_s=.01))
     check(stationary, 'LOCAL_CLEAR')
+
+
+@pytest.mark.parametrize('field', ['steer_error_rad', 'acceleration_error_mps2'])
+def test_unimplemented_state_error_does_not_get_zeroed(check, field):
+    r = fixture_request()
+    check(replace(r, state=replace(r.state, **{field: .01})),
+          'UNKNOWN', 'STEER_OR_ACCEL_ERROR_MODEL_UNSUPPORTED')
+
+
+def test_no_return_behind_hit_never_free():
+    r = fixture_request()
+    scan = replace(r.history.scans[0], ranges_m=(.4,)*61)
+    assert not m._cell_free((20, 0), scan, r.profile, m._Checks(1000))

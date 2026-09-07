@@ -30,6 +30,8 @@ class State:
     xy_error_m: float
     yaw_error_rad: float
     speed_error_mps: float
+    steer_error_rad: float = 0.
+    acceleration_error_mps2: float = 0.
 
 
 @dataclass(frozen=True)
@@ -232,6 +234,7 @@ def _validate(r: Request, now: float) -> tuple[Status, str] | None:
     nonnegative = (p.front_overhang_m, p.rear_overhang_m, p.tracking_xy_m,
                    p.tracking_yaw_rad, p.tracking_speed_mps, s.xy_error_m, s.yaw_error_rad,
                    s.speed_error_mps, r.previous.duration_s, r.candidate.duration_s,
+                   s.steer_error_rad, s.acceleration_error_mps2,
                    r.stop.monitor_delay_s, r.stop.communication_delay_s, r.stop.brake_response_s)
     if min(positive) <= 0 or min(nonnegative) < 0 or not 0 < p.max_steer_rad < 1.3:
         return 'FAULT', 'INVALID_BOUNDS'
@@ -261,6 +264,8 @@ def _validate(r: Request, now: float) -> tuple[Status, str] | None:
         return 'FAULT', 'INVALID_EFFECTIVE_BRAKING'
     if r.stop.steering_policy != 'HOLD_AT_BRAKE_START':
         return 'UNKNOWN', 'STOP_POLICY_UNSUPPORTED'
+    if s.steer_error_rad != 0 or s.acceleration_error_mps2 != 0:
+        return 'UNKNOWN', 'STEER_OR_ACCEL_ERROR_MODEL_UNSUPPORTED'
     if not r.history.complete:
         return 'UNKNOWN', 'HISTORY_LOSS'
     if not r.history.generation or not 1 <= len(r.history.scans) <= p.max_scans:
@@ -328,6 +333,8 @@ def _rollout(r: Request, now: float, checks: _Checks) -> tuple[set[Cell], tuple[
     p, s, stop = r.profile, r.state, r.stop
     x, y, yaw, v, delta, a = s.x_m, s.y_m, s.yaw_rad, s.speed_mps, s.steer_rad, s.acceleration_mps2
     upper_v = v+s.speed_error_mps+p.tracking_speed_mps
+    lower_v = max(0., v-s.speed_error_mps-p.tracking_speed_mps)
+    lower_a = a
     reaction = stop.monitor_delay_s+stop.communication_delay_s+stop.brake_response_s
     phases = [(now-s.time_s+r.previous.duration_s, r.previous.acceleration_mps2, r.previous.steering_rate_rps),
               (r.candidate.duration_s, r.candidate.acceleration_mps2, r.candidate.steering_rate_rps),
@@ -344,7 +351,7 @@ def _rollout(r: Request, now: float, checks: _Checks) -> tuple[set[Cell], tuple[
         t = Tube(s.time_s+elapsed, x, y, yaw, v, delta,
                  s.xy_error_m+p.tracking_xy_m+numeric_xy,
                  s.yaw_error_rad+p.tracking_yaw_rad+numeric_yaw,
-                 s.speed_error_mps+p.tracking_speed_mps)
+                 max(upper_v-v, v-lower_v, 0.))
         tubes.append(t)
         cells.update(_footprint_cells(t, p, (p.max_speed_mps+body_radius*omega)*dt, checks))
         if len(cells) > p.max_cells:
@@ -362,9 +369,16 @@ def _rollout(r: Request, now: float, checks: _Checks) -> tuple[set[Cell], tuple[
                 raise _Budget('STOP_NOT_REACHED_WITHIN_BUDGET')
             dt = min(p.dt_s, remaining, p.horizon_s-elapsed)
             capture(dt)
-            a_next = max(a-stop.jerk_mps3*dt, min(a+stop.jerk_mps3*dt, wanted))
+            # Braking response lies between commanded maximum and guaranteed
+            # effective braking. Keep both speed envelopes, not just nominal stop.
+            upper_wanted = max(wanted, -float(stop.effective_braking_mps2))
+            lower_wanted = -stop.command_braking_mps2 if braking else wanted
+            a_next = max(a-stop.jerk_mps3*dt, min(a+stop.jerk_mps3*dt, upper_wanted))
+            lower_a = max(lower_a-stop.jerk_mps3*dt, min(lower_a+stop.jerk_mps3*dt, lower_wanted))
+            speed_error = max(upper_v-v, v-lower_v, 0.)
             nv = max(0., v+a_next*dt)
             upper_v = max(0., upper_v+a_next*dt)
+            lower_v = max(0., lower_v+lower_a*dt)
             if upper_v > p.max_speed_mps:
                 raise _Budget('REACHABLE_SPEED_OUT_OF_PROFILE')
             distance = (v+nv)*dt/2
@@ -373,9 +387,10 @@ def _rollout(r: Request, now: float, checks: _Checks) -> tuple[set[Cell], tuple[
             yaw += distance*math.tan(delta)/p.wheelbase_m
             delta = max(-p.max_steer_rad, min(p.max_steer_rad, delta+rate*dt))
             # Explicit bounded numerical and state/model error propagation.
-            numeric_xy += ((s.speed_error_mps+p.tracking_speed_mps)+p.max_speed_mps*(
+            speed_error = max(speed_error, upper_v-nv, nv-lower_v, 0.)
+            numeric_xy += (speed_error+p.max_speed_mps*(
                 s.yaw_error_rad+p.tracking_yaw_rad+numeric_yaw))*dt + .5*(accel_bound+p.max_speed_mps*omega)*dt**2
-            numeric_yaw += .5*yaw_accel*dt**2 + (s.speed_error_mps+p.tracking_speed_mps)*math.tan(p.max_steer_rad)/p.wheelbase_m*dt
+            numeric_yaw += .5*yaw_accel*dt**2 + speed_error*math.tan(p.max_steer_rad)/p.wheelbase_m*dt
             elapsed += dt
             remaining -= dt
             travel += distance
