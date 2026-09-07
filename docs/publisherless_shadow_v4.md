@@ -106,10 +106,22 @@ ASTによる新コードのpublisher/client/action呼出し不在検査と、fak
 
 ## 実試験へ残る作業
 
-1. 受動command sourceの実在確認。欠ける場合は入力契約変更を無断で行わず別設計判断。
+1. 選択した別制御器のcommand topic・publisher identity・意味を現在graphで確認し、上記受信hookへ結合。
 2. 現simのpose生成経路と観測時刻を結合する入力受信部。任意のOdometry topicを仮定しない。
 3. 車両Limitsと出典、current-container隔離の読取検証、実ROS内部endpoint監査。
 4. 推論childと独立control tick、queue/失効/欠損を実transportへ接続。
 5. 新しい有限試験枠を旧使用量へ追加する既存budget連携と、所有AWSIMの外側監視・終了。
 
 これらを接続するまではlive CLIを開放しない。既存HOLD送信runnerを裏で使う回避も禁止。
+
+### 外部指令hookの合成検証結果
+
+実行commit `919481c3b8ee8d3721e13a46547c05fd880289b2`。
+上記3テストファイル: **46 passed / 8.62s**。source維持、未確認final拒否、
+nominal優先、future/stale/availability/epoch不一致不採用、非有限値・restamp拒否、
+shadow自己出力拒否、選択topicのsubscriptionのみの構築を合成検証。
+生stdout/stderrとJUnit: Windows `tmp/passive_external_command_01/`。
+既定同期によるDatasetルートの存在確認を実施。
+Dataset内容・raw・sensor・checkpointの読取りは未実施。
+ROS・AWSIM・実推論・実制御・走行・全pytest・pushはNOT_RUN。
+実環境の制御器稼働、QoS、producer identity、final指令意味はこのfixture結果では確定しない。
