@@ -182,6 +182,7 @@ class Decision:
     frame: str
     tf_version: str
     profile_hash: str
+    initial_hash: str
     evidence_trace: tuple[str, ...]
     runtime_permission: bool = False
     contact_telemetry: str = 'MISSING'
@@ -286,7 +287,7 @@ def _validate(r: Request, now: float) -> tuple[Status, str] | None:
             return 'FAULT', 'INVALID_SCAN_CONTRACT'
         if not 0 <= scan.observed_s <= scan.received_s <= now:
             return 'FAULT', 'SCAN_CLOCK_ORDER'
-    if all(now-x.observed_s >= p.scan_ttl_s for x in r.history.scans):
+    if all(now-(x.observed_s-x.acquisition_error_s) >= p.scan_ttl_s for x in r.history.scans):
         return 'STALE', 'ALL_SCANS_EXPIRED'
     return None
 
@@ -405,7 +406,7 @@ def _initial_cells(r: Request, now: float, previous: Decision | None, checks: _C
         return set(), now, 'INITIAL_MISSING'
     if ((e.instance, e.epoch, e.frame, e.tf_version, e.profile_version) !=
             (r.instance, r.epoch, r.frame, r.tf_version, p.version) or
-            not e.kind or not _finite(e.observed_s, e.valid_until_s, *e.confirmed_box_m) or
+            not e.kind or len(e.confirmed_box_m) != 4 or not _finite(e.observed_s, e.valid_until_s, *e.confirmed_box_m) or
             not e.observed_s == e.anchor_state.time_s <= now < e.valid_until_s):
         return set(), now, 'INITIAL_EXPIRED_OR_CHANGED'
     x0, y0, x1, y1 = e.confirmed_box_m
@@ -424,6 +425,7 @@ def _initial_cells(r: Request, now: float, previous: Decision | None, checks: _C
         return set(), now, 'INITIAL_CONTINUATION_UNPROVEN'
     if ((previous.instance, previous.epoch, previous.frame, previous.tf_version, previous.profile_hash) !=
             (r.instance, r.epoch, r.frame, r.tf_version, content_hash(p)) or
+            previous.initial_hash != content_hash(e) or
             now >= previous.evidence_until_s or r.previous.id != previous.candidate.id or
             r.previous.acceleration_mps2 != previous.candidate.acceleration_mps2 or
             r.previous.steering_rate_rps != previous.candidate.steering_rate_rps):
@@ -513,7 +515,7 @@ def evaluate(r: Request, *, now_s: float, prior: Decision | None = None) -> Deci
                        r.state.time_s+r.profile.state_ttl_s, evidence_until) if status == 'LOCAL_CLEAR' else now_s
         return Decision(status, reason, content_hash(r), now_s, deadline, evidence_until,
                         tuple(sorted(cells)), tubes, stopped, travel, r.candidate,
-                        r.instance, r.epoch, r.frame, r.tf_version, content_hash(r.profile), tuple(trace),
+                        r.instance, r.epoch, r.frame, r.tf_version, content_hash(r.profile), content_hash(r.initial), tuple(trace),
                         stop_required=status != 'LOCAL_CLEAR',
                         stopping_clearance='CONDITIONAL_MODEL_CLEAR' if status == 'LOCAL_CLEAR' else 'UNVERIFIED')
     invalid = _validate(r, now_s)
@@ -528,7 +530,7 @@ def evaluate(r: Request, *, now_s: float, prior: Decision | None = None) -> Deci
         # Old hit evidence is retained even when it no longer certifies FREE.
         # No UNKNOWN scan clears an old hit; bounded history loss is UNKNOWN.
         for scan in r.history.scans:
-            fresh = now_s-scan.observed_s < r.profile.scan_ttl_s
+            fresh = now_s-(scan.observed_s-scan.acquisition_error_s) < r.profile.scan_ttl_s
             trace.append(f'{scan.id}:' + ('FREE_ELIGIBLE' if fresh else 'FREE_TTL_EXPIRED_HITS_RETAINED'))
             for index, value in enumerate(scan.ranges_m):
                 if not _valid_hit(scan, value):
@@ -543,8 +545,8 @@ def evaluate(r: Request, *, now_s: float, prior: Decision | None = None) -> Deci
         if seed_reason not in ('INITIAL_EXPLICIT_SCOPE', 'INITIAL_MAINTAINED_WITHIN_CHECKED_TUBE'):
             return result('UNKNOWN', seed_reason)
         # Finite static history: reuse original observation times, never now.
-        fresh_scans = [x for x in r.history.scans if now_s-x.observed_s < r.profile.scan_ttl_s]
-        evidence_until = min(seed_until, *(x.observed_s+r.profile.scan_ttl_s for x in fresh_scans))
+        fresh_scans = [x for x in r.history.scans if now_s-(x.observed_s-x.acquisition_error_s) < r.profile.scan_ttl_s]
+        evidence_until = min(seed_until, *(x.observed_s-x.acquisition_error_s+r.profile.scan_ttl_s for x in fresh_scans))
         for cell in cells-seed:
             if not any(_cell_free(cell, scan, r.profile, checks) for scan in fresh_scans):
                 trace.append(f'UNKNOWN_CELL:{cell[0]},{cell[1]}')

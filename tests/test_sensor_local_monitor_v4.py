@@ -296,7 +296,30 @@ def test_unimplemented_state_error_does_not_get_zeroed(check, field):
           'UNKNOWN', 'STEER_OR_ACCEL_ERROR_MODEL_UNSUPPORTED')
 
 
-def test_no_return_behind_hit_never_free():
+def test_no_return_behind_hit_never_free(check):
     r = fixture_request()
     scan = replace(r.history.scans[0], ranges_m=(.4,)*61)
+    check(replace(r, history=m.History('occluding-wall', (scan,))), 'OBSTRUCTED')
     assert not m._cell_free((20, 0), scan, r.profile, m._Checks(1000))
+
+
+def test_capture_time_uncertainty_expires_earliest(check):
+    r = fixture_request()
+    scan = replace(r.history.scans[0], acquisition_error_s=1.)
+    check(replace(r, history=m.History('uncertain-time', (scan,))), 'STALE', 'ALL_SCANS_EXPIRED')
+
+
+def test_duplicate_and_empty_scan_fault(check):
+    r = fixture_request()
+    check(replace(r, history=m.History('dup', r.history.scans*2)), 'FAULT', 'DUPLICATE_SCAN_ID')
+    scan = replace(r.history.scans[0], ranges_m=())
+    check(replace(r, history=m.History('empty', (scan,))), 'FAULT', 'INVALID_SCAN_CONTRACT')
+
+
+def test_between_pose_coverage_is_explicit(check):
+    r = fixture_request()
+    d = check(r, 'LOCAL_CLEAR')
+    t = d.tubes[0]
+    at_pose = m._footprint_cells(t, r.profile, 0., m._Checks(10000))
+    between = m._footprint_cells(t, r.profile, .05, m._Checks(10000))
+    assert at_pose < between
