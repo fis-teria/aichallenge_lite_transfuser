@@ -62,7 +62,7 @@ def test_initial_offsets_and_model_closed_loop(trace):
     b,p,tf,s=setup(); b.limits=replace(b.limits,path_ttl_s=20.)
     p=replace(p,expires_s=20.)
     assert b.accept(p,tf,now_s=1.)
-    s=replace(s,pose=(.2,.15,.05))
+    s=replace(s,pose=(.2,.05,.02))
     output=[]
     for i in range(120):
         t=1+i*.05; out=tick(b,s,t); output.append(out)
@@ -77,6 +77,22 @@ def test_initial_offsets_and_model_closed_loop(trace):
     assert output[-1]['cross_track_m']<output[0]['cross_track_m']
     assert max(abs(x['steering_rate_rps']) for x in output)<=b.limits.steer_rate_rps+1e-10
     trace(dict(scope='KINEMATIC_MODEL_CLOSED_LOOP_NOT_REAL_TRAJECTORY',results=output))
+
+
+def test_initial_offset_requiring_excess_steer_is_rejected(trace):
+    b,p,tf,s=setup();assert b.accept(p,tf,now_s=1.)
+    out=tick(b,replace(s,pose=(.2,.15,.05)))
+    trace(out);assert not out['valid'] and out['reason']=='PP_STEER_INFEASIBLE'
+
+
+def test_past_path_after_vehicle_translation_and_rotation(trace):
+    b,p,tf,s=setup();assert b.accept(p,tf,now_s=1.)
+    old=b.reference.copy()
+    s=replace(s,pose=(.4,.01,.03))
+    out=tick(b,s,1.05);trace(out)
+    assert out['valid'] and np.array_equal(old,b.reference)
+    # Path remains y=0 in fixed local frame, not reattached to current ego.
+    assert out['command']['tire_steering_rad']<0
 
 
 def test_explicit_stop(trace):
