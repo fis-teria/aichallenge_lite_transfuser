@@ -14,7 +14,7 @@ else
 ifeq ($(DEV_CONTROLLER),tiny)
 	python3 tools/tiny_dev_runner.py --sim-repo "$(SIM_REPO)" --official-package "$(TINY_PACKAGE)" --xvfb-root "$(XVFB_ROOT)" --output "$(TINY_OUTPUT)" --commit "$(TINY_COMMIT)" --phase "$(TINY_PHASE)" --wall-seconds "$(TINY_WALL_SECONDS)" --budget "$(TINY_BUDGET)"
 else
-	python3 tools/spatial_dev_runner.py $(if $(filter 1,$(V4_PURE_PURSUIT)),--pure-pursuit,) --sim-repo "$(SIM_REPO)" --checkpoint "$(V4_CHECKPOINT)" --xvfb-root "$(XVFB_ROOT)" --output "$(V4_OUTPUT)" --commit "$(V4_COMMIT)" --phase "$(V4_PHASE)" --wall-seconds "$(V4_WALL_SECONDS)" --budget "$(V4_BUDGET)" --binding "$(V4_BINDING)" --forward-limit "$(if $(V4_FORWARD_LIMIT),$(V4_FORWARD_LIMIT),0)"
+	python3 tools/spatial_dev_runner.py $(if $(filter 1,$(V4_PURE_PURSUIT)),--pure-pursuit,) $(if $(V4_MAP_CHECK),--map-check-yaml "$(V4_MAP_CHECK)",) --sim-repo "$(SIM_REPO)" --checkpoint "$(V4_CHECKPOINT)" --xvfb-root "$(XVFB_ROOT)" --output "$(V4_OUTPUT)" --commit "$(V4_COMMIT)" --phase "$(V4_PHASE)" --wall-seconds "$(V4_WALL_SECONDS)" --budget "$(V4_BUDGET)" --binding "$(V4_BINDING)" --forward-limit "$(if $(V4_FORWARD_LIMIT),$(V4_FORWARD_LIMIT),0)"
 endif
 endif
 

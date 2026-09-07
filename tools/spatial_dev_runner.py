@@ -12,6 +12,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import time
 
@@ -70,12 +71,15 @@ def main() -> int:
     ap.add_argument('--budget', type=Path, required=True)
     ap.add_argument('--binding', type=Path, required=True)
     ap.add_argument('--pure-pursuit', action='store_true', help='Explicit four-trial V4 PP authorization')
+    ap.add_argument('--map-check-yaml',type=Path,help='Stationary diagnostic and explicit deadline renewal')
     ap.add_argument('--forward-limit',type=int,default=0,help='0 selects phase default; otherwise finite 1..240')
     args = ap.parse_args()
     if os.name != 'posix' or not re.fullmatch('[0-9a-f]{40}', args.commit):
         raise ValueError('LINUX_AND_FIXED_SOURCE_COMMIT_REQUIRED')
     if not 10 <= args.wall_seconds <= 120: raise ValueError('WALL_BUDGET')
     if not 0 <= args.forward_limit <= 240: raise ValueError('FORWARD_BUDGET')
+    if args.map_check_yaml and (not args.pure_pursuit or args.phase!='stationary'):
+        raise ValueError('MAP_CHECK_STATIONARY_ONLY')
     source = Path(__file__).resolve().parents[1]
     sim = args.sim_repo.resolve()
     output = args.output.resolve()
@@ -122,6 +126,15 @@ def main() -> int:
     if args.pure_pursuit:
         cfg['dev'].update(controller='PURE_PURSUIT', length_policy='ENDPOINT_NORMALIZED_LENGTH_V1',
                           snapshots_limit=0, powered_brake_at_s=6., powered_limit_s=10.)
+    if args.map_check_yaml:
+        map_image=args.map_check_yaml.parent/'occupancy_grid_map.pgm'
+        if (digest(args.map_check_yaml)!='2977e3b241ef4f1ce3527212fb0733679939d2d2cb87af40742ac76b002da212' or
+            digest(map_image)!='403ac8d681f5ab8ecba9df8892ff72bba13f7351016bf108f1145133f0d6a12a'):
+            raise ValueError('FIXED_OFFICIAL_MAP_IDENTITY')
+        (output/'map').mkdir()
+        shutil.copyfile(args.map_check_yaml,output/'map/occupancy_grid_map.yaml')
+        shutil.copyfile(map_image,output/'map/occupancy_grid_map.pgm')
+        cfg['dev']['map_check_yaml']='/evidence/map/occupancy_grid_map.yaml'
     (output/'resolved_config.yaml').write_text(yaml.safe_dump(cfg, sort_keys=False))
     spec = compose_definition(source, sim, args.xvfb_root, output, args.checkpoint, project, args.commit)
     spec_path = output/'compose.json'
@@ -142,6 +155,9 @@ def main() -> int:
         from spatial_pp_budget_v4 import PPBudget
         budget = PPBudget(args.budget)
         authorization = budget.authorize()
+        if args.map_check_yaml:
+            atomic_json(output/'map_deadline_renewal.json',budget.renew_map_test_deadline())
+            authorization=budget.value['pp_authorization']
         atomic_json(output/'authorization.json', authorization)
         cfg['dev']['driving_cutoff_unix_s'] = authorization['driving_cutoff_unix_s']
         (output/'resolved_config.yaml').write_text(yaml.safe_dump(cfg, sort_keys=False))

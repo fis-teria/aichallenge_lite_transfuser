@@ -88,6 +88,12 @@ def main() -> int:
     while not inspection.exists() and time.monotonic()-waiting < 30:
         time.sleep(.10)
     verify_dev_isolation(json.loads(inspection.read_text()), args.project)
+    course_map = None
+    if cfg['dev'].get('map_check_yaml'):
+        if cfg['enabled']: raise ValueError('MAP_CHECK_MUST_NOT_DRIVE')
+        from aic_transfuser_lite.control.static_course_map_v4 import load_map
+        from aic_transfuser_lite.control.map_observation_v4 import compare_observation
+        course_map = load_map(Path(cfg['dev']['map_check_yaml']))
     if os.environ.get('ROS_DOMAIN_ID') != '1':
         raise ValueError('UNEXPECTED_DOMAIN')
     # Only now resolve ROS and launch the read-only fixed model worker.
@@ -235,6 +241,15 @@ def main() -> int:
                     for s in buffers['imu']]
                 yaw, basis = interpolate(orientations, ns, angle_columns=(0,))
                 p = np.r_[np.asarray(value)+.26*np.array([np.cos(yaw[0]), np.sin(yaw[0])]), yaw[0]]
+                if course_map is not None and counts['map_comparisons'] < 10 and buffers['lidar']:
+                    scan = min(buffers['lidar'],key=lambda sample:abs(sample.ns-ns))
+                    if abs(scan.ns-ns)<=50_000_000:
+                        comparison=compare_observation(course_map,p,scan.value,
+                            lidar_x_m=cfg['lidar_x_in_base_m'],lidar_y_m=cfg['lidar_y_in_base_m'])
+                        log(dict(event='STATIC_MAP_COMPARISON',pose_ns=ns,scan_ns=scan.ns,
+                            scan_received_ns=scan.received_ns,utm_base_pose=p.copy(),
+                            pose_basis=basis,comparison=comparison))
+                        counts['map_comparisons']+=1
                 if pose_origin is None: pose_origin = p[:2].copy()
                 p[:2] -= pose_origin
                 # Duplicate or regressing source stamps never contribute travel.

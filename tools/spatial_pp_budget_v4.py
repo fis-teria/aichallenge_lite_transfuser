@@ -15,6 +15,22 @@ class PPBudget(AttemptBudget):
         super().__init__(path)
         self.limits = dict(LIMITS)
 
+    def renew_map_test_deadline(self) -> dict:
+        """One explicit renewal after 10:57 JST; preserve all prior charges."""
+        auth=self.authorize();key='V4_MAP_TEST_RENEWAL_20260907_1057'
+        if self.value.get('pp_map_renewal'):
+            if self.value['pp_map_renewal']['id']!=key: raise ValueError('RENEWAL_CONFLICT')
+            return self.value['pp_map_renewal']
+        now=time.time()
+        record=dict(id=key,old_cutoff_unix_s=auth['driving_cutoff_unix_s'],
+            new_cutoff_unix_s=now+1800.,applied_unix_s=now,used_at_change=dict(self.value['used']),
+            limits_unchanged=dict(self.limits),authority_source='USER approval after explicit deadline proposal')
+        self.value['pp_authorization']=dict(auth,driving_cutoff_unix_s=now+1800.)
+        self.value['pp_map_renewal']=record
+        self.value.setdefault('authorization_changes',[]).append(record)
+        atomic_json(self.path,self.value)
+        return record
+
     def authorize(self) -> dict:
         if self.value.get('active'):
             raise ValueError('UNRESOLVED_PRIOR_RESERVATION')
