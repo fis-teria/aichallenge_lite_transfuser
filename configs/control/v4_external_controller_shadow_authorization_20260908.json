@@ -1,0 +1,39 @@
+{
+  "profile": "V4_EXTERNAL_CONTROLLER_SHADOW_ONE_20260908",
+  "authorization_source": "USER_MESSAGES_IN_CURRENT_TASK",
+  "user_approval": "こうしんしてください",
+  "scope": "One simulator-only external MPC or Pure Pursuit driving attempt with passive V4 shadow",
+  "host": "graneple@192.168.3.10",
+  "simulator_repository": "/home/graneple/git/autononous_ai/aichallenge-racingkart",
+  "cumulative_budget_path": "/home/graneple/e2e_autonomous/spatial_run_continuation_20260907/budget.json",
+  "attempt_limit": 1,
+  "automatic_retry": false,
+  "outer_wall_seconds_including_shutdown": 120,
+  "powered_sim_seconds_including_braking": 10,
+  "v4_forward_attempt_limit_including_failures": 40,
+  "deadline_rule": "Set ready_unix_s once after preparation checks; finish and stop within ready_unix_s + 1800. Never refresh on retry or restart.",
+  "ready_unix_s": null,
+  "driving_cutoff_unix_s": null,
+  "activation_status": "AUTHORIZED_PENDING_PREPARATION",
+  "cumulative_usage_reset": false,
+  "cumulative_limits_increased": false,
+  "unchanged_cumulative_limits": {
+    "wall_s": 3600,
+    "forward_including_tiny": 7100,
+    "mpc": 6000,
+    "snapshots": 16,
+    "powered": 11,
+    "powered_s": 320,
+    "log_bytes": 536870912
+  },
+  "reservation_rule": "Re-read active reservation and usage under existing exclusive protection, preserve all prior attempts, reserve the one run and account external controller computations. Missing enforcement blocks dispatch.",
+  "authority": {
+    "sole_actuating_source": "Selected external controller through existing supervisor",
+    "v4_control_publish_enabled": false,
+    "shadow_feedback_into_command_history": false,
+    "physical_vehicle_enabled": false,
+    "awsim_modification_allowed": false,
+    "safety_bypass_allowed": false
+  },
+  "applied_retroactively": false
+}

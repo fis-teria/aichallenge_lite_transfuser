@@ -125,3 +125,18 @@ shadow自己出力拒否、選択topicのsubscriptionのみの構築を合成検
 Dataset内容・raw・sensor・checkpointの読取りは未実施。
 ROS・AWSIM・実推論・実制御・走行・全pytest・pushはNOT_RUN。
 実環境の制御器稼働、QoS、producer identity、final指令意味はこのfixture結果では確定しない。
+
+### 2026-09-08: ユーザー承認済みの試験枠更新
+
+`configs/control/v4_external_controller_shadow_authorization_20260908.json` に承認を記録。
+1試行、終了処理込みwall120秒、制動込み駆動10sim秒、V4推論試行40回。
+準備完了時を一度だけ記録し、そこから30分以内に終了する。準備前の現在時刻を
+仮のready時刻として書かない。承認待ちではなく `AUTHORIZED_PENDING_PREPARATION`。
+累積上限・使用量は変更せず、旧走行期限はこの1試行の有効化時に更新する。
+他試行や旧プロファイルの一括再承認ではない。
+
+現行 `PPBudget.reserve` はmpc予約を0に限定し、V4から直接PPへ送る旧4試行用。
+この旧gateを無効化して外部MPC走行を通さない。外部制御器の実計算を含めた予約と
+上記1試行制限の接続、実ROS受信・隔離・停止確認が完了するまでdispatchしない。
+承認ファイルのみでruntime enforcement済みとは扱わない。
+現時点でremote budgetのready/期限変更・試行予約・AWSIM起動は未実施。
