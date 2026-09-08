@@ -21,8 +21,10 @@ true)
     [[ "${mode}" == "awsim" || "${mode}" == "awsim-no-viz" ]] || exit 2
     [[ "${V4_SHADOW_SETUP:-}" = /* && -f "${V4_SHADOW_SETUP}" ]] || exit 2
     [[ "${V4_SHADOW_CONFIG:-}" = /* && -f "${V4_SHADOW_CONFIG}" ]] || exit 2
-    [[ "${V4_SHADOW_LAUNCH:-}" = /* && -f "${V4_SHADOW_LAUNCH}" ]] || exit 2
     source "${V4_SHADOW_SETUP}" || exit 2
+    v4_shadow_prefix=$(ros2 pkg prefix aic_e2e_runtime) || exit 2
+    export V4_SHADOW_LAUNCH="${v4_shadow_prefix}/share/aic_e2e_runtime/launch/v4_shadow.launch.py"
+    [[ -f "${V4_SHADOW_LAUNCH}" ]] || exit 2
     ;;
 false) ;;
 *) exit 2 ;;

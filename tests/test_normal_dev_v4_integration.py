@@ -23,6 +23,8 @@ def test_preserves_controller_and_start_and_no_runner():
     assert tree.find('group').attrib['if']=='$(env V4_SHADOW_ENABLED false)'
     assert runtime.count('ros2 launch')==1
     assert 'source "${V4_SHADOW_SETUP}"' in runtime
+    assert 'v4_shadow_prefix=$(ros2 pkg prefix aic_e2e_runtime)' in runtime
+    assert runtime.index('source "${V4_SHADOW_SETUP}"') < runtime.index('v4_shadow_prefix=')
     assert '"${mode}" == "awsim"' in runtime
     assert 'CONTROL_METHOD=${CONTROL_METHOD:-}' in compose
     assert not any(x in runtime+launch+compose for x in ('official_start','race_armed','AWSIM_START_MODE','helper_complete'))

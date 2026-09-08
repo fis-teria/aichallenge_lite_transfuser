@@ -88,3 +88,42 @@ bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q \
   remoteの追加レビューポリシーもあるため、今回のローカル限定テストを
   remote適用や外部レビュー完了の証拠にはしない。
   Ready調査用の次回走行を、この統合の合格条件にはしない。
+
+## 実適用・install・追加試験07（上記の未実施状態と説明を更新）
+
+ユーザーの実適用/install反映/追加走行依頼により、remoteの上記3ファイルへ
+git apply --check成功後に限定差分を適用。既存dirtyは保持、remote commit/pushなし。
+実system installのlaunchはsourceへのsymlinkであり、追加groupが実ロード先へ反映済み。
+V4は`/home/graneple/e2e_autonomous/v4_normal_dev_07/install`へcolcon build、
+1 package / 1.19s成功。コンテナ内`ros2 pkg executables`でv4_shadow_nodeを確認。
+
+**訂正: 通常make devがoffというB節の結論は誤り。**
+run_simulator.bash単体のdev既定はoffだが、現行Makefile:339は
+`dev: AWSIM_START_MODE := sync`を指定している。試験07でコマンドライン指定を
+外しても実ログは`--start-mode sync`だった。したがって、sync上書きが通常devとの
+相違点・Ready欠落の原因という推測は撤回する。Ready原因は引き続きUNKNOWN。
+
+今回試行は`codex-v4-normal-dev-07`。既存MPC、V4同一launch、DEV_AUTO_START=false、
+AWSIM_START_MODEのコマンドライン指定なし。読み取り専用observerを先に起動。
+新しい1試行枠を作り旧台帳は保持。1試行120秒/駆動10sim秒/forward40/MPC1500上限。
+**結果は起動失敗、実走行未成立**。make exit0は車両動作成功ではない。
+
+- launchパスをmerged install形式で指定したが、実際はisolated installだった。
+  run_autowareのファイル存在判定で終了し、Autoware/V4の実動作へ到達しなかった。
+- 別に、試験側の15秒開始タイマーをmake開始から数えていたため、
+  START_WALL_LIMITで停止。全体18.0446秒、観測clock4件/最終0.019999999sim秒。
+  ego/pose/command未取得、motion.jsonl空。走行・自然制動・V4経路更新は未確認。
+- 今回所有container/projectは全て終了済み。observerの追加stopは既に消滅しており
+  exit1になったが、終了後のinventoryで残存なしを確認。他の終了済み資源は保全。
+
+パス問題はその後修正し実適用済み。sourceしたoverlayの
+`ros2 pkg prefix aic_e2e_runtime`からlaunchパスを組み立てるため、
+V4_SHADOW_LAUNCHの手入力は不要（旧指定があっても正しい解決結果で上書き）。
+実解決値は`/v4/install/aic_e2e_runtime`。実ファイル存在と統合launch
+`--show-args`のexit0をnetwork noneコンテナで再確認。推論/ROS graph起動ではない。
+修正後の追加駆動再試行はしていない。
+
+残課題は、試験側で起動待ち時間と駆動時間を混同しない有限監視を用意し、
+修正済みinstall設定で実起動・走行を再検証すること。既存のReady/Safety条件は維持する。
+AWSIM本体/scene/sensor、モデル、controllerは未変更。外部レビューはNOT_RUN。
+証拠: Windows `tmp/v4_normal_dev_07/`、remote同名run。失敗の設定・run.pyは保全。
