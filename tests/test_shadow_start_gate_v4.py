@@ -135,3 +135,50 @@ def test_receipt_handoff_never_overwrites_or_accepts_failure(tmp_path):
     bad=receipt();bad['exit_code']=1
     with pytest.raises(ValueError): save_helper_completion(tmp_path/'bad.json',bad)
     assert not (tmp_path/'bad.json').exists()
+
+
+def test_ros_observer_with_synthetic_graph_and_messages(monkeypatch,tmp_path):
+    import sys
+    from aic_transfuser_lite.runtime import shadow_start_gate_v4 as m
+    monkeypatch.setitem(sys.modules,'std_msgs.msg',Obj(Bool=object))
+    monkeypatch.setitem(sys.modules,'rclpy.qos',Obj(
+        QoSProfile=lambda **kw:kw,ReliabilityPolicy=Obj(RELIABLE='reliable'),
+        DurabilityPolicy=Obj(TRANSIENT_LOCAL='transient_local')))
+    clock=[10];monkeypatch.setattr(m.time,'monotonic_ns',lambda:clock[0])
+    config=dict(instance_id='synthetic_instance',receipt_file=str(tmp_path/'receipt.json'),
+                expected_node='/autostart_orchestrator',
+                topics={'arm':'/overtake/race_armed',
+                        'initialization':'/autostart/initialization_ready'})
+    class Node:
+        def __init__(self): self.callbacks={};self.bad=False;self.removed=[]
+        def get_publishers_info_by_topic(self,topic):
+            return [] if self.bad else [Obj(node_namespace='/',node_name='autostart_orchestrator')]
+        def create_subscription(self,kind,topic,callback,qos):
+            assert qos['durability']=='transient_local' and qos['reliability']=='reliable'
+            self.callbacks[topic]=callback;return topic
+        def create_timer(self,period,callback): assert period==.1;return 'timer'
+        def destroy_subscription(self,sub): self.removed.append(sub)
+        def destroy_timer(self,timer): self.removed.append(timer)
+    n=Node();events=[];o=m.ROSStartObserver(n,config,'fixture',events.append)
+    clock[0]=11;n.callbacks[config['topics']['arm']](Obj(data=False))
+    clock[0]=12;n.callbacks[config['topics']['initialization']](Obj(data=True))
+    assert o.poll('0') is None
+    clock[0]=30;n.callbacks[config['topics']['arm']](Obj(data=True))
+    assert o.poll('0') is None  # helper has not completed
+    clock[0]=40;m.save_helper_completion(tmp_path/'receipt.json',receipt())
+    p=o.poll('0');assert p and p['not_before_ns']==40
+    clock[0]=50;n.bad=True;o.check_graph()
+    assert o.poll('0') is None and o.gate.fault.startswith('START_GRAPH_INVALID')
+    o.close();assert len(n.removed)==3
+    assert any(e['event']=='HELPER_RECEIPT' for e in events)
+    with pytest.raises(ValueError,match='START_RECEIPT_ALREADY_EXISTS'):
+        m.ROSStartObserver(n,config,'fixture',events.append)
+
+
+def test_revoke_worker_permit_prevents_later_reuse():
+    s,p,c,_=session();token=ready(gate());p.update(token)
+    assert observe(s,0)['event']=='PLAN'
+    p.update(None)
+    assert observe(s,1)['event']=='REJECTED'
+    p.update(token)
+    assert observe(s,2)['event']=='REJECTED' and s.forward_calls==1
