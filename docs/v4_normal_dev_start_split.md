@@ -127,3 +127,48 @@ V4_SHADOW_LAUNCHの手入力は不要（旧指定があっても正しい解決�
 修正済みinstall設定で実起動・走行を再検証すること。既存のReady/Safety条件は維持する。
 AWSIM本体/scene/sensor、モデル、controllerは未変更。外部レビューはNOT_RUN。
 証拠: Windows `tmp/v4_normal_dev_07/`、remote同名run。失敗の設定・run.pyは保全。
+
+## 既存MPCの通常自動Start試験08: 走行開始を確認
+
+ユーザー「既存構成とAWSIMを弄らずに走行開始」に対し、今回はV4をOFFにし、
+通常make devの既定`DEV_AUTO_START=true`を使用した。別途helperをdocker execで
+手動起動する処理は使わない。既存のMakefile、Start helper、controller、Safety、
+AWSIM本体/scene/sensorは今回一切変更していない。前段のV4追加hookはOFF。
+変更はWindowsの記録文書と新規試験ディレクトリの起動/監視スクリプトのみ。
+
+```bash
+# 実行済み。既存GPU compose＋専有project、外側有限watchdog付き。
+V4_SHADOW_ENABLED=false make dev CONTROL_METHOD=mpc CAPTURE=false ROSBAG=false \
+ RUN_ID=mpc_normal_start_08 \
+ OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/mpc_normal_start_08/evidence
+```
+
+起動前から読み取り専用observerを有効化。全体95秒の終了開始閾値/120秒上限と、
+helperのStart pulseログ観測から8sim秒/15wall秒の終了開始閾値を分離した。
+後者をmake起動時やV4準備時から誤計測しない。Start後の10sim秒上限は維持。
+旧履歴を保持し、新規1試行予算は当該runのbudget.jsonに記録。
+
+**既存公式Start完了＋短距離移動を確認した。**
+
+- make既定の`awsim-request-start`が`docker compose run --rm --no-deps autoware-command`
+  を使用。ログにvehicle Start、その後Ready、official Start true: accepted、
+  authoritative admin Start accepted、AWSIM race start confirmed。make exit0。
+- 622件のposeとego速度記録。開始位置からの変位1.872412m、最大速度1.837929m/s。
+  速度0.05m/s超の最初の観測10.649999761sim秒、最後12.634999717sim秒。
+  0.05は解析用の区別であり、Safety閾値変更ではない。
+- Start pulse観測4.529999898sim秒。DRIVE_TIME_LIMITで所有sim pause/KILL後、
+  所有Autoware/observer/Composeを終了。全体39.1065秒、残存なし。
+- 自然制動、無接触、一周完走は未確認。V4推論0、V4→MPC追従の成功ではない。
+
+raw result.jsonのstatus=FAILEDは保全する。make完了後のinstance inspectが
+watchdog終了と競合し空のcontainer IDを読んだためで、開始失敗という意味ではない。
+同じ理由で終了済みobserverへの追加stopはexit1。終了後inventoryで残存なし確認。
+試験スクリプト全体をPASSとは呼ばず、Startと移動の成立を独立した証拠で報告する。
+末尾のINPUT_STALEはfreeze後の欠損であり最初の停止原因ではない。
+
+この結果により、既存MPC/Start/AWSIMの改修が走行開始の必須条件ではないことを確認。
+過去のReady未到達について、手動helper起動の差と時間窓のどちらが支配的だったかは
+単独比較していないため断定しない。今後はこの既存自動Start経路を維持してV4を追加する。
+
+証拠: Windows `tmp/mpc_normal_start_08/{evidence,evaluation.json,budget.json,run.py}`、
+remote `/home/graneple/e2e_autonomous/mpc_normal_start_08/`。追加再試行なし、pushなし。
