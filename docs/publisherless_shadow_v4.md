@@ -179,3 +179,55 @@ clock未受信/巻戻り・有限buffer・解除を検証。ASTで制御publishe
 実rclpy/DDS・message package import・実センサ購読・実モデル推論・AWSIM・走行はNOT_RUN。
 既定同期によるDatasetルート存在確認は実施。Dataset内容・raw・sensor・checkpointの
 読取りは未実施。試験期限は未開始、台帳・AWSIM・既存制御器は変更していない。
+
+### 観測時刻結合と実ROS graph probe（2026-09-08、部分完了）
+
+`shadow_observation_join_v4.ShadowObservationJoin` がtransportのon_input/resetと
+ShadowSession.observationを接続する。RGB/BGR Image、LaserScan、Velocity/SteeringReport、
+明示base_link childのOdometryをSampleへ変換する。poseの固定frameと根拠は必須。
+既存align_observation/interpolateを再利用し、camera基準ego/poseをbracket補間する。
+LiDARは30ms以内のnearestであり同時刻へ再stampしない。ego/poseは50ms支持、
+外挿なし。最大64件/stream、待機camera16件、300msの固定期限。欠損はWAITから
+DEADLINEへ終了し、resetで待機・履歴・planを消す。推論呼出しはROS受信callbackではなく
+別workerからtickする必要があり、worker分離の実組立は未検証。
+実AWSIMにOdometryがあるとは仮定しない。GNSS/IMUからのpose生成は自動追加していない。
+
+合成tests: commit `61602c917e5dee830d60c6595b9004cf3d2d28f8`、**54 passed / 4.16s**。
+前節の限定コマンドに `tests/test_shadow_observation_join_v4.py` を追加し、
+JUnit出力先を `runs/shadow_join_02/junit.xml` とした。
+生ログ/JUnitは `tmp/shadow_join_live_20260908/tests/`。
+既定CheckOnly/同期による固定Dataset root存在確認のみ。内容/checkpoint読取なし。
+
+実host `graneple@192.168.3.10`、既存固定image
+`sha256:8c650c13157ffabbc3a72bab08865ccff8338f9025b43a8f4405b4c6b96d1ba7`、ROS Humble。
+`tools/host_shadow_graph_probe_v4.py` で旧専用composeのsimulatorだけを新規所有projectへ
+複製。network=none、非privileged、AWSIM/read-only mount、制御nodeなし、外側110秒
+TERM+5秒KILL。既存バイナリ/scene変更なし。旧checkout・旧コンテナを変更していない。
+実行は各専有ディレクトリで `timeout --signal=TERM --kill-after=5 110 python3 host_shadow_graph_probe_v4.py`。
+
+2試行はともにFAILED。第1は9.245秒、第2は7.377秒、制御送信0、推論0、駆動要求0。
+各所有AWSIMはhost pause→KILL→scoped compose downで終了。自然制動の成功ではない。
+final_containers空・cleanup errorなし。生ログを保全し、wall/log消費を既存budgetへ追記。
+旧累積使用量をリセットせず、承認された駆動1試行とそのready期限は未開始。
+
+観測できた実graph：/clock は awsim_d1、RELIABLE/VOLATILE/KEEP_LAST depth10。
+/sensing/lidar/scan は awsim_d1、BEST_EFFORT/VOLATILE/KEEP_LAST depth5。
+各endpoint GIDをgraph_probe.jsonへ保存。
+/control/command/control_cmd は型を確認したがpublisher=0（このprobeはsimulatorのみ）。
+camera/ego/Odometryの網羅確認は未完了。receiptsは空で、受信成功とは扱わない。
+
+初回エラーはcallbackにinfoが渡らないTypeError。2引数closureへ修正して再試験したが
+同じ失敗が再現し、以降のAWSIM再起動は中止。実image内の
+`/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py` を静的確認したところ、
+`_take_subscription` がtake_messageの第0要素だけを返し、`_execute_subscription` は
+callback(msg)のみを呼ぶ実装だった。2引数への修正だけではこの版に対応できない。
+**実ROS transportはこの版で未対応**。graphのGIDを受信messageのGIDだと偽装しない。
+
+次に必要なのは、同じ固定imageの低レベルtake_messageが返すmetadataの実契約確認と、
+MessageInfo/GIDを保持できる受信方式の合成ROS検証。それができるまで本transportを
+liveへ昇格しない。環境全面更新・GID照合解除・実制御開始はしていない。
+外部制御器の起動とego/pose送信元の確認も残る。今回の実ログは
+`tmp/shadow_join_live_20260908/attempt01/` と `attempt02/`。
+host側正本は `/home/graneple/e2e_autonomous/shadow_graph_20260908_01/evidence/` と
+`shadow_graph_20260908_02/evidence/`。失敗時も当時host wrapper自体のexitは0だったため、
+result.json/statusとstderrを判定正本とした。後続修正で失敗時exit1を追加（実再試験なし）。

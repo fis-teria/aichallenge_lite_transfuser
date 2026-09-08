@@ -63,6 +63,8 @@ def main():
         budget.finish(dict(reservation,wall_s=result['wall_s'],log_bytes=used),exact=True)
         (out/'result.json').write_text(json.dumps(result,indent=2))
         print(json.dumps(result))
+    if result['status']!='PROBE_COMPLETED_NOT_DRIVING' or result['cleanup'] or result['final_containers'].strip():
+        raise SystemExit(1)
 
 
 if __name__=='__main__': main()
