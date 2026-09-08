@@ -523,3 +523,24 @@ bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q -s \
 ROS実購読・checkpoint読取・モデル推論・AWSIM走行・全pytestはNOT_RUN。
 既定syncのDataset操作は固定ルートの`test -d`のみ（静的確認済み）。
 Dataset内容・raw・sensor・checkpoint読取を許可する変更は加えていない。
+
+### 今回の結果
+
+- 実行版: `d6f80ab68c1fba37413d4660d6f015fa12219f27`。
+  Windows commit → 既定CheckOnly/同期 → 同一SHAのWSL lock付き限定試験。
+- 上記8ファイルを新規run `v4_start_gate_20260909_02`で実行し、
+  **98 passed in 4.12s**、stderr空、JUnitのfailure/errorなし。
+  初回run01は96 passed in 4.46s。後に模擬ROS購読と許可再利用拒否の2件を追加した。
+- Windows生ログ/JUnit/合成trace: `tmp/v4_start_gate_20260909_02/`。
+  WSL側は`runs/v4_start_gate_20260909_02/`。期待値は仕様に基づく人工例。
+- 検証: helperのみ/retained trueのみでは閉鎖、PREPAREでforward=0、開始後のみforward、
+  開始前cameraは履歴のみ、候補上限とdeadline維持、遅延forward破棄、
+  arm取消/初期化取消/epoch/graph失効、失効許可の再利用拒否。
+  模擬ROS graphで購読QoS・helper receipt読取・送信元消失を検証した。
+- **既定同期によるDatasetルートの存在確認を実施**。
+  **Dataset内容・raw・sensor・checkpointの読取りは未実施**。
+- 制御publisher/client/action追加なし。既存Start helper/Safety/controller、
+  AWSIM、remote checkout、走行予算は変更なし。pushなし。
+- ROS実起動/購読、固定モデル推論、AWSIM駆動/停止、全pytestはNOT_RUN。
+  次回は既存試験起動側のPLAN待ちをPREPARED待ちへ変更し、helper成功receiptを
+  接続してから、別承認の有限予算内で確認する必要がある。
