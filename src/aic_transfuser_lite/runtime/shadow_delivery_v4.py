@@ -57,14 +57,16 @@ class DeliveryPump:
         self.pending.append(dict(kind='input', role=role, message=message,
                                  received_ns=received_ns, epoch=epoch))
 
-    def dispatch(self, now_ns: int, now_ros_s: float | None, commands: Callable) -> bool:
+    def dispatch(self, now_ns: int, now_ros_s: float | None, commands: Callable,
+                 *, forward_permit: dict | None = None) -> bool:
         if self.closed: return False
         self.expire(now_ns)
         if (self.inflight is not None or now_ros_s is None or
                 (self.last_sent_ns is not None and now_ns-self.last_sent_ns < self.period_ns)):
             return False
         batch = dict(kind='batch', batch_id=self.sequence, inputs=list(self.pending),
-                     commands=commands(), sent_ns=now_ns, now_s=now_ros_s)
+                     commands=commands(), sent_ns=now_ns, now_s=now_ros_s,
+                     forward_permit=forward_permit)
         try: self.incoming.put_nowait(batch)
         except queue.Full as exc: raise RuntimeError('DELIVERY_CREDIT_MISMATCH') from exc
         self.pending.clear()

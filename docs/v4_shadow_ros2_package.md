@@ -369,3 +369,157 @@ powered試行8、powered秒279.990。駆動10秒の実測という意味では�
 今回の試験起動順では、その完了前にV4の40回枠を使い切ることも分かった。
 上限を増やすだけで解決済みとせず、走行準備と推論開始の順序を見直す必要がある。
 安全gateの解除・Readyの偽装は行わない。次回liveには改めて予算判断が必要。
+
+## 開始順序の見直し（2026-09-09、静的確認・設計）
+
+対象は試験05のStart未完了と、走行前のV4予算消費。
+追加ROS起動・Start・checkpoint読取・推論・走行は実施していない。
+remoteの既存dirtyコードとSafety/Start helperは変更しない。
+参照repo HEADは`4af395eee10f928c7fc7225760adfa04c4c07ff4`（dirty）。
+この節は次の実装修正仕様であり、実装・走行済みという意味ではない。
+
+### コードで確定した条件
+
+以下のパスはremoteのaichallenge-racingkart基準。
+
+|箇所|確認した意味|
+|---|---|
+|`aichallenge/workspace/src/aichallenge_system/autostart_orchestrator_py/autostart_orchestrator_py/autostart_orchestrator_node.py` `_RaceArmLatch.observe_state`|Ready未観測のStartはarm_state_before_neutralで拒否。Readyは車両状態名で、操舵中立値の要求ではない|
+|同 `_RaceArmLatch.observe_official_start`|同一reset世代でReady観測と初期化完了が必要。terminal/reset後や初期化前の呼出しを拒否|
+|同 `_on_vehicle_state`|上の拒否理由をwaiting_for_neutral=Readyとして表示|
+|同 `_on_official_start`|SetBoolの結果をsuccess/messageとして返し、race_armをpublish|
+|同packageの`config/autostart_orchestrator.param.yaml`|arm=Start、neutral=Ready、disarm=Spawned/Grounded/Finish|
+|`aichallenge/request_awsim_start.bash` `publish_official_one_shot_start`|GroundedまたはReady＋初期化済み＋race_arm=false等を確認して1回だけStart pulseを送る|
+|同 `wait_for_one_shot_start_barrier`|車両のStart履歴だけでなく、watermark後のadmin Startも要求|
+|同 `arm_after_authoritative_start`|履歴・初期化・rollback余裕を再確認してofficial_start serviceを呼び、race_arm=trueと最終状態を確認して完了|
+
+したがって、車両domainのStartログだけをもって、admin Start成立やrace_arm成立と
+扱えない。Ready前Startの待機ログそのものは故障の証拠でもない。
+試験05にはhelperの完了ログやofficial_start service成功ログがなく、40forward終了で
+途中終了した。Readyが恒久的に来ない、既存gateが壊れている、という断定は取り消す。
+カウント時間の実値、Ready/admin Startがその後成立したかはUNKNOWN。
+
+### 試験起動側の問題
+
+`tmp/v4_mpc_drive_05/run.py`は最初のPLANを待ってStart helperを起動するが、
+その待ち時間にもV4は連続推論する。40回終了でhelperとsimを止めるため、
+Start handshakeの完了とshadowの残り回数を両立する段階分けがない。
+これは配送queueの問題とは別であり、MPC/モデル再学習の根拠にはならない。
+
+### 採用する修正仕様（未実装）
+
+1. PREPARE: 固定モデル読込・入力購読・graph監視・有限履歴の準備を先に行う。
+   forwardの実行許可は閉じておく。準備中も元の時刻/欠損/resetを記録し、
+   古い入力を復帰時にまとめて再推論しない。既存のworktree/試験deadlineを延長しない。
+2. START_HANDSHAKE: 既存Start helperを1回だけ実行する。Readyやrace_armの偽装、
+   neutral条件の変更、別経路からのengageは行わない。
+3. RUN_SHADOW: helperの正常完了に加え、選択した同じinstance/世代の
+   initialization_readyとrace_armの新鮮な証拠を確認してforwardを許可する。
+   残るwall/sim/forward予算が不足なら走行試験を打ち切る。
+4. END: 既存監視の失効・worker終了・上限で所有simを停止する。
+   自然制動とhost freeze/KILLを別記し、停止できたことを走行成功に置換しない。
+
+V4側の許可は「shadow forwardを開始してよい」だけで、車両制御権限ではない。
+この許可をrace_arm/Startへ逆送しない。新しいactuator publisherやcontrollerは不要。
+標準ROS2パッケージ内の最小の推論待機機能として実装し、別の走行runnerへ
+モデル本体を移動しない。親のgraph監視・期限・worker終了監視は待機中も有効とする。
+
+重要: 既存helperが走行許可を出した瞬間に車両が動く可能性がある。
+RUN_SHADOW開始を理由に駆動タイマーを0へ戻さない。Start要求前からの保守的な
+時間計測と、許可後/実速度発生後の計測を併記する。準備時間と駆動時間を区別しても
+全体120秒・駆動10sim秒の既存上限を延長する意味にはしない。
+正常helper完了が駆動枠内に収まらない場合は、原因・必要時間を示して別承認を求める。
+
+### 実装時の限定テスト
+
+- Ready未到着、早いStart、初期化未完了ではforward=0、待機が有限で終了する。
+- helper成功だけ、retained race_arm=trueだけでは開始しない。現在世代・freshnessを要求。
+- helper完了＋新鮮な許可後にだけforwardを開始し、実際の履歴maskを保持する。
+- reset、race_arm=false、入力/graph stale、期限切れで待機/推論許可を失効させる。
+- 前段でforwardがあれば総上限から差し引き、フェーズ変更・再起動で回数をresetしない。
+- 失効後の旧worker結果を採用しない。既存Start helper/Safetyの条件は変わらない。
+
+今回は静的見直しと文書化まで。上記待機機能・テスト・追加走行はNOT_RUN/未実装。
+現在の累積MPC予算8501/8501は変更していない。実装の合成検証は走行予算を消費しない。
+
+## 推論待機の実装（2026-09-09、合成検証対象）
+
+上節の「未実装」は設計時点の記録。今回、標準`v4_shadow_node`に
+`start_gate`を任意設定として追加した。既存の設定（キーなし）は停止時試験との
+互換のため従来どおり即時推論。駆動試験には必ず新しいgate設定を指定する。
+exampleは引き続きenabled=false、instance/receipt未設定で起動不可。
+これはモデル・PP・MPC・Start/Safetyを変更する機能ではない。
+
+- `shadow_start_gate_v4.py`: ROS非依存のStartGate/ForwardPermitと、読取専用の
+  ROSStartObserver。`std_msgs/Bool`をreliable/transient-localで購読する。
+  現環境の実QoS互換性は今回NOT_RUN。送信元は単一の`/autostart_orchestrator`を
+  100ms周期でgraph確認し、500ms以内の確認を要求する。
+- `/overtake/race_armed`: この購読開始後のfalse、その後のtrueを要求。
+  初期retained trueだけでは開かない。`/autostart/initialization_ready`もtrueが必要。
+  Boolにepoch/headerはないため同一instanceの隔離と既存helperの世代検査を信頼する。
+  graphは個々のmessageを認証しない。起動中のpublisher入替えを検出し切る保証もない。
+- helper成功証拠は同一hostのmonotonic nsを使う小さなJSON（上限4096byte）。
+  起動時に存在するファイルは拒否する。session/instance/epoch=0、exit_code=0、
+  helper開始・終了時刻を照合する。false観測はhelper開始より前、true観測は開始以降。
+  false/trueだけからhelperの成功を捏造しない。
+- Boolは更新時通知なので受信時刻をheartbeatとしてTTL更新しない。
+  開始後はfalse、初期化取消、graph失効、clock reset、既存入力監視の故障で終了。
+  workerへは最大500msの期限付き許可を渡し、forward前後で検査する。
+  親もPLAN採用前に再確認。イベント配送には遅延があり、既に実行中のforwardを
+  即時キャンセルする保証はないが、失効結果を有効PLANとして採用しない。
+- PREPAREでも実入力・外部command履歴を既存adapterへ追加し、tensor buildとforwardは
+  行わない。許可前に受信したcameraを許可後に再推論せず、PRE_START_OBSERVATIONとして
+  履歴だけに使用する。履歴maskを全有効へ置換しない。
+- 全候補（PREPARE含む）200件上限、総wall/forward/log上限を変更しない。
+  したがってStartが遅ければCANDIDATE_LIMITで終了し得る。開始時に予算をresetしない。
+  今回の実装が既存の有限時間内にStartを完了できるという実証はまだない。
+
+### 次回の既存試験起動側との受け渡し
+
+旧test05の「最初のPLANを待つ」はgate有効時には使わない。既存の専有試験起動側で
+PREPARE_STARTEDと少なくとも1件PREPARED（入力組立済み）を確認し、さらに
+START_EVIDENCEのarm=falseを確認してから、**既存Start helperを一回だけ**起動する。
+helperの正常終了を待った呼出元が次を実行する。以下は接続例であり実行ログではない。
+
+```python
+# helper_started_ns は既存helperを起動する直前に記録。
+# returncode は既存helper process.wait() の実測値。固定値0で代用しない。
+from pathlib import Path
+from aic_transfuser_lite.runtime.shadow_start_gate_v4 import save_helper_completion
+if returncode == 0:
+    save_helper_completion(Path(config['start_gate']['receipt_file']), {
+        'session_id': config['envelope']['session_id'],
+        'instance_id': config['start_gate']['instance_id'], 'epoch': '0',
+        'helper_started_ns': helper_started_ns,
+        'helper_completed_ns': helper_completed_ns, 'exit_code': returncode,
+    })
+# 失敗時はreceiptを作らず、既存の所有sim停止・終了処理へ。
+```
+
+receiptは信頼する試験起動側からのローカル証拠であり署名/認証ではない。
+同一host、専有run、共有した絶対パスを使用し、他者書込不可のディレクトリに置く。
+保存はpendingのexclusive作成→hard linkによる原子的公開で、既存ファイルを上書きしない。
+helper/Start操作はnode側に追加しない。元Start helperは変更しない。
+今回、旧試行run.pyやremote環境は変更していない。次回実試験の起動側への組込、
+実QoS/送信元/Ready遷移確認、停止、追加駆動予算承認は残課題。
+Start要求前からの既存駆動タイマーを維持し、RUN_SHADOWでresetしない。
+
+### 限定再現コマンド（固定モデル・ROS不要）
+
+Windows commit後、既定`tools/sync_to_wsl.ps1 -CheckOnly`、通常syncを使用する。
+WSLにて以下の限定テストのみを実行する（runsは新規run名を使う）。
+
+```bash
+bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q -s \
+  tests/test_shadow_start_gate_v4.py tests/test_shadow_delivery_v4.py \
+  tests/test_v4_shadow_package.py tests/test_shadow_ros2_transport_v4.py \
+  tests/test_shadow_observation_join_v4.py tests/test_passive_controller_command_v4.py \
+  tests/test_publisherless_shadow_v4.py tests/test_path_control_bridge.py \
+  --basetemp=runs/v4_start_gate_20260909_01/pytest_tmp \
+  --junitxml=runs/v4_start_gate_20260909_01/junit.xml
+```
+
+合成traceはpytest_tmp下の`synthetic_start_trace.json`。実センサ/実forwardではない。
+ROS実購読・checkpoint読取・モデル推論・AWSIM走行・全pytestはNOT_RUN。
+既定syncのDataset操作は固定ルートの`test -d`のみ（静的確認済み）。
+Dataset内容・raw・sensor・checkpoint読取を許可する変更は加えていない。

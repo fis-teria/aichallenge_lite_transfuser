@@ -40,7 +40,7 @@ class ShadowSession:
     """
     def __init__(self, envelope: Envelope, adapter: object, infer: object,
                  bridge: ShadowBridge, emit: object, *, monotonic=time.monotonic,
-                 unix=time.time):
+                 unix=time.time, forward_permit=None):
         envelope.validate(unix())
         self.envelope, self.adapter, self.infer, self.bridge, self.emit = envelope, adapter, infer, bridge, emit
         self.monotonic, self.unix = monotonic, unix
@@ -49,10 +49,17 @@ class ShadowSession:
         self.terminal = None
         self.last_epoch = None
         self.seen: set[str] = set()
+        self.forward_permit = forward_permit
 
     def active(self) -> bool:
         if self.terminal:
             return False
+        if self.forward_permit is not None:
+            self.forward_permit.check()
+            if self.forward_permit.fault:
+                self.terminal = self.forward_permit.fault
+                self.bridge._invalidate(self.terminal)
+                return False
         if self.monotonic()-self.started >= self.envelope.wall_s or self.unix() >= self.envelope.authorized_until_unix_s:
             self.terminal = 'SESSION_DEADLINE'
         elif self.forward_calls >= self.envelope.forward_limit:
@@ -91,6 +98,11 @@ class ShadowSession:
                 self.adapter.add_command(command)
             if not self.adapter.commands:
                 raise ValueError('PASSIVE_COMMAND_MISSING')
+            if self.forward_permit is not None and not self.forward_permit.check(epoch):
+                return self._event('PREPARED', 'WAITING_FOR_START', input_id=candidate_id)
+            if (self.forward_permit is not None and
+                    obs.camera.received_ns < self.forward_permit.value['not_before_ns']):
+                return self._event('PREPARED', 'PRE_START_OBSERVATION', input_id=candidate_id)
             batch, provenance = self.adapter.build(finalized_ns)
             if self.monotonic()-self.started >= self.envelope.wall_s:
                 self.terminal = 'SESSION_DEADLINE'
@@ -101,6 +113,10 @@ class ShadowSession:
             before = self.monotonic()
             raw = np.asarray(self.infer(batch))
             generated = self.monotonic()
+            if self.forward_permit is not None and not self.forward_permit.check(epoch):
+                self.terminal = self.forward_permit.fault or 'START_PERMISSION_REVOKED'
+                self.bridge._invalidate(self.terminal)
+                return self._event('REJECTED', self.terminal, output_id=output_id)
             if raw.shape != (20, 2) or raw.dtype != np.float32 or not np.isfinite(raw).all():
                 raise ValueError('OUTPUT_SHAPE_DTYPE_FINITE')
             # Result completed after deadline cannot become a fresh plan.

@@ -16,6 +16,15 @@ def validate_config(c: dict) -> None:
     from aic_transfuser_lite.runtime.publisherless_shadow_v4 import Envelope
     from aic_transfuser_lite.runtime.passive_controller_command_v4 import ControllerCommandBinding
     if c.get('enabled') is not True: raise ValueError('V4_SHADOW_DISABLED')
+    gate = c.get('start_gate')
+    if gate is not None:
+        if (gate.get('policy') != 'OFFICIAL_HELPER_AND_RACE_ARM' or
+                not Path(gate.get('receipt_file', '')).is_absolute() or
+                gate.get('instance_id') in (None, '', 'UNKNOWN') or
+                gate.get('expected_node') != '/autostart_orchestrator' or
+                gate.get('topics') != {'arm': '/overtake/race_armed',
+                                      'initialization': '/autostart/initialization_ready'}):
+            raise ValueError('EXPLICIT_START_GATE_REQUIRED')
     Envelope(**c['envelope']).validate(time.time())
     binding=ControllerCommandBinding(**c['command_binding']);binding.validate()
     roles={'image','lidar','velocity','steering','command','odometry','clock'}
@@ -32,13 +41,16 @@ def worker(config: dict, incoming, outgoing) -> None:
     from aic_transfuser_lite.runtime.shadow_observation_join_v4 import ShadowObservationJoin
     from aic_transfuser_lite.control.path_control_bridge import ShadowBridge
     from aic_transfuser_lite.runtime.shadow_delivery_v4 import consume_batch
+    from aic_transfuser_lite.runtime.shadow_start_gate_v4 import ForwardPermit
     validate_config(config)
     infer,identity=fixed_infer_factory()
     def emit(value): outgoing.put(value,timeout=.1)
     emit(dict(event='MODEL_LOADED',identity=identity))
     adapter=SpatialInputV4(command_binding_known=True,
         final_fallback_verified=config['command_binding']['source']=='final_fallback')
-    session=ShadowSession(Envelope(**config['envelope']),adapter,infer,ShadowBridge(None),emit)
+    permit = ForwardPermit(config['envelope']['session_id']) if config.get('start_gate') else None
+    session=ShadowSession(Envelope(**config['envelope']),adapter,infer,ShadowBridge(None),emit,
+                          forward_permit=permit)
     commands=()
     join=ShadowObservationJoin(session,lambda:commands,emit,clock_id='AWSIM_ROS',
          monotonic_id='HOST_MONOTONIC',pose_frame=config['pose_frame'],pose_evidence=config['pose_evidence'])
@@ -46,6 +58,7 @@ def worker(config: dict, incoming, outgoing) -> None:
         try: item=incoming.get(timeout=.05)
         except queue.Empty: continue
         if item['kind']!='batch': raise ValueError('DELIVERY_PROTOCOL')
+        if permit is not None: permit.update(item.get('forward_permit'))
         commands=item['commands']
         emit(consume_batch(item,join,emit,time.monotonic_ns))
     emit(dict(event='WORKER_FINISHED',reason=session.terminal))
@@ -82,7 +95,7 @@ def main(args=None) -> None:
     rclpy.init(args=args)
     node=Node('v4_shadow',enable_rosout=False,start_parameter_services=False)
     node.declare_parameter('config_file','')
-    process=transport=stream=pump=None
+    process=transport=stream=pump=start_observer=None
     ctx=mp.get_context('spawn');incoming=ctx.Queue(maxsize=1);outgoing=ctx.Queue(maxsize=64)
     terminal=None
     try:
@@ -113,6 +126,10 @@ def main(args=None) -> None:
             lambda:rclpy.spin_once(node,timeout_sec=.02),
             lambda: not rclpy.ok() or time.monotonic()-started>=limit or
                 time.time()>=config['envelope']['authorized_until_unix_s'])
+        if config.get('start_gate'):
+            from aic_transfuser_lite.runtime.shadow_start_gate_v4 import ROSStartObserver
+            start_observer=ROSStartObserver(node,config['start_gate'],config['envelope']['session_id'],emit)
+            emit(dict(event='PREPARE_STARTED',forward_enabled=False))
         transport=ShadowROS2Transport(node,types,config['topics'],
             {r:qos_profile_sensor_data if r in ('image','lidar') else 10 for r in types},
             ControllerCommandBinding(**config['command_binding']),config['expected_nodes'],
@@ -128,9 +145,21 @@ def main(args=None) -> None:
             # Preserve per-loop freshness admission without repeatedly copying
             # the 64-command history while the worker owns the only credit.
             if not transport._fresh(): break
+            permit = None
+            if start_observer:
+                was_open = start_observer.gate.opened
+                permit = start_observer.poll(str(transport.epoch))
+                if start_observer.gate.fault:
+                    terminal=start_observer.gate.fault;break
+                if not was_open and permit:
+                    emit(dict(event='RUN_SHADOW_STARTED',permit=permit))
             for _ in range(64):
                 try: result=outgoing.get_nowait()
                 except queue.Empty: break
+                # Recheck independently before accepting each in-flight PLAN.
+                if start_observer and result.get('event')=='PLAN':
+                    if start_observer.poll(str(transport.epoch)) is None:
+                        terminal=start_observer.gate.fault or 'START_PERMISSION_MISSING';break
                 if result.get('event')=='BATCH_CONSUMED':
                     try: pump.acknowledge(result)
                     except RuntimeError as exc: terminal=str(exc);break
@@ -144,13 +173,15 @@ def main(args=None) -> None:
                 return commands
             try:
                 pump.dispatch(time.monotonic_ns(),
-                    None if transport.last_ros_ns is None else transport.last_ros_ns*1e-9,snapshot)
+                    None if transport.last_ros_ns is None else transport.last_ros_ns*1e-9,snapshot,
+                    forward_permit=permit)
             except (ValueError,RuntimeError) as exc: terminal=str(exc)
         pump.close(terminal or 'SESSION_CLOSED')
         emit(dict(event='SESSION_END',reason=terminal,control_publish=False))
     finally:
         if pump: pump.close(terminal or 'SESSION_CLOSED')
         if transport: transport.close()
+        if start_observer: start_observer.close()
         if process:
             process.join(timeout=.2)
             if process.is_alive(): process.terminate();process.join(timeout=2)
