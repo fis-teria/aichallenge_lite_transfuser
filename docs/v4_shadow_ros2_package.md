@@ -58,3 +58,82 @@ ros2 pkg executablesでv4_shadow_nodeを確認、launch --show-argsでconfig_fil
 既定同期のDataset root存在確認は実施、内容・checkpoint読取は未実施。
 enabled実モデルのend-to-end・親子queue負荷・AWSIM/MPC同時起動はNOT_RUN。
 既存制御器へのlaunch includeやmake dev既定変更はしていない。
+
+## 通常make devでの入力確認（2026-09-08）
+
+通常環境の起動・実topic受信まで実施した。V4 nodeのenabled起動、モデル推論、
+走行Startはまだ実施していない。上のパッケージ試験とは別の実測である。
+
+- Windows参照HEAD: `ee25918`（開始時clean）。
+- SSH: `graneple@192.168.3.10`。
+- 実行repo: `/home/graneple/git/autononous_ai/aichallenge-racingkart`。
+- Remote HEAD: `4af395eee10f928c7fc7225760adfa04c4c07ff4`、既存dirtyのまま保全。
+- Image: `aichallenge-2025-dev`、ID
+  `sha256:8c650c13157ffabbc3a72bab08865ccff8338f9025b43a8f4405b4c6b96d1ba7`。
+- 実行overlay: `/aichallenge/workspace/install/setup.bash`。
+  `/aichallenge/install`ではない。通常composeのhost workspace mountを使用。
+
+```bash
+# 専用COMPOSE_PROJECT_NAME、既存GUIのDISPLAY/XAUTHORITYを指定。
+# 記録コマンドであり、外側の有限停止処理なしに再実行しない。
+make dev DEV_AUTO_START=false CONTROL_METHOD=mpc CAPTURE=false ROSBAG=false \
+ RUN_ID=normal_dev_20260908_01 \
+ OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/normal_dev_20260908_01/evidence \
+ AWSIM_START_MODE=sync
+```
+
+make exit=0。AWSIM、Autoware、MPCが起動し、RVizはOpenGL初期化ログを確認。
+画面動画・目視確認は未取得。25.001秒の実ROS購読で以下を受信した。
+
+|入力|topic|実publisher|受信数|
+|---|---|---|---:|
+|Camera|`/sensing/camera/image_raw`|`/awsim_d1`|96|
+|LiDAR|`/sensing/lidar/scan`|`/awsim_d1`|203|
+|速度|`/vehicle/status/velocity_status`|`/awsim_d1`|290|
+|操舵状態|`/vehicle/status/steering_status`|`/awsim_d1`|290|
+|Odometry|`/localization/kinematic_state`|`/localization/ekf_localizer`|498|
+|MPC command|`/control/command/control_cmd`|`/mpc_controller`|375|
+|Clock|`/clock`|`/awsim_d1`|2020|
+
+Odometry header frameは`map`。child frame、時刻整列の成立、V4 command履歴の
+採用可否までこのprobeでは判定していない。Camera/LiDARはBEST_EFFORT、
+残りはRELIABLE、全てVOLATILE。単一publisherのgraph snapshot確認であり、
+各messageの送信者認証ではない。raw commandも同じMPCから375件受信。
+
+既存DDS設定はloインターフェース。通常make devはdriver/zenohを起動せず、
+simulation=trueによりlaunch_vehicle_interface=falseとなる既存launchを確認。
+Start要求なし、race_not_armedログあり。ただし本probeは速度値を保存しないので、
+ゼロ速度実測や自然制動成功とは呼ばない。MPCからのcommand publishは実施されている。
+V4からの制御publish・forwardは0。AWSIMの実行物やsensor設定は変更していない。
+
+全体38.032秒、75秒host watchdogは発火せず。所有simulatorをpause→KILL、
+所有Autowareをstop、正確な専用projectをdown。cleanup errorなし、所有container残存なし。
+旧停止済みprojectは保全。これはhost終了であり車両制動試験ではない。
+
+既存累積予算を保持しwall/logを加算。MPC内部solve数は未測定なので、予約4000回を
+保守的に消費計上（exact=false）。4000回実測とは報告しない。forward=0、
+powered試行=0の計上。走行試行のready/deadlineは未発行、予算の自動拡張なし。
+
+成果物: Windows `tmp/normal_dev_20260908_01/evidence/`、
+remote `/home/graneple/e2e_autonomous/normal_dev_20260908_01/evidence/`。
+生make/Autoware/AWSIMログ、graph_probe.json、result.jsonを保存。
+実行指令の補助scriptは同runの`run.py`（製品runtimeへの追加ではない）。
+通常imageでtorch 2.3.1+cu121等のimportも成功。GPU非公開の読取確認containerで
+cuda=falseだったことは通常dev環境のGPU可否判定に使わない。
+
+次は実測node名をV4設定へ結合し、pose child frameとcommand単位・実際の時刻支持を
+確認した上で、固定checkpointによる停止中shadowを行う。続く短距離走行はその結果、
+既存停止手順、残予算を確認してからとする。今回不足が解消したのは実topicの存在・
+受信であり、V4入力組立→forward→更新経路記録のend-to-endはNOT_RUN。
+trajectoryのQoS不一致WARNも保存しており、走行前に対象subscriberを確認する。
+
+## 停止中shadowの準備
+
+モデル読込中は親が入力subscriptionをまだ作らず、MODEL_LOADEDを待つ。
+従来はモデル初期化中に64件の入力queueが満杯になり得たため、起動順のみ修正。
+元のsession deadlineに読込時間を含め、読込失敗・期限切れを明示して終了する。
+読込後も既存単一publisher・graph freshness条件は変更しない。
+過去入力の再stamp、queue拡大、許容遅延の緩和は行わない。
+tests/test_v4_shadow_package.pyで遅延ready・失敗・期限切れを合成検証する。
+MPCは通常command送信前にsteering gainを掛けるため、V4にはゲイン適用前の
+`/control/command/control_cmd_raw`をnominalとして選択する。

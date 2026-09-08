@@ -54,6 +54,27 @@ def worker(config: dict, incoming, outgoing) -> None:
     emit(dict(event='WORKER_FINISHED',reason=session.terminal))
 
 
+def wait_model_ready(process, outgoing, emit, spin, expired) -> None:
+    """No input subscriptions exist during bounded model loading.
+
+    Loading time consumes the parent's original deadline. No old sensor queue
+    is replayed or restamped when the worker becomes ready.
+    """
+    while True:
+        if expired(): raise RuntimeError('MODEL_STARTUP_DEADLINE')
+        try: record=outgoing.get(timeout=.02)
+        except queue.Empty:
+            if not process.is_alive():
+                raise RuntimeError('MODEL_STARTUP_EXIT:'+str(process.exitcode))
+            spin()
+            continue
+        if expired(): raise RuntimeError('MODEL_STARTUP_DEADLINE')
+        if record.get('event')!='MODEL_LOADED':
+            raise RuntimeError('MODEL_STARTUP_PROTOCOL')
+        emit(record)
+        return
+
+
 def main(args=None) -> None:
     import rclpy
     from rclpy.node import Node
@@ -88,13 +109,17 @@ def main(args=None) -> None:
             terminal=reason
             send(dict(kind='reset',reason=reason,epoch=epoch))
         types=ros2_types()
+        process=ctx.Process(target=worker,args=(config,incoming,outgoing));process.start()
+        wait_model_ready(process,outgoing,emit,
+            lambda:rclpy.spin_once(node,timeout_sec=.02),
+            lambda: not rclpy.ok() or time.monotonic()-started>=limit or
+                time.time()>=config['envelope']['authorized_until_unix_s'])
         transport=ShadowROS2Transport(node,types,config['topics'],
             {r:qos_profile_sensor_data if r in ('image','lidar') else 10 for r in types},
             ControllerCommandBinding(**config['command_binding']),config['expected_nodes'],
             lambda role,message,received_ns,epoch:send(dict(kind='input',role=role,message=message,
                 received_ns=received_ns,epoch=epoch)),on_reset,emit,
             clock_id='AWSIM_ROS',monotonic_id='HOST_MONOTONIC')
-        process=ctx.Process(target=worker,args=(config,incoming,outgoing));process.start()
         emit(dict(event='SESSION_STARTED',source_verification='GRAPH_SINGLE_PUBLISHER_NOT_PER_MESSAGE',
                   control_publish=False,config=config))
         while rclpy.ok() and terminal is None:
