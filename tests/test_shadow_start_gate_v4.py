@@ -154,6 +154,8 @@ def test_ros_observer_with_synthetic_graph_and_messages(monkeypatch,tmp_path):
         def get_publishers_info_by_topic(self,topic):
             return [] if self.bad else [Obj(node_namespace='/',node_name='autostart_orchestrator')]
         def create_subscription(self,kind,topic,callback,qos):
+            import inspect
+            assert len(inspect.signature(callback).parameters)==1
             assert qos['durability']=='transient_local' and qos['reliability']=='reliable'
             self.callbacks[topic]=callback;return topic
         def create_timer(self,period,callback): assert period==.1;return 'timer'

@@ -144,9 +144,13 @@ class ROSStartObserver:
         try:
             self.check_graph()
             if self.gate.fault: raise ValueError(self.gate.fault)
+            def callback_for(role: str):
+                # Humble treats a second positional parameter as MessageInfo.
+                def callback(message): self.receive(role, message.data)
+                return callback
             for role, topic in config['topics'].items():
                 self.subscriptions.append(node.create_subscription(
-                    Bool, topic, lambda m, r=role: self.receive(r, m.data), qos))
+                    Bool, topic, callback_for(role), qos))
             self.timer = node.create_timer(.1, self.check_graph)
         except Exception:
             self.close(); raise
