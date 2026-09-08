@@ -231,3 +231,53 @@ liveへ昇格しない。環境全面更新・GID照合解除・実制御開始�
 host側正本は `/home/graneple/e2e_autonomous/shadow_graph_20260908_01/evidence/` と
 `shadow_graph_20260908_02/evidence/`。失敗時も当時host wrapper自体のexitは0だったため、
 result.json/statusとstderrを判定正本とした。後続修正で失敗時exit1を追加（実再試験なし）。
+
+### メッセージ送信元受信の修正（部分完了）
+
+実行commit `eb81be190e3d4d36847c4ee6a000c7165faa0421`。
+固定image内のrclpy take_messageを隔離合成ROSで確認した結果、metadataはdictで
+source_timestamp/received_timestampのみ。publisher_gidは提供されない。
+`integrations/ros2_gid_receiver_v4/receiver.cpp` を追加し、rclcppの
+SubscriptionBase.take_serialized(message, MessageInfo)から同じtakeのserialized bytesと
+publisher_gidを取得する方式を実装。ROS publisher/client/engageは作らない。
+Node parameter events/rosoutも無効。QoSは明示SensorDataQoS、最大7入力、25秒、2000件、
+1MiB/message。stdoutはnonblocking、200msでbackpressure終了。外側監視は引き続き必須。
+role/gid/受信CLOCK_MONOTONIC ns/serialized hexを1行で渡す。rawセンサ全保存は不要。
+
+Python `ShadowROS2Transport(..., serialized_receiver=True)` はrclpy subscriptionを
+作らず、`ingest_wire`が同一hostの専有child pipeから取得した有界行をdeserializeして
+既存receiveへ渡す。GID不一致・不正行・未来monotonicは履歴失効。EOF/child停止も
+呼出元がresetする必要がある。実runnerへのprocess/pipe組立は未完了。
+
+固定ROS image内でCMake build成功。隔離された/fixture/gidのString publisher2個から
+異なるメッセージGIDを取得しCDRをPythonへ復元できた。ただしgraph endpoint GIDとの
+一致assertは失敗した。例：fixture0のmessage GIDは
+`9b64e5fa06ad67f000000000000000000000000000000000`、graphは
+`01101fa4953d3b6574e3dc22000007030000000000000000`等で、同一表現ではない。
+このRMW版における対応付けはUNKNOWN。graph GIDをmessage GIDとして使用したままでは
+live入力は拒否される。照合を解除せず、graph/source同定がPASSとは報告しない。
+2回の一致検証失敗後は同じ試験を繰り返していない。
+
+追加Python unit testsを含む限定5ファイルは58 passed。WSL lock実行：
+```bash
+bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q \
+ tests/test_shadow_ros2_transport_v4.py tests/test_shadow_observation_join_v4.py \
+ tests/test_passive_controller_command_v4.py tests/test_publisherless_shadow_v4.py \
+ tests/test_path_control_bridge.py --junitxml=runs/gid_receiver_fix_01/junit.xml
+```
+CPP/合成ROS再現（固定image、network none、専有/probe mount内）：
+```bash
+source /autoware/install/setup.bash
+cmake -S /probe -B /probe/build
+cmake --build /probe/build -j2
+env -u CYCLONEDDS_URI timeout -k 2 20 python3 /probe/test_humble_gid_receiver_v4.py /probe/build/v4_gid_receiver
+```
+ROS_LOG_DIR=/probe/ros_logs、user1000:1000で実施。既定imageに存在しない
+Cyclone設定パス、初回出力権限/ログディレクトリの問題を当該隔離コンテナだけで訂正。
+ホスト/既存ROS環境は変更していない。build.log/test.log/test2.log/test3.logと
+JUnit/stdout/stderrをWindows `tmp/gid_receiver_fix_01/` に保存。
+このtest scriptの最終結果はFAILのまま保全し、期待値を書き換えてPASSにしていない。
+今回AWSIM起動・制御topic送信・走行・実センサ/モデル推論なし。
+既定同期のDataset root存在確認のみ実施、内容は未読取。pushなし。
+残る一点はmessage GIDと選択graph endpointを結び付ける根拠ある方式の確定。
+実ROS接続全体の完了や走行可能を意味しない。
