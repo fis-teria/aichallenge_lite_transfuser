@@ -1,0 +1,39 @@
+{
+  "enabled": false,
+  "output_file": "",
+  "pose_frame": "",
+  "pose_evidence": "UNKNOWN",
+  "envelope": {
+    "session_id": "",
+    "wall_s": 115,
+    "forward_limit": 40,
+    "candidate_limit": 200,
+    "authorized_until_unix_s": 0,
+    "log_bytes": 4194304
+  },
+  "command_binding": {
+    "topic": "/control/command/control_cmd",
+    "producer_id": "/UNKNOWN",
+    "source": "final_fallback",
+    "contract_evidence": "",
+    "semantics": "TIRE_RAD_TARGET_MPS_ACCEL_MPS2"
+  },
+  "topics": {
+    "image": "/sensing/camera/image_raw",
+    "lidar": "/sensing/lidar/scan",
+    "velocity": "/vehicle/status/velocity_status",
+    "steering": "/vehicle/status/steering_status",
+    "clock": "/clock",
+    "command": "/control/command/control_cmd",
+    "odometry": "/UNKNOWN"
+  },
+  "expected_nodes": {
+    "image": "/awsim_d1",
+    "lidar": "/awsim_d1",
+    "velocity": "/awsim_d1",
+    "steering": "/awsim_d1",
+    "clock": "/awsim_d1",
+    "command": "/UNKNOWN",
+    "odometry": "/UNKNOWN"
+  }
+}
