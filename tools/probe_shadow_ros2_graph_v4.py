@@ -21,19 +21,18 @@ def main():
     rclpy.init(args=[])
     node=Node('v4_input_graph_probe',enable_rosout=False,start_parameter_services=False,
               use_global_arguments=False)
-    result={'kind':'ACTUAL_ROS_GRAPH_AND_RECEIPT','control_publish':False,'topics':{},'receipts':{}}
+    result={'kind':'ACTUAL_ROS_GRAPH_AND_RECEIPT','control_publish':False,'topics':{},'receipts':{},
+            'source_verification':'GRAPH_SNAPSHOT_NOT_PER_MESSAGE'}
     subscriptions={};start=time.monotonic()
-    def receive(topic,msg,info):
-        d=result['receipts'].setdefault(topic,{'count':0,'gids':[]})
+    def receive(topic,msg):
+        d=result['receipts'].setdefault(topic,{'count':0})
         d['count']+=1
-        gid=bytes(info.publisher_gid).hex()
-        if gid not in d['gids']: d['gids'].append(gid)
         stamp=getattr(getattr(msg,'header',None),'stamp',None) or getattr(msg,'stamp',None) or getattr(msg,'clock',None)
         if stamp is not None: d['last_stamp_ns']=stamp.sec*1_000_000_000+stamp.nanosec
         d['last_received_monotonic_ns']=time.monotonic_ns()
         if hasattr(msg,'header'): d['frame']=msg.header.frame_id
     def make_callback(topic):
-        def cb(msg,info): receive(topic,msg,info)
+        def cb(msg): receive(topic,msg)
         return cb
     try:
         while time.monotonic()-start<25:

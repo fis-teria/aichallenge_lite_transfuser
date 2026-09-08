@@ -27,6 +27,27 @@ nominal/final区分、過去commandの50ms支持・availability・epoch検査は
 testsをWSL lockで実施。固定Humble imageでtools/test_humble_graph_transport_v4.pyを
 network none、外側20秒timeout、/fixture topicsだけで実行する。AWSIMは起動しない。
 
+実行commit `651f0a8a1a6e6202ce948e9ce076b6e9830d74fe`、限定5ファイルは
+**62 passed / 4.05s**。固定Humble imageの実ROS合成試験も **PASS**。
+単一publisherのcommandを1件受信後、同じtopicへ追加publisherを作り、
+`PUBLISHER_COUNT:command`・履歴破棄・fault継続を確認。
+`tmp/graph_source_refactor_01/` にJUnit/stdout/stderr/ros_test.log保存。
+再現コマンド：
+```bash
+bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q \
+ tests/test_shadow_ros2_transport_v4.py tests/test_shadow_observation_join_v4.py \
+ tests/test_passive_controller_command_v4.py tests/test_publisherless_shadow_v4.py \
+ tests/test_path_control_bridge.py --junitxml=runs/graph_source_refactor_01/junit.xml
+# 専有network-noneコンテナ、同じ固定image、PYTHONPATH=/probe/src、ROS_LOG_DIR=/probe/ros_logs
+source /autoware/install/setup.bash
+env -u CYCLONEDDS_URI timeout -k 2 20 python3 /probe/tools/test_humble_graph_transport_v4.py
+```
+既定同期のDataset root存在確認は実施、内容/checkpoint読取なし。
+実ROS試験のpublishは/fixture配下の合成入力のみ。AWSIM・実制御topic・走行・推論なし。
+診断用probe_shadow_ros2_graph_v4.pyも1引数callbackへ統一し、graph情報を
+メッセージ別GIDだと記録しない（この診断CLIのAWSIM再実行はNOT_RUN）。
+旧GID C++/metadata probeは非推奨の調査資料として保全、今回の接続には不要。
+
 ## 結果と未完成境界
 
 起点4af1e2650848cd6b25fb73120f1fac9b5596cd6a、Windows clean。
