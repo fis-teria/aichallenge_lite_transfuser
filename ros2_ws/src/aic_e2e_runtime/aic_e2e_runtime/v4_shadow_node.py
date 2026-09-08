@@ -17,6 +17,11 @@ def validate_config(c: dict) -> None:
     from aic_transfuser_lite.runtime.passive_controller_command_v4 import ControllerCommandBinding
     if c.get('enabled') is not True: raise ValueError('V4_SHADOW_DISABLED')
     gate = c.get('start_gate')
+    policy = c.get('inference_start_policy', 'OFFICIAL_HELPER_AND_RACE_ARM' if gate else 'INPUT_READY_SHADOW')
+    if policy not in ('INPUT_READY_SHADOW', 'OFFICIAL_HELPER_AND_RACE_ARM'):
+        raise ValueError('UNKNOWN_INFERENCE_START_POLICY')
+    if (policy == 'OFFICIAL_HELPER_AND_RACE_ARM') != (gate is not None):
+        raise ValueError('INFERENCE_START_POLICY_MISMATCH')
     if gate is not None:
         if (gate.get('policy') != 'OFFICIAL_HELPER_AND_RACE_ARM' or
                 not Path(gate.get('receipt_file', '')).is_absolute() or

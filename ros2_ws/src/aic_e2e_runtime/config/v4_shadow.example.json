@@ -3,16 +3,8 @@
   "output_file": "",
   "pose_frame": "",
   "pose_evidence": "UNKNOWN",
-  "start_gate": {
-    "policy": "OFFICIAL_HELPER_AND_RACE_ARM",
-    "receipt_file": "",
-    "instance_id": "UNKNOWN",
-    "expected_node": "/autostart_orchestrator",
-    "topics": {
-      "arm": "/overtake/race_armed",
-      "initialization": "/autostart/initialization_ready"
-    }
-  },
+  "inference_start_policy": "INPUT_READY_SHADOW",
+  "start_gate": null,
   "envelope": {
     "session_id": "",
     "wall_s": 115,
