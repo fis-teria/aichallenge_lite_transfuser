@@ -1,129 +1,121 @@
-"""Input-only ROS2 transport. No model load, simulator launch or control output.
-
-Caller owns the context/executor and synchronized observation construction.
-Raw sensor messages are forwarded, not reinterpreted as aligned observations.
-"""
+"""Dedicated simulator inputs with graph ownership checks, NOT per-message authentication."""
 from collections import deque
-import time
 from types import SimpleNamespace
-from typing import Callable
-
+import time
 from .passive_controller_command_v4 import ControllerCommandBinding
 from .spatial_bootstrap_v4 import extract_message_stamp
 from .spatial_input_v4 import Stamp
 
 
 def ros2_types() -> dict:
-    """Lazy imports: inspection/import of this module never initializes ROS."""
     from sensor_msgs.msg import Image, LaserScan
     from autoware_auto_vehicle_msgs.msg import VelocityReport, SteeringReport
     from autoware_auto_control_msgs.msg import AckermannControlCommand
     from nav_msgs.msg import Odometry
     from rosgraph_msgs.msg import Clock
-    return dict(image=Image, lidar=LaserScan, velocity=VelocityReport,
-                steering=SteeringReport, command=AckermannControlCommand,
-                odometry=Odometry, clock=Clock)
+    return dict(image=Image,lidar=LaserScan,velocity=VelocityReport,steering=SteeringReport,
+                command=AckermannControlCommand,odometry=Odometry,clock=Clock)
 
 
 class ShadowROS2Transport:
-    """Bounded passive command buffer; caller supplies audited QoS and graph GIDs.
+    """Exact single publisher and fully qualified node per topic; faults latch.
 
-    on_input(role, message, received_monotonic_ns, epoch) must not block for
-    inference. on_reset invalidates caller sensor queues, poses and cached plans.
-    No clock, frame or ego interpolation is fabricated by this transport.
+    Graph snapshots cannot identify individual queued messages or exclude
+    transient publishers between polls. Dedicated isolated simulator only.
+    Caller owns node/executor and must expire plans independently of inference.
     """
-    def __init__(self, node: object, types: dict, topics: dict, qos: dict,
-                 binding: ControllerCommandBinding, expected_gids: dict,
-                 on_input: Callable, on_reset: Callable, emit: Callable, *,
-                 clock_id: str, monotonic_id: str, monotonic=time.monotonic_ns,
-                 serialized_receiver: bool = False):
+    def __init__(self,node,types: dict,topics: dict,qos: dict,
+                 binding: ControllerCommandBinding,expected_nodes: dict,
+                 on_input,on_reset,emit,*,clock_id: str,monotonic_id: str,
+                 monotonic=time.monotonic_ns,graph_period_s: float=.1,
+                 graph_ttl_ns: int=500_000_000):
         binding.validate()
-        roles=set(ros_role for ros_role in ('image','lidar','velocity','steering','command','odometry','clock'))
-        if (set(topics)!=roles or set(qos)!=roles or set(expected_gids)!=roles or
-                any(not isinstance(t,str) or not t.startswith('/') for t in topics.values()) or
-                any(not isinstance(g,str) or not g for g in expected_gids.values()) or
-                topics['command']!=binding.topic or expected_gids['command']!=binding.producer_id or
-                not clock_id or not monotonic_id):
-            raise ValueError('EXPLICIT_ROS_BINDINGS_REQUIRED')
-        self.node,self.binding,self.expected_gids=node,binding,dict(expected_gids)
+        roles={'image','lidar','velocity','steering','command','odometry','clock'}
+        if (set(topics)!=roles or set(types)!=roles or set(qos)!=roles or set(expected_nodes)!=roles or
+                any(not isinstance(v,str) or not v.startswith('/') for v in (*topics.values(),*expected_nodes.values())) or
+                topics['command']!=binding.topic or expected_nodes['command']!=binding.producer_id or
+                not clock_id or not monotonic_id or not 0<graph_period_s<=.1 or
+                type(graph_ttl_ns) is not int or not graph_period_s*1e9<graph_ttl_ns<=500_000_000):
+            raise ValueError('EXPLICIT_GRAPH_BINDINGS_REQUIRED')
+        self.node,self.binding=node,binding
+        self.topics,self.expected_nodes=dict(topics),dict(expected_nodes)
         self.on_input,self.on_reset,self.emit=on_input,on_reset,emit
         self.clock_id,self.monotonic_id,self.monotonic=clock_id,monotonic_id,monotonic
-        self.commands=deque(maxlen=64)
-        self.epoch=0;self.last_ros_ns=None;self.closed=False;self.subscriptions=[]
-        self.serialized_receiver=serialized_receiver
-        self.types=dict(types)
-        def make_callback(role):
-            def callback(message, info):
-                self.receive(role,message,info)
+        self.commands=deque(maxlen=64);self.epoch=0;self.last_ros_ns=None
+        self.closed=False;self.fault=None;self.checked_ns=None;self.graph_ttl_ns=graph_ttl_ns
+        self.subscriptions=[];self.timer=None
+        if not self.check_graph(): raise ValueError(self.fault)
+        def callback_for(role):
+            def callback(message): self.receive(role,message)
             return callback
         try:
-            for role in (() if serialized_receiver else topics):
-                self.subscriptions.append(node.create_subscription(types[role],topics[role],make_callback(role),qos[role]))
+            for role in topics:
+                self.subscriptions.append(node.create_subscription(types[role],topics[role],callback_for(role),qos[role]))
+            self.timer=node.create_timer(graph_period_s,self.check_graph)
         except Exception:
-            self.close()
-            raise
+            self.close();raise
 
-    def ingest_wire(self, line: bytes, deserialize=None) -> None:
-        """One bounded line from owned C++ receiver pipe, NOT untrusted ROS text.
+    def _reject(self,reason: str) -> bool:
+        if self.fault is None:
+            self.fault=reason;self.commands.clear();self.last_ros_ns=None
+            self.on_reset(reason,str(self.epoch))
+            self.emit(dict(event='TRANSPORT_FAULT',reason=reason,
+                           source_verification='GRAPH_SINGLE_PUBLISHER_NOT_PER_MESSAGE'))
+        return False
 
-        Reader must bound readline to 2,097,408 bytes and invalidate on EOF/exit.
-        The child and parent must share CLOCK_MONOTONIC; do not use across hosts.
-        """
-        if not self.serialized_receiver or self.closed:
-            raise ValueError('SERIALIZED_RECEIVER_NOT_ACTIVE')
+    def check_graph(self) -> bool:
+        if self.closed or self.fault: return False
+        before=self.monotonic()
+        if self.checked_ns is not None and not 0<=before-self.checked_ns<=self.graph_ttl_ns:
+            return self._reject('GRAPH_MONITOR_STALE')
         try:
-            if len(line)>2_097_408 or not line.endswith(b'\n'): raise ValueError('IPC_LINE_BOUND')
-            role,gid,received,payload=line.decode('ascii').strip().split(' ')
-            if role not in self.types or gid!=self.expected_gids[role]: raise ValueError('PUBLISHER_GID_CHANGED')
-            received=int(received)
-            if not 0<=received<=self.monotonic(): raise ValueError('IPC_CLOCK_DOMAIN')
-            if deserialize is None:
-                from rclpy.serialization import deserialize_message
-                deserialize=deserialize_message
-            msg=deserialize(bytes.fromhex(payload),self.types[role])
-            self.receive(role,msg,SimpleNamespace(publisher_gid=bytes.fromhex(gid)),received_ns=received)
+            for role,topic in self.topics.items():
+                endpoints=self.node.get_publishers_info_by_topic(topic)
+                if len(endpoints)!=1: return self._reject('PUBLISHER_COUNT:'+role)
+                e=endpoints[0]
+                name=e.node_namespace.rstrip('/')+'/'+e.node_name
+                if name!=self.expected_nodes[role]: return self._reject('PUBLISHER_NODE:'+role)
+            after=self.monotonic()
+            if not 0<=after-before<=self.graph_ttl_ns: return self._reject('GRAPH_QUERY_TIMEOUT')
+            self.checked_ns=before
+            return True
         except Exception as exc:
-            self.commands.clear();self.on_reset('IPC_REJECTED',str(self.epoch))
-            self.emit(dict(event='INPUT_REJECTED',reason=str(exc)))
+            return self._reject('GRAPH_QUERY_ERROR:'+type(exc).__name__)
 
-    def receive(self, role: str, message: object, info: object, *, received_ns=None) -> None:
-        if self.closed:
-            return
-        received=self.monotonic() if received_ns is None else received_ns
+    def _fresh(self) -> bool:
+        if self.closed or self.fault: return False
+        if self.checked_ns is None or not 0<=self.monotonic()-self.checked_ns<=self.graph_ttl_ns:
+            return self._reject('GRAPH_MONITOR_STALE')
+        return True
+
+    def receive(self,role: str,message: object) -> None:
+        if not self._fresh(): return
+        received=self.monotonic()
         try:
-            gid=bytes(info.publisher_gid).hex()
-            if gid!=self.expected_gids[role]:
-                raise ValueError('PUBLISHER_GID_CHANGED')
             if role=='clock':
-                ns, _=extract_message_stamp('nominal', type('ClockMessage',(),{'stamp':message.clock})(),
+                ns,_=extract_message_stamp('nominal',SimpleNamespace(stamp=message.clock),
                                            {'stamp_source':'stamp','message_frame':None})
                 if self.last_ros_ns is not None and ns<self.last_ros_ns:
-                    self.epoch+=1;self.commands.clear()
-                    self.on_reset('CLOCK_RESET',str(self.epoch))
+                    self.epoch+=1;self.commands.clear();self.on_reset('CLOCK_RESET',str(self.epoch))
                 self.last_ros_ns=ns
             elif self.last_ros_ns is None:
-                raise ValueError('CLOCK_NOT_OBSERVED')
+                self.emit(dict(event='INPUT_REJECTED',role=role,reason='CLOCK_NOT_OBSERVED'));return
             if role=='command':
                 ns,_=extract_message_stamp('nominal',message,{'stamp_source':'stamp','message_frame':None})
                 stamp=Stamp(ns,received,self.monotonic(),clock_id=self.clock_id,
                             epoch=str(self.epoch),monotonic_id=self.monotonic_id)
-                command=self.binding.decode(message,stamp,producer_id=gid,external_controller=True)
-                if len(self.commands)==self.commands.maxlen:
-                    self.emit(dict(event='COMMAND_BUFFER_EVICT',epoch=str(self.epoch)))
+                command=self.binding.decode_graph_observed(message,stamp)
+                if len(self.commands)==64: self.emit(dict(event='COMMAND_BUFFER_EVICT'))
                 self.commands.append(command)
-            else:
-                self.on_input(role,message,received,str(self.epoch))
+            else: self.on_input(role,message,received,str(self.epoch))
         except Exception as exc:
-            self.commands.clear()
-            self.on_reset('INPUT_REJECTED',str(self.epoch))
-            self.emit(dict(event='INPUT_REJECTED',role=role,reason=type(exc).__name__+':'+str(exc)))
+            self._reject('INPUT_REJECTED:'+type(exc).__name__+':'+str(exc))
 
     def command_snapshot(self) -> tuple:
-        """Existing SpatialInputV4 applies availability/past-slot/50ms checks."""
-        return tuple(self.commands)
+        return tuple(self.commands) if self._fresh() else ()
 
     def close(self) -> None:
-        self.closed=True;self.commands.clear()
-        for sub in self.subscriptions:
-            self.node.destroy_subscription(sub)
+        self._reject('TRANSPORT_CLOSED');self.closed=True
+        if self.timer is not None: self.node.destroy_timer(self.timer);self.timer=None
+        for sub in self.subscriptions: self.node.destroy_subscription(sub)
         self.subscriptions.clear()

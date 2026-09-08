@@ -35,6 +35,20 @@ class ControllerCommandBinding:
         self.validate()
         if producer_id != self.producer_id or not external_controller:
             raise ValueError('EXTERNAL_COMMAND_PRODUCER_MISMATCH')
+        return self._decode_fields(message, stamp)
+
+    def decode_graph_observed(self, message: object, stamp: Stamp) -> PassiveCommand:
+        """Caller has checked a sole expected node in the dedicated ROS graph.
+
+        No per-message identity is supplied or claimed. producer_id is the
+        configured fully qualified node name for this policy.
+        """
+        self.validate()
+        if not self.producer_id.startswith('/'):
+            raise ValueError('GRAPH_NODE_NAME_REQUIRED')
+        return self._decode_fields(message, stamp)
+
+    def _decode_fields(self, message: object, stamp: Stamp) -> PassiveCommand:
         try:
             header_ns = message.stamp.sec * 1_000_000_000 + message.stamp.nanosec
             values = (float(message.lateral.steering_tire_angle),

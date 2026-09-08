@@ -1,5 +1,32 @@
 # Publisherless V4 shadow runner — 合成限定実装
 
+## 現行方針：専用topic・単一publisherのgraph監視
+
+ユーザー承認によりGIDのメッセージ別証明を必須条件から外した。
+下記の旧GID/IPC調査は履歴であり、現行transportの依存ではない。
+`ShadowROS2Transport` は通常rclpyの1引数callbackのみを使い、
+`expected_gids` を `expected_nodes`（完全修飾node名）へ変更した。
+`serialized_receiver` / `ingest_wire` は現行APIから削除した。
+command bindingのproducer_idにも選択node名を指定し、
+decode_graph_observedでfieldを読む。メッセージGIDを取得したとは記録しない。
+
+起動時に全入力topicのpublisher数=1・node名一致を確認してからsubscriptionを作成。
+100ms周期でgraphを監視し、0件/複数件/別node/graphエラーはfaultをラッチする。
+500ms超の監視停止・monotonic巻戻りはreceive/snapshot/timerで拒否し、履歴と
+on_reset先の待機観測/pose/planを失効させる。自動再開しない。
+timerとsubscriptionsはclose時に解除。runtime executorは推論から独立させること。
+nominal/final区分、過去commandの50ms支持・availability・epoch検査は変更しない。
+
+これは隔離専用simulator向け運用確認であり、メッセージごとの送信元認証ではない。
+同名nodeへの入替や監視間に現れて消えるpublisherを必ず検出する保証はない。
+実車・敵対的networkへ昇格しない。graph faultはshadow入力/参照を失効させるだけで、
+別制御器や車両を直接停止しない。実走行時の停止は既存supervisor/host側の責任。
+旧C++受信部とmetadata probeは履歴保存し、build/start依存へ入れない。
+
+再現検証は限定tests/test_shadow_ros2_transport_v4.pyと既存join/command/session/bridge
+testsをWSL lockで実施。固定Humble imageでtools/test_humble_graph_transport_v4.pyを
+network none、外側20秒timeout、/fixture topicsだけで実行する。AWSIMは起動しない。
+
 ## 結果と未完成境界
 
 起点4af1e2650848cd6b25fb73120f1fac9b5596cd6a、Windows clean。
