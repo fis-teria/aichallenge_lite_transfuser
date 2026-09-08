@@ -140,3 +140,42 @@ ROS・AWSIM・実推論・実制御・走行・全pytest・pushはNOT_RUN。
 上記1試行制限の接続、実ROS受信・隔離・停止確認が完了するまでdispatchしない。
 承認ファイルのみでruntime enforcement済みとは扱わない。
 現時点でremote budgetのready/期限変更・試行予約・AWSIM起動は未実施。
+
+### ROS2受信部の準備（2026-09-08）
+
+実装 `runtime/shadow_ros2_transport_v4.py`、実行commit
+`49eb9cba48ae1d978fc43a186224978106554720`。
+`ros2_types()` はImage/LaserScan/VelocityReport/SteeringReport/
+AckermannControlCommand/Odometry/Clockを遅延importし、ROSを自動初期化しない。
+`ShadowROS2Transport` は既存nodeに7種類のsubscriptionのみを作る。
+topic/QoS/clock IDと全入力publisher GIDを明示指定し、受信MessageInfoの
+publisher_gid.hexと比較する。GIDは実graphから取得し、自身や競合producerを
+選ばないこと。topic名の一致だけでは外部制御器の同定にならない。
+
+commandは既存decoderへ接続し、最大64件で保持する。上限超過はevictを記録。
+`command_snapshot()` を入力確定時に既存sessionのpassive_commandsへ渡す。
+保持値の時刻は元stampのまま。選択の過去性・availability・50ms制限は既存adapterの責任。
+clock未受信は拒否。clock巻戻りでepoch更新・command消去・on_reset通知。
+送信元不一致やdecode例外でもcommand消去・on_resetを通知し、理由をemitする。
+closeは所有subscriptionのみを解除する。node/context/executor自体は呼出元所有。
+
+`on_input(role,message,received_monotonic_ns,epoch)` は未整列の実messageを渡す境界。
+ここから観測時刻でのego/pose結合とGridObservation構築を行う組立は残っている。
+on_resetはその組立側のsensor queue・pose・planも失効させる必要がある。
+既存SpatialPathShadowWrapperV4は独自runtime/Recordsとnominal専用経路へ結合されており、
+新ShadowSessionへそのまま接続済みとは扱わない。新しい実行CLIはまだ開放しない。
+この受信部だけで「実ROS接続準備全体完了」や「走行可能」とは主張しない。
+
+検証コマンド（Windows commit→既定CheckOnly/sync→WSL lock）：
+```bash
+bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q \
+ tests/test_shadow_ros2_transport_v4.py tests/test_passive_controller_command_v4.py \
+ tests/test_publisherless_shadow_v4.py tests/test_path_control_bridge.py \
+ --junitxml=runs/shadow_ros2_transport_01/junit.xml
+```
+結果 **51 passed / 6.51s**。fake Node/MessageInfoによる受信・source維持・GID不一致・
+clock未受信/巻戻り・有限buffer・解除を検証。ASTで制御publisher等の不在を確認。
+生stdout/stderr/JUnitはWindows `tmp/shadow_ros2_transport_01/`。
+実rclpy/DDS・message package import・実センサ購読・実モデル推論・AWSIM・走行はNOT_RUN。
+既定同期によるDatasetルート存在確認は実施。Dataset内容・raw・sensor・checkpointの
+読取りは未実施。試験期限は未開始、台帳・AWSIM・既存制御器は変更していない。
