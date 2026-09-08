@@ -544,3 +544,56 @@ Dataset内容・raw・sensor・checkpoint読取を許可する変更は加えて
 - ROS実起動/購読、固定モデル推論、AWSIM駆動/停止、全pytestはNOT_RUN。
   次回は既存試験起動側のPLAN待ちをPREPARED待ちへ変更し、helper成功receiptを
   接続してから、別承認の有限予算内で確認する必要がある。
+
+## 通常make dev・新規試験枠06（2026-09-09）
+
+ユーザー「枠をリセットして続けてください」により新規有限枠を開始。
+旧budgetのused/attemptsは消さず、renewalsへ新規budgetの参照と開始時累積値を追記。
+新規budget: `/home/graneple/e2e_autonomous/v4_mpc_drive_06/budget.json`。
+1試行、wall120秒、MPC1500、V4 forward40、駆動10sim秒、log16MiB。
+MPC/forwardの予約枠は未計測分を保守計上し、実推論数とは別に扱う。
+
+実行source `2f51aa559de44f20db761cbc75eef90799a43d9f`。
+Start購読のlambda既定引数がHumbleのMessageInfo引数と解釈される問題を
+一引数closureへ修正。模擬ROSでsignature検査追加、WSL lock付き限定2ファイル
+29 passed / 3.97s。既定CheckOnly/syncのDatasetルート存在判定は実施、内容は未読。
+固定Humble imageは従前の`sha256:8c650c13157ffabbc3a72bab08865ccff8338f9025b43a8f4405b4c6b96d1ba7`。
+network noneでcolcon build成功、1 package / 1.14s。
+
+remote repo HEAD `4af395eee10f928c7fc7225760adfa04c4c07ff4`、既存dirtyは未変更。
+DDSはlo限定。今回instanceのnetwork=host/privileged、mount/deviceを記録し、
+vcu/gnssなし、制御topic単一`/mpc_controller`をguardで確認。
+過去の終了済みcontainer/projectは保全。新規project `codex-v4-mpc-drive-06`のみ所有。
+
+```bash
+# 実行済みコマンド。専有project/GPU compose/overlay・外側watchdog付き。
+make dev DEV_AUTO_START=false CONTROL_METHOD=mpc CAPTURE=false ROSBAG=false \
+ RUN_ID=v4_mpc_drive_06 \
+ OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/v4_mpc_drive_06/evidence \
+ AWSIM_START_MODE=sync
+```
+
+今回の起動側は最初のPLANではなくPREPARED＋arm=falseを待って既存helperを一度起動。
+helper正常終了時のみreceiptを保存するよう接続した。helper自体は変更なし。
+
+**結果: make dev起動・実入力PREPAREは成立、走行・RUN_SHADOWは未成立。**
+
+- MODEL_LOADED 1、PREPARED 49、FORWARD_STARTED 0、PLAN 0。
+  Start待ちで推論枠を使い切る旧挙動は解消した。
+- 実ROSでarm=false、initialization=trueを受信。arm=trueとhelper成功receiptはなし。
+  helperはGrounded＋初期化trueを確認し、Start pulseを一度送信、vehicle Startまで観測。
+  autostartは`state=Start waiting_for_neutral=Ready`。Ready未観測のまま許可されていない。
+  Readyが来ない根本原因や、時間延長すれば成立するかはUNKNOWN。
+- Start要求5.904999868sim秒。hostの8sim秒終了閾値（10秒上限内の終了余裕）で
+  DRIVE_TIME_LIMIT。最終clock14.074999685sim秒。
+  wall39.4326秒、cleanup errorなし、今回所有container/project残存なし。
+- 最大速度2.8891219017168623e-7m/s。実走行や自然制動成功ではない。
+  既存MPCが制御担当、V4はshadowのみ。V4→MPC追従成功とも報告しない。
+- 最後のINPUT_STALE/odometry publisher消失はfreeze/終了後のログ。
+  初期停止原因はhost DRIVE_TIME_LIMIT。Start/V4 exit137は所有instance終了による。
+- AWSIM本体・scene・sensor・Safety・Start条件は変更なし。追加試行なし、pushなし。
+
+生ログ、instance_inspect.json、motion.jsonl、設定、budget、起動側:
+Windows `tmp/v4_mpc_drive_06/`、remote同名runディレクトリ。
+source.tar SHA256 `800949b337a1170b48e74eda1d228c34789aab0e72a40be8089b4def04558c1e`。
+次の対象は既存Start/Ready遷移の原因調査。モデルや制御器を変更する根拠はない。
