@@ -262,3 +262,62 @@ WSL成果物: `runs/v4_delivery_20260909_01/`。
 同期に伴う既定Datasetルート存在確認は実施、Dataset内容・checkpoint読取は未実施。
 全pytest、実ROS接続、公式環境での再build、AWSIM、実モデル推論はNOT_RUN。
 次はこの版のROS packageを再buildして、停止中の有限shadowで経路と配送計測を確認する。
+
+## 配送修正版のAWSIM再試験（2026-09-09、試験04）
+
+ユーザーの明示承認でMPC累積上限のみ6000→7001へ変更し、1回実施。
+実行commit=`9af0e8dba4648dd2c3806a34a8744aa76d57db80`。
+Windows clean→既定CheckOnly/sync。固定Humble imageでcolcon build成功
+（1 package / 1.29s）。Datasetルート存在確認を実施、内容は未読取。
+固定checkpointはread-only mountし、実推論のため読取。
+SHA256=`0316692543a901d9d6b96718c5651d6739367aa851f83fb3a133c126ccc8919f`、
+before/after一致、strict=true、missing/unexpected=[]。
+
+通常repoのHEADは`4af395eee10f928c7fc7225760adfa04c4c07ff4`。
+既存dirtyを保持し、通常GPU composeを含める。実行コマンド:
+
+```bash
+# 各run.pyに記録した専用project・有限watchdogと共に実行。
+make dev DEV_AUTO_START=false CONTROL_METHOD=mpc CAPTURE=false ROSBAG=false \
+ RUN_ID=v4_shadow_live_04 \
+ OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/v4_shadow_live_04/evidence \
+ AWSIM_START_MODE=sync
+```
+
+**停止中の未補正経路記録に成功**。JOIN_READY=6、FORWARD_STARTED=6、PLAN=6。
+全6件のraw_xy_mは[20,2]かつ全要素finite、異なるinput/output IDを持つ。
+観測時刻は5.979999866～6.609999852 sim秒。SESSION_END=FORWARD_LIMIT。
+INPUT_QUEUE_FULLなし。配送15便、ack15件。queue待ち時間最大13.928ms。
+worker処理（join/forwardを含む）は初回forward便379.581ms、
+後続forward便24.592～43.760ms。
+
+|forward|観測sim時刻(s)|記録上のinference(ms)|command履歴の実採用slot数/10|
+|---|---:|---:|---:|
+|1|5.979999866|362.627|0|
+|2|6.189999861|20.038|1|
+|3|6.294999859|19.691|2|
+|4|6.399999856|22.313|3|
+|5|6.504999854|19.406|4|
+|6|6.609999852|32.603|5|
+
+起動直後の履歴paddingを含む短い試験。全履歴充足後の定常評価ではない。
+時計受信前のINPUT_REJECTED=3、期限切れ配送13件（image1/lidar2/odom4/
+steering3/velocity3）、終了時破棄5件も記録。欠損を隠していない。
+最後のTRANSPORT_CLOSEDは終了後のclose記録であり運転中の新規faultではない。
+
+全PLANのaccepted=false、reason=VEHICLE_CONTRACT_UNKNOWN。
+これはShadowBridge(None)による追従入力の無効化で、経路が記録できなかった意味では
+ない。一方、20点がfiniteというだけで追従可能・安全・経路品質良好とはしない。
+V4からPP/MPCへの制御接続、走行、制動成功は未検証のまま。
+
+Start要求なし、V4 control/gear/mode publishなし。
+guardの最大絶対速度=2.8425111509022827e-7 m/s。
+全体32.862秒、所有simulator pause/KILLとAutoware stop、専用project down完了。
+cleanup errorなし、所有container残存なし、確認時の稼働containerなし。AWSIM未改変。
+
+成果物: Windows `tmp/v4_shadow_live_04/evidence/`と`live.json`、
+remote `/home/graneple/e2e_autonomous/v4_shadow_live_04/`。
+生stdout/stderr、shadow.jsonl、guard.json、make/Autoware/AWSIMログ、終了記録を保存。
+承認履歴と今回の予約1500 MPCを台帳へ保持。累積MPC計上7001/7001で残0
+（実測solve数ではなく保守的計上）、V4 forward216、Tiny5711、wall1777.798秒。
+追加試行は行わない。次の試験には予算判断が必要。自動pushなし。
