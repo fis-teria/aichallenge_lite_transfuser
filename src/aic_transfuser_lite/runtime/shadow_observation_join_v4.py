@@ -8,11 +8,12 @@ from dataclasses import replace
 import numpy as np
 from .spatial_sim_adapter_v4 import Sample, align_observation, interpolate, quaternion_yaw
 from aic_transfuser_lite.control.path_control_bridge import PathPose
+from .shadow_delivery_v4 import INPUT_WAIT_NS
 
 
 class ShadowObservationJoin:
     def __init__(self, session, commands, emit, *, clock_id: str, monotonic_id: str,
-                 pose_frame: str, pose_evidence: str, wait_ns: int = 300_000_000):
+                 pose_frame: str, pose_evidence: str, wait_ns: int = INPUT_WAIT_NS):
         if not all((clock_id,monotonic_id,pose_frame,pose_evidence)) or not 0 < wait_ns <= 300_000_000:
             raise ValueError('JOIN_CONTRACT_REQUIRED')
         self.session,self.commands,self.emit=session,commands,emit
@@ -105,3 +106,5 @@ class ShadowObservationJoin:
             self.emit(dict(event='JOIN_READY',input_id=obs.sample_id,alignment=provenance,
                            pose=pose_source,pose_frame=self.pose_frame,pose_evidence=self.pose_evidence))
             self.session.observation(obs,self.commands(),pose,finalized_ns=finalized_ns,now_s=now_ros_s)
+            # Forward may block. Never reuse this cutoff for a second candidate.
+            return

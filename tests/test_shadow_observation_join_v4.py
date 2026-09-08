@@ -46,3 +46,15 @@ def test_future_receipt_not_used_and_reset_clears():
     assert not calls
     join.reset('CLOCK_RESET','1');join.tick(30,1.05)
     assert not calls and all(not q for q in join.streams.values())
+
+
+def test_slow_forward_does_not_reuse_cutoff_for_another_candidate():
+    join,calls,events=setup();feed(join)
+    # A second synthetic pending image would be geometrically supported by the
+    # same bracket, but needs a new worker tick after the first forward.
+    join.add('camera',Sample(1_001_000_000,11,np.zeros((256,384,3),np.uint8),'camera_optical_link','0'))
+    join.tick(30,1.05)
+    assert len(calls)==1 and len(join.pending)==1
+    join.tick(300_000_011,1.35)
+    assert len(calls)==1 and not join.pending
+    assert events[-1]['reason']=='JOIN_DEADLINE'

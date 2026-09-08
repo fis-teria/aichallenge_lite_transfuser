@@ -31,6 +31,7 @@ def worker(config: dict, incoming, outgoing) -> None:
     from aic_transfuser_lite.runtime.spatial_input_v4 import SpatialInputV4
     from aic_transfuser_lite.runtime.shadow_observation_join_v4 import ShadowObservationJoin
     from aic_transfuser_lite.control.path_control_bridge import ShadowBridge
+    from aic_transfuser_lite.runtime.shadow_delivery_v4 import consume_batch
     validate_config(config)
     infer,identity=fixed_infer_factory()
     def emit(value): outgoing.put(value,timeout=.1)
@@ -44,13 +45,9 @@ def worker(config: dict, incoming, outgoing) -> None:
     while session.active():
         try: item=incoming.get(timeout=.05)
         except queue.Empty: continue
-        if item['kind']=='stop': return
-        if item['kind']=='reset':
-            commands=();join.reset(item['reason'],item['epoch']);continue
-        if item['kind']=='input':
-            join.on_input(item['role'],item['message'],item['received_ns'],item['epoch'])
-        elif item['kind']=='tick':
-            commands=item['commands'];join.tick(item['finalized_ns'],item['now_s'])
+        if item['kind']!='batch': raise ValueError('DELIVERY_PROTOCOL')
+        commands=item['commands']
+        emit(consume_batch(item,join,emit,time.monotonic_ns))
     emit(dict(event='WORKER_FINISHED',reason=session.terminal))
 
 
@@ -81,11 +78,12 @@ def main(args=None) -> None:
     from rclpy.qos import qos_profile_sensor_data
     from aic_transfuser_lite.runtime.shadow_ros2_transport_v4 import ShadowROS2Transport,ros2_types
     from aic_transfuser_lite.runtime.passive_controller_command_v4 import ControllerCommandBinding
+    from aic_transfuser_lite.runtime.shadow_delivery_v4 import DeliveryPump
     rclpy.init(args=args)
     node=Node('v4_shadow',enable_rosout=False,start_parameter_services=False)
     node.declare_parameter('config_file','')
-    process=transport=stream=None
-    ctx=mp.get_context('spawn');incoming=ctx.Queue(maxsize=64);outgoing=ctx.Queue(maxsize=64)
+    process=transport=stream=pump=None
+    ctx=mp.get_context('spawn');incoming=ctx.Queue(maxsize=1);outgoing=ctx.Queue(maxsize=64)
     terminal=None
     try:
         config=json.loads(Path(node.get_parameter('config_file').value).read_text())
@@ -98,16 +96,17 @@ def main(args=None) -> None:
             used+=len(text.encode())
             if used>config['envelope']['log_bytes']: raise RuntimeError('LOG_LIMIT')
             stream.write(text);stream.flush()
-        def send(value):
+        pump=DeliveryPump(incoming,emit)
+        def receive(role,message,received_ns,epoch):
             nonlocal terminal
-            try: incoming.put_nowait(value)
-            except queue.Full: terminal='INPUT_QUEUE_FULL'
+            try: pump.accept(role,message,received_ns,epoch)
+            except (ValueError,RuntimeError) as exc: terminal=str(exc)
         def on_reset(reason,epoch):
             # Fail closed for this finite session, including clock reset. No old
             # in-flight child result is accepted once parent has invalidated it.
             nonlocal terminal
             terminal=reason
-            send(dict(kind='reset',reason=reason,epoch=epoch))
+            pump.close(reason)
         types=ros2_types()
         process=ctx.Process(target=worker,args=(config,incoming,outgoing));process.start()
         wait_model_ready(process,outgoing,emit,
@@ -117,8 +116,7 @@ def main(args=None) -> None:
         transport=ShadowROS2Transport(node,types,config['topics'],
             {r:qos_profile_sensor_data if r in ('image','lidar') else 10 for r in types},
             ControllerCommandBinding(**config['command_binding']),config['expected_nodes'],
-            lambda role,message,received_ns,epoch:send(dict(kind='input',role=role,message=message,
-                received_ns=received_ns,epoch=epoch)),on_reset,emit,
+            receive,on_reset,emit,
             clock_id='AWSIM_ROS',monotonic_id='HOST_MONOTONIC')
         emit(dict(event='SESSION_STARTED',source_verification='GRAPH_SINGLE_PUBLISHER_NOT_PER_MESSAGE',
                   control_publish=False,config=config))
@@ -127,17 +125,31 @@ def main(args=None) -> None:
                 terminal='SESSION_DEADLINE';break
             rclpy.spin_once(node,timeout_sec=.02)
             if terminal: break
-            commands=transport.command_snapshot()
-            if terminal: break
-            if transport.last_ros_ns is not None:
-                send(dict(kind='tick',commands=commands,finalized_ns=time.monotonic_ns(),now_s=transport.last_ros_ns*1e-9))
+            # Preserve per-loop freshness admission without repeatedly copying
+            # the 64-command history while the worker owns the only credit.
+            if not transport._fresh(): break
             for _ in range(64):
                 try: result=outgoing.get_nowait()
                 except queue.Empty: break
+                if result.get('event')=='BATCH_CONSUMED':
+                    try: pump.acknowledge(result)
+                    except RuntimeError as exc: terminal=str(exc);break
                 emit(result)
-            if not process.is_alive(): terminal='WORKER_EXIT:'+str(process.exitcode)
+                if result.get('event')=='WORKER_FINISHED': terminal=result['reason']
+            if not process.is_alive() and terminal is None: terminal='WORKER_EXIT:'+str(process.exitcode)
+            if terminal: break
+            def snapshot():
+                commands=transport.command_snapshot()
+                if terminal: raise RuntimeError(terminal)
+                return commands
+            try:
+                pump.dispatch(time.monotonic_ns(),
+                    None if transport.last_ros_ns is None else transport.last_ros_ns*1e-9,snapshot)
+            except (ValueError,RuntimeError) as exc: terminal=str(exc)
+        pump.close(terminal or 'SESSION_CLOSED')
         emit(dict(event='SESSION_END',reason=terminal,control_publish=False))
     finally:
+        if pump: pump.close(terminal or 'SESSION_CLOSED')
         if transport: transport.close()
         if process:
             process.join(timeout=.2)

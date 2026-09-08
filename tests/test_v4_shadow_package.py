@@ -26,6 +26,14 @@ def test_registered_node_launch_and_no_actuator_api():
     assert 'Process' in attrs and 'spin_once' in attrs
 
 
+def test_node_uses_single_credit_batch_and_not_per_callback_ticks():
+    source=(PACKAGE/'aic_e2e_runtime/v4_shadow_node.py').read_text()
+    assert 'incoming=ctx.Queue(maxsize=1)' in source
+    assert 'pump.dispatch(' in source and 'pump.acknowledge(result)' in source
+    assert "kind='tick'" not in source
+    assert 'consume_batch(item,join,emit,time.monotonic_ns)' in source
+
+
 def test_loading_finishes_before_any_transport_is_created():
     sys.path.insert(0,str(PACKAGE))
     module=importlib.import_module('aic_e2e_runtime.v4_shadow_node')

@@ -196,3 +196,49 @@ remoteは対応する`/home/graneple/e2e_autonomous/v4_shadow_live_02/`と`03/`�
 有限buffer・入力時刻・欠損記録・停止条件を維持し、容量や許容期限だけを増やして
 隠さない。今回の起動順修正は初期load中の詰まりに限定して有効であり、
 実forward中の配送問題を解決済みとはしない。追加live試行は未実施。
+
+## 配送ボトルネック修正（2026-09-09）
+
+原因: workerが無視するclockもIPCに送り、各spinの後に同じ最大64件のcommand履歴を
+添えたtickを追加していた。推論中はworkerが消費できず、不要な通知まで64件FIFOを
+占有する。前回ログはFORWARD_STARTED→INPUT_QUEUE_FULLであり、forward完了時間を
+保存できていないため「モデルそのものの速度が原因」とはまだ断定できない。
+
+修正範囲は`shadow_delivery_v4.py`、V4 node、joinの配送境界と限定tests。
+clockは親の従来transportで時刻/reset/graph監視し、workerへは送らない。
+親はsensorイベントを最大64件、既存joinと同じ300ms期限で保持する。
+IPCは最大1便。workerのBATCH_CONSUMEDを受けるまで次の便・command履歴を作らない。
+空tickを蓄積せず、最短20ms間隔（最大50Hz）で必要な最新のtickをbatchに付ける。
+これはカメラ・scan自体の間引きや、各streamのlatest-only置換ではない。
+
+期限切れイベントはrole/epoch/header/元received時刻とDELIVERY_DEADLINEで記録。
+期限内のburstで64件を超えた場合は引き続き終了し、容量・期限を緩めない。
+待機bufferと処理中batchはそれぞれ最大64イベント、IPC未完了batchは1件に限定。
+画像は期限内のものだけで、期限の更新や再stampはしない。欠損をFREE/有効入力としない。
+
+workerは実消費時のmonotonicを使って配送期限を再検査し、joinにもその時刻を渡す。
+1回のjoin.tickでforward候補は最大1件。遅いforwardの後に同じ古いcutoffで次の画像を
+採用しない。次便の実時刻で期限・command availabilityを再検査する。
+ROS時刻は別fieldの受信済みsnapshotのまま。monotonic差分でROS時刻を外挿しない。
+元のcontroller command source/世代・受信時刻・単位・観測horizonは変更しない。
+reset/fault後は待機を破棄し、旧ackで配送を再開しない。親のgraph freshness検査を
+維持し、判定失効後のworker結果は採用しない。ROS制御出力は追加しない。
+
+DELIVERY_SENTとBATCH_CONSUMEDにbatch ID、入力数、command数、queue_wait_nsと
+worker_ns（join/forwardを含む）を記録する。実モデル単独forwardの計測とは区別する。
+合成500ms worker停止で旧方式の64件超過、新方式の有限待機・期限切れ・再開を比較。
+実spawn IPCのack、元stamp保持、期限切れ、reset、容量超過、遅いforward後の
+cutoff再利用防止も限定テストする。
+
+```bash
+bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q -s \
+ tests/test_shadow_delivery_v4.py tests/test_v4_shadow_package.py \
+ tests/test_shadow_ros2_transport_v4.py tests/test_shadow_observation_join_v4.py \
+ tests/test_passive_controller_command_v4.py tests/test_publisherless_shadow_v4.py \
+ tests/test_path_control_bridge.py \
+ --basetemp=runs/v4_delivery_20260909_01/pytest_tmp \
+ --junitxml=runs/v4_delivery_20260909_01/junit.xml
+```
+
+今回の検証は合成限定。実ROS・AWSIM再試験、checkpoint読取、新規モデル推論、走行は
+実施しない。liveで経路が記録できることを合成結果でPASS扱いにしない。
