@@ -36,3 +36,25 @@ MPCが別途走行している間のV4 shadow記録用nodeである。
 
 限定tests：tests/test_v4_shadow_package.pyと既存transport/join/session/bridgeテスト。
 実checkpoint読取・推論・AWSIM走行は今回のパッケージ整備では行わない。
+
+## 検証結果
+
+実行commit: `0b9c848ed41ec7c996f2db02bf729cc796affa8f`。
+Windows commit→既定CheckOnly/sync→WSL lockで限定6ファイルを実行、
+**64 passed / 4.08s**。
+```bash
+bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q \
+ tests/test_v4_shadow_package.py tests/test_shadow_ros2_transport_v4.py \
+ tests/test_shadow_observation_join_v4.py tests/test_passive_controller_command_v4.py \
+ tests/test_publisherless_shadow_v4.py tests/test_path_control_bridge.py \
+ --junitxml=runs/v4_ros_package_01/junit.xml
+```
+固定Humble image（sha256:8c650c13157ffabbc3a72bab08865ccff8338f9025b43a8f4405b4c6b96d1ba7）、
+network none専有コンテナでcolcon build成功（1 package / 1.22s）。
+ros2 pkg executablesでv4_shadow_nodeを確認、launch --show-argsでconfig_file引数を確認。
+インストール先のros2 runにdisabled雛形を渡し、V4_SHADOW_DISABLEDでexit1を確認。
+これは期待どおりの起動拒否であり、実モデル動作PASSではない。
+ログ/JUnitはWindows `tmp/v4_ros_package_01/`。
+既定同期のDataset root存在確認は実施、内容・checkpoint読取は未実施。
+enabled実モデルのend-to-end・親子queue負荷・AWSIM/MPC同時起動はNOT_RUN。
+既存制御器へのlaunch includeやmake dev既定変更はしていない。
