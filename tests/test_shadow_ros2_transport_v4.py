@@ -66,3 +66,20 @@ def test_no_output_or_implicit_start():
     p=Path(__file__).parents[1]/'src/aic_transfuser_lite/runtime/shadow_ros2_transport_v4.py'
     attrs={n.attr for n in ast.walk(ast.parse(p.read_text())) if isinstance(n,ast.Attribute)}
     assert not attrs.intersection({'create_publisher','publish','create_client','send_goal_async','load_fixed'})
+
+
+def test_serialized_gid_and_original_receipt():
+    t,node,events,resets,inputs=setup()
+    t.serialized_receiver=True
+    t.ingest_wire(b'clock 01 10 00\n',lambda payload,typ:O(clock=O(sec=2,nanosec=0)))
+    t.ingest_wire(b'command 01 15 00\n',lambda payload,typ:command())
+    assert t.command_snapshot()[0].stamp.received_ns==15
+    t.ingest_wire(b'command 02 15 00\n',lambda payload,typ:command())
+    assert not t.command_snapshot() and resets[-1][0]=='IPC_REJECTED'
+
+
+@pytest.mark.parametrize('line',[b'command 01 30 00\n',b'command 01 15 zz\n',b'broken'])
+def test_serialized_bad_line_rejected(line):
+    t,_,events,resets,_=setup();t.serialized_receiver=True
+    t.ingest_wire(line,lambda payload,typ:command())
+    assert resets[-1][0]=='IPC_REJECTED'

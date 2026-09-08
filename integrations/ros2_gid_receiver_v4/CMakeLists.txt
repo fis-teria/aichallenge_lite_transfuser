@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.16)
+project(v4_gid_receiver)
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+add_executable(v4_gid_receiver receiver.cpp)
+target_compile_features(v4_gid_receiver PRIVATE cxx_std_17)
+ament_target_dependencies(v4_gid_receiver rclcpp)

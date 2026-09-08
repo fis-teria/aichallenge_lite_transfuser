@@ -5,6 +5,7 @@ Raw sensor messages are forwarded, not reinterpreted as aligned observations.
 """
 from collections import deque
 import time
+from types import SimpleNamespace
 from typing import Callable
 
 from .passive_controller_command_v4 import ControllerCommandBinding
@@ -34,7 +35,8 @@ class ShadowROS2Transport:
     def __init__(self, node: object, types: dict, topics: dict, qos: dict,
                  binding: ControllerCommandBinding, expected_gids: dict,
                  on_input: Callable, on_reset: Callable, emit: Callable, *,
-                 clock_id: str, monotonic_id: str, monotonic=time.monotonic_ns):
+                 clock_id: str, monotonic_id: str, monotonic=time.monotonic_ns,
+                 serialized_receiver: bool = False):
         binding.validate()
         roles=set(ros_role for ros_role in ('image','lidar','velocity','steering','command','odometry','clock'))
         if (set(topics)!=roles or set(qos)!=roles or set(expected_gids)!=roles or
@@ -48,21 +50,46 @@ class ShadowROS2Transport:
         self.clock_id,self.monotonic_id,self.monotonic=clock_id,monotonic_id,monotonic
         self.commands=deque(maxlen=64)
         self.epoch=0;self.last_ros_ns=None;self.closed=False;self.subscriptions=[]
+        self.serialized_receiver=serialized_receiver
+        self.types=dict(types)
         def make_callback(role):
             def callback(message, info):
                 self.receive(role,message,info)
             return callback
         try:
-            for role in topics:
+            for role in (() if serialized_receiver else topics):
                 self.subscriptions.append(node.create_subscription(types[role],topics[role],make_callback(role),qos[role]))
         except Exception:
             self.close()
             raise
 
-    def receive(self, role: str, message: object, info: object) -> None:
+    def ingest_wire(self, line: bytes, deserialize=None) -> None:
+        """One bounded line from owned C++ receiver pipe, NOT untrusted ROS text.
+
+        Reader must bound readline to 2,097,408 bytes and invalidate on EOF/exit.
+        The child and parent must share CLOCK_MONOTONIC; do not use across hosts.
+        """
+        if not self.serialized_receiver or self.closed:
+            raise ValueError('SERIALIZED_RECEIVER_NOT_ACTIVE')
+        try:
+            if len(line)>2_097_408 or not line.endswith(b'\n'): raise ValueError('IPC_LINE_BOUND')
+            role,gid,received,payload=line.decode('ascii').strip().split(' ')
+            if role not in self.types or gid!=self.expected_gids[role]: raise ValueError('PUBLISHER_GID_CHANGED')
+            received=int(received)
+            if not 0<=received<=self.monotonic(): raise ValueError('IPC_CLOCK_DOMAIN')
+            if deserialize is None:
+                from rclpy.serialization import deserialize_message
+                deserialize=deserialize_message
+            msg=deserialize(bytes.fromhex(payload),self.types[role])
+            self.receive(role,msg,SimpleNamespace(publisher_gid=bytes.fromhex(gid)),received_ns=received)
+        except Exception as exc:
+            self.commands.clear();self.on_reset('IPC_REJECTED',str(self.epoch))
+            self.emit(dict(event='INPUT_REJECTED',reason=str(exc)))
+
+    def receive(self, role: str, message: object, info: object, *, received_ns=None) -> None:
         if self.closed:
             return
-        received=self.monotonic()
+        received=self.monotonic() if received_ns is None else received_ns
         try:
             gid=bytes(info.publisher_gid).hex()
             if gid!=self.expected_gids[role]:
