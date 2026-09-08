@@ -242,3 +242,23 @@ bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q -s \
 
 今回の検証は合成限定。実ROS・AWSIM再試験、checkpoint読取、新規モデル推論、走行は
 実施しない。liveで経路が記録できることを合成結果でPASS扱いにしない。
+
+### 配送修正の検証結果
+
+実行commit: `38d4131d1b800a07c79fcffcf4edf2a714a7f7aa`。
+既定CheckOnly/sync後、WSL worktree lock付きで上記7ファイルを実行:
+**77 passed / 4.19s**。標準出力・標準エラー・JUnitを保存。
+合成traceでは500msのworker停止に対して旧方式は90msで64件を超過
+（500ms全体で348 enqueue）。修正後はack前1便、待機最大42件、
+期限切れcamera等を理由付きで記録し、ack後に期限内イベントだけを配送。
+これは同一の人工trafficモデルの比較で、実ROS帯域や実forward時間の測定ではない。
+実multiprocessing spawn/Queueを使った合成IPC試験も成功。
+
+Windows成果物: `tmp/v4_delivery_20260909_01/`。
+WSL成果物: `runs/v4_delivery_20260909_01/`。
+`pytest_tmp/test_blocked_worker_does_not_ac0/traffic_trace.json`に合成失効traceを保存。
+`git diff --check`成功。変更はV4専用配送/node/join/tests/docsに限定し、
+既存controller、Safety、入力の数値前処理、checkpointは変更していない。
+同期に伴う既定Datasetルート存在確認は実施、Dataset内容・checkpoint読取は未実施。
+全pytest、実ROS接続、公式環境での再build、AWSIM、実モデル推論はNOT_RUN。
+次はこの版のROS packageを再buildして、停止中の有限shadowで経路と配送計測を確認する。
