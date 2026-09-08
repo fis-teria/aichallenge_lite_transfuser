@@ -321,3 +321,51 @@ remote `/home/graneple/e2e_autonomous/v4_shadow_live_04/`。
 承認履歴と今回の予約1500 MPCを台帳へ保持。累積MPC計上7001/7001で残0
 （実測solve数ではなく保守的計上）、V4 forward216、Tiny5711、wall1777.798秒。
 追加試行は行わない。次の試験には予算判断が必要。自動pushなし。
+
+## MPC走行＋V4 shadow試行（2026-09-09、試験05）
+
+ユーザー承認によりMPC上限8501（+1500）で1回実施。
+実行版`2f104fce72c09b535f0c73d063175c598296299a`。既定CheckOnly/sync後、
+Humble colcon build成功（1 package / 1.15s）。固定Datasetルート存在確認は実施、
+内容未読取。固定checkpoint読取・推論を実施。AWSIM本体・既存controllerは未改変。
+
+専用project=`codex-v4-mpc-drive-05`。通常make devをDEV_AUTO_START=false、
+CONTROL_METHOD=mpc、RUN_ID=v4_mpc_drive_05、通常GPU compose付きで起動。
+V4の初回PLAN後に、Autoware container内で既存
+`ROS_DOMAIN_ID=0 AWSIM_READY_DOMAINS=1 bash /aichallenge/request_awsim_start.bash`
+を一度だけ起動（絶対monotonic deadline付き）。新しいcontrol publisherは追加しない。
+親watchdogはStart要求前に有効化。Start要求時点から8sim秒または15wall秒で終了要求し、
+10sim秒承認枠に余裕を残す。V4終了・入力/graph異常でも所有instanceをfreeze/終了。
+V4最大40forward、全体95秒watchdog、外側115秒＋kill grace5秒。
+
+**結果: DRIVING_NOT_ESTABLISHED（走行成立せず）。**
+- 既存Start helperはReady/WaitStartを観測し、Start pulseを1回送信。
+  vehicle state=startまで確認したが、helperの完了は未確認のまま終了。
+- 既存Autostartログ:
+  `overtake race arm deferred: state=Start waiting_for_neutral=Ready`。
+  overtake側はrace_not_armedを記録。Start送信だけで制御開始済みとはしない。
+- V4は40forward/40PLAN、全て[20,2]のfiniteな未補正XYを記録。
+  観測時刻5.979999866～10.914999756sim秒、FORWARD_LIMITで終了し、hostも終了。
+  INPUT_QUEUE_FULLなし。走行中の経路記録ではなく、ほぼ停止状態での記録。
+- guard最大絶対速度2.8891219017168623e-7m/s。601件のpose記録の始終差は
+  dx=-7.559e-6m、dy=8.688e-5mで、移動・追従成立の証拠ではない。
+- guardの最終INPUT_STALEはfreeze後の欠損も含む最終状態。
+  hostの終了理由はV4_ENDED、nodeの終了理由はFORWARD_LIMIT。
+
+全体37.923秒。Start要求時6.314999858sim秒、最終観測12.254999726sim秒。
+所有simulator pause/KILL、Autoware stop、専用project down完了。
+cleanup errorなし、所有container残存なし。車両の自然制動成功・無接触走行は未確認。
+V4のaccepted=false/VEHICLE_CONTRACT_UNKNOWNは維持し、V4操舵には接続していない。
+
+Windows成果物: `tmp/v4_mpc_drive_05/evidence/`、`live.json`、`evaluation.json`。
+remote: `/home/graneple/e2e_autonomous/v4_mpc_drive_05/`。
+motion.jsonlで観測時刻/pose/速度/raw・final commandを対応付け、Startログも保存。
+run.pyのV4_ATTEMPT_FINISHEDは処理終了の意味であり走行PASSではない。
+予算履歴は保持し、MPC1500、forward40、powered試行1/秒10を保守的計上。
+累積MPC8501/8501、V4 forward256、Tiny5711、wall1815.721秒、
+powered試行8、powered秒279.990。駆動10秒の実測という意味ではない。
+
+追加試行なし。次は既存Start→neutral Ready確認→race armの成立条件を確認する。
+今回の試験起動順では、その完了前にV4の40回枠を使い切ることも分かった。
+上限を増やすだけで解決済みとせず、走行準備と推論開始の順序を見直す必要がある。
+安全gateの解除・Readyの偽装は行わない。次回liveには改めて予算判断が必要。
