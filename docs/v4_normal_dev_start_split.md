@@ -71,3 +71,20 @@ bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q \
 ```
 
 同期時の固定Datasetルート存在確認のみ許可。内容・raw・checkpointは読まない。
+
+## 今回の到達点
+
+- 実装/試験版 `deaa5680ca605dea19469b897a070a72c252e067`。
+  上記4ファイル、WSL lock付き **44 passed / 4.02s**。
+- 既定CheckOnly/同期によるDatasetルート存在確認を実施。
+  Dataset内容/raw/sensor/checkpoint読取は未実施。
+- 現在dirtyの3ファイルから生成した配布差分:
+  `integrations/normal_dev_v4/racingkart.patch`（`c722400`）。
+  SSH先で`git apply --check`成功。**実適用は未実施**。
+  手作業の変更破棄やsource/installの全置換は必要ない。
+- SSH先の既存起動ファイル・install・AWSIMは変更していない。
+  実ROS launch/build、推論、走行、外部レビュー、pushは今回NOT_RUN。
+- 残作業はremoteへの限定差分適用と実ロードinstall反映/非走行launch検証。
+  remoteの追加レビューポリシーもあるため、今回のローカル限定テストを
+  remote適用や外部レビュー完了の証拠にはしない。
+  Ready調査用の次回走行を、この統合の合格条件にはしない。

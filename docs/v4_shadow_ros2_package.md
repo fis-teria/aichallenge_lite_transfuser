@@ -597,3 +597,11 @@ helper正常終了時のみreceiptを保存するよう接続した。helper自�
 Windows `tmp/v4_mpc_drive_06/`、remote同名runディレクトリ。
 source.tar SHA256 `800949b337a1170b48e74eda1d228c34789aab0e72a40be8089b4def04558c1e`。
 次の対象は既存Start/Ready遷移の原因調査。モデルや制御器を変更する根拠はない。
+
+## 続き: 通常launch統合とReady調査を分離
+
+最新の作業状態は`docs/v4_normal_dev_start_split.md`を参照。
+入力準備後に開始するshadow設定へ変更し、既存make dev launch用の最小patchを作成。
+限定44 tests PASS、remoteでpatch check成功、remote適用/実install反映は未実施。
+Ready側は前回試験の`AWSIM_START_MODE=sync`上書きが通常dev既定`off`と異なることを
+コードとログで確認。根本原因やoffでの走行成立は未確認。
