@@ -256,7 +256,7 @@ bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q -s \
 
 Windows成果物: `tmp/v4_delivery_20260909_01/`。
 WSL成果物: `runs/v4_delivery_20260909_01/`。
-`pytest_tmp/test_blocked_worker_does_not_ac0/traffic_trace.json`に合成失効traceを保存。
+`pytest_tmp/test_blocked_worker_does_not_a0/traffic_trace.json`に合成失効traceを保存。
 `git diff --check`成功。変更はV4専用配送/node/join/tests/docsに限定し、
 既存controller、Safety、入力の数値前処理、checkpointは変更していない。
 同期に伴う既定Datasetルート存在確認は実施、Dataset内容・checkpoint読取は未実施。
