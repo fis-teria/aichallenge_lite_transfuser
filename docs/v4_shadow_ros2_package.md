@@ -137,3 +137,62 @@ trajectoryのQoS不一致WARNも保存しており、走行前に対象subscribe
 tests/test_v4_shadow_package.pyで遅延ready・失敗・期限切れを合成検証する。
 MPCは通常command送信前にsteering gainを掛けるため、V4にはゲイン適用前の
 `/control/command/control_cmd_raw`をnominalとして選択する。
+
+### 停止中shadowの実試験結果（2026-09-08）
+
+実行版 `6ad1ae130d3d3e899358a6f4741340e824295561`。
+Windows commit→既定CheckOnly/sync→WSL lock付き限定6ファイル:
+**69 passed / 4.18s**。Datasetルート存在確認を実施、内容は未読取。
+全pytestはNOT_RUN。Humbleでcolcon build成功（1 package / 1.22s）。
+最初のbuildは`--log-base`をbuildの後へ置いたためCLIエラー、
+`colcon --log-base /v4/log build ...`へ引数位置を直して成功した。
+
+試験02: 試験用COMPOSE_FILE指定から通常`.env`のdocker-compose.gpu.ymlが
+抜けてしまい、AWSIMがexit1。Player.logにlibnvidia-ml.so.1不足、Vulkan detection=0、
+Forced renderer not supportedを記録。INPUT_READY_DEADLINE、38.535秒で終了。
+観測count={}、MPCはclock待ち、V4 dispatch未到達。
+元の予約計上を残した上で、この試験だけMPC -1500 / forward -6の精算履歴を
+入力/実行ログhash付きで追記した。wall/log消費、旧試験の計上、承認上限は変更しない。
+
+試験03: 原因に直接関係するCompose指定だけを直して1回再確認。
+`docker-compose.yml:docker-compose.gpu.yml:<run>/overlay.json`とし、通常GPU設定を保持。
+追加mountはV4 package/run成果物と固定checkpoint（read-only）。AWSIM本体未改変。
+専用project=`codex-v4-shadow-live-03`、make devはDEV_AUTO_START=false、CONTROL_METHOD=mpc。
+V4は最大6forward、25秒session、外側は65秒watchdog、20sim秒で終了要求。
+観測速度の絶対値が0.05m/sを超えた場合も終了要求する、停止中確認専用条件。
+これは車両停止距離や走行用安全閾値ではない。
+
+実測:
+- camera=256x384 bgr8、Odometry=map/base_link、raw command=/mpc_controller。
+- guardで観測した最大絶対速度=2.861155223854439e-7 m/s。
+- MODEL_LOADED=1。固定checkpoint SHA256
+  `0316692543a901d9d6b96718c5651d6739367aa851f83fb3a133c126ccc8919f`、
+  before/after一致、strict load。checkpoint読取はこの試験で実施した。
+- JOIN_READY=1。camera t=6.084999863s、LiDAR t=6.089378534s、
+  ego/steeringは6.054999864～6.089999863sのbracket、poseはcameraと同時刻。
+- FORWARD_STARTED=1、未補正経路の記録=0。
+- SESSION_END=`INPUT_QUEUE_FULL`。最初のforward中、親の入力/tick投入が
+  子の消費を上回り64件queueのput_nowaitが失敗した。
+- ROS process exit=0でも試験成功ではない。経路生成・継続更新は**未確認**。
+- 観測時刻対応はこの1件の成立であり、全frameや学習LiDAR幾何との一致を意味しない。
+  provenanceのtraining_lidar_geometry_parity=NOT_FULLY_PROVENを維持する。
+
+全体32.000秒。Start要求なし、V4制御publishなし。所有simulatorをpause/KILL、
+Autowareをstop、専用projectだけdownし、cleanup error/残存containerなし。
+ここまでの観測は停止状態であり、走行追従や自然制動の成功ではない。
+試験03の内部実行終了総数を断定できないためforward=6、MPC=1500を保守的に計上。
+記録されたforward開始は1回で、6回完了したという意味ではない。
+累積MPC計上5501/6000（残499）、V4 forward計上210、Tiny forward5711、
+wall=1744.936s、powered試行7/11とpowered秒269.990/320は据え置き。
+
+Windows成果物:
+`tmp/v4_shadow_live_02/evidence/`（失敗・Unityログを含む）、
+`tmp/v4_shadow_live_03/evidence/`、同runのlive.json/JUnit。
+remoteは対応する`/home/graneple/e2e_autonomous/v4_shadow_live_02/`と`03/`。
+試験指令は各run.pyに固定。自動再試行・自動pushはしない。
+
+次の修正対象は推論中の入力/tick配送。workerが捨てるclockまでqueueへ渡し、
+各spinでcommand snapshot付きtickも加える現実装を見直す必要がある。
+有限buffer・入力時刻・欠損記録・停止条件を維持し、容量や許容期限だけを増やして
+隠さない。今回の起動順修正は初期load中の詰まりに限定して有効であり、
+実forward中の配送問題を解決済みとはしない。追加live試行は未実施。
