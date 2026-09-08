@@ -32,6 +32,9 @@ def main():
         if stamp is not None: d['last_stamp_ns']=stamp.sec*1_000_000_000+stamp.nanosec
         d['last_received_monotonic_ns']=time.monotonic_ns()
         if hasattr(msg,'header'): d['frame']=msg.header.frame_id
+    def make_callback(topic):
+        def cb(msg,info): receive(topic,msg,info)
+        return cb
     try:
         while time.monotonic()-start<25:
             for topic,names in node.get_topic_names_and_types():
@@ -42,8 +45,7 @@ def main():
                          reliability=str(e.qos_profile.reliability),durability=str(e.qos_profile.durability),
                          history=str(e.qos_profile.history),depth=e.qos_profile.depth) for e in endpoints]}
                 if topic not in subscriptions:
-                    def cb(msg,info,topic=topic): receive(topic,msg,info)
-                    subscriptions[topic]=node.create_subscription(types[names[0]],topic,cb,qos_profile_sensor_data)
+                    subscriptions[topic]=node.create_subscription(types[names[0]],topic,make_callback(topic),qos_profile_sensor_data)
             rclpy.spin_once(node,timeout_sec=.1)
         result['wall_s']=time.monotonic()-start
     finally:

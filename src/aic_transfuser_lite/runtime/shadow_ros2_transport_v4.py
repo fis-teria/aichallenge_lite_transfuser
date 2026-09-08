@@ -48,11 +48,13 @@ class ShadowROS2Transport:
         self.clock_id,self.monotonic_id,self.monotonic=clock_id,monotonic_id,monotonic
         self.commands=deque(maxlen=64)
         self.epoch=0;self.last_ros_ns=None;self.closed=False;self.subscriptions=[]
+        def make_callback(role):
+            def callback(message, info):
+                self.receive(role,message,info)
+            return callback
         try:
             for role in topics:
-                def callback(message, info, role=role):
-                    self.receive(role,message,info)
-                self.subscriptions.append(node.create_subscription(types[role],topics[role],callback,qos[role]))
+                self.subscriptions.append(node.create_subscription(types[role],topics[role],make_callback(role),qos[role]))
         except Exception:
             self.close()
             raise

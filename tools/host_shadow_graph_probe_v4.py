@@ -13,7 +13,7 @@ def run(args, timeout=15):
 def main():
     root=Path(__file__).resolve().parent
     out=root/'evidence';out.mkdir()
-    start=time.monotonic();name='codex-shadow-graph-20260908-01'
+    start=time.monotonic();name='codex-'+root.name.replace('_','-')
     old=Path('/home/graneple/e2e_autonomous/static_map_awsim_20260907/stationary_bfd7263_01/compose.json')
     budget=AttemptBudget(Path('/home/graneple/e2e_autonomous/spatial_run_continuation_20260907/budget.json'))
     budget.limits=dict(wall_s=3600.,forward=7100,mpc=6000,snapshots=16,powered=11,powered_s=320.,log_bytes=536870912)

@@ -1,6 +1,7 @@
 """ROS-free message-info fixtures; no real observation or model inference."""
 from types import SimpleNamespace as O
 import ast
+import inspect
 from pathlib import Path
 import pytest
 from aic_transfuser_lite.runtime.shadow_ros2_transport_v4 import ShadowROS2Transport
@@ -33,6 +34,7 @@ def command(): return O(stamp=O(sec=1,nanosec=0),lateral=O(steering_tire_angle=.
 
 def test_subscription_command_binding_and_cleanup():
     t,node,events,resets,inputs=setup();assert len(node.subs)==7
+    assert all(len(inspect.signature(cb).parameters)==2 for cb in node.subs)
     clock(t,2);node.subs[4](command(),O(publisher_gid=[1]))
     c=t.command_snapshot()[0]
     assert c.source=='final_fallback' and c.stamp.header_ns==1_000_000_000
