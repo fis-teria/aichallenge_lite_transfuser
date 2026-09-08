@@ -172,3 +172,38 @@ watchdog終了と競合し空のcontainer IDを読んだためで、開始失敗
 
 証拠: Windows `tmp/mpc_normal_start_08/{evidence,evaluation.json,budget.json,run.py}`、
 remote `/home/graneple/e2e_autonomous/mpc_normal_start_08/`。追加再試行なし、pushなし。
+
+## MPC一周試験09: 未完走（2026-09-09）
+
+ユーザー承認: 1試行、全体120秒、Start後90sim秒、MPC60000回、V4 OFF。
+通常自動Start、CONTROL_METHOD=mpcは維持し、既存起動引数`AWSIM_LAPS=1`のみ追加。
+AWSIM実行物/scene/sensor、controller、Start/Safetyには変更なし。
+変更対象は新規試験ディレクトリの有限起動/読取監視と本記録のみ。
+
+実行コマンドは試験08と同じmake devに`AWSIM_LAPS=1`、RUN_ID=mpc_normal_lap_09。
+実ログで`--start-mode sync --laps 1`を確認。run参照Windows HEAD `1f21953`、
+remote HEADは従前の`4af395eee10f928c7fc7225760adfa04c4c07ff4`（dirty保全）。
+開始前の構文チェックで試験スクリプト生成時の引用符エラーを検出・修正した。
+その時点ではROS起動/試行予約は未実施。実AWSIM試行は1回のみ。
+
+**結果: 公式Startは成功したが、一周は完了しなかった。**
+
+- make exit0、公式Start成立。最大速度6.9133m/s。
+- 3694件のposeを取得。記録点を結ぶ折線長82.086m（測位の微小揺れを含むため
+  厳密な車輪走行距離ではない）。開始地点へ戻ったことを完走とする判定は行わない。
+- コーナー付近でほぼ停止。既存ログに`mpc_guard=1`、MPC infeasibleの反復、
+  `reason=wall_footprint_margin`とspeed-only fallbackを確認。
+  実際の壁接触、速度/参照曲率/初期偏差のどれが根本原因かは未確定。
+- 一周のFinish通知なし。既存監視を解除せず、反復する実行不能を理由に
+  agentが所有simulator `c76ba22f2a93`をpause→KILLし試験終了。
+- 最終74.084998344sim秒、Start pulse観測6.079999864sim秒、全体101.5966秒。
+  120秒/90sim秒以内。生ログ11,499,064byte。MPC60000枠は保守予約計上であり
+  実際に60000回計算したという意味ではない。forward0。
+- raw resultのINPUT_STALE/OBSERVER_EXITはfreeze後の結果として保全。
+  最初の終了判断は上記MPC実行不能の反復。cleanup errorなし、所有container残存なし。
+  外部停止であり自然制動の合格とはしない。無接触・一周・V4追従は未確認。
+
+証拠: Windows `tmp/mpc_normal_lap_09/`、remote同名run。
+`evaluation.json`はraw resultを書き換えず、判定と停止介入を分離して記録。
+次は保存済みログから停止直前の参照曲率・速度・横偏差とMPC制約を照合する。
+既存構成の変更や追加走行は自動で行わない。pushなし。
