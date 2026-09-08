@@ -1,0 +1,48 @@
+--- a/aichallenge/run_autoware.bash
++++ b/aichallenge/run_autoware.bash
+@@ -22,6 +22,19 @@
+     echo "invalid argument (use 'awsim' or 'vehicle' or 'rosbag')"
+     exit 1
+     ;;
++esac
++
++# Optional V4 shadow package overlay; existing controller is unchanged.
++case "${V4_SHADOW_ENABLED:-false}" in
++true)
++    [[ "${mode}" == "awsim" || "${mode}" == "awsim-no-viz" ]] || exit 2
++    [[ "${V4_SHADOW_SETUP:-}" = /* && -f "${V4_SHADOW_SETUP}" ]] || exit 2
++    [[ "${V4_SHADOW_CONFIG:-}" = /* && -f "${V4_SHADOW_CONFIG}" ]] || exit 2
++    [[ "${V4_SHADOW_LAUNCH:-}" = /* && -f "${V4_SHADOW_LAUNCH}" ]] || exit 2
++    source "${V4_SHADOW_SETUP}" || exit 2
++    ;;
++false) ;;
++*) exit 2 ;;
+ esac
+ 
+ export ROS_DOMAIN_ID=$id
+--- a/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/launch/aichallenge_system.launch.xml
++++ b/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/launch/aichallenge_system.launch.xml
+@@ -104,4 +104,10 @@
+     <group if="$(eval $(var domain_id)!=0)">
+         <include file="$(find-pkg-share aichallenge_system_launch)/launch/mode/v2x.launch.xml"/>
+     </group>
++  <!-- Shadow only; no control-method or Start authority replacement. -->
++  <group if="$(env V4_SHADOW_ENABLED false)">
++    <include file="$(env V4_SHADOW_LAUNCH '')">
++      <arg name="config_file" value="$(env V4_SHADOW_CONFIG '')"/>
++    </include>
++  </group>
+ </launch>
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -23,6 +23,10 @@
+     - __VK_LAYER_NV_optimus=${__VK_LAYER_NV_optimus:-NVIDIA_only}
+     - VK_ICD_FILENAMES
+     - CONTROL_METHOD=${CONTROL_METHOD:-}
++    - V4_SHADOW_ENABLED=${V4_SHADOW_ENABLED:-false}
++    - V4_SHADOW_SETUP=${V4_SHADOW_SETUP:-}
++    - V4_SHADOW_LAUNCH=${V4_SHADOW_LAUNCH:-}
++    - V4_SHADOW_CONFIG=${V4_SHADOW_CONFIG:-}
+     - OPPONENT_MOTION_PREDICTION_ENABLED=${OPPONENT_MOTION_PREDICTION_ENABLED:-false}
+     - STATE_LATTICE_V4_POC_COMMAND_ACTIVATION_ENABLED=${STATE_LATTICE_V4_POC_COMMAND_ACTIVATION_ENABLED:-false}
+     - PP_CORE_EXACT_SNAPSHOT_ENABLED=${PP_CORE_EXACT_SNAPSHOT_ENABLED:-false}
