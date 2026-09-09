@@ -640,3 +640,39 @@ tests/test_publisherless_shadow_v4.py tests/test_shadow_start_gate_v4.py。
 試験wrapperはSESSION_END監視をmake待ちと独立に実施し、終了後の不要な駆動を防ぐ。
 ログ監視パスに残っていたrun12名も今回のrun15名へ一致させる。
 変更は試験wrapperだけ、V4/制御の新規仕様追加なし。外側host期限は実時間を維持。
+
+### run15結果: 停止中の未補正20点出力40件を確認
+
+実行commit f69ddd4c57c99662a69a3e8592643790b086b041。
+Windows commit→既定CheckOnly/同期→WSL lock限定検証58 passed / 4.43s。
+固定Datasetルート存在確認のみ実施、Dataset内容は未読。
+SSH専有installへ1 package / 1.36sでbuild。CONFIG_OK_NO_INFERENCE。
+transportファイルはWindows/remote source/installのSHA256が一致:
+ca819a8bd1978337abb48434932047eeda446aeae147b887a19abd4e89f87834。
+既存PP launchのhashもrun13と同じ。AWSIM本体/PP/controller変更なし。
+
+make dev CONTROL_METHOD=pure_pursuit CAPTURE=false ROSBAG=false AWSIM_LAPS=1
+RUN_ID=v4_pp_shadow_15を専有wrapper/外側timeout117+3秒下で1回実行。
+固定step500読込み成功、FORWARD_STARTED=40、PLAN=40、JOIN_READY=40。
+全40件のraw_xy_mは[20,2]で有限。観測source_sは0.310〜11.125sim秒。
+推論実時間は平均43.83ms、最小15.89ms、最大499.60ms（初回含む）。
+これは停止中観測の推論性能であり、走行時性能・経路品質の合格ではない。
+PLAN accepted=false / VEHICLE_CONTRACT_UNKNOWNはShadowBridge(None)による
+制御採用禁止であり、推論失敗ではない。control/gear/mode publishは0。
+
+起動時CLOCK_NOT_OBSERVED拒否445件、JOIN_DEADLINE64件、
+DELIVERY_DEADLINE drop35件、FORWARD_LIMITによるdrop14件も保全。
+GRAPH_MONITOR_STALEは再発なし。終了理由FORWARD_LIMIT、終了処理の
+TRANSPORT_CLOSEDを異常原因とは扱わない。
+
+最大実速度3.28e-7m/sで、実走行は成立していない。Ready受信前に40回の枠を消費。
+V4終了をmake待ち中にも検知して所有AWSIM freeze/KILL、全体40.779wall秒。
+元result FAILED/BOUNDED_MONITOR_STOP_DURING_MAKE、make_exit=nullを保全。
+result時にhelper4d2253a56816の一時残存あり。その後の独立inventoryでは
+全running/所有project残存なし。元remaining_ownedを空へ改変しない。
+
+成果物: tmp/v4_pp_shadow_15/とremote同名runにsource、build、shadow/motion/state、
+budget/result、生ログを保存。既存履歴を保全、再試行・pushなし。
+達成: SSH反映と実センサによる停止中V4経路更新。未達: 走行中更新、完走、制御接続。
+次は起動前に推論枠を使い切らない試験構成（走行開始後の推論開始または明示的な
+有限枠見直し）を決める。今回の終了を理由に上限を自動延長しない。
