@@ -370,3 +370,18 @@ remote external_review: 58372ef713b5b8917935b6bfd5cda1e0ba02aabd5d0645da75d88642
 保存差分: integrations/review_policy/remote_optional_review.patch。
 今回の変更は運用文書のみ。ROS/モデル/controller/AWSIMを起動・改変せず、
 走行枠は未使用。外部レビュー待ちは解消したが、実適用/ROS結合確認は引き続き必要。
+
+## 修正済みMPC・カーブ速度候補の試験11準備
+
+ユーザーがAWSIM試験まで継続を明示依頼。以前許可された未使用枠を今回1回だけ使用予定。
+上限は120wall秒、Start後90sim秒、MPC60000、V4 OFF。試験10までの使用量を継承。
+remoteの2ソースhashが基準版と一致しgit apply --check成功後、限定patchを実適用。
+既存node実行属性のwarningはあったが属性を変更しない。既存dirtyは保全。
+制御設定は専有コンテナだけの20km/h/ay_max3.0候補。AWSIM本体・scene・sensorは不変。
+installの実import元をpreflight.pyで確認し、修正版SHAと比較してから起動する。
+run11のobserverは実設定のraw限界・gainを使うcommand_monitorを接続。
+NaN/Inf/角度超過、既存authority/stale条件、MPC失敗反復、Finish、時間上限で終了。
+外側timeout117秒+kill猶予3秒、watchdog105秒で終了開始。自動再試行なし。
+実行は通常make dev CONTROL_METHOD=mpc CAPTURE=false ROSBAG=false AWSIM_LAPS=1。
+記録先はtmp/mpc_guard_lap_11（remote同名）。過去試験との差はguard修正とay_maxであり、
+単一パラメータの因果比較とは扱わない。動作未確認の候補設定を完走済みとは扱わない。
