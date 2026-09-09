@@ -165,6 +165,17 @@ class ShadowSession:
         return record
 
 
+def inference_device_metadata(model):
+    """Actual loaded parameter device; no extra forward or GPU synchronization."""
+    import torch
+    device = next(model.parameters()).device
+    return dict(model_device=str(device), torch_version=str(torch.__version__),
+                cuda_build=torch.version.cuda,
+                gpu_name=torch.cuda.get_device_name(device) if device.type == 'cuda' else None,
+                model_loaded_cuda_allocated_bytes=torch.cuda.memory_allocated(device) if device.type == 'cuda' else 0,
+                memory_scope='PYTORCH_ALLOCATOR_AFTER_MODEL_LOAD_NOT_PEAK_OR_WHOLE_GPU')
+
+
 def fixed_infer_factory():
     """Call only inside explicitly admitted real-input child; exact existing loader."""
     import torch
@@ -173,6 +184,7 @@ def fixed_infer_factory():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model, identity = load_fixed(device)
     model.eval()
+    identity['execution_device'] = inference_device_metadata(model)
     def infer(batch):
         with torch.inference_mode():
             result = model(freeze_batch(batch, device))

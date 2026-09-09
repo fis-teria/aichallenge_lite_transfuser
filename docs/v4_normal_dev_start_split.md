@@ -724,3 +724,12 @@ PPが既存Referenceで走行、V4経路による制御ではない。controller
 成果物はtmp/v4_pp_shadow_16/とremote同名run。40回停止は撤廃した明示モードで実行。
 旧予算履歴を保持。forward10000はメモリ上限に対応する保守予約で実測278と区別。
 追加走行・自動pushなし。次は保存された走行中V4経路の形状/時刻/欠損を評価する段階。
+
+## run17準備: 同条件再試験と実使用deviceの記録
+
+ユーザーの再試験指示。PP/モデル/入力/閾値/終了条件はrun16と同じ。
+変更はMODEL_LOADED identityへ実parameter.device、torch/CUDA版、GPU名、
+モデルload後のPyTorch CUDA allocated bytesを追加するだけ。追加forwardや同期なし。
+メモリ量は推論ピーク/全GPU使用量ではない。GPU対応イメージからの推測を避ける。
+全体300wall秒、駆動240sim秒、TIME_BOUNDED、1周Finishで終了する新規1試行。
+旧run16までの履歴を保持、専有run17へbuild/install、AWSIMやremote既存dirtyは保全。
