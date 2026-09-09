@@ -31,6 +31,8 @@ def validate_config(c: dict) -> None:
                                       'initialization': '/autostart/initialization_ready'}):
             raise ValueError('EXPLICIT_START_GATE_REQUIRED')
     Envelope(**c['envelope']).validate(time.time())
+    if c.get('start_local_odometry',False) and c.get('pose_child_frame')!='v4_base_link':
+        raise ValueError('LOCAL_ODOMETRY_BINDING')
     if c.get('pose_child_frame','base_link') != 'base_link':
         if (c['pose_child_frame']!='v4_base_link' or c['pose_frame']!='v4_odom' or
                 c['topics']['odometry']!='/v4/local_odometry' or
@@ -106,12 +108,16 @@ def main(args=None) -> None:
     rclpy.init(args=args)
     node=Node('v4_shadow',enable_rosout=False,start_parameter_services=False)
     node.declare_parameter('config_file','')
-    process=transport=stream=pump=start_observer=None
+    process=transport=stream=pump=start_observer=local_node=None
     ctx=mp.get_context('spawn');incoming=ctx.Queue(maxsize=1);outgoing=ctx.Queue(maxsize=64)
     terminal=None
     try:
         config=json.loads(Path(node.get_parameter('config_file').value).read_text())
         validate_config(config)
+        if config.get('start_local_odometry',False):
+            from .local_odometry_node_v4 import create_local_odometry_node
+            local_node=create_local_odometry_node()
+            rclpy.get_global_executor().add_node(local_node)
         stream=Path(config['output_file']).open('x',encoding='utf-8')
         used=0;started=time.monotonic();limit=config['envelope']['wall_s']
         def emit(record):
@@ -189,6 +195,11 @@ def main(args=None) -> None:
             except (ValueError,RuntimeError) as exc: terminal=str(exc)
         pump.close(terminal or 'SESSION_CLOSED')
         emit(dict(event='SESSION_END',reason=terminal,control_publish=False))
+    except Exception as exc:
+        terminal='PARENT_EXCEPTION:'+type(exc).__name__+':'+str(exc)
+        if stream:
+            emit(dict(event='SESSION_END',reason=terminal,control_publish=False))
+        raise
     finally:
         if pump: pump.close(terminal or 'SESSION_CLOSED')
         if transport: transport.close()
@@ -199,6 +210,9 @@ def main(args=None) -> None:
             if process.is_alive(): process.kill();process.join(timeout=2)
         for q in (incoming,outgoing): q.cancel_join_thread();q.close()
         if stream: stream.close()
+        if local_node:
+            rclpy.get_global_executor().remove_node(local_node)
+            local_node.destroy_node()
         node.destroy_node();rclpy.shutdown()
 
 

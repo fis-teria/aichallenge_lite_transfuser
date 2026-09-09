@@ -4,7 +4,8 @@ from . import spatial_path_shadow_node_v4 as _source_layout
 from aic_transfuser_lite.runtime.local_odometry_v4 import LocalOdometry
 
 
-def main(args=None) -> None:
+def create_local_odometry_node():
+    """Build a separate ROS node; caller owns executor and ROS context."""
     import rclpy
     from rclpy.node import Node
     from rclpy.qos import qos_profile_sensor_data
@@ -14,7 +15,6 @@ def main(args=None) -> None:
     from geometry_msgs.msg import TransformStamped
     from tf2_ros import TransformBroadcaster
 
-    rclpy.init(args=args)
     node=Node('v4_local_odometry',start_parameter_services=False)
     node.declare_parameter('expected_velocity_node','/awsim_d1')
     node.declare_parameter('max_gap_s',0.25)
@@ -74,6 +74,13 @@ def main(args=None) -> None:
     subscriptions=[node.create_subscription(Clock,'/clock',on_clock,10),
                    node.create_subscription(VelocityReport,topic,on_velocity,qos_profile_sensor_data)]
     node.get_logger().info('LOCAL_ODOMETRY_READY velocity_only /v4/local_odometry v4_odom->v4_base_link')
+    return node
+
+
+def main(args=None) -> None:
+    import rclpy
+    rclpy.init(args=args)
+    node=create_local_odometry_node()
     try: rclpy.spin(node)
     finally:
         node.destroy_node();rclpy.shutdown()

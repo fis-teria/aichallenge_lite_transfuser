@@ -21,11 +21,15 @@ Odometryのstampを現在時刻で再stampしない。共分散は未推定の�
 
 ## V4接続
 
-既定launchは変更せず、`local_odometry:=true` で追加ノードを選択起動する。
+通常make devの直接node起動では、JSONの `start_local_odometry: true` により
+別名ROS nodeを同じ親processのexecutorへ追加する。モデルworkerとは分離される。
+独立起動する場合のみ `local_odometry:=true` launchを使用し、JSONの起動flagはfalseにする。
+両方を同時に有効化して二重起動しない。
 V4 JSONには以下を設定する。
 
 ```json
 {
+  "start_local_odometry": true,
   "pose_frame": "v4_odom",
   "pose_child_frame": "v4_base_link",
   "pose_evidence": "VelocityReport-only SE2 integration; local origin; v4_base_link aliases physical input base_link axes, no global localization"
@@ -49,7 +53,7 @@ tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q tests/test_local_o
 実ROS起動例（選択済みsimulator用configが必要）:
 
 ```bash
-ros2 launch aic_e2e_runtime v4_shadow.launch.py config_file:=/v4/live.json local_odometry:=true
+ros2 launch aic_e2e_runtime v4_shadow.launch.py config_file:=/v4/live.json
 ```
 
 試験では前回同様の専有make dev wrapper、PP単一制御、V4非制御、1周・300wall秒上限を使用する。

@@ -61,6 +61,10 @@ def test_isolated_node_has_no_ekf_or_actuator_inputs():
     assert not attrs.intersection({'create_client','lookup_transform','send_goal_async'})
     assert "parent,child='v4_odom','v4_base_link'" in source
     assert 'local_odometry_node_v4' in (root/'setup.py').read_text()
+    parent=(root/'aic_e2e_runtime/v4_shadow_node.py').read_text()
+    assert "config.get('start_local_odometry',False)" in parent
+    assert 'add_node(local_node)' in parent and 'remove_node(local_node)' in parent
+    assert 'PARENT_EXCEPTION:' in parent
 
 
 def test_local_pose_can_be_joined_without_map_ekf():
