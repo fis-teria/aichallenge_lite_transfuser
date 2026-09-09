@@ -61,3 +61,24 @@ def test_isolated_node_has_no_ekf_or_actuator_inputs():
     assert not attrs.intersection({'create_client','lookup_transform','send_goal_async'})
     assert "parent,child='v4_odom','v4_base_link'" in source
     assert 'local_odometry_node_v4' in (root/'setup.py').read_text()
+
+
+def test_local_pose_can_be_joined_without_map_ekf():
+    from types import SimpleNamespace as O
+    import numpy as np
+    from aic_transfuser_lite.runtime.shadow_observation_join_v4 import ShadowObservationJoin
+    from aic_transfuser_lite.runtime.spatial_sim_adapter_v4 import Sample
+    calls=[]
+    session=O(observation=lambda *a,**kw:calls.append(a))
+    join=ShadowObservationJoin(session,lambda:(),lambda r:None,clock_id='sim',monotonic_id='host',
+                              pose_frame='v4_odom',pose_child_frame='v4_base_link',pose_evidence='synthetic')
+    ns=1_000_000_000
+    join.add('camera',Sample(ns,10,np.zeros((256,384,3),dtype=np.uint8),'camera_optical_link','0'))
+    scan=dict(ranges=np.ones(750),angle_min=-1.5666074752807617,angle_increment=.004188789986073971,range_min=0.,range_max=25.)
+    join.add('lidar',Sample(ns,10,scan,'lidar','0'))
+    join.add('velocity',Sample(ns,10,[1.,0.,0.],'base_link','0'))
+    join.add('steering',Sample(ns,10,[0.],'steering_tire_angle','0'))
+    message=O(header=O(stamp=O(sec=1,nanosec=0),frame_id='v4_odom'),child_frame_id='v4_base_link',
+              pose=O(pose=O(position=O(x=.1,y=.2),orientation=O(x=0.,y=0.,z=0.,w=1.))))
+    join.on_input('odometry',message,10,'0');join.tick(20,1.)
+    assert len(calls)==1 and calls[0][2].base_in_local==(.1,.2,0.)
