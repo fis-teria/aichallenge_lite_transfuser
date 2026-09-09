@@ -58,3 +58,83 @@ ros2 launch aic_e2e_runtime v4_shadow.launch.py config_file:=/v4/live.json
 
 試験では前回同様の専有make dev wrapper、PP単一制御、V4非制御、1周・300wall秒上限を使用する。
 AWSIM本体と既存dirty checkoutは変更しない。停止/故障を成功扱いせずログに残す。
+
+## 2026-09-09 実装・試験結果
+
+最終実行commit `103ce346909ec378868821b877fec43ae8dc1d27`。
+Windows commit、既定CheckOnly/同期、WSL共有lock付き検証を実施。
+既定同期によるDatasetルート存在確認は実施。Dataset内容は未読。
+固定checkpoint読取・実推論はAWSIM試験内で実施した。
+
+### テスト
+
+- 初版の関連tests: 37 passed。
+- 最終版全体: **1757 passed, 4 skipped, 51 warnings / 69.38s**。
+- skipはOSQP、Draft2020 validator、jsonschema、任意公式Tiny packageの不足。
+- JUnit: WSL `runs/v4_local_odometry_103ce34/junit.xml`、
+  Windows `tmp/v4_pp_shadow_20/junit.xml`。
+- SSH先の固定Humble image、network noneでbuild成功（1 package / 1.28s）。
+- 同隔離containerで `tools/check_local_odometry_ros_v4.py` を実行。
+  synthetic VelocityReport11件からOdometry11件、x=.685795615m、y=.121254574m。
+  合成円弧の解析解と一致。重複再publishなし、親のROS node名remapを継承しない。
+  最初はDDS設定mount不足でROS初期化失敗。既存lo設定をread-only mountして再実行した。
+  これはAWSIM走行でも実センサ精度検証でもない。
+
+### run19: 起動経路の不一致
+
+`a7e5281` を専有run19へ配布。通常make devはV4 nodeを直接起動し、
+追加専用launchは使われなかった。そのためlocal Odometry publisherがなく、
+V4が `PUBLISHER_COUNT:odometry` で終了。V4経路0件。
+異常を読み取り確認した後、今回所有run.pyへSIGTERMを送り、所有AWSIMを停止。
+raw result `OUTER_SIGNAL_15`、後続INPUT_STALEを保全。wall57.0012秒。
+この失敗を受け、JSONで別名local nodeを同じ親executorへ登録する方式へ修正した。
+startup例外もSESSION_ENDに記録する処理を追加した。
+
+### run20: 局所Odometryと走行中V4接続は成立、途中停止
+
+source.tar SHA256:
+`753e1d776ae37a5cb399048f837babee9cb0ea6a0b3f43b5a68cbe6b35e330b4`。
+Windows/remoteで一致を確認。remote既存dirty checkout・AWSIM・PP設定は未変更。
+
+```bash
+timeout --signal=TERM --kill-after=15s 300s python3 /home/graneple/e2e_autonomous/v4_pp_shadow_20/run.py
+# wrapper内
+make dev CONTROL_METHOD=pure_pursuit CAPTURE=false ROSBAG=false AWSIM_LAPS=1 \
+  RUN_ID=v4_pp_shadow_20 OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/v4_pp_shadow_20/evidence
+```
+
+- `/v4/local_odometry`: publisherは `/v4_local_odometry` 1件、V4購読を実graphで確認。
+  RELIABLE/VOLATILE/depth10。既存EKF poseではなく、このlocal poseがJOIN_READYへ入った。
+- 局所Odometry **972件**、source時刻.035〜34.020sim秒。
+  frame v4_odom / child v4_base_link。TFは同じposeで送信するコード経路。
+  今回TF message自体の全件記録・tf2 lookup試験は未実施。
+- V4 FORWARD_STARTED **256件**、PLAN **256件**。
+  source .205〜34.015sim秒。V4は非制御shadow、PPが既存Referenceで走行。
+- camera受信→join平均 **28.53ms**、推論呼出し平均 **34.58ms**。
+  実効PLAN更新 **7.62Hz**、最大wall間隔 **.628秒**。
+  run17は110.51ms / 3.68Hzだが、今回は一周ではなく短区間・異なるpose源。
+  同一条件での改善率や完走品質を断定しない。
+- JOIN_REJECTED: CAMERA_GRID_TOLERANCE68、JOIN_DEADLINE8、SUPERSEDED_BY_READY3。
+  既存100ms grid/40ms許容差は維持している。
+- Start/Ready/Start stateを記録したが、**Finishなし・完走未達**。
+  最大車速4.5386m/s。約34sim秒で `LOCAL_ODOMETRY_FAULT VELOCITY_OUT_OF_PROFILE`。
+  coreの水平速度10m/sまたはyaw rate2rad/sの検査で停止。
+  元のvx/vy/wzはfaultログに保存していないため、超過fieldと値はUNKNOWN。
+  前後速度の記録だけでは横速度・yawの超過を断定できない。
+- local pose停止後、observerがINPUT_STALEを検出し所有AWSIMをfreeze/KILL。
+  wall64.3923秒、raw result FAILED/OBSERVER_EXIT、残存ownedなし。
+  終了時のKeyboardInterrupt/二重rcl_shutdown例外もログに残る。一次停止原因と区別する。
+
+run19/20とも独立した停止後確認で稼働container、当該project container、ROS/AWSIM processなし。
+旧budget/used・失敗ログは保持し、run20へ履歴を引き継いだ。各runの保守予約forward10000と
+実forward0/256は区別する。実ログはWindows `tmp/v4_pp_shadow_19/`、`tmp/v4_pp_shadow_20/`、
+remote `/home/graneple/e2e_autonomous/` 配下同名runに保存。自動pushなし。
+
+### 残課題
+
+1. 超過した速度field・値・stampを記録して入力異常かprofile設定かを切り分ける。
+   現状は任意の閾値引上げ・クリップ・Euler wrap補正を行っていない。
+2. 短区間での相対変換誤差・累積driftを評価する。今回の停止はdrift過大の証拠ではなく、
+   これだけを根拠にLiDAR SLAMが必要とは判断しない。
+3. 走行制御は既存PP/EKF経路であり、E2E部門適合走行・V4制御での完走ではない。
+   V4本体へのGNSS/IMU pose依存を外したことと、試験全体のセンサ依存を混同しない。
