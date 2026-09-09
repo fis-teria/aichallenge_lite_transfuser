@@ -325,3 +325,26 @@ Windowsコピー100644の差についてwarningあり。実適用時は既存実
 未適用・未レビューのまま完走済み/稼働修正済みとは報告しない。
 全pytestと実ROS結合試験はNOT_RUN。同期の固定Datasetルート存在確認は実施、
 Dataset内容/raw/sensor/checkpoint読取は未実施。
+
+## レビュー・適用・AWSIM再試験依頼: キュー占有で保留
+
+ユーザーがレビューからAWSIM試験までの継続を依頼。予定する新試行は1回、
+全体120wall秒、Start後90sim秒、MPC60000上限、V4 OFF。まだ枠を予約/消費していない。
+不変handoff/packetを`tmp/mpc_guard_review_20260909/`に作成してremoteへ配布。
+execution=`mpc-guard-dc84956-20260909`、attempt=
+`mpc-guard-dc84956-20260909-review01`をcanonical queueへ登録、integrity_valid=true。
+最初の短いattempt名review01は既存名と衝突して登録失敗し、一意名で登録した。
+
+専用transportのclaimは
+`review_singleflight_busy:five-path-lease-canonical-ownership-review-01`
+で拒否。他作業のlease/claimを変更せず、ブラウザ送信もdeferも未実施。
+状態はREVIEW_PENDING、workflow_advance_allowed=false。
+外部レビュー未完了のため、remote source/install適用・実ROS起動・AWSIMは未実施。
+再開時は同一requestの状態と共有枠を確認し、同一packetのレビューを継続する。
+
+並行して、有限observer向け純粋command_monitorを実装。実ロード設定由来の
+raw角度上限と既存gain別domainでNaN/Inf/shape/角度超過を判定する。
+この段階ではobserverへの接続前。Safety/controllerの緩和はしない。
+Windows実装1518b4c→既定同期→WSL lock試験は34 passed / 1 skipped / 1.27s。
+スキップは既報のOSQP依存。AWSIM、ROS、推論、駆動は追加していない。
+旧結果と既存dirtyを保全。pushなし。
