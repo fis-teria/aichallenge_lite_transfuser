@@ -385,3 +385,40 @@ NaN/Inf/角度超過、既存authority/stale条件、MPC失敗反復、Finish、
 実行は通常make dev CONTROL_METHOD=mpc CAPTURE=false ROSBAG=false AWSIM_LAPS=1。
 記録先はtmp/mpc_guard_lap_11（remote同名）。過去試験との差はguard修正とay_maxであり、
 単一パラメータの因果比較とは扱わない。動作未確認の候補設定を完走済みとは扱わない。
+
+### 試験11結果: 起動後・Start前のsolver非収束で終了
+
+実行Windows版8dac2675b9ddc7d9b571d57411109163e7134574。
+既定CheckOnly/同期、WSL lock付き36 passed / 1 skipped / 1.22s。
+Datasetルート存在確認のみ実施、内容/raw/checkpoint読取なし。
+remote patch適用とinstall実import元を検証。2ファイルのSHAは以下で一致:
+MPC.py 2810b8ba70b9d64398487b17a84c10cc3f077faaeada1a0f4dd6843ed5a71355
+mpc_controller.py af080fb1169783114c533d60ddcc161d4a1b8cfdbe299481d9b50aa088f98328
+installは既存sourceへの参照で、再buildによる無関係な置換はしていない。
+preflightは最初のshell引用符ミス、次にsetup.bashのCOLCON_TRACE未定義で失敗。
+ROS setup読み込み中にnounsetを使わないよう修正して成功。これらは駆動試行ではない。
+実設定20km/h、ay_max3.0、hash:
+ccb5cc4f1ff2aced753010411ab725ec97ae5db20cc4af705a2a819bedb1fa54。
+
+通常make devの1試行を実施。AWSIM、ROS sensor/ego/pose、MPC raw/finalの接続を確認。
+しかしMPC_REJECTED: SOLVER_STATUS:maximum iterations reachedが34回。
+最初からこの終了状態のため、1e-5制約残差判定まで到達したという証拠はない。
+この試験で判明した最初の失敗はsolver非収束であり、wall gateや外部レビューではない。
+旧版にも同じ終了状態が出ていたか、ay_max変更が影響したかは未確定。
+
+- observer raw/final各34件、要求は全て速度0・raw舵0・加速度-0.9m/s²。
+- 56 pose、折線長0.000482m、最大実速度2.4e-7m/s。実走行は成立していない。
+- stateはspawnedのみ、official Start pulse/Ready/Finishは未確認。
+- REPEATED_MPC_FAILUREで所有sim freeze/終了。全体31.0145wall秒、最終1.255sim秒。
+  追加1試行を使用。MPC60000/駆動90秒は保守予約計上で実際の回数/駆動時間ではない。
+- raw resultはFAILED / BOUNDED_MONITOR_STOP_DURING_MAKE、make_exit=nullを保全。
+  INPUT_STALEはfreeze後。制動要求確認はできたが、もともと静止中なので動的停止PASSではない。
+- result生成時にhelper container 055a3caac60fの一時残存を記録。
+  その後の独立inventoryで所有project/containerと全running containerが空と確認。
+  元remaining_ownedを改変しない。postrun_inventory.logに最終状態を保存。
+- AWSIM実行物/scene/sensor・V4は未変更。MPCソース修正は適用済み。
+  ホストの元configは上書きせず、試験用速度候補は専有コンテナ内のみ。
+
+証拠: tmp/mpc_guard_lap_11/とremote同名run。追加再試行・pushなし。
+完走は未達。次は初期状態QPの非収束（尺度、重み、制約整合、反復状況）を
+限定診断し、解採用条件を緩めずに収束するかを確かめる。未収束解を復活させない。
