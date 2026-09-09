@@ -116,7 +116,7 @@ def main(args=None) -> None:
         validate_config(config)
         if config.get('start_local_odometry',False):
             from .local_odometry_node_v4 import create_local_odometry_node
-            local_node=create_local_odometry_node()
+            local_node=create_local_odometry_node(config.get('local_odometry_geometry'))
             rclpy.get_global_executor().add_node(local_node)
         stream=Path(config['output_file']).open('x',encoding='utf-8')
         used=0;started=time.monotonic();limit=config['envelope']['wall_s']

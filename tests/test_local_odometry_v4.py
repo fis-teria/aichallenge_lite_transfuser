@@ -86,7 +86,7 @@ def test_isolated_node_has_no_ekf_or_actuator_inputs():
     attrs={n.attr for n in ast.walk(tree) if isinstance(n,ast.Attribute)}
     assert not attrs.intersection({'create_client','lookup_transform','send_goal_async'})
     assert "parent,child='v4_odom','v4_base_link'" in source
-    assert 'node.get_logger().warning(json.dumps(core.warning,allow_nan=False))' in source
+    assert "node.get_logger().warning(json.dumps(trace['warning'],allow_nan=False))" in source
     assert 'local_odometry_node_v4' in (root/'setup.py').read_text()
     parent=(root/'aic_e2e_runtime/v4_shadow_node.py').read_text()
     assert "config.get('start_local_odometry',False)" in parent
