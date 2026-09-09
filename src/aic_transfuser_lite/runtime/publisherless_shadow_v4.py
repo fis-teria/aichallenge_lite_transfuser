@@ -16,26 +16,31 @@ from aic_transfuser_lite.control.path_control_bridge import Plan, PathPose, Vehi
 class Envelope:
     session_id: str
     wall_s: float
-    forward_limit: int
+    forward_limit: int | None
     candidate_limit: int
     authorized_until_unix_s: float
     log_bytes: int
+    termination_policy: str = 'COUNT_BOUNDED'
 
     def validate(self, unix_s: float) -> None:
-        if (not self.session_id or type(self.forward_limit) is not int or
-                not 1 <= self.forward_limit <= 40 or type(self.candidate_limit) is not int or
-                not 1 <= self.candidate_limit <= 200 or
-                not math.isfinite(self.wall_s) or not 0 < self.wall_s <= 115 or
+        timed = self.termination_policy == 'TIME_BOUNDED'
+        valid_forward = (self.forward_limit is None if timed else
+                         type(self.forward_limit) is int and 1 <= self.forward_limit <= 40)
+        if (self.termination_policy not in ('COUNT_BOUNDED', 'TIME_BOUNDED') or
+                not self.session_id or not valid_forward or type(self.candidate_limit) is not int or
+                not 1 <= self.candidate_limit <= (10000 if timed else 200) or
+                not math.isfinite(self.wall_s) or not 0 < self.wall_s <= (285 if timed else 115) or
                 not math.isfinite(self.authorized_until_unix_s) or
                 self.authorized_until_unix_s < unix_s+self.wall_s+5 or
-                type(self.log_bytes) is not int or not 1024 <= self.log_bytes <= 16*1024**2):
+                type(self.log_bytes) is not int or not 1024 <= self.log_bytes <= (64 if timed else 16)*1024**2):
             raise ValueError('FINITE_SHADOW_ENVELOPE_REQUIRED')
 
 
 class ShadowSession:
     """No transport methods: injected adapter/infer are executed in owned child.
 
-    wall_s <=115 reserves <=5 seconds of the 120s outer cap for termination.
+    Count-bounded trials retain the 115s cap. Explicit time-bounded shadow
+    sessions allow 285s inside an independently enforced 300s host envelope.
     Count attempted forward BEFORE invoking model, including errors.
     """
     def __init__(self, envelope: Envelope, adapter: object, infer: object,
@@ -62,7 +67,7 @@ class ShadowSession:
                 return False
         if self.monotonic()-self.started >= self.envelope.wall_s or self.unix() >= self.envelope.authorized_until_unix_s:
             self.terminal = 'SESSION_DEADLINE'
-        elif self.forward_calls >= self.envelope.forward_limit:
+        elif self.envelope.forward_limit is not None and self.forward_calls >= self.envelope.forward_limit:
             self.terminal = 'FORWARD_LIMIT'
         elif self.candidates >= self.envelope.candidate_limit:
             self.terminal = 'CANDIDATE_LIMIT'

@@ -57,6 +57,22 @@ def test_exact_forty_including_errors():
     assert len([x for x in e if x['event']=='FORWARD_STARTED'])==40
 
 
+def test_time_bounded_continues_after_forty_but_expires():
+    r,events,clock=setup()
+    r.envelope=Envelope('timed',285.,None,10000,600.,67108864,'TIME_BOUNDED')
+    r.envelope.validate(0.)
+    for i in range(80): apply(r,i)
+    assert r.forward_calls==80 and r.active()
+    clock[0]=285.
+    assert not r.active() and r.terminal=='SESSION_DEADLINE'
+    assert apply(r,81)['reason']=='SESSION_DEADLINE'
+
+
+def test_time_bounded_policy_must_be_explicit():
+    with pytest.raises(ValueError): Envelope('bad',285.,None,10000,600.,67108864).validate(0.)
+    with pytest.raises(ValueError): Envelope('bad',286.,None,10000,600.,67108864,'TIME_BOUNDED').validate(0.)
+
+
 def test_duplicate_epoch_missing_profile():
     r,e,_=setup();apply(r,1);apply(r,1)
     assert r.forward_calls==1
