@@ -689,3 +689,38 @@ V4自身も285wall秒/64MiB上限。候補10000はseen集合のメモリ保護�
 PP gain0.5、V4記録のみ・非制御の構成を維持する。
 変更はEnvelopeの明示試験モードと専有run16起動設定だけ。旧run15以前を保全。
 新規試行は1回、外側timeout297+3秒。実行後はFinish・介入・停止中/走行中PLANを分ける。
+
+### run16結果: 1周Finishと走行中V4 shadow記録を確認
+
+実行commit 5cebd49f80f8c984821e730a41e307b259f3f369。
+既定CheckOnly/同期とWSL lock限定testsは59 passed / 4.71s。
+既定同期の固定Datasetルート存在確認のみ実施。Dataset内容・学習なし。
+専有SSH install buildは1 package / 1.41s、config検証成功。
+publisherless_shadow_v4.pyのsource/install SHA一致:
+02ea46f0d6ba5a65a87c6cfef44ebe03a7a7b743bbfe1275d9cec85c19dd8ad4。
+
+実行: V4_SHADOW_ENABLED=true make dev CONTROL_METHOD=pure_pursuit
+CAPTURE=false ROSBAG=false AWSIM_LAPS=1 RUN_ID=v4_pp_shadow_16（専有wrapper下）。
+AWSIM state finishをsim100.540秒で受信、stop_reason=SIMULATOR_FINISH。
+Start state再通知sim18.335秒からFinishまで約82.205sim秒。
+これはjudge stateによる1周確認であり、開始位置への近接を完走根拠としていない。
+PPが既存Referenceで走行、V4経路による制御ではない。controller切替・resetなし。
+
+- FORWARD_STARTED278件、PLAN277件。最後の1件はFinish終了処理に重なり結果記録なし。
+- 全277経路は未補正[20,2]有限値。source時刻0.310〜100.480sim秒。
+- 観測時刻以後で最も近い保存odom標本の速度>0.1m/sで分類すると走行中243件、
+  それ以外34件。この分類は事後診断であり厳密な同時刻sensor joinの証明ではない。
+- 推論実時間平均32.94ms、最小10.20ms、最大369.02ms（初回含む）。
+- pose折線長375.646m、最高4.83454m/s（17.404km/h）。距離は完走判定に使用しない。
+- V4 control/gear/mode送信なし。PLANのVEHICLE_CONTRACT_UNKNOWNは
+  ShadowBridge(None)で制御採用禁止のままという意味。経路品質/安全性合格ではない。
+- 全体130.449wall秒でFinish後の所有AWSIM freeze/KILLを実施。
+  最終速度4.4996m/s、後続制動要求-1.5m/s²。ブレーキ停止成功は未確認。
+- raw resultのstatus=FAILED/error=OBSERVER_EXITは終了処理の競合による表記として保全。
+  公式Finish受信と区別し、raw resultをPASSへ書き換えない。SESSION_END記録はなし。
+- 最終INPUT_STALE/TRANSPORT_CLOSEDは終了後。所有container残存なしを独立確認。
+
+無接触・ペナルティなしは未確認。実画面動画なし、公式stateと走行/推論ログで確認。
+成果物はtmp/v4_pp_shadow_16/とremote同名run。40回停止は撤廃した明示モードで実行。
+旧予算履歴を保持。forward10000はメモリ上限に対応する保守予約で実測278と区別。
+追加走行・自動pushなし。次は保存された走行中V4経路の形状/時刻/欠損を評価する段階。
