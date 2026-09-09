@@ -226,3 +226,46 @@ Collision detectedログでの終了を明示する。外部freezeは自然制�
 Windows実行commitをsource_commit.txtに保存。preflight後に
 `timeout --signal=TERM --kill-after=3s 117s python3 run.py`を一度だけ実行。
 生ログ・予算・結果は`tmp/mpc_speed20_lap_10/`へ回収する。
+
+### 試験10結果: 未完走
+
+実行版`3d707e0613d1c309f46fe98d2d2d4be931c2a9c4`。
+Windows commit→既定CheckOnly/同期→WSL lock付き
+`.venv/bin/python -m pytest -q tests/test_mpc_speed20_fixture.py`は2 passed / 0.06s。
+全pytestはNOT_RUN。Datasetルートの既定存在確認を実施、内容/checkpoint読取なし。
+network-noneコンテナでinstallの実ロード設定が20km/h版であることを確認し、
+走行ログにも同じ値を確認。設定hashは
+`273793ba675ca8608ff3d75c07ba3fd63056fba4324dd700e82f09840caf2252`。
+SSH元configは前後とも
+`1be5b0e0aa9a5753e93d6cec28c88d4bf52f978d2b9d584f949b7a5b0c589ba1`。
+
+- 通常make dev exit0、official Start成立。V4 OFF、forward0。
+- 目標速度最大5.555555m/s、実速度最大5.718049m/s（20.585km/h）。
+  目標上限の反映は確認、実速度20km/h厳守ではない。
+- 3722 pose、記録点の折線長102.645m（前回82.086m）。測位揺れを含む。
+  overtake座標ego_s最大124.47、最終124.34（前回最終105.62）。
+  前回停止地点より約18.7m先という比較であり、一周判定ではない。
+- sim30.405→30.435の記録で速度4.660→1.315m/sへ急落。
+  当時の要求加速度+3.0m/s²。接触・状態入力異常の切り分けはUNKNOWN。
+  速度とposeは別callbackの最新値で、厳密な同時刻の加速度実測ではない。
+- MPC失敗カウンタ最大6、最終0。前回の失敗継続とは異なる。
+  最終reason=wall_footprint_margin、ego_d=2.41、速度約0.00033m/s。
+- sim46.09でraw舵角が設定32degを超え、raw最大絶対値1.008829rad、
+  final最大1.653471rad。finalは既存gain 1.639適用後。実タイヤ角の実測ではない。
+  agentが停止状態と異常な指令増大を確認し、所有simulator
+  `89a67b91de0a`をpause→KILL。以後unpauseなし。
+  監視スクリプトには操舵絶対値の即時停止条件がなく、今回はagent介入。
+  既存の操舵制約/出力処理の調査と停止監視確認が次の駆動前の課題。
+- Finish通知なし、無接触UNKNOWN、外部停止を自然制動PASSとしない。
+- 全体104.9106wall秒、最終74.680sim秒、Start pulse観測5.825sim秒。
+  Start後約68.855sim秒。command2123件、MPC60000は保守予約計上で実計算回数ではない。
+  生ログ13,189,632byte。新枠1回を使用、再試行なし。
+- raw resultのFAILED / INPUT_STALE / OBSERVER_EXITはfreeze後の結果。
+  start_basisの旧文字列は残存しているが、start_sim_sはStart pulseログ観測時。
+  元結果は改変せず本節で解釈を分離。cleanup errorなし、所有container/project残存なし。
+
+速度を下げて進捗は増えたが、原因解決や一周成功とは扱わない。
+AWSIM/既存MPCソース/SSH設定は未変更、変更は専用設定コピーと試験スクリプトのみ。
+実ROS/AWSIM試験は実施済み。接触telemetry、実舵角記録、solver正式終了状態、
+独立レビューは未確認。生証拠はWindows `tmp/mpc_speed20_lap_10/evidence/`と
+remote `/home/graneple/e2e_autonomous/mpc_speed20_lap_10/`。pushなし。
