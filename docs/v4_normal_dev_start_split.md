@@ -552,3 +552,23 @@ remaining_owned空、独立postrun inventoryでも全running/所有project残存
 証拠はtmp/pp_speed20_lap_13/とremote同名run。run12の履歴は保全。
 次の20km/h精度改善は、単なるgain増加ではなく加速上限と縦制御の定常偏差を
 両立する設計を先に確認する。走行再試行は未実施、pushなし。
+
+## run14: V4 shadowと既存PP走行の同時試験準備
+
+ユーザーは速度調整より完走を優先し、V4 shadow AWSIM試験を指示。
+PP gain0.5と基準Referenceを維持。V4は通常system launchの子として起動し、
+publisherなしで固定step500の未補正経路を記録する。制御接続は追加しない。
+変更は専有run14起動設定/限定testsのみ。モデル・worker・AWSIM・Safetyを変更しない。
+旧MPC command名を使うと入力契約が不成立になるため、sole PP final topicを
+明示final_fallbackとして設定。値はgain適用後の出力域rad、目標m/s、加速m/s²。
+実操舵計測やV4のshadow指令を過去操作として混ぜない。学習分布との一致は保証しない。
+各roleのsole publisher確認・鮮度・時刻/履歴検査は既存実装を維持。
+
+最大120wall秒、Start後90sim秒、forward40、候補200、shadow70wall秒、
+PP60000指令、1試行のみ。run13までの消費を保全。入力準備で推論開始するため、
+停止中に枠を消費する可能性があり、走行中PLAN数と停止中PLAN数を区別する。
+V4 session終了・監視異常・期限で所有instanceを終了。再試行や自動pushなし。
+専有source archiveからROS packageをbuildし、実installとconfig検証後に実行する。
+固定checkpointは既存allowlistパスをread-only mount。Datasetにはアクセスしない。
+実行予定: make dev CONTROL_METHOD=pure_pursuit CAPTURE=false ROSBAG=false
+AWSIM_LAPS=1 RUN_ID=v4_pp_shadow_14（専有wrapper下）。
