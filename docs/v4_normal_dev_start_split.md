@@ -422,3 +422,27 @@ ccb5cc4f1ff2aced753010411ab725ec97ae5db20cc4af705a2a819bedb1fa54。
 証拠: tmp/mpc_guard_lap_11/とremote同名run。追加再試行・pushなし。
 完走は未達。次は初期状態QPの非収束（尺度、重み、制約整合、反復状況）を
 限定診断し、解採用条件を緩めずに収束するかを確かめる。未収束解を復活させない。
+
+## 既存Pure Pursuitへ基準経路の接続先を変更
+
+ユーザー方針変更によりMPC調整を止め、既存PPへ切替。
+remote Makefile既定CONTROL_METHODをpure_pursuitへ変更（明示指定で旧方式は選択可能）。
+reference.launchのPP分岐だけに既存overtake plannerを残し、PPのtracking_statusを接続。
+MPC horizonはfalse、external固定速度はfalse、stale停止とoverride鮮度要求はtrue。
+PP以外の分岐は変更せず、追従器/車両モデル/Safetyを新規実装しない。
+Windows integrations/pp_reference/に適用ソース・差分・テスト・再現記録を保存。
+git apply --check→remote限定適用成功、既存dirtyを保全、remote pushなし。
+
+基準軌道生成の速度上限はPP選択時だけmin(既存指定,20/3.6)m/s。
+実装調査により、既存buildExecutionProfileは全点速度の最小値を使う一様速度であり、
+カーブ別速度計画ではないと確認。source速度0も停止点ではなくprofile拒否になる。
+PPはその軌道速度を読み比例縦制御、stale等では既存-1.5m/s²停止要求。
+MPCの制動/操舵gainを流用したとは扱わない。PP既存gain1.54を維持。
+速度・制動能力の実走行検証、新しいカーブ速度計画は今回は行っていない。
+
+Windows b086707→既定同期→WSL lock試験3 passed/0.03s。
+install実ファイルhash一致、ROS launch --show-argsと上限式の実評価が成功。
+PP executableの存在確認済み。実node起動・購読・publish・AWSIM・走行はNOT_RUN。
+MPC用run11 observerはノード名/異常理由/gainが違うためそのまま再利用しない。
+次はPP専有送信元、既存監視の入力充足、consumer制限と停止を確認する有限試験。
+V4は未接続のまま。基準経路PPで成立後、V4経路接続を別段階とする。

@@ -1,0 +1,62 @@
+diff --git a/Makefile b/Makefile
+index 42c748c..6ac9055 100644
+--- a/Makefile
++++ b/Makefile
+@@ -71,7 +71,7 @@ endif
+ # Used by docker-compose.yml for build/eval artifact ownership.
+ HOST_UID ?= $(shell id -u)
+ HOST_GID ?= $(shell id -g)
+-CONTROL_METHOD ?= pure_pursuit_mpc_horizon
++CONTROL_METHOD ?= pure_pursuit
+ PP_CORE_EXACT_SNAPSHOT_ENABLED ?= false
+ OVERTAKE_TRAJECTORY_BACKEND ?= current
+ AWSIM_READY_DOMAINS ?= 1
+diff --git a/aichallenge/workspace/src/aichallenge_submit/aichallenge_submit_launch/launch/reference.launch.xml b/aichallenge/workspace/src/aichallenge_submit/aichallenge_submit_launch/launch/reference.launch.xml
+index 8001141..cf18548 100644
+--- a/aichallenge/workspace/src/aichallenge_submit/aichallenge_submit_launch/launch/reference.launch.xml
++++ b/aichallenge/workspace/src/aichallenge_submit/aichallenge_submit_launch/launch/reference.launch.xml
+@@ -181,6 +181,13 @@
+ 
+   </group>
+ 
++  <!-- Pure Pursuit baseline: same reference generation, capped at 20 km/h.
++       Keep an explicitly lower reference cap; do not use external fixed speed. -->
++  <let name="effective_reference_speed_cap_mps" value="$(var reference_execution_speed_cap_mps)"/>
++  <let name="effective_reference_speed_cap_mps"
++       value="$(eval &quot;min(float('$(var reference_execution_speed_cap_mps)'), 5.555555555555555)&quot;)"
++       if="$(eval &quot;'$(var control_method)' == 'pure_pursuit'&quot;)"/>
++
+   <!-- Planning -->
+   <group>
+     <push-ros-namespace namespace="planning"/>
+@@ -193,7 +200,7 @@
+       <node pkg="simple_trajectory_generator" exec="simple_trajectory_generator_node" name="simple_trajectory_generator" output="screen">
+             <param name="csv_path" value="$(find-pkg-share multi_purpose_mpc_ros)/env/final_ver3/traj_mincurv_manual.csv"/>
+             <param name="z" value="6.5"/>
+-            <param name="execution_profile.max_speed_mps" value="$(var reference_execution_speed_cap_mps)"/>
++            <param name="execution_profile.max_speed_mps" value="$(var effective_reference_speed_cap_mps)"/>
+             <param name="execution_profile.max_arc_spacing_m" value="0.25"/>
+             <param name="execution_profile.max_yaw_step_rad" value="0.05"/>
+       </node>
+@@ -203,9 +210,21 @@
+ 
+   <!-- Control -->
+   <group if="$(eval &quot;'$(var control_method)' == 'pure_pursuit'&quot;)">
++    <!-- Retain the planner/wall guards previously included by mpc.launch. -->
++    <include file="$(find-pkg-share overtake_planner)/launch/overtake_planner.launch.xml">
++      <arg name="use_sim_time" value="$(var use_sim_time)"/>
++      <arg name="input_odom" value="/localization/kinematic_state"/>
++      <arg name="horizon_points" value="20"/>
++      <arg name="input_controller_tracking_status" value="/hybrid_control/pure_pursuit/tracking_status"/>
++    </include>
+     <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/pure_pursuit.launch.xml">
+       <arg name="simulation" value="$(var simulation)"/>
+       <arg name="use_sim_time" value="$(var use_sim_time)"/>
++      <arg name="use_mpc_predicted_horizon" value="false"/>
++      <arg name="use_external_target_vel" value="false"/>
++      <arg name="use_overtake_reference_override" value="true"/>
++      <arg name="require_overtake_reference_override_fresh" value="true"/>
++      <arg name="stop_on_stale_input" value="true"/>
+     </include>
+   </group>
+ 
