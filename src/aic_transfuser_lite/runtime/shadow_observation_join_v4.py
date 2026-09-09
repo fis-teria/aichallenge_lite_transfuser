@@ -11,6 +11,15 @@ from aic_transfuser_lite.control.path_control_bridge import PathPose
 from .shadow_delivery_v4 import INPUT_WAIT_NS
 
 
+def _same_value(left: object, right: object) -> bool:
+    """Exact decoded-value equality, including matching invalid scan markers."""
+    if isinstance(left, dict) or isinstance(right, dict):
+        return (isinstance(left, dict) and isinstance(right, dict)
+                and left.keys() == right.keys()
+                and all(_same_value(left[k], right[k]) for k in left))
+    return bool(np.array_equal(left, right, equal_nan=True))
+
+
 class ShadowObservationJoin:
     def __init__(self, session, commands, emit, *, clock_id: str, monotonic_id: str,
                  pose_frame: str, pose_evidence: str, wait_ns: int = INPUT_WAIT_NS):
@@ -21,7 +30,7 @@ class ShadowObservationJoin:
         self.pose_frame,self.pose_evidence=pose_frame,pose_evidence
         self.wait_ns=wait_ns;self.epoch=None;self.phase=None
         self.streams={r:deque(maxlen=64) for r in ('lidar','velocity','steering','pose')}
-        self.pending=deque();self.last_camera_ns=None
+        self.pending=deque();self.last_camera_ns=None;self.fault=None
 
     def on_input(self, role: str, message: object, received_ns: int, epoch: str) -> None:
         """ROS transport callback adapter; Odometry must explicitly be base_link pose."""
@@ -60,9 +69,10 @@ class ShadowObservationJoin:
         self.pending.clear()
         for stream in self.streams.values(): stream.clear()
         self.session.adapter.reset(reason);self.session.bridge._invalidate(reason)
-        self.epoch=epoch;self.phase=None;self.last_camera_ns=None
+        self.epoch=epoch;self.phase=None;self.last_camera_ns=None;self.fault=None
 
     def add(self, role: str, sample: Sample) -> None:
+        if self.fault is not None: raise ValueError(self.fault)
         if self.epoch is None: self.epoch=sample.epoch
         if sample.epoch!=self.epoch:
             raise ValueError('EPOCH_RESET_REQUIRED')
@@ -77,34 +87,71 @@ class ShadowObservationJoin:
             self.pending.append(sample)
         else:
             if role=='pose' and sample.frame!=self.pose_frame: raise ValueError('POSE_FRAME')
+            for previous in self.streams[role]:
+                if previous.ns != sample.ns: continue
+                if previous.frame == sample.frame and _same_value(previous.value, sample.value):
+                    self.emit(dict(event='JOIN_DUPLICATE',role=role,header_ns=sample.ns,
+                                   epoch=sample.epoch,reason='IDENTICAL_SAMPLE',
+                                   retained_received_ns=previous.received_ns,
+                                   duplicate_received_ns=sample.received_ns))
+                    return  # Retain original availability; never renew it.
+                self.fault='CONFLICTING_TIMESTAMP:'+role
+                self.emit(dict(event='JOIN_FAULT',role=role,header_ns=sample.ns,
+                               epoch=sample.epoch,reason=self.fault))
+                self.session.bridge._invalidate(self.fault)
+                raise ValueError(self.fault)
             self.streams[role].append(sample)
 
     def tick(self, finalized_ns: int, now_ros_s: float) -> None:
-        """Call from bounded worker, not the ROS receive callback (forward can block)."""
-        while self.pending:
-            camera=self.pending[0]
+        """Submit at most the newest ready camera; retain finite sensor history.
+
+        Only the worker calls this method. A forward owns its frozen input;
+        another candidate needs a fresh cutoff after that forward completes.
+        """
+        if self.fault is not None: return
+        streams={r:sorted((s for s in q if s.received_ns<=finalized_ns),key=lambda s:s.ns)
+                 for r,q in self.streams.items()}
+        waitable={'EMPTY_STREAM','LIDAR_stream_empty','LIDAR_outside_tolerance',
+                  'INTERPOLATION_missing_bracket','INTERPOLATION_outside_tolerance'}
+        for camera in reversed(tuple(self.pending)):
+            if camera.received_ns > finalized_ns: continue
             if finalized_ns>=camera.received_ns+self.wait_ns:
-                self.pending.popleft()
+                self._remove_camera(camera.ns)
                 self.emit(dict(event='JOIN_REJECTED',camera_ns=camera.ns,reason='JOIN_DEADLINE'))
                 self.session.bridge._invalidate('JOIN_DEADLINE')
                 continue
-            streams={r:sorted((s for s in q if s.received_ns<=finalized_ns),key=lambda s:s.ns)
-                     for r,q in self.streams.items()}
             try:
                 obs, provenance=align_observation(camera,streams['lidar'],streams['velocity'],
                     streams['steering'],cutoff_ns=finalized_ns,grid_phase_ns=self.phase)
                 xyh, pose_source=interpolate(streams['pose'],camera.ns,angle_columns=(2,))
                 if xyh.shape!=(3,): raise ValueError('POSE_SHAPE')
             except ValueError as exc:
-                self.emit(dict(event='JOIN_WAIT',camera_ns=camera.ns,reason=str(exc)))
-                return
+                reason=str(exc)
+                if reason in waitable:
+                    self.emit(dict(event='JOIN_WAIT',camera_ns=camera.ns,reason=reason))
+                else:
+                    self._remove_camera(camera.ns)
+                    self.emit(dict(event='JOIN_REJECTED',camera_ns=camera.ns,reason=reason))
+                    self.session.bridge._invalidate(reason)
+                continue
             def stamp(s): return replace(s,clock_id=self.clock_id,monotonic_id=self.monotonic_id)
             obs=replace(obs,camera=stamp(obs.camera),lidar=stamp(obs.lidar),ego_stamp=stamp(obs.ego_stamp))
             pose=PathPose(obs.sample_id,camera.ns*1e-9,self.clock_id,self.epoch,
                           tuple(float(x) for x in xyh),self.pose_evidence)
-            self.pending.popleft()  # consumed once, including rejected forward
+            # Consume once, including rejected forward. Older pending images
+            # never run after this observation; newer incomplete ones may wait.
+            for old in tuple(self.pending):
+                if old.ns <= camera.ns:
+                    self._remove_camera(old.ns)
+                    if old.ns < camera.ns:
+                        self.emit(dict(event='JOIN_REJECTED',camera_ns=old.ns,
+                                       reason='SUPERSEDED_BY_READY',selected_camera_ns=camera.ns))
             self.emit(dict(event='JOIN_READY',input_id=obs.sample_id,alignment=provenance,
                            pose=pose_source,pose_frame=self.pose_frame,pose_evidence=self.pose_evidence))
             self.session.observation(obs,self.commands(),pose,finalized_ns=finalized_ns,now_s=now_ros_s)
             # Forward may block. Never reuse this cutoff for a second candidate.
             return
+
+    def _remove_camera(self, ns: int) -> None:
+        # Do not compare dataclasses containing numpy arrays via deque.remove.
+        self.pending=deque(camera for camera in self.pending if camera.ns != ns)
