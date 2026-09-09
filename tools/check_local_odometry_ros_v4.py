@@ -9,20 +9,21 @@ import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from rosgraph_msgs.msg import Clock
-from autoware_auto_vehicle_msgs.msg import VelocityReport
+from autoware_auto_vehicle_msgs.msg import VelocityReport, SteeringReport
 from aic_e2e_runtime.local_odometry_node_v4 import create_local_odometry_node
 
 
 def main() -> None:
     rclpy.init(args=['--ros-args','-r','__node:=v4_shadow'])
     fixture=Node('awsim_d1',use_global_arguments=False)  # Artificial source identity in an isolated DDS domain.
-    local=create_local_odometry_node()
+    local=create_local_odometry_node(dict(wheelbase_m=2.,reference_left_offset_m=0.,evidence='SYNTHETIC_ONLY'))
     assert local.get_name()=='v4_local_odometry'
     executor=rclpy.get_global_executor();executor.add_node(local);executor.add_node(fixture)
     outputs=[]
     subscription=fixture.create_subscription(Odometry,'/v4/local_odometry',outputs.append,10)
     clock=fixture.create_publisher(Clock,'/clock',10)
     velocity=fixture.create_publisher(VelocityReport,'/vehicle/status/velocity_status',10)
+    steering=fixture.create_publisher(SteeringReport,'/vehicle/status/steering_status',10)
 
     def spin(seconds: float) -> None:
         until=time.monotonic()+seconds
@@ -34,12 +35,15 @@ def main() -> None:
             c=Clock();c.clock.sec=1;c.clock.nanosec=i*35_000_000
             clock.publish(c);spin(.02)
             v=VelocityReport();v.header.stamp=c.clock;v.header.frame_id='base_link'
-            v.longitudinal_velocity=2.;v.heading_rate=1.
+            v.longitudinal_velocity=2.;v.heading_rate=1256.
+            s=SteeringReport();s.stamp=c.clock;s.steering_tire_angle=math.atan(1.)
+            steering.publish(s)
             velocity.publish(v);spin(.04)
         assert len(outputs)==11, len(outputs)
         p=outputs[-1].pose.pose.position
-        assert abs(p.x-2*math.sin(.35))<1e-6
-        assert abs(p.y-2*(1-math.cos(.35)))<1e-6
+        assert abs(p.x-2*math.sin(.35))<1e-5
+        assert abs(p.y-2*(1-math.cos(.35)))<1e-5
+        assert abs(outputs[-1].twist.twist.angular.z-1.)<1e-6
         assert outputs[-1].child_frame_id=='v4_base_link'
         velocity.publish(v);spin(.05)
         assert len(outputs)==11
