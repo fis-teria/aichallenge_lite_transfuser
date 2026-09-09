@@ -1,0 +1,255 @@
+diff --git a/aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros/multi_purpose_mpc_ros/core/MPC.py b/aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros/multi_purpose_mpc_ros/core/MPC.py
+index b41a003..be85a4f 100644
+--- a/aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros/multi_purpose_mpc_ros/core/MPC.py
++++ b/aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros/multi_purpose_mpc_ros/core/MPC.py
+@@ -73,6 +73,9 @@ class MPC:
+         self.current_prediction_contract = (0, 0, False, False)
+         self._last_problem_prediction_contract = (0, 0, False, False)
+         self.infeasibility_counter = 0
++        self.last_control_valid = False
++        self.last_solver_status = "NOT_RUN"
++        self.last_rejection_reason = "NOT_RUN"
+         self.last_solved_wp_id = 0
+         self.current_control = np.zeros((self.nu*self.N))
+         self.overtake_lateral_offsets = None
+@@ -382,88 +385,100 @@ class MPC:
+         # オプティマイザの設定
+         self.optimizer = osqp.OSQP()
+         self.optimizer.setup(P=P, q=q, A=A_full, l=l, u=u, verbose=False)
++        self._solution_constraints = (A_full.copy(), l.copy(), u.copy())
++
++    def _bounded_steering(self, requested: float) -> float:
++        """Raw tire angle in rad; keep the existing post-publish gain separate."""
++        lower = float(np.arctan(self.input_constraints['umin'][1] * self.model.length))
++        upper = float(np.arctan(self.input_constraints['umax'][1] * self.model.length))
++        if not np.all(np.isfinite([lower, upper, requested, self.previous_steering,
++                                   self.max_steering_rate, self.model.Ts])):
++            raise ValueError("STEERING_NONFINITE")
++        if lower > 0 or upper < 0 or lower >= upper or self.model.Ts <= 0 or self.max_steering_rate < 0:
++            raise ValueError("STEERING_CONFIG")
++        # An already-invalid previous command is not a valid rate-limit anchor.
++        if not lower <= self.previous_steering <= upper:
++            raise ValueError("PREVIOUS_STEERING_OUT_OF_BOUNDS")
++        step = self.max_steering_rate * self.model.Ts
++        return float(np.clip(requested, max(lower, self.previous_steering-step),
++                             min(upper, self.previous_steering+step)))
++
++    def _reject_control(self, reason: str) -> Tuple[np.ndarray, float]:
++        """Zero speed request plus held, bounded raw steer; not a stopping proof."""
++        self.last_control_valid = False
++        self.last_rejection_reason = reason
++        self.infeasibility_counter += 1
++        self.current_prediction = None
++        self.current_prediction_trajectory = None
++        self.current_prediction_contract = (0, 0, False, False)
++        try:
++            steer = self._bounded_steering(float(self.previous_steering))
++        except ValueError:
++            steer = 0.0
++        self.previous_steering = steer
++        self.current_control = np.zeros(self.nu * self.N)
++        self.current_control[1::2] = steer
++        return np.array([0.0, steer]), abs(steer)
+ 
+     def get_control(self) -> Tuple[np.ndarray, float]:
+-        """
+-        Get control signal given the current position of the car.
+-        """
+-        nx = self.nx
+-        nu = self.nu
+-
+-        self.model.get_current_waypoint()
+-
+-        N = min(self.N, self.model.reference_path.n_waypoints - self.model.wp_id) \
+-            if not self.model.reference_path.circular else self.N
+-
+-        self.model.spatial_state = self.model.t2s(
+-            reference_state=self.model.temporal_state,
+-            reference_waypoint=self.model.current_waypoint)
+-
+-        self._init_problem(N, self.model.safety_margin)
++        """Accept only solved, finite, constraint-compatible [speed, curvature].
+ 
++        The solver vector has shape [(N+1)*nx + N*nu]. Curvature is 1/m;
++        returned control is [m/s, raw tire rad]. No old-command fallback.
++        """
++        self.last_control_valid = False
++        self.last_rejection_reason = ""
++        self.last_solver_status = "NOT_RUN"
+         try:
++            self.model.get_current_waypoint()
++            N = (min(self.N, self.model.reference_path.n_waypoints-self.model.wp_id)
++                 if not self.model.reference_path.circular else self.N)
++            if N < 1:
++                raise ValueError("EMPTY_HORIZON")
++            self.model.spatial_state = self.model.t2s(
++                reference_state=self.model.temporal_state,
++                reference_waypoint=self.model.current_waypoint)
++            self._init_problem(N, self.model.safety_margin)
+             dec = self.optimizer.solve()
+-            control_signals = np.array(dec.x[-N*nu:])
+-            use_control_signals = control_signals[1::2]
+-
+-            if not np.all(use_control_signals):
+-                for i in range(1, 6):
+-                    relaxed_safety_margin = self.model.safety_margin * ((5-i) / 5.0)
+-                    self._init_problem(N, relaxed_safety_margin)
+-                    dec = self.optimizer.solve()
+-                    control_signals = np.array(dec.x[-N*nu:])
+-                    use_control_signals = control_signals[1::2]
+-
+-                    if self.infeasibility_counter == 0 and np.all(use_control_signals):
+-                        if self.last_solved_wp_id != self.model.wp_id:
+-                            print(f"Relaxed safety margin by {relaxed_safety_margin} ({5-i}/5) to solve the problem")
+-                        break
+-
+-            # ステア角の計算と保存
+-            control_signals[1::2] = np.arctan(control_signals[1::2] * self.model.length)
+-            v = control_signals[0]
+-            delta = control_signals[1]
+-
+-            # ステアレートの制限を適用
+-            max_delta_change = self.max_steering_rate * self.model.Ts
+-            delta = np.clip(
+-                delta,
+-                self.previous_steering - max_delta_change,
+-                self.previous_steering + max_delta_change
+-            )
+-            self.previous_steering = delta
+-
+-            # 予測の更新
+-            self.current_control = control_signals
+-            x = np.reshape(dec.x[:(N+1)*nx], (N+1, nx))
+-            self.current_prediction = self.update_prediction(x, N)
+-            self.current_prediction_trajectory = self.update_prediction_trajectory(
+-                x, N, control_signals)
++            self.last_solver_status = str(dec.info.status)
++            if dec.info.status_val != 1 or self.last_solver_status.lower() != "solved":
++                return self._reject_control("SOLVER_STATUS:"+self.last_solver_status)
++            vector = np.asarray(dec.x, dtype=float)
++            expected = (N+1)*self.nx + N*self.nu
++            if vector.shape != (expected,) or not np.all(np.isfinite(vector)):
++                raise ValueError("SOLUTION_SHAPE_OR_NONFINITE")
++            A, lower, upper = self._solution_constraints
++            projected = np.asarray(A @ vector).reshape(-1)
++            # Absolute numerical acceptance budget, NOT a wall/vehicle margin.
++            tolerance = 1e-5
++            if (not np.all(np.isfinite(projected))
++                    or np.any(projected < lower-tolerance)
++                    or np.any(projected > upper+tolerance)):
++                raise ValueError("SOLUTION_CONSTRAINT_VIOLATION")
++            controls = vector[-N*self.nu:].copy()
++            # Clamp only accepted numerical roundoff against ORIGINAL input bounds.
++            for j in range(self.nu):
++                controls[j::self.nu] = np.clip(
++                    controls[j::self.nu], self.input_constraints['umin'][j],
++                    self.input_constraints['umax'][j])
++            controls[1::2] = np.arctan(controls[1::2] * self.model.length)
++            delta = self._bounded_steering(float(controls[1]))
++            x = vector[:(N+1)*self.nx].reshape(N+1, self.nx)
++            prediction = self.update_prediction(x, N)
++            trajectory = self.update_prediction_trajectory(x, N, controls)
++            # Keep the solver horizon unmodified: the rate-limited first command
++            # is separate; do not advertise this horizon as an executed rollout.
++            self.current_control = controls
++            self.current_prediction = prediction
++            self.current_prediction_trajectory = trajectory
+             self.current_prediction_contract = self._last_problem_prediction_contract
+-
+-            u = np.array([v, delta])
+-            max_delta = np.max(np.abs(control_signals[1:len(control_signals)//3*2:2]))
+-
+-            if self.infeasibility_counter > (N - 1):
+-                print(f'Problem solved after {self.infeasibility_counter} infeasible iterations')
++            self.previous_steering = delta
+             self.infeasibility_counter = 0
+             self.last_solved_wp_id = self.model.wp_id
+-
+-        except TypeError or ValueError:
+-            id = nu * (self.infeasibility_counter + 1)
+-            if id + 2 < len(self.current_control):
+-                u = np.array(self.current_control[id:id+2])
+-                max_delta = np.abs(u[1])
+-            else:
+-                u = np.array([0.0, 0.0])
+-                max_delta = 0.0
+-
+-            self.infeasibility_counter += 1
+-
+-        if self.infeasibility_counter > (N - 1) and self.infeasibility_counter % 100 == 0:
+-            print('No control signal computed!')
+-
+-        return u, max_delta
++            self.last_control_valid = True
++            return np.array([controls[0], delta]), float(np.max(np.abs(controls[1::2])))
++        except (TypeError, ValueError, AttributeError, RuntimeError, FloatingPointError, osqp.OSQPException) as exc:
++            return self._reject_control(type(exc).__name__+":"+str(exc))
+ 
+     def update_prediction(self, spatial_state_prediction, N):
+         """
+diff --git a/aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros/multi_purpose_mpc_ros/mpc_controller.py b/aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros/multi_purpose_mpc_ros/mpc_controller.py
+index 8ef72c2..d7a5ff4 100644
+--- a/aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros/multi_purpose_mpc_ros/mpc_controller.py
++++ b/aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros/multi_purpose_mpc_ros/mpc_controller.py
+@@ -937,7 +937,37 @@ class MPCController(Node):
+         ackerman_boost_cmd.boost_mode = bug_acc_enabled
+         return ackerman_boost_cmd
+ 
++    def _guard_publish_values(self, u, acc, bug_acc_enabled):
++        """Final raw-domain bound in rad; gain conversion remains downstream."""
++        cfg = self._mpc_cfg
++        limit = float(cfg.delta_max)
++        rate = float(cfg.steer_rate_max) / float(cfg.steering_tire_angle_gain_var)
++        dt = 1.0 / float(cfg.control_rate)
++        if (not np.all(np.isfinite([limit, rate, dt, cfg.a_min, cfg.a_max, cfg.v_max]))
++                or limit <= 0 or rate < 0 or dt <= 0 or cfg.a_min >= 0):
++            raise ValueError("INVALID_PUBLISH_LIMITS")
++        previous = float(getattr(self, '_last_published_raw_steer', 0.0))
++        if not np.isfinite(previous) or abs(previous) > limit:
++            previous = 0.0
++        values = np.asarray(u, dtype=float)
++        invalid = (values.shape != (2,) or not np.all(np.isfinite(values))
++                   or not np.isfinite(acc))
++        if not invalid:
++            invalid = abs(values[1]) > limit or values[0] < 0 or values[0] > cfg.v_max
++        if invalid:
++            self.get_logger().error('COMMAND_REJECTED: nonfinite/shape/bounds')
++            values = np.array([0.0, previous])
++            acc = cfg.a_min
++            bug_acc_enabled = False
++        else:
++            values = values.copy()
++        values[1] = np.clip(values[1], max(-limit, previous-rate*dt),
++                            min(limit, previous+rate*dt))
++        self._last_published_raw_steer = float(values[1])
++        return values, float(np.clip(acc, cfg.a_min, cfg.a_max)), bug_acc_enabled
++
+     def _publish_control_command(self, stamp, u, acc, bug_acc_enabled):
++        u, acc, bug_acc_enabled = self._guard_publish_values(u, acc, bug_acc_enabled)
+         cmd = self._create_ackerman_control_command(stamp, u, acc, bug_acc_enabled)
+ 
+         # publish raw control command
+@@ -1482,6 +1512,10 @@ class MPCController(Node):
+             self._last_mpc_solve_time_ms = (perf_counter() - solve_started) * 1000.0
+             self._last_mpc_infeasible_count = int(getattr(self._mpc, "infeasibility_counter", 0))
+             self._last_mpc_status = "infeasible" if self._last_mpc_infeasible_count > 0 else "solved"
++            if not self._mpc.last_control_valid:
++                self.get_logger().warning(
++                    'MPC_REJECTED: '+self._mpc.last_rejection_reason+
++                    ' solver='+self._mpc.last_solver_status)
+             # self.get_logger().info(f"u: {u}")
+ 
+         # override by brake command if control is disabled
+@@ -1533,6 +1567,12 @@ class MPCController(Node):
+         acc = self._last_acc + (acc - self._last_acc) * self._mpc_cfg.accel_low_pass_gain
+         u[1] = self._last_u[1] + (u[1] - self._last_u[1]) * self._mpc_cfg.steer_low_pass_gain
+ 
++        # Rejection dominates disabled-control ramp, feedforward and low-pass.
++        # This is a brake request, not evidence that the simulator has stopped.
++        if not self._mpc.last_control_valid:
++            u[0] = 0.0
++            acc = self._mpc_cfg.a_min
++            bug_acc_enabled = False
+         self._last_acc = acc
+         self._last_u[0] = u[0]
+         self._last_u[1] = u[1]

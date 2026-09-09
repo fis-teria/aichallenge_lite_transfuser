@@ -477,7 +477,7 @@ class MPC:
             self.last_solved_wp_id = self.model.wp_id
             self.last_control_valid = True
             return np.array([controls[0], delta]), float(np.max(np.abs(controls[1::2])))
-        except (TypeError, ValueError, RuntimeError, FloatingPointError, osqp.OSQPException) as exc:
+        except (TypeError, ValueError, AttributeError, RuntimeError, FloatingPointError, osqp.OSQPException) as exc:
             return self._reject_control(type(exc).__name__+":"+str(exc))
 
     def update_prediction(self, spatial_state_prediction, N):

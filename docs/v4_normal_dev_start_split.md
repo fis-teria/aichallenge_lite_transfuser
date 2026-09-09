@@ -288,3 +288,29 @@ solver終了理由・許容残差・実操舵が未記録なので前回の超�
 次段階は既存MPCの解採用条件・操舵制約処理の修正範囲について承認を得て、
 異常解を含む合成回帰試験で確認する。新規MPC開発やSafety緩和は不要。
 その後に別承認枠で比較走行し、Finishと接触/逸脱/介入を評価する。
+
+## MPC解採用・操舵制限修正（Windows実装、remote適用保留）
+
+ユーザーが既存MPCの解採用と操舵制限の修正を承認。
+`integrations/mpc_solution_guard/`に現在の2ソースの修正版とfocused patchを保存。
+実装内容はREADME参照。OSQP solved以外、非有限/shape異常/組立制約逸脱を拒否、
+旧操作再利用とゼロ曲率時のmargin緩和retryを削除。拒否時は予測を失効させ、
+既存a_minの制動要求をfeedforward/filterより優先。raw絶対角/rateをpublish前にも制限。
+既存gain変換は維持。未知の車体校正値は追加しない。カーブ候補設定とは別変更。
+
+初回WSL試験はOSQP未導入でcollection error。その記録を合格扱いにしない。
+依存追加せず、合成解用test doubleと実OSQP試験を明示分離し、
+WSL lock付き25 passed / 1 skipped（OSQPなし）を確認。
+remote既存MPC venvにもpytestがなくtest起動は失敗。
+標準Python実行のsmoke_osqp.pyで既存OSQP 0.6.7.post1を使い、
+正常解採用・primal infeasible拒否の合成QP 2件を確認した。
+いずれもnetwork none、既存aichallenge mountはread-only、ROS/publish/走行なし。
+追加のmetadata欠落とraw/final publisher境界試験を含む最終結果は下記に追記する。
+
+最大主張はローカル実装と合成検証。完走、実車Safety、実停止成功は主張しない。
+既存QPの隣接曲率差rate定式化と実タイヤ校正、実ROS全体の例外停止、
+数値許容1e-5による実際の解採用率は未検証。
+SSH先ソース/installへの適用は未実施、基準hashはREADMEに固定。
+remoteのexternal_review方針を確認したが、今回は外部サービスへのソース送信を
+明示承認されていないため未送信・REVIEW_PENDING。review完了と偽らない。
+新しい走行枠もなし。AWSIM/V4/壁監視/既存remote dirtyは未変更、pushなし。

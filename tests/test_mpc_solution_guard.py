@@ -165,3 +165,32 @@ def test_invalid_previous_steering_cannot_extend_bound():
     m.previous_steering = 1.0
     assert m.get_control()[0].tolist() == [0., 0.]
     assert not m.last_control_valid
+
+
+def test_missing_solver_metadata_is_rejected():
+    m = fixture()
+    m.optimizer = S(solve=lambda: S(x=np.zeros(13)))
+    assert m.get_control()[0][0] == 0
+    assert 'AttributeError' in m.last_rejection_reason
+
+
+def test_actual_publish_method_keeps_raw_gain_contract():
+    import copy
+    n, guard = publisher()
+    n._guard_publish_values = lambda *args: guard(n, *args)
+    recorded = []
+    n._create_ackerman_control_command = lambda stamp, u, acc, boost: S(
+        lateral=S(steering_tire_angle=u[1]), longitudinal=S(speed=u[0], acceleration=acc))
+    n._command_raw_pub = S(publish=lambda msg: recorded.append(copy.deepcopy(msg)))
+    n._command_pub = S(publish=lambda msg: recorded.append(copy.deepcopy(msg)))
+    tree = ast.parse((ROOT/'mpc_controller.py').read_text(encoding='utf-8'))
+    method = next(x for x in ast.walk(tree) if isinstance(x, ast.FunctionDef)
+                  and x.name == '_publish_control_command')
+    ns = {}
+    exec(compile(ast.Module(body=[method], type_ignores=[]), 'actual_publish', 'exec'), ns)
+    ns['_publish_control_command'](n, None, [1., .4], 1., False)
+    assert recorded[1].lateral.steering_tire_angle == pytest.approx(
+        recorded[0].lateral.steering_tire_angle*1.639)
+    ns['_publish_control_command'](n, None, [1., 1.01], 3., True)
+    assert recorded[-1].longitudinal.speed == 0
+    assert recorded[-1].longitudinal.acceleration == -.9
