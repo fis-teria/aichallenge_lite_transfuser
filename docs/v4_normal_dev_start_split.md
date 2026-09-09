@@ -625,3 +625,9 @@ AWSIM、PP、モデル、閾値、topic/QoSは変更なし。今回live再試行
 限定再現: tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q
 tests/test_shadow_ros2_transport_v4.py tests/test_v4_shadow_package.py
 tests/test_publisherless_shadow_v4.py tests/test_shadow_start_gate_v4.py。
+
+実装commit 095438f764e77585b8b35acac51655534670cdfe。
+既定CheckOnly/同期成功、WSL lock限定検証57 passed / 4.13s。
+起動待ち、pause、再開、sim TTL超過、時計巻き戻り、pause中の遅いgraph照会を合成検証。
+既定同期の固定Datasetルート存在確認のみ実施、Dataset内容/checkpoint読取りは未実施。
+全pytest、実ROS clock/pause検証、SSH先install反映、AWSIM再走行はNOT_RUN。
