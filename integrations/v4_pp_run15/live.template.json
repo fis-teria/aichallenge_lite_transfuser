@@ -1,0 +1,41 @@
+{
+  "enabled": true,
+  "output_file": "/v4/evidence/shadow.jsonl",
+  "pose_frame": "map",
+  "pose_evidence": "live guard validates Odometry map/base_link from sole /localization/ekf_localizer",
+  "inference_start_policy": "INPUT_READY_SHADOW",
+  "start_gate": null,
+  "envelope": {
+    "session_id": "codex-v4-pp-shadow-15",
+    "wall_s": 70,
+    "forward_limit": 40,
+    "candidate_limit": 200,
+    "authorized_until_unix_s": 1788888491.5629199,
+    "log_bytes": 4194304
+  },
+  "command_binding": {
+    "topic": "/control/command/control_cmd",
+    "producer_id": "/simple_pure_pursuit_node",
+    "source": "final_fallback",
+    "contract_evidence": "Existing PP final Ackermann: bounded output-domain tire rad after gain1.54, target m/s, acceleration m/s2; sole external PP graph required, not measured steering or shadow feedback",
+    "semantics": "TIRE_RAD_TARGET_MPS_ACCEL_MPS2"
+  },
+  "topics": {
+    "image": "/sensing/camera/image_raw",
+    "lidar": "/sensing/lidar/scan",
+    "velocity": "/vehicle/status/velocity_status",
+    "steering": "/vehicle/status/steering_status",
+    "clock": "/clock",
+    "command": "/control/command/control_cmd",
+    "odometry": "/localization/kinematic_state"
+  },
+  "expected_nodes": {
+    "image": "/awsim_d1",
+    "lidar": "/awsim_d1",
+    "velocity": "/awsim_d1",
+    "steering": "/awsim_d1",
+    "clock": "/awsim_d1",
+    "command": "/simple_pure_pursuit_node",
+    "odometry": "/localization/ekf_localizer"
+  }
+}

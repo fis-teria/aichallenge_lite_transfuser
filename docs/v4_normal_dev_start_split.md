@@ -631,3 +631,12 @@ tests/test_publisherless_shadow_v4.py tests/test_shadow_start_gate_v4.py。
 起動待ち、pause、再開、sim TTL超過、時計巻き戻り、pause中の遅いgraph照会を合成検証。
 既定同期の固定Datasetルート存在確認のみ実施、Dataset内容/checkpoint読取りは未実施。
 全pytest、実ROS clock/pause検証、SSH先install反映、AWSIM再走行はNOT_RUN。
+
+## run15準備: 修正版のSSH反映とAWSIM再試験
+
+専有v4_pp_shadow_15へ現commitのsource archiveを配布/buildする。
+既存dirty checkout/旧run/installは上書きしない。PP gain0.5、AWSIMは前runと同じ。
+最大120wall秒/Start後90sim秒/forward40/候補200の新規1試行、run14の履歴を保全。
+試験wrapperはSESSION_END監視をmake待ちと独立に実施し、終了後の不要な駆動を防ぐ。
+ログ監視パスに残っていたrun12名も今回のrun15名へ一致させる。
+変更は試験wrapperだけ、V4/制御の新規仕様追加なし。外側host期限は実時間を維持。
