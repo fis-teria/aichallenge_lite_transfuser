@@ -1,8 +1,9 @@
 """Synthetic solver/ROS-free tests of the actual patched integration methods."""
 import ast
 import importlib.util
+import sys
 from pathlib import Path
-from types import SimpleNamespace as S
+from types import SimpleNamespace as S, ModuleType
 
 import numpy as np
 import pytest
@@ -11,7 +12,17 @@ from scipy import sparse
 ROOT = Path(__file__).resolve().parents[1] / 'integrations/mpc_solution_guard'
 spec = importlib.util.spec_from_file_location('guarded_mpc', ROOT / 'MPC.py')
 module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
+HAS_OSQP = importlib.util.find_spec('osqp') is not None
+if not HAS_OSQP:
+    # Explicit test double ONLY for synthetic acceptance tests; never deployment.
+    stub = ModuleType('osqp')
+    stub.OSQPException = type('SyntheticOSQPException', (Exception,), {})
+    sys.modules['osqp'] = stub
+try:
+    spec.loader.exec_module(module)
+finally:
+    if not HAS_OSQP:
+        del sys.modules['osqp']
 
 
 def fixture(status='solved', status_val=1, vector=None, error=None):
@@ -137,6 +148,7 @@ def test_publish_rate_and_no_input_mutation():
     assert a == 1.
 
 
+@pytest.mark.skipif(not HAS_OSQP, reason='OSQP unavailable; synthetic tests are not real solver validation')
 def test_actual_osqp_solved_vector_is_accepted():
     m = fixture()
     A, lo, hi = m._solution_constraints
