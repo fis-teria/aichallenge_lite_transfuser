@@ -147,3 +147,19 @@ remote `/home/graneple/e2e_autonomous/` 配下同名runに保存。自動pushな
    これだけを根拠にLiDAR SLAMが必要とは判断しない。
 3. 走行制御は既存PP/EKF経路であり、E2E部門適合走行・V4制御での完走ではない。
    V4本体へのGNSS/IMU pose依存を外したことと、試験全体のセンサ依存を混同しない。
+
+### 速度profileを警告へ変更した版の検証
+
+ユーザー指示により `add974c55a81793ce4ff01e168acf463f55634c0` で超過停止を削除。
+非有限・時刻・送信元等の検査、既存host/PP側の監視は変更していない。
+WSL同期の固定Dataset root存在確認を実施、実Dataset内容は未読。
+
+```bash
+tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q --junitxml=runs/local_odom_warning_add974c/junit.xml
+```
+
+**1760 passed, 4 skipped, 51 warnings / 71.23s**。
+前後/横速度・正負yaw超過で停止せず解析解どおり積分すること、記録field、
+閾値等号、reset、NaN/Inf・時刻異常の拒否を確認した。
+JUnitは上記WSL path。SSH simulator hostへの再配布・実ROS警告ログ検証・AWSIM再試験は未実施。
+超過値を採用するため、入力スパイク等で局所poseがずれる可能性は残る。
