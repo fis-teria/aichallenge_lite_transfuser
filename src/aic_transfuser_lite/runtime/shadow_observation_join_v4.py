@@ -22,12 +22,15 @@ def _same_value(left: object, right: object) -> bool:
 
 class ShadowObservationJoin:
     def __init__(self, session, commands, emit, *, clock_id: str, monotonic_id: str,
-                 pose_frame: str, pose_evidence: str, wait_ns: int = INPUT_WAIT_NS):
+                 pose_frame: str, pose_evidence: str, wait_ns: int = INPUT_WAIT_NS,
+                 pose_child_frame: str = 'base_link'):
         if not all((clock_id,monotonic_id,pose_frame,pose_evidence)) or not 0 < wait_ns <= 300_000_000:
             raise ValueError('JOIN_CONTRACT_REQUIRED')
         self.session,self.commands,self.emit=session,commands,emit
         self.clock_id,self.monotonic_id=clock_id,monotonic_id
         self.pose_frame,self.pose_evidence=pose_frame,pose_evidence
+        if pose_child_frame not in ('base_link','v4_base_link'): raise ValueError('POSE_CHILD_FRAME')
+        self.pose_child_frame=pose_child_frame
         self.wait_ns=wait_ns;self.epoch=None;self.phase=None
         self.streams={r:deque(maxlen=64) for r in ('lidar','velocity','steering','pose')}
         self.pending=deque();self.last_camera_ns=None;self.fault=None
@@ -56,7 +59,7 @@ class ShadowObservationJoin:
             value=[message.longitudinal_velocity,message.lateral_velocity,message.heading_rate]
         elif role=='steering': value=[message.steering_tire_angle]
         elif role=='odometry':
-            if message.child_frame_id!='base_link' or frame!=self.pose_frame:
+            if message.child_frame_id!=self.pose_child_frame or frame!=self.pose_frame:
                 raise ValueError('ODOMETRY_BASE_FRAME_UNPROVEN')
             p=message.pose.pose.position;q=message.pose.pose.orientation
             value=[p.x,p.y,quaternion_yaw([q.x,q.y,q.z,q.w])];role='pose'

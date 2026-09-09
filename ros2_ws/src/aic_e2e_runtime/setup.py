@@ -42,6 +42,7 @@ setup(
             "inference_node_v3 = aic_e2e_runtime.inference_node_v3:main",
             "spatial_path_shadow_node_v4 = aic_e2e_runtime.spatial_path_shadow_node_v4:main",
             "v4_shadow_node = aic_e2e_runtime.v4_shadow_node:main",
+            "local_odometry_node_v4 = aic_e2e_runtime.local_odometry_node_v4:main",
             "safety_supervisor_node = aic_e2e_runtime.safety_supervisor_node:main",
             "calibration_excitation_node = aic_e2e_runtime.calibration_excitation_node:main",
         ],

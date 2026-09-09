@@ -31,6 +31,11 @@ def validate_config(c: dict) -> None:
                                       'initialization': '/autostart/initialization_ready'}):
             raise ValueError('EXPLICIT_START_GATE_REQUIRED')
     Envelope(**c['envelope']).validate(time.time())
+    if c.get('pose_child_frame','base_link') != 'base_link':
+        if (c['pose_child_frame']!='v4_base_link' or c['pose_frame']!='v4_odom' or
+                c['topics']['odometry']!='/v4/local_odometry' or
+                c['expected_nodes']['odometry']!='/v4_local_odometry'):
+            raise ValueError('LOCAL_ODOMETRY_BINDING')
     binding=ControllerCommandBinding(**c['command_binding']);binding.validate()
     roles={'image','lidar','velocity','steering','command','odometry','clock'}
     if (set(c['topics'])!=roles or set(c['expected_nodes'])!=roles or
@@ -58,7 +63,8 @@ def worker(config: dict, incoming, outgoing) -> None:
                           forward_permit=permit)
     commands=()
     join=ShadowObservationJoin(session,lambda:commands,emit,clock_id='AWSIM_ROS',
-         monotonic_id='HOST_MONOTONIC',pose_frame=config['pose_frame'],pose_evidence=config['pose_evidence'])
+         monotonic_id='HOST_MONOTONIC',pose_frame=config['pose_frame'],pose_evidence=config['pose_evidence'],
+         pose_child_frame=config.get('pose_child_frame','base_link'))
     while session.active():
         try: item=incoming.get(timeout=.05)
         except queue.Empty: continue
