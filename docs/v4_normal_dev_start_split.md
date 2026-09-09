@@ -446,3 +446,55 @@ PP executableの存在確認済み。実node起動・購読・publish・AWSIM・
 MPC用run11 observerはノード名/異常理由/gainが違うためそのまま再利用しない。
 次はPP専有送信元、既存監視の入力充足、consumer制限と停止を確認する有限試験。
 V4は未接続のまま。基準経路PPで成立後、V4経路接続を別段階とする。
+
+## 2026-09-09 Pure Pursuit AWSIM有限試験 run12
+
+実行commit: bf69a68f11828e079066833c3043f17d03064cbe。
+Windows正本から既定CheckOnly/同期後、WSL lockで限定試験11 passed / 0.07s。
+既定同期によるDatasetルートの存在確認を実施。
+Dataset内容・raw・sensor・checkpointファイルの読取りは未実施。
+実行時のROS sensor/ego/pose購読と小さな状態ログ保存は本AWSIM試験として実施。
+
+実行環境: graneple@192.168.3.10、
+/home/graneple/git/autononous_ai/aichallenge-racingkart。
+専有project codex-pp-reference-lap-12、ホスト元checkoutの既存dirtyを保全。
+AWSIM実行物/scene/sensorは変更せず、V4推論・MPCはOFF。
+既存PPが既存CSV基準経路を追従する試験であり、V4経路追従ではない。
+
+実行コマンド（同じrun IDの再実行指示ではない）:
+
+```text
+make dev CONTROL_METHOD=pure_pursuit CAPTURE=false ROSBAG=false AWSIM_LAPS=1 RUN_ID=pp_reference_lap_12 OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/pp_reference_lap_12/evidence
+```
+
+ホスト専用run.pyの時間監視下で上記を実行。raw操舵はPP制限前の要求、
+final操舵はPP制限後として監視し、MPCのraw gain契約を流用しない。
+final送信元は/simple_pure_pursuit_nodeのみを要求。
+追加試行は1回のみ。wall120秒、post-Start90sim秒、PP指令60000回以内。
+旧予算はbudget.jsonのprior_usedに保持。駆動90秒は保守予約計上で実測値ではない。
+
+結果:
+
+- make終了0、公式Start helper完了。stateはspawned/grounded/start/ready/start。
+  Finishはなし。RViz2起動ログはあるが画面動画は今回取得していない。
+- 3966 pose標本の折線長91.9304m。これは走行距離の診断値で完走判定ではない。
+  初めて速度0.1m/s超となった記録はsim12.815秒、最終sim79.530秒。
+- 最大実速度1.389441m/s（約5.002km/h）。目標速度最大5.524161m/s（約19.887km/h）。
+  終端も速度1.388028m/sに対して加速要求4.136114m/s²。
+  約5km/hに留まる理由はUNKNOWN。速度fieldの設定だけで20km/h成立とは扱わない。
+- raw9036件/final9037件。poseに対応付けて記録されたfinal操舵の最大絶対値0.530rad。
+  これは全commandを保存した厳密な最大値ではない。監視時のfinal0.64rad超過検出なし。
+- HOST_WALL_LIMITが終了理由。全体108.963wall秒。
+  生resultはFAILED / OBSERVER_EXIT、最終guardはINPUT_STALEのまま保全。
+  終了処理のobserver終了を主因のように上書きせず、時間上限停止と区別する。
+- 所有AWSIMをpause→KILLして終了。最終制動要求-1.5m/s²は見えるが、
+  最終速度は1.388m/sであり、動的制動停止成功ではない。
+- 生resultのremaining_ownedは空。試験後の独立docker inventoryでも
+  所有project残存・全running containerなし。過去の停止済みcontainerは保全。
+- trajectoryのRELIABILITY QoS不一致警告が2件あり、対象購読者は未特定。
+  PP実走行が成立したことだけで全subscriberの接続成功とはしない。
+
+証拠: tmp/pp_reference_lap_12/ とremote同名runに生ログ・budget・resultを保存。
+無接触、コース1周、実制動停止は未確認。追加再試行・pushなし。
+次は目標約19.9km/hと実速度約5km/hの差をconsumer/制限設定から読み取り確認し、
+必要な修正と次の有限試験条件を定める。AWSIMの変更や監視解除で解消しない。
