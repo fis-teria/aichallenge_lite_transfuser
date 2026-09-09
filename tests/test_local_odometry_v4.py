@@ -32,7 +32,6 @@ def test_duplicate_and_conflict_and_reset():
 @pytest.mark.parametrize('ns,values,reason',[
     (0,(float('nan'),0.,0.),'NONFINITE'),
     (0,(0.,float('inf'),0.),'NONFINITE'),
-    (0,(11.,0.,0.),'PROFILE'),(0,(0.,0.,3.),'PROFILE'),
     (-1,(0.,0.,0.),'INVALID_STAMP')])
 def test_invalid_input(ns,values,reason):
     with pytest.raises(ValueError,match=reason): make().update(ns,*values)
@@ -50,6 +49,33 @@ def test_trapezoidal_acceleration():
     assert core.update(100_000_000,2.,0.,0.).x_m==pytest.approx(.1)
 
 
+@pytest.mark.parametrize('vx,vy,w,flags',[
+    (11.,0.,0.,(True,False)),(0.,11.,0.,(True,False)),
+    (0.,0.,3.,(False,True)),(11.,0.,-3.,(True,True))])
+def test_profile_excess_is_logged_and_integrated_without_clipping(vx,vy,w,flags):
+    core=make();core.update(0,vx,vy,w)
+    pose=core.update(100_000_000,vx,vy,w)
+    assert core.fault is None and core.velocity==(vx,vy,w)
+    a=.1 if w==0 else math.sin(w*.1)/w
+    b=0. if w==0 else (1-math.cos(w*.1))/w
+    assert (pose.x_m,pose.y_m,pose.yaw_rad)==pytest.approx((a*vx-b*vy,b*vx+a*vy,w*.1))
+    assert core.warning['stamp_ns']==100_000_000
+    assert (core.warning['vx_mps'],core.warning['vy_mps'],core.warning['yaw_rate_rps'])==(vx,vy,w)
+    assert (core.warning['speed_exceeded'],core.warning['yaw_rate_exceeded'])==flags
+    assert core.warning['action']=='INTEGRATED_UNCLIPPED'
+    core.update(200_000_000,0.,0.,0.)
+    assert core.warning is None and core.fault is None
+
+
+def test_threshold_equality_is_not_a_warning_and_reset_clears():
+    core=make();core.update(0,10.,0.,2.)
+    assert core.warning is None
+    core.update(100_000_000,11.,0.,2.1)
+    assert core.warning
+    core.reset()
+    assert core.warning is None
+
+
 def test_isolated_node_has_no_ekf_or_actuator_inputs():
     root=Path(__file__).parents[1]/'ros2_ws/src/aic_e2e_runtime'
     source=(root/'aic_e2e_runtime/local_odometry_node_v4.py').read_text()
@@ -60,6 +86,7 @@ def test_isolated_node_has_no_ekf_or_actuator_inputs():
     attrs={n.attr for n in ast.walk(tree) if isinstance(n,ast.Attribute)}
     assert not attrs.intersection({'create_client','lookup_transform','send_goal_async'})
     assert "parent,child='v4_odom','v4_base_link'" in source
+    assert 'node.get_logger().warning(json.dumps(core.warning,allow_nan=False))' in source
     assert 'local_odometry_node_v4' in (root/'setup.py').read_text()
     parent=(root/'aic_e2e_runtime/v4_shadow_node.py').read_text()
     assert "config.get('start_local_odometry',False)" in parent

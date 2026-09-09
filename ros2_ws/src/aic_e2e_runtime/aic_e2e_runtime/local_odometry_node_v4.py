@@ -1,5 +1,6 @@
 """VelocityReport-only local odometry; isolated TF, no actuator interface."""
 import math
+import json
 from . import spatial_path_shadow_node_v4 as _source_layout
 from aic_transfuser_lite.runtime.local_odometry_v4 import LocalOdometry
 
@@ -54,6 +55,8 @@ def create_local_odometry_node():
                 core.fail('VELOCITY_CLOCK_AGE')
             pose=core.update(ns,message.longitudinal_velocity,message.lateral_velocity,message.heading_rate)
             if pose is None: return
+            if core.warning is not None:
+                node.get_logger().warning(json.dumps(core.warning,allow_nan=False))
             odom=Odometry()
             odom.header.stamp=stamp;odom.header.frame_id=parent;odom.child_frame_id=child
             odom.pose.pose.position.x=pose.x_m;odom.pose.pose.position.y=pose.y_m

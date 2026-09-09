@@ -14,7 +14,16 @@ Odometryのstampを現在時刻で再stampしない。共分散は未推定の�
 
 実装profile: max_gap_s=.25、max_speed_mps=10、max_yaw_rate_rps=2。
 速度10m/sは既存試験監視の上限と整合。yaw上限は今回の低速sim試験用入力検査値で、
-車両能力を実測した値ではない。値を超えた場合に適当なクリップをせず停止する。
+車両能力を実測した値ではない。
+2026-09-09ユーザー指示で、速度・旋回速度の超過は停止条件から外した。
+互換のためmax_speed_mps/max_yaw_rate_rpsという名前は維持するが、警告閾値としてのみ使う。
+超過した有効入力もクリップせず積分し、各採用標本についてROS warningログへ
+`LOCAL_ODOMETRY_PROFILE_WARNING` のJSONを出力する。
+stamp_ns、epoch、vx_mps、vy_mps、yaw_rate_rps、超過項目、閾値、
+`action=INTEGRATED_UNCLIPPED`を記録する。通常起動では既存autoware.log/ROSログへ保存される。
+NaN/Inf、時刻逆転・競合・欠損、計算結果の非有限は従来同様に無効化する。
+旧run20の停止結果と下記の旧残課題は履歴として保持する。
+この変更は異常な入力値によるpose誤差を補正するものではない。
 同時刻同値は再publishしない。同時刻競合、非有限、stamp逆転、gap超過はfaultを保持。
 明示clock巻戻りで局所epochを更新し原点reset。V4 session側は既存どおりclock resetで終了する。
 欠落中の外挿・古いposeの再publishはしない。利用側はTF/poseの時刻と期限を必ず検査する。
