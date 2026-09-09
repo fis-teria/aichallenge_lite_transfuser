@@ -498,3 +498,26 @@ final送信元は/simple_pure_pursuit_nodeのみを要求。
 無接触、コース1周、実制動停止は未確認。追加再試行・pushなし。
 次は目標約19.9km/hと実速度約5km/hの差をconsumer/制限設定から読み取り確認し、
 必要な修正と次の有限試験条件を定める。AWSIMの変更や監視解除で解消しない。
+
+## run13準備: 20km/h目標を維持し、過大な加速要求を修正
+
+前回の単なる時間不足という説明を補足する。約5km/hへの制限に一致する
+AWSIM penalty経路が保存済み逆コンパイルから判明。現在のAssembly-CSharp.dllと
+保存DLLのSHA256は859e5560dbffd7d0833cd1fe5eb1f36b87fa8d22f6e45eb0e1203d04a1ea6d13で一致。
+AccelInputAnomalyDetectorは加速度>3m/s²または64標本の到着頻度>=250Hzを異常とし、
+VehiclePenaltyControllerは速度を1.388889m/sに制限する。
+run12は加速4〜5.5m/s²を継続要求しており条件に該当。公式penalty event自体は未収録。
+
+変更対象はPP分岐の既存speed_proportional_gainのみ1→0.5。
+同一経路の目標約5.524m/sは維持し、静止からの要求を約2.762m/s²にする。
+変更なしでは入力違反を反復する。加速gain単独比較で速度上昇と入力上限を確認する。
+一般的なclampではなく、逆走や異常stateまで許容する設定ではない。
+run13 observerはfinal加速>3で停止する。既存停止・舵角・鮮度監視は維持。
+AWSIMや追従器C++、他controller分岐を変更しない。復旧はgain追記1行を戻すだけ。
+元racingkart.patchの後にspeed20_gain.patchを適用する順序で、過去差分は保全。
+
+予定検証: WSL lock下pytest tests/test_pp_run13.py tests/test_pp_run12.py
+tests/test_pp_reference_switch.py tests/test_mpc_command_monitor.py。
+実試験は専有pp_speed20_lap_13へ1回、全体120wall秒/Start後90sim秒以内、
+PP60000指令以内、V4/MPC OFF。前run12予算を引継ぎ、AWSIMは未改変。
+約20km/hで344mの単純移動時間は62秒だが、発進・旋回・停止等を保証しない。
