@@ -41,6 +41,9 @@ class ShadowROS2Transport:
         self.topics,self.expected_nodes=dict(topics),dict(expected_nodes)
         self.on_input,self.on_reset,self.emit=on_input,on_reset,emit
         self.clock_id,self.monotonic_id,self.monotonic=clock_id,monotonic_id,monotonic
+        # Timer cadence and graph age MUST use the same ROS clock. Receipt
+        # timestamps and blocking-query budgets remain host monotonic time.
+        self.graph_clock=node.get_clock()
         self.commands=deque(maxlen=64);self.epoch=0;self.last_ros_ns=None
         self.closed=False;self.fault=None;self.checked_ns=None;self.graph_ttl_ns=graph_ttl_ns
         self.subscriptions=[];self.timer=None
@@ -51,7 +54,7 @@ class ShadowROS2Transport:
         try:
             for role in topics:
                 self.subscriptions.append(node.create_subscription(types[role],topics[role],callback_for(role),qos[role]))
-            self.timer=node.create_timer(graph_period_s,self.check_graph)
+            self.timer=node.create_timer(graph_period_s,self.check_graph,clock=self.graph_clock)
         except Exception:
             self.close();raise
 
@@ -66,8 +69,8 @@ class ShadowROS2Transport:
     def check_graph(self) -> bool:
         if self.closed or self.fault: return False
         before=self.monotonic()
-        if self.checked_ns is not None and not 0<=before-self.checked_ns<=self.graph_ttl_ns:
-            return self._reject('GRAPH_MONITOR_STALE')
+        graph_now=self.graph_clock.now().nanoseconds
+        if self.last_ros_ns is not None and not self._fresh(): return False
         try:
             for role,topic in self.topics.items():
                 endpoints=self.node.get_publishers_info_by_topic(topic)
@@ -77,14 +80,21 @@ class ShadowROS2Transport:
                 if name!=self.expected_nodes[role]: return self._reject('PUBLISHER_NODE:'+role)
             after=self.monotonic()
             if not 0<=after-before<=self.graph_ttl_ns: return self._reject('GRAPH_QUERY_TIMEOUT')
-            self.checked_ns=before
+            self.checked_ns=graph_now  # ROS time, never a host receipt timestamp.
             return True
         except Exception as exc:
             return self._reject('GRAPH_QUERY_ERROR:'+type(exc).__name__)
 
     def _fresh(self) -> bool:
         if self.closed or self.fault: return False
-        if self.checked_ns is None or not 0<=self.monotonic()-self.checked_ns<=self.graph_ttl_ns:
+        # Before the first /clock, inputs are rejected by receive(). Do not
+        # expire a simulation-time lease using startup wall time.
+        if self.last_ros_ns is None: return True
+        age=self.graph_clock.now().nanoseconds-self.checked_ns
+        if age<0:
+            self.epoch+=1
+            return self._reject('CLOCK_RESET')
+        if age>self.graph_ttl_ns:
             return self._reject('GRAPH_MONITOR_STALE')
         return True
 
@@ -96,7 +106,8 @@ class ShadowROS2Transport:
                 ns,_=extract_message_stamp('nominal',SimpleNamespace(stamp=message.clock),
                                            {'stamp_source':'stamp','message_frame':None})
                 if self.last_ros_ns is not None and ns<self.last_ros_ns:
-                    self.epoch+=1;self.commands.clear();self.on_reset('CLOCK_RESET',str(self.epoch))
+                    self.epoch+=1;self._reject('CLOCK_RESET');return
+                if self.last_ros_ns is None and not self.check_graph(): return
                 self.last_ros_ns=ns
             elif self.last_ros_ns is None:
                 self.emit(dict(event='INPUT_REJECTED',role=role,reason='CLOCK_NOT_OBSERVED'));return

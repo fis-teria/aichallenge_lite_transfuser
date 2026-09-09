@@ -606,3 +606,22 @@ V4終了後にもPPが少量進んだ。次の修正では終了検知をhelper�
 
 証拠: tmp/v4_pp_shadow_14/とremote同名run（shadow.jsonl、motion、state、result、budget）。
 forward40は予約計上、実測forward0。旧run13までの履歴保全。自動pushなし。
+
+## run14後: INPUT_READY_SHADOWの時計整合修正
+
+送信元監視timerと500ms graph TTLをnode.get_clock()の同一ROS時計へ統一。
+use_sim_time=trueではシミュレーション時間となる。初回/clock前の操作は引き続き拒否し、
+最初のclockで送信元を再確認してleaseを確立する。pauseのwall経過だけでは失効しない。
+sim時間が500ms超進んで監視更新がなければ失効。巻き戻りはCLOCK_RESETをラッチし、
+command履歴を破棄して自動復旧しない。timerに使用clockを明示した。
+
+入力header・履歴のROS時刻は既存のまま。受信/利用可能時刻、処理遅延、graph照会の
+500ms処理時間上限、worker/session wall上限、外側host watchdogはmonotonicを維持。
+シミュレータ停止で無限待ちにしないため、これらをsim時計へ変えない。
+今回未使用のOFFICIAL_HELPER_AND_RACE_ARMの許可leaseは別の実時間契約として未変更。
+本変更はINPUT_READY_SHADOWのgraph TTL整合に限定し、他gate全体の時計移行とはしない。
+AWSIM、PP、モデル、閾値、topic/QoSは変更なし。今回live再試行は未実施。
+
+限定再現: tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q
+tests/test_shadow_ros2_transport_v4.py tests/test_v4_shadow_package.py
+tests/test_publisherless_shadow_v4.py tests/test_shadow_start_gate_v4.py。

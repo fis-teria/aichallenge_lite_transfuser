@@ -12,15 +12,21 @@ ROLES=('image','lidar','velocity','steering','command','odometry','clock')
 class Node:
     def __init__(self):
         self.subs=[];self.timers=[]
+        self.sim_now=lambda:20
+        self.clock=O(now=lambda:O(nanoseconds=self.sim_now()))
         self.graph={r:[O(node_name='external',node_namespace='/fixture')] for r in ROLES}
     def get_publishers_info_by_topic(self,topic): return self.graph[topic.split('/')[-1]]
     def create_subscription(self,t,topic,cb,q): self.subs.append(cb);return cb
     def destroy_subscription(self,sub): self.subs.remove(sub)
-    def create_timer(self,period,cb): self.timers.append(cb);return cb
+    def get_clock(self): return self.clock
+    def create_timer(self,period,cb,*,clock):
+        assert clock is self.clock
+        self.timers.append(cb);return cb
     def destroy_timer(self,timer): self.timers.remove(timer)
 
 def setup(node=None):
     events=[];resets=[];inputs=[];node=node or Node();now=[20]
+    node.sim_now=lambda:now[0]
     binding=ControllerCommandBinding('/fixture/command','/fixture/external','final_fallback',
                                     'FIXTURE','TIRE_RAD_TARGET_MPS_ACCEL_MPS2')
     t=ShadowROS2Transport(node,dict.fromkeys(ROLES,object),{r:'/fixture/'+r for r in ROLES},
@@ -91,3 +97,43 @@ def test_no_output_or_gid_ipc():
     attrs={n.attr for n in ast.walk(ast.parse(code)) if isinstance(n,ast.Attribute)}
     assert not attrs.intersection({'create_publisher','publish','create_client','send_goal_async','load_fixed'})
     assert 'ingest_wire' not in code and 'publisher_gid' not in code
+
+
+def test_startup_and_pause_do_not_age_ros_lease_in_wall_time():
+    t,node,events,resets,inputs,wall=setup()
+    sim=[0];node.sim_now=lambda:sim[0]
+    wall[0]+=10_000_000_000
+    t.receive('command',command())
+    assert not t.commands and not t.fault
+    sim[0]=2_000_000_000
+    clock(t,2)  # first observation establishes a freshly checked graph lease
+    t.receive('command',command())
+    wall[0]+=20_000_000_000
+    assert len(t.command_snapshot())==1 and not t.fault
+    sim[0]+=100_000_000
+    node.timers[0]()
+    assert t.checked_ns==sim[0]
+    sim[0]+=500_000_001
+    assert not t.command_snapshot() and t.fault=='GRAPH_MONITOR_STALE'
+
+
+def test_ros_clock_rewind_latches_and_drops_history():
+    t,node,events,resets,inputs,wall=setup()
+    sim=[2_000_000_000];node.sim_now=lambda:sim[0]
+    clock(t,2);t.receive('command',command())
+    sim[0]=0
+    assert not t.command_snapshot() and t.fault=='CLOCK_RESET'
+    sim[0]=3_000_000_000;clock(t,3)
+    assert not t.command_snapshot()
+
+
+def test_paused_ros_clock_does_not_hide_slow_graph_query():
+    t,node,events,resets,inputs,wall=setup()
+    node.sim_now=lambda:20
+    clock(t,2)
+    original=node.get_publishers_info_by_topic
+    def slow(topic):
+        wall[0]+=100_000_000
+        return original(topic)
+    node.get_publishers_info_by_topic=slow
+    assert not t.check_graph() and t.fault=='GRAPH_QUERY_TIMEOUT'
