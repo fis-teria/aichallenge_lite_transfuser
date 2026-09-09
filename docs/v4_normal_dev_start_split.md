@@ -572,3 +572,37 @@ V4 session終了・監視異常・期限で所有instanceを終了。再試行�
 固定checkpointは既存allowlistパスをread-only mount。Datasetにはアクセスしない。
 実行予定: make dev CONTROL_METHOD=pure_pursuit CAPTURE=false ROSBAG=false
 AWSIM_LAPS=1 RUN_ID=v4_pp_shadow_14（専有wrapper下）。
+
+### run14結果: model load成功、forward前にgraph監視期限切れ
+
+実行commit 581926b2f4773a129464c9e75dff30437bd5da32。
+既定CheckOnly/同期成功（固定Datasetルート存在確認のみ、内容未読）。
+WSL lock下のtest_v4_pp_run14/test_v4_shadow_package/test_publisherless_shadow_v4/
+test_passive_controller_command_v4は32 passed / 7.51s。全pytestはNOT_RUN。
+専有source archiveからROS buildは1 package / 1.41s成功。
+network-noneでCONFIG_OK_NO_INFERENCE。固定checkpoint hashはallowlistの
+0316692543a901d9d6b96718c5651d6739367aa851f83fb3a133c126ccc8919fに一致。
+本試行では承認範囲として固定checkpoint読取り・loadを実施した。
+
+make終了0、V4 node起動、MODEL_LOADED 1件、SESSION_STARTED 1件。
+しかしcommand入力にCLOCK_NOT_OBSERVEDが48件、TRANSPORT_FAULTとSESSION_ENDは
+GRAPH_MONITOR_STALE。FORWARD_STARTED=0、PLAN=0。走行中経路更新は未達。
+モデル出力品質や学習の良否をこの結果から判定しない。
+V4はpublisherなしでcontrol_publish=false。外側はPPのみのcommand送信元を監視。
+PPは6.0396m移動、最大3.14735m/s（11.3305km/h）。完走は未達。
+V4_ENDEDで所有AWSIM freeze/KILL、全体44.282wall秒、最終sim15.10秒。
+元result FAILED/OBSERVER_EXITと終了後INPUT_STALEを保全。
+制動停止成功ではない。所有container残存なし、独立inventoryでも全runningなし。
+
+静的切り分け: shadow_ros2_transport_v4.pyはmonotonicの500ms TTLに対して、
+node.create_timer(.1,check_graph)の既定node clockを使っている。
+use_sim_time下の起動時clock停止では監視更新とTTLの時計が一致しない可能性がある。
+初回check_graph成功後にcommandだけが48件届き、clock未観測のまま期限切れなので、
+センサが欠けたモデルやPPの追従失敗ではなく、起動時のclock/graph監視を先に確認する。
+各callbackの時刻を本ログは保持しておらず、timer停止の実測断定はしない。
+TTL緩和・監視解除・runtime改修・追加再試行は今回行わない。
+さらにwrapperはmake helper完了までSESSION_END検知が遅れるため、
+V4終了後にもPPが少量進んだ。次の修正では終了検知をhelper待ちと独立させる必要がある。
+
+証拠: tmp/v4_pp_shadow_14/とremote同名run（shadow.jsonl、motion、state、result、budget）。
+forward40は予約計上、実測forward0。旧run13までの履歴保全。自動pushなし。
