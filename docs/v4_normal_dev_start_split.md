@@ -348,3 +348,25 @@ raw角度上限と既存gain別domainでNaN/Inf/shape/角度超過を判定す�
 Windows実装1518b4c→既定同期→WSL lock試験は34 passed / 1 skipped / 1.27s。
 スキップは既報のOSQP依存。AWSIM、ROS、推論、駆動は追加していない。
 旧結果と既存dirtyを保全。pushなし。
+
+## 2026-09-09 外部レビュー必須条件の廃止（現行方針）
+
+仕様変更に伴うユーザーの明示指示で、外部レビューを必須の進行条件から除外した。
+上記のREVIEW_PENDINGによる実適用/試験保留は現在のブロッカーではない。
+Windows AGENTS.mdとremote親リポジトリAGENTS.mdを更新し、レビュー送信・
+キュー登録・搬送agent・待機は当該タスクでの明示依頼時のみとした。
+remote docs/agent_guidelines/external_review.mdは冒頭で現行方針を定義し、
+既存の本文は非適用の履歴として保全。過去M4の外部レビュー必須条件も置き換える。
+キューCLIや記録そのものは削除/成功扱い/ロック奪取していない。
+本件の未送信review requestも歴史的記録として保持し、自動送信しない。
+ローカルテスト、source/install整合、Safety/権限/期限、有限試験予算は変えない。
+
+remoteの既存external_review.mdの未コミット変更69行を含む読取snapshotに
+追加差分だけ適用。最初のpatchは末尾context空行欠落でcheck段階にて拒否され、
+修正後のgit apply --checkと適用、diff --checkは成功。内容SHA256は
+Windows修正snapshotとremote実ファイルで一致した。
+remote AGENTS: c27814e1280bde1c707719b9c0be3f6d1befddff376e233ceafd1d8c1499a4ce
+remote external_review: 58372ef713b5b8917935b6bfd5cda1e0ba02aabd5d0645da75d88642235588e4
+保存差分: integrations/review_policy/remote_optional_review.patch。
+今回の変更は運用文書のみ。ROS/モデル/controller/AWSIMを起動・改変せず、
+走行枠は未使用。外部レビュー待ちは解消したが、実適用/ROS結合確認は引き続き必要。

@@ -1,0 +1,64 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index fd76998..91cb0ae 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -30,12 +30,24 @@ rule.
+ | Planning, control, perception, localization, transforms, trajectories, Mux/authority, watchdogs, fallback, simulation-time behavior, or vehicle motion | `docs/agent_guidelines/robotics_safety.md` |
+ | Repository layout, coding, dependencies, build, test, replay, Docker, AWSIM, runtime execution, or artifact validation | `docs/agent_guidelines/development_and_validation.md` |
+ | Creating, assigning, reviewing, or reporting subagent work | `docs/agent_guidelines/subagent_orchestration.md` |
+-| A non-trivial robotics change or any external GPT review, queue, browser transport, review handoff, or M4 acceptance transition | `docs/agent_guidelines/external_review.md` |
++| The user explicitly requests external GPT review or maintenance of its historical queue/transport | `docs/agent_guidelines/external_review.md` |
+ | Commit, PR, push, publication, credentials, dependencies, generated artifacts, or a formal execution handoff | `docs/agent_guidelines/git_security_and_reporting.md` |
+ | `danger-full-access`, `approval_policy = "never"`, or equivalent unrestricted execution | `docs/full_access_execution_harness.md` before the first non-trivial mutation |
+ 
+ ## Always-on project and safety rules
+ 
++### External review policy (user revision, 2026-09-09)
++
++External GPT review is optional, not a prerequisite for implementation, testing,
++deployment, simulator execution, or milestone acceptance. Do not automatically
++enqueue requests, spawn review transports, wait for review results, or block
++work on review singleflight/lease state. This replaces all older mandatory
++external-review and M4 external-review gates, including historical runbooks.
++Use external review only when the user explicitly requests it for the task.
++Preserve historical requests/results/leases; do not delete or commandeer them.
++Existing local verification, source/install checks, safety constraints, user
++authorization and finite runtime budgets remain mandatory and unchanged.
++
+ This is a robotics and autonomous-driving repository. Treat changes as capable
+ of affecting real-world motion unless proven otherwise.
+ 
+diff --git a/docs/agent_guidelines/external_review.md b/docs/agent_guidelines/external_review.md
+index 57e991e..f14797f 100644
+--- a/docs/agent_guidelines/external_review.md
++++ b/docs/agent_guidelines/external_review.md
+@@ -1,5 +1,29 @@
+ # External GPT Project Review
+ 
++## Current policy: optional only (2026-09-09)
++
++The user retired mandatory external review because the specification changed.
++External review is NOT an implementation, deployment, simulator, or M4 gate.
++Do not enqueue, claim, send, poll or automatically retry reviews unless the user
++explicitly requests external review for the current task. A pending/busy queue
++does not block ordinary work. Review queue workflow_advance_allowed describes
++the historical review workflow only, not present runtime authorization.
++
++Local code review, focused tests, source/install/config verification, stopping
++and authority checks, explicit live scope and finite budgets still apply.
++No physical safety check, test failure or motion authorization is waived.
++No old request/result/claim/lease is deleted or marked approved by this change.
++Unsent legacy requests must not be submitted automatically; an explicitly
++requested future review must confirm current source and user scope first.
++
++## Historical procedures below (inactive; not normative requirements)
++
++Everything below is retained to preserve existing edits and historical evidence.
++Its mandatory wording, gate rules, automatic transport/delegation, retries and
++deferrals do not apply to current tasks. If a user requests external review,
++agree its scope explicitly; retain record integrity and never steal another
++transport's lease. This section does not reactivate historical mandatory gates.
++
+ Read this document before a non-trivial robotics/autonomous-driving change, any
+ external GPT review operation, or an M4 acceptance transition.
+ 

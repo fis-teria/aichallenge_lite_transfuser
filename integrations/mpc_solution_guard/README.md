@@ -44,9 +44,10 @@ Tests use synthetic solver results, one synthetic OSQP problem, and AST-extracte
 actual node methods without importing ROS or publishing. They do not establish
 full ROS integration, simulator braking, successful lap, or real-vehicle safety.
 
-Remote application/install and external review remain pending. Do not overwrite
+Remote application/install remain pending. External review is optional under
+the user's 2026-09-09 policy revision and no longer blocks this work. Do not overwrite
 a dirty target with these copies: compare baseline hashes and use a reviewed
-focused patch. No source upload to external review has been authorized here.
+focused patch. Do not automatically submit the historical queued review.
 No automatic push, live launch, inference, collection, or driving.
 
 Validation at ff04c19: WSL 27 passed / 1 skipped (OSQP unavailable).
