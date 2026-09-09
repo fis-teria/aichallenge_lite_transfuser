@@ -207,3 +207,22 @@ remote HEADは従前の`4af395eee10f928c7fc7225760adfa04c4c07ff4`（dirty保全�
 `evaluation.json`はraw resultを書き換えず、判定と停止介入を分離して記録。
 次は保存済みログから停止直前の参照曲率・速度・横偏差とMPC制約を照合する。
 既存構成の変更や追加走行は自動で行わない。pushなし。
+
+## MPC速度上限20km/h比較試験10: 実行準備
+
+ユーザーが追加1回、全体120wall秒、Start後90sim秒、MPC60000回を明示承認。
+V4 OFF、通常make dev、AWSIM_LAPS=1。仮説は速度上限低下によりコーナーの
+追従崩れが改善するかであり、接触やsolver失敗の根本原因確定ではない。
+`integrations/mpc_speed20/config.yaml`はremoteの現行設定のコピーから
+mpc.v_maxのみ35→20km/hへ変更。元設定と比較可能に保管する。
+実ロードinstallのconfigはsource configへのsymlinkと確認済み。
+専有autowareコンテナだけにread-only bindし、SSH先dirty checkoutは上書きしない。
+曲率/区間速度計画、操舵、制動、Start/Safety、AWSIM本体は維持。
+撤回は専有コンテナ終了のみ。速度上限は目標の上限であり実速度保証ではない。
+改善指標は問題コーナー通過、経路進捗、MPC失敗有無、一周Finish。
+未完走時も枠を自動更新しない。監視は既存run09から継承し、反復MPC失敗と
+Collision detectedログでの終了を明示する。外部freezeは自然制動と区別する。
+再現: 設定/guard/runとtools/spatial_dev_host_v4.pyを専有runディレクトリへ配布し、
+Windows実行commitをsource_commit.txtに保存。preflight後に
+`timeout --signal=TERM --kill-after=3s 117s python3 run.py`を一度だけ実行。
+生ログ・予算・結果は`tmp/mpc_speed20_lap_10/`へ回収する。
