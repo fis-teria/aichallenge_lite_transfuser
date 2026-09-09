@@ -38,3 +38,27 @@ ssh codex-wsl 'cd /home/thistle/e2e_autonomous/e2e_lite_transfuser && tools/with
 
 既定syncのDataset操作は固定rootに対する `test -d` のみであることを静的確認。
 Dataset内容・raw・sensor・checkpointの読取、実ROS・実推論・走行は検証に含めない。
+
+## 実行結果
+
+検証commit: `513a4ec8d98e312d4fcdd8316c65b1b8d80fddb5`。
+Windows commit → CheckOnly (`CHECK_OK`) → 通常同期 (`SYNC_OK`) を実施。
+既定同期によるDatasetルートの存在確認を実施した。
+既存Dataset内容・raw・sensor・配布checkpointの読取りは未実施。
+テスト内部の人工データ・一時モデル生成は実運用データの検証とは別である。
+
+- 上記関連tests: **58 passed in 4.49s**。
+- WSL共有lock下の全体tests: **1741 passed, 4 skipped, 51 warnings in 70.52s**。
+- skip: OSQP未導入、Draft2020 validator不足、jsonschema未導入、公式Tiny package未指定。
+  これらをPASSとしない。追加依存の導入は行わなかった。
+
+全体検証の実行コマンド:
+
+```powershell
+ssh codex-wsl 'cd /home/thistle/e2e_autonomous/e2e_lite_transfuser && tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q --junitxml=tmp/v4_latest_ready_junit.xml'
+```
+
+JUnitはWSLとWindowsの `tmp/v4_latest_ready_junit.xml` に保存（Git非追跡）。
+AWSIMホストへの配布・install更新、実ROS、固定V4の実入力推論、走行はNOT_RUN。
+次は同じPP走行＋V4 shadow構成でjoin待ち・推論間隔・重複/競合理由を再測定する。
+今回pushは行っていない。
