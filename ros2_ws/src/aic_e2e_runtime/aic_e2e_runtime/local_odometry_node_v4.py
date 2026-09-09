@@ -15,7 +15,9 @@ def create_local_odometry_node():
     from geometry_msgs.msg import TransformStamped
     from tf2_ros import TransformBroadcaster
 
-    node=Node('v4_local_odometry',start_parameter_services=False)
+    # The parent may have __node:=v4_shadow in global argv. Do not inherit that
+    # remap or unrelated vehicle parameters into this independently named node.
+    node=Node('v4_local_odometry',start_parameter_services=False,use_global_arguments=False)
     node.declare_parameter('expected_velocity_node','/awsim_d1')
     node.declare_parameter('max_gap_s',0.25)
     node.declare_parameter('max_speed_mps',10.0)

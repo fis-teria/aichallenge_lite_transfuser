@@ -14,9 +14,10 @@ from aic_e2e_runtime.local_odometry_node_v4 import create_local_odometry_node
 
 
 def main() -> None:
-    rclpy.init()
-    fixture=Node('awsim_d1')  # Artificial source identity in an isolated DDS domain.
+    rclpy.init(args=['--ros-args','-r','__node:=v4_shadow'])
+    fixture=Node('awsim_d1',use_global_arguments=False)  # Artificial source identity in an isolated DDS domain.
     local=create_local_odometry_node()
+    assert local.get_name()=='v4_local_odometry'
     executor=rclpy.get_global_executor();executor.add_node(local);executor.add_node(fixture)
     outputs=[]
     subscription=fixture.create_subscription(Odometry,'/v4/local_odometry',outputs.append,10)
