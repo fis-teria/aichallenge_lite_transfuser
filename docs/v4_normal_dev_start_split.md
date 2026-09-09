@@ -733,3 +733,32 @@ PPが既存Referenceで走行、V4経路による制御ではない。controller
 メモリ量は推論ピーク/全GPU使用量ではない。GPU対応イメージからの推測を避ける。
 全体300wall秒、駆動240sim秒、TIME_BOUNDED、1周Finishで終了する新規1試行。
 旧run16までの履歴を保持、専有run17へbuild/install、AWSIMやremote既存dirtyは保全。
+
+### run17結果: 1周再現、cuda:0実使用を確認
+
+実行commit 8ffe36d2a74ee1a9fa709fb2f13a9cf0c17e3afe。
+既定CheckOnly/同期、WSL lock限定tests39 passed / 4.50s。
+既定同期の固定Datasetルート存在確認のみ実施、内容未読。固定checkpointは試験でload。
+SSH build1 package / 1.23s、config確認成功。source/install SHA一致:
+61d9582839aba3de2f5f0646c02d8ff15f937607992155a6e8ab778bf61fe65a。
+make dev CONTROL_METHOD=pure_pursuit CAPTURE=false ROSBAG=false AWSIM_LAPS=1
+RUN_ID=v4_pp_shadow_17を同じ300wall秒外側監視下で1回実施。
+
+- AWSIM公式finish受信sim99.530秒。Start再通知17.830秒から約81.700sim秒。
+  PPがReferenceを追従して1周、V4は非制御shadow。前run16に続きFinishを確認。
+- 実V4モデルparameter.device=cuda:0、NVIDIA GeForce RTX 4060 Laptop GPU。
+  PyTorch2.3.1+cu121/CUDA12.1。load直後のCUDA割当48,946,176bytes（46.679MiB）。
+  これは当該processのPyTorch allocator値で、全GPU/推論ピークVRAMではない。
+- forward開始368件、PLAN366件。全366件[20,2]有限値。
+  current ego features must be valid拒否2件を除外せず記録。
+- source以後の直近odom速度>0.1m/sによる事後分類で走行中310件、その他56件。
+  厳密な同時刻結合の証明ではなく、前runと同じ診断集計方法。
+- 推論平均33.15ms、p95 59.01ms、実効出力約3.68Hz。
+  最大出力間隔2.715wall秒。更新の途切れは依然課題で、経路品質評価は未実施。
+- 全体129.216wall秒、終了理由SIMULATOR_FINISH。所有AWSIM freeze/KILL。
+  raw status FAILED/OBSERVER_EXIT、終了後INPUT_STALE/TRANSPORT_CLOSEDを保全。
+  最終実速度4.5016m/s、ブレーキ停止成功ではない。無接触/無ペナルティは未確認。
+- 所有container残存なしを独立inventoryで確認。AWSIM/PP設定の変更なし。
+
+成果物: tmp/v4_pp_shadow_17/とremote同名runにbuild/device/shadow/state/motion/result/budget。
+追加再試行、全pytest、自動pushなし。記録機能の追加を性能改善とは扱わない。
