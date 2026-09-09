@@ -50,3 +50,15 @@ Initial verification script imported a module as a function; corrected its
 Humble import path and reran successfully. No ROS nodes or AWSIM started.
 Actual PP binary behavior, control topic exclusivity, fresh planner overrides,
 speed/steering/clamp/stop behavior and one-lap completion remain NOT_RUN.
+
+## Later live results (2026-09-09)
+
+The preceding paragraph records the original preflight, not current live status.
+Run12 drove 91.93 m but requested acceleration above the simulator's 3 m/s²
+input contract and remained near 5 km/h. Apply `speed20_gain.patch` AFTER
+`racingkart.patch`; the current XML includes that additional PP-only gain 0.5.
+Run13 reached 17.39 km/h, maximum observed acceleration request 2.7622 m/s²,
+and 277.55 m before its host time limit. No Finish; no braking-stop acceptance.
+Target remained 19.887 km/h; actual 20 km/h holding is NOT achieved.
+Full records: `docs/v4_normal_dev_start_split.md`, local `tmp/pp_speed20_lap_13`.
+AWSIM was not modified, and V4/MPC were off in both PP trials.

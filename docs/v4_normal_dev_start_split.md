@@ -521,3 +521,34 @@ tests/test_pp_reference_switch.py tests/test_mpc_command_monitor.py。
 実試験は専有pp_speed20_lap_13へ1回、全体120wall秒/Start後90sim秒以内、
 PP60000指令以内、V4/MPC OFF。前run12予算を引継ぎ、AWSIMは未改変。
 約20km/hで344mの単純移動時間は62秒だが、発進・旋回・停止等を保証しない。
+
+### run13結果
+
+実行commit d1bc0cb7544c7be841a45055b8881878cc2df0d1。
+既定CheckOnly/同期成功、WSL lockの限定testsは13 passed / 0.10s。
+既定同期によるDatasetルート存在確認を実施。Dataset内容/raw/checkpoint読取りは未実施。
+実ROSの状態購読は本試験として実施。全pytestはNOT_RUN。
+network-noneのinstall XML gain確認とROS launch --show-args成功。
+Windows/remote source/container installのreference.launch.xml SHA256一致:
+764a5bb9f340fdc7a4aaff236b4d08dd582e12929bcc78b6d36d07e3fc9396da。
+ホストからのinstall絶対symlink参照は失敗したため、実container内で確認した。
+
+```text
+make dev CONTROL_METHOD=pure_pursuit CAPTURE=false ROSBAG=false AWSIM_LAPS=1 RUN_ID=pp_speed20_lap_13 OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/pp_speed20_lap_13/evidence
+```
+
+専有wrapper run.pyと外側timeout117秒+3秒graceで1回実施。
+make終了0、公式Start完了、V4/MPC OFF、AWSIM本体変更なし。
+最高実速度4.831439m/s=17.393km/h、目標5.524161m/s=19.887km/h。
+最大観測加速要求2.762114m/s²。5km/hで張り付く挙動は再現しなかった。
+ただし20km/h維持の達成ではない。P制御の定常偏差が考えられるが未同定。
+3944 poseの折線長277.5455m、最後の経路進行ego_s=293.66m、ego_d=0.24m。
+距離は完走判定ではなく、Finishなし。全体109.1228wall秒、最終sim79.115秒。
+HOST_WALL_LIMITで走行中freeze/KILL。raw result FAILED/OBSERVER_EXITを保全。
+最終速度4.3931m/sで、制動要求-1.5は見えるが制動停止成功ではない。
+remaining_owned空、独立postrun inventoryでも全running/所有project残存なし。
+初期化を含むwall上限で1周に届かなかった。時間延長だけで完走保証とはしない。
+
+証拠はtmp/pp_speed20_lap_13/とremote同名run。run12の履歴は保全。
+次の20km/h精度改善は、単なるgain増加ではなく加速上限と縦制御の定常偏差を
+両立する設計を先に確認する。走行再試行は未実施、pushなし。
