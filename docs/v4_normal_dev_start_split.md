@@ -314,3 +314,14 @@ SSH先ソース/installへの適用は未実施、基準hashはREADMEに固定�
 remoteのexternal_review方針を確認したが、今回は外部サービスへのソース送信を
 明示承認されていないため未送信・REVIEW_PENDING。review完了と偽らない。
 新しい走行枠もなし。AWSIM/V4/壁監視/既存remote dirtyは未変更、pushなし。
+
+最終実装版`ff04c19bafb1cf95fc580002b50481542ae45450`。
+WSL同版・worktree lock付き **27 passed / 1 skipped / 1.42s**。
+スキップはOSQP依存1件だけであり、別途同版MPCを既存runtime venvの
+OSQP 0.6.7.post1で試し **合成QP 2件成功**。ROSは起動していない。
+stdout/JUnitは`tmp/mpc_solution_guard_results/`。
+`git apply --check`は現行remoteに対してexit0。nodeの既存実行属性100755と
+Windowsコピー100644の差についてwarningあり。実適用時は既存実行属性を維持する。
+未適用・未レビューのまま完走済み/稼働修正済みとは報告しない。
+全pytestと実ROS結合試験はNOT_RUN。同期の固定Datasetルート存在確認は実施、
+Dataset内容/raw/sensor/checkpoint読取は未実施。

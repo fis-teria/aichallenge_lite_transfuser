@@ -48,3 +48,11 @@ Remote application/install and external review remain pending. Do not overwrite
 a dirty target with these copies: compare baseline hashes and use a reviewed
 focused patch. No source upload to external review has been authorized here.
 No automatic push, live launch, inference, collection, or driving.
+
+Validation at ff04c19: WSL 27 passed / 1 skipped (OSQP unavailable).
+The actual deployed MPC venv OSQP 0.6.7.post1 passed the two synthetic QPs in
+`smoke_osqp.py`, run with `--network none` and read-only source mounts.
+The venv has no pytest; the standalone smoke does not require package installs.
+Full pytest and ROS integration remain NOT_RUN. Evidence is under
+`tmp/mpc_solution_guard_results/`. `git apply --check` exited 0 on the remote
+baseline; retain the node's existing executable file mode when applying.
