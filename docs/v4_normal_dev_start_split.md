@@ -269,3 +269,22 @@ AWSIM/既存MPCソース/SSH設定は未変更、変更は専用設定コピー�
 実ROS/AWSIM試験は実施済み。接触telemetry、実舵角記録、solver正式終了状態、
 独立レビューは未確認。生証拠はWindows `tmp/mpc_speed20_lap_10/evidence/`と
 remote `/home/graneple/e2e_autonomous/mpc_speed20_lap_10/`。pushなし。
+
+## 完走向けカーブ速度調整候補（未適用）
+
+ユーザーのMPC単独パラメータ調整依頼。試験10の設定・結果は保全し、
+`integrations/mpc_speed20/config.corner_candidate.yaml`を別名で作成。
+v_max=20km/hを維持、ay_maxのみ9.5→3.0m/s²へ低下させる。
+3.0は校正値・安全保証ではなく、カーブ進入速度を下げるための未検証の試験値。
+既存reference_path.compute_speed_profileとMPCの曲率速度上限が対象。
+操舵gain/rate/角度限界、車幅、壁margin、制動能力、Q/R、経路、AWSIMは変更しない。
+適用はまだ行わず、run.pyも引き続き試験10設定を指す。追加走行枠なし。
+
+調整前のコード確認で、MPC.get_controlはdec.info.statusを確認せずdec.xを使用し、
+成功分岐では操舵rate clipだけ、例外分岐では過去予測操作を返すことを確認。
+mpc_controllerの出力前フィルタも絶対角度のclipではない。
+solver終了理由・許容残差・実操舵が未記録なので前回の超過原因の断定はしない。
+パラメータ変更だけで操舵制約が確実に守られるとは言えず、実走行への昇格は保留。
+次段階は既存MPCの解採用条件・操舵制約処理の修正範囲について承認を得て、
+異常解を含む合成回帰試験で確認する。新規MPC開発やSafety緩和は不要。
+その後に別承認枠で比較走行し、Finishと接触/逸脱/介入を評価する。

@@ -26,3 +26,12 @@ def test_scripts_parse_and_preserve_bounds():
     assert 'REPEATED_MPC_FAILURE' in run
     assert 'COLLISION_REPORTED' in run
     assert "signal.signal(signal.SIGTERM,interrupted)" in run
+
+
+def test_corner_candidate_changes_only_lateral_acceleration_budget():
+    baseline = yaml.safe_load((ROOT / 'config.yaml').read_text())
+    candidate = yaml.safe_load((ROOT / 'config.corner_candidate.yaml').read_text())
+    assert candidate['mpc']['ay_max'] == 3.0
+    assert candidate['mpc']['v_max'] == 20.0
+    candidate['mpc']['ay_max'] = baseline['mpc']['ay_max']
+    assert candidate == baseline
