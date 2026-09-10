@@ -42,6 +42,11 @@ def check_preparation_time(started: float) -> None:
         raise TimeoutError('teacher audit/input preparation budget exceeded')
 
 
+def same_epoch(left: list | tuple, right: list | tuple) -> bool:
+    """Compare live tuple keys and JSON list keys without dropping components."""
+    return tuple(left) == tuple(right)
+
+
 def ten_metre_candidates(annotations: list[dict]) -> list[dict]:
     """Metadata-only >=10 m provisional prefix; never select validation/test."""
     if len({r['sample_id'] for r in annotations}) != len(annotations):
@@ -110,7 +115,7 @@ def expand_ten_metre_corpus(old: dict, audited: list[dict], arrays: dict,
         if view['covered_grid_m'] < 10:
             reasons.append('regenerated_support_below_10m')
         item = {'sample_id': row['sample_id'], 'row_index': i, 'run_id': row['run_id'],
-            'segment_id': row['segment_id'], 'epoch_key': keys[i], 'split': 'train',
+            'segment_id': row['segment_id'], 'epoch_key': list(keys[i]), 'split': 'train',
             'stamp_ns': int(row['grid_stamp_ns']), 'future_path': row['trajectory_path'], 'future_sha256': sha(blob),
             'normal_recovery': annotation['normal_recovery'], 'reasons': sorted(set(reasons)),
             'diagnostic_eligible': not reasons, 'runtime_teacher_eligibility': 'UNKNOWN',
@@ -125,7 +130,7 @@ def expand_ten_metre_corpus(old: dict, audited: list[dict], arrays: dict,
             print(json.dumps({'phase': 'expanded_teacher_audit', 'audited': count, 'total': len(candidates)}), flush=True)
     train = merge_train(audited, expanded)
     previous_ids = {r['sample_id'] for r in all_train(audited)}
-    summary = {'policy': POLICY, 'candidate_count': len(candidates),
+    summary = {'policy': {**POLICY, 'minimum_selected_gap_s': None}, 'candidate_count': len(candidates),
         'accepted_10m': sum(r['diagnostic_eligible'] for r in expanded),
         'rejected': sum(not r['diagnostic_eligible'] for r in expanded),
         'reasons': dict(Counter(reason for r in expanded for reason in r['reasons'])),
@@ -184,7 +189,7 @@ def run(parent: Path, checkpoint: Path, output: Path) -> None:
             check_preparation_time(wall)
             canonical = access.rows[row['row_index']]
             if (canonical['sample_id'] != row['sample_id'] or canonical['run_id'] != row['run_id']
-                    or list(keys[row['row_index']]) != row['epoch_key'] or access.splits[row['run_id']] != row['split']):
+                    or not same_epoch(keys[row['row_index']], row['epoch_key']) or access.splits[row['run_id']] != row['split']):
                 raise ValueError('canonical sample/epoch/split mismatch')
             blob = access.read(row['future_path'])
             if sha(blob) != row['future_sha256']:

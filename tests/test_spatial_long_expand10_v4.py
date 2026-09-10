@@ -1,7 +1,13 @@
 import numpy as np
 import pytest
 
-from aic_transfuser_lite.training.spatial_long_expand10_v4 import ten_metre_candidates, merge_train
+from aic_transfuser_lite.training.spatial_long_expand10_v4 import ten_metre_candidates, merge_train, same_epoch
+
+
+def test_live_and_serialized_epoch_identity_remains_strict():
+    assert same_epoch(('run', 'segment', 1), ['run', 'segment', 1])
+    assert not same_epoch(('run', 'segment', 1), ['other', 'segment', 1])
+    assert not same_epoch(('run', 'segment', 1), ['run', 'segment', 2])
 from aic_transfuser_lite.training.spatial_long_full_v4 import epoch_batches
 
 
