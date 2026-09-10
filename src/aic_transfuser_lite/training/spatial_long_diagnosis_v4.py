@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter, defaultdict
+from copy import deepcopy
 import io
 import json
 from pathlib import Path
@@ -31,6 +32,15 @@ PARENT_INITIAL_SHA = 'ba66991ee9437fed22087d1221a1e05bb4ce268b8e93fc557c00af931d
 PARENT_COMMIT = '9bc02287c862511f36bdb31f634bf9ade3b55d3a'
 PHASES = {'tiny8': 1000, 'same128': 1000, 'expanded256': 2000}
 LIMIT_SECONDS = 2400
+
+
+def restore_optimizer(optimizer: torch.optim.Optimizer, state: dict) -> None:
+    """Load an independent optimizer state, including mutable CPU step tensors.
+
+    torch optimizer loading may retain tensor references when no device cast is
+    needed. Each paired branch must start at the same saved optimizer age.
+    """
+    optimizer.load_state_dict(deepcopy(state))
 
 
 def stratum(row: dict) -> tuple[str, int]:
@@ -250,7 +260,7 @@ def run(parent: Path, output: Path) -> None:
             model.load_state_dict((initial_state if phase == 'tiny8' else final_state)['model'], strict=True)
             optimizer = optimizer_for(model)
             if phase != 'tiny8':
-                optimizer.load_state_dict(final_state['optimizer'])
+                restore_optimizer(optimizer, final_state['optimizer'])
                 replay = predict(model, old_ids + val_ids)
                 np.testing.assert_allclose(replay, original_predictions, rtol=1e-5, atol=2e-5)
             torch.manual_seed(43)  # Same stochastic start for paired branches, not exact historical RNG resume.

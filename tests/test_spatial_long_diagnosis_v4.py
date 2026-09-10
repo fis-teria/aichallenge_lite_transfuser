@@ -1,8 +1,31 @@
 from copy import deepcopy
 import numpy as np
 import pytest
+import torch
 
-from aic_transfuser_lite.training.spatial_long_diagnosis_v4 import expand_selection, cohort_summary
+from aic_transfuser_lite.training.spatial_long_diagnosis_v4 import expand_selection, cohort_summary, restore_optimizer
+
+
+def test_optimizer_branches_do_not_share_step_or_moments():
+    parameter = torch.nn.Parameter(torch.tensor([1.]))
+    parent = torch.optim.AdamW([parameter], lr=.01)
+    parameter.grad = torch.ones_like(parameter)
+    parent.step()
+    state = deepcopy(parent.state_dict())
+    baseline = deepcopy(state)
+    a_param = torch.nn.Parameter(parameter.detach().clone())
+    b_param = torch.nn.Parameter(parameter.detach().clone())
+    a = torch.optim.AdamW([a_param], lr=.01)
+    b = torch.optim.AdamW([b_param], lr=.01)
+    restore_optimizer(a, state)
+    restore_optimizer(b, state)
+    a_param.grad = torch.ones_like(a_param)
+    a.step()
+    for key in ('step', 'exp_avg', 'exp_avg_sq'):
+        torch.testing.assert_close(state['state'][0][key], baseline['state'][0][key])
+        torch.testing.assert_close(b.state[b_param][key], baseline['state'][0][key])
+    assert a.state[a_param]['step'].item() == 2
+    assert b.state[b_param]['step'].item() == 1
 
 
 def row(name, stamp, run='a', support=20, split='train', eligible=True):
