@@ -77,7 +77,9 @@ def main():
         assert abs(result['midpoint_x']-.0595)<1e-9
         assert result['actuator_publishers']==0
     finally:
-        os.killpg(process.pid,signal.SIGINT)
+        # ros2 launch forwards SIGINT to children itself; signalling the entire
+        # group here would deliver it twice and interrupt middleware teardown.
+        process.send_signal(signal.SIGINT)
         try:process.wait(timeout=5)
         except subprocess.TimeoutExpired:os.killpg(process.pid,signal.SIGKILL);process.wait()
         for n in (sensor,planner,slam):n.destroy_node()

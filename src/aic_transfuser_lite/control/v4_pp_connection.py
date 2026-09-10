@@ -57,6 +57,8 @@ class ShadowPPConnection:
         reference = self.adapter.poll(now_s=now_s, clock=clock, epoch=epoch)
         if reference is None:
             self.reason = self.adapter.reason; return None
+        if len(reference.xy_m) > 100:
+            self.invalidate('ROS_TRAJECTORY_POINT_LIMIT'); return None
         check = self.adapter._bridge.tick(now_s=now_s, clock=clock, epoch=epoch, state=state)
         if not check['valid']:
             self.invalidate(check['reason']); return None
