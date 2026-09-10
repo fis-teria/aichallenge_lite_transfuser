@@ -1,5 +1,7 @@
 """Existing PP executable, entirely namespaced shadow output; no live remap arg."""
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 import os
@@ -9,9 +11,10 @@ def generate_launch_description():
     config = os.path.join(get_package_share_directory('aic_e2e_runtime'),
                           'config', 'v4_pp_shadow_connection.json')
     return LaunchDescription([
+        DeclareLaunchArgument('config_file', default_value=config),
         # Explicit /clock input; wall timer remains alive when sim clock pauses.
         Node(package='aic_e2e_runtime', executable='v4_pp_connection_node',
-             parameters=[{'config_file': config, 'use_sim_time': False}]),
+             parameters=[{'config_file': LaunchConfiguration('config_file'), 'use_sim_time': False}]),
         Node(package='simple_pure_pursuit', executable='simple_pure_pursuit',
              namespace='/shadow/v4/pp', name='controller',
              parameters=[{'use_sim_time': True, 'wheel_base': 1.087,
