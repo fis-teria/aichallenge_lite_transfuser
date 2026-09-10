@@ -50,3 +50,20 @@ tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q
 
 人工fixtureのみ。直線・左右円弧、raw不変、終端速度、観測pose変換、
 複数消費周期、入力不正、未知契約、失効を検証する。
+
+## 実行結果（2026-09-10）
+
+実行commit: `862a9d57115dccb42e0e55edf26a3f2dc5902f7a`。
+Windows commit → 既定CheckOnly → 同期（SYNC_OK）→ WSL lock下で上記コマンドを実行。
+
+- 関連テスト: 35 passed、0.91秒。
+- 全体: 1791 passed、4 skipped、51 warnings、98.15秒。
+- skip: OSQP未導入、JSON Schema validator未導入2件、公式Tiny package未指定1件。
+- 既定同期によるDatasetルートの存在確認を実施。
+  実Dataset内容・raw・sensor・配布checkpointの読取りは未実施。
+- ROS接続、sim host適用、AWSIM走行、実制御送信: NOT_RUN。
+
+承認された4個の `.chart-data-*` フォルダは削除せず、
+Windows `tmp/preserved_before_v4_pp_20260910` へ退避した。
+10ファイルの元相対パス・size・SHA256は同ディレクトリのmanifest.jsonに保存し、
+移動後のSHA256一致を確認。退避物はGitへ含めていない。
