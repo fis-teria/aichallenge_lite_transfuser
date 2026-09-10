@@ -52,3 +52,12 @@ Before driving: time-aware runtime/controller adapter, sensor/update timing chec
 and closed-loop validation. Optional speed/stop heads and consistency regularizers
 are separate comparisons after the waypoint baseline; no learned stop capability
 is claimed. No datasets or checkpoints are created by this change.
+
+## Verification result
+
+Execution commit: `bec20369068c1bf25bc77d702cd0d5c12f187ad8`, synchronized from Windows.
+Native WSL under shared lock: new tests 5 passed (10.54 s); full suite
+1858 passed, 4 skipped, 55 warnings (109.70 s).
+Skips: OSQP unavailable, two existing JSON schema dependency gates, and an absent
+optional official package. Warnings are the existing Transformer nested-tensor warning.
+These are synthetic/software tests, not real-data training or driving evaluation.
