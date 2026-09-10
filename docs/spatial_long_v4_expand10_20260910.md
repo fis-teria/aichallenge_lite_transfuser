@@ -29,6 +29,11 @@ Record rejected candidates, source hashes, tensor cache hashes, checkpoint ident
 visits and failure status. All prior artifacts are preserved.
 
 ```powershell
+# Verify physical host capacity as well as native WSL free space. The recovered
+# distro's expanding VHDX is on D:, independently of the E: source checkout.
+if ((Get-Volume -DriveLetter D).SizeRemaining -lt 80GB) {
+    throw 'WSL VHDX host D: requires at least 80 GiB free for this disk-cache run'
+}
 .\tools\sync_to_wsl.ps1 -CheckOnly
 .\tools\sync_to_wsl.ps1
 ```
@@ -36,8 +41,56 @@ visits and failure status. All prior artifacts are preserved.
 ```bash
 cd /home/thistle/e2e_autonomous/e2e_lite_transfuser
 bash tools/with_wsl_training_lock.sh env OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 .venv/bin/python -m pytest -q
-bash tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 .venv/bin/python -u -m aic_transfuser_lite.training.spatial_long_expand10_v4 --parent /home/thistle/e2e_autonomous/runs/spatial_long_v4_20260910_run01 --checkpoint /home/thistle/e2e_autonomous/runs/spatial_long_v4_full_20260910_run01/epoch_12.pt --output /home/thistle/e2e_autonomous/runs/spatial_long_v4_expand10_20260910_run01
+bash tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 .venv/bin/python -u -m aic_transfuser_lite.training.spatial_long_expand10_v4 --parent /home/thistle/e2e_autonomous/runs/spatial_long_v4_20260910_run01 --checkpoint /home/thistle/e2e_autonomous/runs/spatial_long_v4_full_20260910_run01/epoch_12.pt --output /home/thistle/e2e_autonomous/runs/spatial_long_v4_expand10_20260910_run02
 ```
 
 Use a fresh output directory and preserve stdout/stderr in sibling logs.
 Execution and result details are added after the finite run completes.
+
+Initial run01 (`9592b9e`) audited all 12,698 candidates, accepting 12,661 and
+rejecting 37, but stopped before training at the identity guard because live epoch
+keys were tuples and previously serialized keys were lists. No optimizer updates
+occurred. Run01 artifacts/logs are preserved. `037cc6e` normalizes sequence types
+while retaining exact run/segment/epoch values, with a regression test. The bounded
+retry uses run02 and the same data/model/budget; no guard is bypassed.
+
+## Actual result: teacher audit complete, training blocked by host storage
+
+Execution source: `037cc6edba2c85eba02d610114f63a7e9878e17c`.
+WSL full pytest: **1,842 passed / 4 skipped / 52 warnings, 67.39 s**.
+
+Run02 repeated the audit with identical counts and passed source/teacher identity
+checks. Accepted >=10 m teachers: **12,661**, rejected **37**, overlapping reason
+counts invalid current ego 20, direction reversal 17, observed self-intersection 6.
+After removing the 376 already-used >=10 m anchors, **12,285 new anchors** join
+the prior 1,786, giving **14,071 train** (normal 13,051, recovery 1,020; 16 runs).
+10 m support increases 376 -> 12,661; 20 m support 165 -> 5,854 (7 runs).
+Fixed validation remains 64 anchors / 5 runs. No test future/sensor assets read.
+
+Run02 input-cache progress reached **3,800 / 14,135** in the last readable log.
+Then the process exited with Bus error; even `/usr/bin/free` returned Input/output
+error and `df` segfaulted. `/proc/mounts` reported `/dev/sdd` ext4 `emergency_ro`.
+Windows registry confirmed `Ubuntu-22.04-Recovered` BasePath `D:\WSL-Recovery`;
+host D: had only **27,787,264 bytes free**, whereas the prior native WSL `df`
+reported 807 GiB available. Native capacity alone was an insufficient preflight.
+The additional cache writes are consistent with exhausting the backing volume.
+This does not establish physical drive failure or confirm filesystem integrity.
+
+**No training optimizer steps, new checkpoint, or additional model evaluation
+completed.** The last execution record may still say STARTED because the OS I/O
+failure prevented exception/finally reporting. Do not infer a live training job
+from that stale state. Source/runtime checkpoint was not replaced.
+
+The readable stdout and host volume snapshot were copied to Windows
+`tmp/v4_expand10_storage_20260910/`. Attempts to copy execution/summary JSON then
+also hit I/O errors; the summary counts above had already been read before those
+errors. Do not claim full artifact backup or successful post-run hash verification.
+The affected distro was stopped with `wsl --terminate Ubuntu-22.04-Recovered`.
+No original datasets/checkpoints or unrelated host files were deleted.
+
+Before resuming: free physical D: capacity and inspect WSL filesystem health;
+verify source, teacher and checkpoint hashes again. Preserve failure evidence.
+The per-anchor float32 disk cache can exceed 55 GiB for the full cohort; consider
+bounded in-memory/on-demand preprocessing to avoid requiring that much persistent
+space. That alternative is not yet implemented or tested. Do not automatically
+restart the failed disk-cache command on the full backing volume.
