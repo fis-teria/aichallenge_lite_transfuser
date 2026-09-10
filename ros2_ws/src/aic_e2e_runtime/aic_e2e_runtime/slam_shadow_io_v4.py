@@ -1,5 +1,6 @@
 """Optional SLAM input bridge and RViz-only display, no vehicle command APIs."""
 import math
+import json
 import time
 from . import spatial_path_shadow_node_v4 as _source_layout
 from aic_transfuser_lite.runtime.slam_shadow_geometry_v4 import lidar_to_root,display_points
@@ -11,10 +12,13 @@ class SlamShadowIO:
         from geometry_msgs.msg import PoseStamped
         from nav_msgs.msg import Odometry,Path
         from rosgraph_msgs.msg import Clock
+        from std_msgs.msg import String
         self.node=Node('v4_slam_pose_adapter',enable_rosout=False,start_parameter_services=False,use_global_arguments=False)
         self.emit=emit;self.clock=None;self.last=None;self.display_stamp=None;self.display_wall=None
         self.frame='cartographer_v4_local';self.odom_type=Odometry;self.path_type=Path;self.pose_type=PoseStamped
         self.offset=config['lidar_forward_m']
+        self.string_type=String
+        self.plan_pub=self.node.create_publisher(String,'/shadow/v4/plan_record',1) if config.get('plan_transport',False) else None
         self.odom=self.node.create_publisher(Odometry,'/v4/slam_odometry',10)
         self.path=self.node.create_publisher(Path,'/shadow/v4/path',1) if config.get('rviz_path',False) else None
         self.node.create_subscription(Clock,'/clock',self.on_clock,10)
@@ -51,6 +55,13 @@ class SlamShadowIO:
         self.emit(dict(event='SLAM_POSE_ADAPTED',stamp_ns=ns,source='/cartographer_v4/tracked_pose',frame=self.frame))
 
     def on_record(self,record):
+        if self.plan_pub is not None and record.get('event') in ('PLAN','SESSION_END'):
+            # Same forward, not a reconstructed RViz Path. Zero TTL remains zero;
+            # this diagnostic transport does not authorize a controller.
+            packet=dict(record,pose_frame=self.frame,transport_kind='DIAGNOSTIC_NOT_CONTROL')
+            msg=self.string_type();msg.data=json.dumps(packet,allow_nan=False)
+            self.plan_pub.publish(msg)
+            self.emit(dict(event='PLAN_RECORD_PUBLISHED',output_id=record.get('output_id'),control_publish=False))
         if self.path is None:return
         if record.get('event')=='SESSION_END':self.clear();return
         if record.get('event')!='PLAN':return

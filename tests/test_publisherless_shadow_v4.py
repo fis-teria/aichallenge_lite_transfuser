@@ -40,6 +40,19 @@ def test_no_fake_command_no_forward():
     assert not any(x['event']=='FORWARD_STARTED' for x in e)
 
 
+def test_plan_transport_metadata_does_not_extend_zero_ttl():
+    r, _, _ = setup()
+    value = apply(r, 1)
+    assert value['event'] == 'PLAN'
+    assert value['clock'] == 'synthetic' and value['epoch'] == '0'
+    assert value['source'] == 'FIXED_V4_UNCORRECTED'
+    assert value['expires_s'] == value['source_s']
+    assert not value['accepted']
+    assert value['observation_pose_evidence'] is None
+    assert value['frame'] == 'base_link'
+    assert value['reference_point'] == 'BASE_LINK_ORIGIN'
+
+
 def test_verified_external_final_command_and_shadow_rejection():
     r,_,_=setup()
     assert 'FINAL_COMMAND_BINDING_UNVERIFIED' in apply(r,1,[Obj(source='final_fallback')])['reason']
