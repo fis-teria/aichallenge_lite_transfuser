@@ -1,0 +1,35 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Global Options:
+    Fixed Frame: cartographer_v4_local
+    Frame Rate: 20
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Local grid
+      Enabled: true
+      Cell Size: 1
+    - Class: rviz_default_plugins/Path
+      Name: V4 uncorrected predicted path - visualization only
+      Enabled: true
+      Topic:
+        Value: /shadow/v4/path
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 1
+      Color: 255; 60; 180
+      Line Style: Billboards
+      Line Width: 0.08
+      Buffer Length: 1
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 30
+      Pitch: 1.5
+      Yaw: 0
+Window Geometry:
+  Width: 900
+  Height: 700
