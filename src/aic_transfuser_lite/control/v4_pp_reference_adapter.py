@@ -6,7 +6,7 @@ speeds m/s. Plan times use their named clock/epoch, never wall receipt time.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import math
 
 import numpy as np
@@ -43,7 +43,10 @@ class V4PPReferenceAdapter:
     """
 
     def __init__(self, limits: Limits | None, *, fixed_frame: str,
-                 fixture_mode: bool = False):
+                 fixture_mode: bool = False, shadow_spacing_m: float | None = None):
+        if shadow_spacing_m is not None and (not fixture_mode or shadow_spacing_m not in (.2,.3)):
+            raise ValueError('SHADOW_ONLY_SPACING')
+        self.shadow_spacing_m = shadow_spacing_m
         self._bridge = ShadowBridge(limits, fixture_mode=fixture_mode)
         self.fixed_frame = fixed_frame
         self._prepared: PreparedReference | None = None
@@ -79,12 +82,23 @@ class V4PPReferenceAdapter:
         if any(v is not None for v in (plan.speed_mps, plan.speed_source, plan.speed_plan_id)):
             self._clear('V4_SPEED_CONTRACT_MISMATCH')
             return False
-        if not self._bridge.accept(plan, pose, now_s=now_s):
+        checked_plan=plan
+        deviation_upper=0.
+        if self.shadow_spacing_m is not None:
+            from .shadow_resample_v4 import resample_shadow
+            try:
+                resampled,deviation_upper=resample_shadow(plan.xy_m,self.shadow_spacing_m,.03)
+                checked_plan=replace(plan,xy_m=tuple(map(tuple,resampled)))
+            except ValueError as exc:
+                self._clear(str(exc)); return False
+        if not self._bridge.accept(checked_plan, pose, now_s=now_s):
             self._prepared = None
             self.reason = self._bridge.reason
             return False
         limits = self._bridge.limits
         assert limits is not None
+        if self.shadow_spacing_m is not None and deviation_upper+self._bridge.audit['max_raw_reference_difference_m']>.03:
+            self._clear('FINAL_REFERENCE_DEVIATION_EXCEEDED'); return False
         xy = self._bridge.reference.copy()
         arc = self._bridge.arc.copy()
         delta = np.diff(xy, axis=0)
@@ -105,7 +119,7 @@ class V4PPReferenceAdapter:
             min(plan.expires_s, plan.source_s + limits.path_ttl_s),
             tuple(map(tuple, xy)), tuple(yaw), tuple(speed),
             'EXPLICIT_TRIAL_POLICY_NOT_MODEL_SPEED',
-            self._bridge.audit['max_raw_reference_difference_m'])
+            deviation_upper+self._bridge.audit['max_raw_reference_difference_m'])
         self.reason = 'PREPARED_NOT_CONTROL_AUTHORIZED'
         return True
 

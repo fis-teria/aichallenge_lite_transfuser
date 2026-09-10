@@ -12,9 +12,10 @@ def pp_center_pose(root_pose, wheelbase_m: float, rear_x_in_root_m: float):
 
 
 class ShadowPPConnection:
-    def __init__(self, limits: Limits, frame: str):
+    def __init__(self, limits: Limits, frame: str, shadow_spacing_m: float | None = None):
         # Artificial policy is permitted only in this non-actuating connection.
-        self.adapter = V4PPReferenceAdapter(limits, fixed_frame=frame, fixture_mode=True)
+        self.shadow_spacing_m = shadow_spacing_m
+        self.adapter = V4PPReferenceAdapter(limits, fixed_frame=frame, fixture_mode=True,shadow_spacing_m=shadow_spacing_m)
         self.limits = limits
         self.reason = 'NO_PLAN'
         self.context = None
@@ -32,7 +33,7 @@ class ShadowPPConnection:
             context = (record['session_id'], record['clock'], record['epoch'])
             if self.context is not None and self.context != context:
                 self.adapter = V4PPReferenceAdapter(self.limits,
-                    fixed_frame=self.adapter.fixed_frame, fixture_mode=True)
+                    fixed_frame=self.adapter.fixed_frame, fixture_mode=True,shadow_spacing_m=self.shadow_spacing_m)
                 self.context = context
                 self.invalidate('CONTEXT_RESET'); return False
             self.context = context

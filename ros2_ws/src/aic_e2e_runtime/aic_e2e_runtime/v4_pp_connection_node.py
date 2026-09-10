@@ -38,7 +38,7 @@ def main(args=None):
     if config.get('mode') != 'SHADOW_ONLY':
         raise ValueError('ONLY_SHADOW_AUTHORIZED')
     limits = Limits(**config['limits'])
-    conn = ShadowPPConnection(limits, config['fixed_frame'])
+    conn = ShadowPPConnection(limits, config['fixed_frame'],config.get('shadow_spacing_m'))
     if not conn.adapter._bridge._limits_valid():
         raise ValueError('INVALID_LIMITS')
     trajectory = node.create_publisher(Trajectory, '/shadow/v4/pp/trajectory', 1)

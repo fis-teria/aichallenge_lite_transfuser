@@ -29,6 +29,14 @@ KWARGS = dict(image_height=16, image_width=16, lidar_points=16, ego_dim=4, hidde
               camera_tokens_hw=(1, 1), lidar_tokens=2, fusion_depth=1, fusion_heads=4)
 
 
+def test_separate_long_candidate_shape_without_changing_fixed_model():
+    from aic_transfuser_lite.models.spatial_path_long_v4 import SpatialPathLongV4
+    model=SpatialPathLongV4(**KWARGS).eval()
+    with torch.no_grad(): output=model(batch())
+    assert output.shape==(2,46,2) and torch.isfinite(output).all()
+    assert SpatialPathDiagnosticV4(**KWARGS).path_head[-1].out_features==40
+
+
 def test_masked_loss_invalid_tail_values_and_gradients() -> None:
     p = torch.randn(2, 20, 2, requires_grad=True)
     target = torch.randn_like(p)
