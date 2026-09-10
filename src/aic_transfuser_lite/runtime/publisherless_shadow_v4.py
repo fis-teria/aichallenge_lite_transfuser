@@ -143,6 +143,7 @@ class ShadowSession:
             accepted = self.bridge.accept(plan, pose, now_s=now_s)
             return self._event('PLAN', self.bridge.reason, input_id=candidate_id, output_id=output_id,
                                accepted=accepted, raw_xy_m=raw.tolist(), source_s=source_s,
+                               observation_pose_xyyaw=None if pose is None else list(pose.base_in_local),
                                generated_monotonic_s=generated, inference_s=generated-before,
                                command_policy=provenance.get('command_policy'),
                                command_provenance=[asdict(c) if c is not None else None

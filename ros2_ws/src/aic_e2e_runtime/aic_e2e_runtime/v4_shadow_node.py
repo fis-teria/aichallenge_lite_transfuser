@@ -31,9 +31,16 @@ def validate_config(c: dict) -> None:
                                       'initialization': '/autostart/initialization_ready'}):
             raise ValueError('EXPLICIT_START_GATE_REQUIRED')
     Envelope(**c['envelope']).validate(time.time())
+    slam=c.get('slam_shadow')
+    if slam is not None:
+        if (c.get('start_local_odometry',False) or c['pose_frame']!='cartographer_v4_local' or
+            c.get('pose_child_frame')!='v4_base_link' or c['topics']['odometry']!='/v4/slam_odometry' or
+            c['expected_nodes']['odometry']!='/v4_slam_pose_adapter' or
+            slam.get('lidar_forward_m')!=1.1649999618530273 or not slam.get('geometry_evidence')):
+            raise ValueError('SLAM_SHADOW_BINDING')
     if c.get('start_local_odometry',False) and c.get('pose_child_frame')!='v4_base_link':
         raise ValueError('LOCAL_ODOMETRY_BINDING')
-    if c.get('pose_child_frame','base_link') != 'base_link':
+    if slam is None and c.get('pose_child_frame','base_link') != 'base_link':
         if (c['pose_child_frame']!='v4_base_link' or c['pose_frame']!='v4_odom' or
                 c['topics']['odometry']!='/v4/local_odometry' or
                 c['expected_nodes']['odometry']!='/v4_local_odometry'):
@@ -108,7 +115,7 @@ def main(args=None) -> None:
     rclpy.init(args=args)
     node=Node('v4_shadow',enable_rosout=False,start_parameter_services=False)
     node.declare_parameter('config_file','')
-    process=transport=stream=pump=start_observer=local_node=None
+    process=transport=stream=pump=start_observer=local_node=slam_io=None
     ctx=mp.get_context('spawn');incoming=ctx.Queue(maxsize=1);outgoing=ctx.Queue(maxsize=64)
     terminal=None
     try:
@@ -143,6 +150,10 @@ def main(args=None) -> None:
             lambda:rclpy.spin_once(node,timeout_sec=.02),
             lambda: not rclpy.ok() or time.monotonic()-started>=limit or
                 time.time()>=config['envelope']['authorized_until_unix_s'])
+        if config.get('slam_shadow'):
+            from .slam_shadow_io_v4 import SlamShadowIO
+            slam_io=SlamShadowIO(config['slam_shadow'],emit)
+            rclpy.get_global_executor().add_node(slam_io.node)
         if config.get('start_gate'):
             from aic_transfuser_lite.runtime.shadow_start_gate_v4 import ROSStartObserver
             start_observer=ROSStartObserver(node,config['start_gate'],config['envelope']['session_id'],emit)
@@ -181,6 +192,7 @@ def main(args=None) -> None:
                     try: pump.acknowledge(result)
                     except RuntimeError as exc: terminal=str(exc);break
                 emit(result)
+                if slam_io: slam_io.on_record(result)
                 if result.get('event')=='WORKER_FINISHED': terminal=result['reason']
             if not process.is_alive() and terminal is None: terminal='WORKER_EXIT:'+str(process.exitcode)
             if terminal: break
@@ -213,6 +225,9 @@ def main(args=None) -> None:
         if local_node:
             rclpy.get_global_executor().remove_node(local_node)
             local_node.destroy_node()
+        if slam_io:
+            rclpy.get_global_executor().remove_node(slam_io.node)
+            slam_io.close()
         node.destroy_node();rclpy.shutdown()
 
 
