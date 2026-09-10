@@ -27,3 +27,16 @@ bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q tests/test_pa
 合成testでは通常拒否/ログ判定の比較、必要操舵角の拒否維持、非fixture禁止、
 診断の世代分離、context resetでの方針維持を確認する。
 実ROS/AWSIMへの反映・走行はこの変更だけでは実施しない。
+
+## 実行結果
+
+実行版 `ee4c7606f17eeb1b3548f64479d118d1dc4618ae`。
+既定CheckOnly/通常同期が成功。既定同期によるDatasetルート存在確認を実施し、
+Dataset内容の読取りは行っていない。WSL共有lock下で：
+
+- 上記限定tests：50 passed in 0.79 s。
+- 同じlockで `.venv/bin/python -m pytest -q`：1822 passed, 4 skipped,
+  52 warnings in 81.35 s。
+- skipはOSQP、JSON Schema validator、公式Tiny packageの任意依存不足。
+- 前回の固定速度上限なしの追加testsも今回実行済み。
+- 実ROS接続・AWSIM再試験：NOT_RUN。pushなし。
