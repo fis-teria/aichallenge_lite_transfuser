@@ -1,0 +1,42 @@
+{
+  "mode": "SHADOW_ONLY",
+  "fixed_frame": "cartographer_v4_local",
+  "lidar_forward_m": 1.1649999618530273,
+  "state_alignment_s": 0.05,
+  "topics": {
+    "plan": "/shadow/v4/plan_record",
+    "pose": "/cartographer_v4/extrapolated_pose",
+    "velocity": "/vehicle/status/velocity_status",
+    "steering": "/vehicle/status/steering_status"
+  },
+  "expected_nodes": {
+    "plan": "/v4_slam_pose_adapter",
+    "pose": "/cartographer_v4/cartographer",
+    "velocity": "/awsim_d1",
+    "steering": "/awsim_d1"
+  },
+  "limits": {
+    "provenance": "SHADOW_EXPERIMENT_ONLY: geometry level1; remaining limits are explicit test policy NOT calibrated vehicle capability",
+    "fixture_only": true,
+    "wheelbase_m": 1.087,
+    "rear_x_in_base_m": -0.484,
+    "steer_rad": 0.64,
+    "steer_rate_rps": 0.5,
+    "lateral_accel_mps2": 0.8,
+    "accel_mps2": 0.5,
+    "brake_mps2": 1.0,
+    "speed_cap_mps": 0.5,
+    "lookahead_m": 0.5,
+    "resample_m": 0.1,
+    "max_segment_m": 0.5,
+    "max_turn_rad": 1.0,
+    "max_initial_offset_m": 0.8,
+    "max_heading_error_rad": 0.5,
+    "max_plan_jump_m": 1.0,
+    "path_ttl_s": 0.5,
+    "state_ttl_s": 0.15,
+    "future_tolerance_s": 0.02,
+    "period_s": 0.05,
+    "stop_delay_s": 0.25
+  }
+}

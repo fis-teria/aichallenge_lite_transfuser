@@ -37,6 +37,7 @@ setup(
     license="Apache-2.0",
     entry_points={
         "console_scripts": [
+            "v4_pp_connection_node = aic_e2e_runtime.v4_pp_connection_node:main",
             "inference_node = aic_e2e_runtime.inference_node:main",
             "inference_node_v1 = aic_e2e_runtime.inference_node_v1:main",
             "inference_node_v3 = aic_e2e_runtime.inference_node_v3:main",
