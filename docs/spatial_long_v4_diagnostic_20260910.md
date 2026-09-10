@@ -56,7 +56,7 @@ Failure/timeout/OOM is recorded and never silently retried.
 cd /home/thistle/e2e_autonomous/e2e_lite_transfuser
 tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q
 # Choose a NEW output; redirect stdout/stderr to sibling log files.
-tools/with_wsl_training_lock.sh .venv/bin/python -u -m aic_transfuser_lite.training.spatial_long_v4 --config configs/spatial_long_v4.yaml --output /home/thistle/e2e_autonomous/runs/spatial_long_v4_20260910_run01
+tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 .venv/bin/python -u -m aic_transfuser_lite.training.spatial_long_v4 --config configs/spatial_long_v4.yaml --output /home/thistle/e2e_autonomous/runs/spatial_long_v4_20260910_run01
 ```
 
 Artifacts include teacher audit/NPZ, frozen selection/input histories and hashes,
