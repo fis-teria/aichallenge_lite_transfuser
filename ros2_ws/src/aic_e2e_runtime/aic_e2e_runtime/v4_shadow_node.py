@@ -16,6 +16,9 @@ def validate_config(c: dict) -> None:
     from aic_transfuser_lite.runtime.publisherless_shadow_v4 import Envelope
     from aic_transfuser_lite.runtime.passive_controller_command_v4 import ControllerCommandBinding
     if c.get('enabled') is not True: raise ValueError('V4_SHADOW_DISABLED')
+    if c.get('long_model') is not None:
+        from aic_transfuser_lite.runtime.spatial_long_shadow_v4 import validate_trial
+        validate_trial(c['long_model'])
     gate = c.get('start_gate')
     policy = c.get('inference_start_policy', 'OFFICIAL_HELPER_AND_RACE_ARM' if gate else 'INPUT_READY_SHADOW')
     if policy not in ('INPUT_READY_SHADOW', 'OFFICIAL_HELPER_AND_RACE_ARM'):
@@ -62,13 +65,19 @@ def worker(config: dict, incoming, outgoing) -> None:
     from aic_transfuser_lite.runtime.shadow_delivery_v4 import consume_batch
     from aic_transfuser_lite.runtime.shadow_start_gate_v4 import ForwardPermit
     validate_config(config)
-    infer,identity=fixed_infer_factory()
+    session_type = ShadowSession
+    if config.get('long_model') is not None:
+        from aic_transfuser_lite.runtime.spatial_long_shadow_v4 import long_infer_factory, LongShadowSession
+        infer,identity=long_infer_factory(config['long_model'])
+        session_type = LongShadowSession
+    else:
+        infer,identity=fixed_infer_factory()
     def emit(value): outgoing.put(value,timeout=.1)
     emit(dict(event='MODEL_LOADED',identity=identity))
     adapter=SpatialInputV4(command_binding_known=True,
         final_fallback_verified=config['command_binding']['source']=='final_fallback')
     permit = ForwardPermit(config['envelope']['session_id']) if config.get('start_gate') else None
-    session=ShadowSession(Envelope(**config['envelope']),adapter,infer,ShadowBridge(None),emit,
+    session=session_type(Envelope(**config['envelope']),adapter,infer,ShadowBridge(None),emit,
                           forward_permit=permit)
     commands=()
     join=ShadowObservationJoin(session,lambda:commands,emit,clock_id='AWSIM_ROS',

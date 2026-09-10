@@ -74,7 +74,7 @@ class SlamShadowIO:
             p=self.pose_type();p.header=msg.header;p.pose.position.x=x;p.pose.position.y=y;p.pose.orientation.w=1.
             msg.poses.append(p)
         self.path.publish(msg);self.display_stamp=ns;self.display_wall=time.monotonic()
-        self.emit(dict(event='RVIZ_PATH_PUBLISHED',output_id=record['output_id'],source_ns=ns,points=20,control_publish=False))
+        self.emit(dict(event='RVIZ_PATH_PUBLISHED',output_id=record['output_id'],source_ns=ns,points=len(points),control_publish=False))
 
     def expire(self):
         if self.display_stamp is not None and (self.clock-self.display_stamp>500_000_000 or time.monotonic()-self.display_wall>1.):self.clear()

@@ -43,6 +43,9 @@ class ShadowSession:
     sessions allow 285s inside an independently enforced 300s host envelope.
     Count attempted forward BEFORE invoking model, including errors.
     """
+    output_points = 20
+    output_source = 'FIXED_V4_UNCORRECTED'
+
     def __init__(self, envelope: Envelope, adapter: object, infer: object,
                  bridge: ShadowBridge, emit: object, *, monotonic=time.monotonic,
                  unix=time.time, forward_permit=None):
@@ -122,7 +125,7 @@ class ShadowSession:
                 self.terminal = self.forward_permit.fault or 'START_PERMISSION_REVOKED'
                 self.bridge._invalidate(self.terminal)
                 return self._event('REJECTED', self.terminal, output_id=output_id)
-            if raw.shape != (20, 2) or raw.dtype != np.float32 or not np.isfinite(raw).all():
+            if raw.shape != (self.output_points, 2) or raw.dtype != np.float32 or not np.isfinite(raw).all():
                 raise ValueError('OUTPUT_SHAPE_DTYPE_FINITE')
             # Result completed after deadline cannot become a fresh plan.
             if generated-self.started >= self.envelope.wall_s or self.unix() >= self.envelope.authorized_until_unix_s:
@@ -137,7 +140,7 @@ class ShadowSession:
                 from dataclasses import replace
                 pose = replace(pose, plan_id=output_id)
             ttl = self.bridge.limits.path_ttl_s if self.bridge.limits else 0.
-            plan = Plan(output_id, 'FIXED_V4_UNCORRECTED', source_s, generated,
+            plan = Plan(output_id, self.output_source, source_s, generated,
                         source_s+ttl, clock, epoch, 'base_link', 'BASE_LINK_ORIGIN',
                         tuple(tuple(float(v) for v in xy) for xy in raw))
             accepted = self.bridge.accept(plan, pose, now_s=now_s)
