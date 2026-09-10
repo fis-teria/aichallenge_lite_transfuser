@@ -17,3 +17,14 @@ def display_points(record: dict) -> list[tuple[float,float]]:
     if not all(math.isfinite(v) for v in pose+ [v for p in xy for v in p]):raise ValueError('NONFINITE')
     x,y,a=pose;c,s=math.cos(a),math.sin(a)
     return [(x+c*p[0]-s*p[1],y+s*p[0]+c*p[1]) for p in xy]
+
+
+def lidar_display_points(record: dict) -> list[tuple[float,float,float]]:
+    """Raw root XY -> observed LiDAR frame for standard RViz TF display only.
+
+    Current verified AWSIM mount: forward 1.1649999618530273 m, up
+    0.05000000074505806 m, aligned axes. No map/EKF value enters inference.
+    """
+    display_points(record)  # Same shape/finite/source contract as local display.
+    return [(float(x)-1.1649999618530273,float(y),-0.05000000074505806)
+            for x,y in record['raw_xy_m']]

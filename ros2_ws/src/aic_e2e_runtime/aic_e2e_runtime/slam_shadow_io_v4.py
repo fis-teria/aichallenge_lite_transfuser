@@ -3,7 +3,7 @@ import math
 import json
 import time
 from . import spatial_path_shadow_node_v4 as _source_layout
-from aic_transfuser_lite.runtime.slam_shadow_geometry_v4 import lidar_to_root,display_points
+from aic_transfuser_lite.runtime.slam_shadow_geometry_v4 import lidar_to_root,display_points,lidar_display_points
 
 
 class SlamShadowIO:
@@ -21,6 +21,7 @@ class SlamShadowIO:
         self.plan_pub=self.node.create_publisher(String,'/shadow/v4/plan_record',1) if config.get('plan_transport',False) else None
         self.odom=self.node.create_publisher(Odometry,'/v4/slam_odometry',10)
         self.path=self.node.create_publisher(Path,'/shadow/v4/path',1) if config.get('rviz_path',False) else None
+        self.normal_path=self.node.create_publisher(Path,'/visualization/v4_20/raw_path',1) if config.get('normal_rviz_path',False) else None
         self.node.create_subscription(Clock,'/clock',self.on_clock,10)
         self.node.create_subscription(PoseStamped,'/cartographer_v4/tracked_pose',self.on_pose,10)
         self.node.create_timer(.1,self.expire)
@@ -28,6 +29,8 @@ class SlamShadowIO:
     def clear(self):
         if self.path is not None:
             msg=self.path_type();msg.header.frame_id=self.frame;self.path.publish(msg)
+        if self.normal_path is not None:
+            msg=self.path_type();msg.header.frame_id='lidar';self.normal_path.publish(msg)
         self.display_stamp=None;self.display_wall=None
 
     def on_clock(self,msg):
@@ -62,11 +65,23 @@ class SlamShadowIO:
             msg=self.string_type();msg.data=json.dumps(packet,allow_nan=False)
             self.plan_pub.publish(msg)
             self.emit(dict(event='PLAN_RECORD_PUBLISHED',output_id=record.get('output_id'),control_publish=False))
-        if self.path is None:return
+        if self.path is None and self.normal_path is None:return
         if record.get('event')=='SESSION_END':self.clear();return
         if record.get('event')!='PLAN':return
         ns=round(record['source_s']*10**9)
         if self.clock is None or not 0<=self.clock-ns<=500_000_000:return
+        if self.normal_path is not None:
+            raw_msg=self.path_type();raw_msg.header.frame_id='lidar'
+            raw_msg.header.stamp.sec=ns//10**9;raw_msg.header.stamp.nanosec=ns%10**9
+            for x,y,z in lidar_display_points(record):
+                p=self.pose_type();p.header=raw_msg.header
+                p.pose.position.x=x;p.pose.position.y=y;p.pose.position.z=z;p.pose.orientation.w=1.
+                raw_msg.poses.append(p)
+            self.normal_path.publish(raw_msg)
+            self.display_stamp=ns;self.display_wall=time.monotonic()
+            self.emit(dict(event='NORMAL_RVIZ_PATH_PUBLISHED',output_id=record['output_id'],
+                           source_ns=ns,points=len(raw_msg.poses),frame='lidar',control_publish=False))
+        if self.path is None:return
         points=display_points(record)
         msg=self.path_type();msg.header.frame_id=self.frame
         msg.header.stamp.sec=ns//10**9;msg.header.stamp.nanosec=ns%10**9
