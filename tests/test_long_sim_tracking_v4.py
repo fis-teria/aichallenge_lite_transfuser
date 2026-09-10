@@ -8,7 +8,9 @@ def test_pp_forward_and_frame_transform():
     a=tracking_command(raw,(0.,0.,0.),(0.,0.,0.),0.)
     b=tracking_command(raw,(5.,7.,np.pi/2),(5.,7.,np.pi/2),0.)
     assert abs(a['steer_rad'])<1e-6 and b['steer_rad']==pytest.approx(a['steer_rad'],abs=1e-6)
-    assert a['acceleration_mps2']>0 and a['prefix_points']<46
+    assert a['acceleration_mps2']==1. and a['prefix_points']<46
+    steady=tracking_command(raw,(0.,0.,0.),(0.,0.,0.),.25)
+    assert steady['acceleration_mps2']==0.
     with pytest.raises(ValueError):tracking_command(raw,(0.,0.,0.),(0.,0.,0.),.6)
     raw[0,0]=np.nan
     with pytest.raises(ValueError):tracking_command(raw,(0.,0.,0.),(0.,0.,0.),0.)

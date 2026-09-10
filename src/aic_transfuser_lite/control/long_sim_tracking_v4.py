@@ -61,7 +61,7 @@ def tracking_command(raw: np.ndarray, observed_pose: tuple, current_pose: tuple,
         raise ValueError('STEERING_INFEASIBLE')
     cmd = control_from_waypoints(target[None], .25, speed_mps,
         ControllerConfig(wheelbase_m=1.087, min_lookahead_m=1., max_steer_rad=.5,
-                         min_accel_mps2=-1., max_accel_mps2=.5, speed_kp=2.))
+                         min_accel_mps2=-1., max_accel_mps2=1., speed_kp=4.))
     return dict(steer_rad=cmd.steering_rad, acceleration_mps2=cmd.acceleration_mps2,
                 target_speed_mps=.25, lookahead_rear_m=target.tolist(), prefix_points=end,
                 prefix_cutoff_reason=cutoff_reason, remaining_prefix_m=remaining_m)
