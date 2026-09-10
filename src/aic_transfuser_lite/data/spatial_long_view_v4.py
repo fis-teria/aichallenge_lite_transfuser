@@ -23,5 +23,8 @@ def long_spatial_target(future: np.ndarray) -> dict:
     target=np.zeros((46,2),dtype=np.float32)
     for axis in (0,1):target[mask,axis]=np.interp(LONG_GRID[mask],arc,xy[:,axis])
     return dict(xy=target,mask=mask,grid_m=LONG_GRID.copy(),
+        reliable_prefix_xy=xy, raw_length_m=base['raw_length_m'],
+        distance_status=base['distance_status'], prefix_count=base['prefix_count'],
+        maximum_hold_s=base['maximum_hold_s'],
         observed_length_m=float(arc[-1]),cut_reason=base['cut_reason'],flags=base['flags'],
         tier='LONG_HORIZON_OBSERVED_DIAGNOSTIC_CANDIDATE',extrapolation=False)
