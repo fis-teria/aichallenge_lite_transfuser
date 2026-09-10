@@ -8,7 +8,8 @@ from aic_transfuser_lite.control.v4_pp_connection import ShadowPPConnection, pp_
 
 def setup():
     cfg=json.loads(Path('ros2_ws/src/aic_e2e_runtime/config/v4_pp_shadow_connection.json').read_text())
-    c=ShadowPPConnection(Limits(**cfg['limits']), cfg['fixed_frame'])
+    c=ShadowPPConnection(Limits(**cfg['limits']), cfg['fixed_frame'],
+                         shadow_curvature_log_only=cfg.get('shadow_curvature_log_only',False))
     r=dict(event='PLAN',session_id='s',clock='sim',epoch='0',source='FIXED_V4_UNCORRECTED',
         source_s=1.,generated_monotonic_s=99.,expires_s=1.,accepted=False,
         frame='base_link',reference_point='BASE_LINK_ORIGIN',output_id='p',
@@ -59,6 +60,7 @@ def test_context_reset_rejects_first_new_context():
     r['epoch']='1'
     assert not c.accept(r,1.1)
     assert c.reason=='CONTEXT_RESET'
+    assert c.adapter._bridge.shadow_curvature_log_only
 
 
 def test_shadow_output_only_source():

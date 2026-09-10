@@ -38,7 +38,8 @@ def main(args=None):
     if config.get('mode') != 'SHADOW_ONLY':
         raise ValueError('ONLY_SHADOW_AUTHORIZED')
     limits = Limits(**config['limits'])
-    conn = ShadowPPConnection(limits, config['fixed_frame'],config.get('shadow_spacing_m'))
+    conn = ShadowPPConnection(limits, config['fixed_frame'],config.get('shadow_spacing_m'),
+                             config.get('shadow_curvature_log_only', False))
     if not conn.adapter._bridge._limits_valid():
         raise ValueError('INVALID_LIMITS')
     trajectory = node.create_publisher(Trajectory, '/shadow/v4/pp/trajectory', 1)
@@ -51,6 +52,8 @@ def main(args=None):
             plan_id=None if reference is None else reference.plan_id,
             source_s=None if reference is None else reference.source_s,
             expires_s=None if reference is None else reference.expires_s,
+            curvature_diagnostics={k: v for k, v in conn.adapter._bridge.audit.items()
+                                   if k.startswith('curvature_')},
             actuator_connected=False)); status.publish(msg)
     def clear(reason):
         conn.invalidate(reason); cache.clear()

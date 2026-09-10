@@ -24,6 +24,33 @@ def tick(b,s,t=1.):
     return b.tick(now_s=t,clock='sim',epoch='0',state=replace(s,stamp_s=t))
 
 
+def test_shadow_curvature_warning_preserves_pp_steering_rejection():
+    angle=np.linspace(0.,1.5,31)
+    xy=np.c_[np.sin(angle),1-np.cos(angle)]
+    b,p,tf,s=setup(xy)
+    assert not b.accept(p,tf,now_s=1.)
+    assert b.reason=='CURVATURE_INFEASIBLE'
+    b=ShadowBridge(b.limits,fixture_mode=True,shadow_curvature_log_only=True)
+    assert b.accept(p,tf,now_s=1.)
+    assert b.audit['curvature_limit_exceeded']
+    assert b.audit['curvature_steer_excess_rad']>0.
+    assert b.audit['curvature_plan_id']==p.id
+    out=tick(b,s)
+    assert not out['valid'] and out['reason']=='PP_STEER_INFEASIBLE'
+    assert out['curvature_policy']=='SHADOW_LOG_ONLY'
+
+
+def test_curvature_warning_cannot_enable_nonfixture_or_leak_to_next_plan():
+    b,p,tf,s=setup()
+    with pytest.raises(ValueError,match='SHADOW_ONLY_CURVATURE_POLICY'):
+        ShadowBridge(b.limits,shadow_curvature_log_only=True)
+    b=ShadowBridge(b.limits,fixture_mode=True,shadow_curvature_log_only=True)
+    assert b.accept(p,tf,now_s=1.)
+    assert not b.audit['curvature_limit_exceeded']
+    assert not b.accept(replace(p,id='bad',xy_m=()),tf,now_s=1.1)
+    assert 'curvature_plan_id' not in b.audit
+
+
 def test_no_fixed_speed_cap_keeps_terminal_braking_and_explicit_stop():
     b,p,tf,s=setup()
     b.limits=replace(b.limits,speed_cap_mps=None)

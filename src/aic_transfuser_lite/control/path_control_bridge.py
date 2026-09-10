@@ -110,7 +110,11 @@ class ShadowBridge:
     A rejection clears the plan. Never last-valid fallback. Expired output has
     valid=False, null command, and expires_s=now rather than an implied actuator stop.
     """
-    def __init__(self, limits: Limits | None, *, fixture_mode: bool = False):
+    def __init__(self, limits: Limits | None, *, fixture_mode: bool = False,
+                 shadow_curvature_log_only: bool = False):
+        if type(shadow_curvature_log_only) is not bool or (shadow_curvature_log_only and not fixture_mode):
+            raise ValueError('SHADOW_ONLY_CURVATURE_POLICY')
+        self.shadow_curvature_log_only = shadow_curvature_log_only
         self.limits = limits
         self.fixture_mode = fixture_mode
         self.plan = None
@@ -163,6 +167,7 @@ class ShadowBridge:
         start = time.perf_counter()
         old = self.reference
         self.last_input = (plan.id, plan.source)
+        self.audit = {}
         self._invalidate('PLAN_REJECTED')
         def reject(reason):
             self._invalidate(reason); return False
@@ -201,7 +206,15 @@ class ShadowBridge:
         if np.any(np.abs(turns) > p.max_turn_rad): return reject('PATH_FOLDBACK')
         # Check vertex curvature before resampling; don't smooth a discontinuity away.
         k = turns/((ds[1:]+ds[:-1])/2)
-        if np.any(np.abs(np.arctan(p.wheelbase_m*k)) > p.steer_rad): return reject('CURVATURE_INFEASIBLE')
+        required_steer = float(np.max(np.abs(np.arctan(p.wheelbase_m*k)))) if len(k) else 0.
+        exceeded = required_steer > p.steer_rad
+        self.audit.update(curvature_plan_id=plan.id,
+                          curvature_max_abs_inv_m=float(np.max(np.abs(k))) if len(k) else 0.,
+                          curvature_required_steer_rad=required_steer,
+                          curvature_steer_excess_rad=max(0., required_steer-p.steer_rad),
+                          curvature_limit_exceeded=exceeded,
+                          curvature_policy='SHADOW_LOG_ONLY' if self.shadow_curvature_log_only else 'REJECT')
+        if exceeded and not self.shadow_curvature_log_only: return reject('CURVATURE_INFEASIBLE')
         arc = np.r_[0., np.cumsum(ds)]
         if arc[-1] < p.lookahead_m: return reject('HORIZON_SHORT')
         if arc[-1]/p.resample_m > 4095: return reject('REFERENCE_BUDGET')
@@ -221,7 +234,7 @@ class ShadowBridge:
             a = poly[:-1]; d = np.diff(poly, axis=0); den = np.sum(d*d, axis=1)
             den = np.maximum(den, 1e-24)
             return max(float(np.min(np.linalg.norm(a+np.clip(np.sum((x-a)*d, axis=1)/den,0,1)[:,None]*d-x,axis=1))) for x in points)
-        self.audit = dict(raw_points=len(raw), reference_points=len(local), duplicate_removed=len(raw)-len(clean),
+        self.audit.update(raw_points=len(raw), reference_points=len(local), duplicate_removed=len(raw)-len(clean),
                           max_raw_reference_difference_m=max(distance(raw,local),distance(local,clean)),
                           adapter_duration_s=time.perf_counter()-start, actual_length_m=float(arc[-1]),
                           nominal_s_used_as_time=False, resampling='PIECEWISE_LINEAR_NO_SMOOTHING')

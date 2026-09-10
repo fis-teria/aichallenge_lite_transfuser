@@ -43,11 +43,13 @@ class V4PPReferenceAdapter:
     """
 
     def __init__(self, limits: Limits | None, *, fixed_frame: str,
-                 fixture_mode: bool = False, shadow_spacing_m: float | None = None):
+                 fixture_mode: bool = False, shadow_spacing_m: float | None = None,
+                 shadow_curvature_log_only: bool = False):
         if shadow_spacing_m is not None and (not fixture_mode or shadow_spacing_m not in (.2,.3)):
             raise ValueError('SHADOW_ONLY_SPACING')
         self.shadow_spacing_m = shadow_spacing_m
-        self._bridge = ShadowBridge(limits, fixture_mode=fixture_mode)
+        self._bridge = ShadowBridge(limits, fixture_mode=fixture_mode,
+                                    shadow_curvature_log_only=shadow_curvature_log_only)
         self.fixed_frame = fixed_frame
         self._prepared: PreparedReference | None = None
         self._last_now: float | None = None
@@ -62,6 +64,7 @@ class V4PPReferenceAdapter:
     def accept(self, plan: Plan, pose: PathPose | None, *,
                pose_frame: str, now_s: float) -> bool:
         """Require uncorrected [20,2] V4 output and an explicit pose-frame binding."""
+        self._bridge.audit = {}
         if (self._last_now is not None and now_s < self._last_now):
             self._clear('CLOCK_RESET')
             self._last_now = now_s
