@@ -39,3 +39,55 @@ V4 configの`slam_shadow.normal_rviz_path=true`を有効化する。
 短距離教師で更新される共有特徴が遠方出力を変える可能性もある。
 表示の平滑化だけで隠さず、有効長出力/短距離と長距離教師の扱い/経路形状制約を
 分けて改善・検証する必要がある。単純なepoch増加は12→16で遠方誤差を悪化させた。
+
+## 実施結果
+
+実行commit `f30b8bd58d142f209ea6d4ececaa0b078f80dd60`。
+WSLで全pytest 1838 passed / 4 skipped / 52 warnings、79.87秒。
+Humble package build成功。通常Autoware configへ実適用し、元ファイルbackupを保存。
+追加Path stanzaを取り除くと元ファイルと完全一致することを確認。
+
+適用先：host `graneple@192.168.3.10` の
+`/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz`。
+install configはこのsourceへのsymlinkであり、通常make devのRVizが読む対象。
+既存map表示、車両、操作panel、Fixed Frameは維持。
+
+停止状態の試験35/36を実施。Start要求なし、駆動権限file作成なし。
+独自RViz起動行をrunnerから除去し、通常make devが起動する `/rviz2` だけを使用。
+試験35では86 PLAN、標準Path 85件（全件46点）、受信XYと取付け並進後rawの最大差0m。
+標準Pathの購読者に `/rviz2` を実確認した。
+試験36では通常 `autoware.rviz` のウィンドウをXWDで取得し、画面上の
+V4-20 display、Global Status: Ok、車両付近のピンク経路を確認した。
+スクリーンショットは`tmp/v4_20_normal_rviz_35/normal_rviz.png`。
+デコードはXWDの24bpp、BGR、bytes_per_lineに従い、画面内容の加工なし。
+
+両試験ともhost/probe faultなし、所有sim終了後docker psは空。
+既存wheel補助processには終了時rclpy二重shutdownのtracebackがあり、
+子process全てがclean exitしたとは主張しない。表示中のデータ検証とは分けて保全。
+新規学習・重み変更・追従制御変更はしていない。pushなし。
+
+```bash
+CARTOGRAPHER_BUILD_ROOT=/home/graneple/e2e_autonomous/cartographer_extrap_build_20260910 \
+CARTOGRAPHER_TEST_PROJECT=codex-v4-20-normal-rviz-36 CARTOGRAPHER_V4_EXTRAP_COMPARE=1 \
+V4_SLAM_SHADOW_ROOT=/home/graneple/e2e_autonomous/v4_20_normal_rviz_35 \
+python3 /home/graneple/e2e_autonomous/cartographer_v4_20_normal_rviz_36/run_moving.py
+```
+
+既存outputの再利用は禁止。実行済みの試験は終了している。
+今後もV4-20 configでnormal_rviz_pathを有効にし、専用RVizを追加起動しない。
+
+教師支持はWSLで保存済みselection/teachers.npzから再集計した。
+
+|教師grid|有効train anchor数|
+|---|---:|
+|0.1m|1786|
+|1.1m|948|
+|1.2m|722|
+|1.3m|690|
+|1.4m|677|
+|20m|165|
+
+復帰教師は上限1.3mで、全復帰anchorが1.3mまで有効という意味ではない。
+診断/照合結果：WSL `/home/thistle/e2e_autonomous/runs/v4_20_normal_rviz_35/` の
+`teacher_support.json`、`display_verification.json`、完全evidence。
+同小JSONをWindows `tmp/v4_20_normal_rviz_35/`へ保存。
