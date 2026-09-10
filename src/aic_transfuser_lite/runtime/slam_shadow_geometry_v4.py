@@ -12,7 +12,8 @@ def display_points(record: dict) -> list[tuple[float,float]]:
     """Uncorrected (20,2) metres -> fixed SLAM frame at observation time."""
     if record.get('event')!='PLAN':raise ValueError('NOT_PLAN')
     xy=record['raw_xy_m'];pose=record['observation_pose_xyyaw']
-    count = 46 if record.get('source') == 'LONG_V4_20M_EPOCH12_UNCORRECTED' else 20
+    count = {'LONG_V4_20M_EPOCH12_UNCORRECTED': 46,
+             'TEN_V4_10M_EPOCH2_UNCORRECTED': 36}.get(record.get('source'), 20)
     if len(xy)!=count or len(pose)!=3 or any(len(p)!=2 for p in xy):raise ValueError('SHAPE')
     if not all(math.isfinite(v) for v in pose+ [v for p in xy for v in p]):raise ValueError('NONFINITE')
     x,y,a=pose;c,s=math.cos(a),math.sin(a)

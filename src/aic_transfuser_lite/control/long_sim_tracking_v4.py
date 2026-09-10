@@ -10,10 +10,10 @@ from .waypoint_controller import ControllerConfig, control_from_waypoints
 
 
 def tracking_command(raw: np.ndarray, observed_pose: tuple, current_pose: tuple,
-                     speed_mps: float) -> dict:
+                     speed_mps: float, *, expected_points: int = 46) -> dict:
     """Transform float XY[46,2] observation-root to current rear axle, then PP."""
     xy = np.asarray(raw, dtype=float)
-    if xy.shape != (46, 2) or not np.isfinite(xy).all():
+    if expected_points not in (36, 46) or xy.shape != (expected_points, 2) or not np.isfinite(xy).all():
         raise ValueError('PATH_SHAPE_FINITE')
     if not np.isfinite((*observed_pose, *current_pose, speed_mps)).all():
         raise ValueError('STATE_FINITE')

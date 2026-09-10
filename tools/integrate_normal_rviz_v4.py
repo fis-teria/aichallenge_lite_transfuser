@@ -19,23 +19,26 @@ DISPLAY = '''    - Class: rviz_default_plugins/Path
 '''
 
 
-def integrate(text: str) -> str:
-    if '/visualization/v4_20/raw_path' in text:
+def integrate(text: str, *, ten: bool = False) -> str:
+    display = DISPLAY.replace('V4-20', 'V4-10').replace('v4_20', 'v4_10') if ten else DISPLAY
+    topic = '/visualization/v4_10/raw_path' if ten else '/visualization/v4_20/raw_path'
+    if topic in text:
         raise ValueError('ALREADY_INTEGRATED')
     anchor='Visualization Manager:\n  Class: ""\n  Displays:\n'
     if text.count(anchor)!=1:
         raise ValueError('UNKNOWN_RVIZ_LAYOUT')
-    return text.replace(anchor,anchor+DISPLAY,1)
+    return text.replace(anchor,anchor+display,1)
 
 
 def main() -> None:
     ap=argparse.ArgumentParser();ap.add_argument('config',type=Path)
+    ap.add_argument('--ten',action='store_true')
     args=ap.parse_args();p=args.config
     original=p.read_bytes()
     text=original.decode('utf-8')
     newline='\r\n' if '\r\n' in text else '\n'
-    value=integrate(text.replace('\r\n','\n')).replace('\n',newline).encode('utf-8')
-    backup=p.with_name(p.name+'.before-v4-20')
+    value=integrate(text.replace('\r\n','\n'),ten=args.ten).replace('\n',newline).encode('utf-8')
+    backup=p.with_name(p.name+('.before-v4-10' if args.ten else '.before-v4-20'))
     with backup.open('xb') as f:f.write(original)
     p.write_bytes(value)
 

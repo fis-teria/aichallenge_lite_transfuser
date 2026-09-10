@@ -21,7 +21,7 @@ class SlamShadowIO:
         self.plan_pub=self.node.create_publisher(String,'/shadow/v4/plan_record',1) if config.get('plan_transport',False) else None
         self.odom=self.node.create_publisher(Odometry,'/v4/slam_odometry',10)
         self.path=self.node.create_publisher(Path,'/shadow/v4/path',1) if config.get('rviz_path',False) else None
-        self.normal_path=self.node.create_publisher(Path,'/visualization/v4_20/raw_path',1) if config.get('normal_rviz_path',False) else None
+        self.normal_path=self.node.create_publisher(Path,config.get('normal_rviz_topic','/visualization/v4_20/raw_path'),1) if config.get('normal_rviz_path',False) else None
         self.node.create_subscription(Clock,'/clock',self.on_clock,10)
         self.node.create_subscription(PoseStamped,'/cartographer_v4/tracked_pose',self.on_pose,10)
         self.node.create_timer(.1,self.expire)

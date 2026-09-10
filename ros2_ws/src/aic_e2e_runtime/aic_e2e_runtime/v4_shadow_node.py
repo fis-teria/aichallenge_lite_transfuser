@@ -16,6 +16,10 @@ def validate_config(c: dict) -> None:
     from aic_transfuser_lite.runtime.publisherless_shadow_v4 import Envelope
     from aic_transfuser_lite.runtime.passive_controller_command_v4 import ControllerCommandBinding
     if c.get('enabled') is not True: raise ValueError('V4_SHADOW_DISABLED')
+    if c.get('ten_model') is not None:
+        if c.get('long_model') is not None: raise ValueError('AMBIGUOUS_MODEL')
+        from aic_transfuser_lite.runtime.spatial_ten_shadow_v4 import validate_trial
+        validate_trial(c['ten_model'])
     if c.get('long_model') is not None:
         from aic_transfuser_lite.runtime.spatial_long_shadow_v4 import validate_trial
         validate_trial(c['long_model'])
@@ -66,7 +70,11 @@ def worker(config: dict, incoming, outgoing) -> None:
     from aic_transfuser_lite.runtime.shadow_start_gate_v4 import ForwardPermit
     validate_config(config)
     session_type = ShadowSession
-    if config.get('long_model') is not None:
+    if config.get('ten_model') is not None:
+        from aic_transfuser_lite.runtime.spatial_ten_shadow_v4 import ten_infer_factory, TenShadowSession
+        infer,identity=ten_infer_factory(config['ten_model'])
+        session_type = TenShadowSession
+    elif config.get('long_model') is not None:
         from aic_transfuser_lite.runtime.spatial_long_shadow_v4 import long_infer_factory, LongShadowSession
         infer,identity=long_infer_factory(config['long_model'])
         session_type = LongShadowSession
