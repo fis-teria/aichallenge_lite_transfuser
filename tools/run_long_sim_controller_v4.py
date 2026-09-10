@@ -96,6 +96,8 @@ def main() -> None:
                 if names(topics[role][0])!=[topics[role][2]]:raise ValueError('SOURCE_'+role)
             speed=float(cache['velocity'][0].longitudinal_velocity)
             if not math.isfinite(speed):raise ValueError('SPEED_NONFINITE')
+            if not math.isfinite(float(cache['steering'][0].steering_tire_angle)):
+                raise ValueError('STEERING_NONFINITE')
             state['max_speed_mps']=max(state['max_speed_mps'],abs(speed))
             if abs(speed)>.45:state['fault']='OVERSPEED';raise ValueError('OVERSPEED')
             if elapsed is not None and elapsed>=10:
