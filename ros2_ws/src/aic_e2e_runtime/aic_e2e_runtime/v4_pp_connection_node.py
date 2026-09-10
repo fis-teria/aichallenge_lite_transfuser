@@ -6,7 +6,15 @@ reference even when simulation clock pauses. This is not a vehicle stop proof.
 import json
 import math
 import time
-from . import spatial_path_shadow_node_v4 as _source_layout
+# Resolve canonical installed math code without importing model/torch bootstrap.
+from pathlib import Path
+import sys
+prefix = Path(__file__).resolve().parents[4]
+for source in (prefix/'src', prefix/'share/aic_e2e_runtime/python_src'):
+    if (source/'aic_transfuser_lite/control/v4_pp_connection.py').is_file():
+        sys.path.insert(0, str(source)); break
+else:
+    raise RuntimeError('V4 canonical Python source is not installed')
 from aic_transfuser_lite.control.path_control_bridge import Limits, Vehicle
 from aic_transfuser_lite.control.v4_pp_connection import ShadowPPConnection, pp_center_pose
 from aic_transfuser_lite.runtime.slam_shadow_geometry_v4 import lidar_to_root
@@ -113,8 +121,13 @@ def main(args=None):
     # Independent of plan arrival; no inference in this callback.
     node.create_timer(limits.period_s, tick)
     try: rclpy.spin(node)
+    except KeyboardInterrupt: pass
     finally:
-        clear('CONNECTION_CLOSED'); node.destroy_node(); rclpy.shutdown()
+        # SIGINT may have already shut down the middleware context. Consumer's
+        # existing wall-time input timeout handles that case; no invalid publish.
+        if rclpy.ok(): clear('CONNECTION_CLOSED')
+        node.destroy_node()
+        if rclpy.ok(): rclpy.shutdown()
 
 
 if __name__ == '__main__': main()
