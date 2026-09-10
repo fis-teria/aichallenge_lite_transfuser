@@ -21,3 +21,14 @@ def test_lidar_stopping_and_unknown():
     with pytest.raises(ValueError,match='OCCUPIED'):check_scan(r,*args)
     r[375]=np.nan
     with pytest.raises(ValueError,match='UNKNOWN'):check_scan(r,*args)
+
+def test_truncate_before_fold_without_changing_points():
+    raw=np.c_[LONG_GRID,np.zeros(46)]
+    raw[13]=[1.1,.01]
+    original=raw.copy()
+    result=tracking_command(raw,(0.,0.,0.),(0.,0.,0.),0.)
+    assert result['prefix_cutoff_reason']=='FOLDBACK' and result['prefix_points']==13
+    assert np.array_equal(raw,original)
+    raw[2]=[.1,.01]
+    with pytest.raises(ValueError,match='INSUFFICIENT_CONTIGUOUS_PREFIX'):
+        tracking_command(raw,(0.,0.,0.),(0.,0.,0.),0.)

@@ -29,3 +29,9 @@ bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q
 ROS環境で専有sourceをbuildし、`tmp/v4_20_tracking_30/run_moving.py`を実行。
 runnerは前回29を複製し、controller起動・単一送信元・有限駆動/停止監視を追加。
 評価はWSLで実施し、全attemptの結果・コマンドを追記する。
+
+run32では駆動区間にPREFIX_FOLDBACK 169周期、PLAN_STALE 31周期で正加速0。
+全近傍3mを必須とする方針から、最初の折り返し/不連続の手前で打ち切った
+連続prefixを採用する方針へ変更。点の移動・平滑化・閾値緩和はしない。
+4点以上、rearから1m以上のlookahead、停止余裕0.2m+0.5秒遅延+v²/(2×1m/s²)
+が満たされないprefixは拒否する。元46点とcutoff理由・採用点数を記録する。

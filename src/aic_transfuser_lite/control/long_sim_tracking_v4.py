@@ -32,14 +32,26 @@ def tracking_command(raw: np.ndarray, observed_pose: tuple, current_pose: tuple,
     if len(near) < 4 or np.linalg.norm(near[-1]) < 1.:
         raise ValueError('SHORT_PREFIX')
     d = np.diff(near, axis=0)
-    if np.any(np.linalg.norm(d, axis=1) > 1.6):
-        raise ValueError('PREFIX_DISCONTINUITY')
+    discontinuities = np.flatnonzero(np.linalg.norm(d, axis=1) > 1.6)
+    cutoff_reason = None
+    if len(discontinuities):
+        end = min(end, int(discontinuities[0]) + 1)
+        cutoff_reason = 'DISCONTINUITY'
     # Only non-degenerate segments define headings; no point is altered.
-    valid = d[np.linalg.norm(d, axis=1) > .01]
+    valid_indices = np.flatnonzero(np.linalg.norm(d, axis=1) > .01)
+    valid = d[valid_indices]
     angles = np.arctan2(valid[:, 1], valid[:, 0])
     turns = np.arctan2(np.sin(np.diff(angles)), np.cos(np.diff(angles)))
-    if np.any(np.abs(turns) > 1.2):
-        raise ValueError('PREFIX_FOLDBACK')
+    folds = np.flatnonzero(np.abs(turns) > 1.2)
+    if len(folds):
+        end = min(end, int(valid_indices[folds[0]+1]) + 1)
+        cutoff_reason = 'FOLDBACK'
+    near = local[:end]
+    if len(near)<4 or np.linalg.norm(near[-1])<1.:
+        raise ValueError('INSUFFICIENT_CONTIGUOUS_PREFIX')
+    remaining_m = float(np.linalg.norm(near[-1])) - .484
+    if remaining_m < .2 + max(0.,speed_mps)*.5 + speed_mps**2/2.:
+        raise ValueError('PREFIX_STOPPING_DISTANCE')
     candidates = np.flatnonzero((np.linalg.norm(near, axis=1) >= 1.) & (near[:, 0] > .5))
     if not len(candidates):
         raise ValueError('NO_FORWARD_LOOKAHEAD')
@@ -51,7 +63,8 @@ def tracking_command(raw: np.ndarray, observed_pose: tuple, current_pose: tuple,
         ControllerConfig(wheelbase_m=1.087, min_lookahead_m=1., max_steer_rad=.5,
                          min_accel_mps2=-1., max_accel_mps2=.5, speed_kp=2.))
     return dict(steer_rad=cmd.steering_rad, acceleration_mps2=cmd.acceleration_mps2,
-                target_speed_mps=.25, lookahead_rear_m=target.tolist(), prefix_points=end)
+                target_speed_mps=.25, lookahead_rear_m=target.tolist(), prefix_points=end,
+                prefix_cutoff_reason=cutoff_reason, remaining_prefix_m=remaining_m)
 
 
 def check_scan(ranges: np.ndarray, angle_min: float, angle_increment: float,
