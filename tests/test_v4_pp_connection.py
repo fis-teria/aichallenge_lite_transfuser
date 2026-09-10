@@ -28,6 +28,19 @@ def test_connection_and_expiry():
     assert c.tick(1.1,s) is None
 
 
+def test_default_shadow_has_no_fixed_half_metre_speed_cap():
+    from dataclasses import replace
+    c,r,s=setup()
+    assert c.limits.speed_cap_mps is None
+    assert c.accept(r,1.)
+    ref=c.tick(1.,replace(s,speed_mps=4.))
+    assert ref is not None
+    assert .5 < ref.speed_mps[0] < 2.
+    assert ref.speed_mps[-1]==0.
+    assert np.isfinite(ref.speed_mps).all()
+    assert ref.speed_source=='CONSTRAINT_DERIVED_TRIAL_POLICY_NOT_MODEL_SPEED'
+
+
 def test_missing_state_and_packet_clear():
     c,r,s=setup(); assert c.accept(r,1.)
     assert c.tick(1.,None) is None

@@ -24,7 +24,8 @@ class Limits:
     lateral_accel_mps2: float
     accel_mps2: float
     brake_mps2: float
-    speed_cap_mps: float
+    # None explicitly disables the fixed trial speed cap (not physical constraints).
+    speed_cap_mps: float | None
     lookahead_m: float
     resample_m: float
     max_segment_m: float
@@ -134,10 +135,13 @@ class ShadowBridge:
             return False
         if p.fixture_only and not self.fixture_mode:
             return False
-        numbers = [v for k, v in vars(p).items() if k not in ('provenance', 'fixture_only')]
+        excluded = {'provenance', 'fixture_only'}
+        if p.speed_cap_mps is None:
+            excluded.add('speed_cap_mps')
+        numbers = [v for k, v in vars(p).items() if k not in excluded]
         return (all(type(v) in (int, float) and math.isfinite(v) for v in numbers) and
                 all(v > 0 for k, v in vars(p).items() if k not in
-                    ('provenance', 'fixture_only', 'rear_x_in_base_m', 'future_tolerance_s', 'stop_delay_s')) and
+                    excluded | {'rear_x_in_base_m', 'future_tolerance_s', 'stop_delay_s'}) and
                 p.future_tolerance_s >= 0 and p.stop_delay_s >= 0 and p.steer_rad < math.pi/2 and
                 p.max_turn_rad < math.pi and p.period_s <= p.state_ttl_s)
 
@@ -249,7 +253,9 @@ class ShadowBridge:
                 len(state.pose)!=3 or not np.isfinite((*state.pose,state.stamp_s,state.speed_mps,state.tire_steer_rad)).all()):
             return invalid('ODOMETRY_OR_STATE_MISSING')
         if not -p.future_tolerance_s <= now_s-state.stamp_s <= p.state_ttl_s: return invalid('STATE_STALE_OR_FUTURE')
-        if state.speed_mps < 0 or state.speed_mps > p.speed_cap_mps or abs(state.tire_steer_rad)>p.steer_rad:
+        if (state.speed_mps < 0 or
+                (p.speed_cap_mps is not None and state.speed_mps > p.speed_cap_mps) or
+                abs(state.tire_steer_rad)>p.steer_rad):
             return invalid('STATE_OUT_OF_LIMITS')
         rear = _transform(np.array([[p.rear_x_in_base_m,0.]]),state.pose)[0]
         segments = np.diff(self.reference,axis=0); a = self.reference[:-1]
@@ -264,8 +270,10 @@ class ShadowBridge:
         progress = self.arc[j]+u[j]*(self.arc[j+1]-self.arc[j])
         remaining = float(self.arc[-1]-progress)
         # Geometry-only trial speed is explicitly configured, never derived from point spacing.
-        speed = p.speed_cap_mps if plan.speed_mps is None else min(plan.speed_mps,p.speed_cap_mps)
-        source = 'EXPLICIT_TRIAL_POLICY' if plan.speed_mps is None else plan.speed_source
+        fixed_cap = math.inf if p.speed_cap_mps is None else p.speed_cap_mps
+        speed = fixed_cap if plan.speed_mps is None else min(plan.speed_mps,fixed_cap)
+        source = ('CONSTRAINT_DERIVED_TRIAL_POLICY' if p.speed_cap_mps is None else
+                  'EXPLICIT_TRIAL_POLICY') if plan.speed_mps is None else plan.speed_source
         if speed>0 and remaining<p.lookahead_m: return invalid('REMAINING_HORIZON_SHORT')
         curve_cap = math.sqrt(p.lateral_accel_mps2/max(self.curvature,1e-12))
         # v*delay + v²/(2b) <= remaining; terminal speed zero, not constant-speed feed.
@@ -291,6 +299,7 @@ class ShadowBridge:
                    command=dict(tire_steering_rad=steer,acceleration_mps2=cmd.acceleration_mps2),
                    steering_rate_rps=(steer-state.tire_steer_rad)/dt,steer_rate_limited=steer!=cmd.steering_rad,
                    target_speed_mps=target_speed,speed_source=source,remaining_m=remaining,
+                   fixed_speed_cap_mps=p.speed_cap_mps,
                    cross_track_m=offset,heading_error_rad=error,state_id=state.id,
                    processing_s=time.perf_counter()-started)
         return out

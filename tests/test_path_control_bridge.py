@@ -24,6 +24,30 @@ def tick(b,s,t=1.):
     return b.tick(now_s=t,clock='sim',epoch='0',state=replace(s,stamp_s=t))
 
 
+def test_no_fixed_speed_cap_keeps_terminal_braking_and_explicit_stop():
+    b,p,tf,s=setup()
+    b.limits=replace(b.limits,speed_cap_mps=None)
+    assert b.accept(p,tf,now_s=1.)
+    out=tick(b,replace(s,speed_mps=4.))
+    expected=math.sqrt(.15**2+2*4)-.15
+    assert out['valid']
+    assert out['target_speed_mps']==pytest.approx(expected)
+    assert out['command']['acceleration_mps2']<0
+    assert out['fixed_speed_cap_mps'] is None
+    b,p,tf,s=setup()
+    b.limits=replace(b.limits,speed_cap_mps=None)
+    p=replace(p,speed_mps=0.,speed_plan_id=p.id,speed_source='EXPLICIT_STOP')
+    assert b.accept(p,tf,now_s=1.)
+    assert tick(b,s)['target_speed_mps']==0.
+
+
+@pytest.mark.parametrize('cap',[float('nan'),float('inf'),-1.,0.])
+def test_disabled_cap_requires_none_not_invalid_number(cap):
+    b,p,tf,s=setup()
+    b.limits=replace(b.limits,speed_cap_mps=cap)
+    assert not b.accept(p,tf,now_s=1.)
+
+
 @pytest.fixture
 def trace(request,tmp_path):
     def save(data):

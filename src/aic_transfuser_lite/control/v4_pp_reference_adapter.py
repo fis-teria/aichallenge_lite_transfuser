@@ -107,7 +107,7 @@ class V4PPReferenceAdapter:
         yaw = np.r_[heading, heading[-1]]
         curvature = self._bridge.curvature
         curve_cap = math.sqrt(limits.lateral_accel_mps2 / max(curvature, 1e-12))
-        cap = min(limits.speed_cap_mps, curve_cap)
+        cap = curve_cap if limits.speed_cap_mps is None else min(limits.speed_cap_mps, curve_cap)
         remaining = arc[-1] - arc
         delay = limits.stop_delay_s + limits.period_s
         bd = limits.brake_mps2 * delay
@@ -118,7 +118,8 @@ class V4PPReferenceAdapter:
             plan.source_s, plan.generated_mono_s,
             min(plan.expires_s, plan.source_s + limits.path_ttl_s),
             tuple(map(tuple, xy)), tuple(yaw), tuple(speed),
-            'EXPLICIT_TRIAL_POLICY_NOT_MODEL_SPEED',
+            ('CONSTRAINT_DERIVED_TRIAL_POLICY_NOT_MODEL_SPEED' if limits.speed_cap_mps is None
+             else 'EXPLICIT_TRIAL_POLICY_NOT_MODEL_SPEED'),
             deviation_upper+self._bridge.audit['max_raw_reference_difference_m'])
         self.reason = 'PREPARED_NOT_CONTROL_AUTHORIZED'
         return True
