@@ -62,3 +62,15 @@ def test_config_types_and_command_semantics_cannot_silently_load():
     with pytest.raises(ValueError,match='configuration'):model().load_state_dict(off.state_dict(),strict=True)
     with pytest.raises(ValueError):model(trajectory_steps=15)
     restored=model(use_command_history=False);restored.load_state_dict(off.state_dict(),strict=True)
+
+
+def test_optional_ego_feature_missing_is_masked_in_current_and_history_paths():
+    m=model().eval();inputs=batch()
+    mask=inputs.ego_feature_mask.clone();mask[:,:,3]=False
+    a=replace(inputs,ego_feature_mask=mask)
+    changed=a.ego.clone();changed[:,:,3]=1234.
+    with torch.no_grad():
+        torch.testing.assert_close(m(a),m(replace(a,ego=changed)),rtol=0,atol=0)
+    mask[:,-1,0]=False
+    with pytest.raises(ValueError,match='longitudinal speed'):
+        m(replace(a,ego_feature_mask=mask))

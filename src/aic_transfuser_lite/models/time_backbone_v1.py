@@ -42,9 +42,30 @@ class TimeBackboneV1(FullControlLiteV3):
         self.lidar_temporal=SlotGRU(hidden)
         self.ego_history.ego_temporal=SlotGRU(hidden)
         self.ego_history.command_temporal=SlotGRU(hidden,allow_empty=True,previous_only=True)
+        self.ego_mask_projection=nn.Linear(self.ego_dim,hidden,bias=False)
+
+    def _ego_features(self, batch: ModelBatchV3) -> tuple[torch.Tensor, torch.Tensor]:
+        """Feature 0 is measured longitudinal speed; other SI features may be absent.
+
+        Both current and historical paths sanitize masked values before projection.
+        A mask embedding distinguishes a measured zero from an unavailable feature.
+        """
+        mask=batch.ego_feature_mask
+        values=torch.where(mask,batch.ego,0.0)
+        encoded=self.ego_history.ego_projection(values)+self.ego_mask_projection(mask.to(values.dtype))
+        ego_hidden=self.ego_history.ego_temporal(encoded,mask[...,0])
+        command=torch.where(batch.command_mask[...,None],batch.command_history,0.0)
+        command_hidden=self.ego_history.command_temporal(
+            self.ego_history.command_projection(command),batch.command_mask)
+        history=self.ego_history.output(torch.cat((ego_hidden,command_hidden),dim=-1))
+        current=self.ego(values[:,-1])+self.ego_mask_projection(mask[:,-1].to(values.dtype))[:,None]
+        return history,current
 
     def forward_features(self, batch: ModelBatchV3) -> torch.Tensor:
-        batch.validate(require_current=True)
+        batch.validate(require_current=False)
+        if (not batch.image_mask[:,-1].all() or not batch.lidar_mask[:,-1].all()
+                or not batch.ego_feature_mask[:,-1,0].all()):
+            raise ValueError('current Camera, LiDAR and longitudinal speed must be valid')
         if batch.image.shape[1]>self.max_sensor_history or batch.lidar.shape[1]>self.max_sensor_history:
             raise ValueError('sensor history exceeds configured maximum')
         if batch.ego.shape[1]>self.max_ego_history or batch.command_history.shape[1]>self.max_ego_history:
@@ -53,9 +74,10 @@ class TimeBackboneV1(FullControlLiteV3):
             raise ValueError('time input dimensions mismatch')
         camera=encode_valid(self.camera,batch.image,batch.image_mask)
         lidar=encode_valid(self.lidar,batch.lidar,batch.lidar_mask)
+        ego_history,current=self._ego_features(batch)
         temporal=self.temporal_projection(torch.cat((
             self.camera_temporal(camera.mean(2),batch.image_mask),
             self.lidar_temporal(lidar.mean(2),batch.lidar_mask),
-            self.ego_history(batch.ego,batch.ego_feature_mask,batch.command_history,batch.command_mask)),dim=-1))
-        current=self.ego(batch.ego[:,-1])+temporal[:,None]
+            ego_history),dim=-1))
+        current=current+temporal[:,None]
         return self.fusion(camera[:,-1],lidar[:,-1],current)[1]

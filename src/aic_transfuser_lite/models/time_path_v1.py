@@ -51,7 +51,7 @@ class TimePathV1(nn.Module):
     """Existing V3 fusion + new autoregressive GRU XY decoder, output [B,30,2] m.
 
     No target point input is invented. Unlike original TransFuser this decoder is
-    not goal-conditioned. No trained checkpoint or runtime adapter is provided.
+    not goal-conditioned. No trained checkpoint or production runtime is provided.
     """
     def __init__(self, *, use_command_history: bool = True, trajectory_steps: int = 30, **kwargs: Any) -> None:
         super().__init__()
@@ -72,7 +72,7 @@ class TimePathV1(nn.Module):
 
     def get_extra_state(self) -> dict[str, Any]:
         return {"contract": time_contract(), "command_history": self.use_command_history,
-                "backbone": self._backbone_config, "history": "valid_cnn_fixed_slot_v1"}
+                "backbone": self._backbone_config, "history": "valid_cnn_fixed_slot_masked_ego_v2"}
 
     def set_extra_state(self, state: dict[str, Any]) -> None:
         def same(a: Any, b: Any) -> bool:
