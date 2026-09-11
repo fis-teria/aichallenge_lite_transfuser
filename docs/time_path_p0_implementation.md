@@ -65,3 +65,23 @@ P1: real-data adoption/noise/frame/availability audit after SSD, full dataset/ch
 pipeline, supported-anchor accumulation weighting, split/lineage, command OFF/ON comparison.
 P2: calibrated body transforms, actual timing, feasibility/Supervisor wiring and AWSIM.
 P3: optional heads/losses only after baseline evidence. No performance gain claimed.
+
+## Verified results
+
+Native WSL execution commit `0d3e4093c8c6a280eb6fef606f29c7058617c992`.
+Targeted tests: **30 passed**, 5 warnings, 7.72 s.
+Full suite: **1876 passed, 4 skipped**, 58 warnings, 91.88 s.
+Logs and checksums: `docs/evidence/time_path_p0/`.
+Skips are the existing OSQP, two JSON-schema gates, and optional official-package test.
+Warnings are the existing Transformer nested-tensor warning.
+
+The raw reader sink is tested with an AnyReader fixture: both same-stamp pose messages
+reach the event sink while the unchanged legacy return keeps one. Velocity/command/gear
+are optional for the time event path. Teacher -> typed plan -> fractional-age reference
+-> existing PP + longitudinal calculation is tested end to end without velocity labels.
+No production-data adoption rate, speed noise, pose extrinsics, learned model performance,
+ROS timing, actuator integration or AWSIM driving was evaluated.
+
+Review mapping: B01/B02/D02/D03 -> P0-A; B03/D01 -> P0-B;
+D04/D05 configuration protections -> P0-B (full checkpoint lifecycle remains P1);
+D06 -> P0-C. D07-D10 and H01-H04 retain the review's stated later-stage boundaries.
