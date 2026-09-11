@@ -87,10 +87,37 @@ def test_event_reader_preserves_duplicates_before_legacy_dedup(monkeypatch):
     import aic_transfuser_lite.data.time_history_v1 as module
     first=replace(pose(10),bag_timestamp_ns=100)
     second=replace(first,x_world_m=99.,bag_timestamp_ns=200)
-    def read(bag, *, event_sink):
+    def read(bag, *, event_sink, optional_roles):
+        assert {"velocity", "nominal_command", "final_command"} <= optional_roles
         for i,p in enumerate((first,second)):event_sink('pose',p,i)
     monkeypatch.setattr(module,'read_run_messages_v2',read)
     epoch=ClockEpoch('e',0,2,0,300,0,100,None)
     values=read_time_events(Path('unused'),run='r',epochs=[epoch],capture_clock='sim')
     assert len(values)==2 and values[0].sequence!=values[1].sequence
     assert values[0].availability_source=='bag_receipt_proxy'
+
+
+def test_raw_reader_sink_sees_both_records_before_last_wins(tmp_path,monkeypatch):
+    from types import SimpleNamespace as NS
+    import rosbags.highlevel
+    from aic_transfuser_lite.data.mcap_converter_v2 import read_run_messages_v2,DATASET_V2_TOPICS
+    (tmp_path/'metadata.yaml').write_text('synthetic')
+    connections=[NS(topic=c.name,msgtype=c.message_type) for c in DATASET_V2_TOPICS if c.role in {'camera','lidar','pose'}]
+    pose_topic=next(c.name for c in DATASET_V2_TOPICS if c.role=='pose')
+    connection=next(c for c in connections if c.topic==pose_topic)
+    def message(x):
+        return NS(header=NS(stamp=NS(sec=1,nanosec=0),frame_id='map'),child_frame_id='rear_axle',
+            pose=NS(pose=NS(position=NS(x=x,y=0.),orientation=NS(x=0.,y=0.,z=0.,w=1.))))
+    class Reader:
+        def __init__(self,*args):self.connections=connections
+        def __enter__(self):return self
+        def __exit__(self,*args):pass
+        def messages(self,**kwargs):return iter([(connection,1_010_000_000,message(1.)),(connection,2_000_000_000,message(99.))])
+        def deserialize(self,data,kind):return data
+    monkeypatch.setattr(rosbags.highlevel,'AnyReader',Reader)
+    seen=[]
+    decoded=read_run_messages_v2(tmp_path,event_sink=lambda *args:seen.append(args),
+        optional_roles=frozenset({'velocity','nominal_command','final_command','gear','actual_steering'}))
+    assert len(seen)==2 and len(decoded.poses)==1
+    assert seen[0][1].x_world_m==1. and seen[1][1].x_world_m==99.
+    assert seen[0][2]<seen[1][2]

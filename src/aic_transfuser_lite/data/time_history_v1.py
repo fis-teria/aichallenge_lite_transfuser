@@ -41,7 +41,8 @@ def read_time_events(bag: Path, *, run: str, epochs: Sequence[ClockEpoch],
             raise ValueError("event receipt has no unique epoch")
         result.append(TimeEvent(role, run, matches[0].epoch_id, capture_clock, "bag_receipt",
             int(item.timestamp_ns), int(item.bag_timestamp_ns), sequence, item, "bag_receipt_proxy"))
-    read_run_messages_v2(bag, event_sink=sink)
+    read_run_messages_v2(bag, event_sink=sink,
+        optional_roles=frozenset({"velocity", "nominal_command", "final_command", "gear", "actual_steering"}))
     return tuple(result)
 
 

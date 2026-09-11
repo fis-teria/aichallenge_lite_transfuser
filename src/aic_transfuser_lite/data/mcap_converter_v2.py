@@ -775,7 +775,7 @@ def _deduplicate_sorted(items: Sequence[Any]) -> tuple[Any, ...]:
     return tuple(by_timestamp[key] for key in sorted(by_timestamp))
 
 
-def read_run_messages_v2(bag_dir: Path, *, event_sink: Callable[[str, Any, int], None] | None = None) -> RunStreams:
+def read_run_messages_v2(bag_dir: Path, *, event_sink: Callable[[str, Any, int], None] | None = None, optional_roles: frozenset[str] = frozenset()) -> RunStreams:
     """Decode legacy streams; optional sink(role, item, sequence) sees EVERY event.
 
     The sink runs before legacy global deduplication. Receipt is not availability.
@@ -783,6 +783,8 @@ def read_run_messages_v2(bag_dir: Path, *, event_sink: Callable[[str, Any, int],
 
     from rosbags.highlevel import AnyReader
 
+    if not optional_roles.issubset({c.role for c in DATASET_V2_TOPICS}):
+        raise ValueError("unknown optional topic role")
     if not (bag_dir / "metadata.yaml").is_file():
         raise FileNotFoundError(f"rosbag2 metadata not found: {bag_dir / 'metadata.yaml'}")
     buckets: dict[str, list[Any]] = {contract.role: [] for contract in DATASET_V2_TOPICS}
@@ -793,7 +795,7 @@ def read_run_messages_v2(bag_dir: Path, *, event_sink: Callable[[str, Any, int],
         required = {
             contract.name
             for contract in DATASET_V2_TOPICS
-            if contract.required_for_conversion
+            if contract.required_for_conversion and contract.role not in optional_roles
         }
         missing = sorted(required.difference(available))
         if missing:

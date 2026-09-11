@@ -74,3 +74,22 @@ def test_receding_oracle_completes_synthetic_motion_with_progress():
         yaw+=speed*math.tan(cmd.steering_rad)*dt
         speed=max(0.,speed+cmd.acceleration_mps2*dt)
     assert x>.5 and abs(y)<1e-9 and speed>.1
+
+
+def test_teacher_to_reference_to_pp_without_velocity_or_commands():
+    from aic_transfuser_lite.data.mcap_converter_v2 import TimedPose
+    from aic_transfuser_lite.data.time_history_v1 import TimeEvent
+    from aic_transfuser_lite.data.time_teacher_v1 import build_time_teacher
+    def event(t):
+        stamp=int(round(t*1e9))
+        return TimeEvent('pose','r','e','sim','receipt',stamp,stamp,stamp,
+            TimedPose(stamp,.15*t,0.,0.,'map','rear_axle'))
+    teacher=build_time_teacher([event(i/10) for i in range(31)],event(0),
+        epoch_start_ns=0,epoch_end_ns=3_000_000_000)
+    assert teacher.xy_mask.all() and not teacher.velocity_mask.any()
+    plan=TimePlan('oracle_teacher',pose(),teacher.xy_m)
+    reference=prepare_time_reference(plan,pose(.23,.0345))
+    command=reference_control(reference,current_speed_mps=.10)
+    assert reference.target_speed_mps==pytest.approx(.15,abs=1e-6)
+    assert command.acceleration_mps2==pytest.approx(.05,abs=1e-6)
+    assert command.steering_rad==0
