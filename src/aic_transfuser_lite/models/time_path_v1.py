@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import inspect
 from typing import Any
 
 import torch
@@ -9,7 +10,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from aic_transfuser_lite.contracts.model_batch_v3 import ModelBatchV3
-from .full_control_lite_v3 import FullControlLiteV3
+from .time_backbone_v1 import TimeBackboneV1
 
 STEPS = 30
 DT_SEC = 0.1
@@ -17,14 +18,19 @@ DT_SEC = 0.1
 
 def time_contract() -> dict[str, Any]:
     """Serializable output identity; point i is (i+1)*0.1 s after observation."""
-    return {"format": "proposed_time_path_v1", "time_sec": [i / 10 for i in range(1, 31)],
+    return {"format": "proposed_time_path_v1_p0", "time_sec": [i / 10 for i in range(1, 31)],
             "frame": "base_link_at_observation", "xy_unit": "m",
             "speed_unit": "m/s", "speed_meaning": "interval_chord_speed_norm",
             "runtime_ready": False}
 
 
 def validate_time_contract(value: dict[str, Any]) -> None:
-    if value != time_contract():
+    expected = time_contract()
+    if (type(value) is not dict or set(value) != set(expected)
+            or any(type(value[k]) is not type(v) for k,v in expected.items())
+            or type(value.get("time_sec")) is not list
+            or any(type(v) is not float for v in value["time_sec"])
+            or value != expected):
         raise ValueError("time trajectory contract mismatch")
 
 
@@ -47,16 +53,35 @@ class TimePathV1(nn.Module):
     No target point input is invented. Unlike original TransFuser this decoder is
     not goal-conditioned. No trained checkpoint or runtime adapter is provided.
     """
-    def __init__(self, *, use_command_history: bool = True, **kwargs: Any) -> None:
+    def __init__(self, *, use_command_history: bool = True, trajectory_steps: int = 30, **kwargs: Any) -> None:
         super().__init__()
+        if type(use_command_history) is not bool or type(trajectory_steps) is not int or trajectory_steps != 30:
+            raise ValueError("TimePath requires bool command option and 30 time steps")
         self.use_command_history = use_command_history
-        self.backbone = FullControlLiteV3(**{**kwargs, "control_head_enabled": False,
+        from .full_control_lite_v3 import FullControlLiteV3
+        bound = inspect.signature(FullControlLiteV3).bind(**{**kwargs, "control_head_enabled": False,
             "control_sequence_head_enabled": False, "behavior_head_enabled": False})
+        bound.apply_defaults()
+        self._backbone_config = dict(bound.arguments)
+        self.backbone = TimeBackboneV1(**self._backbone_config)
         self.backbone.trajectory_head = None
         self.backbone.speed_profile_head = None
         hidden = int(kwargs.get("hidden_dim", 128))
         self.decoder = nn.GRUCell(2, hidden)
         self.delta_head = nn.Linear(hidden, 2)
+
+    def get_extra_state(self) -> dict[str, Any]:
+        return {"contract": time_contract(), "command_history": self.use_command_history,
+                "backbone": self._backbone_config, "history": "valid_cnn_fixed_slot_v1"}
+
+    def set_extra_state(self, state: dict[str, Any]) -> None:
+        def same(a: Any, b: Any) -> bool:
+            if type(a) is not type(b): return False
+            if isinstance(a, dict): return set(a) == set(b) and all(same(a[k], b[k]) for k in a)
+            if isinstance(a, (tuple, list)): return len(a) == len(b) and all(same(x,y) for x,y in zip(a,b))
+            return a == b
+        if not same(state, self.get_extra_state()):
+            raise ValueError("time model configuration mismatch; construct matching model first")
 
     def forward(self, batch: ModelBatchV3) -> torch.Tensor:
         """Input-only features; teacher tensors never reach backbone or decoder."""
