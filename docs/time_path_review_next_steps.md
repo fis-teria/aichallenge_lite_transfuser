@@ -23,27 +23,7 @@ WSLの関連30件、全体1876件成功・4件skipの記録がある（今回再
 
 ## 次に行う P1-prep（実データ学習なし）
 
-### A. 有効教師数に基づく損失・勾配蓄積と評価集計（最初の実装単位）
-
-対応D08/D10。現在のmasked_time_lossは有効アンカー平均として維持する。
-- 各microbatchの平均を単純平均せず、蓄積windowの有効アンカー総数で重み付けする。
-- 全無効microbatchをスキップしても、前の有効microbatchの勾配を消さない。
-- optimizer/schedulerは実際の有効更新に合わせて進める。全無効windowは進めない。
-- 固定予測で一括計算と分割計算のloss/予測勾配が一致する回帰テストを追加。
-- BN/dropoutを含む全モデルのtrain-mode一括forwardとmicrobatch forwardの一致は要求しない。
-- horizon別の支持数、raw誤差、入力欠損、出力棄却、採用率を集計。分母を失わず、支持0はNA。
-完了条件: 有効数0/1/不均一の合成例で重み・勾配・更新回数・評価分母が一致。
-
-### B. 完全な設定保存・復元と中断再開
-
-対応D04/D05/D09。
-- モデル作成前に、時間グリッド、座標/基準点、前処理、slot規則、command OFF/ONを型付きで検証。
-- モデルだけでなくoptimizer/scheduler/RNG/step、split/教師manifest、継承元SHAとデータ系譜を保存。
-- resumeと新規fine-tuneを区別。距離モデルのheadは流用しない。
-- 合成fixtureで保存再読込と中断再開を検証。実コーパスでの学習は行わない。
-完了条件: 設定違いを明示拒否し、同設定の状態を再現。データ系譜不明ならその旨を保持。
-
-### C. 教師・履歴を実際のDataset入力まで接続
+### A. 教師・履歴を実際のDataset入力まで接続
 
 対応D02/D03/D07/H02/H04。まず合成イベントと小型fixtureで実装する。
 - 実カメラ取得時刻に対応する観測pose/egoを構成し、補間端点と利用可能時刻を記録する。
@@ -54,6 +34,26 @@ WSLの関連30件、全体1876件成功・4件skipの記録がある（今回再
 - 新しい教師経路を使うことを明示。旧combined validのデータだけから欠損XYを復元できたとは扱わない。
 完了条件: 重複・遅着・欠落・reset・介入のfixtureでtensor/教師/mask/理由が再現。
 注意: 既存の位置教師frameとPP要求のrear_axleを同一と仮定しない。推論出力のbody基準点と必要な変換を明記。
+
+### B. 有効教師数に基づく損失・勾配蓄積と評価集計
+
+対応D08/D10。現在のmasked_time_lossは有効アンカー平均として維持する。
+- 各microbatchの平均を単純平均せず、蓄積windowの有効アンカー総数で重み付けする。
+- 全無効microbatchをスキップしても、前の有効microbatchの勾配を消さない。
+- optimizer/schedulerは実際の有効更新に合わせて進める。全無効windowは進めない。
+- 固定予測で一括計算と分割計算のloss/予測勾配が一致する回帰テストを追加。
+- BN/dropoutを含む全モデルのtrain-mode一括forwardとmicrobatch forwardの一致は要求しない。
+- horizon別の支持数、raw誤差、入力欠損、出力棄却、採用率を集計。分母を失わず、支持0はNA。
+完了条件: 有効数0/1/不均一の合成例で重み・勾配・更新回数・評価分母が一致。
+
+### C. 完全な設定保存・復元と中断再開
+
+対応D04/D05/D09。
+- TimePath専用configと明示的なモデル構築入口を用意する。モデル作成前に、時間グリッド、座標/基準点、前処理、slot規則、command OFF/ONを型付きで検証。
+- モデルだけでなくoptimizer/scheduler/RNG/step、split/教師manifest、継承元SHAとデータ系譜を保存。
+- resumeと新規fine-tuneを区別。距離モデルのheadは流用しない。
+- 合成fixtureで保存再読込と中断再開を検証。実コーパスでの学習は行わない。
+完了条件: 設定違いを明示拒否し、同設定の状態を再現。データ系譜不明ならその旨を保持。
 
 ### D. run分割と比較実験設定の固定
 
@@ -83,6 +83,8 @@ P3: baselineで必要性が分かった場合だけ独立速度/停止head、整
 
 ## 次の具体的タスク
 
-**P1-prep-A: 不均一な有効教師数に対応した勾配蓄積・評価集計を、合成回帰テスト付きで実装する。**
-これを最初に小さく完了させ、Bのcheckpoint、CのDataset接続、Dのsplit/比較設定へ進む。
+**P1-prep-A: TimeTeacherとTimeHistoryをTimePath専用Datasetへつなぎ、合成イベントから30点教師・独立mask・因果入力を返せるようにする。**
+旧V3 Dataset/trainerの15点・combined maskを黙って流用しない。
+Aでbatch契約を固定し、Bの損失集計、Cのconfig/factory/checkpoint、Dのsplit/比較設定へ進む。
+Bの固定予測テストやDのmanifest仕様は、Aと独立に準備できる。
 整理段階では追加学習・新規走行・外部レビュー送信は実行していない。
