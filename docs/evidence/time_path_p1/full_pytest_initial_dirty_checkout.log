@@ -1,0 +1,100 @@
+........................................................................ [  3%]
+........................................................................ [  7%]
+........................................................................ [ 11%]
+........................................................................ [ 15%]
+........................................................................ [ 18%]
+........................................................................ [ 22%]
+...........s............................................................ [ 26%]
+........................................................................ [ 30%]
+........................................................................ [ 33%]
+........................................................................ [ 37%]
+........................................................................ [ 41%]
+........................................................................ [ 45%]
+........................................................................ [ 48%]
+..................s..................................................... [ 52%]
+.......................................................................F [ 56%]
+........................................................................ [ 60%]
+........................................................................ [ 63%]
+........................................................................ [ 67%]
+............................................s........................... [ 71%]
+........................................................................ [ 75%]
+........................................................................ [ 78%]
+........................................................................ [ 82%]
+........................................................................ [ 86%]
+........................................................................ [ 90%]
+........................................................................ [ 94%]
+..............................................s......................... [ 97%]
+..........................................                               [100%]
+=================================== FAILURES ===================================
+_______________ test_budget_and_output_collision_partial_record ________________
+
+tmp_path = PosixPath('/tmp/pytest-of-thistle/pytest-298/test_budget_and_output_collisi0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74ebbe151e10>
+
+    def test_budget_and_output_collision_partial_record(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        with pytest.raises(TimeoutError): Budget(-1).check()
+        config = tmp_path / "config.yaml"
+        config.write_text(yaml.safe_dump({"evaluation": FIXED, "prior_run": str(tmp_path/"absent_prior"), "dataset_root": str(tmp_path/"absent_data")}))
+        output = tmp_path / "new"
+        assert execute(config, output) == 1
+        recorded = (output/"artifacts/execution_manifest.json").read_bytes()
+        assert json.loads(recorded)["status"] == "BLOCKED"
+        with pytest.raises(FileExistsError): execute(config, output)
+        assert (output/"artifacts/execution_manifest.json").read_bytes() == recorded
+        def exhausted(*args: object, **kwargs: object) -> bytes:
+            raise TimeoutError("synthetic fixed budget")
+        monkeypatch.setattr("aic_transfuser_lite.evaluation.spatial_diagnostic_validation_v4.read_checked", exhausted)
+        second = tmp_path / "partial"
+        assert execute(config, second) == 1
+>       assert json.loads((second/"artifacts/execution_manifest.json").read_text())["status"] == "PARTIAL"
+E       AssertionError: assert 'BLOCKED' == 'PARTIAL'
+E         
+E         - PARTIAL
+E         + BLOCKED
+
+tests/test_spatial_diagnostic_validation_v4.py:202: AssertionError
+----------------------------- Captured stdout call -----------------------------
+{"mode": "FIXED_STEP500_LIMITED_VALIDATION", "execution_commit": "88c48272e9bfa89e8b798c7e064029b27271f6cd", "dirty": "?? tmp/", "start_utc": "2026-09-11T02:01:58.272880+00:00", "status": "BLOCKED", "teacher_adoption_approved": false, "runtime_deployment_approved": false, "new_training_optimizer_steps": 0, "optimizer_constructed": false, "raw_reads_performed": 0, "test_asset_reads": 0, "train_replay_passed": false, "error_type": "ValueError", "error": "dirty execution checkout", "active_seconds": 0.002129299995431211, "end_utc": "2026-09-11T02:01:58.276045+00:00", "checkpoint_sha256": "0316692543a901d9d6b96718c5651d6739367aa851f83fb3a133c126ccc8919f"}
+{"mode": "FIXED_STEP500_LIMITED_VALIDATION", "execution_commit": "88c48272e9bfa89e8b798c7e064029b27271f6cd", "dirty": "?? tmp/", "start_utc": "2026-09-11T02:01:58.287305+00:00", "status": "BLOCKED", "teacher_adoption_approved": false, "runtime_deployment_approved": false, "new_training_optimizer_steps": 0, "optimizer_constructed": false, "raw_reads_performed": 0, "test_asset_reads": 0, "train_replay_passed": false, "error_type": "ValueError", "error": "dirty execution checkout", "active_seconds": 0.00013899999612476677, "end_utc": "2026-09-11T02:01:58.287817+00:00", "checkpoint_sha256": "0316692543a901d9d6b96718c5651d6739367aa851f83fb3a133c126ccc8919f"}
+----------------------------- Captured stderr call -----------------------------
+Traceback (most recent call last):
+  File "/home/thistle/e2e_autonomous/e2e_lite_transfuser/src/aic_transfuser_lite/evaluation/spatial_diagnostic_validation_v4.py", line 435, in execute
+    raise ValueError("dirty execution checkout")
+ValueError: dirty execution checkout
+Traceback (most recent call last):
+  File "/home/thistle/e2e_autonomous/e2e_lite_transfuser/src/aic_transfuser_lite/evaluation/spatial_diagnostic_validation_v4.py", line 435, in execute
+    raise ValueError("dirty execution checkout")
+ValueError: dirty execution checkout
+=============================== warnings summary ===============================
+tests/test_cli_full_control_train_v3.py: 6 warnings
+tests/test_cls_pooling.py: 4 warnings
+tests/test_ego_features.py: 1 warning
+tests/test_full_control_lite_v3_shape.py: 3 warnings
+tests/test_full_control_training_v3.py: 4 warnings
+tests/test_model_registry_v3.py: 1 warning
+tests/test_model_shapes.py: 1 warning
+tests/test_model_v1_shapes.py: 3 warnings
+tests/test_optional_heads.py: 2 warnings
+tests/test_reproducible_ablation.py: 3 warnings
+tests/test_runtime_input_history_v3.py: 1 warning
+tests/test_runtime_v3.py: 8 warnings
+tests/test_spatial_diagnostic_training_v4.py: 5 warnings
+tests/test_spatial_diagnostic_validation_v4.py: 7 warnings
+tests/test_spatial_ten_v4.py: 1 warning
+tests/test_temporal_model_v3.py: 2 warnings
+tests/test_time_backbone_p0.py: 4 warnings
+tests/test_time_checkpoint_p1.py: 1 warning
+tests/test_time_path_v1.py: 2 warnings
+tests/test_time_pipeline_p1.py: 2 warnings
+tests/test_v1_compatibility_view.py: 1 warning
+  /home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_mpc_solution_guard.py:151: OSQP unavailable; synthetic tests are not real solver validation
+SKIPPED [1] tests/test_spatial_bootstrap_v4.py:484: existing environment lacks full Draft2020 validator; no install
+SKIPPED [1] tests/test_spatial_runtime_v4.py:242: existing environment lacks jsonschema; no dependency installation authorized
+SKIPPED [1] tests/test_tiny_lidar_sim.py:318: Optional fixed official package not supplied
+FAILED tests/test_spatial_diagnostic_validation_v4.py::test_budget_and_output_collision_partial_record
+1 failed, 1909 passed, 4 skipped, 62 warnings in 100.18s (0:01:40)

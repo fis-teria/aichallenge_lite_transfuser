@@ -1,0 +1,43 @@
+{
+  "scope": "P1_PREPARATION_SYNTHETIC_ONLY",
+  "execution_commit": "88c48272e9bfa89e8b798c7e064029b27271f6cd",
+  "environment": "codex-wsl:/home/thistle/e2e_autonomous/e2e_lite_transfuser",
+  "lock": "tools/with_wsl_training_lock.sh",
+  "recorded_utc": "2026-09-11T02:05:51.744623+00:00",
+  "targeted": {
+    "passed": 57,
+    "warnings": 9,
+    "elapsed_sec": 10.59,
+    "exit_code": 0,
+    "command": "env PYTHONPATH=src .venv/bin/python -m pytest -q tests/test_time_dataset_p1.py tests/test_time_objective_p1.py tests/test_time_metrics_p1.py tests/test_time_checkpoint_p1.py tests/test_time_split_p1.py tests/test_time_pipeline_p1.py tests/test_time_path_v1.py tests/test_time_backbone_p0.py tests/test_time_teacher_p0.py tests/test_time_reference_p0.py"
+  },
+  "full": {
+    "passed": 1910,
+    "skipped": 4,
+    "warnings": 62,
+    "elapsed_sec": 137.98,
+    "exit_code": 0,
+    "command": "env PYTHONPATH=src .venv/bin/python -m pytest -q"
+  },
+  "initial_full_attempt": {
+    "passed": 1909,
+    "failed": 1,
+    "skipped": 4,
+    "elapsed_sec": 100.18,
+    "reason": "A receipt copied to unignored WSL tmp/ triggered an existing clean-checkout guard. Moved the owned receipt to the external runs directory and reran without code changes."
+  },
+  "split": {
+    "sha256": "0339b8cadc704b5b418279fd3c058008060fecd4268b30d7e3e6235aabab80b0",
+    "train": 12,
+    "validation": 4,
+    "test": 4,
+    "sources_verified_at_destination": false
+  },
+  "real_corpus_training_performed": false,
+  "awsim_executed": false,
+  "runtime_ready": false,
+  "artifacts": {
+    "docs\\evidence\\time_path_p1\\full_pytest.log": "0efbfd8bfeeb03f52d44277bce47d638eb4bb9bf46d6d555f4ebb0775cbcc0ab",
+    "docs\\evidence\\time_path_p1\\full_pytest_initial_dirty_checkout.log": "f24eeb5ca318cecfeb4c4023d6df6496a164bbfcb5d1549c943ee62106585489"
+  }
+}

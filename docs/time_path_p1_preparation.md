@@ -60,12 +60,12 @@ bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -m pyte
 
 ```bash
 bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python tools/prepare_time_p1.py draft \
-  --receipt tmp/time_p1_receipt.json --output-dir tmp/time_p1_draft \
+  --receipt ../runs/time_p1_preparation_88c4827/receipt.json --output-dir ../runs/time_p1_preparation_88c4827/draft \
   --seed 42 --max-anchors 128 --max-optimizer-steps 4
 # SSD移行後だけ実行する原本の読み取り検証:
 bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python tools/prepare_time_p1.py verify-sources \
-  --split tmp/time_p1_draft/split_draft.json --raw-root /path/to/extracted/package \
-  --output runs/time_p1/split_verified.json
+  --split configs/time_path_p1/split_draft.json --raw-root /path/to/extracted/package \
+  --output ../runs/time_p1/split_verified.json
 ```
 
 ## 残る実データ作業
@@ -73,4 +73,20 @@ bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python tools/p
 20周原本の配置・hash照合、bag receiptと処理完了時刻の差の監査、実frame/取付姿勢の確認、介入時刻の抽出、
 実教師の有効数・速度・停止ノイズの監査、大規模コーパスの逐次変換/cache、有限予算の学習実行は後続。
 現在のDatasetはdecoded eventを受ける小型・共通ロジックであり、20GBをそのまま全RAMへ展開する運用は行わない。
-検証記録は実行後に追記する。
+生成した設定と分割draftは`configs/time_path_p1/`に保存した。例示の128アンカー・4更新を本学習予算として扱わない。
+検証用receiptと出力はWSL worktreeの外に置く。WSLの`tmp/`は必ずしもignoreされておらず、クリーン状態を要求する検証を妨げるためである。
+
+## 検証結果
+
+実行commit: `88c48272e9bfa89e8b798c7e064029b27271f6cd`。WSL native checkout、共有lock経由。
+
+- 関連回帰: **57 passed / 9 warnings / 10.59秒**。
+- 全体: **1910 passed / 4 skipped / 62 warnings / 137.98秒**。
+- skipは既存のOSQP、JSON Schema関連2件、任意official package。依存の追加インストールはしていない。
+- 初回全体実行は確認用receiptがWSLで未追跡になり、既存clean-checkoutガードのテストが1件失敗した。
+  receiptをworktree外へ移し、コード変更なしで全体を再実行して成功した。初回ログも保全。
+- 20周分draft生成をWSLで実行。train 12 / validation 4 / test 4。OFF/ON設定差は`use_command_history`のみ。
+- split hash: `0339b8cadc704b5b418279fd3c058008060fecd4268b30d7e3e6235aabab80b0`。
+
+[検証JSON](evidence/time_path_p1/verification.json) / [全体ログ](evidence/time_path_p1/full_pytest.log)。
+モデルの走行性能・実教師の品質・停止能力を確認した結果ではない。実データ学習とAWSIMは実行していない。

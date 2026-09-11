@@ -1,5 +1,8 @@
 # Astra Proレビュー後の次工程
 
+更新: P1-prepの実装は[学習準備の実装記録](time_path_p1_preparation.md)に移した。
+以下は着手時の作業計画。次の実データ工程はSSD移行・保留解除後の原本照合と教師監査である。
+
 参照: [レビュー](<Astra Pro/astra_2026_1006_review_ja.md>)、[P0実装結果](time_path_p0_implementation.md)。
 整理時の実装HEAD: `ab73206b07a1ca7cf7e73495ea785ef1385e4e9e`。
 本資料は作業順序の整理。学習・実データ処理・AWSIMの再開指示ではない。

@@ -1,0 +1,34 @@
+{
+  "format": "time_command_comparison_v1",
+  "split_sha256": "0339b8cadc704b5b418279fd3c058008060fecd4268b30d7e3e6235aabab80b0",
+  "scope": "same_course_same_conditions_run_holdout",
+  "initialization": "scratch",
+  "seed": 42,
+  "sampling": "natural_frame_distribution",
+  "loss_weighting": "uniform_supported_anchor",
+  "max_anchors_per_arm": 128,
+  "max_optimizer_steps_per_arm": 4,
+  "arms": [
+    {
+      "name": "command_off",
+      "use_command_history": false
+    },
+    {
+      "name": "command_on",
+      "use_command_history": true
+    }
+  ],
+  "test_usage": "sealed_until_final_evaluation",
+  "preprocessing_fit_split": "train",
+  "report": [
+    "natural_frames",
+    "speed_setting_counts",
+    "measured_speed_distribution",
+    "run_macro",
+    "worst_run",
+    "horizon_support",
+    "input_invalid",
+    "output_reject"
+  ],
+  "runtime_ready": false
+}
