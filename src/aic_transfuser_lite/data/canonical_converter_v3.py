@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from bisect import bisect_left
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 import hashlib
 import json
 import math
@@ -159,6 +159,21 @@ def _index_run_streams(streams: RunStreams) -> _RunStreamIndexesV3:
     )
 
 
+def _epoch_indexes(indexes: _RunStreamIndexesV3, epoch: ClockEpoch) -> _RunStreamIndexesV3:
+    """Clip every stream BEFORE interpolation; both endpoints must be in epoch."""
+    if all(not getattr(indexes, f.name) or (
+        epoch.first_sim_stamp_ns <= getattr(indexes, f.name).stamps_ns[0]
+        and getattr(indexes, f.name).stamps_ns[-1] <= epoch.last_sim_stamp_ns
+    ) for f in fields(indexes)):
+        return indexes
+    return _RunStreamIndexesV3(**{
+        field.name: IndexedTimedValues.from_values(tuple(
+            item for item in getattr(indexes, field.name)
+            if epoch.first_sim_stamp_ns <= item.stamp_ns <= epoch.last_sim_stamp_ns
+        )) for field in fields(indexes)
+    })
+
+
 def _interpolate_pose_indexed(
     poses: IndexedTimedValues[TimedPose], target_ns: int, *, tolerance_ms: float
 ) -> tuple[TimedPose, InterpolationTiming]:
@@ -281,6 +296,7 @@ def convert_decoded_run_v3(
     _validate_epoch_ranges(epochs)
     prepared: list[PreparedCanonicalSampleV3] = []
     for epoch in epochs:
+        epoch_indexes = _epoch_indexes(indexes, epoch)
         epoch_images = [
             item
             for item in streams.images
@@ -297,7 +313,7 @@ def convert_decoded_run_v3(
         for match in matches:
             image = epoch_images[match.source_index]
             converted = _convert_observation(
-                indexes=indexes,
+                indexes=epoch_indexes,
                 image=image,
                 grid_stamp_ns=match.target_timestamp_ns,
                 camera_delta_ns=match.delta_ns,
@@ -536,6 +552,7 @@ def _dense_future_state(
     epoch: ClockEpoch,
     config: DatasetV3ConverterConfig,
 ) -> DenseFutureStateV3:
+    indexes = _epoch_indexes(indexes, epoch)
     times = config.future_times_sec
     fields = [np.full(times.shape, np.nan, dtype=np.float32) for _ in range(6)]
     valid = np.zeros(times.shape, dtype=np.bool_)
@@ -555,6 +572,8 @@ def _dense_future_state(
                 indexes, target_ns, config.interpolation_tolerance_ms
             )
         except ValueError:
+            continue
+        if (future_pose.frame_id, future_pose.child_frame_id) != (observation.frame_id, observation.child_frame_id):
             continue
         dx = future_pose.x_world_m - observation.x_world_m
         dy = future_pose.y_world_m - observation.y_world_m

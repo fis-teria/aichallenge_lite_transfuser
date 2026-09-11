@@ -5,7 +5,7 @@ from dataclasses import asdict, dataclass, replace
 import hashlib
 import math
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -775,8 +775,11 @@ def _deduplicate_sorted(items: Sequence[Any]) -> tuple[Any, ...]:
     return tuple(by_timestamp[key] for key in sorted(by_timestamp))
 
 
-def read_run_messages_v2(bag_dir: Path) -> RunStreams:
-    """Deserialize all Dataset v2 streams from one rosbag2 MCAP directory."""
+def read_run_messages_v2(bag_dir: Path, *, event_sink: Callable[[str, Any, int], None] | None = None) -> RunStreams:
+    """Decode legacy streams; optional sink(role, item, sequence) sees EVERY event.
+
+    The sink runs before legacy global deduplication. Receipt is not availability.
+    """
 
     from rosbags.highlevel import AnyReader
 
@@ -804,7 +807,7 @@ def read_run_messages_v2(bag_dir: Path) -> RunStreams:
         connections = [
             connection for connection in reader.connections if connection.topic in TOPIC_BY_NAME
         ]
-        for connection, bag_timestamp_ns, rawdata in reader.messages(connections=connections):
+        for sequence, (connection, bag_timestamp_ns, rawdata) in enumerate(reader.messages(connections=connections)):
             contract = TOPIC_BY_NAME[connection.topic]
             topic_types[connection.topic] = connection.msgtype
             message = reader.deserialize(rawdata, connection.msgtype)
@@ -873,6 +876,8 @@ def read_run_messages_v2(bag_dir: Path) -> RunStreams:
                     bag_timestamp_ns=int(bag_timestamp_ns),
                     timestamp_source=timestamp_source,
                 )
+            if event_sink is not None:
+                event_sink(contract.role, item, sequence)
             buckets[contract.role].append(item)
     return RunStreams(
         images=_deduplicate_sorted(buckets["camera"]),
