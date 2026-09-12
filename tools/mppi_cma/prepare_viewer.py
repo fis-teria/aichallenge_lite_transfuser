@@ -61,6 +61,8 @@ def prepare(root: Path, shared_course: bool = False) -> None:
         'Window Geometry': {'Width': 1280, 'Height': 1500, 'X': 0, 'Y': 27,
                             'Hide Left Dock': True, 'Hide Right Dock': True}}
     (gui / 'live.rviz').write_text(yaml.safe_dump(config, sort_keys=False))
+    if shared_course:
+        (gui / 'shared.rviz').write_text(yaml.safe_dump(config, sort_keys=False))
 
 
 if __name__ == '__main__':

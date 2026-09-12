@@ -11,10 +11,11 @@ import tarfile
 ROOT = Path('/home/si26-pc008/cma_mppi_20260912')
 
 
-def run_episode(name: str, calibration: bool = False, handicap: bool = False,
+def prepare_episode(name: str, calibration: bool = False, handicap: bool = False,
                 reference: Path | None = None, target_mps: float = 10.0,
                 vehicle_count: int = 1, ghost: bool = False,
-                ignore_other_vehicles: bool = False, same_start: bool = False) -> Path:
+                ignore_other_vehicles: bool = False, same_start: bool = False) -> tuple[Path, dict, list[str]]:
+    """Create immutable inputs and a command without starting simulation."""
     if not name or any(c not in 'abcdefghijklmnopqrstuvwxyz0123456789-_' for c in name):
         raise ValueError('Invalid episode name')
     if vehicle_count not in (1, 4) or (calibration and (vehicle_count != 1 or ghost)):
@@ -87,6 +88,16 @@ def run_episode(name: str, calibration: bool = False, handicap: bool = False,
           *extra_mounts, metadata['controller_image_id'],'python3',
           '/tools/shared_course_runtime.py' if vehicle_count == 4 else '/tools/runtime.py']
     (output/'docker_command.json').write_text(json.dumps(args,indent=2))
+    return output, config, args
+
+
+def run_episode(name: str, calibration: bool = False, handicap: bool = False,
+                reference: Path | None = None, target_mps: float = 10.0,
+                vehicle_count: int = 1, ghost: bool = False,
+                ignore_other_vehicles: bool = False, same_start: bool = False) -> Path:
+    output, config, args = prepare_episode(name, calibration, handicap, reference, target_mps,
+                                           vehicle_count, ghost, ignore_other_vehicles, same_start)
+    container = 'cma-mppi-' + name
     print('START '+name,flush=True)
     try:
         with (output/'observer.log').open('w') as log:

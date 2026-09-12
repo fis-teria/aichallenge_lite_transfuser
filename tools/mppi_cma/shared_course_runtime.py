@@ -28,6 +28,7 @@ from shared_course_state import all_vehicles_ready
 def main() -> int:
     out = Path('/eval')
     cfg = json.loads((out / 'config.json').read_text())
+    external = cfg.get('external_controllers', False)
     if cfg['vehicle_count'] != 4:
         raise ValueError('This runtime requires exactly four vehicles')
     contexts, nodes, executors, processes, logs, controllers = [], [], [], [], [], []
@@ -185,7 +186,7 @@ def main() -> int:
         if cfg.get('same_start'):
             sim_args += ['--scenario', '/eval/scenario.yaml']
         sim = launch(sim_args, 0, 'awsim-console.log')
-        for domain in range(1, 5):
+        for domain in ([] if external else range(1, 5)):
             controllers.append(launch([
                 'ros2', 'launch', 'aichallenge_system_launch', 'aichallenge_system.launch.xml',
                 'simulation:=true', 'use_sim_time:=true', 'run_rviz:=false', f'domain_id:={domain}',
@@ -219,7 +220,8 @@ def main() -> int:
                     {k: c[k] for k in ('vehicle_number', 'ego', 'status', 'observed_vehicle_ids')} for c in cars]}), flush=True)
                 next_report = elapsed + 10
             if not state['started'] and state['admin'].lower() in {'ready', 'waitstart'}:
-                if all_vehicles_ready(cars, now, cfg['reference_first_xy_m']):
+                if all_vehicles_ready(cars, now, cfg['reference_first_xy_m'],
+                                      cfg.get('reference_first_xy_m_by_vehicle')):
                     if cfg['ignore_other_vehicles']:
                         required = {'reference_space_mppi_planner', 'mppi_recovery_controller'}
                         proof = {}
@@ -268,7 +270,9 @@ def main() -> int:
         for process in controllers:
             if process.poll() is None:
                 os.killpg(process.pid, signal.SIGTERM)
-        deadline = time.monotonic() + 4
+        # External stacks are closed by the host runner. Stop this disposable
+        # simulator without competing against those stacks with brake commands.
+        deadline = time.monotonic() + (0 if external else 4)
         while time.monotonic() < deadline:
             for car, publisher in zip(cars, brakes):
                 msg = AckermannControlCommand()

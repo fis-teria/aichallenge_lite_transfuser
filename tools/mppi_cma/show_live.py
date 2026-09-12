@@ -21,7 +21,7 @@ def main() -> None:
     parser.add_argument('root', type=Path)
     parser.add_argument('--display', default=':0')
     parser.add_argument('--xauthority', type=Path, required=True)
-    parser.add_argument('--state-subdir', choices=('search', 'shared_course', 'shared_course_same_start'), default='search')
+    parser.add_argument('--state-subdir', choices=('search', 'shared_course', 'shared_course_same_start', 'refinement'), default='search')
     args = parser.parse_args()
     root = args.root.resolve()
     gui = root / 'gui'
@@ -62,6 +62,9 @@ def main() -> None:
                         process.wait(timeout=10)
                         log.close()
                     log = (gui / ('rviz-' + active + '.log')).open('w')
+                    config = gui / ('shared.rviz' if state.get('mode') == 'shared_course' else 'live.rviz')
+                    if not config.exists():
+                        config = gui / 'live.rviz'
                     command = ['docker', 'run', '--rm', '--name', container,
                                '--network', 'container:' + target, '--gpus', 'all',
                                '-e', 'NVIDIA_DRIVER_CAPABILITIES=all', '-e', 'DISPLAY=' + args.display,
@@ -71,7 +74,7 @@ def main() -> None:
                                '-v', '/tmp/.X11-unix:/tmp/.X11-unix:ro',
                                '-v', str(args.xauthority) + ':/xauth:ro',
                                '-v', str(root / 'episodes' / active / 'cyclonedds.xml') + ':/opt/autoware/cyclonedds.xml:ro',
-                               '-v', str(gui / 'live.rviz') + ':/viewer.rviz:ro',
+                               '-v', str(config) + ':/viewer.rviz:ro',
                                image, 'rviz2', '-d', '/viewer.rviz', '--ros-args', '-p', 'use_sim_time:=true']
                     process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)
                     current, placed = active, False

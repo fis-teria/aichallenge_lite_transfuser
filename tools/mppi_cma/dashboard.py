@@ -52,13 +52,16 @@ def episode_snapshot(root: Path, active: str | None) -> dict:
     return {'episode': active, 'live': {k: live.get(k) for k in ('ego', 'command', 'status', 'admin')},
             'vehicles': live.get('vehicles', []),
             'native_summary': live.get('summary'),
+            'references_by_vehicle': {number: coordinates(Path(path)) for number, path in
+                                      enumerate(config.get('vehicle_references', []), 1)},
+            'candidate_names': [Path(path).parent.name for path in config.get('vehicle_references', [])],
             'reference': reference, 'target_mps': config.get('target_mps'),
             'handicap': config.get('handicap'), 'sample_age_s': age}
 
 
 def snapshot(root: Path, state_subdir: str = 'search') -> dict:
     """Return progress and metre/second telemetry without changing experiment state."""
-    if state_subdir not in ('search', 'shared_course', 'shared_course_same_start'):
+    if state_subdir not in ('search', 'shared_course', 'shared_course_same_start', 'refinement'):
         raise ValueError('Unknown study state directory')
     state = json.loads((root / state_subdir / 'state.json').read_text())
     shared = state.get('mode') == 'shared_course'
@@ -78,6 +81,9 @@ def snapshot(root: Path, state_subdir: str = 'search') -> dict:
                                 'vehicle_number': number, 'measured_median_mps': metrics.get('measured_speed_median_mps'),
                                 'live': {k: car.get(k) for k in ('ego', 'command', 'status')}})
             simulations[-1]['live']['status'] = native_vehicle_status(race['native_summary'], number)
+            if number in race['references_by_vehicle']:
+                simulations[-1]['reference'] = race['references_by_vehicle'][number]
+                simulations[-1]['episode'] = f"{race['candidate_names'][number-1]} · D{number}"
     focus = simulations[0] if simulations else episode_snapshot(root, None)
     conditions = {}
     for name, data in state.get('conditions', {}).items():
@@ -86,15 +92,19 @@ def snapshot(root: Path, state_subdir: str = 'search') -> dict:
         conditions[name] = {
             'evaluations': records,
             'candidate_count': sum('-g' in item['episode'] for item in records),
-            'best': min(preferred, key=lambda item: item['objective']) if preferred else None,
+            'best': data['selected']['metrics'] if data.get('selected') else
+                    min(preferred, key=lambda item: item['objective']) if preferred else None,
             'validated': data.get('validated_preferred_feasible'),
-            'validation_count': len(data.get('best_repeats', [])),
+            'validation_count': len(data.get('comparison_runs', {}).get('candidate', data.get('best_repeats', []))),
+            'comparison': data.get('comparison'),
         }
     calibration = json.loads((root / 'calibration.json').read_text())
     return {
         'completed': state['completed'], 'phase': state['phase'], 'active': active,
         'mode': state.get('mode', 'independent'), 'last_error': state.get('last_error'),
         'start_mode': state.get('start_mode'),
+        'study_kind': state.get('study_kind'),
+        'candidate_limit_per_condition': state.get('candidate_limit_per_condition', 18),
         'started_count': state['new_episodes_started'], 'maximum': state['maximum_new_episodes'],
         'conditions': conditions, 'live': focus['live'], 'simulations': simulations,
         'target_mps': focus['target_mps'], 'handicap': focus['handicap'],
@@ -136,6 +146,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('root', type=Path)
     parser.add_argument('--port', type=int, default=8876)
-    parser.add_argument('--state-subdir', choices=('search', 'shared_course', 'shared_course_same_start'), default='search')
+    parser.add_argument('--state-subdir', choices=('search', 'shared_course', 'shared_course_same_start', 'refinement'), default='search')
     args = parser.parse_args()
     server(args.root, args.port, args.state_subdir).serve_forever()

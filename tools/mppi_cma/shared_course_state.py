@@ -23,11 +23,15 @@ def native_vehicle_status(summary: dict | None, number: int) -> list | None:
 
 
 def all_vehicles_ready(vehicles: list[dict], now_s: float,
-                       expected_xy_m: list[float]) -> bool:
+                       expected_xy_m: list[float],
+                       per_vehicle_xy_m: list[list[float]] | None = None) -> bool:
     """Require four fresh, stationary, aligned poses and the requested reference."""
     if len(vehicles) != 4:
         raise ValueError('Exactly four vehicle telemetry records are required')
-    for car in vehicles:
+    references = per_vehicle_xy_m if per_vehicle_xy_m is not None else [expected_xy_m] * 4
+    if len(references) != 4 or any(len(xy) != 2 or not all(math.isfinite(v) for v in xy) for xy in references):
+        raise ValueError('Expected reference coordinates must have shape (4, 2), in metres')
+    for car, expected in zip(vehicles, references):
         ego, gps, ref = (car.get(key) for key in ('ego', 'gnss', 'reference'))
         if not ego or not gps or not ref:
             return False
@@ -41,6 +45,6 @@ def all_vehicles_ready(vehicles: list[dict], now_s: float,
                 or abs(ego['speed_mps']) >= .15
                 or math.hypot(ego['x_m'] - gps['x_m'], ego['y_m'] - gps['y_m']) >= .5):
             return False
-        if math.hypot(ref['x_m'] - expected_xy_m[0], ref['y_m'] - expected_xy_m[1]) > .005:
+        if math.hypot(ref['x_m'] - expected[0], ref['y_m'] - expected[1]) > .005:
             raise ValueError('A vehicle loaded a different reference')
     return True
