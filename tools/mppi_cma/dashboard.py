@@ -29,10 +29,7 @@ def coordinates(path: Path) -> list[list[float]]:
         return [[float(row['x_m']), float(row['y_m'])] for row in csv.DictReader(stream)]
 
 
-def snapshot(root: Path) -> dict:
-    """Return progress and metre/second telemetry without changing experiment state."""
-    state = json.loads((root / 'search/state.json').read_text())
-    active = state.get('active_episode')
+def episode_snapshot(root: Path, active: str | None) -> dict:
     live, reference, config, age = {}, [], {}, None
     if active:
         episode = root / 'episodes' / active
@@ -48,6 +45,18 @@ def snapshot(root: Path) -> dict:
             for arg in command:
                 if ':/aichallenge/workspace/install/multi_purpose_mpc_ros/share/' in arg:
                     reference = coordinates(Path(arg.split(':', 1)[0]))
+    return {'episode': active, 'live': {k: live.get(k) for k in ('ego', 'command', 'status', 'admin')},
+            'reference': reference, 'target_mps': config.get('target_mps'),
+            'handicap': config.get('handicap'), 'sample_age_s': age}
+
+
+def snapshot(root: Path) -> dict:
+    """Return progress and metre/second telemetry without changing experiment state."""
+    state = json.loads((root / 'search/state.json').read_text())
+    active = state.get('active_episode')
+    names = state.get('active_episodes', [active] if active else [])
+    simulations = [episode_snapshot(root, name) for name in names]
+    focus = simulations[0] if simulations else episode_snapshot(root, None)
     conditions = {}
     for name, data in state.get('conditions', {}).items():
         records = [item['metrics'] for item in data['evaluations']]
@@ -63,9 +72,9 @@ def snapshot(root: Path) -> dict:
     return {
         'completed': state['completed'], 'phase': state['phase'], 'active': active,
         'started_count': state['new_episodes_started'], 'maximum': state['maximum_new_episodes'],
-        'conditions': conditions, 'live': {k: live.get(k) for k in ('ego', 'command', 'status', 'admin')},
-        'target_mps': config.get('target_mps'), 'handicap': config.get('handicap'),
-        'sample_age_s': age, 'reference': reference,
+        'conditions': conditions, 'live': focus['live'], 'simulations': simulations,
+        'target_mps': focus['target_mps'], 'handicap': focus['handicap'],
+        'sample_age_s': focus['sample_age_s'], 'reference': focus['reference'],
         'baseline': coordinates(root / 'snapshot/base_reference.csv'),
         'ot_polygon': calibration['ot_lane_polygon_map_m'],
     }

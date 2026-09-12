@@ -1,7 +1,7 @@
 """Ensure live reads tolerate unfinished writes and preserve study files."""
 import json
 
-from tools.mppi_cma.dashboard import last_sample, snapshot
+from tools.mppi_cma.dashboard import last_sample, snapshot, episode_snapshot
 
 
 def test_latest_complete_jsonl_sample_ignores_partial_write(tmp_path):
@@ -26,3 +26,15 @@ def test_finished_dashboard_has_no_live_vehicle_and_does_not_write(tmp_path):
     assert payload['live']['ego'] is None
     assert payload['baseline'] == [[1., 2.], [3., 4.]]
     assert state.read_bytes() == before
+
+
+def test_isolated_episode_read_keeps_each_vehicle_identity_and_units(tmp_path):
+    for name,speed in [('first',7.5),('second',10.)]:
+        path=tmp_path/'episodes'/name;path.mkdir(parents=True)
+        (path/'samples.jsonl').write_text(json.dumps({'ego':{'speed_mps':speed},'status':[200,1,20,3,1]})+'\n')
+        (path/'config.json').write_text(json.dumps({'target_mps':speed,'handicap':name=='first'}))
+    first=episode_snapshot(tmp_path,'first');second=episode_snapshot(tmp_path,'second')
+    assert first['episode']=='first' and second['episode']=='second'
+    assert first['live']['ego']['speed_mps']==7.5
+    assert second['live']['ego']['speed_mps']==10.
+    assert first['handicap'] and not second['handicap']
