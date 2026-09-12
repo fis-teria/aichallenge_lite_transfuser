@@ -16,8 +16,8 @@ canvas{width:100%;height:460px;background:#121e31;border-radius:8px}.legend{disp
 <div class="cards" id="cards"></div>
 <div class="card"><div class="top" style="margin:0"><h2 id="active">走行準備中</h2><span class="muted" id="fresh"></span></div>
 <div id="simulations" class="simgrid"></div>
-<div class="live"><div><span class="muted">現在速度</span><div class="big" id="speed">—</div></div><div><span class="muted">目標速度</span><div class="big" id="target">—</div></div><div><span class="muted">周回 / 順位</span><div class="big" id="lap">—</div></div></div>
-<canvas id="map"></canvas><div class="legend"><span class="gray">─ 元の経路</span><span class="blue">─ 評価中の経路</span><span class="green">● 車両</span><span class="red">■ オーバーテイクレーン</span></div></div>
+<div class="live" id="single-live"><div><span class="muted">実速度（車両の計測値）</span><div class="big" id="speed">—</div></div><div><span class="muted">目標速度</span><div class="big" id="target">—</div></div><div><span class="muted">周回 / 順位</span><div class="big" id="lap">—</div></div></div>
+<canvas id="map"></canvas><div class="legend"><span class="gray">─ 元の経路</span><span class="muted">候補の経路・車両は上のカードと同色</span><span class="red">■ オーバーテイクレーン</span></div></div>
 <div class="card" style="margin-top:14px"><h2>評価結果</h2><div class="muted" style="margin-bottom:9px">侵入時間は車体外形＋10 cmで判定。ラップは2周目。候補の最良値は再走行で確認します。</div><div class="scroll"><table><thead><tr><th>候補</th><th>ラップ (s)</th><th>侵入 (s)</th><th>接触・逸脱</th><th>判定</th></tr></thead><tbody id="rows"></tbody></table></div></div>
 <p class="muted" id="budget"></p>
 <script>
@@ -32,8 +32,9 @@ line(s.baseline,'#78879d',2);line(s.ot_polygon,'#fa8585',2,true);
 function render(s){latest=s;$('phase').textContent=s.completed?'探索・再検証 完了':s.phase==='validation'?'再走行で検証中':'探索中';
 $('cards').innerHTML=['normal','leader'].map((key,i)=>{const q=s.conditions[key]||{},best=q.best;return `<div class="card"><h2>${i?'1位ハンデあり · 7.5 m/s':'通常 · 10 m/s'}</h2><span class="muted">侵入なしの最良ラップ</span><div class="big">${n(best?.flying_lap_s)} <span class="unit">s</span></div><progress value="${q.candidate_count||0}" max="18"></progress><div class="muted">候補 ${q.candidate_count||0} / 18　${q.validated===true?'3走行で確認済み':q.validated===false?'再走行で条件外あり':q.validation_count?'再走行を確認中':'再走行は未確定'}</div></div>`}).join('');
 $('active').textContent=s.simulations?.length>1?`${s.simulations.length}環境を並列評価中`:(s.active||(s.completed?'全条件の評価が完了':'次の候補を準備中'));$('fresh').textContent=s.completed?'最終結果':s.sample_age_s==null?'起動待ち':s.sample_age_s>5?'候補切り替え中':'ライブ更新';
-$('simulations').innerHTML=(s.simulations||[]).map((q,i)=>{const a=q.live.status;return `<div class="simcard" style="border-color:${colors[i%4]}">${q.episode}<strong>${n(q.live.ego?.speed_mps)} m/s</strong><span class="muted">${a?`${Math.round(a[1])} / 2周 ・ ${Math.round(a[4])}位`:'起動中'}　${q.handicap?'ハンデあり':'通常'}</span></div>`}).join('');
-$('speed').innerHTML=n(s.live.ego?.speed_mps)+' <span class="unit">m/s</span>';$('target').innerHTML=n(s.target_mps,1)+' <span class="unit">m/s</span>';
+$('simulations').innerHTML=(s.simulations||[]).map((q,i)=>{const a=q.live.status,v=q.live.ego?.speed_mps;return `<div class="simcard" style="border-color:${colors[i%4]}">${q.episode}<strong>実速度 ${n(v)} m/s <span class="unit">(${n(typeof v==='number'?v*3.6:null,1)} km/h)</span></strong><span class="muted">目標 ${n(q.target_mps,1)} m/s　${a?`${Math.round(a[1])} / 2周 ・ ${Math.round(a[4])}位`:'起動中'}　${q.handicap?'ハンデあり':'通常'}</span></div>`}).join('');
+$('single-live').style.display=s.simulations?.length>1?'none':'flex';
+const speed=s.live.ego?.speed_mps;$('speed').innerHTML=n(speed)+' <span class="unit">m/s ・ '+n(typeof speed==='number'?speed*3.6:null,1)+' km/h</span>';$('target').innerHTML=n(s.target_mps,1)+' <span class="unit">m/s</span>';
 const a=s.live.status;$('lap').textContent=a?`${Math.round(a[1])} / 2周 ・ ${Math.round(a[4])}位`:'—';
 const records=Object.values(s.conditions).flatMap(q=>q.evaluations).reverse();$('rows').innerHTML=records.map(m=>`<tr><td>${m.episode}</td><td>${n(m.flying_lap_s)}</td><td class="${m.ot_overlap_s?'red':'green'}">${n(m.ot_overlap_s)}</td><td>${['crash','wall','over'].reduce((a,k)=>a+m.penalties[k],0)}</td><td class="${m.preferred_feasible?'green':'muted'}">${m.preferred_feasible?'候補採用可':m.completed?'侵入あり':'未完走'}</td></tr>`).join('');
 $('budget').textContent=`今回の追加評価 ${s.started_count} / 最大 ${s.maximum}走行 · 2秒ごとに更新`;draw(s)}
