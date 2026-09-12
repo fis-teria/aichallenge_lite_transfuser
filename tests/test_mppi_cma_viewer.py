@@ -107,12 +107,15 @@ def test_orphan_cleanup_checks_ownership_before_removing(tmp_path, monkeypatch):
         assert len(calls) == 1 and calls[0][1] == 'inspect'
 
 
-def test_missing_orphan_is_ok_but_docker_error_is_reported(tmp_path, monkeypatch):
+@pytest.mark.parametrize('missing_message', ['Error: No such object: viewer',
+                                           'error: no such object: cma-mppi-rviz-viewer',
+                                           'Error: No such container: viewer'])
+def test_missing_orphan_is_ok_but_docker_error_is_reported(tmp_path, monkeypatch, missing_message):
     pytest.importorskip('fcntl')
     monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[1] / 'tools/mppi_cma'))
     viewer = importlib.import_module('show_live')
     monkeypatch.setattr(viewer.subprocess, 'run', lambda command, **kwargs:
-                        subprocess.CompletedProcess(command, 1, '', 'Error: No such object: viewer'))
+                        subprocess.CompletedProcess(command, 1, '', missing_message))
     viewer.clear_orphan_viewer(tmp_path, 'image')
     monkeypatch.setattr(viewer.subprocess, 'run', lambda command, **kwargs:
                         subprocess.CompletedProcess(command, 1, '', 'Cannot connect to Docker daemon'))

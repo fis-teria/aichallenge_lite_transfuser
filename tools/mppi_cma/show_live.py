@@ -21,7 +21,7 @@ def clear_orphan_viewer(root: Path, image: str) -> None:
     result = subprocess.run(['docker', 'inspect', VIEWER_CONTAINER],
                             capture_output=True, text=True, timeout=10)
     if result.returncode:
-        if 'No such object' in result.stderr or 'No such container' in result.stderr:
+        if 'no such object' in result.stderr.lower() or 'no such container' in result.stderr.lower():
             return
         raise RuntimeError(f'Cannot inspect RViz viewer: {result.stderr.strip()}')
     existing = json.loads(result.stdout)[0]
