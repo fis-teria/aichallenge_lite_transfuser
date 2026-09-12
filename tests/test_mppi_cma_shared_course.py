@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from tools.mppi_cma.shared_course_state import all_vehicles_ready
+from tools.mppi_cma.shared_course_state import all_vehicles_ready, native_vehicle_status
 from tools.mppi_cma.dashboard import snapshot
 
 
@@ -45,10 +45,22 @@ def test_shared_dashboard_displays_four_domains_with_distinct_speeds_and_ranks(t
     episode = tmp_path / 'episodes/shared-normal-ghost01'
     (episode / 'config.json').write_text(json.dumps({'target_mps': 10., 'handicap': False}))
     cars = [dict(vehicle_number=i, ego={'speed_mps': 5.+i}, status=[200,1,20,3,5-i]) for i in range(1,5)]
-    (episode / 'samples.jsonl').write_text(json.dumps({'vehicles': cars}) + '\n')
+    native={'session':{'required_laps':2},'vehicles':[
+        {'vehicle_number':i,'final_position':5-i,'lap_count':1,'finished':False} for i in range(4,0,-1)]}
+    for car in cars: car['status'][4]=1  # This stream may mirror D1 in all domains.
+    (episode / 'samples.jsonl').write_text(json.dumps({'vehicles': cars,'summary':native}) + '\n')
     before = path.read_bytes()
     result = snapshot(tmp_path, 'shared_course')
     assert result['mode'] == 'shared_course'
     assert [s['live']['ego']['speed_mps'] for s in result['simulations']] == [6.,7.,8.,9.]
     assert [s['live']['status'][4] for s in result['simulations']] == [4,3,2,1]
     assert path.read_bytes() == before
+
+
+def test_native_rank_is_selected_by_vehicle_number_and_missing_data_is_not_rank_one():
+    summary={'session':{'required_laps':2},'vehicles':[
+        {'vehicle_number':4,'final_position':1,'lap_count':1,'finished':False},
+        {'vehicle_number':1,'final_position':2,'lap_count':2,'finished':True}]}
+    assert native_vehicle_status(summary,4)==[None,2,None,None,1]
+    assert native_vehicle_status(summary,1)==[None,2,None,None,2]
+    assert native_vehicle_status(summary,2) is None

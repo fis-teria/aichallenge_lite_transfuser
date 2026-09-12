@@ -7,6 +7,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
 import time
+if __package__:
+    from .shared_course_state import native_vehicle_status
+else:
+    from shared_course_state import native_vehicle_status
 
 
 def last_sample(path: Path) -> dict:
@@ -47,6 +51,7 @@ def episode_snapshot(root: Path, active: str | None) -> dict:
                     reference = coordinates(Path(arg.split(':', 1)[0]))
     return {'episode': active, 'live': {k: live.get(k) for k in ('ego', 'command', 'status', 'admin')},
             'vehicles': live.get('vehicles', []),
+            'native_summary': live.get('summary'),
             'reference': reference, 'target_mps': config.get('target_mps'),
             'handicap': config.get('handicap'), 'sample_age_s': age}
 
@@ -72,6 +77,7 @@ def snapshot(root: Path, state_subdir: str = 'search') -> dict:
             simulations.append({**race, 'episode': f'{names[0]} · D{number}',
                                 'vehicle_number': number, 'measured_median_mps': metrics.get('measured_speed_median_mps'),
                                 'live': {k: car.get(k) for k in ('ego', 'command', 'status')}})
+            simulations[-1]['live']['status'] = native_vehicle_status(race['native_summary'], number)
     focus = simulations[0] if simulations else episode_snapshot(root, None)
     conditions = {}
     for name, data in state.get('conditions', {}).items():

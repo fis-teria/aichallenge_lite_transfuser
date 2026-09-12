@@ -4,6 +4,24 @@ from __future__ import annotations
 import math
 
 
+def native_vehicle_status(summary: dict | None, number: int) -> list | None:
+    """Read rank by vehicle number from AWSIM admin data, never array ordering.
+
+    The per-domain /awsim/status stream can mirror D1. Only lap and rank are
+    supplied here; unmeasured lap time, remaining time and section stay None.
+    """
+    if not summary:
+        return None
+    matches = [car for car in summary.get('vehicles', []) if car['vehicle_number'] == number]
+    if not matches:
+        return None
+    if len(matches) != 1:
+        raise ValueError('Duplicate native vehicle number')
+    car = matches[0]
+    lap = car['lap_count'] + (0 if car['finished'] else 1)
+    return [None, min(summary['session']['required_laps'], lap), None, None, car['final_position']]
+
+
 def all_vehicles_ready(vehicles: list[dict], now_s: float,
                        expected_xy_m: list[float]) -> bool:
     """Require four fresh, stationary, aligned poses and the requested reference."""

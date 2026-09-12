@@ -7,6 +7,7 @@ import re
 import sys
 import numpy as np
 from geometry import convex_overlap, vehicle_polygon
+from shared_course_state import native_vehicle_status
 
 ROOT=Path('/home/si26-pc008/cma_mppi_20260912')
 
@@ -30,6 +31,10 @@ def analyze(output: Path, vehicle: int = 1) -> dict:
                 matches=[car for car in row['vehicles'] if car['vehicle_number']==vehicle]
                 if len(matches)!=1:raise RuntimeError('Missing or duplicate vehicle telemetry')
                 row={**row,**matches[0]}
+                row['status']=native_vehicle_status(row.get('summary'),vehicle)
+                for car in (row.get('summary') or {}).get('vehicles',[]):
+                    if car['vehicle_number']==vehicle and car['finished']:
+                        row['finish']=True
             ego=row.get('ego')
             if ego:odometry[ego['stamp_s']]=ego
             status=row.get('status')
