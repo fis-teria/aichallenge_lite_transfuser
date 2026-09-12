@@ -72,7 +72,9 @@ Full tensor construction is checked separately by replaying selected anchors.
             current_speed_valid = bool(ep) and all(np.isfinite(e.payload.longitudinal_mps) for e in ep)
     current_camera, current_scan = selected["camera"][-1], selected["lidar"][-1]
     invalid = None
-    if (current_camera is None or current_camera.capture_ns != anchor.capture_ns or current_scan is None):
+    if not bounds[0] <= anchor.capture_ns <= bounds[1]:
+        invalid = "ANCHOR_OUTSIDE_EPOCH"
+    elif (current_camera is None or current_camera.capture_ns != anchor.capture_ns or current_scan is None):
         invalid = "CURRENT_SENSOR_MISSING"
     elif not current_speed_valid:
         invalid = "CURRENT_LONGITUDINAL_SPEED_MISSING"

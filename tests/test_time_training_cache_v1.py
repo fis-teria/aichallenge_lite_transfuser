@@ -84,3 +84,22 @@ def test_cache_hash_change_and_sealed_test_rejected(tmp_path,monkeypatch):
     with path.open('ab') as stream:stream.write(b'corruption')
     with pytest.raises(ValueError,match='cache file mismatch'):
         TimeTrainingCacheDataset(root,'train')
+
+
+def test_legacy_epoch_reason_refinement_is_narrow_and_preserves_source():
+    from copy import deepcopy
+    from aic_transfuser_lite.data.time_training_cache_v1 import _refine_legacy_epoch_reason
+    row = dict(anchor_id='run:0', input_invalid_reason='CURRENT_SENSOR_MISSING',
+               input_eligible=False, usable_partial=False, usable_full=False,
+               observation_ns=99, epoch_bounds_ns=[100, 200], history_row_ids={'camera': [[], []]})
+    changed = deepcopy(row)
+    refinement = _refine_legacy_epoch_reason(changed, 'ANCHOR_OUTSIDE_EPOCH', (100, 200))
+    assert refinement['source_reason'] == changed['source_input_invalid_reason'] == 'CURRENT_SENSOR_MISSING'
+    assert changed['input_invalid_reason'] == 'ANCHOR_OUTSIDE_EPOCH'
+    assert not changed['input_eligible'] and changed['history_row_ids'] == row['history_row_ids']
+    for values, reason in (({'observation_ns': 100}, 'ANCHOR_OUTSIDE_EPOCH'),
+                           ({'input_eligible': True}, 'ANCHOR_OUTSIDE_EPOCH'),
+                           ({'history_row_ids': {'camera': [[1], []]}}, 'ANCHOR_OUTSIDE_EPOCH'),
+                           ({}, 'CURRENT_LONGITUDINAL_SPEED_MISSING')):
+        with pytest.raises(ValueError, match='input audit drift'):
+            _refine_legacy_epoch_reason({**row, **values}, reason, (100, 200))

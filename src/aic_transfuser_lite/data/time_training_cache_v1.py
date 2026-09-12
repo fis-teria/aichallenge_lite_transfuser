@@ -87,6 +87,28 @@ def cached_inputs(arrays: dict[str, np.ndarray], i: int, camera: np.ndarray,
         torch.from_numpy(arrays["dt"][i:i+1].copy()), requested_outputs=frozenset({"trajectory"}))
 
 
+def _refine_legacy_epoch_reason(row: dict[str, Any], replay_reason: str,
+                                bounds: tuple[int, int]) -> dict[str, str] | None:
+    """Recognize only the old audit's generic reason for an excluded boundary anchor.
+
+    This changes no eligibility, sensor reference, label, or denominator. All
+    other replay disagreements remain fatal; the original reason is retained.
+    """
+    if row["input_invalid_reason"] == replay_reason:
+        return None
+    if (replay_reason != "ANCHOR_OUTSIDE_EPOCH" or row["input_invalid_reason"] != "CURRENT_SENSOR_MISSING"
+            or row["input_eligible"] is not False or row["usable_partial"] is not False
+            or row["usable_full"] is not False or bounds[0] <= row["observation_ns"] <= bounds[1]
+            or list(bounds) != row["epoch_bounds_ns"]
+            or any(refs for slots in row["history_row_ids"].values() for refs in slots)):
+        raise ValueError(f"input audit drift at {row['anchor_id']}: {replay_reason}")
+    refinement = {"anchor_id": row["anchor_id"], "source_reason": row["input_invalid_reason"],
+                  "replay_reason": replay_reason}
+    row["source_input_invalid_reason"] = row["input_invalid_reason"]
+    row["input_invalid_reason"] = replay_reason
+    return refinement
+
+
 def _prepare_run(source: Path, destination: Path, run_id: str, config: TimeDatasetConfig) -> dict[str, Any]:
     anchors = _records(source / "anchors.jsonl")
     with np.load(source / "teachers.npz", allow_pickle=False) as bundle:
@@ -133,6 +155,7 @@ def _prepare_run(source: Path, destination: Path, run_id: str, config: TimeDatas
         if e.role == "lidar":
             return replace(e, payload=TimedLidar(e.capture_ns, np.ones(2, np.float32), -np.pi, np.pi, 0., 25.))
         return e
+    refinements = []
     for i, row in enumerate(anchors):
         if row["run_id"] != run_id or row["label_index"] != i:
             raise ValueError("anchor identity mismatch")
@@ -148,8 +171,9 @@ def _prepare_run(source: Path, destination: Path, run_id: str, config: TimeDatas
             batch, _ = assemble_time_inputs(events, sensor_placeholder(anchor), config=small,
                 epoch_start_ns=bounds[anchor.epoch][0], epoch_end_ns=bounds[anchor.epoch][1], freeze_ns=row["freeze_ns"])
         except ValueError as exc:
-            if row["input_invalid_reason"] != str(exc):
-                raise ValueError(f"input audit drift at {run_id}:{i}: {exc}") from exc
+            refinement = _refine_legacy_epoch_reason(row, str(exc), bounds[anchor.epoch])
+            if refinement is not None:
+                refinements.append(refinement)
             continue
         if row["input_invalid_reason"] is not None:
             raise ValueError("previously invalid input unexpectedly became eligible")
@@ -181,7 +205,7 @@ def _prepare_run(source: Path, destination: Path, run_id: str, config: TimeDatas
             stream.write(json.dumps(row, separators=(",", ":")) + "\n")
     del camera, lidar
     return {"run_id": run_id, "anchors": n, "input_valid": int(arrays["input_valid"].sum()),
-            "real_input_replay_equal": replay}
+            "real_input_replay_equal": replay, "input_reason_refinements": refinements}
 
 
 def prepare_time_training_cache(corpus_root: Path, cache_root: Path, *,

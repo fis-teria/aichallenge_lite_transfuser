@@ -49,3 +49,13 @@ def test_probe_requires_real_collection_stop_provenance():
         intervention_from_probe({"fault": "timeout", "stop_confirmed": True, "brake_sim": 407.5})
     with pytest.raises(ValueError):
         intervention_from_probe({"fault": None, "stop_confirmed": False, "brake_sim": 407.5})
+
+
+def test_outside_epoch_reason_matches_full_assembly():
+    events, anchor = fixture()
+    bounds = (anchor.capture_ns + 25_000_000, 5_500_000_000)
+    _, row = audit_anchor(events, anchor, config=cfg(), bounds=bounds,
+                           freeze_ns=kwargs()['freeze_ns'], intervention_ns=None)
+    full = assemble_time_sample(events, anchor, **{**kwargs(), 'epoch_start_ns': bounds[0]})
+    assert row['input_invalid_reason'] == full.input_invalid_reason == 'ANCHOR_OUTSIDE_EPOCH'
+    assert not row['input_eligible'] and full.inputs is None
