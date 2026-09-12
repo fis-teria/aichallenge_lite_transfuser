@@ -78,4 +78,63 @@ skipは既存のOSQP、JSON Schema関連2件、任意official package。
 testを見て条件を選定していない。50ms条件の全1周再生成では3,791件が入力・全30点を支持し、実画像/LiDARからの再構成2件もPASS。
 0ms診断と1周pilotは別ディレクトリに保存し、本出力へ混ぜない。
 
-20runの最終件数・出力監査は生成完了後に追記する。
+20runすべて生成完了。既存の分割identityを変更せず、以下のとおり保存した。
+
+| 分割 | 周数 | 全撮影アンカー | 入力＋1点以上有効 | 入力＋全30点有効 |
+|---|---:|---:|---:|---:|
+| train | 12 | 36,726 | 35,360 | 35,358 |
+| validation | 4 | 12,237 | 11,780 | 11,780 |
+| test | 4 | 12,240 | 11,798 | 11,798 |
+| 合計 | 20 | 61,203 | 58,938 | 58,936 |
+
+学習用の部分支持2件もmask付きで保持する。全体の2,267件は入力または全30点の条件を満たさず、
+除外理由を保存している。最終testは分割・データ整合性の確認のみで、モデル評価を実施していない。
+
+- 20bagすべてSQLite `quick_check=ok`、timestamp fallbackなし、各runのclock epochは1個。
+- Cameraは全runでBGR8、256×384。poseは`map → base_link`。
+- LiDARは全128,536scan、750beam、距離0〜25m、frame=`lidar`。全beam無効のscanは0件。
+- LiDAR実画角は約前方180度（angle_min=-1.5666075rad、increment=0.00418879rad）。P1の360度共通gridでは画角外を無効maskにする。原本の750beamは保持する。
+- 実画像/LiDARを使う共通入力関数への再構成は各run2件、合計40件PASS。教師XYも保存値と一致した。
+- 保存後の全61,203件でshape、有限値/mask、camera row ID、時刻、50ms freeze、run/split所属、介入除外を照合してPASS。
+- 教師・参照・run監査の計60生成物についてSHA-256を保存した。
+- XYの0.1秒区間移動速度と実測縦速度の差も記録した。これはデータ整合性の参考値で、モデル誤差や位置の絶対精度ではない。
+
+## 保存先と使い方
+
+F:上のWSL内に保存。Windows側にはレポート・コードのみ置く。
+
+```text
+/home/thistle/e2e_autonomous/datasets/archives/time_teacher_20laps_20260911.tar
+/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/
+/home/thistle/e2e_autonomous/datasets/processed/time_teacher_20laps_20260913/
+  train/<run_id>/
+  validation/<run_id>/
+  test/<run_id>/
+  split_verified.json
+  contract.json
+  audit.json
+  artifact_manifest.json
+  post_generation_verification.json
+```
+
+Windows Explorerからは `\\wsl.localhost\Ubuntu-22.04-Recovered\home\thistle\e2e_autonomous\datasets\processed\time_teacher_20laps_20260913`。
+生成物は約72MiBで、20GBの画像・LiDAR原本は`raw/`参照で利用する。
+`teachers.npz`の行と`anchors.jsonl`の`label_index`が対応する。
+全撮影アンカーを保存しているため、学習時は`usable_partial`と各maskを使い、NaNを埋めた無効教師を学習させない。
+全30点のみを使う確認には`usable_full`を使う。前処理のfitとモデル選定はtrain/validationに限定する。
+
+保存後検証の再現は以下（結果ファイルが既に存在すると上書きせず停止する）。
+
+```bash
+bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
+  docs/evidence/time_teacher_20laps_split/verify_artifacts.py \
+  --root /home/thistle/e2e_autonomous/datasets/processed/time_teacher_20laps_20260913
+```
+
+今回の範囲はデータ検証・時間教師生成・run分割。学習loaderの効率化、有限予算のモデル学習、
+50ms入力確定条件の実推論への接続、実センサ取付とcontroller座標変換の走行検証は後続。
+
+[全体監査](evidence/time_teacher_20laps_split/corpus_audit.json) /
+[固定分割](evidence/time_teacher_20laps_split/split_verified.json) /
+[生成物の照合結果](evidence/time_teacher_20laps_split/post_generation_verification.json) /
+[LiDAR監査](evidence/time_teacher_20laps_split/lidar_audit.json)。

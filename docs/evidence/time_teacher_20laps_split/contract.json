@@ -1,0 +1,37 @@
+{
+  "format": "time_sqlite_corpus_v1",
+  "dt_s": 0.1,
+  "points": 30,
+  "frame": "base_link_at_observation",
+  "freeze_delay_receipt_ns": 50000000,
+  "availability": "bag_receipt_proxy_not_measured_preprocessing_completion",
+  "config": {
+    "image_shape": [
+      3,
+      224,
+      384
+    ],
+    "lidar_shape": [
+      2,
+      750
+    ],
+    "ego_features": 4,
+    "camera_history_length": 4,
+    "lidar_history_length": 4,
+    "ego_history_length": 10,
+    "command_history_length": 10,
+    "tolerance_ns": 50000000,
+    "teacher_tolerance_ms": 50.0,
+    "lidar_min_range_m": 0.0,
+    "lidar_max_range_m": 25.0,
+    "lidar_angle_min_rad": -3.141592653589793,
+    "capture_clock": "sim",
+    "available_clock": "bag_receipt",
+    "pose_world_frame": "map",
+    "pose_body_frame": "base_link"
+  },
+  "split_sha256": "0339b8cadc704b5b418279fd3c058008060fecd4268b30d7e3e6235aabab80b0",
+  "pilot_only": null,
+  "stop_probability": null,
+  "runtime_ready": false
+}

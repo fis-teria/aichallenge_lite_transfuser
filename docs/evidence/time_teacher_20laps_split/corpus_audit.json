@@ -1,0 +1,3791 @@
+{
+  "format": "time_corpus_audit_v1",
+  "source_hashes_verified": true,
+  "split_sha256": "0339b8cadc704b5b418279fd3c058008060fecd4268b30d7e3e6235aabab80b0",
+  "freeze_delay_receipt_ns": 50000000,
+  "scope": "same_course_same_conditions_run_holdout",
+  "pilot_only": null,
+  "splits": {
+    "train": {
+      "anchors": 36726,
+      "input_eligible": 36568,
+      "teacher_any": 35477,
+      "teacher_full": 35475,
+      "usable_partial": 35360,
+      "usable_full": 35358,
+      "runs": 12
+    },
+    "validation": {
+      "anchors": 12237,
+      "input_eligible": 12192,
+      "teacher_any": 11822,
+      "teacher_full": 11822,
+      "usable_partial": 11780,
+      "usable_full": 11780,
+      "runs": 4
+    },
+    "test": {
+      "anchors": 12240,
+      "input_eligible": 12201,
+      "teacher_any": 11825,
+      "teacher_full": 11825,
+      "usable_partial": 11798,
+      "usable_full": 11798,
+      "runs": 4
+    }
+  },
+  "runs": [
+    {
+      "run_id": "5kmh_run01",
+      "split": "train",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run01",
+      "anchors": 3907,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 3891,
+      "usable_partial": 3791,
+      "usable_full": 3791,
+      "teacher_any": 3805,
+      "teacher_full": 3805,
+      "xy_support_per_horizon": [
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805
+      ],
+      "velocity_support_per_horizon": [
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805,
+        3805
+      ],
+      "input_reasons": {
+        "OK": 3891,
+        "CURRENT_SENSOR_MISSING": 16
+      },
+      "teacher_anchor_reasons": {
+        "OK": 3805,
+        "COLLECTION_INTERVENTION": 102
+      },
+      "stop_reasons": {
+        "UNKNOWN": 3805,
+        "COLLECTION_INTERVENTION": 102
+      },
+      "intervention_ns": 407519990891,
+      "topic_counts": {
+        "actual_steering": 11724,
+        "final_command": 58329,
+        "pose": 20516,
+        "lidar": 8207,
+        "velocity": 11722,
+        "camera": 3907
+      },
+      "sensor_metadata": {
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 82066,
+          "first_bag_stamp_ns": 1789063161451914218,
+          "last_bag_stamp_ns": 1789063571792999796,
+          "first_sim_stamp_ns": 4904999890,
+          "last_sim_stamp_ns": 415234990718,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "5kmh_run01:epoch0000:5034999887",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "5kmh_run01:epoch0000:5139999885",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.0003725271672010422,
+        0.9750516712665558,
+        1.114436280727386,
+        1.4976747035980225
+      ]
+    },
+    {
+      "run_id": "5kmh_run02",
+      "split": "train",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run02",
+      "anchors": 3907,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 3892,
+      "usable_partial": 3791,
+      "usable_full": 3791,
+      "teacher_any": 3804,
+      "teacher_full": 3804,
+      "xy_support_per_horizon": [
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804
+      ],
+      "velocity_support_per_horizon": [
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804
+      ],
+      "input_reasons": {
+        "CURRENT_SENSOR_MISSING": 14,
+        "OK": 3892,
+        "CURRENT_LONGITUDINAL_SPEED_MISSING": 1
+      },
+      "teacher_anchor_reasons": {
+        "OK": 3804,
+        "COLLECTION_INTERVENTION": 103
+      },
+      "stop_reasons": {
+        "UNKNOWN": 3804,
+        "COLLECTION_INTERVENTION": 103
+      },
+      "intervention_ns": 407324990895,
+      "topic_counts": {
+        "velocity": 11719,
+        "actual_steering": 11719,
+        "lidar": 8204,
+        "final_command": 58316,
+        "pose": 20508,
+        "camera": 3907
+      },
+      "sensor_metadata": {
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 82033,
+          "first_bag_stamp_ns": 1789065050947464700,
+          "last_bag_stamp_ns": 1789065461113939451,
+          "first_sim_stamp_ns": 4894999890,
+          "last_sim_stamp_ns": 415059990722,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "5kmh_run02:epoch0000:5034999887",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "5kmh_run02:epoch0000:5139999885",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.00037420494481921196,
+        0.9751694798469543,
+        1.1143978595733646,
+        1.4973170757293701
+      ]
+    },
+    {
+      "run_id": "5kmh_run03",
+      "split": "validation",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run03",
+      "anchors": 3905,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 3901,
+      "usable_partial": 3799,
+      "usable_full": 3799,
+      "teacher_any": 3803,
+      "teacher_full": 3803,
+      "xy_support_per_horizon": [
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803
+      ],
+      "velocity_support_per_horizon": [
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803
+      ],
+      "input_reasons": {
+        "OK": 3901,
+        "CURRENT_SENSOR_MISSING": 4
+      },
+      "teacher_anchor_reasons": {
+        "OK": 3803,
+        "COLLECTION_INTERVENTION": 102
+      },
+      "stop_reasons": {
+        "UNKNOWN": 3803,
+        "COLLECTION_INTERVENTION": 102
+      },
+      "intervention_ns": 407414990893,
+      "topic_counts": {
+        "velocity": 11718,
+        "actual_steering": 11718,
+        "final_command": 58342,
+        "pose": 20505,
+        "lidar": 8202,
+        "camera": 3905
+      },
+      "sensor_metadata": {
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 82021,
+          "first_bag_stamp_ns": 1789065772520479713,
+          "last_bag_stamp_ns": 1789066182607815228,
+          "first_sim_stamp_ns": 5039999887,
+          "last_sim_stamp_ns": 415144990720,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "5kmh_run03:epoch0000:5139999885",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "5kmh_run03:epoch0000:5244999882",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -4.1224591740274263e-08,
+        0.9751582741737366,
+        1.1147187530994414,
+        1.4958505630493164
+      ]
+    },
+    {
+      "run_id": "5kmh_run04",
+      "split": "train",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run04",
+      "anchors": 3905,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 3884,
+      "usable_partial": 3786,
+      "usable_full": 3786,
+      "teacher_any": 3803,
+      "teacher_full": 3803,
+      "xy_support_per_horizon": [
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803
+      ],
+      "velocity_support_per_horizon": [
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803
+      ],
+      "input_reasons": {
+        "OK": 3884,
+        "CURRENT_SENSOR_MISSING": 21
+      },
+      "teacher_anchor_reasons": {
+        "OK": 3803,
+        "COLLECTION_INTERVENTION": 102
+      },
+      "stop_reasons": {
+        "UNKNOWN": 3803,
+        "COLLECTION_INTERVENTION": 102
+      },
+      "intervention_ns": 407519990891,
+      "topic_counts": {
+        "velocity": 11719,
+        "final_command": 58141,
+        "pose": 20507,
+        "actual_steering": 11718,
+        "lidar": 8202,
+        "camera": 3905
+      },
+      "sensor_metadata": {
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 82022,
+          "first_bag_stamp_ns": 1789066493890643981,
+          "last_bag_stamp_ns": 1789066904059287948,
+          "first_sim_stamp_ns": 5159999884,
+          "last_sim_stamp_ns": 415269990717,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "5kmh_run04:epoch0000:5244999882",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "5kmh_run04:epoch0000:5349999880",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.00037819426506757736,
+        0.9750692248344421,
+        1.114175462722779,
+        1.4989033937454224
+      ]
+    },
+    {
+      "run_id": "5kmh_run05",
+      "split": "train",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run05",
+      "anchors": 3906,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 3895,
+      "usable_partial": 3794,
+      "usable_full": 3794,
+      "teacher_any": 3804,
+      "teacher_full": 3804,
+      "xy_support_per_horizon": [
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804
+      ],
+      "velocity_support_per_horizon": [
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804
+      ],
+      "input_reasons": {
+        "OK": 3895,
+        "CURRENT_SENSOR_MISSING": 11
+      },
+      "teacher_anchor_reasons": {
+        "OK": 3804,
+        "COLLECTION_INTERVENTION": 102
+      },
+      "stop_reasons": {
+        "UNKNOWN": 3804,
+        "COLLECTION_INTERVENTION": 102
+      },
+      "intervention_ns": 407624990888,
+      "topic_counts": {
+        "velocity": 11720,
+        "pose": 20508,
+        "actual_steering": 11719,
+        "lidar": 8204,
+        "final_command": 58313,
+        "camera": 3906
+      },
+      "sensor_metadata": {
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 82026,
+          "first_bag_stamp_ns": 1789067217322734714,
+          "last_bag_stamp_ns": 1789067627507611098,
+          "first_sim_stamp_ns": 5204999883,
+          "last_sim_stamp_ns": 415334990716,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "5kmh_run05:epoch0000:5244999882",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "5kmh_run05:epoch0000:5349999880",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.00017146184109151363,
+        0.9750829041004181,
+        1.114236038923263,
+        1.4963035583496094
+      ]
+    },
+    {
+      "run_id": "5kmh_run06",
+      "split": "validation",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run06",
+      "anchors": 3906,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 3895,
+      "usable_partial": 3793,
+      "usable_full": 3793,
+      "teacher_any": 3803,
+      "teacher_full": 3803,
+      "xy_support_per_horizon": [
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803
+      ],
+      "velocity_support_per_horizon": [
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803
+      ],
+      "input_reasons": {
+        "OK": 3895,
+        "CURRENT_SENSOR_MISSING": 11
+      },
+      "teacher_anchor_reasons": {
+        "OK": 3803,
+        "COLLECTION_INTERVENTION": 102,
+        "OBSERVATION_POSE_MISSING": 1
+      },
+      "stop_reasons": {
+        "UNKNOWN": 3803,
+        "COLLECTION_INTERVENTION": 103
+      },
+      "intervention_ns": 407524990891,
+      "topic_counts": {
+        "velocity": 11719,
+        "actual_steering": 11719,
+        "final_command": 58241,
+        "pose": 20507,
+        "lidar": 8203,
+        "camera": 3906
+      },
+      "sensor_metadata": {
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 82031,
+          "first_bag_stamp_ns": 1789067939106497716,
+          "last_bag_stamp_ns": 1789068349246433305,
+          "first_sim_stamp_ns": 5134999885,
+          "last_sim_stamp_ns": 415289990717,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "5kmh_run06:epoch0000:5244999882",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "5kmh_run06:epoch0000:5349999880",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.00037821149453520775,
+        0.9751733541488647,
+        1.1151299953460694,
+        1.4969263076782227
+      ]
+    },
+    {
+      "run_id": "5kmh_run07",
+      "split": "train",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run07",
+      "anchors": 3907,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 3890,
+      "usable_partial": 3790,
+      "usable_full": 3790,
+      "teacher_any": 3804,
+      "teacher_full": 3804,
+      "xy_support_per_horizon": [
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804
+      ],
+      "velocity_support_per_horizon": [
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804,
+        3804
+      ],
+      "input_reasons": {
+        "CURRENT_SENSOR_MISSING": 17,
+        "OK": 3890
+      },
+      "teacher_anchor_reasons": {
+        "OK": 3804,
+        "COLLECTION_INTERVENTION": 103
+      },
+      "stop_reasons": {
+        "UNKNOWN": 3804,
+        "COLLECTION_INTERVENTION": 103
+      },
+      "intervention_ns": 407514990891,
+      "topic_counts": {
+        "velocity": 11720,
+        "actual_steering": 11720,
+        "final_command": 58191,
+        "pose": 20509,
+        "camera": 3907,
+        "lidar": 8204
+      },
+      "sensor_metadata": {
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 82034,
+          "first_bag_stamp_ns": 1789068660625488443,
+          "last_bag_stamp_ns": 1789069070773707000,
+          "first_sim_stamp_ns": 5114999885,
+          "last_sim_stamp_ns": 415284990717,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "5kmh_run07:epoch0000:5244999882",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "5kmh_run07:epoch0000:5349999880",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.00028191041201353073,
+        0.9750735461711884,
+        1.113746273517608,
+        1.4981048107147217
+      ]
+    },
+    {
+      "run_id": "5kmh_run08",
+      "split": "test",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run08",
+      "anchors": 3906,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 3888,
+      "usable_partial": 3787,
+      "usable_full": 3787,
+      "teacher_any": 3803,
+      "teacher_full": 3803,
+      "xy_support_per_horizon": [
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803
+      ],
+      "velocity_support_per_horizon": [
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803
+      ],
+      "input_reasons": {
+        "OK": 3888,
+        "CURRENT_SENSOR_MISSING": 17,
+        "CURRENT_LONGITUDINAL_SPEED_MISSING": 1
+      },
+      "teacher_anchor_reasons": {
+        "OK": 3803,
+        "COLLECTION_INTERVENTION": 103
+      },
+      "stop_reasons": {
+        "UNKNOWN": 3803,
+        "COLLECTION_INTERVENTION": 103
+      },
+      "intervention_ns": 407519990891,
+      "topic_counts": {
+        "velocity": 11718,
+        "actual_steering": 11718,
+        "final_command": 58131,
+        "lidar": 8202,
+        "pose": 20506,
+        "camera": 3906
+      },
+      "sensor_metadata": {
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 82021,
+          "first_bag_stamp_ns": 1789069383915702190,
+          "last_bag_stamp_ns": 1789069794019529122,
+          "first_sim_stamp_ns": 5164999884,
+          "last_sim_stamp_ns": 415269990717,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "5kmh_run08:epoch0000:5244999882",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "5kmh_run08:epoch0000:5349999880",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.00017991755157709122,
+        0.9751130938529968,
+        1.1154352128505707,
+        1.4973134994506836
+      ]
+    },
+    {
+      "run_id": "5kmh_run09",
+      "split": "train",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run09",
+      "anchors": 3906,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 3886,
+      "usable_partial": 3787,
+      "usable_full": 3787,
+      "teacher_any": 3803,
+      "teacher_full": 3803,
+      "xy_support_per_horizon": [
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803
+      ],
+      "velocity_support_per_horizon": [
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803
+      ],
+      "input_reasons": {
+        "CURRENT_SENSOR_MISSING": 20,
+        "OK": 3886
+      },
+      "teacher_anchor_reasons": {
+        "OBSERVATION_POSE_MISSING": 1,
+        "OK": 3803,
+        "COLLECTION_INTERVENTION": 102
+      },
+      "stop_reasons": {
+        "UNKNOWN": 3804,
+        "COLLECTION_INTERVENTION": 102
+      },
+      "intervention_ns": 407504990891,
+      "topic_counts": {
+        "camera": 3906,
+        "actual_steering": 11717,
+        "velocity": 11717,
+        "final_command": 58231,
+        "pose": 20504,
+        "lidar": 8202
+      },
+      "sensor_metadata": {
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        },
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 82015,
+          "first_bag_stamp_ns": 1789070106312031088,
+          "last_bag_stamp_ns": 1789070516460560912,
+          "first_sim_stamp_ns": 5164999884,
+          "last_sim_stamp_ns": 415239990718,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "5kmh_run09:epoch0000:5244999882",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "5kmh_run09:epoch0000:5349999880",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.00016792071983218193,
+        0.9752126932144165,
+        1.1144278049468976,
+        1.4972178936004639
+      ]
+    },
+    {
+      "run_id": "5kmh_run10",
+      "split": "test",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run10",
+      "anchors": 3905,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 3898,
+      "usable_partial": 3799,
+      "usable_full": 3799,
+      "teacher_any": 3803,
+      "teacher_full": 3803,
+      "xy_support_per_horizon": [
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803
+      ],
+      "velocity_support_per_horizon": [
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803,
+        3803
+      ],
+      "input_reasons": {
+        "OK": 3898,
+        "CURRENT_SENSOR_MISSING": 7
+      },
+      "teacher_anchor_reasons": {
+        "OK": 3803,
+        "COLLECTION_INTERVENTION": 102
+      },
+      "stop_reasons": {
+        "UNKNOWN": 3803,
+        "COLLECTION_INTERVENTION": 102
+      },
+      "intervention_ns": 407519990891,
+      "topic_counts": {
+        "velocity": 11718,
+        "actual_steering": 11718,
+        "final_command": 58066,
+        "pose": 20504,
+        "lidar": 8202,
+        "camera": 3905
+      },
+      "sensor_metadata": {
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 82022,
+          "first_bag_stamp_ns": 1789070828573633052,
+          "last_bag_stamp_ns": 1789071238659421979,
+          "first_sim_stamp_ns": 5134999885,
+          "last_sim_stamp_ns": 415244990718,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "5kmh_run10:epoch0000:5244999882",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "5kmh_run10:epoch0000:5349999880",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.00016263315046671778,
+        0.9750605225563049,
+        1.1139758288860315,
+        1.4976260662078857
+      ]
+    },
+    {
+      "run_id": "8kmh_run01",
+      "split": "train",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run01",
+      "anchors": 2213,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 2203,
+      "usable_partial": 2103,
+      "usable_full": 2103,
+      "teacher_any": 2108,
+      "teacher_full": 2108,
+      "xy_support_per_horizon": [
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108
+      ],
+      "velocity_support_per_horizon": [
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108
+      ],
+      "input_reasons": {
+        "OK": 2203,
+        "CURRENT_SENSOR_MISSING": 10
+      },
+      "teacher_anchor_reasons": {
+        "OK": 2108,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "stop_reasons": {
+        "UNKNOWN": 2108,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "intervention_ns": 229624994867,
+      "topic_counts": {
+        "velocity": 6642,
+        "final_command": 41464,
+        "pose": 11622,
+        "actual_steering": 6641,
+        "lidar": 4649,
+        "camera": 2213
+      },
+      "sensor_metadata": {
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 46475,
+          "first_bag_stamp_ns": 1789063610453176678,
+          "last_bag_stamp_ns": 1789063842866319286,
+          "first_sim_stamp_ns": 5319999881,
+          "last_sim_stamp_ns": 237694994687,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "8kmh_run01:epoch0000:5349999880",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "8kmh_run01:epoch0000:5454999878",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.00012181652709841728,
+        1.7794941067695618,
+        1.9560375988483427,
+        2.250170946121216
+      ]
+    },
+    {
+      "run_id": "8kmh_run02",
+      "split": "test",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run02",
+      "anchors": 2214,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 2205,
+      "usable_partial": 2104,
+      "usable_full": 2104,
+      "teacher_any": 2109,
+      "teacher_full": 2109,
+      "xy_support_per_horizon": [
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109
+      ],
+      "velocity_support_per_horizon": [
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109
+      ],
+      "input_reasons": {
+        "OK": 2205,
+        "CURRENT_SENSOR_MISSING": 9
+      },
+      "teacher_anchor_reasons": {
+        "OK": 2109,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "stop_reasons": {
+        "UNKNOWN": 2109,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "intervention_ns": 229624994867,
+      "topic_counts": {
+        "velocity": 6643,
+        "final_command": 41194,
+        "pose": 11625,
+        "actual_steering": 6642,
+        "lidar": 4650,
+        "camera": 2214
+      },
+      "sensor_metadata": {
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 46499,
+          "first_bag_stamp_ns": 1789065501141510416,
+          "last_bag_stamp_ns": 1789065733609259387,
+          "first_sim_stamp_ns": 5149999884,
+          "last_sim_stamp_ns": 237644994688,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "8kmh_run02:epoch0000:5244999882",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "8kmh_run02:epoch0000:5349999880",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.00016782991588115692,
+        1.7799383401870728,
+        1.9552024841308588,
+        2.2491707801818848
+      ]
+    },
+    {
+      "run_id": "8kmh_run03",
+      "split": "train",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run03",
+      "anchors": 2215,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 2207,
+      "usable_partial": 2105,
+      "usable_full": 2105,
+      "teacher_any": 2110,
+      "teacher_full": 2110,
+      "xy_support_per_horizon": [
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110
+      ],
+      "velocity_support_per_horizon": [
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110
+      ],
+      "input_reasons": {
+        "OK": 2207,
+        "CURRENT_SENSOR_MISSING": 8
+      },
+      "teacher_anchor_reasons": {
+        "OK": 2110,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "stop_reasons": {
+        "UNKNOWN": 2110,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "intervention_ns": 229614994867,
+      "topic_counts": {
+        "velocity": 6645,
+        "actual_steering": 6645,
+        "final_command": 40824,
+        "pose": 11629,
+        "lidar": 4652,
+        "camera": 2215
+      },
+      "sensor_metadata": {
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 46515,
+          "first_bag_stamp_ns": 1789066222766788473,
+          "last_bag_stamp_ns": 1789066455343924019,
+          "first_sim_stamp_ns": 5104999885,
+          "last_sim_stamp_ns": 237679994687,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "8kmh_run03:epoch0000:5139999885",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "8kmh_run03:epoch0000:5244999882",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.00023991940543055534,
+        1.7797014713287354,
+        1.9553585529327389,
+        2.24960994720459
+      ]
+    },
+    {
+      "run_id": "8kmh_run04",
+      "split": "train",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run04",
+      "anchors": 2215,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 2205,
+      "usable_partial": 2103,
+      "usable_full": 2103,
+      "teacher_any": 2109,
+      "teacher_full": 2109,
+      "xy_support_per_horizon": [
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109
+      ],
+      "velocity_support_per_horizon": [
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109
+      ],
+      "input_reasons": {
+        "CURRENT_SENSOR_MISSING": 10,
+        "OK": 2205
+      },
+      "teacher_anchor_reasons": {
+        "OBSERVATION_POSE_MISSING": 1,
+        "OK": 2109,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "stop_reasons": {
+        "UNKNOWN": 2110,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "intervention_ns": 229624994867,
+      "topic_counts": {
+        "velocity": 6645,
+        "actual_steering": 6645,
+        "final_command": 41211,
+        "pose": 11629,
+        "camera": 2215,
+        "lidar": 4651
+      },
+      "sensor_metadata": {
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 46503,
+          "first_bag_stamp_ns": 1789066945320805553,
+          "last_bag_stamp_ns": 1789067177859079595,
+          "first_sim_stamp_ns": 5174999884,
+          "last_sim_stamp_ns": 237689994687,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "8kmh_run04:epoch0000:5349999880",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "8kmh_run04:epoch0000:5454999878",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.0001827208325266838,
+        1.7796952724456787,
+        1.9555881977081295,
+        2.2498817443847656
+      ]
+    },
+    {
+      "run_id": "8kmh_run05",
+      "split": "train",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run05",
+      "anchors": 2215,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 2205,
+      "usable_partial": 2103,
+      "usable_full": 2102,
+      "teacher_any": 2109,
+      "teacher_full": 2108,
+      "xy_support_per_horizon": [
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2108
+      ],
+      "velocity_support_per_horizon": [
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109
+      ],
+      "input_reasons": {
+        "CURRENT_SENSOR_MISSING": 10,
+        "OK": 2205
+      },
+      "teacher_anchor_reasons": {
+        "OBSERVATION_POSE_MISSING": 1,
+        "OK": 2109,
+        "INTERVENTION_ENDPOINT": 1,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "stop_reasons": {
+        "UNKNOWN": 2110,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "intervention_ns": 229604994867,
+      "topic_counts": {
+        "velocity": 6645,
+        "actual_steering": 6645,
+        "final_command": 41290,
+        "pose": 11628,
+        "camera": 2215,
+        "lidar": 4651
+      },
+      "sensor_metadata": {
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 46503,
+          "first_bag_stamp_ns": 1789067667944269199,
+          "last_bag_stamp_ns": 1789067900491030496,
+          "first_sim_stamp_ns": 5189999883,
+          "last_sim_stamp_ns": 237704994686,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "8kmh_run05:epoch0000:5244999882",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "8kmh_run05:epoch0000:5349999880",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.000275956466794014,
+        1.7795889377593994,
+        1.9565001487731923,
+        2.2490274906158447
+      ]
+    },
+    {
+      "run_id": "8kmh_run06",
+      "split": "validation",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run06",
+      "anchors": 2212,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 2201,
+      "usable_partial": 2098,
+      "usable_full": 2098,
+      "teacher_any": 2107,
+      "teacher_full": 2107,
+      "xy_support_per_horizon": [
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107
+      ],
+      "velocity_support_per_horizon": [
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107,
+        2107
+      ],
+      "input_reasons": {
+        "OK": 2201,
+        "CURRENT_SENSOR_MISSING": 11
+      },
+      "teacher_anchor_reasons": {
+        "OK": 2107,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "stop_reasons": {
+        "UNKNOWN": 2107,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "intervention_ns": 229519994869,
+      "topic_counts": {
+        "velocity": 6639,
+        "pose": 11618,
+        "final_command": 41017,
+        "lidar": 4646,
+        "actual_steering": 6637,
+        "camera": 2212
+      },
+      "sensor_metadata": {
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 46462,
+          "first_bag_stamp_ns": 1789068390030189971,
+          "last_bag_stamp_ns": 1789068622382023126,
+          "first_sim_stamp_ns": 5264999882,
+          "last_sim_stamp_ns": 237574994689,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "8kmh_run06:epoch0000:5349999880",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "8kmh_run06:epoch0000:5454999878",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.0001642070710659027,
+        1.7792377471923828,
+        1.957936596870422,
+        2.245347023010254
+      ]
+    },
+    {
+      "run_id": "8kmh_run07",
+      "split": "test",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run07",
+      "anchors": 2215,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 2210,
+      "usable_partial": 2108,
+      "usable_full": 2108,
+      "teacher_any": 2110,
+      "teacher_full": 2110,
+      "xy_support_per_horizon": [
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110
+      ],
+      "velocity_support_per_horizon": [
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110
+      ],
+      "input_reasons": {
+        "OK": 2210,
+        "CURRENT_SENSOR_MISSING": 5
+      },
+      "teacher_anchor_reasons": {
+        "OK": 2110,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "stop_reasons": {
+        "UNKNOWN": 2110,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "intervention_ns": 229719994865,
+      "topic_counts": {
+        "final_command": 41269,
+        "actual_steering": 6646,
+        "velocity": 6646,
+        "pose": 11629,
+        "lidar": 4652,
+        "camera": 2215
+      },
+      "sensor_metadata": {
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 46522,
+          "first_bag_stamp_ns": 1789069112030164921,
+          "last_bag_stamp_ns": 1789069344688978849,
+          "first_sim_stamp_ns": 5189999883,
+          "last_sim_stamp_ns": 237799994684,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "8kmh_run07:epoch0000:5244999882",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "8kmh_run07:epoch0000:5349999880",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.00016345642507076263,
+        1.7797983884811401,
+        1.9556260406970978,
+        2.249201774597168
+      ]
+    },
+    {
+      "run_id": "8kmh_run08",
+      "split": "train",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run08",
+      "anchors": 2214,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 2202,
+      "usable_partial": 2102,
+      "usable_full": 2102,
+      "teacher_any": 2108,
+      "teacher_full": 2108,
+      "xy_support_per_horizon": [
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108
+      ],
+      "velocity_support_per_horizon": [
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108,
+        2108
+      ],
+      "input_reasons": {
+        "CURRENT_SENSOR_MISSING": 12,
+        "OK": 2202
+      },
+      "teacher_anchor_reasons": {
+        "OBSERVATION_POSE_MISSING": 1,
+        "OK": 2108,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "stop_reasons": {
+        "UNKNOWN": 2109,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "intervention_ns": 229524994869,
+      "topic_counts": {
+        "actual_steering": 6643,
+        "velocity": 6643,
+        "camera": 2214,
+        "lidar": 4650,
+        "final_command": 41302,
+        "pose": 11621
+      },
+      "sensor_metadata": {
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 46496,
+          "first_bag_stamp_ns": 1789069834911765965,
+          "last_bag_stamp_ns": 1789070067387584301,
+          "first_sim_stamp_ns": 5114999885,
+          "last_sim_stamp_ns": 237594994689,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "8kmh_run08:epoch0000:5244999882",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "8kmh_run08:epoch0000:5349999880",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -3.4064154164070715e-08,
+        1.7797622680664062,
+        1.9557089328765869,
+        2.250847816467285
+      ]
+    },
+    {
+      "run_id": "8kmh_run09",
+      "split": "validation",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run09",
+      "anchors": 2214,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 2195,
+      "usable_partial": 2090,
+      "usable_full": 2090,
+      "teacher_any": 2109,
+      "teacher_full": 2109,
+      "xy_support_per_horizon": [
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109
+      ],
+      "velocity_support_per_horizon": [
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109,
+        2109
+      ],
+      "input_reasons": {
+        "OK": 2195,
+        "CURRENT_SENSOR_MISSING": 19
+      },
+      "teacher_anchor_reasons": {
+        "OK": 2109,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "stop_reasons": {
+        "UNKNOWN": 2109,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "intervention_ns": 229719994865,
+      "topic_counts": {
+        "velocity": 6644,
+        "actual_steering": 6644,
+        "lidar": 4650,
+        "final_command": 41144,
+        "pose": 11625,
+        "camera": 2214
+      },
+      "sensor_metadata": {
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 46500,
+          "first_bag_stamp_ns": 1789070557310071622,
+          "last_bag_stamp_ns": 1789070789793606909,
+          "first_sim_stamp_ns": 5269999882,
+          "last_sim_stamp_ns": 237769994685,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "8kmh_run09:epoch0000:5349999880",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "8kmh_run09:epoch0000:5454999878",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.0003738394007086754,
+        1.7795996069908142,
+        1.9551064312458035,
+        2.2503445148468018
+      ]
+    },
+    {
+      "run_id": "8kmh_run10",
+      "split": "train",
+      "raw_run_dir": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run10",
+      "anchors": 2216,
+      "duplicate_camera_captures": 0,
+      "input_eligible": 2208,
+      "usable_partial": 2105,
+      "usable_full": 2104,
+      "teacher_any": 2110,
+      "teacher_full": 2109,
+      "xy_support_per_horizon": [
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2109
+      ],
+      "velocity_support_per_horizon": [
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2110,
+        2109
+      ],
+      "input_reasons": {
+        "CURRENT_SENSOR_MISSING": 8,
+        "OK": 2208
+      },
+      "teacher_anchor_reasons": {
+        "OBSERVATION_POSE_MISSING": 1,
+        "OK": 2110,
+        "INTERVENTION_ENDPOINT": 1,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "stop_reasons": {
+        "UNKNOWN": 2111,
+        "COLLECTION_INTERVENTION": 105
+      },
+      "intervention_ns": 229809994863,
+      "topic_counts": {
+        "velocity": 6648,
+        "actual_steering": 6648,
+        "final_command": 41117,
+        "pose": 11632,
+        "lidar": 4653,
+        "camera": 2216
+      },
+      "sensor_metadata": {
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        },
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        }
+      },
+      "fallback_counts": {},
+      "sqlite_integrity": {
+        "quick_check": "ok"
+      },
+      "epochs": [
+        {
+          "epoch_id": "epoch0000",
+          "first_index": 0,
+          "last_index": 46520,
+          "first_bag_stamp_ns": 1789071279568966278,
+          "last_bag_stamp_ns": 1789071512213913245,
+          "first_sim_stamp_ns": 5249999882,
+          "last_sim_stamp_ns": 237849994683,
+          "reset_reason": null
+        }
+      ],
+      "replay_smoke": [
+        {
+          "anchor_id": "8kmh_run10:epoch0000:5349999880",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        },
+        {
+          "anchor_id": "8kmh_run10:epoch0000:5454999878",
+          "status": "PASS",
+          "image_shape": [
+            1,
+            4,
+            3,
+            224,
+            384
+          ],
+          "lidar_shape": [
+            1,
+            4,
+            2,
+            750
+          ]
+        }
+      ],
+      "measured_longitudinal_mps_quantiles": [
+        -0.0003719637170433998,
+        1.779738962650299,
+        1.9552684664726252,
+        2.2499282360076904
+      ]
+    }
+  ],
+  "training_executed": false,
+  "test_model_evaluation_executed": false
+}
