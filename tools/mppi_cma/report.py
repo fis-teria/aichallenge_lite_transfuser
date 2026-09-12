@@ -1,6 +1,7 @@
 """Export selected, tested reference files and a standalone comparison map."""
 from __future__ import annotations
 import io
+import hashlib
 import json
 from pathlib import Path
 import shutil
@@ -12,6 +13,7 @@ import yaml
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from verify_tracks import verify
 
 ROOT=Path('/home/si26-pc008/cma_mppi_20260912')
 
@@ -22,6 +24,7 @@ def main() -> None:
     output=ROOT/'deliverables';output.mkdir(exist_ok=True)
     summary={'scope':'Solo closed-loop AWSIM, second-lap time, 18 CMA candidates per condition',
              'ot_metric':'GNSS XY plus timestamp-aligned EKF yaw; bounding rectangle and 0.1 m margin',
+             'controller_image_id':json.loads((ROOT/'environment.json').read_text())['controller_image_id'],
              'conditions':{}}
     with tarfile.open(ROOT/'snapshot/submission.tar.gz') as archive:
         def member(suffix: str) -> bytes:
@@ -40,6 +43,7 @@ def main() -> None:
         best=progress['best'];metrics=best['metrics']
         chosen=[metrics,*progress['best_repeats']]
         baseline=[progress['evaluations'][0]['metrics'],progress['baseline_repeat']]
+        dense=[verify(ROOT,x['episode']) for x in chosen]
         ref=np.genfromtxt(best['reference'],delimiter=',',names=True)
         track=np.genfromtxt(ROOT/'episodes'/metrics['episode']/'track.csv',delimiter=',',names=True)
         ax.imshow(wall_array,cmap='gray',vmin=0,vmax=255,origin='upper',
@@ -66,17 +70,25 @@ def main() -> None:
               'baseline_ot_overlap_s':[x['ot_overlap_s'] for x in baseline],
               'selected_penalties':[x['penalties'] for x in chosen],
               'validated_preferred_feasible':progress['validated_preferred_feasible'],
+              'dense_checks':dense,
+              'validated_with_interpolation':progress['validated_preferred_feasible'] and all(x['passed'] for x in dense),
               'anchors_m':best['anchors_m'],
-              'measured_speed_median_mps':metrics['measured_speed_median_mps']}
+              'measured_speed_median_mps':metrics['measured_speed_median_mps'],
+              'selected_speed_medians_mps':[x['measured_speed_median_mps'] for x in chosen],
+              'selected_speed_maxima_mps':[x['measured_speed_max_mps'] for x in chosen],
+              'gentle_acceleration_in_corners_s':[x['gentle_acceleration_in_corners_s'] for x in chosen]}
         summary['conditions'][condition]=case
         shutil.copy2(best['reference'],output/(condition+'_reference.csv'))
         episode=ROOT/'episodes'/metrics['episode']
         shutil.copy2(episode/'mppi.yaml',output/(condition+'_mppi.yaml'))
         shutil.copy2(episode/'config.json',output/(condition+'_episode.json'))
+        shutil.copy2(episode/'track.csv',output/(condition+'_measured_track.csv'))
     fig.savefig(output/'routes.png',dpi=170)
     fig.savefig(output/'routes.svg')
     plt.close(fig)
     (output/'summary.json').write_text(json.dumps(summary,indent=2))
+    shutil.copy2(ROOT/'calibration.json',output/'calibration.json')
+    shutil.copy2(ROOT/'snapshot/base_reference.csv',output/'baseline_reference.csv')
     (output/'README.md').write_text(
         '# Bounded MPPI raceline search\n\n'
         'The reference CSVs are the exact tested geometry files. Use each with its paired MPPI YAML '
@@ -88,7 +100,11 @@ def main() -> None:
         'These are solo closed-loop references, not a guarantee for traffic/overtaking or a global optimum. '
         'See summary.json for all repeated-run outcomes; a selected path is only preferred-feasible '
         'when all three checks completed without contact/over penalties or measured OT overlap. '
+        'The dense_checks and validated_with_interpolation fields additionally check interpolated footprints. '
         'No production reference was replaced.\n')
+    manifest={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(output.iterdir())
+              if p.is_file() and p.name!='sha256.json'}
+    (output/'sha256.json').write_text(json.dumps(manifest,indent=2))
     print(json.dumps(summary),flush=True)
 
 

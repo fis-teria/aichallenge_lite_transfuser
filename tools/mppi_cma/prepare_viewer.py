@@ -52,7 +52,7 @@ def prepare(root: Path) -> None:
             'Global Options': {'Background Color': '20; 29; 44', 'Fixed Frame': 'map', 'Frame Rate': 15},
             'Tools': [{'Class': 'rviz_default_plugins/' + name} for name in ('MoveCamera', 'Select', 'FocusCamera')],
             'Views': {'Current': {'Class': 'rviz_default_plugins/TopDownOrtho', 'Name': 'Current View',
-                                  'Target Frame': 'map', 'Angle': 0., 'Scale': 12.,
+                                  'Target Frame': 'map', 'Angle': 0., 'Scale': 8.,
                                   'X': (min(x) + max(x)) / 2, 'Y': (min(y) + max(y)) / 2}, 'Saved': []}},
         'Window Geometry': {'Width': 1280, 'Height': 1500, 'X': 0, 'Y': 27,
                             'Hide Left Dock': True, 'Hide Right Dock': True}}
