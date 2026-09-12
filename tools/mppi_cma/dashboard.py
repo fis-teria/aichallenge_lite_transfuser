@@ -97,6 +97,8 @@ def snapshot(root: Path, state_subdir: str = 'search') -> dict:
             'validated': data.get('validated_preferred_feasible'),
             'validation_count': len(data.get('comparison_runs', {}).get('candidate', data.get('best_repeats', []))),
             'comparison': data.get('comparison'),
+            'selected_reference': coordinates(Path(data['selected']['reference']))
+                                  if state['completed'] and data.get('selected') else [],
         }
     calibration = json.loads((root / 'calibration.json').read_text())
     return {

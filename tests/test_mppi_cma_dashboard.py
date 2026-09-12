@@ -38,3 +38,25 @@ def test_isolated_episode_read_keeps_each_vehicle_identity_and_units(tmp_path):
     assert first['live']['ego']['speed_mps']==7.5
     assert second['live']['ego']['speed_mps']==10.
     assert first['handicap'] and not second['handicap']
+
+
+def test_finished_refinement_keeps_selected_routes_visible_without_live_episodes(tmp_path):
+    (tmp_path / 'refinement').mkdir()
+    (tmp_path / 'snapshot').mkdir()
+    base = tmp_path / 'snapshot/base_reference.csv'
+    base.write_text('x_m,y_m\n1,2\n3,4\n')
+    selected = tmp_path / 'selected.csv'
+    selected.write_text('x_m,y_m\n1.5,2.5\n3.5,4.5\n')
+    (tmp_path / 'calibration.json').write_text(json.dumps({'ot_lane_polygon_map_m': [[0, 0], [1, 0], [1, 1]]}))
+    state = tmp_path / 'refinement/state.json'
+    state.write_text(json.dumps({'completed': True, 'phase': 'complete', 'new_episodes_started': 64,
+                                'maximum_new_episodes': 64, 'conditions': {
+        'normal': {'evaluations': [], 'selected': {'reference': str(base), 'metrics': {}}},
+        'leader': {'evaluations': [], 'selected': {'reference': str(selected), 'metrics': {}}},
+    }}))
+    before = {p: p.read_bytes() for p in tmp_path.rglob('*') if p.is_file()}
+    payload = snapshot(tmp_path, 'refinement')
+    assert payload['simulations'] == []
+    assert payload['conditions']['normal']['selected_reference'] == [[1., 2.], [3., 4.]]
+    assert payload['conditions']['leader']['selected_reference'] == [[1.5, 2.5], [3.5, 4.5]]
+    assert {p: p.read_bytes() for p in tmp_path.rglob('*') if p.is_file()} == before

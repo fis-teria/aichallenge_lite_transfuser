@@ -1,0 +1,246 @@
+{
+  "checked_unix_s": 1789199587.0274312,
+  "checks": {
+    "preceding_study_states_unchanged": true,
+    "frozen_awsim_unchanged": true,
+    "source_awsim_unchanged": true,
+    "legacy_awsim_unchanged": true,
+    "snapshot_inputs_unchanged": true,
+    "source_head_unchanged": true,
+    "source_diff_unchanged": true,
+    "deliverables_unchanged": true,
+    "shared_course_deliverables_unchanged": true,
+    "normal_32_recorded_evaluations": true,
+    "normal_selected_repeat_validation_passed": true,
+    "leader_32_recorded_evaluations": true,
+    "leader_selected_repeat_validation_passed": true,
+    "leader_rank1_throughout_all32": true,
+    "exactly_64_vehicle_evaluations": true,
+    "forty_simulator_episodes": true,
+    "no_evaluation_containers": true,
+    "no_awsim_processes": true,
+    "all_runtime_sessions_closed": true,
+    "all_shared_controller_clients_closed": true,
+    "all_four_start_at_d1": true,
+    "distinct_shared_candidate_references": true,
+    "both_ghost_control_inputs_empty": true
+  },
+  "remaining_containers": [
+    "cma-mppi-rviz-viewer",
+    "ga_yaw_slip_ablation_ws-rosbag-cleaner-1"
+  ],
+  "performance": {
+    "normal": {
+      "completed_count": 32,
+      "preferred_feasible_count": 32,
+      "native_penalty_counts": {
+        "crash": 0,
+        "wall": 0,
+        "over": 0,
+        "block": 0
+      },
+      "ot_overlap_samples": 0,
+      "positive_corner_acceleration_count": 32
+    },
+    "leader": {
+      "completed_count": 29,
+      "preferred_feasible_count": 27,
+      "native_penalty_counts": {
+        "crash": 0,
+        "wall": 0,
+        "over": 3,
+        "block": 0
+      },
+      "ot_overlap_samples": 28,
+      "positive_corner_acceleration_count": 32
+    }
+  },
+  "new_vehicle_evaluations": 64,
+  "new_simulator_episodes": 40,
+  "execution_source_commit": "211aa117cdd8e20ad1aaadc07a6bbe2841a32f2c",
+  "preceding_state_sha256": {
+    "search/state.json": "f51b224d992fc3e40488de09395e8f47dee1155bc65604d15945ef4290f544cd",
+    "shared_course/state.json": "8b94185b53fb46d1ff5680596f181ccbeecaa2b6444a8f8c045433e48577bd6d",
+    "shared_course_same_start/state.json": "b7429bff07d6cfabdb87d5623e3760d83ab4ac9b84ba3b401f6b01e1fdab0a78"
+  },
+  "shared_reference_hash_counts": [
+    {
+      "episode": "r2-normal-g00-b0",
+      "unique_reference_hashes": 4
+    },
+    {
+      "episode": "r2-normal-g00-b1",
+      "unique_reference_hashes": 4
+    },
+    {
+      "episode": "r2-normal-g01-b0",
+      "unique_reference_hashes": 4
+    },
+    {
+      "episode": "r2-normal-g01-b1",
+      "unique_reference_hashes": 4
+    },
+    {
+      "episode": "r2-normal-g02-b0",
+      "unique_reference_hashes": 4
+    },
+    {
+      "episode": "r2-normal-g02-b1",
+      "unique_reference_hashes": 4
+    },
+    {
+      "episode": "r2-normal-validate-b0",
+      "unique_reference_hashes": 2
+    },
+    {
+      "episode": "r2-normal-validate-b1",
+      "unique_reference_hashes": 2
+    }
+  ],
+  "runtime_result_sample": {
+    "ok": true,
+    "reason": "candidate_penalty",
+    "started": true,
+    "summary": {
+      "schema_version": "admin-summary-v1",
+      "race_ended": false,
+      "session": {
+        "required_laps": 2,
+        "timeout": 260.0,
+        "total_vehicles": 1
+      },
+      "vehicles": [
+        {
+          "vehicle_number": 1,
+          "vehicle_name": "GoKart1",
+          "final_position": 1,
+          "finished": false,
+          "lap_count": 0,
+          "laps": [],
+          "min_lap_time": 0.0,
+          "max_lap_time": 0.0,
+          "avg_lap_time": 0.0,
+          "total_lap_time": 0.0,
+          "gap_to_leader_m": 0.0,
+          "penalty_active": false,
+          "penalty_active_kinds": [],
+          "penalty_count": 1,
+          "penalty_total_seconds": 2.3000051975250244,
+          "penalty_by_kind": {
+            "crash": {
+              "count": 0,
+              "total_seconds": 0.0
+            },
+            "wall": {
+              "count": 0,
+              "total_seconds": 0.0
+            },
+            "over": {
+              "count": 1,
+              "total_seconds": 2.3000030517578125
+            },
+            "block": {
+              "count": 0,
+              "total_seconds": 0.0
+            }
+          }
+        }
+      ]
+    },
+    "status": [
+      163.6259765625,
+      1.0,
+      89.67035675048828,
+      3.0,
+      1.0,
+      0.0,
+      0.0
+    ],
+    "last_observed_speed_mps": 1.0744434244894889e-05,
+    "simulator_process_stopped": true
+  },
+  "same_start_measurement_sample": {
+    "expected_d1_map_xy_m": [
+      89631.4163,
+      43127.8085
+    ],
+    "maximum_allowed_error_m": 0.05,
+    "errors_m": [
+      0.00014142135780958461,
+      0.00010000000474974513,
+      0.0,
+      0.00031622776723169195
+    ],
+    "vehicles": [
+      {
+        "vehicle_number": 1,
+        "ego": {
+          "stamp_s": 8.669999806,
+          "arrival_s": 98202.334894618,
+          "x_m": 89631.41618046693,
+          "y_m": 43127.808465853646,
+          "speed_mps": 2.5100456218897966e-07,
+          "yaw_rad": -3.3019160580801515e-06
+        },
+        "gnss": {
+          "stamp_s": 8.649999806,
+          "arrival_s": 98202.316886036,
+          "x_m": 89631.41619999999,
+          "y_m": 43127.8084
+        }
+      },
+      {
+        "vehicle_number": 2,
+        "ego": {
+          "stamp_s": 8.684999805,
+          "arrival_s": 98202.391759815,
+          "x_m": 89631.41619939146,
+          "y_m": 43127.808477419356,
+          "speed_mps": 1.3916465489140877e-07,
+          "yaw_rad": 2.4324076251398056e-07
+        },
+        "gnss": {
+          "stamp_s": 8.649999806,
+          "arrival_s": 98202.318020884,
+          "x_m": 89631.41619999999,
+          "y_m": 43127.8085
+        }
+      },
+      {
+        "vehicle_number": 3,
+        "ego": {
+          "stamp_s": 8.684999805,
+          "arrival_s": 98202.392178813,
+          "x_m": 89631.41619169553,
+          "y_m": 43127.80850303028,
+          "speed_mps": 1.999887313340269e-07,
+          "yaw_rad": 1.7892552034317386e-06
+        },
+        "gnss": {
+          "stamp_s": 8.649999806,
+          "arrival_s": 98202.309126853,
+          "x_m": 89631.4163,
+          "y_m": 43127.8085
+        }
+      },
+      {
+        "vehicle_number": 4,
+        "ego": {
+          "stamp_s": 8.684999805,
+          "arrival_s": 98202.392352019,
+          "x_m": 89631.41621268881,
+          "y_m": 43127.808543750005,
+          "speed_mps": 4.566591352608222e-08,
+          "yaw_rad": -2.453671808077092e-06
+        },
+        "gnss": {
+          "stamp_s": 8.649999806,
+          "arrival_s": 98202.310041295,
+          "x_m": 89631.41619999999,
+          "y_m": 43127.8088
+        }
+      }
+    ]
+  },
+  "awsim_processes": []
+}

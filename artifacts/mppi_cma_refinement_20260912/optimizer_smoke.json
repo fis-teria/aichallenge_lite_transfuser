@@ -1,0 +1,19 @@
+{
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "-v",
+    "/home/si26-pc008/cma_mppi_20260912/tools:/tools:ro",
+    "--entrypoint",
+    "python3",
+    "sha256:c5eb525d1bf1e52789075b4306bb8c9438542b5658855c5468115f95a9e8cc39",
+    "/tools/smoke_refine_optimizer.py"
+  ],
+  "stdout": "CMA_REFINEMENT_TRANSACTION_SMOKE_OK\n",
+  "stderr": "",
+  "passed": true,
+  "checked_unix_s": 1789197286.7921526
+}

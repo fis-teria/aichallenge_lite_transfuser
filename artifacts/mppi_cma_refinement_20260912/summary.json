@@ -1,0 +1,451 @@
+{
+  "scope": "Bounded refinement, 24 CMA candidates per condition plus four runs of each compared route",
+  "controller_image_id": "sha256:7a585a12c5593bf12466b229577b2c9e6afacd43b078b51985dbf584409001c5",
+  "new_vehicle_evaluations": 64,
+  "conditions": {
+    "normal": {
+      "evaluation_layout": "four ghosts on one course, same D1 start, no other-vehicle controller input",
+      "target_mps": 10.0,
+      "selected_candidate": "normal-g02-c02",
+      "compared_new_candidate": "r2-normal-g00-c06",
+      "selected_anchors_m": [
+        0.12790704442101808,
+        2.092700872084509,
+        2.925334622131381,
+        2.673031160796376,
+        -0.07942053134484611,
+        0.32660562973733587,
+        0.3754769726817253,
+        -0.21756684018131026,
+        -0.09793269788855898,
+        -0.04687693399376722,
+        -0.433057570989233,
+        -0.1962542040456012,
+        0.7784236075824253,
+        -0.5553716069113087,
+        0.1607303262941031,
+        -0.4862611403833517
+      ],
+      "comparison": {
+        "candidate_median_s": 37.733856201171875,
+        "incumbent_median_s": 37.72885513305664,
+        "improvement_s": -0.005001068115234375,
+        "minimum_improvement_s": 0.05,
+        "comparison_wins": 3,
+        "candidate_validated": true,
+        "incumbent_validated": true,
+        "promoted": false,
+        "reason": "improvement_not_reproducible"
+      },
+      "selected_reference_sha256": "2e5aac54b397ec7d9595dda3c4791f3b15d1b09ecab2581240ca0db1751ae4f0",
+      "selected_runs": [
+        {
+          "episode": "r2-normal-validate-b0-d2",
+          "completed": true,
+          "flying_lap_s": 37.71385192871094,
+          "laps_s": [
+            39.83930587768555,
+            37.71385192871094
+          ],
+          "penalties": {
+            "crash": 0,
+            "wall": 0,
+            "over": 0,
+            "block": 0
+          },
+          "ot_overlap_s": 0.0,
+          "ot_overlap_samples": 0,
+          "ot_test_margin_m": 0.1,
+          "position_source": "timestamp-aligned AWSIM GNSS with EKF yaw",
+          "rank_values": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "handicap_enabled": false,
+          "target_mps": 10.0,
+          "measured_speed_median_mps": 8.975979977948247,
+          "measured_speed_max_mps": 9.775941356280052,
+          "command_speed_max_mps": 10.0,
+          "gentle_acceleration_in_corners_s": 4.2399999999999665,
+          "objective": 37.71385192871094,
+          "preferred_feasible": true,
+          "vehicle_number": 2,
+          "shared_course": true,
+          "ignore_other_vehicles": true,
+          "rank1_sample_fraction": 0.10507505360972123,
+          "candidate_id": "r2-normal-validate-b0-d2",
+          "output_episode": "r2-normal-validate-b0"
+        },
+        {
+          "episode": "r2-normal-validate-b0-d4",
+          "completed": true,
+          "flying_lap_s": 37.75386047363281,
+          "laps_s": [
+            39.824302673339844,
+            37.75386047363281
+          ],
+          "penalties": {
+            "crash": 0,
+            "wall": 0,
+            "over": 0,
+            "block": 0
+          },
+          "ot_overlap_s": 0.0,
+          "ot_overlap_samples": 0,
+          "ot_test_margin_m": 0.1,
+          "position_source": "timestamp-aligned AWSIM GNSS with EKF yaw",
+          "rank_values": [
+            2,
+            3,
+            4
+          ],
+          "handicap_enabled": false,
+          "target_mps": 10.0,
+          "measured_speed_median_mps": 9.004807144942896,
+          "measured_speed_max_mps": 9.774882669632936,
+          "command_speed_max_mps": 10.0,
+          "gentle_acceleration_in_corners_s": 4.2550000000000345,
+          "objective": 37.75386047363281,
+          "preferred_feasible": true,
+          "vehicle_number": 4,
+          "shared_course": true,
+          "ignore_other_vehicles": true,
+          "rank1_sample_fraction": 0.0,
+          "candidate_id": "r2-normal-validate-b0-d4",
+          "output_episode": "r2-normal-validate-b0"
+        },
+        {
+          "episode": "r2-normal-validate-b1-d1",
+          "completed": true,
+          "flying_lap_s": 37.698848724365234,
+          "laps_s": [
+            39.69427490234375,
+            37.698848724365234
+          ],
+          "penalties": {
+            "crash": 0,
+            "wall": 0,
+            "over": 0,
+            "block": 0
+          },
+          "ot_overlap_s": 0.0,
+          "ot_overlap_samples": 0,
+          "ot_test_margin_m": 0.1,
+          "position_source": "timestamp-aligned AWSIM GNSS with EKF yaw",
+          "rank_values": [
+            1,
+            2,
+            3
+          ],
+          "handicap_enabled": false,
+          "target_mps": 10.0,
+          "measured_speed_median_mps": 9.036284994085296,
+          "measured_speed_max_mps": 9.775638316806402,
+          "command_speed_max_mps": 10.0,
+          "gentle_acceleration_in_corners_s": 3.6600000000000286,
+          "objective": 37.698848724365234,
+          "preferred_feasible": true,
+          "vehicle_number": 1,
+          "shared_course": true,
+          "ignore_other_vehicles": true,
+          "rank1_sample_fraction": 0.11730205278592376,
+          "candidate_id": "r2-normal-validate-b1-d1",
+          "output_episode": "r2-normal-validate-b1"
+        },
+        {
+          "episode": "r2-normal-validate-b1-d3",
+          "completed": true,
+          "flying_lap_s": 37.743858337402344,
+          "laps_s": [
+            39.824302673339844,
+            37.743858337402344
+          ],
+          "penalties": {
+            "crash": 0,
+            "wall": 0,
+            "over": 0,
+            "block": 0
+          },
+          "ot_overlap_s": 0.0,
+          "ot_overlap_samples": 0,
+          "ot_test_margin_m": 0.1,
+          "position_source": "timestamp-aligned AWSIM GNSS with EKF yaw",
+          "rank_values": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "handicap_enabled": false,
+          "target_mps": 10.0,
+          "measured_speed_median_mps": 9.020473878827904,
+          "measured_speed_max_mps": 9.775713424023358,
+          "command_speed_max_mps": 10.0,
+          "gentle_acceleration_in_corners_s": 4.414999999999974,
+          "objective": 37.743858337402344,
+          "preferred_feasible": true,
+          "vehicle_number": 3,
+          "shared_course": true,
+          "ignore_other_vehicles": true,
+          "rank1_sample_fraction": 0.06964809384164222,
+          "candidate_id": "r2-normal-validate-b1-d3",
+          "output_episode": "r2-normal-validate-b1"
+        }
+      ],
+      "selected_dense_checks": [
+        {
+          "episode": "r2-normal-validate-b0-d2",
+          "interpolation_max_translation_m": 0.05,
+          "interpolation_max_yaw_rad": 0.01,
+          "margin_m": 0.1,
+          "samples_tested": 14847,
+          "overlap_samples": 0,
+          "overlap_s": 0.0,
+          "passed": true,
+          "limit": "Interpolated measured GNSS XY and EKF yaw, not an additional simulator collision sensor"
+        },
+        {
+          "episode": "r2-normal-validate-b0-d4",
+          "interpolation_max_translation_m": 0.05,
+          "interpolation_max_yaw_rad": 0.01,
+          "margin_m": 0.1,
+          "samples_tested": 14838,
+          "overlap_samples": 0,
+          "overlap_s": 0.0,
+          "passed": true,
+          "limit": "Interpolated measured GNSS XY and EKF yaw, not an additional simulator collision sensor"
+        },
+        {
+          "episode": "r2-normal-validate-b1-d1",
+          "interpolation_max_translation_m": 0.05,
+          "interpolation_max_yaw_rad": 0.01,
+          "margin_m": 0.1,
+          "samples_tested": 14909,
+          "overlap_samples": 0,
+          "overlap_s": 0.0,
+          "passed": true,
+          "limit": "Interpolated measured GNSS XY and EKF yaw, not an additional simulator collision sensor"
+        },
+        {
+          "episode": "r2-normal-validate-b1-d3",
+          "interpolation_max_translation_m": 0.05,
+          "interpolation_max_yaw_rad": 0.01,
+          "margin_m": 0.1,
+          "samples_tested": 14882,
+          "overlap_samples": 0,
+          "overlap_s": 0.0,
+          "passed": true,
+          "limit": "Interpolated measured GNSS XY and EKF yaw, not an additional simulator collision sensor"
+        }
+      ],
+      "evaluated_candidates": 24
+    },
+    "leader": {
+      "evaluation_layout": "independent single-car AWSIM, native rank 1 throughout",
+      "target_mps": 7.5,
+      "selected_candidate": "r2-leader-g01-c04",
+      "compared_new_candidate": "r2-leader-g01-c04",
+      "selected_anchors_m": [
+        -0.22310470273657224,
+        2.336147553198536,
+        2.7032676011712184,
+        2.2191704795237324,
+        -0.3697004231532445,
+        0.5068987261381994,
+        0.06796827201230471,
+        -0.22037211447928887,
+        -0.3434844180898067,
+        -0.6761618914131734,
+        -0.320199101871915,
+        -0.04787747992156391,
+        0.4112290521667994,
+        0.17497025648317774,
+        -0.5127689888648411,
+        0.2656417642839627
+      ],
+      "comparison": {
+        "candidate_median_s": 50.07649230957031,
+        "incumbent_median_s": 50.199018478393555,
+        "improvement_s": 0.12252616882324219,
+        "minimum_improvement_s": 0.05,
+        "comparison_wins": 4,
+        "candidate_validated": true,
+        "incumbent_validated": true,
+        "promoted": true,
+        "reason": "repeated_improvement"
+      },
+      "selected_reference_sha256": "e0f797c346a0bd1e67e18f31f715a709c6d155612b281a0a0c97cf32bef39432",
+      "selected_runs": [
+        {
+          "episode": "r2-leader-validate-b0-d1",
+          "completed": true,
+          "flying_lap_s": 50.136505126953125,
+          "laps_s": [
+            50.39155960083008,
+            50.136505126953125
+          ],
+          "penalties": {
+            "crash": 0,
+            "wall": 0,
+            "over": 0,
+            "block": 0
+          },
+          "ot_overlap_s": 0.0,
+          "ot_overlap_samples": 0,
+          "ot_test_margin_m": 0.1,
+          "position_source": "timestamp-aligned AWSIM GNSS with EKF yaw",
+          "rank_values": [
+            1
+          ],
+          "handicap_enabled": true,
+          "target_mps": 7.5,
+          "measured_speed_median_mps": 6.856458112847106,
+          "measured_speed_max_mps": 6.956655929807227,
+          "command_speed_max_mps": 7.5,
+          "gentle_acceleration_in_corners_s": 3.4150000000000063,
+          "objective": 50.136505126953125,
+          "preferred_feasible": true
+        },
+        {
+          "episode": "r2-leader-validate-b0-d3",
+          "completed": true,
+          "flying_lap_s": 50.08149337768555,
+          "laps_s": [
+            50.40156173706055,
+            50.08149337768555
+          ],
+          "penalties": {
+            "crash": 0,
+            "wall": 0,
+            "over": 0,
+            "block": 0
+          },
+          "ot_overlap_s": 0.0,
+          "ot_overlap_samples": 0,
+          "ot_test_margin_m": 0.1,
+          "position_source": "timestamp-aligned AWSIM GNSS with EKF yaw",
+          "rank_values": [
+            1
+          ],
+          "handicap_enabled": true,
+          "target_mps": 7.5,
+          "measured_speed_median_mps": 6.8587760329218685,
+          "measured_speed_max_mps": 6.958219171754239,
+          "command_speed_max_mps": 7.5,
+          "gentle_acceleration_in_corners_s": 3.065000000000012,
+          "objective": 50.08149337768555,
+          "preferred_feasible": true
+        },
+        {
+          "episode": "r2-leader-validate-b1-d2",
+          "completed": true,
+          "flying_lap_s": 50.02648162841797,
+          "laps_s": [
+            50.35655212402344,
+            50.02648162841797
+          ],
+          "penalties": {
+            "crash": 0,
+            "wall": 0,
+            "over": 0,
+            "block": 0
+          },
+          "ot_overlap_s": 0.0,
+          "ot_overlap_samples": 0,
+          "ot_test_margin_m": 0.1,
+          "position_source": "timestamp-aligned AWSIM GNSS with EKF yaw",
+          "rank_values": [
+            1
+          ],
+          "handicap_enabled": true,
+          "target_mps": 7.5,
+          "measured_speed_median_mps": 6.855507820392569,
+          "measured_speed_max_mps": 6.956085917958314,
+          "command_speed_max_mps": 7.5,
+          "gentle_acceleration_in_corners_s": 3.415000000000024,
+          "objective": 50.02648162841797,
+          "preferred_feasible": true
+        },
+        {
+          "episode": "r2-leader-validate-b1-d4",
+          "completed": true,
+          "flying_lap_s": 50.07149124145508,
+          "laps_s": [
+            50.34654998779297,
+            50.07149124145508
+          ],
+          "penalties": {
+            "crash": 0,
+            "wall": 0,
+            "over": 0,
+            "block": 0
+          },
+          "ot_overlap_s": 0.0,
+          "ot_overlap_samples": 0,
+          "ot_test_margin_m": 0.1,
+          "position_source": "timestamp-aligned AWSIM GNSS with EKF yaw",
+          "rank_values": [
+            1
+          ],
+          "handicap_enabled": true,
+          "target_mps": 7.5,
+          "measured_speed_median_mps": 6.859413143607847,
+          "measured_speed_max_mps": 6.9573252331847835,
+          "command_speed_max_mps": 7.5,
+          "gentle_acceleration_in_corners_s": 3.3550000000000395,
+          "objective": 50.07149124145508,
+          "preferred_feasible": true
+        }
+      ],
+      "selected_dense_checks": [
+        {
+          "episode": "r2-leader-validate-b0-d1",
+          "interpolation_max_translation_m": 0.05,
+          "interpolation_max_yaw_rad": 0.01,
+          "margin_m": 0.1,
+          "samples_tested": 14670,
+          "overlap_samples": 0,
+          "overlap_s": 0.0,
+          "passed": true,
+          "limit": "Interpolated measured GNSS XY and EKF yaw, not an additional simulator collision sensor"
+        },
+        {
+          "episode": "r2-leader-validate-b0-d3",
+          "interpolation_max_translation_m": 0.05,
+          "interpolation_max_yaw_rad": 0.01,
+          "margin_m": 0.1,
+          "samples_tested": 14651,
+          "overlap_samples": 0,
+          "overlap_s": 0.0,
+          "passed": true,
+          "limit": "Interpolated measured GNSS XY and EKF yaw, not an additional simulator collision sensor"
+        },
+        {
+          "episode": "r2-leader-validate-b1-d2",
+          "interpolation_max_translation_m": 0.05,
+          "interpolation_max_yaw_rad": 0.01,
+          "margin_m": 0.1,
+          "samples_tested": 14656,
+          "overlap_samples": 0,
+          "overlap_s": 0.0,
+          "passed": true,
+          "limit": "Interpolated measured GNSS XY and EKF yaw, not an additional simulator collision sensor"
+        },
+        {
+          "episode": "r2-leader-validate-b1-d4",
+          "interpolation_max_translation_m": 0.05,
+          "interpolation_max_yaw_rad": 0.01,
+          "margin_m": 0.1,
+          "samples_tested": 14632,
+          "overlap_samples": 0,
+          "overlap_s": 0.0,
+          "passed": true,
+          "limit": "Interpolated measured GNSS XY and EKF yaw, not an additional simulator collision sensor"
+        }
+      ],
+      "evaluated_candidates": 24
+    }
+  }
+}
