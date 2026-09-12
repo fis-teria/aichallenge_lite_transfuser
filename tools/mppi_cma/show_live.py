@@ -21,7 +21,7 @@ def main() -> None:
     parser.add_argument('root', type=Path)
     parser.add_argument('--display', default=':0')
     parser.add_argument('--xauthority', type=Path, required=True)
-    parser.add_argument('--state-subdir', choices=('search', 'shared_course', 'shared_course_same_start', 'refinement'), default='search')
+    parser.add_argument('--state-subdir', choices=('search', 'shared_course', 'shared_course_same_start', 'refinement', 'continuous'), default='search')
     args = parser.parse_args()
     root = args.root.resolve()
     gui = root / 'gui'

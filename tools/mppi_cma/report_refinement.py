@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import argparse
 import io
 import json
 from pathlib import Path
@@ -14,16 +15,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 import yaml
+from continuation_state import study_path
 
 ROOT = Path('/home/si26-pc008/cma_mppi_20260912')
 
 
 def main() -> None:
-    state = json.loads((ROOT/'refinement/state.json').read_text())
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--state-subdir', default='refinement')
+    parser.add_argument('--output-subdir', default='refinement_deliverables')
+    args = parser.parse_args()
+    study = study_path(ROOT, args.state_subdir)
+    output = study_path(ROOT, args.output_subdir)
+    if output == study or output.is_relative_to(study / 'normal') or output.is_relative_to(study / 'leader'):
+        raise ValueError('Export directory must not overwrite study state or optimizer inputs')
+    state = json.loads((study/'state.json').read_text())
     if not state['completed'] or not all(p['validated_preferred_feasible'] for p in state['conditions'].values()):
         raise RuntimeError('The finite study and selected-route validations must be complete')
     environment = json.loads((ROOT/'environment.json').read_text())
-    output = ROOT/'refinement_deliverables'; output.mkdir(exist_ok=True)
+    output.mkdir(parents=True, exist_ok=True)
     with tarfile.open(ROOT/'snapshot/submission.tar.gz') as archive:
         def member(suffix: str) -> bytes:
             matches = [m for m in archive.getmembers() if m.isfile() and m.name.endswith(suffix)]
@@ -69,7 +79,7 @@ def main() -> None:
         shutil.copy2(selected['reference'], exported)
         shutil.copy2(episode/'mppi.yaml', output/f'{condition}_mppi.yaml')
         shutil.copy2(track_path, output/f'{condition}_measured_track.csv')
-        shutil.copy2(ROOT/f'refinement/{condition}/optimizer_config.json',
+        shutil.copy2(study/condition/'optimizer_config.json',
                      output/f'{condition}_optimizer_config.json')
         layout = 'four ghosts on one course, same D1 start, no other-vehicle controller input' if condition == 'normal' else 'independent single-car AWSIM, native rank 1 throughout'
         summary['conditions'][condition] = {
@@ -88,10 +98,15 @@ def main() -> None:
     figure.savefig(output/'routes.png', dpi=170)
     figure.savefig(output/'routes.svg'); plt.close(figure)
     (output/'summary.json').write_text(json.dumps(summary, indent=2))
-    shutil.copy2(ROOT/'refinement/state.json', output/'search_state.json')
+    shutil.copy2(study/'state.json', output/'search_state.json')
     shutil.copy2(ROOT/'calibration.json', output/'calibration.json')
     shutil.copy2(ROOT/'d1_start_pose.json', output/'d1_start_pose.json')
-    shutil.copy2(ROOT/'refinement_preflight.json', output/'preflight.json')
+    if state.get('checkpoint_source_hashes'):
+        (output/'preflight.json').write_text(json.dumps({
+            'previous_study': state['previous_study'], 'previous_state_sha256': state['previous_search_sha256'],
+            'checkpoint_source_hashes': state['checkpoint_source_hashes']}, indent=2))
+    else:
+        shutil.copy2(ROOT/'refinement_preflight.json', output/'preflight.json')
     shutil.copy2(ROOT/'refinement_optimizer_smoke.json', output/'optimizer_smoke.json')
     (output/'.gitattributes').write_text('* -text\n')
     (output/'README.md').write_text(
