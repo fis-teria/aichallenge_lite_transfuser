@@ -1,8 +1,8 @@
 """Bounded-memory rosbag2 SQLite index for the time-path dataset.
 
-The index pass never materializes camera pixels or LiDAR arrays.  Large sensor
-rows are represented by :class:`RawMessageRef` and decoded only by
-``load_event`` when a selected anchor is assembled.
+The index pass validates one sensor message at a time and retains no camera
+pixels or LiDAR arrays. Sensor rows remain :class:`RawMessageRef` values and
+are decoded again by ``load_event`` when a selected anchor is assembled.
 """
 from __future__ import annotations
 
