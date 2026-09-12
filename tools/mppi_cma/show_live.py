@@ -21,6 +21,7 @@ def main() -> None:
     parser.add_argument('root', type=Path)
     parser.add_argument('--display', default=':0')
     parser.add_argument('--xauthority', type=Path, required=True)
+    parser.add_argument('--state-subdir', choices=('search', 'shared_course'), default='search')
     args = parser.parse_args()
     root = args.root.resolve()
     gui = root / 'gui'
@@ -30,7 +31,7 @@ def main() -> None:
     if not args.xauthority.is_file():
         raise ValueError('Xauthority must be an existing file')
     os.environ.update(DISPLAY=args.display, XAUTHORITY=str(args.xauthority))
-    httpd = server(root)
+    httpd = server(root, state_subdir=args.state_subdir)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     image = json.loads((root / 'environment.json').read_text())['controller_image_id']
     spec = importlib.util.spec_from_file_location('cma_window_layout', gui / 'layout_sim_windows.py')
@@ -49,7 +50,7 @@ def main() -> None:
     container = 'cma-mppi-rviz-viewer'
     try:
         while not stopped:
-            state = json.loads((root / 'search/state.json').read_text())
+            state = json.loads((root / args.state_subdir / 'state.json').read_text())
             active = state.get('active_episode')
             target = 'cma-mppi-' + active if active else None
             if active and active != current:

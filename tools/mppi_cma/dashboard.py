@@ -46,16 +46,32 @@ def episode_snapshot(root: Path, active: str | None) -> dict:
                 if ':/aichallenge/workspace/install/multi_purpose_mpc_ros/share/' in arg:
                     reference = coordinates(Path(arg.split(':', 1)[0]))
     return {'episode': active, 'live': {k: live.get(k) for k in ('ego', 'command', 'status', 'admin')},
+            'vehicles': live.get('vehicles', []),
             'reference': reference, 'target_mps': config.get('target_mps'),
             'handicap': config.get('handicap'), 'sample_age_s': age}
 
 
-def snapshot(root: Path) -> dict:
+def snapshot(root: Path, state_subdir: str = 'search') -> dict:
     """Return progress and metre/second telemetry without changing experiment state."""
-    state = json.loads((root / 'search/state.json').read_text())
+    if state_subdir not in ('search', 'shared_course'):
+        raise ValueError('Unknown study state directory')
+    state = json.loads((root / state_subdir / 'state.json').read_text())
+    shared = state.get('mode') == 'shared_course'
     active = state.get('active_episode')
     names = state.get('active_episodes', [active] if active else [])
+    if shared and not names and state.get('last_episode'):
+        names = [state['last_episode']]
     simulations = [episode_snapshot(root, name) for name in names]
+    if shared and simulations:
+        race = simulations[0]
+        simulations = []
+        for car in race['vehicles']:
+            number = car['vehicle_number']
+            metrics_path = root / 'episodes' / names[0] / f'metrics-d{number}.json'
+            metrics = json.loads(metrics_path.read_text()) if metrics_path.exists() else {}
+            simulations.append({**race, 'episode': f'{names[0]} · D{number}',
+                                'vehicle_number': number, 'measured_median_mps': metrics.get('measured_speed_median_mps'),
+                                'live': {k: car.get(k) for k in ('ego', 'command', 'status')}})
     focus = simulations[0] if simulations else episode_snapshot(root, None)
     conditions = {}
     for name, data in state.get('conditions', {}).items():
@@ -71,6 +87,7 @@ def snapshot(root: Path) -> dict:
     calibration = json.loads((root / 'calibration.json').read_text())
     return {
         'completed': state['completed'], 'phase': state['phase'], 'active': active,
+        'mode': state.get('mode', 'independent'), 'last_error': state.get('last_error'),
         'started_count': state['new_episodes_started'], 'maximum': state['maximum_new_episodes'],
         'conditions': conditions, 'live': focus['live'], 'simulations': simulations,
         'target_mps': focus['target_mps'], 'handicap': focus['handicap'],
@@ -80,12 +97,12 @@ def snapshot(root: Path) -> dict:
     }
 
 
-def server(root: Path, port: int = 8876) -> ThreadingHTTPServer:
+def server(root: Path, port: int = 8876, state_subdir: str = 'search') -> ThreadingHTTPServer:
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:
             try:
                 if self.path.split('?', 1)[0] == '/api/state':
-                    body = json.dumps(snapshot(root), allow_nan=False).encode()
+                    body = json.dumps(snapshot(root, state_subdir), allow_nan=False).encode()
                     mime = 'application/json; charset=utf-8'
                 elif self.path in ('/', '/index.html'):
                     body = Path(__file__).with_name('dashboard.html').read_bytes()
@@ -112,5 +129,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('root', type=Path)
     parser.add_argument('--port', type=int, default=8876)
+    parser.add_argument('--state-subdir', choices=('search', 'shared_course'), default='search')
     args = parser.parse_args()
-    server(args.root, args.port).serve_forever()
+    server(args.root, args.port, args.state_subdir).serve_forever()

@@ -11,7 +11,7 @@ import subprocess
 import yaml
 
 
-def prepare(root: Path) -> None:
+def prepare(root: Path, shared_course: bool = False) -> None:
     gui = root / 'gui'
     gui.mkdir(exist_ok=True)
     environment = json.loads((root / 'environment.json').read_text())
@@ -39,6 +39,10 @@ def prepare(root: Path) -> None:
         displays.append({'Class': 'rviz_default_plugins/MarkerArray', 'Name': name, 'Enabled': True,
                          'Topic': {'Value': topic, 'Depth': 1, 'Reliability Policy': 'Reliable',
                                    'Durability Policy': 'Volatile'}})
+    if shared_course:
+        displays.append({'Class': 'rviz_default_plugins/MarkerArray', 'Name': 'Four ghost vehicles',
+                         'Enabled': True, 'Topic': {'Value': '/cma/shared/vehicles', 'Depth': 1,
+                         'Reliability Policy': 'Reliable', 'Durability Policy': 'Volatile'}})
     displays.insert(0, {'Class': 'rviz_default_plugins/Map', 'Name': 'Course walls', 'Enabled': True, 'Alpha': .8,
                         'Topic': {'Value': '/debug/mppi/wall_map', 'Depth': 1, 'Reliability Policy': 'Reliable',
                                   'Durability Policy': 'Transient Local'}})
@@ -62,4 +66,6 @@ def prepare(root: Path) -> None:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('root', type=Path)
-    prepare(parser.parse_args().root)
+    parser.add_argument('--shared-course', action='store_true')
+    args = parser.parse_args()
+    prepare(args.root, args.shared_course)

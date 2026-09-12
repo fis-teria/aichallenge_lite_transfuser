@@ -11,18 +11,25 @@ from geometry import convex_overlap, vehicle_polygon
 ROOT=Path('/home/si26-pc008/cma_mppi_20260912')
 
 
-def analyze(output: Path) -> dict:
+def analyze(output: Path, vehicle: int = 1) -> dict:
     runtime=json.loads((output/'runtime_result.json').read_text())
     if not runtime['ok'] or not runtime.get('started'):
         raise RuntimeError('Infrastructure/initialization failure: '+runtime['reason'])
     config=json.loads((output/'config.json').read_text())
-    native=json.loads((output/'d1-result-details.json').read_text())
+    shared = config.get('vehicle_count', 1) == 4
+    if vehicle not in range(1, config.get('vehicle_count', 1) + 1):
+        raise ValueError('Vehicle number is outside this episode')
+    native=json.loads((output/f'd{vehicle}-result-details.json').read_text())
     cal=json.loads((ROOT/'calibration.json').read_text())
     polygon=np.array(cal['ot_lane_polygon_map_m'])
     odometry={};gps={};debug={};commands={};ranks=[];race_rows=[]
     with (output/'samples.jsonl').open() as stream:
         for line in stream:
             row=json.loads(line)
+            if shared:
+                matches=[car for car in row['vehicles'] if car['vehicle_number']==vehicle]
+                if len(matches)!=1:raise RuntimeError('Missing or duplicate vehicle telemetry')
+                row={**row,**matches[0]}
             ego=row.get('ego')
             if ego:odometry[ego['stamp_s']]=ego
             status=row.get('status')
@@ -36,7 +43,8 @@ def analyze(output: Path) -> dict:
                 normalized=re.sub(r'(?<![A-Za-z])(-?inf|nan)(?=[,}\]])','null',row['debug'])
                 d=json.loads(normalized)
                 debug[d['control_command_stamp_sec']]=d
-    if len(gps)<100 or len(odometry)<100 or len(debug)<100 or not ranks or set(ranks)!={1}:
+    valid_ranks = set(ranks) <= {1, 2, 3, 4} if shared else set(ranks)=={1}
+    if len(gps)<100 or len(odometry)<100 or len(debug)<100 or not ranks or not valid_ranks:
         raise RuntimeError('Required position, rank or controller telemetry missing')
     if any(abs(float(d['steering_acceleration_hold_maximum_acceleration_mps2'])-.6)>1e-6 for d in debug.values()):
         raise RuntimeError('Current corner-acceleration contract not active')
@@ -76,7 +84,7 @@ def analyze(output: Path) -> dict:
         if 0<dt<=.3 and abs(previous['signed_curvature_1pm'])>=.06 and previous['steering_acceleration_hold_active'] and previous['commanded_acceleration_mps2']>.05:
             gentle_s+=dt
     speeds=[r['ego']['speed_mps'] for r in race_rows if r.get('ego')]
-    result={'episode':output.name,'completed':completed,'flying_lap_s':lap,
+    result={'episode':output.name+(f'-d{vehicle}' if shared else ''),'completed':completed,'flying_lap_s':lap,
             'laps_s':native['laps'],'penalties':penalties,'ot_overlap_s':overlap_s,
             'ot_overlap_samples':overlaps,'ot_test_margin_m':.1,'position_source':'timestamp-aligned AWSIM GNSS with EKF yaw',
             'rank_values':sorted(set(ranks)),'handicap_enabled':config['handicap'],
@@ -85,8 +93,13 @@ def analyze(output: Path) -> dict:
             'command_speed_max_mps':max(v['speed_mps'] for v in commands.values()),
             'gentle_acceleration_in_corners_s':gentle_s,'objective':objective,
             'preferred_feasible':completed and hard_count==0 and overlaps==0}
-    (output/'metrics.json').write_text(json.dumps(result,indent=2))
-    with (output/'track.csv').open('w') as stream:
+    if shared:
+        result.update(vehicle_number=vehicle, shared_course=True,
+                      ignore_other_vehicles=config['ignore_other_vehicles'],
+                      rank1_sample_fraction=sum(rank==1 for rank in ranks)/len(ranks))
+    suffix=f'-d{vehicle}' if shared else ''
+    (output/f'metrics{suffix}.json').write_text(json.dumps(result,indent=2))
+    with (output/f'track{suffix}.csv').open('w') as stream:
         stream.write('stamp_s,x_m,y_m,yaw_rad,ot_overlap\n')
         for row in trace:stream.write(','.join(map(str,row))+'\n')
     return result

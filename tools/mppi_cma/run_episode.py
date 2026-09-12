@@ -3,20 +3,32 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 from pathlib import Path
 import subprocess
+import tarfile
 
 ROOT = Path('/home/si26-pc008/cma_mppi_20260912')
 
 
 def run_episode(name: str, calibration: bool = False, handicap: bool = False,
-                reference: Path | None = None, target_mps: float = 10.0) -> Path:
+                reference: Path | None = None, target_mps: float = 10.0,
+                vehicle_count: int = 1, ghost: bool = False,
+                ignore_other_vehicles: bool = False) -> Path:
     if not name or any(c not in 'abcdefghijklmnopqrstuvwxyz0123456789-_' for c in name):
         raise ValueError('Invalid episode name')
+    if vehicle_count not in (1, 4) or (calibration and (vehicle_count != 1 or ghost)):
+        raise ValueError('Driving supports one or four vehicles; calibration is separate')
+    if not math.isfinite(target_mps) or not 0 < target_mps <= 10:
+        raise ValueError('Target speed must be finite and in (0, 10] m/s')
+    if (ghost or ignore_other_vehicles) and vehicle_count != 4:
+        raise ValueError('Ghost comparison is supported only by the four-vehicle runtime')
     output = ROOT / 'episodes' / name
     output.mkdir(parents=True, exist_ok=False)
     config = {'mode': 'calibration' if calibration else 'drive', 'target_mps': target_mps,
-              'handicap': handicap, 'wall_timeout_s': 70 if calibration else 360, 'sim_timeout_s': 260}
+              'handicap': handicap, 'wall_timeout_s': 70 if calibration else 360, 'sim_timeout_s': 260,
+              'vehicle_count': vehicle_count, 'vehicle_collisions': not ghost,
+              'ignore_other_vehicles': ignore_other_vehicles}
     reference = reference or ROOT / 'snapshot/base_reference.csv'
     with reference.open() as stream:
         first = next(csv.DictReader(stream))
@@ -39,6 +51,18 @@ def run_episode(name: str, calibration: bool = False, handicap: bool = False,
     cyclone = (ROOT/'snapshot/cyclonedds.xml').read_text()
     cyclone = cyclone.replace('<General>', '<Discovery><ParticipantIndex>auto</ParticipantIndex><MaxAutoParticipantIndex>99</MaxAutoParticipantIndex></Discovery>\n    <General>')
     (output/'cyclonedds.xml').write_text(cyclone)
+    extra_mounts = []
+    if ignore_other_vehicles:
+        with tarfile.open(ROOT/'snapshot/submission.tar.gz') as archive:
+            member = 'aichallenge_submit/aichallenge_submit_launch/launch/control/mppi.launch.xml'
+            launch = archive.extractfile(member).read().decode()
+        if launch.count('/v2x/vehicle_positions') != 2:
+            raise RuntimeError('Expected planner and recovery V2X inputs in frozen launch')
+        (output/'mppi-ghost.launch.xml').write_text(
+            launch.replace('/v2x/vehicle_positions', '/cma/ghost/vehicle_positions'))
+        extra_mounts = ['-v', str(output/'mppi-ghost.launch.xml') +
+                        ':/aichallenge/workspace/install/aichallenge_submit_launch/share/'
+                        'aichallenge_submit_launch/launch/control/mppi.launch.xml:ro']
     metadata=json.loads((ROOT/'environment.json').read_text())
     container='cma-mppi-'+name
     args=['docker','run','--name',container,'--rm','--network','none','--cap-add','NET_ADMIN',
@@ -50,7 +74,8 @@ def run_episode(name: str, calibration: bool = False, handicap: bool = False,
           '-v',str(ROOT/'tools')+':/tools:ro','-v',str(output)+':/eval',
           '-v',str(reference)+':/aichallenge/workspace/install/multi_purpose_mpc_ros/share/multi_purpose_mpc_ros/env/final_ver3/in_corce_line_straight_smooth.csv:ro',
           '-v',str(output/'mppi.yaml')+':/aichallenge/workspace/install/reference_space_mppi_planner/share/reference_space_mppi_planner/config/reference_space_mppi.param.yaml:ro',
-          metadata['controller_image_id'],'python3','/tools/runtime.py']
+          *extra_mounts, metadata['controller_image_id'],'python3',
+          '/tools/shared_course_runtime.py' if vehicle_count == 4 else '/tools/runtime.py']
     (output/'docker_command.json').write_text(json.dumps(args,indent=2))
     print('START '+name,flush=True)
     try:
