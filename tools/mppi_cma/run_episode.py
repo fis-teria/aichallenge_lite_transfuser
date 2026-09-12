@@ -14,7 +14,7 @@ ROOT = Path('/home/si26-pc008/cma_mppi_20260912')
 def run_episode(name: str, calibration: bool = False, handicap: bool = False,
                 reference: Path | None = None, target_mps: float = 10.0,
                 vehicle_count: int = 1, ghost: bool = False,
-                ignore_other_vehicles: bool = False) -> Path:
+                ignore_other_vehicles: bool = False, same_start: bool = False) -> Path:
     if not name or any(c not in 'abcdefghijklmnopqrstuvwxyz0123456789-_' for c in name):
         raise ValueError('Invalid episode name')
     if vehicle_count not in (1, 4) or (calibration and (vehicle_count != 1 or ghost)):
@@ -23,12 +23,14 @@ def run_episode(name: str, calibration: bool = False, handicap: bool = False,
         raise ValueError('Target speed must be finite and in (0, 10] m/s')
     if (ghost or ignore_other_vehicles) and vehicle_count != 4:
         raise ValueError('Ghost comparison is supported only by the four-vehicle runtime')
+    if same_start and (vehicle_count != 4 or not ghost or not ignore_other_vehicles):
+        raise ValueError('Coincident start requires four ghosts with other-vehicle input disabled')
     output = ROOT / 'episodes' / name
     output.mkdir(parents=True, exist_ok=False)
     config = {'mode': 'calibration' if calibration else 'drive', 'target_mps': target_mps,
               'handicap': handicap, 'wall_timeout_s': 70 if calibration else 360, 'sim_timeout_s': 260,
               'vehicle_count': vehicle_count, 'vehicle_collisions': not ghost,
-              'ignore_other_vehicles': ignore_other_vehicles}
+              'ignore_other_vehicles': ignore_other_vehicles, 'same_start': same_start}
     reference = reference or ROOT / 'snapshot/base_reference.csv'
     with reference.open() as stream:
         first = next(csv.DictReader(stream))
@@ -39,6 +41,14 @@ def run_episode(name: str, calibration: bool = False, handicap: bool = False,
         scenario = ['schemaVersion: 2','name: cma calibration','vehicles:']
         for i,(x,z) in enumerate(config['calibration_points'],1):
             scenario += [f'  "{i}":',f'    at: [{x}, {z}]','    yaw: -121.84']
+        (output/'scenario.yaml').write_text('\n'.join(scenario)+'\n')
+    if same_start:
+        pose = json.loads((ROOT/'d1_start_pose.json').read_text())
+        config['start_pose_source'] = pose
+        scenario = ['schemaVersion: 2', 'name: four ghosts at native D1 start', 'vehicles:']
+        for number in range(1, 5):
+            scenario += [f'  "{number}":', f"    at: {pose['unity_xz_m']}",
+                         f"    yaw: {pose['unity_yaw_deg']}"]
         (output/'scenario.yaml').write_text('\n'.join(scenario)+'\n')
     (output/'config.json').write_text(json.dumps(config,indent=2))
     source=(ROOT/'snapshot/mppi.yaml').read_text()

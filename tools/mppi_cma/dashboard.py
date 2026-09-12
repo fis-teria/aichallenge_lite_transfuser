@@ -58,7 +58,7 @@ def episode_snapshot(root: Path, active: str | None) -> dict:
 
 def snapshot(root: Path, state_subdir: str = 'search') -> dict:
     """Return progress and metre/second telemetry without changing experiment state."""
-    if state_subdir not in ('search', 'shared_course'):
+    if state_subdir not in ('search', 'shared_course', 'shared_course_same_start'):
         raise ValueError('Unknown study state directory')
     state = json.loads((root / state_subdir / 'state.json').read_text())
     shared = state.get('mode') == 'shared_course'
@@ -94,6 +94,7 @@ def snapshot(root: Path, state_subdir: str = 'search') -> dict:
     return {
         'completed': state['completed'], 'phase': state['phase'], 'active': active,
         'mode': state.get('mode', 'independent'), 'last_error': state.get('last_error'),
+        'start_mode': state.get('start_mode'),
         'started_count': state['new_episodes_started'], 'maximum': state['maximum_new_episodes'],
         'conditions': conditions, 'live': focus['live'], 'simulations': simulations,
         'target_mps': focus['target_mps'], 'handicap': focus['handicap'],
@@ -135,6 +136,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('root', type=Path)
     parser.add_argument('--port', type=int, default=8876)
-    parser.add_argument('--state-subdir', choices=('search', 'shared_course'), default='search')
+    parser.add_argument('--state-subdir', choices=('search', 'shared_course', 'shared_course_same_start'), default='search')
     args = parser.parse_args()
     server(args.root, args.port, args.state_subdir).serve_forever()

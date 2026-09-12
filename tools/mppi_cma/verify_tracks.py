@@ -11,9 +11,12 @@ else:
     from geometry import convex_overlap, vehicle_polygon
 
 
-def verify(root: Path, episode: str) -> dict:
+def verify(root: Path, episode: str, vehicle: int | None = None) -> dict:
     output=root/'episodes'/episode
-    rows=np.genfromtxt(output/'track.csv',delimiter=',',names=True)
+    if vehicle is not None and vehicle not in range(1, 5):
+        raise ValueError('Vehicle must be in 1..4')
+    suffix=f'-d{vehicle}' if vehicle is not None else ''
+    rows=np.genfromtxt(output/f'track{suffix}.csv',delimiter=',',names=True)
     zone=np.asarray(json.loads((root/'calibration.json').read_text())['ot_lane_polygon_map_m'])
     low,high=zone.min(axis=0),zone.max(axis=0)
     overlaps=0;tested=0;duration=0.0
@@ -31,11 +34,11 @@ def verify(root: Path, episode: str) -> dict:
             if np.any(body.max(axis=0)+.1<low) or np.any(high+.1<body.min(axis=0)):continue
             if convex_overlap(body,zone,.1):
                 overlaps+=1;duration+=(second['stamp_s']-first['stamp_s'])/count
-    result={'episode':episode,'interpolation_max_translation_m':.05,'interpolation_max_yaw_rad':.01,
+    result={'episode':episode+suffix,'interpolation_max_translation_m':.05,'interpolation_max_yaw_rad':.01,
             'margin_m':.1,'samples_tested':tested,'overlap_samples':overlaps,'overlap_s':float(duration),
             'passed':overlaps==0,
             'limit':'Interpolated measured GNSS XY and EKF yaw, not an additional simulator collision sensor'}
-    (output/'dense_check.json').write_text(json.dumps(result,indent=2))
+    (output/f'dense_check{suffix}.json').write_text(json.dumps(result,indent=2))
     return result
 
 

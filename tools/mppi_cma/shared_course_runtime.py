@@ -173,7 +173,7 @@ def main() -> int:
 
     result = {'ok': False, 'reason': 'not_started'}
     try:
-        sim = launch(['/aichallenge/simulator/AWSIM/AWSIM.x86_64', '-batchmode', '-nographics',
+        sim_args = ['/aichallenge/simulator/AWSIM/AWSIM.x86_64', '-batchmode', '-nographics',
                       '--venue', 'citycircuit', '--vehicles', '4', '--npcs', '0', '--boosts', '0',
                       '--camera', 'off', '--lidar', 'off', '--start-mode', 'sync',
                       '--start-count-seconds', '3', '--laps', '2', '--timeout', str(cfg['sim_timeout_s']),
@@ -181,7 +181,10 @@ def main() -> int:
                       'on' if cfg['vehicle_collisions'] else 'off', '--handicap',
                       'on' if cfg['handicap'] else 'off', '--ranking', 'on',
                       '--overtaking-lane', 'on', '--wall-recovery', 'on',
-                      '-logFile', '/eval/awsim-player.log'], 0, 'awsim-console.log')
+                      '-logFile', '/eval/awsim-player.log']
+        if cfg.get('same_start'):
+            sim_args += ['--scenario', '/eval/scenario.yaml']
+        sim = launch(sim_args, 0, 'awsim-console.log')
         for domain in range(1, 5):
             controllers.append(launch([
                 'ros2', 'launch', 'aichallenge_system_launch', 'aichallenge_system.launch.xml',
@@ -230,6 +233,16 @@ def main() -> int:
                         if not all(required <= set(p['empty_subscribers']) for p in proof.values()):
                             continue
                         (out / 'ghost_subscription_proof.json').write_text(json.dumps(proof, indent=2))
+                    if cfg.get('same_start'):
+                        expected = cfg['start_pose_source']['observed_d1_gnss_xy_m']
+                        errors = [math.hypot(car['gnss']['x_m']-expected[0], car['gnss']['y_m']-expected[1])
+                                  for car in cars]
+                        if max(errors) > .05:
+                            raise RuntimeError(f'A car is not at the native D1 start: errors_m={errors}')
+                        (out / 'same_start_measurement.json').write_text(json.dumps({
+                            'expected_d1_map_xy_m': expected, 'maximum_allowed_error_m': .05,
+                            'errors_m': errors, 'vehicles': [{k: c[k] for k in ('vehicle_number','ego','gnss')}
+                                                           for c in cars]}, indent=2))
                     start_pub.publish(Bool(data=True)); state['started'] = True
                     event('start_after_all_four_ready', cars)
             if state['finish']:

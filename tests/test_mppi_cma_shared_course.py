@@ -6,6 +6,7 @@ import pytest
 
 from tools.mppi_cma.shared_course_state import all_vehicles_ready, native_vehicle_status
 from tools.mppi_cma.dashboard import snapshot
+from tools.mppi_cma.verify_tracks import verify
 
 
 def ready_cars():
@@ -64,3 +65,14 @@ def test_native_rank_is_selected_by_vehicle_number_and_missing_data_is_not_rank_
     assert native_vehicle_status(summary,4)==[None,2,None,None,1]
     assert native_vehicle_status(summary,1)==[None,2,None,None,2]
     assert native_vehicle_status(summary,2) is None
+
+
+def test_dense_check_uses_the_requested_vehicle_track(tmp_path):
+    output=tmp_path/'episodes/four';output.mkdir(parents=True)
+    (tmp_path/'calibration.json').write_text(json.dumps({'ot_lane_polygon_map_m':[[0,0],[1,0],[1,1],[0,1]]}))
+    for number,x in [(1,.5),(2,10.)]:
+        (output/f'track-d{number}.csv').write_text(
+            f'stamp_s,x_m,y_m,yaw_rad,ot_overlap\n1,{x},.5,0,0\n1.1,{x+.01},.5,0,0\n')
+    assert not verify(tmp_path,'four',vehicle=1)['passed']
+    assert verify(tmp_path,'four',vehicle=2)['passed']
+    assert (output/'dense_check-d2.json').exists()
