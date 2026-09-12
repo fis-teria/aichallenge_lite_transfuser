@@ -52,22 +52,23 @@ def test_round_pause_resume_then_continue_without_repeating_completed_evaluation
         output.parent.mkdir(parents=True, exist_ok=True); output.write_text('95')
     monkeypatch.setattr(module, 'generate_reference', generate)
 
-    def launch(name, references):
+    def launch(name, references, target_mps=10.):
         output = tmp_path/'episodes'/name
         assert not output.exists(), 'A completed simulator evaluation was launched twice'
         output.mkdir(parents=True)
-        prepared[output] = [float(Path(p).read_text()) for p in references]
+        prepared[output] = [(float(Path(p).read_text()), target_mps) for p in references]
         (output/'runtime_result.json').write_text('{"ok":true}')
         launches.append((name, len(references)))
         if pause_next[0]:
             now[0] = 1002.; pause_next[0] = False
         return output
     monkeypatch.setattr(module, 'run_shared_candidates', launch)
-    monkeypatch.setattr(module, 'run_episode', lambda name, **kw: launch(name, [kw['reference']]))
+    monkeypatch.setattr(module, 'run_episode', lambda name, **kw: launch(name, [kw['reference']], kw['target_mps']))
     monkeypatch.setattr(module, 'verify', lambda *a, **k: {'passed': True})
     monkeypatch.setattr(module, 'analyze', lambda output, vehicle=1: {
-        'episode': output.name, 'objective': prepared[output][vehicle-1],
-        'flying_lap_s': prepared[output][vehicle-1], 'preferred_feasible': True})
+        'episode': output.name, 'objective': prepared[output][vehicle-1][0],
+        'flying_lap_s': prepared[output][vehicle-1][0], 'preferred_feasible': True,
+        'target_mps': prepared[output][vehicle-1][1]})
 
     def run(study, previous, prefix, deadline, resume=False):
         argv = ['refine.py', '--study-subdir', study, '--previous-subdir', previous,

@@ -14,6 +14,22 @@ class EvaluationPause(RuntimeError):
     """The current budget or an operator stop forbids starting another batch."""
 
 
+def condition_targets(state: dict) -> dict[str, float]:
+    """Keep each condition's execution speed with its measured selection, in m/s."""
+    targets = {}
+    for name, default in (('normal', 10.), ('leader', 7.5)):
+        data = state['conditions'][name]
+        selected = data.get('selected') or data.get('incumbent') or data.get('best') or {}
+        measured = selected.get('metrics', {}).get('target_mps')
+        target = float(data.get('target_mps', measured if measured is not None else default))
+        if not math.isfinite(target) or not 0 < target <= 10:
+            raise ValueError('Execution targets must be finite m/s in (0, 10]')
+        if measured is not None and not math.isclose(target, float(measured), rel_tol=0, abs_tol=1e-8):
+            raise ValueError('Changed speed requires a separately measured baseline')
+        targets[name] = target
+    return targets
+
+
 def study_path(root: Path, relative: str) -> Path:
     if not re.fullmatch(r'[a-z][a-z0-9_-]*(?:/[a-z0-9][a-z0-9_-]*)*', relative):
         raise ValueError('Study path must be a relative lowercase directory without traversal')
@@ -62,9 +78,9 @@ def campaign_view(journal: dict, previous: dict, rounds: list[dict]) -> dict:
     """Expose aggregate progress while retaining only repeatedly validated selections."""
     view = {key: copy.deepcopy(value) for key, value in journal.items() if key != 'initial_state'}
     view.update(study_kind='continuous', start_mode='d1', parallel_workers=4,
-                maximum_new_episodes=journal['maximum_rounds'] * 64,
+                maximum_new_episodes=journal['maximum_rounds'] * 64 + journal.get('initial_evaluations', 0),
                 candidate_limit_per_condition=journal['maximum_rounds'] * 24,
-                new_episodes_started=sum(item['new_episodes_started'] for item in rounds),
+                new_episodes_started=journal.get('initial_evaluations', 0) + sum(item['new_episodes_started'] for item in rounds),
                 conditions=copy.deepcopy(previous['conditions']))
     for progress in view['conditions'].values():
         progress['evaluations'] = []

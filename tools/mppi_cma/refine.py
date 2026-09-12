@@ -18,7 +18,7 @@ from refinement_selection import compare
 from run_episode import ROOT, run_episode
 from run_shared_candidates import run_shared_candidates
 from verify_tracks import verify
-from continuation_state import EvaluationPause, check_admission, clone_checkpoint, study_path
+from continuation_state import EvaluationPause, check_admission, clone_checkpoint, condition_targets, study_path
 
 
 def save(path: Path, value: object) -> None:
@@ -50,8 +50,13 @@ def main() -> int:
     previous = json.loads((previous_directory / 'state.json').read_text())
     if not previous['completed']:
         raise RuntimeError('The preceding CMA search must be complete')
+    targets = condition_targets(previous)
     if path.exists():
         state = json.loads(path.read_text())
+        if condition_targets(state) != targets:
+            raise ValueError('Resume must preserve the execution speed conditions')
+        if state['previous_search_sha256'] != hashlib.sha256((previous_directory / 'state.json').read_bytes()).hexdigest():
+            raise ValueError('The preceding study changed during this round')
         if state['completed']:
             print('Refinement already completed', flush=True); return 0
         if state.get('last_error'):
@@ -74,18 +79,22 @@ def main() -> int:
                  'previous_study': args.previous_subdir, 'checkpoint_source_hashes': {}}
         for condition in ('normal', 'leader'):
             preceding = previous['conditions'][condition]
-            incumbent = preceding.get('selected', preceding['best'])
-            start_generation = preceding['next_generation'] if args.continue_optimizer else 0
+            incumbent = preceding.get('selected') or preceding['best']
+            continue_optimizer = args.continue_optimizer and not preceding.get('optimizer_restart_required', False)
+            start_generation = preceding['next_generation'] if continue_optimizer else 0
             state['conditions'][condition] = {'incumbent': incumbent, 'next_generation': start_generation,
+                                             'target_mps': targets[condition],
                                              'starting_generation': start_generation,
                                              'generation_limit': start_generation + 3, 'evaluations': []}
             directory = study / condition; directory.mkdir(exist_ok=True)
-            if args.continue_optimizer:
+            if continue_optimizer:
                 state['checkpoint_source_hashes'][condition] = clone_checkpoint(
                     previous_directory / condition, directory, start_generation)
             else:
                 save(directory / 'seed_anchors.json', incumbent['anchors_m'])
-                save(directory / 'optimizer_config.json', {'sigma_m': .16, 'seed': 202609120 + (condition == 'leader')})
+                config = json.loads((previous_directory / condition / 'optimizer_config.json').read_text()) if preceding.get('optimizer_restart_required') else {
+                    'sigma_m': .16, 'seed': 202609120 + (condition == 'leader')}
+                save(directory / 'optimizer_config.json', config)
         save(path, state)
 
     def reserve(count: int) -> None:
@@ -108,11 +117,13 @@ def main() -> int:
                     raise RuntimeError('Incomplete shared candidate group: ' + group_name)
                 reserve(4)
                 state.update(active_episode=group_name, active_episodes=[group_name]); save(path, state)
-                run_shared_candidates(group_name, [Path(job['reference']) for job in jobs])
+                run_shared_candidates(group_name, [Path(job['reference']) for job in jobs], target_mps=targets[condition])
             state['last_episode'] = group_name
             measured = []
             for number, job in enumerate(jobs, 1):
                 result = analyze(output, vehicle=number)
+                if abs(result['target_mps'] - targets[condition]) > 1e-8:
+                    raise ValueError('Cached evaluation uses a different execution speed')
                 result.update(candidate_id=job['name'], output_episode=group_name)
                 measured.append(result)
             state['active_episodes'] = []; state.pop('active_episode', None); save(path, state)
@@ -124,6 +135,8 @@ def main() -> int:
             output = ROOT / 'episodes' / job['name']
             if (output / 'runtime_result.json').exists():
                 cached[job['name']] = analyze(output)
+                if abs(cached[job['name']]['target_mps'] - targets[condition]) > 1e-8:
+                    raise ValueError('Cached evaluation uses a different execution speed')
             elif output.exists():
                 raise RuntimeError('Incomplete rank-1 candidate: ' + job['name'])
             else:
@@ -137,7 +150,7 @@ def main() -> int:
             state['active_episode'] = state['active_episodes'][0]; save(path, state)
 
         def run(job: dict) -> dict:
-            output = run_episode(job['name'], handicap=True, target_mps=7.5, reference=Path(job['reference']))
+            output = run_episode(job['name'], handicap=True, target_mps=targets[condition], reference=Path(job['reference']))
             return analyze(output)
 
         def finished(_index: int, job: dict, result: dict | Exception) -> None:

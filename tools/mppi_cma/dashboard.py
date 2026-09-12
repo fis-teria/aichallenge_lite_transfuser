@@ -9,8 +9,10 @@ from pathlib import Path
 import time
 if __package__:
     from .shared_course_state import native_vehicle_status
+    from .continuation_state import study_path
 else:
     from shared_course_state import native_vehicle_status
+    from continuation_state import study_path
 
 
 def last_sample(path: Path) -> dict:
@@ -61,9 +63,7 @@ def episode_snapshot(root: Path, active: str | None) -> dict:
 
 def snapshot(root: Path, state_subdir: str = 'search') -> dict:
     """Return progress and metre/second telemetry without changing experiment state."""
-    if state_subdir not in ('search', 'shared_course', 'shared_course_same_start', 'refinement', 'continuous'):
-        raise ValueError('Unknown study state directory')
-    state = json.loads((root / state_subdir / 'state.json').read_text())
+    state = json.loads((study_path(root, state_subdir) / 'state.json').read_text())
     shared = state.get('mode') == 'shared_course'
     active = state.get('active_episode')
     names = state.get('active_episodes', [active] if active else [])
@@ -90,6 +90,8 @@ def snapshot(root: Path, state_subdir: str = 'search') -> dict:
         records = [item['metrics'] for item in data['evaluations']]
         preferred = [item for item in records if item['preferred_feasible']]
         conditions[name] = {
+            'target_mps': data.get('target_mps', 10. if name == 'normal' else 7.5),
+            'baseline_median_s': data.get('baseline_median_s'),
             'evaluations': records,
             'candidate_count': sum('-g' in item['episode'] for item in records),
             'best': data['selected']['metrics'] if data.get('selected') else
@@ -152,6 +154,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('root', type=Path)
     parser.add_argument('--port', type=int, default=8876)
-    parser.add_argument('--state-subdir', choices=('search', 'shared_course', 'shared_course_same_start', 'refinement', 'continuous'), default='search')
+    parser.add_argument('--state-subdir', default='search')
     args = parser.parse_args()
     server(args.root, args.port, args.state_subdir).serve_forever()

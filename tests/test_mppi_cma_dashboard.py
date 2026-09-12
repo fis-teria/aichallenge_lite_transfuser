@@ -1,5 +1,6 @@
 """Ensure live reads tolerate unfinished writes and preserve study files."""
 import json
+import pytest
 
 from tools.mppi_cma.dashboard import last_sample, snapshot, episode_snapshot
 
@@ -60,3 +61,18 @@ def test_finished_refinement_keeps_selected_routes_visible_without_live_episodes
     assert payload['conditions']['normal']['selected_reference'] == [[1., 2.], [3., 4.]]
     assert payload['conditions']['leader']['selected_reference'] == [[1.5, 2.5], [3.5, 4.5]]
     assert {p: p.read_bytes() for p in tmp_path.rglob('*') if p.is_file()} == before
+
+
+def test_named_campaign_reports_actual_target_and_rejects_path_traversal(tmp_path):
+    (tmp_path/'continuous35_20260913').mkdir()
+    (tmp_path/'snapshot').mkdir()
+    (tmp_path/'snapshot/base_reference.csv').write_text('x_m,y_m\n1,2\n3,4\n')
+    (tmp_path/'calibration.json').write_text('{"ot_lane_polygon_map_m":[[0,0],[1,0],[1,1]]}')
+    (tmp_path/'continuous35_20260913/state.json').write_text(json.dumps({
+        'completed': False, 'phase': 'rebaseline', 'new_episodes_started': 4, 'maximum_new_episodes': 388,
+        'conditions': {'normal': {'target_mps': 35/3.6, 'evaluations': []}}}))
+    result = snapshot(tmp_path, 'continuous35_20260913')
+    assert result['conditions']['normal']['target_mps'] * 3.6 == pytest.approx(35.)
+    assert result['phase'] == 'rebaseline' and result['conditions']['normal']['best'] is None
+    with pytest.raises(ValueError):
+        snapshot(tmp_path, '../outside')

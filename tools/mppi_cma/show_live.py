@@ -12,6 +12,7 @@ import threading
 import time
 
 from dashboard import server
+from continuation_state import study_path
 from viewer_layout import VIEWER_CONFIG, VIEWER_CONTAINER, try_arrange
 
 
@@ -42,9 +43,10 @@ def main() -> None:
     parser.add_argument('root', type=Path)
     parser.add_argument('--display', default=':0')
     parser.add_argument('--xauthority', type=Path, required=True)
-    parser.add_argument('--state-subdir', choices=('search', 'shared_course', 'shared_course_same_start', 'refinement', 'continuous'), default='search')
+    parser.add_argument('--state-subdir', default='search')
     args = parser.parse_args()
     root = args.root.resolve()
+    study_path(root, args.state_subdir)
     gui = root / 'gui'
     gui.mkdir(exist_ok=True)
     lock = (gui / 'viewer.lock').open('a')

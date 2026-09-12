@@ -8,13 +8,14 @@ import hashlib
 import json
 import math
 import os
+import re
 from pathlib import Path
 import signal
 import subprocess
 import sys
 import time
 
-from continuation_state import campaign_view
+from continuation_state import campaign_view, condition_targets, study_path
 from run_episode import ROOT
 
 
@@ -23,10 +24,15 @@ def save(path: Path, value: dict) -> None:
     temporary.write_text(json.dumps(value, indent=2)); temporary.replace(path)
 
 
-def source_manifest() -> dict[str, str]:
-    paths = [ROOT/'refinement/state.json']
-    paths += [ROOT/f'refinement/{condition}/{name}' for condition in ('normal', 'leader')
-              for name in ('optimizer.pkl', 'optimizer_status.json', 'optimizer_config.json', 'seed_anchors.json')]
+def source_manifest(previous_subdir: str = 'refinement') -> dict[str, str]:
+    directory = study_path(ROOT, previous_subdir)
+    previous = json.loads((directory/'state.json').read_text())
+    paths = [directory/'state.json']
+    for condition in ('normal', 'leader'):
+        names = ('optimizer_config.json', 'seed_anchors.json')
+        if not previous['conditions'][condition].get('optimizer_restart_required', False):
+            names += ('optimizer.pkl', 'optimizer_status.json')
+        paths += [directory/condition/name for name in names]
     return {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths}
 
 
@@ -35,12 +41,27 @@ def main() -> None:
     parser.add_argument('--hours', type=float, default=3.)
     parser.add_argument('--max-rounds', type=int, default=6)
     parser.add_argument('--resume', action='store_true')
+    parser.add_argument('--campaign-subdir', default='continuous')
+    parser.add_argument('--previous-subdir', default='refinement')
+    parser.add_argument('--episode-prefix', default='c3')
+    parser.add_argument('--deadline-unix-s', type=float)
     args = parser.parse_args()
     if not math.isfinite(args.hours) or not 0 < args.hours <= 24:
         raise ValueError('The campaign requires a finite duration in (0, 24] hours')
     if not 1 <= args.max_rounds <= 32:
         raise ValueError('The campaign requires 1 to 32 rounds')
-    directory = ROOT/'continuous'; directory.mkdir(exist_ok=True)
+    if not re.fullmatch(r'[a-z][a-z0-9-]*', args.episode_prefix):
+        raise ValueError('Episode prefix must use lowercase letters, digits and hyphens')
+    directory = study_path(ROOT, args.campaign_subdir)
+    preceding_directory = study_path(ROOT, args.previous_subdir)
+    if directory == preceding_directory:
+        raise ValueError('The preceding study must remain separate')
+    deadline = time.time() + args.hours * 3600
+    if args.deadline_unix_s is not None:
+        if not math.isfinite(args.deadline_unix_s) or args.deadline_unix_s <= time.time():
+            raise ValueError('Explicit deadline must be finite and in the future')
+        deadline = min(deadline, args.deadline_unix_s)
+    directory.mkdir(parents=True, exist_ok=True)
     lock = (directory/'supervisor.lock').open('a')
     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     path = directory/'journal.json'
@@ -49,6 +70,9 @@ def main() -> None:
         journal = json.loads(path.read_text())
         if not args.resume:
             raise RuntimeError('Campaign already exists; use --resume with an explicit new finite budget')
+        if (journal.get('previous_subdir', 'refinement') != args.previous_subdir or
+                journal.get('episode_prefix', 'c3') != args.episode_prefix):
+            raise ValueError('Resume must preserve source study and episode identity')
         if journal.get('last_error'):
             raise RuntimeError('Inspect the recorded error before resuming; no automatic retry is permitted')
         if journal.get('child_pid'):
@@ -57,20 +81,23 @@ def main() -> None:
                 raise RuntimeError('The preceding evaluation child is still running')
         if args.max_rounds <= len(journal['completed_rounds']):
             raise ValueError('Increase the total round ceiling when resuming a finished campaign')
-        journal.update(completed=False, phase='preflight', deadline_unix_s=time.time()+args.hours*3600,
+        journal.update(completed=False, phase='preflight', deadline_unix_s=deadline,
                        maximum_rounds=args.max_rounds, pause_reason=None)
         if stop_file.exists():
             stop_file.unlink()
     else:
-        previous = json.loads((ROOT/'refinement/state.json').read_text())
+        previous = json.loads((preceding_directory/'state.json').read_text())
         if not previous['completed'] or not all(p['validated_preferred_feasible'] for p in previous['conditions'].values()):
             raise RuntimeError('The preceding refinement and both selected-route validations must be complete')
         journal = {'completed': False, 'phase': 'preflight', 'started_unix_s': time.time(),
-                   'deadline_unix_s': time.time()+args.hours*3600, 'maximum_rounds': args.max_rounds,
+                   'deadline_unix_s': deadline, 'maximum_rounds': args.max_rounds,
                    'completed_rounds': [], 'round_subdirs': [], 'round_index': 0,
-                   'initial_state': previous, 'initial_source_sha256': source_manifest(),
+                   'initial_state': previous, 'initial_source_sha256': source_manifest(args.previous_subdir),
+                   'previous_subdir': args.previous_subdir, 'episode_prefix': args.episode_prefix,
+                   'initial_evaluations': previous.get('restart_baseline_evaluations', 0),
+                   'target_mps_by_condition': condition_targets(previous),
                    'last_error': None, 'child_pid': None, 'exports': []}
-    if source_manifest() != journal['initial_source_sha256']:
+    if source_manifest(args.previous_subdir) != journal['initial_source_sha256']:
         raise RuntimeError('The source refinement changed; preserve and inspect it before continuation')
     save(path, journal)
 
@@ -95,15 +122,15 @@ def main() -> None:
                 journal.update(completed=True, phase='paused', pause_reason='operator_stop' if stop_file.exists() else 'time_budget')
                 break
             number = len(journal['completed_rounds'])
-            subdir = f'continuous/round-{number:03d}'
-            preceding = journal['completed_rounds'][-1] if journal['completed_rounds'] else 'refinement'
+            subdir = f'{args.campaign_subdir}/round-{number:03d}'
+            preceding = journal['completed_rounds'][-1] if journal['completed_rounds'] else args.previous_subdir
             if subdir not in journal['round_subdirs']:
                 journal['round_subdirs'].append(subdir)
             journal.update(round_index=number+1, phase='search')
             command = [sys.executable, '-u', str(ROOT/'tools/refine.py'), '--study-subdir', subdir,
-                       '--previous-subdir', preceding, '--episode-prefix', f'c3-r{number:02d}',
+                       '--previous-subdir', preceding, '--episode-prefix', f'{args.episode_prefix}-r{number:02d}',
                        '--continue-optimizer', '--deadline-unix-s', str(journal['deadline_unix_s']),
-                       '--stop-file', 'continuous/stop_requested']
+                       '--stop-file', f'{args.campaign_subdir}/stop_requested']
             if (ROOT/subdir/'state.json').exists():
                 command.append('--resume-budget')
             save(directory/'active_command.json', {'command': command, 'previous_study': preceding})
@@ -123,9 +150,9 @@ def main() -> None:
             state = json.loads((ROOT/subdir/'state.json').read_text())
             if not state['completed'] or not all(p['validated_preferred_feasible'] for p in state['conditions'].values()):
                 raise RuntimeError('Round validation did not close successfully')
-            if source_manifest() != journal['initial_source_sha256']:
+            if source_manifest(args.previous_subdir) != journal['initial_source_sha256']:
                 raise RuntimeError('The preceding refinement was changed during continuation')
-            output = f'continuous/results/round-{number:03d}'
+            output = f'{args.campaign_subdir}/results/round-{number:03d}'
             subprocess.run([sys.executable, str(ROOT/'tools/report_refinement.py'),
                             '--state-subdir', subdir, '--output-subdir', output], check=True, timeout=60)
             journal['completed_rounds'].append(subdir)
@@ -138,7 +165,7 @@ def main() -> None:
         else:
             journal.update(completed=True, phase='complete', pause_reason='round_budget')
         journal['finished_unix_s'] = time.time()
-        journal['source_preserved'] = source_manifest() == journal['initial_source_sha256']
+        journal['source_preserved'] = source_manifest(args.previous_subdir) == journal['initial_source_sha256']
         if not journal['source_preserved']:
             raise RuntimeError('Source checkpoint preservation failed')
         publish()
