@@ -1,0 +1,19 @@
+{
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "-v",
+    "/home/si26-pc008/cma_mppi_20260912/tools:/tools:ro",
+    "--entrypoint",
+    "python3",
+    "sha256:c5eb525d1bf1e52789075b4306bb8c9438542b5658855c5468115f95a9e8cc39",
+    "/tools/smoke_continuation.py"
+  ],
+  "passed": true,
+  "stdout": "CMA_CONTINUATION_DISTRIBUTION_AND_RNG_SMOKE_OK\n",
+  "stderr": "",
+  "checked_unix_s": 1789201456.5635273
+}
