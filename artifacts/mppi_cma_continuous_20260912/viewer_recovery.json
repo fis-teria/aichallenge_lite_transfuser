@@ -1,0 +1,78 @@
+{
+  "source_commit": "8de4ca6c23df099a61bf00affb232d9fcc9090fc",
+  "failure": "Xlib BadWindow / X_ConfigureWindow terminated show_live.py while CMA supervisor continued",
+  "remote_evidence_directory": "/home/si26-pc008/cma_mppi_20260912/gui/viewer-recovery-20260912-190821",
+  "before": {
+    "captured_unix_s": 1789207701.4700723,
+    "round_index": 3,
+    "new_episodes_started": 184,
+    "phase": "search",
+    "active_episodes": [
+      "c3-r02-leader-g11-c04",
+      "c3-r02-leader-g11-c05",
+      "c3-r02-leader-g11-c06",
+      "c3-r02-leader-g11-c07"
+    ],
+    "heartbeat_age_s": 0.6362333297729492,
+    "last_error": null,
+    "supervisor_pid": 335881,
+    "deadline_unix_s": 1789212484.2774403
+  },
+  "after": {
+    "checked_unix_s": 1789207852.2782688,
+    "viewer_pid": 444210,
+    "viewer_alive": "python3 -u /home/si26-pc008/cma_mppi_20260912/tools/show_live.py /home/si26-pc008/cma_mppi_20260912 --state-subdir continuous --xauthority /run/user/1000/.mutter-Xwaylandauth.V5NQV3 ",
+    "supervisor_pid": 335881,
+    "supervisor_alive": "python3 -u /home/si26-pc008/cma_mppi_20260912/tools/continuous.py --hours 3 --max-rounds 6 ",
+    "heartbeat_age_s": 2.732125997543335,
+    "deadline_unix_s": 1789212484.2774403,
+    "round_index": 3,
+    "started_count": 188,
+    "phase": "validation",
+    "active_episode": "c3-r02-leader-validate-b0-d1",
+    "last_error": null,
+    "rviz_follows": [
+      "RViz following c3-r02-leader-g11-c04",
+      "RViz following c3-r02-leader-validate-b0-d1"
+    ],
+    "viewer_container_running": true,
+    "viewer_network": "container:9c92bbf57f56981a1aa6339d76e48624764c954ca3ea8ba94dd77e41626c00e7",
+    "simulations": [
+      {
+        "episode": "c3-r02-leader-validate-b0-d1",
+        "sample_age_s": 0.03095555305480957,
+        "speed_mps": 6.91920270272959
+      },
+      {
+        "episode": "c3-r02-leader-validate-b0-d2",
+        "sample_age_s": 0.031174182891845703,
+        "speed_mps": 6.894709859151501
+      },
+      {
+        "episode": "c3-r02-leader-validate-b0-d3",
+        "sample_age_s": 0.05063509941101074,
+        "speed_mps": 6.916269719842175
+      },
+      {
+        "episode": "c3-r02-leader-validate-b0-d4",
+        "sample_age_s": 0.05976438522338867,
+        "speed_mps": 6.913419211857287
+      }
+    ]
+  },
+  "viewer_network_matches_followed_simulation": true,
+  "source_hashes": {
+    "show_live.py": "bae27601235c471d1d16f7f484350271bb9284564fa00af5732001918555dc8b",
+    "viewer_layout.py": "edbb519963981ab5a913b6e27677c896454c4f339f025fa5cf4320b8b61df97b"
+  },
+  "validation": {
+    "focused_pytest_passed": 12,
+    "focused_pytest_seconds": 1.2,
+    "full_pytest_passed": 1944,
+    "full_pytest_skipped": 4,
+    "full_pytest_warnings": 62,
+    "full_pytest_seconds": 79.75,
+    "native_dashboard_visual_checked": true,
+    "native_rviz_visual_checked": true
+  }
+}
