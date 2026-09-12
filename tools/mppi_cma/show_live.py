@@ -3,17 +3,38 @@ from __future__ import annotations
 
 import argparse
 import fcntl
-import importlib.util
 import json
 import os
 from pathlib import Path
 import signal
 import subprocess
-import sys
 import threading
 import time
 
 from dashboard import server
+from viewer_layout import VIEWER_CONFIG, VIEWER_CONTAINER, try_arrange
+
+
+def clear_orphan_viewer(root: Path, image: str) -> None:
+    """Reclaim only this study's RViz container while holding viewer.lock."""
+    result = subprocess.run(['docker', 'inspect', VIEWER_CONTAINER],
+                            capture_output=True, text=True, timeout=10)
+    if result.returncode:
+        if 'No such object' in result.stderr or 'No such container' in result.stderr:
+            return
+        raise RuntimeError(f'Cannot inspect RViz viewer: {result.stderr.strip()}')
+    existing = json.loads(result.stdout)[0]
+    config = existing['Config']
+    viewer_files = {str(root / 'gui' / name) for name in ('live.rviz', 'shared.rviz')}
+    owns_config = any(mount.get('Source') in viewer_files
+                      and mount.get('Destination') in ('/viewer.rviz', VIEWER_CONFIG)
+                      for mount in existing.get('Mounts', []))
+    if (existing['Name'] != '/' + VIEWER_CONTAINER or config['Image'] != image
+            or config.get('Cmd', [])[:1] != ['rviz2'] or not owns_config):
+        raise RuntimeError('Existing RViz container does not belong to this study')
+    print('Removing orphan RViz viewer', flush=True)
+    subprocess.run(['docker', 'rm', '-f', existing['Id']], check=True,
+                   capture_output=True, text=True, timeout=15)
 
 
 def main() -> None:
@@ -31,13 +52,10 @@ def main() -> None:
     if not args.xauthority.is_file():
         raise ValueError('Xauthority must be an existing file')
     os.environ.update(DISPLAY=args.display, XAUTHORITY=str(args.xauthority))
+    image = json.loads((root / 'environment.json').read_text())['controller_image_id']
+    clear_orphan_viewer(root, image)
     httpd = server(root, state_subdir=args.state_subdir)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
-    image = json.loads((root / 'environment.json').read_text())['controller_image_id']
-    spec = importlib.util.spec_from_file_location('cma_window_layout', gui / 'layout_sim_windows.py')
-    layout = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = layout
-    spec.loader.exec_module(layout)
     stopped = False
 
     def stop(_signum: int, _frame: object) -> None:
@@ -47,7 +65,7 @@ def main() -> None:
     signal.signal(signal.SIGINT, stop)
     signal.signal(signal.SIGTERM, stop)
     process, current, log, placed = None, None, None, False
-    container = 'cma-mppi-rviz-viewer'
+    container = VIEWER_CONTAINER
     try:
         while not stopped:
             state = json.loads((root / args.state_subdir / 'state.json').read_text())
@@ -74,8 +92,8 @@ def main() -> None:
                                '-v', '/tmp/.X11-unix:/tmp/.X11-unix:ro',
                                '-v', str(args.xauthority) + ':/xauth:ro',
                                '-v', str(root / 'episodes' / active / 'cyclonedds.xml') + ':/opt/autoware/cyclonedds.xml:ro',
-                               '-v', str(config) + ':/viewer.rviz:ro',
-                               image, 'rviz2', '-d', '/viewer.rviz', '--ros-args', '-p', 'use_sim_time:=true']
+                               '-v', str(config) + ':' + VIEWER_CONFIG + ':ro',
+                               image, 'rviz2', '-d', VIEWER_CONFIG, '--ros-args', '-p', 'use_sim_time:=true']
                     process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)
                     current, placed = active, False
                     print('RViz following ' + active, flush=True)
@@ -84,20 +102,7 @@ def main() -> None:
                 log.close()
                 process, current = None, None
             if process is not None and not placed:
-                windows = layout.list_client_windows()
-                rviz = [w for w in windows if 'rviz' in w.title.lower()]
-                browser = [w for w in windows if 'MPPI' in w.title and 'rviz' not in w.title.lower()]
-                if rviz:
-                    area = layout.active_workarea()
-                    mover = layout.X11Mover()
-                    try:
-                        mover.place(rviz[-1].window_id, layout.Rect(area.x, area.y, area.width // 2, area.height))
-                        if browser:
-                            mover.place(browser[-1].window_id, layout.Rect(area.x + area.width // 2, area.y,
-                                                                         area.width // 2, area.height))
-                        placed = bool(browser)
-                    finally:
-                        mover.close()
+                placed = try_arrange(gui)
             time.sleep(2)
     finally:
         httpd.shutdown()
