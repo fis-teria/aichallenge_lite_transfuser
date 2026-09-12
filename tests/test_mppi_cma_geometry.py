@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
+import json
 from tools.mppi_cma.geometry import closed_path_offsets,fit_similarity,convex_overlap,vehicle_polygon
+from tools.mppi_cma.verify_tracks import verify
 
 
 def test_periodic_offset_metres_and_identity():
@@ -37,3 +39,13 @@ def test_similarity_coordinate_direction_and_holdout():
     np.testing.assert_allclose(fit['translation'],translation,atol=1e-8)
     assert fit['max_residual_m']<1e-7
     with pytest.raises(ValueError):fit_similarity(np.zeros((4,2)),np.zeros((4,2)))
+
+
+def test_interpolation_detects_between_sample_lane_crossing(tmp_path):
+    episode=tmp_path/'episodes'/'crossing';episode.mkdir(parents=True)
+    (tmp_path/'calibration.json').write_text(json.dumps({'ot_lane_polygon_map_m':[[-.1,-2],[.1,-2],[.1,2],[-.1,2]]}))
+    (episode/'track.csv').write_text('stamp_s,x_m,y_m,yaw_rad,ot_overlap\n0,-3,0,0,0\n1,3,0,0,0\n')
+    result=verify(tmp_path,'crossing')
+    assert not result['passed'] and result['overlap_s']>0 and result['samples_tested']>=120
+    (episode/'track.csv').write_text('stamp_s,x_m,y_m,yaw_rad,ot_overlap\n0,-3,0,0,0\n1,30,0,0,0\n')
+    with pytest.raises(ValueError,match='jump'):verify(tmp_path,'crossing')
