@@ -1,5 +1,7 @@
 from dataclasses import replace
+import json
 import math
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -63,4 +65,16 @@ def test_trial_rejects_discontinuous_path_without_cutting_it():
     p = TimePlan("bad", pose(), xy)
     with pytest.raises(ValueError, match="DISCONTINUITY"):
         time_trial_control(p, pose(), speed_mps=.1, rear_axle_offset_m=(.001, 0.))
+    np.testing.assert_array_equal(p.xy_m, xy)
+
+
+def test_recorded_awsim_near_origin_prediction_reproduces_foldback_stop():
+    """Trial 03 never drove: preserve the observed geometry rejection."""
+    fixture = json.loads((Path(__file__).parent / "fixtures/time_path/near_origin_foldback.json").read_text())
+    xy = np.array(fixture["raw_xy_m"], dtype=np.float64)
+    observed = pose(fixture["observation_ns"])
+    p = TimePlan(fixture["plan_id"], observed, xy)
+    current = replace(observed, stamp_ns=observed.stamp_ns + 150_000_000)
+    with pytest.raises(ValueError, match="^TIME_PATH_FOLDBACK$"):
+        time_trial_control(p, current, speed_mps=0., rear_axle_offset_m=(.0010000169277191162, 0.))
     np.testing.assert_array_equal(p.xy_m, xy)

@@ -1,0 +1,72 @@
+{
+  "status": "COMPLETED_NO_POSITIVE_DRIVE",
+  "scope": "BOUNDED_SAME_SCENE_TEST_NOT_LAP_OR_AVOIDANCE_ACCEPTANCE",
+  "source_host_status": "COMPLETE_BOUNDED_TRIAL",
+  "official_start_requested": true,
+  "armed_sim_ns": 16339999634,
+  "active_commands": 201,
+  "positive_acceleration_commands": 0,
+  "active_command_reasons": {
+    "TIME_PATH_FOLDBACK": 201
+  },
+  "all_predictions": 244,
+  "active_observation_predictions": 90,
+  "active_first_fold_source_segment_indices": {
+    "0": 90
+  },
+  "active_first_turn_abs_rad": {
+    "min": 1.5456600743122333,
+    "median": 1.5780889984676292,
+    "p95": 1.6577976786204733,
+    "max": 1.7624744427113763
+  },
+  "foldback_threshold_rad": 1.2,
+  "active_first_point_x_m": {
+    "min": -0.010630391538143158,
+    "median": -0.007096104323863983,
+    "p95": -0.007092851027846336,
+    "max": -0.007091723382472992
+  },
+  "active_first_point_y_m": {
+    "min": 0.019115619361400604,
+    "median": 0.02109292894601822,
+    "p95": 0.021098218113183975,
+    "max": 0.02179909497499466
+  },
+  "active_3s_endpoint_norm_m": {
+    "min": 1.7763592430101454,
+    "median": 1.8194687714414834,
+    "p95": 1.819519574377244,
+    "max": 1.819537714430867
+  },
+  "active_source_speed_0_to_0p3s_mps": {
+    "min": 0.1635291961997285,
+    "median": 0.1764653664860862,
+    "p95": 0.17648812357611957,
+    "max": 0.17672930935280284
+  },
+  "inference_duration_ms": {
+    "min": 26.376922,
+    "median": 50.8443325,
+    "p95": 94.9976588,
+    "max": 125.299383
+  },
+  "max_measured_speed_mps": 0.00017983093857765198,
+  "stop_confirmed_before_cleanup": true,
+  "runtime_inference_rejections": {
+    "CURRENT_SENSOR_MISSING": 2
+  },
+  "cleanup_errors": [],
+  "wall_s": 54.28875246200005,
+  "checkpoint_sha256": [
+    "e857db4b67d3d9f6a77c2865cfc1fa53e9903e7a1d2d8a371407fbe009a1a44f"
+  ],
+  "raw_predictions_modified": false,
+  "guard_relaxed": false,
+  "boundary": "Near-origin heading gate rejected predictions; no measured lane-tracking accuracy or model teacher error.",
+  "source_sha256": {
+    "host_result.json": "d4b361cdbb3f762c3e614ec9bca483193f91f330331accfa8cb74fd7479a74cb",
+    "control.jsonl": "bf40c9122a7d7e17b74ac1dcb28fef790afbe96dd4def6fada377f8011212d6b",
+    "inference.jsonl": "f78360913469bbb00701907859a178091a3f08d696c03bf8546efa5b1445b885"
+  }
+}
