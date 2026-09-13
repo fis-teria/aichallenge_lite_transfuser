@@ -202,3 +202,10 @@ left020-r03: 発進後10.455sim秒でSTOPPING_SWEEP_OCCUPIED。0.03m/s未満を3
 開始姿勢の少し後方にある誤った末尾点へ操舵し続けた。新規exportの不具合であり、モデル学習の問題ではない。
 exportに閉路区間と先頭12m以上の連続するprefixを付ける。物理座標・速度・PP tuning・監視は変更しない。
 基準sによるphaseと評価の周期表現は120点のままとし、export形状の回帰テストを追加する。
+
+e11ad65のWSL full pytestは2,210 passed / 4 skipped / 63 warnings（80.80s）。
+left020-r04は修正した閉路を走行。初期横ずれ+0.664mから約−0.011mへ10.2秒で復帰した。
+その直後、pose stamp=31.775sに対してcollectorのclock=31.735sとなり、未来20msの上限で停止。
+pose自体の欠測ではなくclock受信キューの遅れが疑われる（旧depth10で200Hzなら最大約50ms）。
+公式PPのclock QoSと同じBEST_EFFORT/depth1へ変更し、最新clockを受け取る。
+元stampとfuture/stale閾値は維持。正常停止の3秒確認、bag closeは成立。指定20cm区間はまだ未到達。

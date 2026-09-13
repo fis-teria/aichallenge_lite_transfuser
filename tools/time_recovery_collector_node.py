@@ -34,7 +34,7 @@ def main() -> None:
     baseline = np.asarray(reference['baseline_xy_m'])
     import rclpy
     from rclpy.node import Node
-    from rclpy.qos import qos_profile_sensor_data
+    from rclpy.qos import qos_profile_sensor_data, QoSProfile, ReliabilityPolicy
     from rosgraph_msgs.msg import Clock
     from nav_msgs.msg import Odometry, Path as RosPath
     from geometry_msgs.msg import PoseStamped
@@ -72,7 +72,12 @@ def main() -> None:
             state['fault'] = 'CLOCK_RESET'; poses.clear(); scans.clear(); cache.clear()
         clock_ns = value; clock_receipt = time.monotonic_ns()
 
-    node.create_subscription(Clock, '/clock', on_clock, 10)
+    # /clock is a latest-time sample, like the official PP ROS clock QoS.
+    # A depth-10 callback queue can deliver old time after newer odometry and
+    # falsely make a valid pose future-dated. Keep all original sensor stamps
+    # and the existing [-20 ms, 150 ms] admission interval unchanged.
+    node.create_subscription(Clock, '/clock', on_clock,
+        QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT))
     topics = {
         'pose': ('/localization/kinematic_state', Odometry, '/localization/ekf_localizer'),
         'velocity': ('/vehicle/status/velocity_status', VelocityReport, '/awsim_d1'),
