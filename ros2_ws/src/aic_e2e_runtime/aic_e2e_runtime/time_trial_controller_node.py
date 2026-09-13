@@ -26,8 +26,11 @@ def main() -> None:
     parser.add_argument("--pose-source", required=True)
     parser.add_argument("--sensor-source", default="/awsim_d1")
     parser.add_argument("--authorize-awsim-only", action="store_true")
+    parser.add_argument("--synthetic-shadow-fixture", action="store_true")
     args, ros_args = parser.parse_known_args()
     live = args.authorize_awsim_only
+    if live and args.synthetic_shadow_fixture:
+        raise ValueError("SYNTHETIC_FIXTURE_CANNOT_ACTUATE")
     if not math.isfinite(args.rear_axle_forward_m) or abs(args.rear_axle_forward_m) > .002:
         raise ValueError("UNSUPPORTED_BODY_POINT_CALIBRATION")
     if live and (os.environ.get("ROS_DOMAIN_ID") != "1" or args.sensor_source != "/awsim_d1"
@@ -130,6 +133,7 @@ def main() -> None:
                     raise ValueError("SOURCE_" + role)
             speed = float(cache["velocity"][0].longitudinal_velocity)
             if not np.isfinite([speed, float(cache["steering"][0].steering_tire_angle)]).all():
+                speed = None
                 raise ValueError("NONFINITE_VEHICLE_STATE")
             velocity_fresh = True
             state["max_speed_mps"] = max(state["max_speed_mps"], abs(speed))
@@ -157,6 +161,7 @@ def main() -> None:
                     or value.get("run_id") != args.run_id or value.get("epoch") != str(epoch)
                     or value.get("checkpoint_sha256") != args.checkpoint_sha256
                     or value.get("clock") != "sim" or value.get("frame") != "base_link"
+                    or value.get("producer_kind") != ("SYNTHETIC_ROS_FIXTURE" if args.synthetic_shadow_fixture else "LEARNED_TIME_MODEL")
                     or value.get("dt_s") != .1 or value.get("precision") != "float32"):
                 raise ValueError("PLAN_IDENTITY")
             obs_ns = value["observation_ns"]

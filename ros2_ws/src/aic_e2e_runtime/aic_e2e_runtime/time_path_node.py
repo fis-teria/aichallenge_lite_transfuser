@@ -143,6 +143,7 @@ def main() -> None:
                          "observation_ns": anchor.capture_ns, "freeze_monotonic_ns": snapshot.freeze_ns,
                          "published_monotonic_ns": now, "clock": "sim", "frame": "base_link",
                          "dt_s": .1, "checkpoint_sha256": model.sha256, "precision": "float32",
+                         "producer_kind": "LEARNED_TIME_MODEL",
                          "raw_xy_m": xy.tolist(), "inference_ns": inference_ns,
                          "provenance": provenance, "sensor_frames": dict(frame_ids)}
                 message = String(); message.data = json.dumps(value, allow_nan=False)
