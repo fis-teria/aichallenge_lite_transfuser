@@ -121,7 +121,9 @@ def main() -> None:
             '-e','CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml','-v',str(runtime_dds)+':/opt/autoware/cyclonedds.xml:ro',
             '-v',str(ROOT)+':/capture','-v',str(REPO/'aichallenge')+':/aichallenge:ro','--entrypoint','bash',
             'codex-cartographer-v4-build:20260910','-lc',shell]
-        make_args = ['CONTROL_METHOD=v4_20_external','CAPTURE=false','ROSBAG=false','AWSIM_LAPS=1','AWSIM_VEHICLES=1',
+        # Allow the simulator to keep producing observed future after lap 1.
+        # Collection stops at first verified lap +4 s, before another full lap.
+        make_args = ['CONTROL_METHOD=v4_20_external','CAPTURE=false','ROSBAG=false','AWSIM_LAPS=2','AWSIM_VEHICLES=1',
             'RUN_ID='+args.run_id,'OUTPUT_HOST_ROOT='+str(output),'AWSIM_TIMEOUT=1920',
             'AWSIM_EXTRA_ARGS=-logFile /output/'+args.run_id+'/awsim_unity.log']
         result['commands'] = [probe_cmd,['make','dev','DEV_AUTO_START=false',*make_args]]

@@ -165,7 +165,7 @@ VelocityReportの前後/横速度とheading_rate、実SteeringReport、教師nom
 教師が目標5km/h条件で復帰できない場合は、データを増やす前にその理由を切り分ける。
 pilot単位で停止確認し、次へ進む。正常制動の実測確認前にfreezeだけで成功扱いしない。
 
-空き容量は毎回事前確認し、pilot合計2GB程度を目安とする有限容量枠を用意する。
+空き容量は毎回事前確認し、pilotは各3GiB、合計6GiBを上限とする。
 実際の記録量を見て更新し、足りなければ新しいrunを開始しない。
 WSL転送後も既存データやremote bagを勝手に削除しない。
 大量収集への拡張は保存先容量/転送方式を決めてから行う。
@@ -177,5 +177,7 @@ WSL転送後も既存データやremote bagを勝手に削除しない。
 現行監視を維持した収集runnerへの接続、および固定5km/hでのpilotである。
 ここまでを確認せず旧runnerで大量収集は開始しない。
 
-この文書以外のsource/config/runtimeは変更していない。今回はread-onlyの現地確認で、
-新しいpytest・build・AWSIM試行は未実施。
+現地事前確認の後、collection専用entrypointとphase maskを追加した。既存モデル・共通監視は変更していない。
+専用C++ buildは成功。WSLの全pytestと参照生成、停止状態のROS接続、pilotの順で確認中。
+AWSIM自身のlap上限は2に設定するが、収集停止条件は最初の検証済み1周+4秒とする。
+1周でAWSIM自体が終了して将来poseが欠けるのを避け、collectorの30分上限も維持する。
