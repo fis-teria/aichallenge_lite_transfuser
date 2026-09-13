@@ -354,7 +354,7 @@ WSL評価の制御再生1594件、actuator/response再生1589件一致、最大�
 計算とstate連続性の再生であり、全scan判断の再生とは区別する。
 
 先行補償は1576指令で有効、補償量は-0.014884〜+0.033716rad。
-操舵reportのsim年齢中央値15ms、p95 30ms、最大35ms。
+操舵report取得からのsim経過時間は中央値15ms、p95 30ms、最大35ms。
 実行DLLのMultiDomainROS2ManagerはUnity Updateで受信を処理する。
 発行済み指令のzero-order holdに固定物理遅延70ms・一次応答20msを適用した
 保存時系列の当てはめでは、追加35〜40msの遅れを含めると平均絶対誤差約0.00026rad。
@@ -391,3 +391,8 @@ raw scan/全指令/全予測はWSLの `runs/time_turning_20260913/codex-time-tur
 ```bash
 bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python tools/evaluate_time_awsim_trial.py --run /home/thistle/e2e_autonomous/runs/time_turning_20260913/codex-time-turn-14 --output /home/thistle/e2e_autonomous/runs/time_turning_20260913/evaluation14_recheck
 ```
+
+最終検証commit `9e00781bb524302a2ff3e151fa864a2a2aa02ca4` は、turn14の実行source
+`c2e264f5` とsrc/ROS/tools/configsが同一。追加40ms感度回帰を含めWSL限定99passed
+(1.76s)、全体2146passed/4skipped/63warnings (87.27s)。既存optional依存4skipは継続。
+実走コーナー課題は未解決として記録し、シミュレーションは終了済み。
