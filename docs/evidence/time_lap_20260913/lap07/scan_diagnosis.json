@@ -1,0 +1,102 @@
+{
+  "status": "SAVED_REJECTION_REPRODUCED",
+  "run_id": "codex-time-lap-07",
+  "self_checks": "PASS",
+  "first_rejection_since_arm_s": 29.09999935,
+  "speed_mps": 1.2381234169006348,
+  "scan_age_s": 0.014024816,
+  "plan_age_s": 0.20499999600000002,
+  "exact_guard": {
+    "reason": "STOPPING_CORRIDOR_OCCUPIED",
+    "clearance_m": 1.7848445080120547,
+    "required_m": 1.7855365061891688,
+    "deficit_m": 0.0006919981771140726,
+    "critical_ray_index": 464,
+    "range_m": 2.2799506187438965,
+    "angle_rad": 0.37699107825756073,
+    "point_vehicle_root_m": [
+      3.2848445080120547,
+      0.8393057165072844
+    ],
+    "lidar_forward_in_root_m": 1.165,
+    "front_in_root_m": 1.5,
+    "half_width_m": 0.85
+  },
+  "diagnostic_alignment": {
+    "base_link_forward_in_root_m": -0.48500001430511475,
+    "lidar_forward_in_base_link_m": 1.649999976158142,
+    "critical_point_current_base_m": [
+      3.7458938353979105,
+      0.8424683411420778
+    ],
+    "critical_distance_to_reference_polyline_m": 1.3359431923273162,
+    "nearest_reference_xy_m": [
+      3.2559765193881196,
+      -0.4004014173601809
+    ],
+    "nearest_segment_index": 27,
+    "nearest_segment_fraction": 1.0,
+    "nearest_is_final_endpoint": true,
+    "reference_endpoint_m": [
+      3.2559765193881196,
+      -0.4004014173601809
+    ],
+    "calculated_steer_rad": -0.06630107794710628,
+    "lookahead_rear_m": [
+      1.0876840353012085,
+      -0.03617292642593384
+    ],
+    "geometry": {
+      "version": "distance_resolved_time_geometry_v2",
+      "motion_resolved": true,
+      "validation_indices": [
+        0,
+        2,
+        5,
+        8,
+        11,
+        14,
+        17,
+        20,
+        23,
+        26,
+        29,
+        30
+      ],
+      "raw_points_checked": 31,
+      "position_budget_m": 0.03,
+      "heading_baseline_m": 0.25,
+      "max_curvature_per_m": 0.5025781875287861,
+      "max_tube_deviation_m": 0.001785953408014282,
+      "max_backtrack_m": 0.0,
+      "max_resolved_turn_rad": 0.04377214778813947
+    }
+  },
+  "plan_validation_scope": "Recorded identity, original capture pose and mathematical PP only; scan rejected first. Plan receive age and publisher graph are not in this snapshot.",
+  "reference_centerline_comparison": [
+    {
+      "at": "first_tracking",
+      "segment_index": 29,
+      "projection_fraction": 0.3573021452807853,
+      "distance_m": 1.1126227994255153,
+      "signed_left_m": 1.1126227994255156,
+      "s_m": 32.8166074426483
+    },
+    {
+      "at": "at_scan_rejection",
+      "segment_index": 66,
+      "projection_fraction": 0.8118692650205458,
+      "distance_m": 1.0930461621380756,
+      "signed_left_m": 1.0930461621380756,
+      "s_m": 68.35878751418436
+    }
+  ],
+  "boundary": "Single-scan static scene alignment, all rays at header pose; no per-ray deskew, dynamic TF or full swept footprint proof. Point/polyline gap, especially at its endpoint, does not establish a safe turn. Reference centerline is not a teacher or mandatory lane center.",
+  "source_sha256": {
+    "/home/thistle/e2e_autonomous/runs/time_lap_20260913/codex-time-lap-07/control.jsonl": "08bad9a23d13a70593e7bb62e5ef0ad60b3b3305744e80ad67f83172c3a32743",
+    "/home/thistle/e2e_autonomous/runs/time_lap_20260913/codex-time-lap-07/trial_config.json": "2eb3404858705edac2a19ac712f9760706f5b4310f725bb98a369f6ca74558f4",
+    "/home/thistle/e2e_autonomous/runs/time_lap_20260913/course_centerline.csv": "5380466a8585b6adf42f615f2c840073f59aadea8241b7d2b5e84dcb75d6af2e",
+    "/home/thistle/e2e_autonomous/e2e_lite_transfuser/docs/evidence/time_lap_20260913/lap07/scene_transforms.json": "b10e9e7c57c2fba1f1d2d2fd79cd362dbdcc915ad6b636f1291671ed8ca129c4",
+    "/home/thistle/e2e_autonomous/e2e_lite_transfuser/docs/evidence/time_lap_20260913/lap07/analyze_rejection.py": "e4eed69ab783595be7ed25e71987ea918aee456f9889e8b48ff81df68a4f436a"
+  }
+}
