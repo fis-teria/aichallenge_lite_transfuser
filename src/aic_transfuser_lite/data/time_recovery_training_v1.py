@@ -191,7 +191,7 @@ def prepare_recovery_cache(base_cache: Path, output: Path, *, plan: dict[str, An
         for p in sorted((partial/'materialized').rglob('*')) if p.is_file() and 'raw' not in p.relative_to(partial).parts]
     identity = {'format':'time_training_cache_v1','base_cache_sha256':original['manifest_sha256'],
         'corpus_artifact_manifest_sha256':content_sha256(materialized_files),
-        'contract':{'config':asdict(TimeDatasetConfig()),'freeze_delay_receipt_ns':50_000_000,
+        'contract':{**original['contract'], 'config':asdict(TimeDatasetConfig()),'freeze_delay_receipt_ns':50_000_000,
                     'split_sha256':split['manifest_sha256'],'selection':'full_observed_recovery_only_150ms_margin'},
         'config':asdict(TimeDatasetConfig()),'split_manifest':split,'splits':['train','validation'],
         'runs':prepared, 'cache_files':files, 'materialized_files':materialized_files,
