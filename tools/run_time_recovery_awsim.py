@@ -171,7 +171,7 @@ def main() -> None:
                 p = output/'progress.pending'
                 p.write_text(json.dumps(dict(result, judge_sections=judge.section_events, judge_laps=judge.laps),allow_nan=False))
                 p.replace(output/'progress.json')
-            if control.get('ready_ticks',0) >= 10 and make.poll() == 0 and not result['official_start_requested']:
+            if control.get('ready_ticks',0) >= 100 and make.poll() == 0 and not result['official_start_requested']:
                 if not any(n.startswith('rviz') for n in control['rviz_subscribers']):
                     if time.monotonic()-started > 120:
                         raise RuntimeError('RVIZ_NOT_SUBSCRIBED')

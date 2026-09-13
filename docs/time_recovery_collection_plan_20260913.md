@@ -260,3 +260,17 @@ left020-r08は発進1.49秒後にFRESH_ALIGNED_SCAN_MISSING。新着scanはcurre
 poseは前後の実測補間点が必要なので従来sensor-data depth5へ戻す。velocity/steering/nominalはdepth1、
 motionの同時刻帯選択は維持する。欠けたposeを外挿で埋めず、scan選択・各50ms補間端点期限を保持する。
 新着scanが未来の場合と、中間poseを欠いた場合/保持した場合のscan選択を回帰テストで確認する。
+
+3372f07のWSL full pytestは2,215 passed / 4 skipped / 63 warnings（86.74s）。
+left020-r09はs=98.70mでFRESH_ALIGNED_SCAN_MISSING、制動・3秒停止確認・bag close成立。
+callback遅延後に最新poseとvelocityが60msずれ、同時刻帯にそろえられる前のmotionは既に約150ms古く、
+対応scanが150msを超えていた。受信QoSのみでは制御計算/graph/disk IOによるcallback待ちを解消できない。
+センサ受信Node/executorを独立したthreadへ分け、短いlock内で取得した不変snapshotだけを制御へ渡す。
+受信中のclock reset/pose異常はsnapshot世代とfaultで検出し、publish直前に同じ採用sampleの期限を再検査する。
+実際に監視へ使ったscanを再検査対象とする。起動前は100回連続READY（約5秒）を必要とする。
+
+収集bagの因果再現検査で別の保存設定の不具合を確認した。新runnerの`--use-sim-time`ではbag receiptが
+同じsim clock値にまとまり、r07は既存epoch detectorで7,434区間に分断された。これは入力の受信順を
+独立した時計で再現する既存TimePath契約に適合しない。r01〜r09は診断用として保全し、学習採用しない。
+新runは通常のrosbag system-time receiptを保持し、sensorの元sim headerと`/clock`を別に記録する。
+既存epoch判定やcausal selectorを緩めず、新bagで1 epochと実入力/将来30点の再現を検証する。

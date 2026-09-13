@@ -11,6 +11,7 @@ import json
 import math
 import os
 from pathlib import Path
+import threading
 import time
 
 import numpy as np
@@ -35,6 +36,7 @@ def main() -> None:
     baseline = np.asarray(reference['baseline_xy_m'])
     import rclpy
     from rclpy.node import Node
+    from rclpy.executors import SingleThreadedExecutor
     from rclpy.qos import qos_profile_sensor_data, QoSProfile, ReliabilityPolicy
     from rosgraph_msgs.msg import Clock
     from nav_msgs.msg import Odometry, Path as RosPath
@@ -47,8 +49,11 @@ def main() -> None:
 
     rclpy.init(args=ros_args)
     node = Node('time_recovery_collector', enable_rosout=False, start_parameter_services=False)
+    receiver = Node('time_recovery_inputs', enable_rosout=False, start_parameter_services=False)
+    sensor_lock = threading.Lock()
     cache = {}; poses = deque(maxlen=256); scans = deque(maxlen=4); histories = {}
-    clock_ns = None; clock_receipt = 0; previous = [0., time.monotonic()]
+    sensor_clock = [None, 0]; sensor_fault = [None]; sensor_generation = [0]
+    previous = [0., time.monotonic()]
     state = dict(run_id=args.run_id, fault=None, armed_ns=None, armed_wall=None,
                  stop_reason=None, stop_since_ns=None, stop_confirmed=False,
                  ready_ticks=0, commands=0, speed_mps=None, max_speed_mps=0.,
@@ -67,17 +72,18 @@ def main() -> None:
         return [e.node_namespace.rstrip('/')+'/'+e.node_name for e in node.get_publishers_info_by_topic(topic)]
 
     def on_clock(m) -> None:
-        nonlocal clock_ns, clock_receipt
         value = stamp(m.clock)
-        if clock_ns is not None and value < clock_ns:
-            state['fault'] = 'CLOCK_RESET'; poses.clear(); scans.clear(); cache.clear(); histories.clear()
-        clock_ns = value; clock_receipt = time.monotonic_ns()
+        with sensor_lock:
+            if sensor_clock[0] is not None and value < sensor_clock[0]:
+                sensor_fault[0] = 'CLOCK_RESET'; sensor_generation[0] += 1
+                poses.clear(); scans.clear(); cache.clear(); histories.clear()
+            sensor_clock[:] = [value, time.monotonic_ns()]
 
     # /clock is a latest-time sample, like the official PP ROS clock QoS.
     # A depth-10 callback queue can deliver old time after newer odometry and
     # falsely make a valid pose future-dated. Keep all original sensor stamps
     # and the existing [-20 ms, 150 ms] admission interval unchanged.
-    node.create_subscription(Clock, '/clock', on_clock,
+    receiver.create_subscription(Clock, '/clock', on_clock,
         QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT))
     topics = {
         'pose': ('/localization/kinematic_state', Odometry, '/localization/ekf_localizer'),
@@ -90,34 +96,48 @@ def main() -> None:
     }
 
     def receive(role, m) -> None:
-        cache[role] = (m, time.monotonic_ns())
-        histories.setdefault(role, deque(maxlen=4 if role in ('camera','scan','trajectory') else 32)).append(cache[role])
-        if role == 'scan':
-            scans.append(cache[role])
-        if role == 'nominal':
-            state['nominal_count'] += 1
-        if role == 'trajectory':
-            state['trajectory_count'] += 1
-        if role == 'pose':
-            p = m.pose.pose; q = p.orientation
-            if (m.header.frame_id != 'map' or m.child_frame_id != 'base_link'
-                    or not np.isfinite([p.position.x, p.position.y, q.x, q.y, q.z, q.w]).all()
-                    or abs(q.x*q.x+q.y*q.y+q.z*q.z+q.w*q.w-1.) > .01):
-                state['fault'] = 'POSE_CONTRACT'; return
-            yaw = math.atan2(2*(q.w*q.z+q.x*q.y), 1-2*(q.y*q.y+q.z*q.z))
-            poses.append(TimedBodyPose(stamp(m.header.stamp), 'sim', '0', 'map', 'base_link',
-                                      p.position.x, p.position.y, yaw))
+        receipt = time.monotonic_ns()
+        with sensor_lock:
+            cache[role] = (m, receipt)
+            histories.setdefault(role, deque(maxlen=4 if role in ('camera','scan','trajectory') else 32)).append(cache[role])
+            if role == 'scan':
+                scans.append(cache[role])
+            if role == 'nominal':
+                sensor_counts['nominal'] += 1
+            if role == 'trajectory':
+                sensor_counts['trajectory'] += 1
+            if role == 'pose':
+                p = m.pose.pose; q = p.orientation
+                if (m.header.frame_id != 'map' or m.child_frame_id != 'base_link'
+                        or not np.isfinite([p.position.x, p.position.y, q.x, q.y, q.z, q.w]).all()
+                        or abs(q.x*q.x+q.y*q.y+q.z*q.z+q.w*q.w-1.) > .01):
+                    sensor_fault[0] = 'POSE_CONTRACT'; return
+                yaw = math.atan2(2*(q.w*q.z+q.x*q.y), 1-2*(q.y*q.y+q.z*q.z))
+                poses.append(TimedBodyPose(stamp(m.header.stamp), 'sim', '0', 'map', 'base_link',
+                                          p.position.x, p.position.y, yaw))
 
+    sensor_counts = {'nominal': 0, 'trajectory': 0}
     for role, (topic, kind, _) in topics.items():
         # Latest motion reports must not replay a DDS backlog against /clock.
         # Pose retains the sensor-data queue: the scan's original capture time
         # needs both measured interpolation endpoints, not just the latest pose.
         qos = (QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
                if role in ('velocity', 'steering', 'nominal') else qos_profile_sensor_data)
-        node.create_subscription(kind, topic, lambda m, role=role: receive(role, m), qos)
+        receiver.create_subscription(kind, topic, lambda m, role=role: receive(role, m), qos)
+
+    def snapshot():
+        # ROS messages are immutable after receipt; copy only bounded references.
+        # The receiver never waits for scan geometry, ROS graph queries or disk IO.
+        with sensor_lock:
+            return (*sensor_clock, sensor_fault[0], sensor_generation[0], dict(cache),
+                    {r:tuple(h) for r,h in histories.items()}, tuple(poses), tuple(scans), dict(sensor_counts))
 
     def tick() -> None:
         nonlocal publisher, last_path_wall, last_pose_stamp
+        clock_ns, clock_receipt, fault, generation, cache, histories, poses, scans, counts = snapshot()
+        if fault:
+            state['fault'] = fault
+        state['nominal_count'] = counts['nominal']; state['trajectory_count'] = counts['trajectory']
         now = time.monotonic_ns(); wall = time.monotonic(); dt = min(.1, max(0., wall-previous[1]))
         speed = None; fresh_velocity = False; details = {}; reason = 'STARTUP'; projection = None; current = None
         inputs = dict(cache); motion_selected = None; input_times = {}
@@ -205,6 +225,7 @@ def main() -> None:
             selected, captured = select_aligned_scan([(stamp(m.header.stamp), t) for m, t in scans],
                 poses, current, now_sim_ns=clock_ns, now_receipt_ns=now)
             laser = scans[selected][0]
+            inputs['scan'] = scans[selected]  # Recheck the scan actually used by the guard at publish time.
             if laser.header.frame_id != 'lidar':
                 raise ValueError('SCAN_FRAME')
             alignment = scan_pose_in_rear(captured, current, .0010000169277191162)
@@ -233,16 +254,38 @@ def main() -> None:
         phase = ('invalid' if state['fault'] or state['armed_ns'] is None else
                  'braking' if state['stop_reason'] else phase_at_s(projection['s_m'], reference['intervals']) if projection else 'invalid')
         state['phase'] = phase
-        previous[:] = [angle, wall]
         if publisher is not None and names(final_topic) == ['/time_recovery_collector'] and clock_ns is not None:
-            command = AckermannControlCommand()
-            command.stamp.sec = clock_ns//10**9; command.stamp.nanosec = clock_ns%10**9
-            command.lateral.stamp = command.stamp; command.longitudinal.stamp = command.stamp
-            command.lateral.steering_tire_angle = angle
-            command.longitudinal.speed = target; command.longitudinal.acceleration = accel
-            publisher.publish(command); state['commands'] += 1
+            # Recheck the *same* selected samples before publishing. A clock
+            # reset, bad pose or processing delay must not publish an old go
+            # command merely because its snapshot passed earlier in the tick.
+            with sensor_lock:
+                publish_sim, publish_receipt = sensor_clock
+                publish_wall = time.monotonic_ns()
+                try:
+                    if sensor_fault[0] or generation != sensor_generation[0]:
+                        raise ValueError(sensor_fault[0] or 'CLOCK_RESET')
+                    if publish_sim is None or publish_wall-publish_receipt > 500_000_000:
+                        raise ValueError('CLOCK_STALE')
+                    if target > 0:
+                        for role, (m, receipt) in inputs.items():
+                            check_collection_input_time(role,
+                                capture_ns=stamp(m.stamp if role in ('nominal','steering') else m.header.stamp),
+                                receipt_ns=receipt, now_sim_ns=publish_sim, now_wall_ns=publish_wall)
+                except ValueError as exc:
+                    reason = str(exc); angle = previous[0]; accel = -1.; target = 0.
+                    phase = 'invalid'; state['phase'] = phase; state['ready_ticks'] = 0
+                    if state['armed_ns'] is not None or sensor_fault[0]:
+                        state['fault'] = reason
+                command = AckermannControlCommand()
+                command_stamp = publish_sim if publish_sim is not None else clock_ns
+                command.stamp.sec = command_stamp//10**9; command.stamp.nanosec = command_stamp%10**9
+                command.lateral.stamp = command.stamp; command.longitudinal.stamp = command.stamp
+                command.lateral.steering_tire_angle = angle
+                command.longitudinal.speed = target; command.longitudinal.acceleration = accel
+                publisher.publish(command); state['commands'] += 1
         elif actual and actual != ['/time_recovery_collector']:
             state['fault'] = 'COMPETING_CONTROLLER'
+        previous[:] = [angle, wall]
         row = dict(event='CONTROL_AND_PHASE', monotonic_ns=now, sim_ns=clock_ns, reason=reason,
                    phase=phase, projection=projection, speed_mps=state['speed_mps'],
                    issued_angle_rad=angle, target_speed_mps=target, acceleration_mps2=accel,
@@ -256,6 +299,10 @@ def main() -> None:
                                             for role,(m,receipt) in cache.items()}
         if reason == 'STATE_FRAME_OR_CAPTURE_SKEW':
             row['motion_history_ns'] = {role:input_times.get(role, []) for role in ('pose','velocity','steering')}
+        if reason == 'FRESH_ALIGNED_SCAN_MISSING':
+            row['pose_history_ns'] = [p.stamp_ns for p in poses]
+            row['scan_history_ns'] = [(stamp(m.header.stamp), t) for m,t in scans]
+        row['processing_ms'] = (time.monotonic_ns()-now)/1e6
         serialized = json.dumps(row, allow_nan=False); log.write(serialized+'\n')
         phase_pub.publish(String(data=serialized))
         if poses and poses[-1].stamp_ns != last_pose_stamp:
@@ -275,11 +322,18 @@ def main() -> None:
         pending.replace(args.output/'control_heartbeat.json')
 
     node.create_timer(.05, tick)
+    receiver_executor = SingleThreadedExecutor()
+    receiver_executor.add_node(receiver)
+    receiver_thread = threading.Thread(target=receiver_executor.spin, name='recovery-inputs', daemon=True)
+    receiver_thread.start()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
+        receiver_executor.shutdown(timeout_sec=2.)
+        receiver_thread.join(timeout=2.)
+        receiver.destroy_node()
         log.close(); node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()

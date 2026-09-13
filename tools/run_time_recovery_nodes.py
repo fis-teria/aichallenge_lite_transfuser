@@ -35,7 +35,10 @@ def main() -> None:
             'output_raw_control_cmd:=/recovery_teacher/raw_control_cmd',
             'use_external_target_vel:=true', 'external_target_vel:=1.3888888888888888',
             'use_overtake_reference_override:=false'],
-        'bag': ['ros2', 'bag', 'record', '--use-sim-time', '--storage', 'sqlite3', '-o', str(args.output/'bag'), *TOPICS],
+        # Preserve independent wall-clock bag receipt and original sim capture.
+        # --use-sim-time collapses multiple receipts onto the same /clock value,
+        # which cannot replay the existing causal availability/epoch contract.
+        'bag': ['ros2', 'bag', 'record', '--storage', 'sqlite3', '-o', str(args.output/'bag'), *TOPICS],
         'collector': ['python3', str(Path(__file__).with_name('time_recovery_collector_node.py')),
             '--output', str(args.output), '--reference', str(args.reference_root/(args.side+'.json')), '--run-id', args.run_id],
     }
