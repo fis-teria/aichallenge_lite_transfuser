@@ -32,9 +32,12 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--deployment", type=Path, required=True)
     ap.add_argument("--run-id", required=True)
+    ap.add_argument("--display", required=True, help="Verified active desktop, e.g. :0 or :1")
     args = ap.parse_args()
     if not re.fullmatch(r"codex-time-[a-z0-9-]+", args.run_id):
         raise ValueError("INVALID_OWNED_RUN_ID")
+    if not re.fullmatch(r":[0-9]+", args.display):
+        raise ValueError("EXPLICIT_LOCAL_DISPLAY_REQUIRED")
     deployment = args.deployment.resolve()
     if deployment.parent != Path("/home/graneple/e2e_autonomous"):
         raise ValueError("UNEXPECTED_DEPLOYMENT_ROOT")
@@ -101,7 +104,7 @@ def main() -> None:
         override = output / "compose.json"
         override.write_text(json.dumps({"services": {service: {"volumes": [
             str(runtime_dds) + ":/opt/autoware/cyclonedds.xml:ro"]} for service in ("simulator", "autoware")}}, indent=2))
-        env.update(DISPLAY=":0", XAUTHORITY=str(auth[0]), COMPOSE_PROJECT_NAME=args.run_id,
+        env.update(DISPLAY=args.display, XAUTHORITY=str(auth[0]), COMPOSE_PROJECT_NAME=args.run_id,
             COMPOSE_FILE=":".join(map(str, (repo/"docker-compose.yml", repo/"docker-compose.gpu.yml", override))),
             CONTROL_METHOD="v4_20_external", V4_SHADOW_ENABLED="false")
         compose = ["docker", "compose", "-p", args.run_id]
