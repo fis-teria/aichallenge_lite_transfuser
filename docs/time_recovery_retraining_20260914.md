@@ -1,7 +1,8 @@
 # 復帰データ追加学習とAWSIM比較
 
 ユーザー依頼: 採用した復帰データで再学習し、graneple@192.168.3.10でAWSIMテストを実施する。
-この文書を実行状態の正本とする。現在はWSL追加学習中。旧モデルの比較走行は終了し、候補走行は学習後に実施する。
+この文書を実行状態の正本とする。WSL追加学習と新旧モデルのAWSIM比較は終了した。
+候補はオフライン誤差が改善したが発進できず、走行用には不採用。現在は停止理由のWSL再現・結果整理段階。
 
 既存の学習入口は20周固定のscratch OFF/ON比較専用であり、復帰区間の除外と追加runの固定split、
 既存checkpointからの追加学習を扱えない。データ変換と学習開始点のみを拡張する。
@@ -11,6 +12,24 @@
 finetune初期重みをテストし、実センサ再構成の一致も確認する。安全監視やcontrollerは変更しない。
 
 ## 現在の実行状態
+
+- 3epoch/4,281更新/136,938提示を完了。学習・検証・再ロードは2,556.77秒、前処理照合を含むコマンド全体は2,591.90秒。
+  選定epoch3、保存時と再ロード時のvalidation予測は全件一致。
+  checkpoint SHA `c2fdb6fd1daf525524fe44d3f793d84b482760aa1f9f1fa84d5315222ab9fbe0`。
+- validationの3秒run-macro誤差: 通常4走行0.06394195→0.05367572m、復帰2走行0.05048828→0.03595959m。
+  6走行平均0.05945739→0.04777034m。testは未使用。復帰データ追加と追加学習更新だけの効果を分離する実験ではない。
+- 候補: `codex-time-recovery-model-candidate01`、source `54513331888f9cf3478db9d0d7b6f69ab278fc20`。
+  `/home/graneple/e2e_autonomous/time_recovery_model_candidate_20260914`。
+  baselineとsrc/ros2_ws/toolsの全ファイル一致。設定差はcheckpoint SHA/epochのみ。
+  213module source/install一致、隔離ROSの実モデルPath6件一致・異常制動確認後に実行。
+  `STOPPED_NO_LAP / PROGRESS_STALLED`、wall50.06秒。発進後5.15秒の全103指令が
+  `STEERING_FEASIBLE_LOOKAHEAD_MISSING`で、正の加速指令0、実測停止確認あり。
+  48個の走行中予測は現在のgeometry判定で全てRESOLVEDだが、PP先読み点の実行条件を満たさない。
+  WSLで全103件の同じ拒否理由を再現。経路修正や監視緩和は行っていない。
+- baselineのWSL評価は98.105秒/123.464m、section0→1→2、未完走。
+  PP/記録制御1,958件を再現、最大差8.88e-16。scan admission全件再生ではない。
+- 最終実行source `5451333` のWSL全体テスト: 2,227 passed / 4 skipped / 64 warnings、74.69秒。
+  native runtime loaderでも候補重みと実センサcache入力から有限[30,2]出力を確認。
 
 - 変換・学習source: `17777082d4d9c8cef0b2c7be482352a19fae7fa1`。WindowsからWSLへ同期済み。
 - 前段source `6da2842` のWSL全体テスト: 2,227 passed / 4 skipped / 64 warnings、78.05秒。
@@ -37,8 +56,7 @@ finetune初期重みをテストし、実センサ再構成の一致も確認す
 - 小さい証跡: `docs/evidence/time_recovery_finetune_20260914/`。
   通常RVizのmagenta経路を保存画像で目視確認した。XWDは宣言BGR24・bytes_per_lineを使ってPNG化。
 
-残る処理は、学習完了/再読込一致、通常/復帰のholdout比較、新checkpointのruntime読込、
-候補のsource/install/hash確認と隔離ROS、同条件AWSIM、両走行のWSL評価、最終pytestと環境確認。
+残る処理は、発進拒否の詳細診断、証跡の転送照合と最終環境確認。候補は自動採用しない。
 
 ## 固定計画
 
