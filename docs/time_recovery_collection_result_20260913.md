@@ -1,5 +1,9 @@
 # AWSIMで実測した復帰教師の初回収集
 
+2026-09-14更新: 診断分を含む今回の20記録をWSLへ移動済み。
+全項目の一致確認後、AWSIM側の原データを整理し、空きを約21.02GiBへ回復した。
+現在の保管先と証跡は [WSL移動記録](time_recovery_wsl_relocation_20260914.md) を参照する。
+
 ## 結果
 
 実行先は `graneple@192.168.3.10`。直線で左右それぞれ20cmずらした参照経路を
@@ -90,15 +94,16 @@ Windowsが編集・Git正本。検証は `Ubuntu-22.04-Recovered` の
 元stampと `/clock` によるepochは各1。固定50msのcamera freeze設定を使用。
 bag receiptは入力利用可能時刻の代用であり、前処理完了時刻の実測値ではない。
 
-- AWSIM側原本: `/home/graneple/e2e_autonomous/time_recovery_collection_20260913/<run-id>/`
+- AWSIM側の旧原本位置: `/home/graneple/e2e_autonomous/time_recovery_collection_20260913/<run-id>/`。
+  2026-09-14の移動後は `MOVED_TO_WSL.json` の案内のみを保持。
 - WSL側原本: `/home/thistle/e2e_autonomous/raw/time_recovery_collection_20260913/<run-id>/`
 - WSL側圧縮archive・監査: `/home/thistle/e2e_autonomous/runs/time_recovery_collection_20260913/`
 - 小さい検証結果: [evidence](evidence/time_recovery_collection_20260913/)。bag・重みはGitへ追加していない。
 
-AWSIM側の原bagは保持。WSLで照合した輸送用archiveだけを削除して空きを確保し、
+収集終了時はAWSIM側の原bagを保持し、WSLで照合した輸送用archiveだけを削除して空きを確保した。
 対象・ハッシュ・削除前後容量を `shipping_archive_cleanup*_result.json` に記録した。
-終了・bag flush・輸送archive整理後のAWSIM側空きは約9.95GiB。
-追加収集前には、再び容量を確保して開始条件を満たす必要がある。
+当時の終了・bag flush・輸送archive整理後のAWSIM側空きは約9.95GiB。
+2026-09-14、ユーザーの移動指示により原データも全件照合後にWSLへ移し、空きは約21.02GiBとなった。
 実行中containerは0。元の実験repositoryのHEADと既存dirty 155件を保持した。
 
 再検証コマンド（WSL checkout内、`run_id`を対象runへ設定）:
