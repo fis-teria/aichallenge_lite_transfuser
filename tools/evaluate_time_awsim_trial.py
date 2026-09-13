@@ -10,6 +10,8 @@ from typing import Any
 
 import numpy as np
 
+from aic_transfuser_lite.control.time_geometry_v2 import validate_time_geometry
+
 
 def main() -> None:
     ap = argparse.ArgumentParser()
@@ -52,6 +54,16 @@ def main() -> None:
     source = np.concatenate((np.zeros((len(xy), 1, 2)), xy[:, :3]), axis=1)
     source_speed = np.linalg.norm(np.diff(source, axis=1), axis=2).sum(axis=1) / .3
     positive = sum(c["acceleration_mps2"] > 0 for c in active)
+    geometry_reasons: Counter[str] = Counter()
+    for path in xy:
+        try:
+            geometry = validate_time_geometry(path)
+            geometry_reasons["RESOLVED" if geometry["motion_resolved"] else "MOTION_UNRESOLVED"] += 1
+        except ValueError as exc:
+            geometry_reasons[str(exc)] += 1
+    pose_by_stamp = {c["details"]["current_pose"]["stamp_ns"]: c["details"]["current_pose"] for c in active
+                     if c.get("details", {}).get("current_pose") is not None}
+    measured_xy = np.array([[p["x_m"], p["y_m"]] for _, p in sorted(pose_by_stamp.items())])
     result = {"status": "COMPLETED_NO_POSITIVE_DRIVE" if positive == 0 else "COMPLETED_POSITIVE_COMMANDS_OBSERVED",
         "evaluator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "scope": "BOUNDED_SAME_SCENE_TEST_NOT_LAP_OR_AVOIDANCE_ACCEPTANCE",
@@ -59,6 +71,13 @@ def main() -> None:
         "armed_sim_ns": start, "active_commands": len(active), "positive_acceleration_commands": positive,
         "active_command_reasons": dict(Counter(c["reason"] for c in active)),
         "all_predictions": len(plans), "active_observation_predictions": len(active_plans),
+        "foldback_statistics_policy": "legacy_step_heading_v1_not_current_admission",
+        "recorded_geometry_policy_versions": sorted({c["details"]["geometry"]["version"] for c in active
+                                                     if "geometry" in c.get("details", {})}),
+        "active_new_geometry_reasons": dict(geometry_reasons),
+        "recorded_pose_count": len(measured_xy),
+        "recorded_pose_travel_m": float(np.linalg.norm(np.diff(measured_xy, axis=0), axis=1).sum()) if len(measured_xy) > 1 else None,
+        "recorded_pose_net_displacement_m": float(np.linalg.norm(measured_xy[-1] - measured_xy[0])) if len(measured_xy) > 1 else None,
         "active_first_fold_source_segment_indices": dict(Counter(str(i) for i in first_fold_indices)),
         "active_first_turn_abs_rad": quantiles(turns), "foldback_threshold_rad": 1.2,
         "active_first_point_x_m": quantiles(xy[:,0,0]), "active_first_point_y_m": quantiles(xy[:,0,1]),
@@ -70,7 +89,7 @@ def main() -> None:
         "runtime_inference_rejections": dict(Counter(r.get("reason") for r in inference if r.get("event") in ("INPUT_REJECTED", "ANCHOR_REJECTED"))),
         "cleanup_errors": host["cleanup_errors"], "wall_s": host["wall_s"],
         "checkpoint_sha256": sorted({p["checkpoint_sha256"] for p in plans}),
-        "raw_predictions_modified": False, "guard_relaxed": False,
+        "raw_predictions_modified": False,
         "boundary": "Recorded command and prediction analysis; no measured lane-tracking accuracy or model teacher error.",
         "source_sha256": {name: hashlib.sha256((args.run/name).read_bytes()).hexdigest()
                           for name in ("host_result.json", "control.jsonl", "inference.jsonl")}}
@@ -96,6 +115,18 @@ def main() -> None:
     axes[1].legend(loc="lower right", fontsize=8)
     fig.suptitle(f"Proposed time model: 10 s AWSIM trial ({positive} positive acceleration commands)")
     fig.tight_layout(); fig.savefig(args.output/"raw_time_paths.png", dpi=150); plt.close(fig)
+    fig, axes = plt.subplots(3, 1, figsize=(10, 7), sharex=True)
+    times = [(c["sim_ns"] - start) / 1e9 for c in active]
+    axes[0].plot(times, [c["speed_mps"] if c["speed_mps"] is not None else np.nan for c in active], label="Measured speed")
+    axes[0].plot(times, [c["target_speed_mps"] for c in active], label="Commanded target speed", alpha=.7)
+    axes[0].set_ylabel("Speed [m/s]"); axes[0].legend()
+    axes[1].plot(times, [c["acceleration_mps2"] for c in active]); axes[1].set_ylabel("Command accel [m/s²]")
+    axes[2].plot(times, [c["steer_rad"] for c in active]); axes[2].set_ylabel("Command steer [rad]")
+    axes[2].set_xlabel("Time since drive authorization [sim s]")
+    for ax in axes:
+        ax.grid(alpha=.25)
+    fig.suptitle("Proposed time model: bounded AWSIM control and measured response")
+    fig.tight_layout(); fig.savefig(args.output/"control_timeline.png", dpi=150); plt.close(fig)
     print(json.dumps(result, allow_nan=False))
 
 
