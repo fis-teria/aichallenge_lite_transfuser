@@ -11,6 +11,46 @@ from typing import Any
 import numpy as np
 
 from aic_transfuser_lite.control.time_geometry_v2 import validate_time_geometry
+from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
+from aic_transfuser_lite.control.time_trial_v1 import time_trial_control
+
+
+def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str, Any]],
+                            rear_axle_forward_m: float) -> dict[str, Any]:
+    """Reproduce decisions from recorded raw predictions, poses, and measured speed.
+
+    This covers the calculation before the separate output steering-rate clamp.
+    Older records without pose/plan identity are explicitly outside the replay.
+    """
+    by_id = {p["plan_id"]: p for p in plans}
+    matched = skipped = 0
+    maximum_error = 0.
+    for command in commands:
+        details = command.get("details", {})
+        if not command.get("plan_id") or not all(k in details for k in ("observation_pose", "current_pose")):
+            skipped += 1
+            continue
+        plan = by_id[command["plan_id"]]
+        observed = TimedBodyPose(**details["observation_pose"])
+        current = TimedBodyPose(**details["current_pose"])
+        try:
+            calculated = time_trial_control(TimePlan(plan["plan_id"], observed, np.array(plan["raw_xy_m"])),
+                current, speed_mps=command["speed_mps"], rear_axle_offset_m=(rear_axle_forward_m, 0.))
+        except ValueError as exc:
+            if command["reason"] != str(exc):
+                raise ValueError("recorded rejection could not be reproduced") from exc
+        else:
+            if command["reason"] != "TIME_PATH_TRACKING":
+                raise ValueError("recorded admission could not be reproduced")
+            for key in ("steer_rad", "acceleration_mps2", "target_speed_mps", "reference_xy_rear_m"):
+                error = float(np.max(np.abs(np.asarray(calculated[key]) - np.asarray(details[key]))))
+                maximum_error = max(maximum_error, error)
+                if error > 1e-9:
+                    raise ValueError(f"recorded control differs: {key} error={error}")
+        matched += 1
+    return {"status": "PASS" if matched else "NOT_RECORDED", "matched_commands": matched,
+            "unavailable_commands": skipped, "maximum_absolute_error": maximum_error,
+            "tolerance": 1e-9, "scope": "geometry_and_PP_before_output_steering_rate_clamp"}
 
 
 def main() -> None:
@@ -64,6 +104,10 @@ def main() -> None:
     pose_by_stamp = {c["details"]["current_pose"]["stamp_ns"]: c["details"]["current_pose"] for c in active
                      if c.get("details", {}).get("current_pose") is not None}
     measured_xy = np.array([[p["x_m"], p["y_m"]] for _, p in sorted(pose_by_stamp.items())])
+    publishers = [r for r in control if r.get("event") == "PUBLISHER_CREATED"]
+    if len(publishers) != 1:
+        raise ValueError("one recorded controller publisher required")
+    replay = replay_recorded_control(active, plans, publishers[0]["rear_axle_forward_m"])
     result = {"status": "COMPLETED_NO_POSITIVE_DRIVE" if positive == 0 else "COMPLETED_POSITIVE_COMMANDS_OBSERVED",
         "evaluator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "scope": "BOUNDED_SAME_SCENE_TEST_NOT_LAP_OR_AVOIDANCE_ACCEPTANCE",
@@ -75,6 +119,7 @@ def main() -> None:
         "recorded_geometry_policy_versions": sorted({c["details"]["geometry"]["version"] for c in active
                                                      if "geometry" in c.get("details", {})}),
         "active_new_geometry_reasons": dict(geometry_reasons),
+        "control_replay": replay,
         "recorded_pose_count": len(measured_xy),
         "recorded_pose_travel_m": float(np.linalg.norm(np.diff(measured_xy, axis=0), axis=1).sum()) if len(measured_xy) > 1 else None,
         "recorded_pose_net_displacement_m": float(np.linalg.norm(measured_xy[-1] - measured_xy[0])) if len(measured_xy) > 1 else None,
@@ -116,15 +161,17 @@ def main() -> None:
     fig.suptitle(f"Proposed time model: 10 s AWSIM trial ({positive} positive acceleration commands)")
     fig.tight_layout(); fig.savefig(args.output/"raw_time_paths.png", dpi=150); plt.close(fig)
     fig, axes = plt.subplots(3, 1, figsize=(10, 7), sharex=True)
-    times = [(c["sim_ns"] - start) / 1e9 for c in active]
-    axes[0].plot(times, [c["speed_mps"] if c["speed_mps"] is not None else np.nan for c in active], label="Measured speed")
-    axes[0].plot(times, [c["target_speed_mps"] for c in active], label="Commanded target speed", alpha=.7)
+    timeline = [c for c in commands if start <= c["sim_ns"] < start + 12_000_000_000]
+    times = [(c["sim_ns"] - start) / 1e9 for c in timeline]
+    axes[0].plot(times, [c["speed_mps"] if c["speed_mps"] is not None else np.nan for c in timeline], label="Measured speed")
+    axes[0].plot(times, [c["target_speed_mps"] for c in timeline], label="Commanded target speed", alpha=.7)
     axes[0].set_ylabel("Speed [m/s]"); axes[0].legend()
-    axes[1].plot(times, [c["acceleration_mps2"] for c in active]); axes[1].set_ylabel("Command accel [m/s²]")
-    axes[2].plot(times, [c["steer_rad"] for c in active]); axes[2].set_ylabel("Command steer [rad]")
+    axes[1].plot(times, [c["acceleration_mps2"] for c in timeline]); axes[1].set_ylabel("Command accel [m/s²]")
+    axes[2].plot(times, [c["steer_rad"] for c in timeline]); axes[2].set_ylabel("Command steer [rad]")
     axes[2].set_xlabel("Time since drive authorization [sim s]")
     for ax in axes:
         ax.grid(alpha=.25)
+        ax.axvline(10., linestyle="--", color="#666666", linewidth=1)
     fig.suptitle("Proposed time model: bounded AWSIM control and measured response")
     fig.tight_layout(); fig.savefig(args.output/"control_timeline.png", dpi=150); plt.close(fig)
     print(json.dumps(result, allow_nan=False))

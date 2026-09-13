@@ -1,0 +1,19 @@
+make[1]: ディレクトリ '/home/graneple/git/autononous_ai/aichallenge-racingkart' に入ります
+CMD="env ROS_DOMAIN_ID=0 AWSIM_READY_DOMAINS=1 bash /aichallenge/request_awsim_start.bash" \
+	docker compose run --rm --no-deps "autoware-command"
+ Container codex-time-trial-04-autoware-command-run-2f96e283cc1c Creating 
+ Container codex-time-trial-04-autoware-command-run-2f96e283cc1c Created 
+[awsim-start] admin state: waitstart
+[awsim-start] vehicle domain 1 state: grounded
+[awsim-start] vehicle domain 1 initialization ready: true
+[awsim-start] publish exactly one /admin/awsim/start=true pulse with reliable/transient_local QoS
+publisher: beginning loop
+publishing #1: std_msgs.msg.Bool(data=True)
+
+[awsim-start] one-shot Start pulse publisher completed
+[awsim-start] vehicle domain 1 state: start
+[awsim-start] vehicle domain 1 state: ready
+[awsim-start] domain 1 official Start true: accepted
+[awsim-start] authoritative admin Start accepted by all vehicle domains
+[awsim-start] AWSIM race start confirmed
+make[1]: ディレクトリ '/home/graneple/git/autononous_ai/aichallenge-racingkart' から出ます
