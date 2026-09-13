@@ -1,0 +1,107 @@
+{
+  "status": "COMPLETE_BOUNDED_TRIAL",
+  "run_id": "codex-time-trial-05",
+  "start_time_utc": 1789270588.050726,
+  "scope": "10_SIM_SECOND_MODEL_TRIAL",
+  "official_start_requested": true,
+  "speed_policy": "fixed_5kmh",
+  "trial_config_sha256": "3509ab7e65950dafb850f5c00370a0d703ef484f95356a7c980ecf19b9bc5f58",
+  "gpu": {
+    "returncode": 0,
+    "stdout": "NVIDIA GeForce RTX 4060 Laptop GPU, 595.91.07\n",
+    "stderr": ""
+  },
+  "rviz_config": "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz",
+  "rviz_sha256": "8fb4dcf17ff1278ff4aa58a48728ba9f86b978400ebab5a234b02be65aba9a01",
+  "commands": [
+    [
+      "docker",
+      "run",
+      "--rm",
+      "--name",
+      "codex-time-trial-05-nodes",
+      "--gpus",
+      "all",
+      "--network",
+      "host",
+      "-e",
+      "ROS_DOMAIN_ID=1",
+      "-e",
+      "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_fixed_5kmh_20260913/codex-time-trial-05/cyclonedds.xml:/opt/autoware/cyclonedds.xml:ro",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_fixed_5kmh_20260913:/time",
+      "-v",
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro",
+      "--entrypoint",
+      "bash",
+      "codex-cartographer-v4-build:20260910",
+      "-lc",
+      "source /aichallenge/workspace/install/setup.bash && source /time/install/setup.bash && exec python3 /time/source_c452e42/tools/run_time_path_trial_nodes.py --output /time/codex-time-trial-05 --run-id codex-time-trial-05 --checkpoint /time/command_off_best.pt --config /time/source_c452e42/configs/control/time_path_fixed_5kmh_awsim_20260913.json"
+    ],
+    [
+      "make",
+      "dev",
+      "DEV_AUTO_START=false",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=1",
+      "RUN_ID=codex-time-trial-05",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_fixed_5kmh_20260913/codex-time-trial-05"
+    ],
+    [
+      "make",
+      "awsim-request-start",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=1",
+      "RUN_ID=codex-time-trial-05",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_fixed_5kmh_20260913/codex-time-trial-05"
+    ]
+  ],
+  "last_control": {
+    "fault": null,
+    "armed_ns": 16159999638,
+    "armed_wall": 8870.871314695,
+    "stop_since_ns": 27259999390,
+    "stop_confirmed": true,
+    "positive_count": 201,
+    "commands": 747,
+    "max_speed_mps": 1.3018865585327148,
+    "reason": "SCHEDULED_BRAKE",
+    "monotonic_ns": 8883071314370,
+    "sim_ns": 28359999366,
+    "topic": "/control/command/control_cmd"
+  },
+  "last_inference": {
+    "plans": 5,
+    "rejected": 2,
+    "fault": null,
+    "sources_ok": true,
+    "sources": {
+      "camera": [
+        "/awsim_d1"
+      ],
+      "lidar": [
+        "/awsim_d1"
+      ],
+      "velocity": [
+        "/awsim_d1"
+      ],
+      "actual_steering": [
+        "/awsim_d1"
+      ]
+    },
+    "monotonic_ns": 8855649791135,
+    "sim_ns": 939999978,
+    "epoch": "0",
+    "dropped_anchors": 0
+  },
+  "rviz_window": "0x3200010 \"/aichallenge/workspace/install/aichallenge_system_launch/share/aichallenge_system_launch/config/autoware.rviz* - RViz\": (\"rviz2\" \"rviz2\")  1850x1136+10+45  +70+64",
+  "cleanup_errors": [],
+  "end_time_utc": 1789270643.3093834,
+  "wall_s": 55.258595491999586
+}
