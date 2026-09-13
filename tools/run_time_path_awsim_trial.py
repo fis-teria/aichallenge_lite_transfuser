@@ -18,7 +18,7 @@ import subprocess
 import sys
 import time
 
-from integrate_normal_rviz_v4 import ensure_time_path
+from integrate_normal_rviz_v4 import ensure_time_path, follow_ego_view
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from aic_transfuser_lite.runtime.awsim_trial_session import JudgeLog, LowSpeedStall, trial_duration_limits
@@ -138,7 +138,10 @@ def main() -> None:
         (output / "autoware.rviz.before").write_bytes(rviz_bytes)
         text = rviz_bytes.decode("utf-8")
         newline = "\r\n" if "\r\n" in text else "\n"
-        enabled = ensure_time_path(text.replace("\r\n", "\n")).replace("\n", newline).encode("utf-8")
+        enabled_text = ensure_time_path(text.replace("\r\n", "\n"))
+        if execution_profile == "one_lap":
+            enabled_text = follow_ego_view(enabled_text)
+        enabled = enabled_text.replace("\n", newline).encode("utf-8")
         if enabled != rviz_bytes:
             rviz.write_bytes(enabled)
         result["rviz_config"] = str(rviz); result["rviz_sha256"] = sha(rviz)
@@ -199,7 +202,7 @@ def main() -> None:
                         stop_request("PROGRESS_STALLED")
                     if rviz_window is not None and elapsed_sim_s >= next_capture_sim_s:
                         run(["xwd", "-silent", "-id", rviz_window, "-out", str(output/f"rviz_drive_{int(next_capture_sim_s):03d}.xwd")], timeout=3)
-                        next_capture_sim_s += 60.
+                        next_capture_sim_s = 20. if next_capture_sim_s == 2. else next_capture_sim_s + 60.
                 progress = output/"lap_progress.pending"
                 progress.write_text(json.dumps({"sections":judge.section_events,"laps":judge.laps,
                     "lap_confirmed":judge.completed,"last_control":control},allow_nan=False))
@@ -261,7 +264,12 @@ def main() -> None:
                     cid = run(compose+["ps", "-q", service], timeout=3).stdout.strip()
                     if cid:
                         if service == "simulator":
-                            run(["docker", "pause", cid], timeout=3, check=False)
+                            frozen = run(["docker", "pause", cid], timeout=3, check=False)
+                            if frozen.returncode == 0 and rviz_window is not None:
+                                try:
+                                    run(["xwd", "-silent", "-id", rviz_window, "-out", str(output/"rviz_after_freeze.xwd")], timeout=3)
+                                except Exception as exc:
+                                    result["final_rviz_capture_error"] = str(exc)
                             run(["docker", "kill", cid], timeout=3)
                         else:
                             run(["docker", "stop", "-t", "2", cid], timeout=5)

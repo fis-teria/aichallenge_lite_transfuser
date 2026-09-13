@@ -1,0 +1,145 @@
+{
+  "status": "FAILED",
+  "run_id": "codex-time-lap-06",
+  "start_time_utc": 1789272117.684946,
+  "scope": "ONE_LAP_MODEL_TRIAL",
+  "official_start_requested": true,
+  "execution_profile": "one_lap",
+  "speed_policy": "fixed_5kmh",
+  "trial_config_sha256": "2eb3404858705edac2a19ac712f9760706f5b4310f725bb98a369f6ca74558f4",
+  "gpu": {
+    "returncode": 0,
+    "stdout": "NVIDIA GeForce RTX 4060 Laptop GPU, 595.91.07\n",
+    "stderr": ""
+  },
+  "rviz_config": "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz",
+  "rviz_sha256": "8fb4dcf17ff1278ff4aa58a48728ba9f86b978400ebab5a234b02be65aba9a01",
+  "commands": [
+    [
+      "docker",
+      "run",
+      "--rm",
+      "--name",
+      "codex-time-lap-06-nodes",
+      "--gpus",
+      "all",
+      "--network",
+      "host",
+      "-e",
+      "ROS_DOMAIN_ID=1",
+      "-e",
+      "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_lap_20260913/codex-time-lap-06/cyclonedds.xml:/opt/autoware/cyclonedds.xml:ro",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_lap_20260913:/time",
+      "-v",
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro",
+      "--entrypoint",
+      "bash",
+      "codex-cartographer-v4-build:20260910",
+      "-lc",
+      "source /aichallenge/workspace/install/setup.bash && source /time/install/setup.bash && exec python3 /time/source_be41500/tools/run_time_path_trial_nodes.py --output /time/codex-time-lap-06 --run-id codex-time-lap-06 --checkpoint /time/command_off_best.pt --config /time/source_be41500/configs/control/time_path_one_lap_5kmh_20260913.json"
+    ],
+    [
+      "make",
+      "dev",
+      "DEV_AUTO_START=false",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=1",
+      "RUN_ID=codex-time-lap-06",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_lap_20260913/codex-time-lap-06",
+      "AWSIM_TIMEOUT=660",
+      "AWSIM_EXTRA_ARGS=-logFile /output/codex-time-lap-06/awsim_unity.log"
+    ],
+    [
+      "make",
+      "awsim-request-start",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=1",
+      "RUN_ID=codex-time-lap-06",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_lap_20260913/codex-time-lap-06",
+      "AWSIM_TIMEOUT=660",
+      "AWSIM_EXTRA_ARGS=-logFile /output/codex-time-lap-06/awsim_unity.log"
+    ]
+  ],
+  "last_control": {
+    "fault": "STOPPING_CORRIDOR_OCCUPIED",
+    "armed_ns": 16599999628,
+    "armed_wall": 10400.935862699,
+    "stop_since_ns": null,
+    "stop_confirmed": false,
+    "positive_count": 581,
+    "commands": 1093,
+    "max_speed_mps": 1.3007630109786987,
+    "requested_stop_reason": null,
+    "speed_mps": 1.2356023788452148,
+    "current_pose": {
+      "stamp_ns": 45649998979,
+      "clock": "sim",
+      "epoch": "0",
+      "world_frame": "map",
+      "body_frame": "base_link",
+      "x_m": 89612.25039069827,
+      "y_m": 43157.87284531707,
+      "yaw_rad": 2.0730089506076337
+    },
+    "reason": "STOPPING_CORRIDOR_OCCUPIED",
+    "monotonic_ns": 10430036128781,
+    "sim_ns": 45699998978,
+    "topic": "/control/command/control_cmd"
+  },
+  "last_inference": {
+    "plans": 6,
+    "rejected": 2,
+    "fault": null,
+    "sources_ok": true,
+    "sources": {
+      "camera": [
+        "/awsim_d1"
+      ],
+      "lidar": [
+        "/awsim_d1"
+      ],
+      "velocity": [
+        "/awsim_d1"
+      ],
+      "actual_steering": [
+        "/awsim_d1"
+      ]
+    },
+    "path_subscribers": [
+      "rviz2"
+    ],
+    "monotonic_ns": 10385290555025,
+    "sim_ns": 949999978,
+    "epoch": "0",
+    "dropped_anchors": 0
+  },
+  "rviz_path_subscribers": [
+    "rviz2"
+  ],
+  "rviz_window": "0x3200010 \"/aichallenge/workspace/install/aichallenge_system_launch/share/aichallenge_system_launch/config/autoware.rviz* - RViz\": (\"rviz2\" \"rviz2\")  1850x1136+10+45  +70+64",
+  "error": "RuntimeError: CONTROL_STOPPING_CORRIDOR_OCCUPIED",
+  "cleanup_errors": [],
+  "end_time_utc": 1789272190.1506383,
+  "wall_s": 72.46563569499995,
+  "judge_lap_confirmed": false,
+  "judge_section_events": [
+    {
+      "current": 0,
+      "next": 0,
+      "started": "False",
+      "line": "Section line hit: current=0, next=0, started=False",
+      "run_id": "codex-time-lap-06",
+      "epoch": 0,
+      "byte_offset": 102666
+    }
+  ],
+  "judge_laps": [],
+  "judge_order_invalid": false
+}

@@ -26,6 +26,16 @@ def test_time_path_is_enabled_without_duplicates_or_changes_to_other_displays():
     assert 'Class: Existing\n      Enabled: false' in configured
 
 
+def test_stock_follow_view_changes_only_current_view_and_is_idempotent():
+    current = '  Views:\n    Current:\n      Class: rviz_default_plugins/TopDownOrtho\n      Scale: 13\n      Target Frame: viewer\n      X: 1\n      Y: 2\n'
+    saved = '    Saved:\n      - Target Frame: viewer\n        Scale: 13\n'
+    result = module.follow_ego_view(current+saved)
+    assert result.endswith(saved) and 'Target Frame: base_link' in result and 'Scale: 60' in result
+    assert module.follow_ego_view(result) == result
+    with pytest.raises(ValueError):
+        module.follow_ego_view('unknown')
+
+
 def test_display_mount_is_rigid_and_keeps_full_raw():
     raw=np.c_[np.arange(46)*.2,np.sin(np.arange(46))]
     record=dict(event='PLAN',source='LONG_V4_20M_EPOCH12_UNCORRECTED',raw_xy_m=raw.tolist(),observation_pose_xyyaw=[0.,0.,0.])

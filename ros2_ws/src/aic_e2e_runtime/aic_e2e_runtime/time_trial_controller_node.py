@@ -18,7 +18,7 @@ from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPos
 from aic_transfuser_lite.control.time_trial_v1 import (
     SPEED_POLICIES, interpolate_body_pose, time_trial_control, trial_speed_limits, validate_trial_config,
 )
-from aic_transfuser_lite.runtime.awsim_trial_session import requested_stop, trial_duration_limits, trial_brake_reason
+from aic_transfuser_lite.runtime.awsim_trial_session import requested_stop, trial_duration_limits, trial_brake_reason, encode_scan_values
 
 
 def main() -> None:
@@ -81,7 +81,8 @@ def main() -> None:
     previous = [0., time.monotonic()]
     state = {"fault": None, "armed_ns": None, "armed_wall": None, "stop_since_ns": None,
              "stop_confirmed": False, "positive_count": 0, "commands": 0, "max_speed_mps": 0.,
-             "requested_stop_reason": None, "speed_mps": None, "current_pose": None}
+             "requested_stop_reason": None, "speed_mps": None, "current_pose": None,
+             "scan_rejection_recorded": False}
 
     def stamp(t) -> int:
         return int(t.sec) * 10**9 + int(t.nanosec)
@@ -187,8 +188,21 @@ def main() -> None:
                 if brake_reason is not None:
                     raise ValueError(brake_reason)
             laser = cache["scan"][0]
-            clearance = check_scan(laser.ranges, laser.angle_min, laser.angle_increment,
-                                   laser.range_min, laser.range_max, speed)
+            try:
+                clearance = check_scan(laser.ranges, laser.angle_min, laser.angle_increment,
+                                       laser.range_min, laser.range_max, speed)
+            except ValueError as exc:
+                if not state["scan_rejection_recorded"]:
+                    scalar_names = ("angle_min", "angle_increment", "range_min", "range_max")
+                    record({"event": "SCAN_GUARD_REJECTED", "reason": str(exc), "speed_mps": speed,
+                            "scan_stamp_ns": stamp(laser.header.stamp), "scan_frame": laser.header.frame_id,
+                            "scan": {**dict(zip(scalar_names, encode_scan_values(getattr(laser, k) for k in scalar_names))),
+                                     "ranges": encode_scan_values(laser.ranges)},
+                            "current_pose": state["current_pose"], "pose_history": [p.__dict__ for p in poses],
+                            "latest_plan_json": cache["plan"][0].data if "plan" in cache else None,
+                            "plan_admission": "NOT_CHECKED_AFTER_SCAN_REJECTION"})
+                    state["scan_rejection_recorded"] = True
+                raise
             message, received = cache["plan"]
             value = json.loads(message.data)
             if (names(topics["plan"][0]) != [topics["plan"][2]] or value.get("event") != "PLAN"

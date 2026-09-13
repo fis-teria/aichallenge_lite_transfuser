@@ -5,7 +5,7 @@ import pytest
 
 from aic_transfuser_lite.control.time_trial_v1 import validate_trial_config
 from aic_transfuser_lite.runtime.awsim_trial_session import (
-    JudgeLog, LowSpeedStall, requested_stop, trial_brake_reason, trial_duration_limits,
+    JudgeLog, LowSpeedStall, requested_stop, trial_brake_reason, trial_duration_limits, encode_scan_values,
 )
 
 
@@ -48,3 +48,16 @@ def test_stall_uses_sim_time_and_resets_after_motion_or_clock_reset():
     assert not stall.update(8_000_000_000, 0.)
     assert not stall.update(2_000_000_000, 0.)
     assert stall.update(7_000_000_000, 0.)
+
+
+def test_scan_diagnostic_roundtrip_preserves_finite_and_nonfinite_values():
+    import math
+    from aic_transfuser_lite.control.long_sim_tracking_v4 import check_scan
+    values = [.1, 1.2345, float('inf'), -float('inf'), float('nan')]
+    restored = [float(v) for v in json.loads(json.dumps(encode_scan_values(values), allow_nan=False))]
+    assert restored[:4] == values[:4] and math.isnan(restored[4])
+    ranges = [float('inf')]*750; ranges[375] = 2.1
+    encoded = json.loads(json.dumps(encode_scan_values(ranges), allow_nan=False))
+    for scan in (ranges, [float(v) for v in encoded]):
+        with pytest.raises(ValueError, match='STOPPING_CORRIDOR_OCCUPIED'):
+            check_scan(scan, -math.pi, 2*math.pi/750, .1, 25., 5/3.6)

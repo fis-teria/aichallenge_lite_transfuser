@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import math
 import re
-from typing import Any
+from typing import Any, Iterable
 
 
 def trial_duration_limits(profile: str = "bounded_10s") -> tuple[float, float, float]:
@@ -13,6 +13,11 @@ def trial_duration_limits(profile: str = "bounded_10s") -> tuple[float, float, f
     if profile == "one_lap":
         return 600., 600., 720.
     raise ValueError("TRIAL_EXECUTION_PROFILE")
+
+
+def encode_scan_values(values: Iterable[float]) -> list[float | str]:
+    """Lossless JSON-safe diagnostic values; keep NaN/+inf/-inf distinct."""
+    return [float(v) if math.isfinite(float(v)) else str(float(v)) for v in values]
 
 
 def requested_stop(value: dict[str, Any], run_id: str) -> str:

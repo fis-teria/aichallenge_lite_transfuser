@@ -52,6 +52,19 @@ def ensure_time_path(text: str) -> str:
     return text[:match.start()] + block + text[match.end():]
 
 
+def follow_ego_view(text: str) -> str:
+    """Use the stock top-down view near the car so the short E2E path is legible."""
+    match = re.search(r'^  Views:\n    Current:\n.*?(?=^    Saved:)', text, re.M | re.S)
+    if match is None or '      Class: rviz_default_plugins/TopDownOrtho\n' not in match[0]:
+        raise ValueError('UNKNOWN_CURRENT_RVIZ_VIEW')
+    block = match[0]
+    for key, value in (('Target Frame', 'base_link'), ('Scale', '60'), ('X', '0'), ('Y', '0')):
+        block, count = re.subn(r'^      '+key+r': [^\n]+$', '      '+key+': '+value, block, flags=re.M)
+        if count != 1:
+            raise ValueError('UNKNOWN_CURRENT_RVIZ_VIEW_FIELD:'+key)
+    return text[:match.start()] + block + text[match.end():]
+
+
 def main() -> None:
     ap=argparse.ArgumentParser();ap.add_argument('config',type=Path)
     ap.add_argument('--ten',action='store_true')
