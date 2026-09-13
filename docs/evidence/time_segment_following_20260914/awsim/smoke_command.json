@@ -1,0 +1,20 @@
+[
+  "docker",
+  "run",
+  "--rm",
+  "-e",
+  "ROS_DOMAIN_ID=93",
+  "-e",
+  "CYCLONEDDS_URI=file:///time/smoke_dds.xml",
+  "--network",
+  "none",
+  "-v",
+  "/home/graneple/e2e_autonomous/time_segment_following_20260914:/time",
+  "-v",
+  "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro",
+  "--entrypoint",
+  "bash",
+  "codex-cartographer-v4-build:20260910",
+  "-lc",
+  "source /aichallenge/workspace/install/setup.bash && source /time/install/setup.bash && timeout --signal=TERM --kill-after=10s 100s python3 /time/source_d990fd6/tools/check_time_ros_connection.py --checkpoint /time/command_off_best.pt --checkpoint-sha256 c2fdb6fd1daf525524fe44d3f793d84b482760aa1f9f1fa84d5315222ab9fbe0 --trial-config /time/source_d990fd6/configs/control/time_path_segment_5kmh_20260914.json --output /time/smoke"
+]

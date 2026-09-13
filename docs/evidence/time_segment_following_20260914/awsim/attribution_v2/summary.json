@@ -1,0 +1,134 @@
+{
+  "source_commit": "8fba131826c001f7854eea42f8f5005e28a73092",
+  "scope": "First scan rejection and prior commands only; excludes later latched/frozen repeats",
+  "first_fault_after_arm_s": 80.399998203,
+  "reasons_through_first_fault": {
+    "TIME_PATH_TRACKING": 1602,
+    "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 5,
+    "STALE_scan": 1,
+    "STOPPING_SWEEP_OCCUPIED": 1
+  },
+  "selection_counts": {
+    "segment": 5,
+    "vertex": 1598
+  },
+  "metadata_replay_matched": 1603,
+  "legacy_rejection_rescued_times_s": [
+    0.0,
+    0.054999999,
+    0.104999998,
+    0.159999997,
+    0.209999996
+  ],
+  "actual_missing_times_s": [
+    0.264999994,
+    0.314999993,
+    0.354999992,
+    0.654999986,
+    0.704999984
+  ],
+  "segment_selection_times_s": [
+    0.0,
+    0.054999999,
+    0.104999998,
+    0.159999997,
+    0.209999996
+  ],
+  "last5s_measured_minus_nominal_tire_rad": {
+    "count": 100,
+    "min": -0.008285832243028313,
+    "mean": 0.0006423883730077931,
+    "median": 0.0008487695741858647,
+    "p95": 0.005535228122579114,
+    "max": 0.008411219846755386
+  },
+  "last5s_input_rate_limited_count": 0,
+  "fault": {
+    "speed_kmh": 4.580504465103149,
+    "selection": {
+      "kind": "vertex",
+      "reference_indices": [
+        16,
+        16
+      ],
+      "fraction": 0.0,
+      "fraction_interval": [
+        0.0,
+        0.0
+      ],
+      "xy_m": [
+        1.921270489692688,
+        0.214963898062706
+      ],
+      "remaining_s": 1.535000004,
+      "reference_interval_s": [
+        1.535000004,
+        1.535000004
+      ],
+      "distance_m": 1.9332588476544714,
+      "required_tire_rad": 0.13263568498623532,
+      "steering_margin_rad": 0.16736431501376467,
+      "distance_margin_m": 0.08762469529331307,
+      "observation_horizon_s": 1.7,
+      "source_interval_s": [
+        1.7,
+        1.7
+      ]
+    },
+    "preview_band_m": [
+      1.8456341523611584,
+      2.3456341523611584
+    ],
+    "reference_max_radius_m": 3.575452158766563,
+    "nominal_tire_rad": 0.13263568498623532,
+    "measured_tire_rad": 0.1384902447462082,
+    "response_target_rad": 0.12845862113401646,
+    "actual_guard": {
+      "reason": "STOPPING_SWEEP_OCCUPIED",
+      "minimum_ray_margin_m": -0.04030494956686681
+    },
+    "without_lead_same_measured_state": {
+      "reason": "STOPPING_SWEEP_OCCUPIED",
+      "minimum_ray_margin_m": -0.024803085918094325
+    },
+    "hold_previous_same_measured_state": {
+      "reason": "STOPPING_SWEEP_OCCUPIED",
+      "minimum_ray_margin_m": -0.022551964667409496
+    },
+    "admissible_original_target_sensitivity": [
+      {
+        "reference_index": 16,
+        "radius_m": 1.9332588476544714,
+        "nominal_tire_rad": 0.13263568498623532,
+        "issued_tire_target_rad": 0.12845862113401646,
+        "reason": "STOPPING_SWEEP_OCCUPIED",
+        "minimum_ray_margin_m": -0.04030494956686681
+      },
+      {
+        "reference_index": 17,
+        "radius_m": 2.0601360190292297,
+        "nominal_tire_rad": 0.13149561285581124,
+        "issued_tire_target_rad": 0.12629248407595006,
+        "reason": "STOPPING_SWEEP_OCCUPIED",
+        "minimum_ray_margin_m": -0.05433517110481523
+      },
+      {
+        "reference_index": 18,
+        "radius_m": 2.186986819785357,
+        "nominal_tire_rad": 0.13061234980557654,
+        "issued_tire_target_rad": 0.12461428427255476,
+        "reason": "STOPPING_SWEEP_OCCUPIED",
+        "minimum_ray_margin_m": -0.06454371436263129
+      },
+      {
+        "reference_index": 19,
+        "radius_m": 2.313758292724328,
+        "nominal_tire_rad": 0.12997957354726491,
+        "issued_tire_target_rad": 0.12341200937606768,
+        "reason": "STOPPING_SWEEP_OCCUPIED",
+        "minimum_ray_margin_m": -0.07040021155860687
+      }
+    ]
+  },
+  "sensitivity_boundary": "One-step recalculation using the same scan/pose/yaw/velocity; not a changed-state simulation or permission to bypass a guard"
+}

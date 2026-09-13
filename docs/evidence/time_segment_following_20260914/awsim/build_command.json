@@ -1,0 +1,18 @@
+[
+  "docker",
+  "run",
+  "--rm",
+  "--user",
+  "1000:1000",
+  "--network",
+  "none",
+  "-v",
+  "/home/graneple/e2e_autonomous/time_segment_following_20260914:/time",
+  "-v",
+  "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro",
+  "--entrypoint",
+  "bash",
+  "codex-cartographer-v4-build:20260910",
+  "-lc",
+  "source /aichallenge/workspace/install/setup.bash && cd /time/source_d990fd6/ros2_ws && colcon --log-base /time/build_log build --packages-select aic_e2e_runtime --build-base /time/build --install-base /time/install"
+]

@@ -1,0 +1,125 @@
+{
+  "status": "LAP_NOT_COMPLETED",
+  "evaluator_sha256": "73440ee85885224ec82db1349ef91855d2261965339fd941298900b60417fa6a",
+  "scope": "BOUNDED_SAME_SCENE_TEST_NOT_LAP_OR_AVOIDANCE_ACCEPTANCE",
+  "source_host_status": "FAILED",
+  "official_start_requested": true,
+  "armed_sim_ns": 20769999535,
+  "active_duration_sim_s": 80.619998199,
+  "judge_lap_confirmed": false,
+  "judge_laps": [],
+  "judge_sections": [
+    0,
+    1,
+    2
+  ],
+  "host_error": "RuntimeError: CONTROL_STOPPING_SWEEP_OCCUPIED",
+  "requested_stop_reason": null,
+  "active_commands": 1666,
+  "positive_acceleration_commands": 1602,
+  "active_command_reasons": {
+    "TIME_PATH_TRACKING": 1602,
+    "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 5,
+    "STALE_scan": 1,
+    "STOPPING_SWEEP_OCCUPIED": 58
+  },
+  "all_predictions": 914,
+  "active_observation_predictions": 725,
+  "foldback_statistics_policy": "legacy_step_heading_v1_not_current_admission",
+  "recorded_geometry_policy_versions": [
+    "distance_resolved_time_geometry_v2"
+  ],
+  "active_new_geometry_reasons": {
+    "RESOLVED": 725
+  },
+  "control_replay": {
+    "status": "PASS",
+    "matched_commands": 1608,
+    "unavailable_commands": 58,
+    "maximum_absolute_error": 4.440892098500626e-16,
+    "tolerance": 1e-09,
+    "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+    "post_control_rejections": {
+      "STOPPING_SWEEP_OCCUPIED": 1
+    },
+    "actuator_mapping_matched": 1603,
+    "steering_response_matched": 1603,
+    "vehicle_motion_matched": 1603,
+    "scan_guard_decisions_replayed": false
+  },
+  "speed_policy": "fixed_5kmh",
+  "active_target_speed_mps": {
+    "min": 0.0,
+    "median": 1.3888888888888888,
+    "p95": 1.3888888888888888,
+    "max": 1.3888888888888888
+  },
+  "final_3s_measured_speed_kmh": {
+    "min": 4.571453619003296,
+    "median": 4.577814531326294,
+    "p95": 4.587169218063354,
+    "max": 4.587700939178467
+  },
+  "active_samples_within_0p25_kmh_of_5": 0,
+  "recorded_pose_count": 1608,
+  "recorded_pose_travel_m": 100.44257361818254,
+  "recorded_pose_net_displacement_m": 23.47042623974607,
+  "active_first_fold_source_segment_indices": {
+    "0": 4,
+    "None": 721
+  },
+  "active_first_turn_abs_rad": {
+    "min": 7.951746233195861e-06,
+    "median": 0.024964386630042863,
+    "p95": 0.07778047219289401,
+    "max": 1.7817156748207017
+  },
+  "foldback_threshold_rad": 1.2,
+  "active_first_point_x_m": {
+    "min": -0.00685090571641922,
+    "median": 0.13149824738502502,
+    "p95": 0.13470318615436555,
+    "max": 0.1373240351676941
+  },
+  "active_first_point_y_m": {
+    "min": -0.011518385261297226,
+    "median": -0.0003992244601249695,
+    "p95": 0.004169067740440368,
+    "max": 0.01794608309864998
+  },
+  "active_3s_endpoint_norm_m": {
+    "min": 1.9136361000875708,
+    "median": 3.811498461941689,
+    "p95": 3.919286903247,
+    "max": 3.981903887663976
+  },
+  "active_source_speed_0_to_0p3s_mps": {
+    "min": 0.14294160551042015,
+    "median": 1.2844150919272868,
+    "p95": 1.3028344451499771,
+    "max": 1.3235821871101083
+  },
+  "inference_duration_ms": {
+    "min": 34.621985,
+    "median": 84.86529949999999,
+    "p95": 128.01417735,
+    "max": 157.000003
+  },
+  "max_measured_speed_mps": 1.3033347129821777,
+  "stop_confirmed_before_cleanup": false,
+  "runtime_inference_rejections": {
+    "CURRENT_SENSOR_MISSING": 18
+  },
+  "cleanup_errors": [],
+  "wall_s": 132.04967114700412,
+  "checkpoint_sha256": [
+    "c2fdb6fd1daf525524fe44d3f793d84b482760aa1f9f1fa84d5315222ab9fbe0"
+  ],
+  "raw_predictions_modified": false,
+  "boundary": "Recorded command and prediction analysis; no measured lane-tracking accuracy or model teacher error.",
+  "source_sha256": {
+    "host_result.json": "0acac931ebbd791a6c46a71936059c304055ee0868d3bfd9e9e81623d2300c9e",
+    "control.jsonl": "0c01dd5abee6570e02b1dd4ecfa4d9e9fa816f9939f31cf846ad99b51feab2ff",
+    "inference.jsonl": "1c771d810e49b2aa411d3c356e88def31223cc7a4917d765671ffb270a9ae30d"
+  }
+}
