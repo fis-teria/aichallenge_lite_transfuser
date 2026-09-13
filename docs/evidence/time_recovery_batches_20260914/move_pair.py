@@ -69,6 +69,13 @@ def pack(root: Path, prefix: str, names: list[str]) -> None:
         manifest = json.loads((run/'transfer_manifest.json').read_text())
         for rel, record in manifest.items():
             actual = row['files'][rel]
+            # The recorder hashes content through internal log symlinks.
+            # Keep the link itself in our structural snapshot and compare
+            # its already inventoried, contained regular-file destination.
+            if actual['kind'] == 'symlink':
+                destination = (run/rel).resolve()
+                assert destination.is_relative_to(run) and destination.is_file()
+                actual = row['files'][destination.relative_to(run).as_posix()]
             assert actual['kind'] == 'file' and actual['bytes'] == record['bytes']
             assert actual['sha256'] == record['sha256']
         rows.append(row)
