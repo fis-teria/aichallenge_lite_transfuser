@@ -1,0 +1,3639 @@
+{
+  "source_commit": "97f613294366d5ec7e7f77f10e058e5bf99e6e94",
+  "scope": "recorded_localization_and_prediction_diagnostics_not_causal_or_collision_proof",
+  "runtime_modified": false,
+  "test_evaluated": false,
+  "map_registration_fitted": false,
+  "reference_runs": [
+    "5kmh_run03",
+    "5kmh_run06",
+    "8kmh_run06",
+    "8kmh_run09",
+    "codex-time-recovery-right040-r22",
+    "codex-time-recovery-left020-r23"
+  ],
+  "primary_reference": "codex-time-recovery-left020-r23",
+  "prediction_file_provenance": "saved_epoch3_validation_array_current_hash_and_checkpoint_identity; historical_byte_seal_unavailable",
+  "checkpoint_sha256": "c2fdb6fd1daf525524fe44d3f793d84b482760aa1f9f1fa84d5315222ab9fbe0",
+  "cache_manifest_sha256": "917df968ee8fb1951a2d150c2da82165aa351e7597e372054401601d02c09023",
+  "input_hashes": {
+    "datasets/cache/time_recovery_20260914/identity.json": "0003daa61995ce0b6c5fe965e8a250bf2c5d840341400dbfcabe63ad2d3afa13",
+    "runs/time_recovery_finetune_20260914/result.json": "032b092b4f4557a88609093eee04d3015574db4594926b7cd636a556e2725612",
+    "runs/time_recovery_finetune_20260914/validation_epoch_03.npy": "dcad3223d4412449b80a986dee41a46935a969ca3137bc8392f3b4340ac2b3d4",
+    "runs/time_segment_awsim_evidence_20260914/codex-time-segment01/control.jsonl": "0c01dd5abee6570e02b1dd4ecfa4d9e9fa816f9939f31cf846ad99b51feab2ff",
+    "runs/time_segment_awsim_evidence_20260914/codex-time-segment01/inference.jsonl": "1c771d810e49b2aa411d3c356e88def31223cc7a4917d765671ffb270a9ae30d",
+    "runs/time_segment_awsim_evidence_20260914/codex-time-segment01/vehicle_observations.jsonl": "67f2fe279d87d57b0a2a9fe5ab1077ed77fed583ede004598c2ec6d632481aa4"
+  },
+  "fault_after_arm_s": 80.399998203,
+  "fault_pose": {
+    "stamp_ns": 101169997738,
+    "clock": "sim",
+    "epoch": "0",
+    "world_frame": "map",
+    "body_frame": "base_link",
+    "x_m": 89649.00400737983,
+    "y_m": 43143.3497366721,
+    "yaw_rad": 1.5675418939256511
+  },
+  "command_count": 1608,
+  "used_plan_count": 723,
+  "ambiguous_runtime_pose_stamps": 30,
+  "references": {
+    "5kmh_run03": {
+      "host": "192.168.3.13",
+      "split": "validation",
+      "bag_sha256": "8a2e823cb2f8ba634ba16d54073d9e449c6404d67adc5028e0509f87a663a558",
+      "cache_hashes": {
+        "anchors.jsonl": "4bd0b43773bd0da41f13ab0596e497ea84ef1a574d9775a72e25b017ff767d49",
+        "labels.npz": "ab0e3f6b4c2ee4a067580196fe05b661852ff7d7992e438c0bacda74c7b65854",
+        "inputs.npz": "b59d95bc2329bb2edd14717f300dfcf795839791bb9fe04c3314f403d3090180"
+      },
+      "pose_audit": {
+        "input_poses": 20490,
+        "unique_stamps": 20490,
+        "exact_duplicates": 0,
+        "conflicting_stamps": 0,
+        "excluded_segments": 347
+      },
+      "raw_ambiguous_pose_stamps": 13,
+      "fault_projection": {
+        "distance_m": 1.1164131131246227,
+        "left_m": -1.1163656551658436,
+        "progress_m": 97.6782075346229,
+        "stamp_ns": 113749997457,
+        "body_yaw_rad": 1.6216225666726372,
+        "tangent_yaw_rad": 1.6204479044907703,
+        "segment_index": 5429,
+        "fraction": 1.0,
+        "xy_m": [
+          89647.88952841386,
+          43143.284048974936
+        ]
+      },
+      "fault_body_yaw_error_rad": -0.054080672746986025,
+      "command_status_counts": {
+        "EVALUATED": 1608
+      },
+      "prediction_status_counts": {
+        "EVALUATED": 723
+      },
+      "last30s": {
+        "left_m": {
+          "count": 601,
+          "min": -1.1163656551658436,
+          "median": 0.023689943408424688,
+          "p95": 0.4743059263226147,
+          "max": 0.7188005894619776,
+          "mean": -0.052221939032074456
+        },
+        "body_yaw_error_rad": {
+          "count": 601,
+          "min": -0.13890838148921492,
+          "median": -0.05690171119128945,
+          "p95": 0.08648931016519668,
+          "max": 0.10390085384662573,
+          "mean": -0.04692631336324486
+        },
+        "tire_error_rad": {
+          "count": 601,
+          "min": -0.013315318478807042,
+          "median": -0.0005780381332614309,
+          "p95": 0.006104025104620964,
+          "max": 0.022384929913451923,
+          "mean": -0.00044337816770002517
+        },
+        "speed_mps": {
+          "count": 601,
+          "min": 1.2498010396957397,
+          "median": 1.284745693206787,
+          "p95": 1.3012001514434814,
+          "max": 1.3033347129821777,
+          "mean": 1.2845049626418636
+        },
+        "plan_age_s": {
+          "count": 601,
+          "min": 0.099999998,
+          "median": 0.204999995,
+          "p95": 0.279999994,
+          "max": 0.384999991,
+          "mean": 0.20460898046422626
+        }
+      },
+      "snapshots": [
+        {
+          "time_to_fault_s": -60.004998659,
+          "time_after_arm_s": 20.394999544,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89618.8858439957,
+            43147.807443971695
+          ],
+          "speed_mps": 1.2875394821166992,
+          "projection": {
+            "distance_m": 0.6558449940609736,
+            "left_m": -0.6558449940609736,
+            "progress_m": 23.683761408285974,
+            "stamp_ns": 36749138856,
+            "body_yaw_rad": 2.167843399048633,
+            "tangent_yaw_rad": 2.169203998780489,
+            "segment_index": 1582,
+            "fraction": 0.20698388023382888,
+            "xy_m": [
+              89618.34396278308,
+              43147.43798841598
+            ]
+          },
+          "left_m": -0.6558449940609736,
+          "progress_to_fault_m": -73.99444612633692,
+          "body_yaw_error_rad": -0.02047429070443974,
+          "path_yaw_error_rad": -0.021834890436295495,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.004151447249678786,
+          "measured_tire_rad": 0.004922750871628523,
+          "tire_error_rad": 0.0007713036219497366,
+          "plan_age_s": 0.204999996
+        },
+        {
+          "time_to_fault_s": -39.994999106,
+          "time_after_arm_s": 40.404999097,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89619.02684466676,
+            43167.90830669934
+          ],
+          "speed_mps": 1.2668918371200562,
+          "projection": {
+            "distance_m": 1.2825048388939546,
+            "left_m": 1.2824544983796207,
+            "progress_m": 48.16621528976661,
+            "stamp_ns": 63169998588,
+            "body_yaw_rad": -0.09139838941419022,
+            "tangent_yaw_rad": -0.08000710317104882,
+            "segment_index": 2901,
+            "fraction": 1.0,
+            "xy_m": [
+              89618.91302181825,
+              43166.63086275891
+            ]
+          },
+          "left_m": 1.2824544983796207,
+          "progress_to_fault_m": -49.51199224485629,
+          "body_yaw_error_rad": 0.033706083050867364,
+          "path_yaw_error_rad": 0.022314796807725967,
+          "status": "EVALUATED",
+          "nominal_tire_rad": -0.20364953940827318,
+          "measured_tire_rad": -0.20424024760723114,
+          "tire_error_rad": -0.0005907081989579566,
+          "plan_age_s": 0.279999994
+        },
+        {
+          "time_to_fault_s": -29.994999329,
+          "time_after_arm_s": 50.404998874,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89627.63119491095,
+            43159.21556917724
+          ],
+          "speed_mps": 1.2822909355163574,
+          "projection": {
+            "distance_m": 0.7188005894619776,
+            "left_m": 0.7188005894619776,
+            "progress_m": 59.829001472858884,
+            "stamp_ns": 75150262451,
+            "body_yaw_rad": -1.06720255348253,
+            "tangent_yaw_rad": -1.089834460120698,
+            "segment_index": 3500,
+            "fraction": 0.17547103061673716,
+            "xy_m": [
+              89626.99394200215,
+              43158.88302892759
+            ]
+          },
+          "left_m": 0.7188005894619776,
+          "progress_to_fault_m": -37.849206061764015,
+          "body_yaw_error_rad": -0.12513827282106393,
+          "path_yaw_error_rad": -0.10250636618289599,
+          "status": "EVALUATED",
+          "nominal_tire_rad": -0.04510269498886462,
+          "measured_tire_rad": -0.044705066829919815,
+          "tire_error_rad": 0.0003976281589448058,
+          "plan_age_s": 0.199999996
+        },
+        {
+          "time_to_fault_s": -19.994999553,
+          "time_after_arm_s": 60.40499865,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89632.24430997382,
+            43147.13104365581
+          ],
+          "speed_mps": 1.2911698818206787,
+          "projection": {
+            "distance_m": 0.16212220596959107,
+            "left_m": -0.16212220596959107,
+            "progress_m": 72.70956161543056,
+            "stamp_ns": 87805246166,
+            "body_yaw_rad": -1.0348316664985049,
+            "tangent_yaw_rad": -1.0342507255855777,
+            "segment_index": 4132,
+            "fraction": 0.6832086153899396,
+            "xy_m": [
+              89632.38365070111,
+              43147.213915673914
+            ]
+          },
+          "left_m": -0.16212220596959107,
+          "progress_to_fault_m": -24.96864591919234,
+          "body_yaw_error_rad": -0.06361219057311018,
+          "path_yaw_error_rad": -0.06419313148603734,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.004816252033537073,
+          "measured_tire_rad": 0.006005594506859779,
+          "tire_error_rad": 0.001189342473322706,
+          "plan_age_s": 0.219999995
+        },
+        {
+          "time_to_fault_s": -14.984999665,
+          "time_after_arm_s": 65.414998538,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89635.48188593931,
+            43141.55796978136
+          ],
+          "speed_mps": 1.289273977279663,
+          "projection": {
+            "distance_m": 0.1267564023616481,
+            "left_m": 0.1267564023616481,
+            "progress_m": 79.16448486184235,
+            "stamp_ns": 94234422122,
+            "body_yaw_rad": -1.0479991261317365,
+            "tangent_yaw_rad": -1.0488618030947043,
+            "segment_index": 4453,
+            "fraction": 0.9616152703163455,
+            "xy_m": [
+              89635.37200634956,
+              43141.49477435989
+            ]
+          },
+          "left_m": 0.1267564023616481,
+          "progress_to_fault_m": -18.513722672780546,
+          "body_yaw_error_rad": 0.10306694382555481,
+          "path_yaw_error_rad": 0.10392962078852265,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.0641213128588033,
+          "measured_tire_rad": 0.0620398223400116,
+          "tire_error_rad": -0.0020814905187917093,
+          "plan_age_s": 0.174999997
+        },
+        {
+          "time_to_fault_s": -9.999999776,
+          "time_after_arm_s": 70.399998427,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89640.24258659626,
+            43137.39004623659
+          ],
+          "speed_mps": 1.2833701372146606,
+          "projection": {
+            "distance_m": 0.1684891415898124,
+            "left_m": 0.1684891415898124,
+            "progress_m": 85.7331824094999,
+            "stamp_ns": 101002499140,
+            "body_yaw_rad": -0.34975765097761985,
+            "tangent_yaw_rad": -0.37055950740058735,
+            "segment_index": 4792,
+            "fraction": 0.7000559197421468,
+            "xy_m": [
+              89640.18157044072,
+              43137.23299331686
+            ]
+          },
+          "left_m": 0.1684891415898124,
+          "progress_to_fault_m": -11.945025125122996,
+          "body_yaw_error_rad": -0.0558084348812658,
+          "path_yaw_error_rad": -0.0350065784582983,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.1631350664546713,
+          "measured_tire_rad": 0.1549333930015564,
+          "tire_error_rad": -0.0082016734531149,
+          "plan_age_s": 0.139999997
+        },
+        {
+          "time_to_fault_s": -4.999999888,
+          "time_after_arm_s": 75.399998315,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89646.29006078147,
+            43137.88952534706
+          ],
+          "speed_mps": 1.2746878862380981,
+          "projection": {
+            "distance_m": 0.34658684131119744,
+            "left_m": -0.34658684131119744,
+            "progress_m": 92.01531783040356,
+            "stamp_ns": 107664869863,
+            "body_yaw_rad": 0.7300648727578135,
+            "tangent_yaw_rad": 0.719936945679407,
+            "segment_index": 5125,
+            "fraction": 0.9914846460288143,
+            "xy_m": [
+              89646.06154316106,
+              43138.150105729546
+            ]
+          },
+          "left_m": -0.34658684131119744,
+          "progress_to_fault_m": -5.662889704219339,
+          "body_yaw_error_rad": -0.12075255526717776,
+          "path_yaw_error_rad": -0.11062462818877128,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.1791782198715836,
+          "measured_tire_rad": 0.1708923876285553,
+          "tire_error_rad": -0.008285832243028313,
+          "plan_age_s": 0.204999995
+        },
+        {
+          "time_to_fault_s": 0.0,
+          "time_after_arm_s": 80.399998203,
+          "reason": "STOPPING_SWEEP_OCCUPIED",
+          "world_xy_m": [
+            89649.00400737983,
+            43143.3497366721
+          ],
+          "speed_mps": 1.2723623514175415,
+          "projection": {
+            "distance_m": 1.1164131131246227,
+            "left_m": -1.1163656551658436,
+            "progress_m": 97.6782075346229,
+            "stamp_ns": 113749997457,
+            "body_yaw_rad": 1.6216225666726372,
+            "tangent_yaw_rad": 1.6204479044907703,
+            "segment_index": 5429,
+            "fraction": 1.0,
+            "xy_m": [
+              89647.88952841386,
+              43143.284048974936
+            ]
+          },
+          "left_m": -1.1163656551658436,
+          "progress_to_fault_m": 0.0,
+          "body_yaw_error_rad": -0.054080672746986025,
+          "path_yaw_error_rad": -0.05290601056511912,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.13263568498623532,
+          "measured_tire_rad": 0.1384902447462082,
+          "tire_error_rad": 0.005854559759972872,
+          "plan_age_s": 0.164999996
+        }
+      ],
+      "offline_counts": {
+        "EVALUATED": 465,
+        "INPUT_OR_FULL_TEACHER_INVALID": 2
+      },
+      "offline_errors": {
+        "ade_m": {
+          "count": 465,
+          "min": 0.0032015563920140266,
+          "median": 0.007037765346467495,
+          "p95": 0.01263850294053554,
+          "max": 0.027323303744196892,
+          "mean": 0.007517895323815205
+        },
+        "fde1_m": {
+          "count": 465,
+          "min": 0.00037891807733103633,
+          "median": 0.006099032703787088,
+          "p95": 0.01376199163496494,
+          "max": 0.018871169537305832,
+          "mean": 0.006621342799964271
+        },
+        "fde2_m": {
+          "count": 465,
+          "min": 0.00032973464112728834,
+          "median": 0.007944528013467789,
+          "p95": 0.018148347735404968,
+          "max": 0.05162706598639488,
+          "mean": 0.008828607054367181
+        },
+        "fde3_m": {
+          "count": 465,
+          "min": 0.0004586745926644653,
+          "median": 0.014085027389228344,
+          "p95": 0.028810795396566374,
+          "max": 0.03800622373819351,
+          "mean": 0.014542205016171279
+        },
+        "endpoint_body_left_error_m": {
+          "count": 465,
+          "min": -0.01985625922679901,
+          "median": 0.0027811601758003235,
+          "p95": 0.02059330642223357,
+          "max": 0.03599926829338074,
+          "mean": 0.00399352828947006
+        },
+        "speed_mps": {
+          "count": 465,
+          "min": 0.913102388381958,
+          "median": 0.987398087978363,
+          "p95": 1.0256350994110108,
+          "max": 1.033351182937622,
+          "mean": 0.9787991462215301
+        }
+      },
+      "offline_common_speed_pp_delta_rad": {
+        "count": 465,
+        "min": -0.006070004067479755,
+        "median": 0.00047109250145014464,
+        "p95": 0.006867357740708025,
+        "max": 0.011488942351117803,
+        "mean": 0.001043444390088444
+      },
+      "offline_common_speed_pp_status": {
+        "teacher": {
+          "PASS": 465
+        },
+        "prediction": {
+          "PASS": 465
+        }
+      },
+      "scan_alignment_at_fault": {
+        "method": "nearest_returns_no_fitted_registration_not_ground_truth",
+        "teacher_scan_row_ids": [
+          75536,
+          75570,
+          75607,
+          75639,
+          75676,
+          75710,
+          75747,
+          75781,
+          75815,
+          75853,
+          75885,
+          75922,
+          75956,
+          75992,
+          76026,
+          76062,
+          76097,
+          76138,
+          76174,
+          76203,
+          76235,
+          76274,
+          76307,
+          76348,
+          76377,
+          76420,
+          76451,
+          76491,
+          76522,
+          76561,
+          76591,
+          76630,
+          76663,
+          76698,
+          76735,
+          76763,
+          76804,
+          76837,
+          76870,
+          76906
+        ],
+        "runtime_returns": 461,
+        "teacher_exclusions": {},
+        "distance_m": {
+          "count": 461,
+          "min": 8.095111799094299e-05,
+          "median": 0.0027458640412093005,
+          "p95": 0.009137330112459924,
+          "max": 0.02686539366584851,
+          "mean": 0.003459073819230153
+        },
+        "within_0p1m_fraction": 1.0
+      }
+    },
+    "5kmh_run06": {
+      "host": "192.168.3.13",
+      "split": "validation",
+      "bag_sha256": "4724b0da7036e2863ccff883a5d0043d487af174c8cfee5be78c9207261751df",
+      "cache_hashes": {
+        "anchors.jsonl": "0729d9f223947bcfc42e0a12729cb82e0578d80a9ebae462d81d698c384ca94d",
+        "labels.npz": "13f17e2f9bf184349f5ef635c11b148948dffd5ddbf7ffd07d23d55328c1fa8a",
+        "inputs.npz": "ee0275a1865a880b676ae70919f19d17988ba98d0ac6cee9d22f9dcf739f163d"
+      },
+      "pose_audit": {
+        "input_poses": 20493,
+        "unique_stamps": 20493,
+        "exact_duplicates": 0,
+        "conflicting_stamps": 0,
+        "excluded_segments": 360
+      },
+      "raw_ambiguous_pose_stamps": 13,
+      "fault_projection": {
+        "distance_m": 1.1179867657823062,
+        "left_m": -1.1179867657823064,
+        "progress_m": 97.68578678422996,
+        "stamp_ns": 113937451767,
+        "body_yaw_rad": 1.6215388844681649,
+        "tangent_yaw_rad": 1.6211988249511708,
+        "segment_index": 5437,
+        "fraction": 0.4969542719416733,
+        "xy_m": [
+          89647.88744038684,
+          43143.29341120159
+        ]
+      },
+      "fault_body_yaw_error_rad": -0.05399699054251372,
+      "command_status_counts": {
+        "EVALUATED": 1608
+      },
+      "prediction_status_counts": {
+        "EVALUATED": 723
+      },
+      "last30s": {
+        "left_m": {
+          "count": 601,
+          "min": -1.1179867657823064,
+          "median": 0.023303576197605258,
+          "p95": 0.4748765537357652,
+          "max": 0.719148263552434,
+          "mean": -0.05239221843342612
+        },
+        "body_yaw_error_rad": {
+          "count": 601,
+          "min": -0.1378143865890079,
+          "median": -0.056739889439695046,
+          "p95": 0.08627935933244202,
+          "max": 0.10444077282107433,
+          "mean": -0.0468953069497614
+        },
+        "tire_error_rad": {
+          "count": 601,
+          "min": -0.013315318478807042,
+          "median": -0.0005780381332614309,
+          "p95": 0.006104025104620964,
+          "max": 0.022384929913451923,
+          "mean": -0.00044337816770002517
+        },
+        "speed_mps": {
+          "count": 601,
+          "min": 1.2498010396957397,
+          "median": 1.284745693206787,
+          "p95": 1.3012001514434814,
+          "max": 1.3033347129821777,
+          "mean": 1.2845049626418636
+        },
+        "plan_age_s": {
+          "count": 601,
+          "min": 0.099999998,
+          "median": 0.204999995,
+          "p95": 0.279999994,
+          "max": 0.384999991,
+          "mean": 0.20460898046422626
+        }
+      },
+      "snapshots": [
+        {
+          "time_to_fault_s": -60.004998659,
+          "time_after_arm_s": 20.394999544,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89618.8858439957,
+            43147.807443971695
+          ],
+          "speed_mps": 1.2875394821166992,
+          "projection": {
+            "distance_m": 0.6549462792529888,
+            "left_m": -0.6549462792529887,
+            "progress_m": 23.6837478380326,
+            "stamp_ns": 36927754350,
+            "body_yaw_rad": 2.1678870084108253,
+            "tangent_yaw_rad": 2.167902406271714,
+            "segment_index": 1587,
+            "fraction": 0.11020703264676114,
+            "xy_m": [
+              89618.3442255684,
+              43147.43919934115
+            ]
+          },
+          "left_m": -0.6549462792529887,
+          "progress_to_fault_m": -74.00203894619736,
+          "body_yaw_error_rad": -0.02051790006663179,
+          "path_yaw_error_rad": -0.020533297927520344,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.004151447249678786,
+          "measured_tire_rad": 0.004922750871628523,
+          "tire_error_rad": 0.0007713036219497366,
+          "plan_age_s": 0.204999996
+        },
+        {
+          "time_to_fault_s": -39.994999106,
+          "time_after_arm_s": 40.404999097,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89619.02684466676,
+            43167.90830669934
+          ],
+          "speed_mps": 1.2668918371200562,
+          "projection": {
+            "distance_m": 1.2819623626150674,
+            "left_m": 1.2819623626150676,
+            "progress_m": 48.164793270827815,
+            "stamp_ns": 63338707472,
+            "body_yaw_rad": -0.09138194411648168,
+            "tangent_yaw_rad": -0.08920655668972534,
+            "segment_index": 2907,
+            "fraction": 0.5805925427493943,
+            "xy_m": [
+              89618.91263683337,
+              43166.63144176132
+            ]
+          },
+          "left_m": 1.2819623626150676,
+          "progress_to_fault_m": -49.520993513402146,
+          "body_yaw_error_rad": 0.033689637753158815,
+          "path_yaw_error_rad": 0.03151425032640248,
+          "status": "EVALUATED",
+          "nominal_tire_rad": -0.20364953940827318,
+          "measured_tire_rad": -0.20424024760723114,
+          "tire_error_rad": -0.0005907081989579566,
+          "plan_age_s": 0.279999994
+        },
+        {
+          "time_to_fault_s": -29.994999329,
+          "time_after_arm_s": 50.404998874,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89627.63119491095,
+            43159.21556917724
+          ],
+          "speed_mps": 1.2822909355163574,
+          "projection": {
+            "distance_m": 0.7191482635524339,
+            "left_m": 0.719148263552434,
+            "progress_m": 59.84456684751284,
+            "stamp_ns": 75343879350,
+            "body_yaw_rad": -1.0677932114858377,
+            "tangent_yaw_rad": -1.0672577082560175,
+            "segment_index": 3507,
+            "fraction": 0.755241403719753,
+            "xy_m": [
+              89627.0013069222,
+              43158.8685600324
+            ]
+          },
+          "left_m": 0.719148263552434,
+          "progress_to_fault_m": -37.841219936717124,
+          "body_yaw_error_rad": -0.12454761481775622,
+          "path_yaw_error_rad": -0.12508311804757644,
+          "status": "EVALUATED",
+          "nominal_tire_rad": -0.04510269498886462,
+          "measured_tire_rad": -0.044705066829919815,
+          "tire_error_rad": 0.0003976281589448058,
+          "plan_age_s": 0.199999996
+        },
+        {
+          "time_to_fault_s": -19.994999553,
+          "time_after_arm_s": 60.40499865,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89632.24430997382,
+            43147.13104365581
+          ],
+          "speed_mps": 1.2911698818206787,
+          "projection": {
+            "distance_m": 0.16133735202881694,
+            "left_m": -0.1613373520288169,
+            "progress_m": 72.70879971198679,
+            "stamp_ns": 87972689674,
+            "body_yaw_rad": -1.0353728982103474,
+            "tangent_yaw_rad": -1.0350375021320988,
+            "segment_index": 4139,
+            "fraction": 0.38458204298837906,
+            "xy_m": [
+              89632.38304097835,
+              43147.21340535528
+            ]
+          },
+          "left_m": -0.1613373520288169,
+          "progress_to_fault_m": -24.976987072243176,
+          "body_yaw_error_rad": -0.06307095886126766,
+          "path_yaw_error_rad": -0.06340635493951631,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.004816252033537073,
+          "measured_tire_rad": 0.006005594506859779,
+          "tire_error_rad": 0.001189342473322706,
+          "plan_age_s": 0.219999995
+        },
+        {
+          "time_to_fault_s": -14.984999665,
+          "time_after_arm_s": 65.414998538,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89635.48188593931,
+            43141.55796978136
+          ],
+          "speed_mps": 1.289273977279663,
+          "projection": {
+            "distance_m": 0.12480043003762833,
+            "left_m": 0.12480043003762833,
+            "progress_m": 79.1618106478506,
+            "stamp_ns": 94403405341,
+            "body_yaw_rad": -1.048656534812253,
+            "tangent_yaw_rad": -1.0613822102530401,
+            "segment_index": 4460,
+            "fraction": 0.5259271837176247,
+            "xy_m": [
+              89635.37293137335,
+              43141.49710887524
+            ]
+          },
+          "left_m": 0.12480043003762833,
+          "progress_to_fault_m": -18.52397613637936,
+          "body_yaw_error_rad": 0.10372435250607126,
+          "path_yaw_error_rad": 0.11645002794685844,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.0641213128588033,
+          "measured_tire_rad": 0.0620398223400116,
+          "tire_error_rad": -0.0020814905187917093,
+          "plan_age_s": 0.174999997
+        },
+        {
+          "time_to_fault_s": -9.999999776,
+          "time_after_arm_s": 70.399998427,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89640.24258659626,
+            43137.39004623659
+          ],
+          "speed_mps": 1.2833701372146606,
+          "projection": {
+            "distance_m": 0.1689025631677799,
+            "left_m": 0.1689025631677799,
+            "progress_m": 85.73542920895098,
+            "stamp_ns": 101179229653,
+            "body_yaw_rad": -0.34943093184386026,
+            "tangent_yaw_rad": -0.35106104951537404,
+            "segment_index": 4799,
+            "fraction": 0.6154609872650258,
+            "xy_m": [
+              89640.18450196159,
+              43137.231445319005
+            ]
+          },
+          "left_m": 0.1689025631677799,
+          "progress_to_fault_m": -11.950357575278986,
+          "body_yaw_error_rad": -0.05613515401502538,
+          "path_yaw_error_rad": -0.054505036343511615,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.1631350664546713,
+          "measured_tire_rad": 0.1549333930015564,
+          "tire_error_rad": -0.0082016734531149,
+          "plan_age_s": 0.139999997
+        },
+        {
+          "time_to_fault_s": -4.999999888,
+          "time_after_arm_s": 75.399998315,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89646.29006078147,
+            43137.88952534706
+          ],
+          "speed_mps": 1.2746878862380981,
+          "projection": {
+            "distance_m": 0.3464682252776965,
+            "left_m": -0.34646822527769655,
+            "progress_m": 92.01194546985379,
+            "stamp_ns": 107842754638,
+            "body_yaw_rad": 0.7297525431348043,
+            "tangent_yaw_rad": 0.7272370787020785,
+            "segment_index": 5132,
+            "fraction": 0.6378524256374215,
+            "xy_m": [
+              89646.05972585246,
+              43138.1483419841
+            ]
+          },
+          "left_m": -0.34646822527769655,
+          "progress_to_fault_m": -5.673841314376176,
+          "body_yaw_error_rad": -0.12044022564416856,
+          "path_yaw_error_rad": -0.11792476121144281,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.1791782198715836,
+          "measured_tire_rad": 0.1708923876285553,
+          "tire_error_rad": -0.008285832243028313,
+          "plan_age_s": 0.204999995
+        },
+        {
+          "time_to_fault_s": 0.0,
+          "time_after_arm_s": 80.399998203,
+          "reason": "STOPPING_SWEEP_OCCUPIED",
+          "world_xy_m": [
+            89649.00400737983,
+            43143.3497366721
+          ],
+          "speed_mps": 1.2723623514175415,
+          "projection": {
+            "distance_m": 1.1179867657823062,
+            "left_m": -1.1179867657823064,
+            "progress_m": 97.68578678422996,
+            "stamp_ns": 113937451767,
+            "body_yaw_rad": 1.6215388844681649,
+            "tangent_yaw_rad": 1.6211988249511708,
+            "segment_index": 5437,
+            "fraction": 0.4969542719416733,
+            "xy_m": [
+              89647.88744038684,
+              43143.29341120159
+            ]
+          },
+          "left_m": -1.1179867657823064,
+          "progress_to_fault_m": 0.0,
+          "body_yaw_error_rad": -0.05399699054251372,
+          "path_yaw_error_rad": -0.053656931025519716,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.13263568498623532,
+          "measured_tire_rad": 0.1384902447462082,
+          "tire_error_rad": 0.005854559759972872,
+          "plan_age_s": 0.164999996
+        }
+      ],
+      "offline_counts": {
+        "EVALUATED": 467
+      },
+      "offline_errors": {
+        "ade_m": {
+          "count": 467,
+          "min": 0.0029143127612769604,
+          "median": 0.007216552272439003,
+          "p95": 0.012344113364815711,
+          "max": 0.020179707556962967,
+          "mean": 0.007521392116462712
+        },
+        "fde1_m": {
+          "count": 467,
+          "min": 0.00044456892646849155,
+          "median": 0.006115796975791454,
+          "p95": 0.012815574835985898,
+          "max": 0.019078420475125313,
+          "mean": 0.006578456994150596
+        },
+        "fde2_m": {
+          "count": 467,
+          "min": 0.0009418550762347877,
+          "median": 0.0078697195276618,
+          "p95": 0.019342554360628126,
+          "max": 0.034375909715890884,
+          "mean": 0.008994876277584152
+        },
+        "fde3_m": {
+          "count": 467,
+          "min": 0.0009094296838156879,
+          "median": 0.013577766716480255,
+          "p95": 0.026267271675169467,
+          "max": 0.03629898652434349,
+          "mean": 0.013897665844242063
+        },
+        "endpoint_body_left_error_m": {
+          "count": 467,
+          "min": -0.02328304946422577,
+          "median": 0.002287253737449646,
+          "p95": 0.022759437933564185,
+          "max": 0.036178022623062134,
+          "mean": 0.003895086590779
+        },
+        "speed_mps": {
+          "count": 467,
+          "min": 0.9132869243621826,
+          "median": 0.987201452255249,
+          "p95": 1.0256701946258544,
+          "max": 1.0324769020080566,
+          "mean": 0.9786963078654042
+        }
+      },
+      "offline_common_speed_pp_delta_rad": {
+        "count": 467,
+        "min": -0.006635807799098784,
+        "median": 0.00032746394454080674,
+        "p95": 0.0067037413019001455,
+        "max": 0.011374790382737754,
+        "mean": 0.0010071525773850533
+      },
+      "offline_common_speed_pp_status": {
+        "teacher": {
+          "PASS": 467
+        },
+        "prediction": {
+          "PASS": 467
+        }
+      },
+      "scan_alignment_at_fault": {
+        "method": "nearest_returns_no_fitted_registration_not_ground_truth",
+        "teacher_scan_row_ids": [
+          75585,
+          75623,
+          75656,
+          75694,
+          75728,
+          75751,
+          75788,
+          75822,
+          75858,
+          75892,
+          75926,
+          75963,
+          76001,
+          76034,
+          76069,
+          76105,
+          76138,
+          76173,
+          76208,
+          76244,
+          76280,
+          76313,
+          76354,
+          76386,
+          76422,
+          76456,
+          76488,
+          76527,
+          76560,
+          76597,
+          76631,
+          76666,
+          76700,
+          76736,
+          76772,
+          76806,
+          76843,
+          76877,
+          76911,
+          76947,
+          76981
+        ],
+        "runtime_returns": 461,
+        "teacher_exclusions": {},
+        "distance_m": {
+          "count": 461,
+          "min": 7.779587974712177e-05,
+          "median": 0.0026568151461321497,
+          "p95": 0.007696299494561035,
+          "max": 0.017265328105381315,
+          "mean": 0.003243541180051716
+        },
+        "within_0p1m_fraction": 1.0
+      }
+    },
+    "8kmh_run06": {
+      "host": "192.168.3.13",
+      "split": "validation",
+      "bag_sha256": "9bd0eca249645f596573578085afb426ede8d0ba171111ee092dd0b2b3814e45",
+      "cache_hashes": {
+        "anchors.jsonl": "40ebdd4f14018cde1b98263c02a31826bcec43d20d46c99cef9fe9f325bae0db",
+        "labels.npz": "2498f5a721c60a9d852cf1bd6bbd7c2be947978050859382c0b229332cf0860a",
+        "inputs.npz": "cada14929002cbb1cd94e7b3818fd6f7f5ee0cfb46adbfc111a022e1f1808d6c"
+      },
+      "pose_audit": {
+        "input_poses": 11608,
+        "unique_stamps": 11608,
+        "exact_duplicates": 0,
+        "conflicting_stamps": 0,
+        "excluded_segments": 320
+      },
+      "raw_ambiguous_pose_stamps": 10,
+      "fault_projection": {
+        "distance_m": 1.0342870958830666,
+        "left_m": -1.0342870958830663,
+        "progress_m": 98.05866863605578,
+        "stamp_ns": 68480453556,
+        "body_yaw_rad": 1.624854369793112,
+        "tangent_yaw_rad": 1.6238000415630462,
+        "segment_index": 3161,
+        "fraction": 0.5151695688078756,
+        "xy_m": [
+          89647.97117280371,
+          43143.294941279266
+        ]
+      },
+      "fault_body_yaw_error_rad": -0.0573124758674608,
+      "command_status_counts": {
+        "EVALUATED": 1608
+      },
+      "prediction_status_counts": {
+        "EVALUATED": 723
+      },
+      "last30s": {
+        "left_m": {
+          "count": 601,
+          "min": -1.0342870958830663,
+          "median": 0.015315713664495505,
+          "p95": 0.5075099128382455,
+          "max": 0.7500837753177468,
+          "mean": -0.019003477511939027
+        },
+        "body_yaw_error_rad": {
+          "count": 601,
+          "min": -0.1418040665464425,
+          "median": -0.05722739611251627,
+          "p95": 0.08457014379442596,
+          "max": 0.10211475328356878,
+          "mean": -0.04844974860136595
+        },
+        "tire_error_rad": {
+          "count": 601,
+          "min": -0.013315318478807042,
+          "median": -0.0005780381332614309,
+          "p95": 0.006104025104620964,
+          "max": 0.022384929913451923,
+          "mean": -0.00044337816770002517
+        },
+        "speed_mps": {
+          "count": 601,
+          "min": 1.2498010396957397,
+          "median": 1.284745693206787,
+          "p95": 1.3012001514434814,
+          "max": 1.3033347129821777,
+          "mean": 1.2845049626418636
+        },
+        "plan_age_s": {
+          "count": 601,
+          "min": 0.099999998,
+          "median": 0.204999995,
+          "p95": 0.279999994,
+          "max": 0.384999991,
+          "mean": 0.20460898046422626
+        }
+      },
+      "snapshots": [
+        {
+          "time_to_fault_s": -60.004998659,
+          "time_after_arm_s": 20.394999544,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89618.8858439957,
+            43147.807443971695
+          ],
+          "speed_mps": 1.2875394821166992,
+          "projection": {
+            "distance_m": 0.6334968322198181,
+            "left_m": -0.6334968322198181,
+            "progress_m": 23.704268316042725,
+            "stamp_ns": 26332153234,
+            "body_yaw_rad": 2.1753934333891656,
+            "tangent_yaw_rad": 2.1755092611566353,
+            "segment_index": 1054,
+            "fraction": 0.8102548340255901,
+            "xy_m": [
+              89618.3646881115,
+              43147.4472845892
+            ]
+          },
+          "left_m": -0.6334968322198181,
+          "progress_to_fault_m": -74.35440032001306,
+          "body_yaw_error_rad": -0.028024325044972098,
+          "path_yaw_error_rad": -0.028140152812441865,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.004151447249678786,
+          "measured_tire_rad": 0.004922750871628523,
+          "tire_error_rad": 0.0007713036219497366,
+          "plan_age_s": 0.204999996
+        },
+        {
+          "time_to_fault_s": -39.994999106,
+          "time_after_arm_s": 40.404999097,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89619.02684466676,
+            43167.90830669934
+          ],
+          "speed_mps": 1.2668918371200562,
+          "projection": {
+            "distance_m": 1.2059352649288357,
+            "left_m": 1.2057964385575692,
+            "progress_m": 48.31081761398582,
+            "stamp_ns": 40574999093,
+            "body_yaw_rad": -0.09723052914132194,
+            "tangent_yaw_rad": -0.07852076308813125,
+            "segment_index": 1766,
+            "fraction": 1.0,
+            "xy_m": [
+              89618.91402038331,
+              43166.70766081305
+            ]
+          },
+          "left_m": 1.2057964385575692,
+          "progress_to_fault_m": -49.747851022069966,
+          "body_yaw_error_rad": 0.03953822277799908,
+          "path_yaw_error_rad": 0.02082845672480839,
+          "status": "EVALUATED",
+          "nominal_tire_rad": -0.20364953940827318,
+          "measured_tire_rad": -0.20424024760723114,
+          "tire_error_rad": -0.0005907081989579566,
+          "plan_age_s": 0.279999994
+        },
+        {
+          "time_to_fault_s": -29.994999329,
+          "time_after_arm_s": 50.404998874,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89627.63119491095,
+            43159.21556917724
+          ],
+          "speed_mps": 1.2822909355163574,
+          "projection": {
+            "distance_m": 0.7500837753177468,
+            "left_m": 0.7500837753177468,
+            "progress_m": 60.03407845905995,
+            "stamp_ns": 47159037550,
+            "body_yaw_rad": -1.0664637225699745,
+            "tangent_yaw_rad": -1.1054125894746307,
+            "segment_index": 2096,
+            "fraction": 0.40110297301240155,
+            "xy_m": [
+              89626.96088297776,
+              43158.87895726092
+            ]
+          },
+          "left_m": 0.7500837753177468,
+          "progress_to_fault_m": -38.02459017699584,
+          "body_yaw_error_rad": -0.1258771037336195,
+          "path_yaw_error_rad": -0.08692823682896321,
+          "status": "EVALUATED",
+          "nominal_tire_rad": -0.04510269498886462,
+          "measured_tire_rad": -0.044705066829919815,
+          "tire_error_rad": 0.0003976281589448058,
+          "plan_age_s": 0.199999996
+        },
+        {
+          "time_to_fault_s": -19.994999553,
+          "time_after_arm_s": 60.40499865,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89632.24430997382,
+            43147.13104365581
+          ],
+          "speed_mps": 1.2911698818206787,
+          "projection": {
+            "distance_m": 0.12850531925756067,
+            "left_m": -0.1285053192575607,
+            "progress_m": 72.92408346887902,
+            "stamp_ns": 54218532729,
+            "body_yaw_rad": -1.0472411133511874,
+            "tangent_yaw_rad": -1.0554656289254911,
+            "segment_index": 2448,
+            "fraction": 0.42669707767206916,
+            "xy_m": [
+              89632.35612628085,
+              43147.19437398471
+            ]
+          },
+          "left_m": -0.1285053192575607,
+          "progress_to_fault_m": -25.134585167176766,
+          "body_yaw_error_rad": -0.05120274372042766,
+          "path_yaw_error_rad": -0.042978228146123953,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.004816252033537073,
+          "measured_tire_rad": 0.006005594506859779,
+          "tire_error_rad": 0.001189342473322706,
+          "plan_age_s": 0.219999995
+        },
+        {
+          "time_to_fault_s": -14.984999665,
+          "time_after_arm_s": 65.414998538,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89635.48188593931,
+            43141.55796978136
+          ],
+          "speed_mps": 1.289273977279663,
+          "projection": {
+            "distance_m": 0.10428564372887018,
+            "left_m": 0.10428564372887017,
+            "progress_m": 79.37259749112796,
+            "stamp_ns": 57778034998,
+            "body_yaw_rad": -1.0469502537570912,
+            "tangent_yaw_rad": -1.0473091064029518,
+            "segment_index": 2626,
+            "fraction": 0.202419312713802,
+            "xy_m": [
+              89635.39156610635,
+              43141.50583703482
+            ]
+          },
+          "left_m": 0.10428564372887017,
+          "progress_to_fault_m": -18.686071144927823,
+          "body_yaw_error_rad": 0.10201807145090946,
+          "path_yaw_error_rad": 0.10237692409677014,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.0641213128588033,
+          "measured_tire_rad": 0.0620398223400116,
+          "tire_error_rad": -0.0020814905187917093,
+          "plan_age_s": 0.174999997
+        },
+        {
+          "time_to_fault_s": -9.999999776,
+          "time_after_arm_s": 70.399998427,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89640.24258659626,
+            43137.39004623659
+          ],
+          "speed_mps": 1.2833701372146606,
+          "projection": {
+            "distance_m": 0.24188200954468345,
+            "left_m": 0.24188200954468342,
+            "progress_m": 85.95647812374999,
+            "stamp_ns": 61478349374,
+            "body_yaw_rad": -0.348707043672019,
+            "tangent_yaw_rad": -0.34981485264651235,
+            "segment_index": 2811,
+            "fraction": 0.22338328448769637,
+            "xy_m": [
+              89640.15968785563,
+              43137.16281352472
+            ]
+          },
+          "left_m": 0.24188200954468342,
+          "progress_to_fault_m": -12.102190512305796,
+          "body_yaw_error_rad": -0.05685904218686666,
+          "path_yaw_error_rad": -0.0557512332123733,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.1631350664546713,
+          "measured_tire_rad": 0.1549333930015564,
+          "tire_error_rad": -0.0082016734531149,
+          "plan_age_s": 0.139999997
+        },
+        {
+          "time_to_fault_s": -4.999999888,
+          "time_after_arm_s": 75.399998315,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89646.29006078147,
+            43137.88952534706
+          ],
+          "speed_mps": 1.2746878862380981,
+          "projection": {
+            "distance_m": 0.2649973580583931,
+            "left_m": -0.26499735805839303,
+            "progress_m": 92.31814791117722,
+            "stamp_ns": 65147678622,
+            "body_yaw_rad": 0.7343909700546831,
+            "tangent_yaw_rad": 0.7124638726630895,
+            "segment_index": 2995,
+            "fraction": 0.13400396276525237,
+            "xy_m": [
+              89646.11683192961,
+              43138.09006303595
+            ]
+          },
+          "left_m": -0.26499735805839303,
+          "progress_to_fault_m": -5.740520724878564,
+          "body_yaw_error_rad": -0.12507865256404738,
+          "path_yaw_error_rad": -0.10315155517245378,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.1791782198715836,
+          "measured_tire_rad": 0.1708923876285553,
+          "tire_error_rad": -0.008285832243028313,
+          "plan_age_s": 0.204999995
+        },
+        {
+          "time_to_fault_s": 0.0,
+          "time_after_arm_s": 80.399998203,
+          "reason": "STOPPING_SWEEP_OCCUPIED",
+          "world_xy_m": [
+            89649.00400737983,
+            43143.3497366721
+          ],
+          "speed_mps": 1.2723623514175415,
+          "projection": {
+            "distance_m": 1.0342870958830666,
+            "left_m": -1.0342870958830663,
+            "progress_m": 98.05866863605578,
+            "stamp_ns": 68480453556,
+            "body_yaw_rad": 1.624854369793112,
+            "tangent_yaw_rad": 1.6238000415630462,
+            "segment_index": 3161,
+            "fraction": 0.5151695688078756,
+            "xy_m": [
+              89647.97117280371,
+              43143.294941279266
+            ]
+          },
+          "left_m": -1.0342870958830663,
+          "progress_to_fault_m": 0.0,
+          "body_yaw_error_rad": -0.0573124758674608,
+          "path_yaw_error_rad": -0.05625814763739512,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.13263568498623532,
+          "measured_tire_rad": 0.1384902447462082,
+          "tire_error_rad": 0.005854559759972872,
+          "plan_age_s": 0.164999996
+        }
+      ],
+      "offline_counts": {
+        "EVALUATED": 255,
+        "INPUT_OR_FULL_TEACHER_INVALID": 2
+      },
+      "offline_errors": {
+        "ade_m": {
+          "count": 255,
+          "min": 0.006731697823852301,
+          "median": 0.014094910584390163,
+          "p95": 0.027635355666279785,
+          "max": 0.032221727073192596,
+          "mean": 0.015734965962303036
+        },
+        "fde1_m": {
+          "count": 255,
+          "min": 0.0005604151519946754,
+          "median": 0.010024315677583218,
+          "p95": 0.022014301083981988,
+          "max": 0.02799193561077118,
+          "mean": 0.010731544260474324
+        },
+        "fde2_m": {
+          "count": 255,
+          "min": 0.000635480391792953,
+          "median": 0.017141161486506462,
+          "p95": 0.041554148867726313,
+          "max": 0.0549544095993042,
+          "mean": 0.018970467029687237
+        },
+        "fde3_m": {
+          "count": 255,
+          "min": 0.004287154879420996,
+          "median": 0.037684712558984756,
+          "p95": 0.10300479456782338,
+          "max": 0.1401643604040146,
+          "mean": 0.048174771701223126
+        },
+        "endpoint_body_left_error_m": {
+          "count": 255,
+          "min": -0.11884526908397675,
+          "median": -0.017848491668701172,
+          "p95": 0.0910566806793213,
+          "max": 0.12070685625076294,
+          "mean": -0.007667815393092586
+        },
+        "speed_mps": {
+          "count": 255,
+          "min": 1.7123337984085083,
+          "median": 1.7957966327667236,
+          "p95": 1.831040334701538,
+          "max": 1.8354395627975464,
+          "mean": 1.782872854494581
+        }
+      },
+      "offline_common_speed_pp_delta_rad": {
+        "count": 255,
+        "min": -0.012755904075842678,
+        "median": -0.001397845252744721,
+        "p95": 0.004392180161266738,
+        "max": 0.009682024234526992,
+        "mean": -0.001257436699760442
+      },
+      "offline_common_speed_pp_status": {
+        "teacher": {
+          "PASS": 255
+        },
+        "prediction": {
+          "PASS": 255
+        }
+      },
+      "scan_alignment_at_fault": {
+        "method": "nearest_returns_no_fitted_registration_not_ground_truth",
+        "teacher_scan_row_ids": [
+          43642,
+          43679,
+          43711,
+          43747,
+          43781,
+          43817,
+          43852,
+          43890,
+          43922,
+          43960,
+          43992,
+          44027,
+          44064,
+          44096,
+          44134,
+          44166,
+          44202,
+          44239,
+          44273,
+          44310,
+          44343,
+          44377,
+          44414,
+          44447,
+          44484,
+          44518,
+          44556,
+          44589,
+          44627,
+          44659,
+          44693,
+          44728,
+          44770,
+          44802,
+          44838,
+          44872,
+          44908,
+          44946,
+          44975,
+          45017
+        ],
+        "runtime_returns": 461,
+        "teacher_exclusions": {},
+        "distance_m": {
+          "count": 461,
+          "min": 5.815640065682444e-05,
+          "median": 0.0034565967935427664,
+          "p95": 0.011870983418048195,
+          "max": 0.028057793214550424,
+          "mean": 0.004355270469451289
+        },
+        "within_0p1m_fraction": 1.0
+      }
+    },
+    "8kmh_run09": {
+      "host": "192.168.3.13",
+      "split": "validation",
+      "bag_sha256": "16d4dcb2f2103ef8a9516674ce9b1285373d7d3e0c5ae6c920f3bcc92913cf38",
+      "cache_hashes": {
+        "anchors.jsonl": "ace0e3cf1b2c5be0cd3c096406fb7ab829b54ab01c3b32fa12efaf75a07716b0",
+        "labels.npz": "03cc350894095a440ac9d676305808718c59b3501fff2fdf7d4f79a91a6a7a31",
+        "inputs.npz": "20b25762b31d0a3b3d8e984b08ae429429fa9ca97f943bfe3d83092ba8e4b079"
+      },
+      "pose_audit": {
+        "input_poses": 11612,
+        "unique_stamps": 11612,
+        "exact_duplicates": 0,
+        "conflicting_stamps": 0,
+        "excluded_segments": 339
+      },
+      "raw_ambiguous_pose_stamps": 13,
+      "fault_projection": {
+        "distance_m": 1.0342546302695876,
+        "left_m": -1.0342546302695876,
+        "progress_m": 98.03098032129166,
+        "stamp_ns": 68503190874,
+        "body_yaw_rad": 1.6228347246817303,
+        "tangent_yaw_rad": 1.6498096187339206,
+        "segment_index": 3159,
+        "fraction": 0.6064135256452378,
+        "xy_m": [
+          89647.97297954797,
+          43143.2681018134
+        ]
+      },
+      "fault_body_yaw_error_rad": -0.05529283075607916,
+      "command_status_counts": {
+        "EVALUATED": 1608
+      },
+      "prediction_status_counts": {
+        "EVALUATED": 723
+      },
+      "last30s": {
+        "left_m": {
+          "count": 601,
+          "min": -1.0342546302695876,
+          "median": 0.0159975423518752,
+          "p95": 0.5064514378190567,
+          "max": 0.7491966571748201,
+          "mean": -0.018852416194584883
+        },
+        "body_yaw_error_rad": {
+          "count": 601,
+          "min": -0.1420656527170214,
+          "median": -0.05740740673225264,
+          "p95": 0.08391737050000203,
+          "max": 0.10167883772633546,
+          "mean": -0.04858988166048888
+        },
+        "tire_error_rad": {
+          "count": 601,
+          "min": -0.013315318478807042,
+          "median": -0.0005780381332614309,
+          "p95": 0.006104025104620964,
+          "max": 0.022384929913451923,
+          "mean": -0.00044337816770002517
+        },
+        "speed_mps": {
+          "count": 601,
+          "min": 1.2498010396957397,
+          "median": 1.284745693206787,
+          "p95": 1.3012001514434814,
+          "max": 1.3033347129821777,
+          "mean": 1.2845049626418636
+        },
+        "plan_age_s": {
+          "count": 601,
+          "min": 0.099999998,
+          "median": 0.204999995,
+          "p95": 0.279999994,
+          "max": 0.384999991,
+          "mean": 0.20460898046422626
+        }
+      },
+      "snapshots": [
+        {
+          "time_to_fault_s": -60.004998659,
+          "time_after_arm_s": 20.394999544,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89618.8858439957,
+            43147.807443971695
+          ],
+          "speed_mps": 1.2875394821166992,
+          "projection": {
+            "distance_m": 0.633584924102989,
+            "left_m": -0.633584924102989,
+            "progress_m": 23.709217075504068,
+            "stamp_ns": 26365989621,
+            "body_yaw_rad": 2.1753014548218506,
+            "tangent_yaw_rad": 2.1702364835492243,
+            "segment_index": 1053,
+            "fraction": 0.7995105599052049,
+            "xy_m": [
+              89618.36272359139,
+              43147.44998782243
+            ]
+          },
+          "left_m": -0.633584924102989,
+          "progress_to_fault_m": -74.3217632457876,
+          "body_yaw_error_rad": -0.027932346477657077,
+          "path_yaw_error_rad": -0.022867375205030793,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.004151447249678786,
+          "measured_tire_rad": 0.004922750871628523,
+          "tire_error_rad": 0.0007713036219497366,
+          "plan_age_s": 0.204999996
+        },
+        {
+          "time_to_fault_s": -39.994999106,
+          "time_after_arm_s": 40.404999097,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89619.02684466676,
+            43167.90830669934
+          ],
+          "speed_mps": 1.2668918371200562,
+          "projection": {
+            "distance_m": 1.206460329293837,
+            "left_m": 1.206460329293837,
+            "progress_m": 48.31273803200186,
+            "stamp_ns": 40603239824,
+            "body_yaw_rad": -0.09798115674106227,
+            "tangent_yaw_rad": -0.09221746502536095,
+            "segment_index": 1765,
+            "fraction": 0.8827154523460176,
+            "xy_m": [
+              89618.91574557548,
+              43166.70697264169
+            ]
+          },
+          "left_m": 1.206460329293837,
+          "progress_to_fault_m": -49.718242289289805,
+          "body_yaw_error_rad": 0.04028885037773941,
+          "path_yaw_error_rad": 0.03452515866203809,
+          "status": "EVALUATED",
+          "nominal_tire_rad": -0.20364953940827318,
+          "measured_tire_rad": -0.20424024760723114,
+          "tire_error_rad": -0.0005907081989579566,
+          "plan_age_s": 0.279999994
+        },
+        {
+          "time_to_fault_s": -29.994999329,
+          "time_after_arm_s": 50.404998874,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89627.63119491095,
+            43159.21556917724
+          ],
+          "speed_mps": 1.2822909355163574,
+          "projection": {
+            "distance_m": 0.74919665717482,
+            "left_m": 0.7491966571748201,
+            "progress_m": 60.035041941180864,
+            "stamp_ns": 47194444628,
+            "body_yaw_rad": -1.06727935751851,
+            "tangent_yaw_rad": -1.1027688127597663,
+            "segment_index": 2095,
+            "fraction": 0.2222841610219449,
+            "xy_m": [
+              89626.9625669634,
+              43158.87758648705
+            ]
+          },
+          "left_m": 0.7491966571748201,
+          "progress_to_fault_m": -37.9959383801108,
+          "body_yaw_error_rad": -0.12506146878508395,
+          "path_yaw_error_rad": -0.08957201354382759,
+          "status": "EVALUATED",
+          "nominal_tire_rad": -0.04510269498886462,
+          "measured_tire_rad": -0.044705066829919815,
+          "tire_error_rad": 0.0003976281589448058,
+          "plan_age_s": 0.199999996
+        },
+        {
+          "time_to_fault_s": -19.994999553,
+          "time_after_arm_s": 60.40499865,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89632.24430997382,
+            43147.13104365581
+          ],
+          "speed_mps": 1.2911698818206787,
+          "projection": {
+            "distance_m": 0.12899933052599707,
+            "left_m": -0.12899933052599707,
+            "progress_m": 72.92275474488362,
+            "stamp_ns": 54257656484,
+            "body_yaw_rad": -1.046076737262931,
+            "tangent_yaw_rad": -1.0518779501576068,
+            "segment_index": 2447,
+            "fraction": 0.13288483652436298,
+            "xy_m": [
+              89632.35632733055,
+              43147.1950197378
+            ]
+          },
+          "left_m": -0.12899933052599707,
+          "progress_to_fault_m": -25.108225576408046,
+          "body_yaw_error_rad": -0.05236711980868413,
+          "path_yaw_error_rad": -0.046565906914008304,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.004816252033537073,
+          "measured_tire_rad": 0.006005594506859779,
+          "tire_error_rad": 0.001189342473322706,
+          "plan_age_s": 0.219999995
+        },
+        {
+          "time_to_fault_s": -14.984999665,
+          "time_after_arm_s": 65.414998538,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89635.48188593931,
+            43141.55796978136
+          ],
+          "speed_mps": 1.289273977279663,
+          "projection": {
+            "distance_m": 0.1062673776112666,
+            "left_m": 0.1062673776112666,
+            "progress_m": 79.37190071058403,
+            "stamp_ns": 57813076729,
+            "body_yaw_rad": -1.0464541702445316,
+            "tangent_yaw_rad": -1.0467255208774395,
+            "segment_index": 2625,
+            "fraction": 0.15390110608069185,
+            "xy_m": [
+              89635.38988078167,
+              43141.504792657404
+            ]
+          },
+          "left_m": 0.1062673776112666,
+          "progress_to_fault_m": -18.659079610707636,
+          "body_yaw_error_rad": 0.10152198793834988,
+          "path_yaw_error_rad": 0.10179333857125782,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.0641213128588033,
+          "measured_tire_rad": 0.0620398223400116,
+          "tire_error_rad": -0.0020814905187917093,
+          "plan_age_s": 0.174999997
+        },
+        {
+          "time_to_fault_s": -9.999999776,
+          "time_after_arm_s": 70.399998427,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89640.24258659626,
+            43137.39004623659
+          ],
+          "speed_mps": 1.2833701372146606,
+          "projection": {
+            "distance_m": 0.24133486891485925,
+            "left_m": 0.24133486891485925,
+            "progress_m": 85.94699087207712,
+            "stamp_ns": 61512510498,
+            "body_yaw_rad": -0.3491507892329643,
+            "tangent_yaw_rad": -0.3896012355687217,
+            "segment_index": 2810,
+            "fraction": 0.16745818995113593,
+            "xy_m": [
+              89640.15092289155,
+              43137.1667968599
+            ]
+          },
+          "left_m": 0.24133486891485925,
+          "progress_to_fault_m": -12.083989449214542,
+          "body_yaw_error_rad": -0.056415296625921374,
+          "path_yaw_error_rad": -0.015964850290163927,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.1631350664546713,
+          "measured_tire_rad": 0.1549333930015564,
+          "tire_error_rad": -0.0082016734531149,
+          "plan_age_s": 0.139999997
+        },
+        {
+          "time_to_fault_s": -4.999999888,
+          "time_after_arm_s": 75.399998315,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89646.29006078147,
+            43137.88952534706
+          ],
+          "speed_mps": 1.2746878862380981,
+          "projection": {
+            "distance_m": 0.26544561292897023,
+            "left_m": -0.2654456129289702,
+            "progress_m": 92.31750209343899,
+            "stamp_ns": 65192162182,
+            "body_yaw_rad": 0.7355656437773526,
+            "tangent_yaw_rad": 0.7180090236163782,
+            "segment_index": 2994,
+            "fraction": 0.10818200488620308,
+            "xy_m": [
+              89646.11542768599,
+              43138.089436966
+            ]
+          },
+          "left_m": -0.2654456129289702,
+          "progress_to_fault_m": -5.713478227852676,
+          "body_yaw_error_rad": -0.12625332628671682,
+          "path_yaw_error_rad": -0.10869670612574245,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.1791782198715836,
+          "measured_tire_rad": 0.1708923876285553,
+          "tire_error_rad": -0.008285832243028313,
+          "plan_age_s": 0.204999995
+        },
+        {
+          "time_to_fault_s": 0.0,
+          "time_after_arm_s": 80.399998203,
+          "reason": "STOPPING_SWEEP_OCCUPIED",
+          "world_xy_m": [
+            89649.00400737983,
+            43143.3497366721
+          ],
+          "speed_mps": 1.2723623514175415,
+          "projection": {
+            "distance_m": 1.0342546302695876,
+            "left_m": -1.0342546302695876,
+            "progress_m": 98.03098032129166,
+            "stamp_ns": 68503190874,
+            "body_yaw_rad": 1.6228347246817303,
+            "tangent_yaw_rad": 1.6498096187339206,
+            "segment_index": 3159,
+            "fraction": 0.6064135256452378,
+            "xy_m": [
+              89647.97297954797,
+              43143.2681018134
+            ]
+          },
+          "left_m": -1.0342546302695876,
+          "progress_to_fault_m": 0.0,
+          "body_yaw_error_rad": -0.05529283075607916,
+          "path_yaw_error_rad": -0.0822677248082695,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.13263568498623532,
+          "measured_tire_rad": 0.1384902447462082,
+          "tire_error_rad": 0.005854559759972872,
+          "plan_age_s": 0.164999996
+        }
+      ],
+      "offline_counts": {
+        "EVALUATED": 257
+      },
+      "offline_errors": {
+        "ade_m": {
+          "count": 257,
+          "min": 0.00632070517167449,
+          "median": 0.014144161716103554,
+          "p95": 0.027856347337365146,
+          "max": 0.03563356027007103,
+          "mean": 0.015719889338827668
+        },
+        "fde1_m": {
+          "count": 257,
+          "min": 0.0009611789719201624,
+          "median": 0.00998794473707676,
+          "p95": 0.02288980297744274,
+          "max": 0.03278964385390282,
+          "mean": 0.010741711229743647
+        },
+        "fde2_m": {
+          "count": 257,
+          "min": 0.0006447535124607384,
+          "median": 0.017282839864492416,
+          "p95": 0.042471351474523536,
+          "max": 0.06093871220946312,
+          "mean": 0.01932929341857057
+        },
+        "fde3_m": {
+          "count": 257,
+          "min": 0.0011680393945425749,
+          "median": 0.03881441056728363,
+          "p95": 0.10252269357442854,
+          "max": 0.13501134514808655,
+          "mean": 0.04866669027692845
+        },
+        "endpoint_body_left_error_m": {
+          "count": 257,
+          "min": -0.11480949819087982,
+          "median": -0.013608098030090332,
+          "p95": 0.08834297657012939,
+          "max": 0.11240780353546143,
+          "mean": -0.005479499610713484
+        },
+        "speed_mps": {
+          "count": 257,
+          "min": 1.7124662399291992,
+          "median": 1.7953940629959106,
+          "p95": 1.830843448638916,
+          "max": 1.8358889818191528,
+          "mean": 1.782782796755839
+        }
+      },
+      "offline_common_speed_pp_delta_rad": {
+        "count": 257,
+        "min": -0.011589757246690535,
+        "median": -0.0012847609367044183,
+        "p95": 0.005041021440088861,
+        "max": 0.009382592705922788,
+        "mean": -0.0009411771869836729
+      },
+      "offline_common_speed_pp_status": {
+        "teacher": {
+          "PASS": 257
+        },
+        "prediction": {
+          "PASS": 257
+        }
+      },
+      "scan_alignment_at_fault": {
+        "method": "nearest_returns_no_fitted_registration_not_ground_truth",
+        "teacher_scan_row_ids": [
+          43667,
+          43700,
+          43735,
+          43771,
+          43806,
+          43841,
+          43877,
+          43911,
+          43951,
+          43970,
+          44006,
+          44045,
+          44080,
+          44118,
+          44149,
+          44188,
+          44221,
+          44255,
+          44291,
+          44325,
+          44362,
+          44397,
+          44432,
+          44465,
+          44501,
+          44536,
+          44571,
+          44608,
+          44640,
+          44681,
+          44712,
+          44748,
+          44783,
+          44814,
+          44854,
+          44885,
+          44923,
+          44955,
+          44990,
+          45026
+        ],
+        "runtime_returns": 461,
+        "teacher_exclusions": {},
+        "distance_m": {
+          "count": 461,
+          "min": 5.056845358805098e-05,
+          "median": 0.0033465194990043466,
+          "p95": 0.013318880647401585,
+          "max": 0.025388719902716243,
+          "mean": 0.004356310639206711
+        },
+        "within_0p1m_fraction": 1.0
+      }
+    },
+    "codex-time-recovery-right040-r22": {
+      "host": "192.168.3.10",
+      "split": "validation",
+      "bag_sha256": "ac5b79deaf3a0b5ae4a8fd80546c021bb98d0e3dbfd2a6e343ae7431b60ffe55",
+      "cache_hashes": {
+        "anchors.jsonl": "89b9c62742d2f708fe4992a1b632694f5ed23aa7ff17dcfeb0faaf60141fedd6",
+        "labels.npz": "395ee4c43e582c6378a7d9b183095a889ce876fd3b3528b6323d1d0b9fc5ef4a",
+        "inputs.npz": "73cb817311909088ff9ca1988bb3d6981ccd3bda611a1effb84b3e4b524e1f28"
+      },
+      "pose_audit": {
+        "input_poses": 21303,
+        "unique_stamps": 21303,
+        "exact_duplicates": 0,
+        "conflicting_stamps": 0,
+        "excluded_segments": 877
+      },
+      "raw_ambiguous_pose_stamps": 4,
+      "fault_projection": {
+        "distance_m": 1.1201460568226842,
+        "left_m": -1.119768318557308,
+        "progress_m": 97.66528353590955,
+        "stamp_ns": 128649997124,
+        "body_yaw_rad": 1.6227994846536467,
+        "tangent_yaw_rad": 1.6218272845037296,
+        "segment_index": 6417,
+        "fraction": 1.0,
+        "xy_m": [
+          89647.88718050728,
+          43143.26356866541
+        ]
+      },
+      "fault_body_yaw_error_rad": -0.05525759072799552,
+      "command_status_counts": {
+        "EVALUATED": 1608
+      },
+      "prediction_status_counts": {
+        "EVALUATED": 723
+      },
+      "last30s": {
+        "left_m": {
+          "count": 601,
+          "min": -1.119768318557308,
+          "median": 0.025521526743955733,
+          "p95": 0.47396728258836107,
+          "max": 0.7191119031090969,
+          "mean": -0.05161388802406468
+        },
+        "body_yaw_error_rad": {
+          "count": 601,
+          "min": -0.13883122707954676,
+          "median": -0.05733062084737528,
+          "p95": 0.08747475475133193,
+          "max": 0.10496949220857889,
+          "mean": -0.047120173479709586
+        },
+        "tire_error_rad": {
+          "count": 601,
+          "min": -0.013315318478807042,
+          "median": -0.0005780381332614309,
+          "p95": 0.006104025104620964,
+          "max": 0.022384929913451923,
+          "mean": -0.00044337816770002517
+        },
+        "speed_mps": {
+          "count": 601,
+          "min": 1.2498010396957397,
+          "median": 1.284745693206787,
+          "p95": 1.3012001514434814,
+          "max": 1.3033347129821777,
+          "mean": 1.2845049626418636
+        },
+        "plan_age_s": {
+          "count": 601,
+          "min": 0.099999998,
+          "median": 0.204999995,
+          "p95": 0.279999994,
+          "max": 0.384999991,
+          "mean": 0.20460898046422626
+        }
+      },
+      "snapshots": [
+        {
+          "time_to_fault_s": -60.004998659,
+          "time_after_arm_s": 20.394999544,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89618.8858439957,
+            43147.807443971695
+          ],
+          "speed_mps": 1.2875394821166992,
+          "projection": {
+            "distance_m": 0.5535952604758795,
+            "left_m": -0.5535952604758795,
+            "progress_m": 23.637226553499147,
+            "stamp_ns": 51615247575,
+            "body_yaw_rad": 2.2540991878215713,
+            "tangent_yaw_rad": 2.254207309383039,
+            "segment_index": 2567,
+            "fraction": 0.26243646321151864,
+            "xy_m": [
+              89618.45657327803,
+              43147.457880868125
+            ]
+          },
+          "left_m": -0.5535952604758795,
+          "progress_to_fault_m": -74.0280569824104,
+          "body_yaw_error_rad": -0.10673007947737778,
+          "path_yaw_error_rad": -0.10683820103884534,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.004151447249678786,
+          "measured_tire_rad": 0.004922750871628523,
+          "tire_error_rad": 0.0007713036219497366,
+          "plan_age_s": 0.204999996
+        },
+        {
+          "time_to_fault_s": -39.994999106,
+          "time_after_arm_s": 40.404999097,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89619.02684466676,
+            43167.90830669934
+          ],
+          "speed_mps": 1.2668918371200562,
+          "projection": {
+            "distance_m": 1.284835542585469,
+            "left_m": 1.2848355425854687,
+            "progress_m": 48.17263086991487,
+            "stamp_ns": 78080496434,
+            "body_yaw_rad": -0.08998110133043277,
+            "tangent_yaw_rad": -0.0880133320448445,
+            "segment_index": 3890,
+            "fraction": 0.5249090098782,
+            "xy_m": [
+              89618.91390794923,
+              43166.62844433591
+            ]
+          },
+          "left_m": 1.2848355425854687,
+          "progress_to_fault_m": -49.49265266599468,
+          "body_yaw_error_rad": 0.032288794967109916,
+          "path_yaw_error_rad": 0.030321025681521646,
+          "status": "EVALUATED",
+          "nominal_tire_rad": -0.20364953940827318,
+          "measured_tire_rad": -0.20424024760723114,
+          "tire_error_rad": -0.0005907081989579566,
+          "plan_age_s": 0.279999994
+        },
+        {
+          "time_to_fault_s": -29.994999329,
+          "time_after_arm_s": 50.404998874,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89627.63119491095,
+            43159.21556917724
+          ],
+          "speed_mps": 1.2822909355163574,
+          "projection": {
+            "distance_m": 0.7191119031090968,
+            "left_m": 0.7191119031090969,
+            "progress_m": 59.84944198738964,
+            "stamp_ns": 90080062301,
+            "body_yaw_rad": -1.0669262661506769,
+            "tangent_yaw_rad": -1.066563342545519,
+            "segment_index": 4490,
+            "fraction": 0.506431488003945,
+            "xy_m": [
+              89627.0015798605,
+              43158.86814031051
+            ]
+          },
+          "left_m": 0.7191119031090969,
+          "progress_to_fault_m": -37.81584154851991,
+          "body_yaw_error_rad": -0.12541456015291708,
+          "path_yaw_error_rad": -0.12577748375807496,
+          "status": "EVALUATED",
+          "nominal_tire_rad": -0.04510269498886462,
+          "measured_tire_rad": -0.044705066829919815,
+          "tire_error_rad": 0.0003976281589448058,
+          "plan_age_s": 0.199999996
+        },
+        {
+          "time_to_fault_s": -19.994999553,
+          "time_after_arm_s": 60.40499865,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89632.24430997382,
+            43147.13104365581
+          ],
+          "speed_mps": 1.2911698818206787,
+          "projection": {
+            "distance_m": 0.16375893835533806,
+            "left_m": -0.16375893835533803,
+            "progress_m": 72.71168722575707,
+            "stamp_ns": 102712389657,
+            "body_yaw_rad": -1.0311252538313762,
+            "tangent_yaw_rad": -1.0212369556794512,
+            "segment_index": 5120,
+            "fraction": 0.9130650981557424,
+            "xy_m": [
+              89632.38395618642,
+              43147.216576837665
+            ]
+          },
+          "left_m": -0.16375893835533803,
+          "progress_to_fault_m": -24.953596310152477,
+          "body_yaw_error_rad": -0.06731860324023886,
+          "path_yaw_error_rad": -0.07720690139216392,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.004816252033537073,
+          "measured_tire_rad": 0.006005594506859779,
+          "tire_error_rad": 0.001189342473322706,
+          "plan_age_s": 0.219999995
+        },
+        {
+          "time_to_fault_s": -14.984999665,
+          "time_after_arm_s": 65.414998538,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89635.48188593931,
+            43141.55796978136
+          ],
+          "speed_mps": 1.289273977279663,
+          "projection": {
+            "distance_m": 0.12853992826328578,
+            "left_m": 0.1285399282632858,
+            "progress_m": 79.16911796542927,
+            "stamp_ns": 109136721623,
+            "body_yaw_rad": -1.0485560509618859,
+            "tangent_yaw_rad": -1.0487982379162892,
+            "segment_index": 5442,
+            "fraction": 0.3362031589933247,
+            "xy_m": [
+              89635.37046436261,
+              43141.49387808608
+            ]
+          },
+          "left_m": 0.1285399282632858,
+          "progress_to_fault_m": -18.496165570480287,
+          "body_yaw_error_rad": 0.10362386865570417,
+          "path_yaw_error_rad": 0.10386605561010753,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.0641213128588033,
+          "measured_tire_rad": 0.0620398223400116,
+          "tire_error_rad": -0.0020814905187917093,
+          "plan_age_s": 0.174999997
+        },
+        {
+          "time_to_fault_s": -9.999999776,
+          "time_after_arm_s": 70.399998427,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89640.24258659626,
+            43137.39004623659
+          ],
+          "speed_mps": 1.2833701372146606,
+          "projection": {
+            "distance_m": 0.16900282835952418,
+            "left_m": 0.16900282835952418,
+            "progress_m": 85.74296406312399,
+            "stamp_ns": 115917169145,
+            "body_yaw_rad": -0.3497160244510519,
+            "tangent_yaw_rad": -0.3506491631678749,
+            "segment_index": 5781,
+            "fraction": 0.3585868360264001,
+            "xy_m": [
+              89640.18453285021,
+              43137.231327244146
+            ]
+          },
+          "left_m": 0.16900282835952418,
+          "progress_to_fault_m": -11.92231947278556,
+          "body_yaw_error_rad": -0.05585006140783377,
+          "path_yaw_error_rad": -0.05491692269101073,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.1631350664546713,
+          "measured_tire_rad": 0.1549333930015564,
+          "tire_error_rad": -0.0082016734531149,
+          "plan_age_s": 0.139999997
+        },
+        {
+          "time_to_fault_s": -4.999999888,
+          "time_after_arm_s": 75.399998315,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89646.29006078147,
+            43137.88952534706
+          ],
+          "speed_mps": 1.2746878862380981,
+          "projection": {
+            "distance_m": 0.34636188980837773,
+            "left_m": -0.34636188980837773,
+            "progress_m": 92.02074999816384,
+            "stamp_ns": 122586622107,
+            "body_yaw_rad": 0.7310770176226913,
+            "tangent_yaw_rad": 0.7290408760961377,
+            "segment_index": 6114,
+            "fraction": 0.6624847597070987,
+            "xy_m": [
+              89646.05933021053,
+              43138.147846779284
+            ]
+          },
+          "left_m": -0.34636188980837773,
+          "progress_to_fault_m": -5.6445335377457155,
+          "body_yaw_error_rad": -0.12176470013205554,
+          "path_yaw_error_rad": -0.11972855860550193,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.1791782198715836,
+          "measured_tire_rad": 0.1708923876285553,
+          "tire_error_rad": -0.008285832243028313,
+          "plan_age_s": 0.204999995
+        },
+        {
+          "time_to_fault_s": 0.0,
+          "time_after_arm_s": 80.399998203,
+          "reason": "STOPPING_SWEEP_OCCUPIED",
+          "world_xy_m": [
+            89649.00400737983,
+            43143.3497366721
+          ],
+          "speed_mps": 1.2723623514175415,
+          "projection": {
+            "distance_m": 1.1201460568226842,
+            "left_m": -1.119768318557308,
+            "progress_m": 97.66528353590955,
+            "stamp_ns": 128649997124,
+            "body_yaw_rad": 1.6227994846536467,
+            "tangent_yaw_rad": 1.6218272845037296,
+            "segment_index": 6417,
+            "fraction": 1.0,
+            "xy_m": [
+              89647.88718050728,
+              43143.26356866541
+            ]
+          },
+          "left_m": -1.119768318557308,
+          "progress_to_fault_m": 0.0,
+          "body_yaw_error_rad": -0.05525759072799552,
+          "path_yaw_error_rad": -0.054285390578078456,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.13263568498623532,
+          "measured_tire_rad": 0.1384902447462082,
+          "tire_error_rad": 0.005854559759972872,
+          "plan_age_s": 0.164999996
+        }
+      ],
+      "offline_counts": {},
+      "offline_errors": {
+        "ade_m": {
+          "count": 0
+        },
+        "fde1_m": {
+          "count": 0
+        },
+        "fde2_m": {
+          "count": 0
+        },
+        "fde3_m": {
+          "count": 0
+        },
+        "endpoint_body_left_error_m": {
+          "count": 0
+        },
+        "speed_mps": {
+          "count": 0
+        }
+      },
+      "offline_common_speed_pp_delta_rad": {
+        "count": 0
+      },
+      "offline_common_speed_pp_status": {
+        "teacher": {},
+        "prediction": {}
+      },
+      "scan_alignment_at_fault": {
+        "method": "nearest_returns_no_fitted_registration_not_ground_truth",
+        "teacher_scan_row_ids": [
+          99417,
+          99451,
+          99495,
+          99528,
+          99569,
+          99608,
+          99645,
+          99681,
+          99718,
+          99757,
+          99792,
+          99831,
+          99866,
+          99903,
+          99942,
+          99980,
+          100017,
+          100054,
+          100091,
+          100128,
+          100163,
+          100202,
+          100237,
+          100276,
+          100314,
+          100353,
+          100388,
+          100426,
+          100463,
+          100498,
+          100537,
+          100572,
+          100611,
+          100646,
+          100685,
+          100723,
+          100760,
+          100797,
+          100834,
+          100871
+        ],
+        "runtime_returns": 461,
+        "teacher_exclusions": {},
+        "distance_m": {
+          "count": 461,
+          "min": 0.00019123651835182274,
+          "median": 0.002623811683752638,
+          "p95": 0.007289736126596006,
+          "max": 0.017087528973786112,
+          "mean": 0.0030788191115812998
+        },
+        "within_0p1m_fraction": 1.0
+      },
+      "matched_recovery_phase": {
+        "phase": "baseline",
+        "stamp_delta_s": -0.01,
+        "control_sha256": "5ab74738b47df9a77f0b7f35fe2c1db7fb5a590c1c688b68655d23a495e260ac"
+      }
+    },
+    "codex-time-recovery-left020-r23": {
+      "host": "192.168.3.10",
+      "split": "validation",
+      "bag_sha256": "c5b168b9389050f7a9c34a1db3feed38b8131767f9cf01f9e85c113448ebb93e",
+      "cache_hashes": {
+        "anchors.jsonl": "647bd0aefdae1d6b00e980978147a756d18c97df57ed0f1ec84eca49e0d8aff9",
+        "labels.npz": "2be7f6abe3e219b1804b8d96c39a6d51fce9443523c6e20cb4ea9f8320f6d32d",
+        "inputs.npz": "7a26f3724e25695f66bbd3f0bcf5e2cb15a6274a406b3198f7853c0bc553b7c4"
+      },
+      "pose_audit": {
+        "input_poses": 21305,
+        "unique_stamps": 21305,
+        "exact_duplicates": 0,
+        "conflicting_stamps": 0,
+        "excluded_segments": 929
+      },
+      "raw_ambiguous_pose_stamps": 3,
+      "fault_projection": {
+        "distance_m": 1.120511821560028,
+        "left_m": -1.119880421382251,
+        "progress_m": 97.62347765983311,
+        "stamp_ns": 128504997127,
+        "body_yaw_rad": 1.6230457241300256,
+        "tangent_yaw_rad": 1.6220765576997103,
+        "segment_index": 6411,
+        "fraction": 1.0,
+        "xy_m": [
+          89647.8875269427,
+          43143.25477259601
+        ]
+      },
+      "fault_body_yaw_error_rad": -0.05550383020437444,
+      "command_status_counts": {
+        "EVALUATED": 1608
+      },
+      "prediction_status_counts": {
+        "EVALUATED": 723
+      },
+      "last30s": {
+        "left_m": {
+          "count": 601,
+          "min": -1.119880421382251,
+          "median": 0.025833831710857923,
+          "p95": 0.47339369801892367,
+          "max": 0.7186270069214025,
+          "mean": -0.05169795700099437
+        },
+        "body_yaw_error_rad": {
+          "count": 601,
+          "min": -0.13846321968840972,
+          "median": -0.05768029701795274,
+          "p95": 0.08744881282542172,
+          "max": 0.10512532881608795,
+          "mean": -0.04705529552946733
+        },
+        "tire_error_rad": {
+          "count": 601,
+          "min": -0.013315318478807042,
+          "median": -0.0005780381332614309,
+          "p95": 0.006104025104620964,
+          "max": 0.022384929913451923,
+          "mean": -0.00044337816770002517
+        },
+        "speed_mps": {
+          "count": 601,
+          "min": 1.2498010396957397,
+          "median": 1.284745693206787,
+          "p95": 1.3012001514434814,
+          "max": 1.3033347129821777,
+          "mean": 1.2845049626418636
+        },
+        "plan_age_s": {
+          "count": 601,
+          "min": 0.099999998,
+          "median": 0.204999995,
+          "p95": 0.279999994,
+          "max": 0.384999991,
+          "mean": 0.20460898046422626
+        }
+      },
+      "snapshots": [
+        {
+          "time_to_fault_s": -60.004998659,
+          "time_after_arm_s": 20.394999544,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89618.8858439957,
+            43147.807443971695
+          ],
+          "speed_mps": 1.2875394821166992,
+          "projection": {
+            "distance_m": 0.6537031030425372,
+            "left_m": -0.6537031030425372,
+            "progress_m": 23.656258842679495,
+            "stamp_ns": 51546061812,
+            "body_yaw_rad": 2.1675370897509283,
+            "tangent_yaw_rad": 2.1676133761441507,
+            "segment_index": 2563,
+            "fraction": 0.606296466956089,
+            "xy_m": [
+              89618.34514742391,
+              43147.44005458128
+            ]
+          },
+          "left_m": -0.6537031030425372,
+          "progress_to_fault_m": -73.96721881715362,
+          "body_yaw_error_rad": -0.020167981406734814,
+          "path_yaw_error_rad": -0.02024426779995725,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.004151447249678786,
+          "measured_tire_rad": 0.004922750871628523,
+          "tire_error_rad": 0.0007713036219497366,
+          "plan_age_s": 0.204999996
+        },
+        {
+          "time_to_fault_s": -39.994999106,
+          "time_after_arm_s": 40.404999097,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89619.02684466676,
+            43167.90830669934
+          ],
+          "speed_mps": 1.2668918371200562,
+          "projection": {
+            "distance_m": 1.2824071780680486,
+            "left_m": 1.2824071544648254,
+            "progress_m": 48.14073023231157,
+            "stamp_ns": 77949998257,
+            "body_yaw_rad": -0.0915056808492769,
+            "tangent_yaw_rad": -0.08773784837833033,
+            "segment_index": 3883,
+            "fraction": 1.0,
+            "xy_m": [
+              89618.91422822492,
+              43166.63085387932
+            ]
+          },
+          "left_m": 1.2824071544648254,
+          "progress_to_fault_m": -49.482747427521545,
+          "body_yaw_error_rad": 0.03381337448595405,
+          "path_yaw_error_rad": 0.030045542015007476,
+          "status": "EVALUATED",
+          "nominal_tire_rad": -0.20364953940827318,
+          "measured_tire_rad": -0.20424024760723114,
+          "tire_error_rad": -0.0005907081989579566,
+          "plan_age_s": 0.279999994
+        },
+        {
+          "time_to_fault_s": -29.994999329,
+          "time_after_arm_s": 50.404998874,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89627.63119491095,
+            43159.21556917724
+          ],
+          "speed_mps": 1.2822909355163574,
+          "projection": {
+            "distance_m": 0.7186270069214024,
+            "left_m": 0.7186270069214025,
+            "progress_m": 59.817827379747555,
+            "stamp_ns": 89949539149,
+            "body_yaw_rad": -1.0669976022924137,
+            "tangent_yaw_rad": -1.0663169750153356,
+            "segment_index": 4483,
+            "fraction": 0.9541159924292891,
+            "xy_m": [
+              89627.00208996565,
+              43158.86821957975
+            ]
+          },
+          "left_m": 0.7186270069214025,
+          "progress_to_fault_m": -37.80565028008556,
+          "body_yaw_error_rad": -0.12534322401118025,
+          "path_yaw_error_rad": -0.1260238512882583,
+          "status": "EVALUATED",
+          "nominal_tire_rad": -0.04510269498886462,
+          "measured_tire_rad": -0.044705066829919815,
+          "tire_error_rad": 0.0003976281589448058,
+          "plan_age_s": 0.199999996
+        },
+        {
+          "time_to_fault_s": -19.994999553,
+          "time_after_arm_s": 60.40499865,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89632.24430997382,
+            43147.13104365581
+          ],
+          "speed_mps": 1.2911698818206787,
+          "projection": {
+            "distance_m": 0.16312377506312783,
+            "left_m": -0.1631237750631278,
+            "progress_m": 72.68159173942145,
+            "stamp_ns": 102582557011,
+            "body_yaw_rad": -1.0319593849515505,
+            "tangent_yaw_rad": -1.0314434811661362,
+            "segment_index": 5115,
+            "fraction": 0.5853101659440324,
+            "xy_m": [
+              89632.38427689794,
+              43147.21482089701
+            ]
+          },
+          "left_m": -0.1631237750631278,
+          "progress_to_fault_m": -24.941885920411664,
+          "body_yaw_error_rad": -0.06648447212006459,
+          "path_yaw_error_rad": -0.06700037590547891,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.004816252033537073,
+          "measured_tire_rad": 0.006005594506859779,
+          "tire_error_rad": 0.001189342473322706,
+          "plan_age_s": 0.219999995
+        },
+        {
+          "time_to_fault_s": -14.984999665,
+          "time_after_arm_s": 65.414998538,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89635.48188593931,
+            43141.55796978136
+          ],
+          "speed_mps": 1.289273977279663,
+          "projection": {
+            "distance_m": 0.12890208430154942,
+            "left_m": 0.12890208430154942,
+            "progress_m": 79.134807819107,
+            "stamp_ns": 109012969412,
+            "body_yaw_rad": -1.0484714917936657,
+            "tangent_yaw_rad": -1.067908281412077,
+            "segment_index": 5436,
+            "fraction": 0.9323949662765117,
+            "xy_m": [
+              89635.36894266763,
+              43141.49584438624
+            ]
+          },
+          "left_m": 0.12890208430154942,
+          "progress_to_fault_m": -18.488669840726118,
+          "body_yaw_error_rad": 0.10353930948748402,
+          "path_yaw_error_rad": 0.12297609910589535,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.0641213128588033,
+          "measured_tire_rad": 0.0620398223400116,
+          "tire_error_rad": -0.0020814905187917093,
+          "plan_age_s": 0.174999997
+        },
+        {
+          "time_to_fault_s": -9.999999776,
+          "time_after_arm_s": 70.399998427,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89640.24258659626,
+            43137.39004623659
+          ],
+          "speed_mps": 1.2833701372146606,
+          "projection": {
+            "distance_m": 0.16878142620763958,
+            "left_m": 0.16878142620763956,
+            "progress_m": 85.71080061865018,
+            "stamp_ns": 115794614179,
+            "body_yaw_rad": -0.3497017227455065,
+            "tangent_yaw_rad": -0.35226450657783054,
+            "segment_index": 5775,
+            "fraction": 0.9808384104416227,
+            "xy_m": [
+              89640.18435292947,
+              43137.231629034606
+            ]
+          },
+          "left_m": 0.16878142620763956,
+          "progress_to_fault_m": -11.912677041182931,
+          "body_yaw_error_rad": -0.05586436311337916,
+          "path_yaw_error_rad": -0.05330157928105511,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.1631350664546713,
+          "measured_tire_rad": 0.1549333930015564,
+          "tire_error_rad": -0.0082016734531149,
+          "plan_age_s": 0.139999997
+        },
+        {
+          "time_to_fault_s": -4.999999888,
+          "time_after_arm_s": 75.399998315,
+          "reason": "TIME_PATH_TRACKING",
+          "world_xy_m": [
+            89646.29006078147,
+            43137.88952534706
+          ],
+          "speed_mps": 1.2746878862380981,
+          "projection": {
+            "distance_m": 0.34712028718045096,
+            "left_m": -0.347120287180451,
+            "progress_m": 91.99147933132922,
+            "stamp_ns": 122458657216,
+            "body_yaw_rad": 0.7303627897725428,
+            "tangent_yaw_rad": 0.7179601368751849,
+            "segment_index": 6109,
+            "fraction": 0.4329976518659219,
+            "xy_m": [
+              89646.0617077976,
+              43138.15095872009
+            ]
+          },
+          "left_m": -0.347120287180451,
+          "progress_to_fault_m": -5.631998328503897,
+          "body_yaw_error_rad": -0.12105047228190702,
+          "path_yaw_error_rad": -0.10864781938454915,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.1791782198715836,
+          "measured_tire_rad": 0.1708923876285553,
+          "tire_error_rad": -0.008285832243028313,
+          "plan_age_s": 0.204999995
+        },
+        {
+          "time_to_fault_s": 0.0,
+          "time_after_arm_s": 80.399998203,
+          "reason": "STOPPING_SWEEP_OCCUPIED",
+          "world_xy_m": [
+            89649.00400737983,
+            43143.3497366721
+          ],
+          "speed_mps": 1.2723623514175415,
+          "projection": {
+            "distance_m": 1.120511821560028,
+            "left_m": -1.119880421382251,
+            "progress_m": 97.62347765983311,
+            "stamp_ns": 128504997127,
+            "body_yaw_rad": 1.6230457241300256,
+            "tangent_yaw_rad": 1.6220765576997103,
+            "segment_index": 6411,
+            "fraction": 1.0,
+            "xy_m": [
+              89647.8875269427,
+              43143.25477259601
+            ]
+          },
+          "left_m": -1.119880421382251,
+          "progress_to_fault_m": 0.0,
+          "body_yaw_error_rad": -0.05550383020437444,
+          "path_yaw_error_rad": -0.05453466377405913,
+          "status": "EVALUATED",
+          "nominal_tire_rad": 0.13263568498623532,
+          "measured_tire_rad": 0.1384902447462082,
+          "tire_error_rad": 0.005854559759972872,
+          "plan_age_s": 0.164999996
+        }
+      ],
+      "offline_counts": {},
+      "offline_errors": {
+        "ade_m": {
+          "count": 0
+        },
+        "fde1_m": {
+          "count": 0
+        },
+        "fde2_m": {
+          "count": 0
+        },
+        "fde3_m": {
+          "count": 0
+        },
+        "endpoint_body_left_error_m": {
+          "count": 0
+        },
+        "speed_mps": {
+          "count": 0
+        }
+      },
+      "offline_common_speed_pp_delta_rad": {
+        "count": 0
+      },
+      "offline_common_speed_pp_status": {
+        "teacher": {},
+        "prediction": {}
+      },
+      "scan_alignment_at_fault": {
+        "method": "nearest_returns_no_fitted_registration_not_ground_truth",
+        "teacher_scan_row_ids": [
+          99423,
+          99460,
+          99492,
+          99534,
+          99566,
+          99608,
+          99642,
+          99685,
+          99717,
+          99757,
+          99792,
+          99830,
+          99866,
+          99904,
+          99943,
+          99978,
+          100018,
+          100055,
+          100092,
+          100129,
+          100166,
+          100203,
+          100240,
+          100275,
+          100314,
+          100349,
+          100391,
+          100426,
+          100467,
+          100491,
+          100531,
+          100566,
+          100603,
+          100638,
+          100679,
+          100712,
+          100756,
+          100789,
+          100830,
+          100863
+        ],
+        "runtime_returns": 461,
+        "teacher_exclusions": {},
+        "distance_m": {
+          "count": 461,
+          "min": 1.4756457047081624e-05,
+          "median": 0.0028100813121060995,
+          "p95": 0.007980751377755205,
+          "max": 0.02146208562150924,
+          "mean": 0.003487542666319864
+        },
+        "within_0p1m_fraction": 1.0
+      },
+      "matched_recovery_phase": {
+        "phase": "baseline",
+        "stamp_delta_s": -0.014999999,
+        "control_sha256": "2f10a0b146ac25f6b0888ea99941c1bf905145e3d03cc5376b6a29988fd90d80"
+      }
+    }
+  },
+  "recovery_anchor_coverage": [
+    {
+      "run_id": "codex-time-recovery-right020-r19",
+      "split": "train",
+      "accepted_anchors": 57,
+      "method": "own_run_capture_time_selects_passage_then_spatial_projection; relative_to_matched_fault_location",
+      "own_run_fault_projection": {
+        "distance_m": 1.1200088976454632,
+        "left_m": -1.1200054961425627,
+        "progress_m": 97.66610535978081,
+        "stamp_ns": 128804997120,
+        "body_yaw_rad": 1.6252718548537783,
+        "tangent_yaw_rad": 1.6243375293030833,
+        "segment_index": 6420,
+        "fraction": 1.0,
+        "xy_m": [
+          89647.88575455864,
+          43143.28704250413
+        ]
+      },
+      "bag_sha256": "78ba4002da6f674f0068d6e7770688280730d3cd0af65512ec3fad0ad0940485",
+      "anchors_sha256": "7d9dc8f99b07960860cd3446ed542053b58dc8c44fe49b8eb4a08974082bf9dc",
+      "progress_to_fault_m": {
+        "count": 57,
+        "min": -78.24200919744683,
+        "median": -75.38115480881008,
+        "p95": -72.76625533986031,
+        "max": -72.48031529459638,
+        "mean": -75.37178471279773
+      },
+      "in_fault_minus40_plus8m": 0
+    },
+    {
+      "run_id": "codex-time-recovery-left020-r20",
+      "split": "train",
+      "accepted_anchors": 57,
+      "method": "own_run_capture_time_selects_passage_then_spatial_projection; relative_to_matched_fault_location",
+      "own_run_fault_projection": {
+        "distance_m": 1.120502008110647,
+        "left_m": -1.1204069040730567,
+        "progress_m": 97.6589578380775,
+        "stamp_ns": 129004997116,
+        "body_yaw_rad": 1.6234926279466304,
+        "tangent_yaw_rad": 1.62255020697022,
+        "segment_index": 6432,
+        "fraction": 1.0,
+        "xy_m": [
+          89647.88585582332,
+          43143.27719808339
+        ]
+      },
+      "bag_sha256": "b807e8dc645db65c8dd89648812b4699f35303d0359c8521ca94706e00ad8b2e",
+      "anchors_sha256": "6b256365820a588abd8f342e155cfb431efa35825c063490d8a3a5eadeb3abe9",
+      "progress_to_fault_m": {
+        "count": 57,
+        "min": -78.22574672246081,
+        "median": -75.36697041679236,
+        "p95": -72.7588264130719,
+        "max": -72.46463919353357,
+        "mean": -75.35724785736696
+      },
+      "in_fault_minus40_plus8m": 0
+    },
+    {
+      "run_id": "codex-time-recovery-left040-r21",
+      "split": "train",
+      "accepted_anchors": 58,
+      "method": "own_run_capture_time_selects_passage_then_spatial_projection; relative_to_matched_fault_location",
+      "own_run_fault_projection": {
+        "distance_m": 1.1216481004741348,
+        "left_m": -1.1213041420069707,
+        "progress_m": 97.67687896769263,
+        "stamp_ns": 128449997128,
+        "body_yaw_rad": 1.6226934181292867,
+        "tangent_yaw_rad": 1.621718531196849,
+        "segment_index": 6405,
+        "fraction": 1.0,
+        "xy_m": [
+          89647.88557051645,
+          43143.26492249922
+        ]
+      },
+      "bag_sha256": "3c83cebade8ed1d7dd0297e2d614e1fa6f1b11a8a3d6e766657130ac49ae1abb",
+      "anchors_sha256": "25025d7cd10e4c263596f6c5fd7ca78d5e944869a94a760f892669d652fd1151",
+      "progress_to_fault_m": {
+        "count": 58,
+        "min": -78.29989774966445,
+        "median": -75.37335206517677,
+        "p95": -72.73386024117565,
+        "max": -72.43654633611547,
+        "mean": -75.37479503845434
+      },
+      "in_fault_minus40_plus8m": 0
+    },
+    {
+      "run_id": "codex-time-recovery-right040-r22",
+      "split": "validation",
+      "accepted_anchors": 57,
+      "method": "own_run_capture_time_selects_passage_then_spatial_projection; relative_to_matched_fault_location",
+      "own_run_fault_projection": {
+        "distance_m": 1.1201460568226842,
+        "left_m": -1.119768318557308,
+        "progress_m": 97.66528353590955,
+        "stamp_ns": 128649997124,
+        "body_yaw_rad": 1.6227994846536467,
+        "tangent_yaw_rad": 1.6218272845037296,
+        "segment_index": 6417,
+        "fraction": 1.0,
+        "xy_m": [
+          89647.88718050728,
+          43143.26356866541
+        ]
+      },
+      "bag_sha256": "ac5b79deaf3a0b5ae4a8fd80546c021bb98d0e3dbfd2a6e343ae7431b60ffe55",
+      "anchors_sha256": "89b9c62742d2f708fe4992a1b632694f5ed23aa7ff17dcfeb0faaf60141fedd6",
+      "progress_to_fault_m": {
+        "count": 57,
+        "min": -78.29096770699893,
+        "median": -75.32804639868365,
+        "p95": -72.72776692533776,
+        "max": -72.43175925927358,
+        "mean": -75.33439707381925
+      },
+      "in_fault_minus40_plus8m": 0
+    },
+    {
+      "run_id": "codex-time-recovery-left020-r23",
+      "split": "validation",
+      "accepted_anchors": 52,
+      "method": "own_run_capture_time_selects_passage_then_spatial_projection; relative_to_matched_fault_location",
+      "own_run_fault_projection": {
+        "distance_m": 1.120511821560028,
+        "left_m": -1.119880421382251,
+        "progress_m": 97.62347765983311,
+        "stamp_ns": 128504997127,
+        "body_yaw_rad": 1.6230457241300256,
+        "tangent_yaw_rad": 1.6220765576997103,
+        "segment_index": 6411,
+        "fraction": 1.0,
+        "xy_m": [
+          89647.8875269427,
+          43143.25477259601
+        ]
+      },
+      "bag_sha256": "c5b168b9389050f7a9c34a1db3feed38b8131767f9cf01f9e85c113448ebb93e",
+      "anchors_sha256": "647bd0aefdae1d6b00e980978147a756d18c97df57ed0f1ec84eca49e0d8aff9",
+      "progress_to_fault_m": {
+        "count": 52,
+        "min": 195.06672147756296,
+        "median": 197.97769603930553,
+        "p95": 200.5694594143702,
+        "max": 200.86004650136925,
+        "mean": 197.9755604051502
+      },
+      "in_fault_minus40_plus8m": 0
+    },
+    {
+      "run_id": "codex-time-recovery-left040-r25",
+      "split": "train",
+      "accepted_anchors": 51,
+      "method": "own_run_capture_time_selects_passage_then_spatial_projection; relative_to_matched_fault_location",
+      "own_run_fault_projection": {
+        "distance_m": 1.1195005672625626,
+        "left_m": -1.119335570300145,
+        "progress_m": 97.6454389937128,
+        "stamp_ns": 128344997131,
+        "body_yaw_rad": 1.6235315278347802,
+        "tangent_yaw_rad": 1.6225810955310802,
+        "segment_index": 6399,
+        "fraction": 1.0,
+        "xy_m": [
+          89647.88716716287,
+          43143.27260399492
+        ]
+      },
+      "bag_sha256": "d9e11c88c9699b5a78f7da84a8222e3a116d30d83162f410ff3dfa4542bd04ab",
+      "anchors_sha256": "35fb2f2621251842fae03fb3a06e9b31db0b5b0366e1965ee7a2059921f9e784",
+      "progress_to_fault_m": {
+        "count": 51,
+        "min": 195.3140334762109,
+        "median": 198.2942552171874,
+        "p95": 200.84171629523487,
+        "max": 201.12015545578748,
+        "mean": 198.2412082970844
+      },
+      "in_fault_minus40_plus8m": 0
+    }
+  ],
+  "last30s_future_following": {
+    "1": {
+      "counts": {
+        "EVALUATED": 260,
+        "AMBIGUOUS_POSE_STAMP": 3,
+        "FUTURE_AFTER_FIRST_FAULT": 6
+      },
+      "metrics": {
+        "point_distance_m": {
+          "count": 260,
+          "min": 4.212907043904471e-05,
+          "median": 0.010370312700326473,
+          "p95": 0.023042020429829776,
+          "max": 0.04512274349858031,
+          "mean": 0.01169208145895693
+        },
+        "point_left_m": {
+          "count": 260,
+          "min": -0.018656076306425327,
+          "median": -0.0002978481422635013,
+          "p95": 0.007903687621725244,
+          "max": 0.012805674596936458,
+          "mean": -0.0009498451307930033
+        },
+        "point_along_m": {
+          "count": 260,
+          "min": -0.015874281305172523,
+          "median": 0.00552751247812637,
+          "p95": 0.022218598513788424,
+          "max": 0.04302902431358265,
+          "mean": 0.005767944102695048
+        },
+        "polyline_distance_m": {
+          "count": 260,
+          "min": 5.224788138678313e-06,
+          "median": 0.004575801522237787,
+          "p95": 0.013597615483532739,
+          "max": 0.018656076312495995,
+          "mean": 0.005385419605841709
+        }
+      },
+      "polyline_endpoint_count": 0
+    },
+    "2": {
+      "counts": {
+        "EVALUATED": 250,
+        "AMBIGUOUS_POSE_STAMP": 4,
+        "FUTURE_AFTER_FIRST_FAULT": 15
+      },
+      "metrics": {
+        "point_distance_m": {
+          "count": 250,
+          "min": 0.002567568770774636,
+          "median": 0.02686506289690091,
+          "p95": 0.06798417829466907,
+          "max": 0.1206769400192353,
+          "mean": 0.031771893249459254
+        },
+        "point_left_m": {
+          "count": 250,
+          "min": -0.06382735807749457,
+          "median": -0.011527418630198353,
+          "p95": 0.017012805677769298,
+          "max": 0.0288462035413434,
+          "mean": -0.013295841101120417
+        },
+        "point_along_m": {
+          "count": 250,
+          "min": -0.03805322957897068,
+          "median": 0.01570824797008986,
+          "p95": 0.05388019316196128,
+          "max": 0.10241578107524936,
+          "mean": 0.01746671446957671
+        },
+        "polyline_distance_m": {
+          "count": 250,
+          "min": 0.00019345473295319623,
+          "median": 0.014058841875968703,
+          "p95": 0.05364739174699537,
+          "max": 0.06600513135318192,
+          "mean": 0.018557275198777496
+        }
+      },
+      "polyline_endpoint_count": 0
+    },
+    "3": {
+      "counts": {
+        "EVALUATED": 242,
+        "AMBIGUOUS_POSE_STAMP": 2,
+        "FUTURE_AFTER_FIRST_FAULT": 25
+      },
+      "metrics": {
+        "point_distance_m": {
+          "count": 242,
+          "min": 0.004026427878191297,
+          "median": 0.04979675435247892,
+          "p95": 0.13729795428973884,
+          "max": 0.1886899019284618,
+          "mean": 0.05981948415567211
+        },
+        "point_left_m": {
+          "count": 242,
+          "min": -0.18857081325575598,
+          "median": -0.023229933241029746,
+          "p95": 0.03795845715989033,
+          "max": 0.07653613767075979,
+          "mean": -0.03130315449304073
+        },
+        "point_along_m": {
+          "count": 242,
+          "min": -0.0597252858149908,
+          "median": 0.01473824026832701,
+          "p95": 0.08099032811942448,
+          "max": 0.11214945358139797,
+          "mean": 0.017125564299868844
+        },
+        "polyline_distance_m": {
+          "count": 242,
+          "min": 0.0005045722454288628,
+          "median": 0.047824219547550985,
+          "p95": 0.13669712690928426,
+          "max": 0.1886899019284618,
+          "mean": 0.056978257535881996
+        }
+      },
+      "polyline_endpoint_count": 158
+    }
+  },
+  "primary_prediction_windows": [
+    {
+      "window_s": [
+        -40.0,
+        -30.0
+      ],
+      "plans": 92,
+      "anchor_left_m": {
+        "count": 92,
+        "min": 0.7334198118368793,
+        "median": 1.1518186858468331,
+        "p95": 1.3029959698250166,
+        "max": 1.3052115152741421,
+        "mean": 1.1268340510360157
+      },
+      "heading_error_rad": {
+        "count": 92,
+        "min": -0.12554634018063315,
+        "median": -0.0376219620659953,
+        "p95": 0.015213076794823902,
+        "max": 0.03258518958878302,
+        "mean": -0.04497106630226812
+      },
+      "future": {
+        "1": {
+          "left_m": {
+            "count": 92,
+            "min": 0.567183552246365,
+            "median": 1.1504999136125302,
+            "p95": 1.289400425935973,
+            "max": 1.3001802451637736,
+            "mean": 1.059515384600021
+          },
+          "change_from_anchor_left_m": {
+            "count": 92,
+            "min": -0.1666878661545631,
+            "median": -0.06064100403082906,
+            "p95": -0.0013210439709471554,
+            "max": 0.015886899920422914,
+            "mean": -0.06731866643599456
+          },
+          "forward_progress_m": {
+            "count": 92,
+            "min": 1.0384527553639984,
+            "median": 1.2250954571483312,
+            "p95": 1.266683109419148,
+            "max": 1.2906114201502703,
+            "mean": 1.1754879906341167
+          }
+        },
+        "2": {
+          "left_m": {
+            "count": 92,
+            "min": 0.41425290251420843,
+            "median": 1.1302361920383828,
+            "p95": 1.2145385315613564,
+            "max": 1.246117586361251,
+            "mean": 0.989839323813806
+          },
+          "change_from_anchor_left_m": {
+            "count": 92,
+            "min": -0.320047818328093,
+            "median": -0.12303261900637463,
+            "p95": 0.006247846291684346,
+            "max": 0.009455087544880003,
+            "mean": -0.1369947272222098
+          },
+          "forward_progress_m": {
+            "count": 92,
+            "min": 2.080860421495636,
+            "median": 2.4798918074698726,
+            "p95": 2.542320847973869,
+            "max": 2.5721537173917213,
+            "mean": 2.376228255355153
+          }
+        },
+        "3": {
+          "left_m": {
+            "count": 92,
+            "min": 0.26100596570153584,
+            "median": 1.0195359581794339,
+            "p95": 1.1407064343436186,
+            "max": 1.1546899053268889,
+            "mean": 0.8905352869695156
+          },
+          "change_from_anchor_left_m": {
+            "count": 92,
+            "min": -0.47560761002843654,
+            "median": -0.23175734952087945,
+            "p95": -0.028787087462799687,
+            "max": -0.010209193278728934,
+            "mean": -0.2362987640665002
+          },
+          "forward_progress_m": {
+            "count": 92,
+            "min": 3.1111773685067163,
+            "median": 3.737764549011473,
+            "p95": 3.7981202761359665,
+            "max": 3.8168920564420503,
+            "mean": 3.585143503211262
+          }
+        }
+      }
+    },
+    {
+      "window_s": [
+        -30.0,
+        -20.0
+      ],
+      "plans": 92,
+      "anchor_left_m": {
+        "count": 92,
+        "min": -0.1623283564162002,
+        "median": 0.053448600476730904,
+        "p95": 0.62909247737621,
+        "max": 0.7156865788036438,
+        "mean": 0.16459884868025657
+      },
+      "heading_error_rad": {
+        "count": 92,
+        "min": -0.12703134920486292,
+        "median": -0.07924112148102658,
+        "p95": 0.013987375035163577,
+        "max": 0.0186445086306033,
+        "mean": -0.0673717882633391
+      },
+      "future": {
+        "1": {
+          "left_m": {
+            "count": 92,
+            "min": -0.2060791088785385,
+            "median": 0.041431298437720435,
+            "p95": 0.46524892118554234,
+            "max": 0.5481848063451131,
+            "mean": 0.08720584951885277
+          },
+          "change_from_anchor_left_m": {
+            "count": 92,
+            "min": -0.16800177066705613,
+            "median": -0.0821878389466095,
+            "p95": 0.018855248499757105,
+            "max": 0.02360180037235318,
+            "mean": -0.07739299916140382
+          },
+          "forward_progress_m": {
+            "count": 92,
+            "min": 1.238793993172031,
+            "median": 1.2897769962461183,
+            "p95": 1.2985940411007568,
+            "max": 1.3001133508820288,
+            "mean": 1.2863403347556612
+          }
+        },
+        "2": {
+          "left_m": {
+            "count": 92,
+            "min": -0.23178696296410656,
+            "median": 0.04399991703405135,
+            "p95": 0.3199420710266637,
+            "max": 0.3945629734610973,
+            "mean": 0.025249695590682873
+          },
+          "change_from_anchor_left_m": {
+            "count": 92,
+            "min": -0.3216702201677196,
+            "median": -0.1435512870480165,
+            "p95": 0.023394607001067456,
+            "max": 0.04009010507954973,
+            "mean": -0.13934915308957374
+          },
+          "forward_progress_m": {
+            "count": 92,
+            "min": 2.5023325623117287,
+            "median": 2.587168932333313,
+            "p95": 2.6025946132623465,
+            "max": 2.6151627163528417,
+            "mean": 2.5819663872557554
+          }
+        },
+        "3": {
+          "left_m": {
+            "count": 92,
+            "min": -0.22473907591838976,
+            "median": 0.040917969173569955,
+            "p95": 0.1879477391549551,
+            "max": 0.2422596332995488,
+            "mean": -0.004746644828929184
+          },
+          "change_from_anchor_left_m": {
+            "count": 92,
+            "min": -0.47342694550409503,
+            "median": -0.15813327729769658,
+            "p95": 0.03737136188293589,
+            "max": 0.07323461460418824,
+            "mean": -0.1693454935091858
+          },
+          "forward_progress_m": {
+            "count": 92,
+            "min": 3.7594169520773946,
+            "median": 3.875791340036457,
+            "p95": 3.9067048303326293,
+            "max": 3.924943290814042,
+            "mean": 3.8691417738229354
+          }
+        }
+      }
+    },
+    {
+      "window_s": [
+        -20.0,
+        -10.0
+      ],
+      "plans": 89,
+      "anchor_left_m": {
+        "count": 89,
+        "min": -0.2086874566558825,
+        "median": 0.11882851486900257,
+        "p95": 0.3128631864295684,
+        "max": 0.314221344595047,
+        "mean": 0.07482871718840228
+      },
+      "heading_error_rad": {
+        "count": 89,
+        "min": -0.06303888964767462,
+        "median": 0.031981834382580177,
+        "p95": 0.10096019225045365,
+        "max": 0.10485254642428299,
+        "mean": 0.02461359663149108
+      },
+      "future": {
+        "1": {
+          "left_m": {
+            "count": 89,
+            "min": -0.20775396134262394,
+            "median": 0.1487599371818917,
+            "p95": 0.30793318010818344,
+            "max": 0.3120422137734502,
+            "mean": 0.10187808230403579
+          },
+          "change_from_anchor_left_m": {
+            "count": 89,
+            "min": -0.08275831920000482,
+            "median": 0.03749035251605215,
+            "p95": 0.1243483972827485,
+            "max": 0.12691841234859397,
+            "mean": 0.027049365115633495
+          },
+          "forward_progress_m": {
+            "count": 89,
+            "min": 1.2651699996935548,
+            "median": 1.291138169802565,
+            "p95": 1.3181934233273296,
+            "max": 1.3266623814243275,
+            "mean": 1.2912793844460364
+          }
+        },
+        "2": {
+          "left_m": {
+            "count": 89,
+            "min": -0.19096418840001134,
+            "median": 0.15879815866462177,
+            "p95": 0.3311092667835829,
+            "max": 0.33774213172697964,
+            "mean": 0.13783394737694793
+          },
+          "change_from_anchor_left_m": {
+            "count": 89,
+            "min": -0.14696452843719682,
+            "median": 0.08353090551292859,
+            "p95": 0.24391691571826954,
+            "max": 0.2589399573382872,
+            "mean": 0.06300523018854565
+          },
+          "forward_progress_m": {
+            "count": 89,
+            "min": 2.5189085550754413,
+            "median": 2.578255561252206,
+            "p95": 2.6154105757571644,
+            "max": 2.6272433308054985,
+            "mean": 2.574014502693195
+          }
+        },
+        "3": {
+          "left_m": {
+            "count": 89,
+            "min": -0.12732976685746814,
+            "median": 0.17034506876221875,
+            "p95": 0.3468563542792183,
+            "max": 0.35961261206225786,
+            "mean": 0.15832480945372202
+          },
+          "change_from_anchor_left_m": {
+            "count": 89,
+            "min": -0.23890666754519863,
+            "median": 0.1360581862967059,
+            "p95": 0.3487137474127126,
+            "max": 0.3662046388624645,
+            "mean": 0.08349609226531972
+          },
+          "forward_progress_m": {
+            "count": 89,
+            "min": 3.7751664021055547,
+            "median": 3.86881215645586,
+            "p95": 3.9289080008413038,
+            "max": 3.9322782823667666,
+            "mean": 3.8634793919804293
+          }
+        }
+      }
+    },
+    {
+      "window_s": [
+        -10.0,
+        -5.0
+      ],
+      "plans": 44,
+      "anchor_left_m": {
+        "count": 44,
+        "min": -0.33236161421494964,
+        "median": -0.0199818187402529,
+        "p95": 0.14496893545104456,
+        "max": 0.1635142368315059,
+        "mean": -0.04633287229879935
+      },
+      "heading_error_rad": {
+        "count": 44,
+        "min": -0.12688561659413566,
+        "median": -0.07391276031460726,
+        "p95": -0.04218394012308362,
+        "max": -0.040612535836100055,
+        "mean": -0.07882595469013598
+      },
+      "future": {
+        "1": {
+          "left_m": {
+            "count": 44,
+            "min": -0.5008162546774578,
+            "median": -0.12038404818174199,
+            "p95": 0.07341581257131483,
+            "max": 0.08889842094830336,
+            "mean": -0.15743798137746634
+          },
+          "change_from_anchor_left_m": {
+            "count": 44,
+            "min": -0.1684546404625082,
+            "median": -0.1007075268702863,
+            "p95": -0.0681872172740376,
+            "max": -0.06741528260107188,
+            "mean": -0.11110510907866698
+          },
+          "forward_progress_m": {
+            "count": 44,
+            "min": 1.1644362886492843,
+            "median": 1.238039871721945,
+            "p95": 1.2876757480476626,
+            "max": 1.2918580260367065,
+            "mean": 1.2319741331305212
+          }
+        },
+        "2": {
+          "left_m": {
+            "count": 44,
+            "min": -0.6697600469531368,
+            "median": -0.21297103885984398,
+            "p95": 0.03106610017690501,
+            "max": 0.052552651648682884,
+            "mean": -0.25397004080210633
+          },
+          "change_from_anchor_left_m": {
+            "count": 44,
+            "min": -0.3373984327381872,
+            "median": -0.1963690507517496,
+            "p95": -0.11214512634826533,
+            "max": -0.10852280054530589,
+            "mean": -0.20763716850330693
+          },
+          "forward_progress_m": {
+            "count": 44,
+            "min": 2.2917884529322805,
+            "median": 2.4363825352421244,
+            "p95": 2.5458783418437734,
+            "max": 2.5573122918696924,
+            "mean": 2.4242054199762446
+          }
+        },
+        "3": {
+          "left_m": {
+            "count": 44,
+            "min": -0.8311329005989012,
+            "median": -0.29664885576056876,
+            "p95": -0.05210611572203064,
+            "max": -0.028189391993574512,
+            "mean": -0.363155657832237
+          },
+          "change_from_anchor_left_m": {
+            "count": 44,
+            "min": -0.5001416221418505,
+            "median": -0.29246410480510465,
+            "p95": -0.19198720040204176,
+            "max": -0.18667774014215774,
+            "mean": -0.3168227855334377
+          },
+          "forward_progress_m": {
+            "count": 44,
+            "min": 3.4220419164697518,
+            "median": 3.652836001597194,
+            "p95": 3.823486487484145,
+            "max": 3.841253710595467,
+            "mean": 3.6321289725441686
+          }
+        }
+      }
+    },
+    {
+      "window_s": [
+        -5.0,
+        0.0
+      ],
+      "plans": 44,
+      "anchor_left_m": {
+        "count": 44,
+        "min": -1.104334256632334,
+        "median": -0.725133764545949,
+        "p95": -0.38377881888482684,
+        "max": -0.3478112330857955,
+        "mean": -0.7245800729032907
+      },
+      "heading_error_rad": {
+        "count": 44,
+        "min": -0.13846321968840972,
+        "median": -0.12655840556090414,
+        "p95": -0.09398766388678044,
+        "max": -0.07042777198863903,
+        "mean": -0.122915600091953
+      },
+      "future": {
+        "1": {
+          "left_m": {
+            "count": 44,
+            "min": -1.1530797371959314,
+            "median": -0.8842420359650314,
+            "p95": -0.5545273565425443,
+            "max": -0.5189906162094617,
+            "mean": -0.8707686171863321
+          },
+          "change_from_anchor_left_m": {
+            "count": 44,
+            "min": -0.17403451083527233,
+            "median": -0.15877428609939076,
+            "p95": -0.07842844145082147,
+            "max": -0.0487454805635974,
+            "mean": -0.1461885442830413
+          },
+          "forward_progress_m": {
+            "count": 44,
+            "min": 1.0952188340290974,
+            "median": 1.1294911686801399,
+            "p95": 1.1758445964001154,
+            "max": 1.1862607463569788,
+            "mean": 1.1286765801665295
+          }
+        },
+        "2": {
+          "left_m": {
+            "count": 44,
+            "min": -1.170326958039536,
+            "median": -1.0211508514192587,
+            "p95": -0.7051878439932863,
+            "max": -0.6880255182298122,
+            "mean": -0.9860130684024639
+          },
+          "change_from_anchor_left_m": {
+            "count": 44,
+            "min": -0.3402142851440167,
+            "median": -0.2960170868733096,
+            "p95": -0.09334930015202447,
+            "max": -0.06599270140720193,
+            "mean": -0.2614329954991732
+          },
+          "forward_progress_m": {
+            "count": 44,
+            "min": 2.1996268237754038,
+            "median": 2.2511322838345507,
+            "p95": 2.319803209137293,
+            "max": 2.3372182070889664,
+            "mean": 2.258776760146274
+          }
+        },
+        "3": {
+          "left_m": {
+            "count": 44,
+            "min": -1.1640037660030298,
+            "median": -1.057645549409394,
+            "p95": -0.8494595406757427,
+            "max": -0.8305510141259688,
+            "mean": -1.0361305937013428
+          },
+          "change_from_anchor_left_m": {
+            "count": 44,
+            "min": -0.5007110323172499,
+            "median": -0.33251178486344496,
+            "p95": -0.06963074406557745,
+            "max": -0.053607743332002356,
+            "mean": -0.3115505207980523
+          },
+          "forward_progress_m": {
+            "count": 44,
+            "min": 3.351766030174815,
+            "median": 3.405809755450079,
+            "p95": 3.46949128150914,
+            "max": 3.4788724549367345,
+            "mean": 3.4100270786677296
+          }
+        }
+      }
+    }
+  ]
+}

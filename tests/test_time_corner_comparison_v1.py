@@ -73,6 +73,11 @@ def test_wrapped_body_yaw_and_conflicting_capture_stamps():
         RecordedLine([pose(0), pose(20_000_000, .02, epoch="1")])
 
 
+def test_duplicate_only_record_has_an_explicit_input_error():
+    with pytest.raises(ValueError, match="TOO_FEW_DISTINCT_POSES"):
+        RecordedLine([pose(0), pose(0)])
+
+
 @pytest.mark.parametrize("bad", [np.array([0.]), np.array([0., np.nan])])
 def test_invalid_query_shape_and_finite(bad):
     with pytest.raises(ValueError, match="POINT_SHAPE_OR_NONFINITE"):

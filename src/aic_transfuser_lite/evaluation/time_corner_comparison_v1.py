@@ -85,6 +85,8 @@ class RecordedLine:
                     exact_duplicates += 1
             unique[p.stamp_ns] = p
         self.rows = sorted(unique.values(), key=lambda p: p.stamp_ns)
+        if len(self.rows) < 2:
+            raise ValueError("TOO_FEW_DISTINCT_POSES")
         self.index = PoseIndex(list(poses))
         self.xy = np.array([[p.x_m, p.y_m] for p in self.rows])
         self.delta = np.diff(self.xy, axis=0)

@@ -1,0 +1,14 @@
+{"reference_done": "5kmh_run03", "fault_left_m": -1.1163656551658436, "offline_anchors": 465}
+{"reference_done": "5kmh_run06", "fault_left_m": -1.1179867657823064, "offline_anchors": 467}
+{"reference_done": "8kmh_run06", "fault_left_m": -1.0342870958830663, "offline_anchors": 255}
+{"reference_done": "8kmh_run09", "fault_left_m": -1.0342546302695876, "offline_anchors": 257}
+{"reference_done": "codex-time-recovery-right040-r22", "fault_left_m": -1.119768318557308, "offline_anchors": 0}
+{"reference_done": "codex-time-recovery-left020-r23", "fault_left_m": -1.119880421382251, "offline_anchors": 0}
+Traceback (most recent call last):
+  File "/home/thistle/e2e_autonomous/e2e_lite_transfuser/tools/compare_time_corner_tracking.py", line 406, in <module>
+    main()
+  File "/home/thistle/e2e_autonomous/e2e_lite_transfuser/tools/compare_time_corner_tracking.py", line 326, in main
+    p = bag.poses.at(a["observation_ns"])
+  File "/home/thistle/e2e_autonomous/e2e_lite_transfuser/src/aic_transfuser_lite/evaluation/time_clearance_v1.py", line 35, in at
+    raise ValueError("AMBIGUOUS_POSE_STAMP")
+ValueError: AMBIGUOUS_POSE_STAMP
