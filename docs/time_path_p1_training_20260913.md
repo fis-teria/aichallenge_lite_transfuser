@@ -47,11 +47,11 @@ bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -m pyte
 bash tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 \
   .venv/bin/python -u tools/train_time_corpus.py prepare-cache \
   --corpus ../datasets/processed/time_teacher_20laps_20260913 \
-  --cache ../datasets/cache/time_training_20260913
+  --cache ../datasets/cache/time_training_20260913_v2
 bash tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 \
   .venv/bin/python -u tools/train_time_corpus.py train \
   --corpus ../datasets/processed/time_teacher_20laps_20260913 \
-  --cache ../datasets/cache/time_training_20260913 \
+  --cache ../datasets/cache/time_training_20260913_v2 \
   --output ../runs/time_p1_20laps_20260913 --epochs 10 --batch-size 32 --workers 4 --precision bf16
 ```
 
@@ -64,4 +64,36 @@ WSLのPyTorch2.7.1+cu128、RTX4080 16GB。モデル12,251,426パラメータ。
 合成入力のforward/backwardでは、FP32 batch32はwarm後約0.25秒・peak5.8GB、BF16 batch32は約0.16秒・peak3.0GB。
 これはデータ読込・optimizer・検証を含まない事前計測であり、本学習速度ではない。
 
-検証結果・学習成果は実行後に追記する。
+## 実行確認
+
+- 学習コード: `2137dab87037636441587add6cfa36508db93696`。
+- WSL全体pytest: **1,987 passed / 4 skipped / 63 warnings**（75.19秒）。
+- CPU合成データの有限2epochを途中で中断し、optimizer/scheduler/RNG/cursor復元後の検証予測が連続実行と全件完全一致する回帰テストを実施済み。CUDA学習の中断再開完全一致を検証したという意味ではない。
+- cache identity: `f8ac104391d7a7c483d53aa06fcf058bc06cc6a5a540c6b940d1b4db821f75f5`。
+- train/validationの16周全件の採否照合と、各周2アンカーの実センサ再構成で全input tensorの完全一致を確認。
+- 初回cacheは収録開始境界の除外理由不一致で停止した。`audit_anchor`の判定順を共通入力処理と揃えて回帰テストを追加した。
+- 既存の固定corpusは保存し、cacheでは`5kmh_run09` / `8kmh_run10`の最初の各1アンカーに限り、旧`CURRENT_SENSOR_MISSING`と再生時`ANCHOR_OUTSIDE_EPOCH`を両方記録した。元のepoch bounds外・全履歴参照空・採用/usable falseを条件にした明示的な移行であり、教師・mask・採否・母数は不変。他の不一致は引き続きエラーにする。
+- 初回の不完全cacheは`../datasets/cache/time_training_20260913.partial`に保全し、学習には完了済みの`time_training_20260913_v2`を使用する。
+
+実行ログは`/home/thistle/e2e_autonomous/runs/time_p1_training_evidence_20260913/`、
+学習結果は`/home/thistle/e2e_autonomous/runs/time_p1_20laps_20260913/`。
+学習完了後の最良checkpoint・比較値は追記する。
+
+## 学習中に確認した旧V4データ
+
+ユーザーは「今回の20周パックとは別の、V4-10/V4-20で使った旧データ」の再利用可否を質問した。
+今回の固定OFF/ON比較は20周コーパスのtrain/validationだけで継続し、途中でデータを追加しない。
+
+- `../datasets/d1log_0902_all_v3`: 11 run、旧形式48,946サンプル。
+- `../datasets/recovery_20260904_v3`: 15 run、旧形式23,751サンプル。
+- `../datasets/d1log_recovery_mixed_20260904_v3`: 上記の統合26 run、72,697サンプル。3セットを足して重複計上しない。
+- `../datasets/raw/d1log_0902_all_v3/`にraw MCAP、`bag_inventory.json`、`bag_validation.json`、各runの`metadata.yaml`が残る。
+- metadata上、Camera/LiDAR、`/localization/kinematic_state`のOdometry、velocity、`/clock`、control command/TFを確認。再教師化の材料は存在する。
+- 旧`trajectory_path`だけから時間教師を作らず、rawの観測poseとclockから未来3秒を再構成する必要がある。receipt availability、50ms freeze、epoch、欠損・介入区間、split重複の監査は未実施。
+- 旧形式のサンプル件数は、TimePathの採用可能件数を示さない。recovery全rawと公開データ`aic_real_dataset_v2`の時間教師への適合性も未確定。
+
+## 実行テスト先
+
+現在の実データ学習はnative WSLで継続する。runtime/AWSIMの実行テストを行う場合の指定先は、`graneple@192.168.3.10` とする。今回のTimePath checkpointは既存V3 loaderと互換ではないため、専用の30点XY loader、因果4/4/10履歴、receipt＋50ms freeze契約が必要になる。
+
+runtime/shadowへ進む前に、`base_link`からrear axleへの校正済み変換も確認する。これらの条件が揃った実行テストはまだ実施していない。`192.168.3.10:22`への初回SSH BatchMode接続確認はConnectTimeout 8秒でタイムアウトしており、現在の接続状態を示すものではない。SSH先でのruntime操作やAWSIM試験を完了済みとは扱わない。
