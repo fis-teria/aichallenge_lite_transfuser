@@ -319,3 +319,12 @@ left020-r13はs=35.90mでSTALE_scan、正常停止・bag close成立。IMU軸検
 1thread指定ではp99 2.05ms/最大3.08ms（AWSIM停止中の単体測定、走行改善率を示すものではない）。
 collector子プロセスだけBLAS/OMP/MKLを1threadに固定し、stage wall/CPU時間とGC pauseを診断記録する。
 監視計算・stale期限・最大1回retry/100ms期限・車両設定は変更しない。
+
+8086832のWSL full pytestは2,218 passed / 4 skipped / 63 warnings（80.69s）。
+left020-r14はs=166.96mでSTALE_scan、正常停止・bag close成立。
+scan guardのwall82.71msに対してtick全体のthread CPUは11.90msで、GC generation2の17.48msも重なった。
+同じ実行imageで別Python threadを連続実行する負荷試験（AWSIM停止中、各30回）を実施した。
+Python切替間隔5ms: guard中央値245.61ms/最大260.92ms、1ms:59.04/65.93ms、0.5ms:33.84/39.02ms。
+3条件の監視marginは全て8.024104617691828mで一致。これは合成競合試験であり閉ループ性能ではない。
+collector内だけ`sys.setswitchinterval(0.0005)`とし、NumPyがGILを解放した後の受信threadからの戻りを短くする。
+現在値をrunへ保存する。センサ・判断期限・再計算回数・数式・車両設定は変えない。

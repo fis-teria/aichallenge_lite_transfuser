@@ -12,6 +12,7 @@ import json
 import math
 import os
 from pathlib import Path
+import sys
 import threading
 import time
 
@@ -35,6 +36,15 @@ def main() -> None:
     args, ros_args = ap.parse_known_args()
     if os.environ.get('ROS_DOMAIN_ID') != '1' or any(Path(p).exists() for p in ('/dev/vcu', '/dev/gnss', '/dev/ttyUSB0')):
         raise ValueError('AWSIM_ONLY_REQUIRED')
+    # Small NumPy operations release the GIL repeatedly. The default 5 ms
+    # Python thread handoff lets ROS reception delay a ~12 ms CPU calculation
+    # beyond the sensor deadline. Bound this collector process's handoff only;
+    # keep all sensor/computation deadlines and the numerical monitor intact.
+    sys.setswitchinterval(.0005)
+    (args.output/'collector_python_runtime.json').write_text(json.dumps(dict(
+        python_thread_switch_interval_s=sys.getswitchinterval(),
+        numerical_threads={key:os.environ.get(key) for key in
+            ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS')}), indent=2))
     reference = json.loads(args.reference.read_text())
     baseline = np.asarray(reference['baseline_xy_m'])
     import rclpy
