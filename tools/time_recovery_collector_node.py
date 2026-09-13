@@ -18,7 +18,8 @@ import numpy as np
 from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
 from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, select_aligned_scan, scan_pose_in_rear
 from aic_transfuser_lite.data.time_recovery_collection_v1 import (
-    TARGET_MPS, bounded_collection_command, check_collection_input_time, phase_at_s, project_course, validate_nominal,
+    TARGET_MPS, bounded_collection_command, check_collection_input_time, phase_at_s, project_course,
+    select_collection_input, validate_nominal,
 )
 
 
@@ -46,7 +47,7 @@ def main() -> None:
 
     rclpy.init(args=ros_args)
     node = Node('time_recovery_collector', enable_rosout=False, start_parameter_services=False)
-    cache = {}; poses = deque(maxlen=256); scans = deque(maxlen=4)
+    cache = {}; poses = deque(maxlen=256); scans = deque(maxlen=4); histories = {}
     clock_ns = None; clock_receipt = 0; previous = [0., time.monotonic()]
     state = dict(run_id=args.run_id, fault=None, armed_ns=None, armed_wall=None,
                  stop_reason=None, stop_since_ns=None, stop_confirmed=False,
@@ -69,7 +70,7 @@ def main() -> None:
         nonlocal clock_ns, clock_receipt
         value = stamp(m.clock)
         if clock_ns is not None and value < clock_ns:
-            state['fault'] = 'CLOCK_RESET'; poses.clear(); scans.clear(); cache.clear()
+            state['fault'] = 'CLOCK_RESET'; poses.clear(); scans.clear(); cache.clear(); histories.clear()
         clock_ns = value; clock_receipt = time.monotonic_ns()
 
     # /clock is a latest-time sample, like the official PP ROS clock QoS.
@@ -90,6 +91,7 @@ def main() -> None:
 
     def receive(role, m) -> None:
         cache[role] = (m, time.monotonic_ns())
+        histories.setdefault(role, deque(maxlen=4 if role in ('camera','scan','trajectory') else 32)).append(cache[role])
         if role == 'scan':
             scans.append(cache[role])
         if role == 'nominal':
@@ -112,13 +114,21 @@ def main() -> None:
     def tick() -> None:
         nonlocal publisher, last_path_wall, last_pose_stamp
         now = time.monotonic_ns(); wall = time.monotonic(); dt = min(.1, max(0., wall-previous[1]))
-        speed = None; fresh_velocity = False; details = {}; reason = 'STARTUP'; projection = None
+        speed = None; fresh_velocity = False; details = {}; reason = 'STARTUP'; projection = None; current = None
+        inputs = dict(cache)
+        if clock_ns is not None:
+            for role, history in histories.items():
+                selected = select_collection_input(role,
+                    [(stamp(m.stamp if role in ('nominal','steering') else m.header.stamp), receipt) for m,receipt in history],
+                    now_sim_ns=clock_ns, now_wall_ns=now)
+                if selected is not None:
+                    inputs[role] = history[selected]
         angle, accel, target = previous[0], -1., 0.
         actual = names(final_topic)
         if publisher is None and not actual:
             publisher = node.create_publisher(AckermannControlCommand, final_topic, 10)
-        if clock_ns is not None and 'velocity' in cache:
-            v, receipt = cache['velocity']
+        if clock_ns is not None and 'velocity' in inputs:
+            v, receipt = inputs['velocity']
             speed = float(v.longitudinal_velocity)
             fresh_velocity = (math.isfinite(speed) and 0 <= now-receipt <= 300_000_000
                               and -20_000_000 <= clock_ns-stamp(v.header.stamp) <= 150_000_000
@@ -152,15 +162,16 @@ def main() -> None:
             if clock_ns is None or now-clock_receipt > 500_000_000:
                 raise ValueError('CLOCK_STALE')
             for role in ('pose', 'velocity', 'steering', 'scan', 'camera', 'nominal', 'trajectory'):
-                m, receipt = cache[role]
+                m, receipt = inputs[role]
                 if names(topics[role][0]) != [topics[role][2]]:
                     raise ValueError('SOURCE_'+role)
                 t = stamp(m.stamp if role in ('steering', 'nominal') else m.header.stamp)
                 check_collection_input_time(role, capture_ns=t, receipt_ns=receipt, now_sim_ns=clock_ns, now_wall_ns=now)
             if not fresh_velocity:
                 raise ValueError('VELOCITY_INVALID')
-            current = max(poses, key=lambda p: p.stamp_ns)
-            velocity = cache['velocity'][0]; steering = cache['steering'][0]; nominal, received = cache['nominal']
+            pose_stamp = stamp(inputs['pose'][0].header.stamp)
+            current = next(p for p in reversed(poses) if p.stamp_ns == pose_stamp)
+            velocity = inputs['velocity'][0]; steering = inputs['steering'][0]; nominal, received = inputs['nominal']
             if (velocity.header.frame_id != 'base_link'
                     or abs(current.stamp_ns-stamp(velocity.header.stamp)) > 50_000_000
                     or abs(stamp(steering.stamp)-stamp(velocity.header.stamp)) > 50_000_000):
@@ -169,7 +180,7 @@ def main() -> None:
                 now_wall_ns=now, target_mps=float(nominal.longitudinal.speed),
                 acceleration_mps2=float(nominal.longitudinal.acceleration),
                 steering_input_rad=float(nominal.lateral.steering_tire_angle), measured_speed_mps=speed)
-            trajectory = cache['trajectory'][0]
+            trajectory = inputs['trajectory'][0]
             if (trajectory.header.frame_id != 'map' or len(trajectory.points) < 20
                     or any(not math.isclose(p.longitudinal_velocity_mps, TARGET_MPS, abs_tol=1e-5) for p in trajectory.points)):
                 raise ValueError('REFERENCE_SPEED_OR_FRAME')
@@ -225,12 +236,14 @@ def main() -> None:
         row = dict(event='CONTROL_AND_PHASE', monotonic_ns=now, sim_ns=clock_ns, reason=reason,
                    phase=phase, projection=projection, speed_mps=state['speed_mps'],
                    issued_angle_rad=angle, target_speed_mps=target, acceleration_mps2=accel,
-                   guard=details, current_pose=poses[-1].__dict__ if poses else None,
-                   nominal_angle_rad=float(cache['nominal'][0].lateral.steering_tire_angle)
-                       if 'nominal' in cache and math.isfinite(cache['nominal'][0].lateral.steering_tire_angle) else None,
-                   nominal_stamp_ns=stamp(cache['nominal'][0].stamp) if 'nominal' in cache else None)
+                   guard=details, current_pose=current.__dict__ if current else None,
+                   nominal_angle_rad=float(inputs['nominal'][0].lateral.steering_tire_angle)
+                       if 'nominal' in inputs and math.isfinite(inputs['nominal'][0].lateral.steering_tire_angle) else None,
+                   nominal_stamp_ns=stamp(inputs['nominal'][0].stamp) if 'nominal' in inputs else None)
         row['input_timing_ns'] = {role: dict(capture_ns=stamp(m.stamp if role in ('nominal','steering') else m.header.stamp),
-            receipt_monotonic_ns=receipt, receipt_age_ns=now-receipt) for role,(m,receipt) in cache.items()}
+            receipt_monotonic_ns=receipt, receipt_age_ns=now-receipt) for role,(m,receipt) in inputs.items()}
+        row['latest_received_capture_ns'] = {role:stamp(m.stamp if role in ('nominal','steering') else m.header.stamp)
+                                            for role,(m,receipt) in cache.items()}
         serialized = json.dumps(row, allow_nan=False); log.write(serialized+'\n')
         phase_pub.publish(String(data=serialized))
         if poses and poses[-1].stamp_ns != last_pose_stamp:

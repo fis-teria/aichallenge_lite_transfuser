@@ -4,7 +4,7 @@ import csv
 
 from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     PhaseWindow, TARGET_MPS, phase_at_s, project_course, recovery_teacher_mask, validate_nominal, load_pose_course,
-    bounded_collection_command, reference_rows_with_wrap, check_collection_input_time,
+    bounded_collection_command, reference_rows_with_wrap, check_collection_input_time, select_collection_input,
 )
 
 
@@ -114,3 +114,15 @@ def test_camera_uses_timepath_budget_while_control_state_keeps_150ms():
                         ('now_sim_ns',979_999_999)]:
         with pytest.raises(ValueError,match='STALE_camera'):
             check_collection_input_time('camera',**dict(clocks,**{field:value}))
+
+
+def test_inflight_future_nominal_keeps_fresh_original_sample_until_clock_catches_up():
+    # r06: publisher's 139.225 s command arrived before collector /clock=139.200 s.
+    rows=[(139_195_000_000,100_000_000), (139_225_000_000,166_000_000)]
+    assert select_collection_input('nominal',rows,now_sim_ns=139_200_000_000,now_wall_ns=167_000_000)==0
+    assert select_collection_input('nominal',rows,now_sim_ns=139_230_000_000,now_wall_ns=200_000_000)==1
+    assert select_collection_input('nominal',rows,now_sim_ns=139_400_000_000,now_wall_ns=250_000_000) is None
+    assert select_collection_input('nominal',rows,now_sim_ns=139_230_000_000,now_wall_ns=500_000_000) is None
+    assert select_collection_input('pose',[],now_sim_ns=1,now_wall_ns=1) is None
+    with pytest.raises(ValueError,match='CONTRACT'):
+        select_collection_input('nominal',[(-1,0)],now_sim_ns=1,now_wall_ns=1)

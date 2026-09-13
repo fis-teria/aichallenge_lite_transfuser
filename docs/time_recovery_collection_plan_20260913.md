@@ -218,3 +218,29 @@ left020-r05: 時計QoS修正後18.705秒走行し、STALE_cameraで正常制動�
 pose/velocity/steering/scan/nominalは引き続きcapture150ms、receipt300ms、未来20ms。
 この違いを回帰テストで固定し、各入力の元stamp・receiptもcontrol.jsonlへ追加する。
 bagの欠損/履歴/将来poseの品質検査は別に行い、watchdog通過だけで教師として採用しない。
+
+6681552でWSL full pytestは2,211 passed / 4 skipped / 63 warnings（98.99s）。
+閉じたr04/r05の全転送manifest・SQLite・実pose投影・sensor header・phase maskの監査もWSLで成功。
+両runとも指定復帰区間未到達として扱い、正常pilotや学習採用データの件数へ含めない。
+
+監査の再実行例（rawは書き換えず、結果はrunsへ出力）:
+
+```bash
+bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
+  tools/audit_time_recovery_collection.py \
+  --run /home/thistle/e2e_autonomous/raw/time_recovery_collection_20260913/codex-time-recovery-left020-r06 \
+  --types /home/thistle/e2e_autonomous/runs/time_recovery_collection_20260913/types \
+  --output /home/thistle/e2e_autonomous/runs/time_recovery_collection_20260913/left020_r06_audit.json
+```
+
+Windows→WSLの`git fetch /mnt/e`がPlan9ドライブI/O待ちになった際は、当該所有fetchだけを終了し、
+Windowsで作った同一commitの差分Git bundleをWSL nativeへ転送してobjectを先にfetchした。
+その後、通常の`sync_to_wsl.ps1 -CheckOnly`/`sync_to_wsl.ps1`でclean/SHA/protected-path検証を通して同期した。
+強制resetやignored datasetの置換は行っていない。
+
+left020-r06: 約117.1秒、基準s=107.6mまで走行しSTALE_nominalで停止。正常制動と3秒停止確認、bag closeが成立。
+failureのclock=139.200sに対して新着nominal=139.225s（25ms未来）、直前nominal=139.195sはまだ5ms古いだけで適格。
+最新着1件で置き換える方式ではDDSのtopic間到着順を処理できなかったため、有界historyから現在clockに適格な最新sampleを選ぶ。
+元stamp/receiptを保持し、未来20ms、各roleのcapture/receipt期限、source/skew検査は変更しない。
+適格sampleがなければ従来どおり停止。poseも選択したstampの実測poseを使用し、新着の未来poseへすり替えない。
+この実測ケースとclock追従・期限切れを回帰テストに追加した。

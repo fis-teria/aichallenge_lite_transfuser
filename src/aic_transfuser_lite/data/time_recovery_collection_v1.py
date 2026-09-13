@@ -38,6 +38,27 @@ def check_collection_input_time(role: str, *, capture_ns: int, receipt_ns: int,
         raise ValueError('STALE_'+role)
 
 
+def select_collection_input(role: str, capture_receipts_ns: Sequence[tuple[int, int]], *,
+                            now_sim_ns: int, now_wall_ns: int) -> int | None:
+    """Newest admissible original sample; a newer in-flight clock never retimes it.
+
+    DDS topics arrive independently. Keep a bounded history so a future-stamped
+    arrival does not evict the still-fresh usable sample before /clock catches
+    up. If no sample satisfies the unchanged per-role limits, fail closed.
+    """
+    usable = []
+    for i, (capture, receipt) in enumerate(capture_receipts_ns):
+        try:
+            check_collection_input_time(role, capture_ns=capture, receipt_ns=receipt,
+                                        now_sim_ns=now_sim_ns, now_wall_ns=now_wall_ns)
+        except ValueError as exc:
+            if str(exc) != 'STALE_'+role:
+                raise
+            continue
+        usable.append((capture, receipt, i))
+    return max(usable)[2] if usable else None
+
+
 def load_pose_course(path: Path) -> tuple[MpcReferencePointV3, ...]:
     """Read official map pose CSV [N,8], replace only its speed with 5 km/h."""
     with path.open(newline="", encoding="utf-8") as stream:
