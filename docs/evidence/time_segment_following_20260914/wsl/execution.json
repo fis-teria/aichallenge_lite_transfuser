@@ -1,0 +1,28 @@
+[
+  {
+    "name": "pytest",
+    "command": [
+      "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q"
+    ],
+    "source_commit": "d990fd6e893841167d7974f8d5058b35185ffab5",
+    "exit": 0,
+    "seconds": 92.1958074389986
+  },
+  {
+    "name": "replay",
+    "command": [
+      "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+      "tools/evaluate_time_segment_policy.py",
+      "--records",
+      "../runs/time_recovery_finetune_evidence_20260914",
+      "--output",
+      "../runs/time_segment_policy_20260914"
+    ],
+    "source_commit": "d990fd6e893841167d7974f8d5058b35185ffab5",
+    "exit": 0,
+    "seconds": 10.041744264002773
+  }
+]

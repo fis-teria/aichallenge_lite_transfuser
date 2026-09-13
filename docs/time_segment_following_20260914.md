@@ -42,4 +42,25 @@ ROS smokeの合成センサ試験と、AWSIMでモデルが出した予測によ
 
 ## 状態
 
-実装・回帰テスト作成中。WSL/AWSIM実行結果は未取得。
+実装sourceは`d990fd6e893841167d7974f8d5058b35185ffab5`。
+native WSLで2,264 passed / 4 skipped / 64 warnings、記録比較もexit 0。
+旧記録の成立1,956指令は位置・操舵・加速が完全一致し、応答補償・操舵マッピングのreplayも一致。
+候補の103指令はすべて線分内選択でPP成立。元のraw予測は保持した。
+
+証跡原本: `/home/thistle/e2e_autonomous/runs/time_segment_policy_evidence_20260914`と
+`/home/thistle/e2e_autonomous/runs/time_segment_policy_20260914`。
+AWSIM専用deployment `/home/graneple/e2e_autonomous/time_segment_following_20260914`で
+source 737ファイル・install 216ファイルの一致、Humble build、isolated ROS smokeの成功を確認。
+ROS smokeでは線分選択25指令が応答補償・操舵マッピング・clear scan監視まで到達した。
+
+AWSIM `codex-time-segment01`を1試行実施。固定5km/h目標で発進し、約100.44m・80.62秒走行。
+実測最高4.692km/h、区間0→1→2まで進み、`STOPPING_SWEEP_OCCUPIED`で終了。完走は未達。
+最初の拒否時は先読み1.933m、PP要求タイヤ角0.132636radであり、PPは成立していた。
+安全停止後の繰り返しを分離して、最初のscan拒否と操舵応答を追加解析する。
+
+simulatorは監視faultでfreezeして終了。freeze前の物理的な停止確認は取れていない。
+終了後のAWSIM/RViz/process/稼働containerは0、既存停止container114件と既存Git差分を保全。
+RViz設定は事前のbytesへ復元し、scene/vehicle/DLL hashの一致を確認した。
+74件の記録をSHA-256照合しnative WSLの
+`/home/thistle/e2e_autonomous/runs/time_segment_awsim_evidence_20260914`へ保存した。
+WSLで実指令replayは1,608件一致（うち操舵マッピング1,603件）、評価はexit 0。
