@@ -1,0 +1,44 @@
+{
+  "scope": "OFFLINE_MAP_AND_FORWARD_MONITOR_ONLY_NOT_FULL_BODY_COLLISION_PROOF",
+  "records": [
+    {
+      "run_id": "codex-time-recovery-left020-r23",
+      "control_pose_rows": 452,
+      "tested_map_circle_radius_m": {
+        "1.0": true,
+        "1.2": true,
+        "1.4": true,
+        "1.6": true,
+        "1.8": true,
+        "2.0": true
+      },
+      "minimum_forward_ray_margin_m": 1.0306841711862995,
+      "input_reasons": {
+        "OK": 52
+      },
+      "teacher_reasons": {
+        "OK": 52
+      }
+    },
+    {
+      "run_id": "codex-time-recovery-right020-r24",
+      "control_pose_rows": 444,
+      "tested_map_circle_radius_m": {
+        "1.0": true,
+        "1.2": true,
+        "1.4": true,
+        "1.6": true,
+        "1.8": false,
+        "2.0": false
+      },
+      "minimum_forward_ray_margin_m": 0.7599043047183658,
+      "input_reasons": {
+        "OK": 50,
+        "CURRENT_SENSOR_MISSING": 1
+      },
+      "teacher_reasons": {
+        "OK": 51
+      }
+    }
+  ]
+}

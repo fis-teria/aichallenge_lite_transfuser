@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import textwrap
 
 import matplotlib
 matplotlib.use('Agg')
@@ -89,8 +90,13 @@ def main() -> None:
             axis.axvspan(interval['start_s_m'], interval['end_s_m'], color=color, alpha=.45)
             axis.text((interval['start_s_m']+interval['end_s_m'])/2, .63, interval['phase'], ha='center', va='top', fontsize=9)
         axis.axhline(0., color='#777777', linewidth=.7)
+        display_labels = {'measured_hold_magnitude': 'small initial offset',
+                          'recovered_within_10cm': 'residual over 10 cm',
+                          'reduced_by_at_least_5cm': 'small error reduction'}
+        verdict = ('Accepted recovery pilot' if accepted else 'Not accepted: '+', '.join(
+            display_labels.get(k, k.replace('_', ' ')) for k in record['failed_gates']))
         axis.set(xlim=(start-2, end+5), ylim=(-.65, .65), xlabel='Progress along base course [m]',
-                 title=f'{name}\n'+('Accepted recovery pilot' if accepted else 'Not accepted: '+', '.join(record['failed_gates'])))
+                 title=f'{name}\n'+textwrap.fill(verdict, width=52))
         axis.grid(alpha=.2); axis.legend(loc='lower left', fontsize=8)
     axes[0].set_ylabel('Lateral offset [m] (+ left)')
     fig.suptitle('Measured Pure Pursuit recovery; target 5 km/h; no model evaluation', fontsize=12)

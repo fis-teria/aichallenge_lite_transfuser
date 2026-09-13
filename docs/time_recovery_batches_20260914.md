@@ -103,7 +103,7 @@ skipsは未導入のOSQP、jsonschema 2件、optional公式LiDAR小袋による�
 python3 /home/graneple/e2e_autonomous/time_recovery_collection_20260913/start_owned_run_20260914.py \
   --run-id codex-time-recovery-left040-r21 --profile straight040 --side left
 # AWSIM host: 明示した2本がclose済みの時だけ圧縮。
-python3 move_pair.py pack --pair 1 \
+python3 /home/graneple/e2e_autonomous/time_recovery_collection_20260913/move_pair_20260914.py pack --pair 1 \
   --runs codex-time-recovery-left040-r21 codex-time-recovery-right040-r22
 # packのarchive/snapshot/shippingをWSLへ転送してから、記録されたsnapshot SHAを指定。
 tools/with_wsl_training_lock.sh .venv/bin/python \
@@ -119,3 +119,60 @@ cleanupは検証receiptと採用区分を含む案内を準備した後、同じ
 専用rootのみmount、network none/read-only rootfs/cap-drop ALL/DAC_OVERRIDEのみの一時containerで
 元ファイル全件を再照合してから移動済み案内へ置換し、転送用archiveだけ削除する。
 完了receiptをWSLにも保管し、台帳を `WSL_MOVED` に更新してから次の組へ進む。
+
+### 第1組: 直線40cm — 収集・検証・移動完了
+
+| run | 実測hold中央値 | 復帰後5mの最大横ずれ | 有効な3秒未来候補 | 周回 | 採用 |
+|---|---:|---:|---:|---:|---|
+| left040-r21 | +44.60cm | 5.91cm | 58 | 373.79s / 1周 | 可 |
+| right040-r22 | -45.49cm | 7.02cm | 57 | 373.79s / 1周 | 可 |
+
+目標5km/h、実測移動速度の中央値はそれぞれ3.522/3.520km/h。
+各runは単一epochで、全候補115件が入力履歴と30点の実測未来を満たした。
+画像/LiDARからのtensor再現は各3件成功。raw yaw異常は各run2メッセージあり、
+既存の異常履歴除外を維持した。復帰候補へは混入していない。
+
+2本のbag合計2,985,860,674B、設定/ログ等を含む全122ファイル・リンクの内容は
+3,096,439,634B。転送archiveは1,372,071,438Bで、全ファイル・構造・SQLiteをWSLで照合した。
+原本の全件再照合後にAWSIM側を移動済み案内へ置換し、native全件を再度検証した。
+AWSIM側の空きは20.90GiB。移行先は `raw/time_recovery_batches_20260914/`。
+
+終了後のheartbeatに `NOMINAL_FIXED_SPEED_MISMATCH` が残ったが、両runの正常停止時の
+`result.last_control` はfaultなし・速度0・3秒停止確認済み。
+r21では正常停止sim425.869990481sの後、clock停止後425.979990478sの時刻で不一致が発生した。
+停止後の終了処理と走行中の異常を区別し、採用判定は固定済みresultと元時刻の有効位相で行う。
+
+転送補助は内部ログsymlinkに対応するため `8360a65703850a5bd0493f717a17eabe9cc10950` で修正した。
+旧bagの全60 manifest項目をWSLで再照合し、外部参照・重複run IDの拒否もsmoke確認済み。
+記録器のmanifestはリンク先内容のSHA、移動用snapshotはリンク自体と実体の両方を保持する。
+
+判定値は `docs/evidence/time_recovery_batches_20260914/pair01_20260914_summary.json`、
+全件照合と削除後確認は同prefixの `verified.json` / `postcheck.json`、実測図は
+`pair01_20260914_measured_recovery.png` に保存した。
+
+### 第2組: 右カーブ20cm — 収集・検証・移動完了
+
+| run | 実測hold中央値 | 復帰後5mの最大横ずれ | 有効な3秒未来候補 | 周回 | 採用 |
+|---|---:|---:|---:|---:|---|
+| left020-r23 | +35.81cm | 6.35cm | 52/52 | 373.94s / 1周 | 可 |
+| right020-r24 | -8.53cm | 9.20cm | 50/51 | 373.59s / 1周 | 診断用 |
+
+右20cmは、指示方向へのずれが10cm未満で、復帰後の最大誤差に対する5cm以上の低減も不成立。
+通常走行の左寄りの横誤差と相殺される観測結果であり、成功例として採用しない。
+1候補は `CURRENT_SENSOR_MISSING` で除外した。教師の30点自体は51件で成立していたが、
+入力を満たす50件と区別する。両runとも単一epoch、代表3件のtensor再現は成功した。
+
+実測の移動速度中央値は左3.520/右3.523km/h、目標は両方5km/h。
+2本のbag合計3,000,888,898B、全121ファイル・リンクは3,111,497,072B。
+1,372,443,026Bのarchiveを転送し、第1組と同じ全件一致・SQLite・削除後native再確認を通した。
+AWSIM側を移動済み案内へ置換後、空きは20.99GiB。
+
+実測control poseの対象区間（approach手前2m〜recovery後5m）を地図上で調べたところ、
+左は半径2.0m、右は半径1.6mの円内が全サンプルで空きセルだった。
+右の半径1.8mは不成立。前方scan監視の最小ray marginは左1.031m/右0.760mで、走行faultはなし。
+40cmの参照自体は事前に接続部を含めて半径1.4mを検証済み。
+これらを根拠に予定の40cm各1周へ進める。全車体・全時刻の無接触証明ではない。
+
+判定と原本照合の証拠は第1組と同じprefix形式で `pair02_20260914_*` に保存した。
+地図と前方監視は `pair02_20260914_measured_margin.json`、比較対象の旧通常走行は
+`curve_baseline_margin_20260914.json`。同じ不成立条件の無目的な追加収集は行わない。

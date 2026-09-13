@@ -1,0 +1,60 @@
+{
+  "campaign_id": "time_recovery_batches_20260914",
+  "generator_source_sha": "8333fae192799f85dbcd9cde921b1e368f11920b",
+  "runtime_source_sha": "0484dc369f66282e05faa61dc98c80d687a9c6c4",
+  "max_attempts": 8,
+  "max_bag_bytes": 17179869184,
+  "batch_size": 2,
+  "started_unix": 1789312941.9080136,
+  "deadline_unix": 1789327341.9080136,
+  "attempts": [
+    {
+      "run_id": "codex-time-recovery-left040-r21",
+      "profile": "straight040",
+      "side": "left",
+      "reference_sha256": "a473d0acd33a0bcfeac78d33f439483041bca99498edd187c1aa3befef223e12",
+      "started_unix": 1789312941.9080136,
+      "state": "RECORDED",
+      "pid": 553955,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "bag_bytes": 1488781089
+    },
+    {
+      "run_id": "codex-time-recovery-right040-r22",
+      "profile": "straight040",
+      "side": "right",
+      "reference_sha256": "b8c4788b705fc2e6b64d57a6dd45216bd0f84f0c64e0375294abdd7276aa337f",
+      "started_unix": 1789313427.75069,
+      "state": "STARTED",
+      "pid": 561172
+    }
+  ],
+  "completed_batches": [],
+  "planned_conditions": [
+    [
+      "straight040",
+      "left"
+    ],
+    [
+      "straight040",
+      "right"
+    ],
+    [
+      "curve020",
+      "left"
+    ],
+    [
+      "curve020",
+      "right"
+    ],
+    [
+      "curve040",
+      "left"
+    ],
+    [
+      "curve040",
+      "right"
+    ]
+  ]
+}
