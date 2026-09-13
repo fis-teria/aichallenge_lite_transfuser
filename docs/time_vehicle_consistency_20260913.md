@@ -192,3 +192,12 @@ bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python docs/ev
 残る課題は、コーナー出口から直進時の路端側の余裕、横応答の過渡/速度別の同定、
 停止時のfreeze前速度確認と完走評価。新profileの将来応答上限は実験上の仮定であり、
 全周囲の自由空間や実車安全の認証ではない。
+
+## 最終検証
+
+拒否scan回帰を追加した `d19e478ea1e935dd8f79e7609bb2642bec848fc5` をWindowsから
+native WSLへ同期し、lock内の全`pytest -q`は2188passed/4skipped/63warnings、
+78.36秒。logは同evidenceディレクトリの`full_d19e478.log`。
+4skipは既存環境の任意solver/JSON schema/公式package未導入によるもの。
+実走source `1b0985e` からsrc/ros2_ws/tools/configs/schemasの差分はなく、
+追加は診断・回帰テスト・証拠資料のみ。全体テスト後の変更は本結果記録のみ。
