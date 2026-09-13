@@ -24,6 +24,7 @@ from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     TARGET_MPS, bounded_collection_command, check_collection_input_time, phase_at_s, project_course,
     select_collection_input, select_collection_motion, validate_nominal,
     check_collection_decision_age, collection_snapshot_retry_allowed,
+    collection_snapshot_retry_wait_ns,
     validate_collection_imu_axes, collection_imu_yaw_rate,
 )
 
@@ -297,8 +298,10 @@ def main() -> None:
                 reason = 'RECOVERY_TEACHER_TRACKING'
                 accel = bounded_accel; target = TARGET_MPS
         except (ValueError, KeyError, TypeError) as exc:
+            retry_elapsed = time.monotonic_ns()-started_ns
             if not state['fault'] and collection_snapshot_retry_allowed(str(exc), attempt=attempt,
-                    elapsed_ns=time.monotonic_ns()-started_ns):
+                    elapsed_ns=retry_elapsed):
+                time.sleep(collection_snapshot_retry_wait_ns(retry_elapsed)/1e9)
                 return tick(1, started_ns, (*retry_reasons, str(exc)))
             reason = str(exc); angle = previous[0]; accel = -1.; target = 0.; state['ready_ticks'] = 0
             if state['armed_ns'] is not None and reason != 'REQUESTED_BRAKE':
@@ -352,6 +355,9 @@ def main() -> None:
         elif actual and actual != ['/time_recovery_collector']:
             state['fault'] = 'COMPETING_CONTROLLER'
         if retry_after_snapshot is not None:
+            elapsed = time.monotonic_ns()-started_ns
+            if elapsed <= 80_000_000:
+                time.sleep(collection_snapshot_retry_wait_ns(elapsed)/1e9)
             return tick(1, started_ns, (*retry_reasons, retry_after_snapshot))
         previous[:] = [angle, wall]
         row = dict(event='CONTROL_AND_PHASE', monotonic_ns=now, sim_ns=clock_ns, reason=reason,

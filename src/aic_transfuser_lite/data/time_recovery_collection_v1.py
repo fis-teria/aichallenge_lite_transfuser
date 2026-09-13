@@ -40,6 +40,17 @@ def check_collection_decision_age(*, started_ns: int, now_ns: int) -> None:
         raise ValueError('COLLECTION_COMPUTATION_TIMEOUT')
 
 
+def collection_snapshot_retry_wait_ns(elapsed_ns: int) -> int:
+    """Yield up to 20 ms for real ROS arrivals, retaining 20 ms to recompute.
+
+    Called only after the single timing retry is admitted. This never creates
+    samples or extends the total 100 ms decision deadline.
+    """
+    if type(elapsed_ns) is not int or not 0 <= elapsed_ns <= 80_000_000:
+        raise ValueError('SNAPSHOT_RETRY_WAIT_CONTRACT')
+    return min(20_000_000, 80_000_000-elapsed_ns)
+
+
 def check_collection_input_time(role: str, *, capture_ns: int, receipt_ns: int,
                                 now_sim_ns: int, now_wall_ns: int) -> None:
     """Use existing TimePath input budgets, retaining original capture clocks.

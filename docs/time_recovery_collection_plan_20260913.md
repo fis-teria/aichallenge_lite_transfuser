@@ -367,3 +367,15 @@ recovery後5mのoffset絶対中央値<=0.10m、holdからの絶対offset低減>=
 recoveryからbaselineまで到達した時間区間の本数を別に記録する。
 小pilotの因果監査は最大256候補まで全件を調べ、元画像・LiDARを使う実入力構成は代表3件で確認する。
 256候補超は有界の均等抽出とし、全候補確認かどうかをreportに明記する。学習materializeは行わない。
+
+000c26bのWSL full pytestは2,221 passed / 4 skipped / 63 warnings（80.62s）。
+57f42d2（停止pose除外と全small-pilot候補監査）は2,221 passed / 4 skipped / 63 warnings（74.62s）。
+left020-r17では直線の実測hold中央値+0.223m、recovery後5mの中央値-0.0073mを確認した。
+ただしs=46.61mでFRESH_ALIGNED_SCAN_MISSINGにより停止し、正常制動とbag closeが成立した。
+これは有効な復帰候補区間を含む部分runであり、正常1周pilotとは数えない。
+
+初回snapshotのSTALE_scanから直ちに再試行すると、DDSで最新velocityは到着済みでもposeは65ms前に留まり、
+50ms以内に組めるのは約140ms古いmotionだった。対応scanは既に150msを超え、新着scanは選択poseより未来。
+再試行前に最大20msだけGILを解放して、実測メッセージの到着を待つ。再計算用20msを残し、
+待機は80ms-elapsedを上限とする。1回の再試行、100ms判断期限、全鮮度・skew・scan補間期限はそのまま。
+未到着のposeやscanは生成せず、待機後も全検査に合格しなければ停止する。待機予算はunit testで確認する。

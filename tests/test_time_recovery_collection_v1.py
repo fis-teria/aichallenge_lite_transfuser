@@ -198,6 +198,17 @@ def test_expired_snapshot_retry_is_bounded_and_does_not_retry_physical_or_reset_
         check_collection_decision_age(started_ns=100, now_ns=99)
 
 
+def test_retry_allows_real_arrival_time_without_extending_computation_budget():
+    from aic_transfuser_lite.data.time_recovery_collection_v1 import collection_snapshot_retry_wait_ns
+    for elapsed, expected in [(0,20_000_000),(49_000_000,20_000_000),
+                              (75_000_000,5_000_000),(80_000_000,0)]:
+        assert collection_snapshot_retry_wait_ns(elapsed) == expected
+        assert elapsed+expected+20_000_000 <= 100_000_000
+    for invalid in (-1,80_000_001,1.5):
+        with pytest.raises(ValueError,match='RETRY_WAIT_CONTRACT'):
+            collection_snapshot_retry_wait_ns(invalid)
+
+
 def test_imu_must_be_fresh_and_aligned_with_selected_measured_velocity():
     clocks = dict(now_sim_ns=1_000_000_000, now_wall_ns=2_000_000_000, include_imu=True)
     history = {r:[(990_000_000,1_990_000_000)] for r in ('pose','velocity','steering')}
