@@ -325,3 +325,69 @@ bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -m pyte
 # .10専有deploymentでHumble buildと隔離ROS smoke後、run ID未使用を確認して実行:
 timeout --signal=TERM --kill-after=10s 710s python3 SOURCE/tools/run_time_path_awsim_trial.py --deployment DEPLOYMENT --run-id codex-time-turn-14 --display :1 --config configs/control/time_path_response_turning_5kmh_20260913.json
 ```
+
+## turn14実行前確認
+
+source `c2e264f507a72b8e99b2dd859467c3045c2ab733`、Windows/WSL一致。
+WSL限定97passed (1.66s)、全体2144passed/4skipped/63warnings (80.66s)。
+独立した遅延/一次応答plantのramp/sineに対し平均誤差が旧補正の45%未満、
+最大誤差60%未満であることを検証。角度/rate上限、元要求の到達不能、時刻reset、
+保存state連続性の再生検査を通した。Humble build0.91s、12module一致。
+隔離ROS smokeは実モデルPath6、support guard110、左右28、先行補償10件、
+到達不能の制動10、stale11/clock7/overspeed12、child exit0 (18.722s)。
+archive SHA256 `3883f46d421fb8c681813d1c031ebc16b0f2c4b3a62114d4dbc1a93c31609fc7`、
+config SHA256 `2e6f424034ff441001f5e42a545f9ccb45d13234e9296a1393a5ad6aa900a21c`。
+専有root `/home/graneple/e2e_autonomous/time_turning_response_20260913`、SOURCEは
+その中の `source_c2e264f`。上記run ID、710s+10s外側timeoutで1回実行する。
+開始前active0、既存Compose39個。正常目標5km/h、通常RVizを維持する。
+
+## turn14結果と残る旋回量の問題
+
+turn14は最初のコーナーを通過、公式section 0→1→2へ進んだが、後続角で
+`CONTROL_STOPPING_SWEEP_OCCUPIED`。発進79.654998220sim秒、記録移動99.420366m、
+追従1588回で未完走。正常指令は全て5/3.6m/s、実測最大1.308408m/s（4.7103km/h）。
+通常RVizの実購読・画面記録あり。wall123.187s、外側124.140s、cleanup error0、
+終了後active0、既存Compose39個とremote Gitの既存493行を保全。
+ホストfreeze前の停車実測はない。48ファイル、59,535,360bytesをhash検証。
+archive SHA256 `048252c031fcdb1df3634bc0cf4bf1d10fa2c379803bc1e9778010a44103f218`。
+WSL評価の制御再生1594件、actuator/response再生1589件一致、最大誤差4.44e-16。
+計算とstate連続性の再生であり、全scan判断の再生とは区別する。
+
+先行補償は1576指令で有効、補償量は-0.014884〜+0.033716rad。
+操舵reportのsim年齢中央値15ms、p95 30ms、最大35ms。
+実行DLLのMultiDomainROS2ManagerはUnity Updateで受信を処理する。
+発行済み指令のzero-order holdに固定物理遅延70ms・一次応答20msを適用した
+保存時系列の当てはめでは、追加35〜40msの遅れを含めると平均絶対誤差約0.00026rad。
+これは当該走行の事後推定であり、追加遅延をruntime定数へ採用する根拠とはしない。
+独立plant回帰に追加40msの輸送遅れを加えた感度確認も追加した。
+
+拒否時は実操舵+0.138832rad、PP要求+0.144389rad、補償後+0.146836rad。
+このturn14の保存scanは、要求へ即時到達する仮定でも拒否する。
+全区間を+0.16rad固定と置いた仮定ではray余裕+0.009665m、+0.17radで+0.048179m。
+これらは仮定した幾何計算であり、その場で実行可能な操舵や実車体の空き距離ではない。
+元の経路から距離1m以上の任意の点を選んでもPP要求は最大+0.150262rad。
+したがって今回の残りは、単なる指令遅れや目標点の入れ替えだけでは説明できない。
+先行補償による実走改善や後続コーナー通過は確認できていない。
+
+さらに推定姿勢の0.5s差分yaw rateを `v*tan(実操舵)/1.087` と照合すると、
+turn13/14の最小二乗比は0.90990/0.91144、操舵変化が小さい区間でも
+0.90938/0.91324だった。ただしEKF推定姿勢は独立したground truthではなく、
+この比をそのまま操舵gainやwheelbaseへ入れていない。
+停止範囲の数学的包絡は指定した曲率区間に対するもので、PhysX車体の横滑りや
+推定姿勢誤差まで保証したものではない。制御側だけ倍率を上げると監視側の
+運動仮定との整合が崩れるので、次の原因所有層は車体yaw応答とPP/監視の共通運動モデル。
+
+次の実装前に必要な切り分け:
+1. 同時刻の速度・舵角・IMU yaw rate・推定姿勢のyaw rateを照合し、
+   車体の旋回不足と姿勢推定の遅れを分離する（現control記録はIMU yaw rateを持たない）。
+2. その結果からPPの要求曲率→物理操舵と停止包絡に同じ運動契約を適用する。
+   未変更のモデル経路そのものの曲がりが不足する場合は別にモデル誤差として扱う。
+3. 左右・定常旋回・過渡応答・到達不能・監視を検証してから新規run IDを発行する。
+   固定5km/hの指定は継続し、未検証倍率によるturn15は実施していない。
+
+小さい証拠一式は `docs/evidence/time_turning_20260913/turn14/`。
+raw scan/全指令/全予測はWSLの `runs/time_turning_20260913/codex-time-turn-14`。
+評価の再実行は同じWSL lock内で、既存出力を上書きしない新しいoutputを指定する:
+```bash
+bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python tools/evaluate_time_awsim_trial.py --run /home/thistle/e2e_autonomous/runs/time_turning_20260913/codex-time-turn-14 --output /home/thistle/e2e_autonomous/runs/time_turning_20260913/evaluation14_recheck
+```

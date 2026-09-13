@@ -1,0 +1,92 @@
+{
+  "scope": "RECORDED_CLOSED_LOOP_COMMAND_AND_STAMPED_STEERING_NOT_PATH_ACCURACY",
+  "tracking_commands": 1588,
+  "tracking_elapsed_sim_s": 79.609998221,
+  "nominal_speed_target_mps": {
+    "min": 1.3888888888888888,
+    "median": 1.3888888888888888,
+    "p95": 1.3888888888888888,
+    "max": 1.3888888888888888
+  },
+  "measured_speed_mps": {
+    "min": 0.0,
+    "median": 1.284004271030426,
+    "p95": 1.3005141496658326,
+    "max": 1.3084076642990112
+  },
+  "report_age_sim_s": {
+    "min": 0.0,
+    "median": 0.015,
+    "p95": 0.03,
+    "max": 0.035
+  },
+  "report_age_wall_s": {
+    "min": 0.000130359,
+    "median": 0.017635625000000002,
+    "p95": 0.03363769434999998,
+    "max": 0.055963118
+  },
+  "compensation_rad": {
+    "min": -0.014883910406705309,
+    "median": 0.00013461445054541046,
+    "p95": 0.00517852079895356,
+    "max": 0.033716052716613404
+  },
+  "compensation_active_commands": 1576,
+  "headroom_limited_commands": 5,
+  "turning_current_report_vs_nominal_mae_rad": 0.0029394367751513755,
+  "turning_capture_aligned_vs_nominal_mae_rad": 0.0026444725829233152,
+  "best_fit_capture_aligned_lag_s": 0.1250000000000002,
+  "best_fit_mae_rad": 0.0015783525506204731,
+  "lag_fit_boundary": "Descriptive fit of this changing closed-loop sequence, not identified actuator transport delay.",
+  "first_rejection": {
+    "sim_ns": 96174997850,
+    "reason": "STOPPING_SWEEP_OCCUPIED",
+    "measured_steer_rad": 0.13883155584335327,
+    "issued_steer_rad": 0.14683616650381734,
+    "previous_steer_rad": 0.14617503430542456,
+    "steering_observation": {
+      "stamp_ns": 96144997850,
+      "age_sim_s": 0.03,
+      "receipt_monotonic_ns": 22010338142342,
+      "age_wall_s": 0.034681172
+    },
+    "speed_mps": 1.2710400819778442,
+    "current_pose": {
+      "stamp_ns": 96164997850,
+      "clock": "sim",
+      "epoch": "0",
+      "world_frame": "map",
+      "body_frame": "base_link",
+      "x_m": 89648.92241989436,
+      "y_m": 43139.680785069155,
+      "yaw_rad": 0.8895244166181089
+    },
+    "steering_response": {
+      "policy": "awsim_grip_0p6_lead_v1",
+      "nominal_tire_rad": 0.1443894981114645,
+      "target_tire_rad": 0.14683616650381734,
+      "stamp_ns": 96174997850,
+      "dt_s": 0.044999999,
+      "reset": false,
+      "previous_state": {
+        "nominal_tire_rad": 0.14336695036054417,
+        "filtered_rate_radps": 0.031200932720893262,
+        "stamp_ns": 96129997851
+      },
+      "next_state": {
+        "nominal_tire_rad": 0.1443894981114645,
+        "filtered_rate_radps": 0.027185204359475853,
+        "stamp_ns": 96174997850
+      },
+      "raw_rate_radps": 0.022723283858747164,
+      "filtered_rate_radps": 0.027185204359475853,
+      "lead_s": 0.09,
+      "rate_filter_s": 0.05,
+      "requested_correction_rad": 0.002446668392352827,
+      "applied_correction_rad": 0.00244666839235283,
+      "headroom_limited": false
+    },
+    "elapsed_sim_s": 79.65499822
+  }
+}

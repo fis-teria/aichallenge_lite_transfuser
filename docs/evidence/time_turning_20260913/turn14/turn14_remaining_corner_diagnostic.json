@@ -1,0 +1,169 @@
+{
+  "scope": "FROZEN_SCAN_COUNTERFACTUAL_AND_ESTIMATED_POSE_DIAGNOSIS_NOT_NEW_MOTION",
+  "constant_angle_checks": [
+    {
+      "assumed_constant_tire_rad": 0.13883155584335327,
+      "status": "STOPPING_SWEEP_OCCUPIED"
+    },
+    {
+      "assumed_constant_tire_rad": 0.1443894981114645,
+      "status": "STOPPING_SWEEP_OCCUPIED"
+    },
+    {
+      "assumed_constant_tire_rad": 0.14683616650381734,
+      "status": "STOPPING_SWEEP_OCCUPIED"
+    },
+    {
+      "assumed_constant_tire_rad": 0.15,
+      "status": "STOPPING_SWEEP_OCCUPIED"
+    },
+    {
+      "assumed_constant_tire_rad": 0.16,
+      "status": "CLEAR",
+      "minimum_ray_margin_m": 0.009665467915456638
+    },
+    {
+      "assumed_constant_tire_rad": 0.17,
+      "status": "CLEAR",
+      "minimum_ray_margin_m": 0.04817923800314716
+    },
+    {
+      "assumed_constant_tire_rad": 0.2,
+      "status": "CLEAR",
+      "minimum_ray_margin_m": 0.15024859334380514
+    }
+  ],
+  "raw_reference_PP_candidates": [
+    {
+      "distance_m": 1.0067150644006446,
+      "PP_tire_rad": 0.14792143885850736
+    },
+    {
+      "distance_m": 1.133259166940811,
+      "PP_tire_rad": 0.14988125144587838
+    },
+    {
+      "distance_m": 1.2597932968507741,
+      "PP_tire_rad": 0.15026197171056027
+    },
+    {
+      "distance_m": 1.386395113239281,
+      "PP_tire_rad": 0.1496714142249805
+    },
+    {
+      "distance_m": 1.5131044501786073,
+      "PP_tire_rad": 0.14853605826974367
+    },
+    {
+      "distance_m": 1.6399283032478702,
+      "PP_tire_rad": 0.14715340346005626
+    },
+    {
+      "distance_m": 1.7668486904623877,
+      "PP_tire_rad": 0.1457266526588262
+    },
+    {
+      "distance_m": 1.893830890677508,
+      "PP_tire_rad": 0.1443895003434417
+    },
+    {
+      "distance_m": 2.020830817925379,
+      "PP_tire_rad": 0.1432244410105118
+    },
+    {
+      "distance_m": 2.1478021391220263,
+      "PP_tire_rad": 0.142276557581271
+    },
+    {
+      "distance_m": 2.2747027773359187,
+      "PP_tire_rad": 0.14156394638318842
+    },
+    {
+      "distance_m": 2.401500438879666,
+      "PP_tire_rad": 0.1410857145223117
+    },
+    {
+      "distance_m": 2.528176662782477,
+      "PP_tire_rad": 0.1408281908433123
+    },
+    {
+      "distance_m": 2.654730557977791,
+      "PP_tire_rad": 0.14076949809914382
+    },
+    {
+      "distance_m": 2.7811813343089087,
+      "PP_tire_rad": 0.14088300726422662
+    },
+    {
+      "distance_m": 2.9075689424647333,
+      "PP_tire_rad": 0.14113997669933154
+    },
+    {
+      "distance_m": 3.0339541780898642,
+      "PP_tire_rad": 0.1415113617431726
+    },
+    {
+      "distance_m": 3.160417544810312,
+      "PP_tire_rad": 0.14196908987545864
+    },
+    {
+      "distance_m": 3.2870577717303866,
+      "PP_tire_rad": 0.14248685101244132
+    },
+    {
+      "distance_m": 3.413988546335146,
+      "PP_tire_rad": 0.14304065516234193
+    },
+    {
+      "distance_m": 3.541335767580518,
+      "PP_tire_rad": 0.14360905874644944
+    }
+  ],
+  "estimated_pose_yaw_response": [
+    {
+      "run_id": "codex-time-turn-13",
+      "selection": "all_turning",
+      "samples": 873,
+      "gain_quantiles_10_50_90": [
+        0.8706074250418566,
+        0.9136614487681488,
+        0.9756675254379591
+      ],
+      "least_squares_gain": 0.9098956869082001
+    },
+    {
+      "run_id": "codex-time-turn-13",
+      "selection": "low_angle_change",
+      "samples": 337,
+      "gain_quantiles_10_50_90": [
+        0.8683555901516165,
+        0.9214980565107284,
+        0.988781425179493
+      ],
+      "least_squares_gain": 0.9093807589178241
+    },
+    {
+      "run_id": "codex-time-turn-14",
+      "selection": "all_turning",
+      "samples": 861,
+      "gain_quantiles_10_50_90": [
+        0.8631705628428931,
+        0.9157542312164901,
+        0.982827048708247
+      ],
+      "least_squares_gain": 0.9114371292587697
+    },
+    {
+      "run_id": "codex-time-turn-14",
+      "selection": "low_angle_change",
+      "samples": 293,
+      "gain_quantiles_10_50_90": [
+        0.8703954451651843,
+        0.9224513909681785,
+        0.9886138237301679
+      ],
+      "least_squares_gain": 0.9132431804705132
+    }
+  ],
+  "boundary": "Counterfactual scan clearance does not establish executable control. Estimated localization yaw is not independent ground truth; ratios are not an admitted simulator calibration."
+}
