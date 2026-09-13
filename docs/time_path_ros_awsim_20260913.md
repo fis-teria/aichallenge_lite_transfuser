@@ -55,7 +55,7 @@ float32・TF32無効で、未来3秒・0.1秒刻みの30 XY点を予測した。
 各観測のbase_link座標で重ねた図であり、地図上の走行軌跡ではない。
 制御拒否行には採用plan IDが残らないため、201指令と90経路の厳密な一対一対応は未再現。
 実指令の停止理由と全90経路の形状集計が一致することを確認した。
-実数値1経路を[回帰fixture](../tests/fixtures/time_path/near_origin_foldback.json)として保存し、同じ停止理由と予測列の非改変をテストする。これは予測であり、正解教師ではない。
+実数値1経路を[回帰fixture](../tests/fixtures/time_path/near_origin_foldback.json)として保存し、WSLの回帰テストで同じ停止理由と予測列の非改変を確認した。これは予測であり、正解教師ではない。
 
 ## ROS実装
 
@@ -108,19 +108,23 @@ checkpoint: `/home/thistle/e2e_autonomous/runs/time_p1_20laps_20260913/command_o
 SHA-256: `e857db4b67d3d9f6a77c2865cfc1fa53e9903e7a1d2d8a371407fbe009a1a44f`。配布先と実行時に照合した。
 
 - WSLの入力一致・時刻・座標・制御テスト: 20 passed。
-- `fc381a2` のWSL全体テスト: 2,015 passed / 4 skipped / 63 warnings、128.44秒。
+- 最終コード `0fcb939` のWSL全体テスト: **2,016 passed / 4 skipped / 63 warnings、102.70秒**。
+  [全体テストログ](evidence/time_path_ros_awsim_20260913/full_0fcb939.log)。4 skipは既存のOSQP、JSON Schema関連2件、optional公式package。
 - 通常RViz helperのWSLテスト: 2 passed。ROS node・実行helperのcompile確認完了。
 - 既存Humble imageで `aic_e2e_runtime` のcolcon build完了。
 - 隔離Humble: Path完全一致6件、合成oracleの正のshadow指令111件、plan失効brake 11件、clock停止brake 7件、vehicle publisher 0、両子process終了code 0。
   [結果](evidence/time_path_ros_awsim_20260913/humble_smoke_summary.json)は合成ROS接続試験で、モデルの走行性能ではない。
 - AWSIM直下20記録ファイルのSHA-256とサイズをホスト・Windows・native WSLで全件照合。[integrity.json](evidence/time_path_ros_awsim_20260913/integrity.json)。ネストしたAutoware出力はこの20件に含まない。
+- 最終WSL成果物5件のWindows転送も[SHA-256で照合](evidence/time_path_ros_awsim_20260913/final_transfer_verification.json)した。
 
 host root: `/home/graneple/e2e_autonomous/time_path_ros_20260913/`、生ログはその `codex-time-trial-03/`。
 WSL生ログ: `/home/thistle/e2e_autonomous/runs/time_path_ros_20260913/codex-time-trial-03/`。
 Windows参照コピー: `tmp/time_path_ros_20260913/codex-time-trial-03/`。
 Gitには小さい結果・図・fixtureを保存し、checkpoint・学習データ・rosbag・buildは追加していない。
 
-実行ROSソースは `1fe6043`（中核node/runtimeは `fc381a2` と同一）、trial03のhost helperは `d21e3ece`、WSL初回集計は `a713a15d`。
+実行ROSソースは `1fe6043`（中核node/runtimeは `fc381a2` と同一）、trial03のhost helperは `d21e3ece`。
+WSL初回集計は `a713a15d`、保存した最終図・集計は `0fcb939` の `evaluation03_r1`。
+最終集計のcode SHA-256はsummaryに記録した。再集計でも201件の拒否・90経路の先頭折れを確認した。
 配布archiveはWindows→ホストでSHA-256照合済み。
 
 | archive | SHA-256 |
@@ -145,7 +149,7 @@ bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -m pyte
 bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
   tools/evaluate_time_awsim_trial.py \
   --run /home/thistle/e2e_autonomous/runs/time_path_ros_20260913/codex-time-trial-03 \
-  --output /home/thistle/e2e_autonomous/runs/time_path_ros_20260913/evaluation03
+  --output /home/thistle/e2e_autonomous/runs/time_path_ros_20260913/evaluation03_r1
 ```
 
 指定ホストの準備済みdeploymentでHumble接続を再確認する例。outputは未使用名とする。
