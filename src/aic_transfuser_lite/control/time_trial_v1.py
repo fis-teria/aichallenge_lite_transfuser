@@ -15,7 +15,7 @@ from ..runtime.awsim_trial_session import trial_duration_limits
 
 
 SPEED_POLICIES = ("source_capped_0p25", "fixed_5kmh")
-LOOKAHEAD_POLICIES = ("fixed_1m_v1", "feasible_1_to_1p5m_v1")
+LOOKAHEAD_POLICIES = ("fixed_1m_v1", "feasible_1_to_1p5m_v1", "stopping_preview_v1")
 
 
 def trial_speed_limits(speed_policy: str) -> tuple[float, float]:
@@ -34,7 +34,7 @@ def validate_trial_config(config: dict[str, Any]) -> str:
     lookahead_policy = config.get("lookahead_policy", "fixed_1m_v1")
     if lookahead_policy not in LOOKAHEAD_POLICIES:
         raise ValueError("TRIAL_LOOKAHEAD_POLICY")
-    if lookahead_policy == "feasible_1_to_1p5m_v1" and config.get("steering_policy") != "awsim_grip_0p6_v1":
+    if lookahead_policy != "fixed_1m_v1" and config.get("steering_policy") != "awsim_grip_0p6_v1":
         raise ValueError("TRIAL_LOOKAHEAD_REQUIRES_CALIBRATION")
     if config.get("obstacle_policy", "straight_v1") not in ("straight_v1", "steering_sweep_v1", "steering_support_v2"):
         raise ValueError("TRIAL_OBSTACLE_POLICY")
@@ -104,21 +104,23 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
     config = ControllerConfig(wheelbase_m=1.087, min_lookahead_m=1., max_steer_rad=.5,
                               min_accel_mps2=-1., max_accel_mps2=1., speed_kp=4.)
     target = np.zeros(2)
+    minimum_preview = (max(1., .4+max(0., speed_mps)*.5+speed_mps**2/2)
+                       if lookahead_policy == "stopping_preview_v1" else 1.)
     if target_speed > 1e-6:
         points = reference.xy_current_m[1:]
         forward = points[points[:, 0] > 1e-6]
         if not len(forward):
             raise ValueError("NO_FORWARD_REFERENCE")
         target = select_lookahead(forward, config.min_lookahead_m)
-        if lookahead_policy == "feasible_1_to_1p5m_v1":
+        if lookahead_policy != "fixed_1m_v1":
             target = None
             # Use the same float32 target representation as existing PP. Keep
-            # time order and the original points; do not jump beyond 1.5 m.
+            # time order and original points, with a bounded 0.5 m search band.
             for point in np.asarray(forward, dtype=np.float32):
                 x, y = map(float, point)
                 squared = x*x + y*y
                 angle = math.atan(config.wheelbase_m * (2*y / max(squared, 1e-6)))
-                if 1. <= math.sqrt(squared) <= 1.5 and abs(angle) <= .3:
+                if minimum_preview <= math.sqrt(squared) <= minimum_preview+.5 and abs(angle) <= .3:
                     target = point
                     break
             if target is None:
@@ -128,7 +130,7 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
             raise ValueError("STEERING_INFEASIBLE")
         if np.linalg.norm(forward[-1]) < .1 + max(0., speed_mps) * .5 + speed_mps ** 2 / 2:
             raise ValueError("REFERENCE_STOPPING_DISTANCE")
-    if lookahead_policy == "feasible_1_to_1p5m_v1" and target_speed > 1e-6:
+    if lookahead_policy != "fixed_1m_v1" and target_speed > 1e-6:
         command = control_from_waypoints(np.asarray([target]), target_speed, max(0., speed_mps), config)
     else:
         command = reference_control(reference, current_speed_mps=max(0., speed_mps), config=config)
@@ -136,6 +138,7 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
             "target_speed_mps": target_speed, "predicted_source_speed_mps": predicted_speed,
             "speed_policy": speed_policy, "overspeed_limit_mps": overspeed,
             "lookahead_policy": lookahead_policy, "selected_lookahead_distance_m": float(np.linalg.norm(target)),
+            "minimum_preview_distance_m": minimum_preview,
             "plan_age_sec": reference.age_sec, "lookahead_rear_m": target.tolist(),
             "reference_xy_rear_m": reference.xy_current_m.tolist(),
             "source_body_frame": reference.source_body_frame, "tracking_frame": reference.tracking_frame,

@@ -1,0 +1,108 @@
+{
+  "scope": "SAVED_SCAN_AND_RAW_REFERENCE_ONLY_NOT_NEW_MOTION",
+  "event": {
+    "monotonic_ns": 19359066975640,
+    "sim_ns": 48534998915,
+    "event": "SCAN_GUARD_REJECTED",
+    "reason": "STOPPING_SWEEP_OCCUPIED",
+    "speed_mps": 1.2145540714263916,
+    "scan_stamp_ns": 48489382057,
+    "scan_frame": "lidar",
+    "current_pose": {
+      "stamp_ns": 48534998915,
+      "clock": "sim",
+      "epoch": "0",
+      "world_frame": "map",
+      "body_frame": "base_link",
+      "x_m": 89610.94716829405,
+      "y_m": 43160.88720554381,
+      "yaw_rad": 1.688462240037278
+    },
+    "obstacle_policy": "steering_support_v2",
+    "measured_steer_rad": -0.10129353404045105,
+    "issued_steer_rad": -0.0913564477758351,
+    "previous_steer_rad": -0.09918988631404659,
+    "issued_input_steer_rad": -0.1522607462930585,
+    "previous_input_steer_rad": -0.16531647719007764,
+    "steering_policy": "awsim_grip_0p6_v1",
+    "scan_in_current_rear": [
+      1.6054708834692144,
+      0.005595555020040832,
+      0.003706471383731591
+    ],
+    "plan_admission": "IDENTITY_AND_CONTROL_CHECKED_BEFORE_SCAN"
+  },
+  "recorded_replay": {
+    "status": "STOPPING_SWEEP_OCCUPIED"
+  },
+  "fixed_measured_steer": {
+    "status": "CLEAR",
+    "minimum_margin_m": 0.04695606647237893
+  },
+  "instant_requested_steer": {
+    "status": "STOPPING_SWEEP_OCCUPIED"
+  },
+  "lower_speed_checks": [
+    {
+      "speed_kmh": 4.32,
+      "status": "STOPPING_SWEEP_OCCUPIED"
+    },
+    {
+      "speed_kmh": 3.6,
+      "status": "CLEAR",
+      "minimum_margin_m": 0.0036979532132919157
+    },
+    {
+      "speed_kmh": 3.0,
+      "status": "CLEAR",
+      "minimum_margin_m": 0.01907902592807731
+    },
+    {
+      "speed_kmh": 1.8,
+      "status": "CLEAR",
+      "minimum_margin_m": 0.04318780082869256
+    }
+  ],
+  "raw_reference_lookahead_comparison": [
+    {
+      "requested_lookahead_m": 1.0,
+      "point_m": [
+        1.0274703627064605,
+        -0.04457027019877402
+      ],
+      "required_tire_rad": -0.09135644410363421
+    },
+    {
+      "requested_lookahead_m": 1.5,
+      "point_m": [
+        1.603867135329552,
+        -0.1355252371167297
+      ],
+      "required_tire_rad": -0.11323774005709998
+    },
+    {
+      "requested_lookahead_m": 1.8,
+      "point_m": [
+        1.83232141768474,
+        -0.18269686779645128
+      ],
+      "required_tire_rad": -0.11660480546826196
+    },
+    {
+      "requested_lookahead_m": 2.0,
+      "point_m": [
+        2.058268505436877,
+        -0.23529379956451096
+      ],
+      "required_tire_rad": -0.11862695142719092
+    },
+    {
+      "requested_lookahead_m": 2.5,
+      "point_m": [
+        2.4990196552504838,
+        -0.3559545229191058
+      ],
+      "required_tire_rad": -0.12085649951597437
+    }
+  ]
+}

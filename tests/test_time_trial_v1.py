@@ -185,3 +185,44 @@ def test_feasible_lookahead_never_extends_short_path_and_requires_calibrated_con
         validate_trial_config(config)
     with pytest.raises(ValueError, match="LOOKAHEAD_POLICY"):
         validate_trial_config({**config, "lookahead_policy": "extend_past_horizon"})
+
+
+def test_recorded_corner_preview_keeps_turning_and_passes_unchanged_support_guard():
+    from aic_transfuser_lite.control.awsim_steering import command_steering, CALIBRATED_POLICY
+    from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan
+    f = json.loads((Path(__file__).parent/'fixtures/time_path/turn12_preview_rejection.json').read_text())
+    p = TimePlan(f['plan_id'], TimedBodyPose(**f['observation_pose']), np.array(f['raw_xy_m']))
+    current = TimedBodyPose(**f['current_pose'])
+    options = dict(speed_mps=f['speed_mps'], rear_axle_offset_m=(.0010000169277191162, 0.), speed_policy='fixed_5kmh')
+    old = time_trial_control(p, current, **options, lookahead_policy='feasible_1_to_1p5m_v1')
+    new = time_trial_control(p, current, **options, lookahead_policy='stopping_preview_v1')
+    assert old['steer_rad'] == pytest.approx(f['recorded_required_tire_rad'])
+    assert new['steer_rad'] < f['measured_steer_rad'] < old['steer_rad']
+    distance = .4+f['speed_mps']*.5+f['speed_mps']**2/2
+    assert distance <= new['selected_lookahead_distance_m'] <= distance+.5
+    np.testing.assert_array_equal(new['reference_xy_rear_m'], old['reference_xy_rear_m'])
+    np.testing.assert_array_equal(p.xy_m, f['raw_xy_m'])
+    scan = f['scan']
+    for index, result in enumerate((old, new)):
+        mapped = command_steering(result['steer_rad'], f['previous_input_steer_rad'], f['dt_s'], policy=CALIBRATED_POLICY)
+        def guard():
+            return check_turning_scan(np.asarray(scan['ranges'], dtype=float), scan['angle_min'], scan['angle_increment'],
+                scan['range_min'], scan['range_max'], speed_mps=f['speed_mps'], measured_steer_rad=f['measured_steer_rad'],
+                issued_steer_rad=mapped['issued_tire_target_rad'], previous_steer_rad=mapped['previous_tire_target_rad'],
+                scan_in_current_rear=f['scan_in_current_rear'], envelope_policy='curvature_support_v2')
+        if index == 0:
+            with pytest.raises(ValueError, match='SWEEP_OCCUPIED'):
+                guard()
+        else:
+            assert guard()['minimum_ray_margin_m'] > 0
+
+
+@pytest.mark.parametrize('speed', [0., .5, 1., 1.3, 6/3.6])
+def test_stopping_preview_uses_speed_and_never_extends_raw_reference(speed):
+    p = plan(1.5)
+    result = time_trial_control(p, pose(), speed_mps=speed, rear_axle_offset_m=(.001, 0.),
+                               speed_policy='fixed_5kmh', lookahead_policy='stopping_preview_v1')
+    minimum = max(1., .4+speed*.5+speed**2/2)
+    assert result['minimum_preview_distance_m'] == pytest.approx(minimum)
+    assert minimum <= result['selected_lookahead_distance_m'] <= minimum+.5
+    assert result['steer_rad'] == 0.

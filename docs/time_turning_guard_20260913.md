@@ -236,3 +236,40 @@ scan/frame/NaN/authority/時計の拒否とホスト終了を維持。改善指�
 余分な幾何膨張を減らし、独立積分した変動操舵軌跡を全て包むこと、その後の実走結果。
 実装版のsnapshot回帰、左右/内外障害物/観測不足、最大全曲率区間での包絡テストを通す。
 新規turn12を1回実施する判断は、その検証とHumble smokeが通った後に行う。
+
+## turn12実行前確認
+
+source `8fa561fef0f5f5f8844a582805b4d4bc6e58f5b3`、Windows/WSL一致。
+WSL限定69passed (1.63s)、全体2116passed/4skipped/63warnings (87.23s)。
+6曲率区間×4変動方式×3001距離点の全車体4頂点を独立積分し、64半平面内を確認。
+保存turn11拒否scanの実装版回帰でも、実操舵と指令の差を残して通過する。
+Humble build0.93s、11module一致。ROS smoke実モデルPath6、support guard111、
+左右29、到達不能曲線の制動10、stale11/clock7/overspeed12、child exit0。
+archive SHA256 `d22b7d5f2663c4a6535ac766b2342d7a9d4ce22496ff8e530f3050f6be410f55`、
+config SHA256 `ee10307dd73f30d0169d1517e4de78281cc210d0c5f40b2b5e81fab9cd6e01e1`。
+専有root `/home/graneple/e2e_autonomous/time_turning_support_20260913`、SOURCEは
+その中の `source_8fa561f`。設定 `configs/control/time_path_support_turning_5kmh_20260913.json`、
+run ID `codex-time-turn-12` として、同じ710s+10s外側timeoutで1回実行する。
+正常目標5km/h、生のTimePath、通常RViz、scene/vehicle/DLL/重みは同一。
+
+## turn12結果と速度に対するPP preview不足
+
+turn12は発進31.939999286sim秒後に `CONTROL_STOPPING_SWEEP_OCCUPIED`、未完走。
+639回追従、最大速度1.298153m/s。停止地点yaw1.688462radで、turn11よりさらに約1.75m先。
+wall75.447s、cleanup0、active0、既存Compose39個保全、ホストfreeze前の停車実測なし。
+48ファイルhash検証済み、archive `7bceccfa403f4ba71e66943eaecbf9c2c4ae4bc0c31bc9ee85a5536a0823f549`。
+実装版support guardはturn11保存scanで+0.034383m、WSL計算median3.595/p954.789ms。
+これは保存scanの証拠でありturn12通過の保証ではなかった。
+
+turn12の拒否時は実操舵-0.101294rad、PP要求-0.091356radでハンドルを戻す方向。
+実操舵固定のsupport再計算は余裕+0.046956m、要求角固定では拒否となる。
+同じ未変更の残存経路は1.8m点で-0.116605rad、2m点で-0.118627radを要求しており、
+近い点だけを見ることが、曲がりが強くなる先の情報を使うのを遅らせている。
+監視の追加緩和ではなく、PP目標点選択が今回の原因所有層。
+
+`stopping_preview_v1` を追加し、最低preview距離を
+max(1m, 0.4+v*0.5+v²/2)へ速度連動させる。探索幅は従来と同じ+0.5m、
+経路の元の点を時間順に選び、実現可能物理角±0.3radを守る。速度・余裕・停止距離や
+監視方式はturn12と同一。未変更の経路に適切な点がなければ既存の拒否を維持する。
+改善指標は記録された拒否瞬間で、実操舵/前回入力を残して新指令の監視が通ること、
+その後のコーナー実走。turn12 regressionと走行速度でのROS fixture後にturn13を1回実施する。
