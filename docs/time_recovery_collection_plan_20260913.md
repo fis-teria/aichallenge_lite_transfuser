@@ -310,3 +310,12 @@ IMUはquaternion差分で角速度を生成しており、VelocityReportのEuler
 失敗診断が増えたため、当初の成功pilot2本の6GiB予算とは別に、今回task全bagの累積上限を10GiBとして明示・強制する。
 各runは3GiBまで、開始前にその全量を累積予算へ予約可能なことを確認し、実行中も空き10GiBを維持する。
 既存datasetと今回の原bagは削除せず、最初の左右各1周が成立した時点で今回のpilot収集を終了する。
+
+c71ec52のWSL full pytestは2,218 passed / 4 skipped / 63 warnings（82.55s）。
+left020-r13はs=35.90mでSTALE_scan、正常停止・bag close成立。IMU軸検証も成立した。
+採用scanはsnapshot時点で67.5ms古く、計算80.36ms中に150ms期限を超えた。
+最大80ms以内の再計算条件にも達しなかったため、既定どおり停止した。受信自体は継続していた。
+実行image内の250回の停止領域計算では、既定NumPyが20thread、p99 2.64ms/最大5.48ms、
+1thread指定ではp99 2.05ms/最大3.08ms（AWSIM停止中の単体測定、走行改善率を示すものではない）。
+collector子プロセスだけBLAS/OMP/MKLを1threadに固定し、stage wall/CPU時間とGC pauseを診断記録する。
+監視計算・stale期限・最大1回retry/100ms期限・車両設定は変更しない。

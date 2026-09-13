@@ -37,12 +37,18 @@ def main() -> None:
     assert result['nodes']['closed_bag']
     assert not args.output.exists()
     view = args.output.parent/(run.name+'_causal_view_'+args.phase+'_freeze'+str(freeze_delay))
-    view.mkdir(exist_ok=False)
-    (view/'bag').mkdir()
+    view.mkdir(exist_ok=True)
+    (view/'bag').mkdir(exist_ok=True)
     dbs = list((run/'bag').glob('*.db3'))
     assert len(dbs) == 1
-    os.link(dbs[0], view/'bag'/dbs[0].name)
-    (view/'types').symlink_to(args.types.resolve(), target_is_directory=True)
+    if (view/'bag'/dbs[0].name).exists():
+        assert os.path.samefile(dbs[0], view/'bag'/dbs[0].name)
+    else:
+        os.link(dbs[0], view/'bag'/dbs[0].name)
+    if (view/'types').exists():
+        assert (view/'types').is_symlink() and (view/'types').resolve() == args.types.resolve()
+    else:
+        (view/'types').symlink_to(args.types.resolve(), target_is_directory=True)
     index = read_time_sqlite_run(view, run.name)
     assert len(index.epochs) == 1
     epoch = index.epochs[0]
@@ -73,6 +79,14 @@ def main() -> None:
     invalid_velocity_ids = {rid for rid,e in velocities.items()
         if not np.isfinite(e.payload.yaw_rate_rps)
         or abs(e.payload.yaw_rate_rps) > max(.2,abs(e.payload.longitudinal_mps))*MAX_CURVATURE_PER_M}
+    targeted = []
+    for rid in sorted(invalid_velocity_ids):
+        for delay in (100_000_000, 500_000_000):
+            at = velocities[rid].capture_ns+delay
+            candidate = next((a for a in candidates if at <= a.capture_ns <= at+200_000_000), None)
+            if candidate is not None:
+                targeted.append(candidate)
+    chosen = sorted({a.sequence:a for a in (*chosen,*targeted[:8])}.values(),key=lambda a:a.capture_ns)
     config = TimeDatasetConfig()
     records = []
     full = []
@@ -116,6 +130,7 @@ def main() -> None:
         availability='bag_receipt_proxy_not_measured_preprocessing_completion', freeze_delay_ns=freeze_delay,
         runtime_config_sha256=hashlib.sha256(runtime_bytes).hexdigest(), runtime_config=str(args.runtime_config),
         phase_candidates_with_150ms_start_margin=len(candidates), audited_anchors=len(records),
+        selection_policy='Up to 64 uniform anchors plus up to 8 targeted at invalid raw heading histories',
         audited_input_eligible=sum(r['input_eligible'] for r in records),
         audited_full_observed_future=sum(r['usable_full'] and r.get('phase_and_xy_full',False) for r in records),
         input_reasons=dict(Counter(r['input_invalid_reason'] or 'OK' for r in records)),

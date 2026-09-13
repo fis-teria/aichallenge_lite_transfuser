@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 from collections import deque
+import gc
 import json
 import math
 import os
@@ -68,6 +69,15 @@ def main() -> None:
     paths = {name: node.create_publisher(RosPath, '/recovery_teacher/'+name+'_path', 1)
              for name in ('baseline', 'reference', 'observed')}
     trace = deque(maxlen=10000); last_path_wall = 0.; last_pose_stamp = None
+    gc_events = deque(maxlen=32); gc_started = {}
+    def observe_gc(phase, info):
+        generation = info['generation']
+        if phase == 'start':
+            gc_started[generation] = time.monotonic_ns()
+        elif generation in gc_started:
+            ended = time.monotonic_ns(); began = gc_started.pop(generation)
+            gc_events.append((began, ended, generation))
+    gc.callbacks.append(observe_gc)
 
     def stamp(t) -> int:
         return int(t.sec)*10**9+int(t.nanosec)
@@ -154,6 +164,10 @@ def main() -> None:
         nonlocal publisher, last_path_wall, last_pose_stamp
         if started_ns is None:
             started_ns = time.monotonic_ns()
+        stage_started = time.monotonic_ns(); thread_started = time.thread_time_ns(); stages = {}
+        def stage(name):
+            nonlocal stage_started
+            ended = time.monotonic_ns(); stages[name] = (ended-stage_started)/1e6; stage_started = ended
         clock_ns, clock_receipt, fault, generation, cache, histories, poses, scans, counts, imu_axes = snapshot()
         if fault:
             state['fault'] = fault
@@ -175,6 +189,7 @@ def main() -> None:
                 for role, selected in motion_selected.items():
                     inputs[role] = histories[role][selected]
         angle, accel, target = previous[0], -1., 0.
+        stage('snapshot_selection')
         actual = names(final_topic)
         if publisher is None and not actual:
             publisher = node.create_publisher(AckermannControlCommand, final_topic, 10)
@@ -212,12 +227,14 @@ def main() -> None:
                 raise ValueError('AWSIM_COMMAND_SUBSCRIBER_MISSING')
             if clock_ns is None or now-clock_receipt > 500_000_000:
                 raise ValueError('CLOCK_STALE')
+            stage('authority_clock')
             for role in ('pose', 'velocity', 'steering', 'imu', 'scan', 'camera', 'nominal', 'trajectory'):
                 m, receipt = inputs[role]
                 if names(topics[role][0]) != [topics[role][2]]:
                     raise ValueError('SOURCE_'+role)
                 t = stamp(m.stamp if role in ('steering', 'nominal') else m.header.stamp)
                 check_collection_input_time(role, capture_ns=t, receipt_ns=receipt, now_sim_ns=clock_ns, now_wall_ns=now)
+            stage('source_input_validation')
             if not fresh_velocity:
                 raise ValueError('VELOCITY_INVALID')
             pose_stamp = stamp(inputs['pose'][0].header.stamp)
@@ -252,6 +269,7 @@ def main() -> None:
                 raise ValueError('REQUESTED_BRAKE')
             angle, bounded_accel = bounded_collection_command(float(nominal.lateral.steering_tire_angle),
                 float(nominal.longitudinal.acceleration), previous[0], dt)
+            stage('motion_reference')
             selected, captured = select_aligned_scan([(stamp(m.header.stamp), t) for m, t in scans],
                 poses, current, now_sim_ns=clock_ns, now_receipt_ns=now)
             laser = scans[selected][0]
@@ -259,11 +277,13 @@ def main() -> None:
             if laser.header.frame_id != 'lidar':
                 raise ValueError('SCAN_FRAME')
             alignment = scan_pose_in_rear(captured, current, .0010000169277191162)
+            stage('scan_alignment')
             details = check_turning_scan(laser.ranges, laser.angle_min, laser.angle_increment, laser.range_min, laser.range_max,
                 speed_mps=speed, measured_steer_rad=float(steering.steering_tire_angle),
                 issued_steer_rad=.6*angle, previous_steer_rad=.6*previous[0], scan_in_current_rear=alignment,
                 envelope_policy='curvature_support_v2', vehicle_model_policy='awsim_understeer_v1',
                 heading_rate_radps=guard_yaw_rate, reported_lateral_mps=float(velocity.lateral_velocity))
+            stage('scan_guard')
             state['ready_ticks'] += 1
             if state['armed_ns'] is None:
                 reason = 'READY'; angle = previous[0]
@@ -351,6 +371,10 @@ def main() -> None:
         row['processing_ms'] = (time.monotonic_ns()-now)/1e6
         row['snapshot_retry_reasons'] = retry_reasons
         row['decision_wall_ms'] = (time.monotonic_ns()-started_ns)/1e6
+        row['thread_cpu_ms'] = (time.thread_time_ns()-thread_started)/1e6
+        row['stage_wall_ms'] = stages
+        row['gc_pauses'] = [dict(generation=g, duration_ms=(end-begin)/1e6)
+                            for begin,end,g in tuple(gc_events) if end >= started_ns]
         serialized = json.dumps(row, allow_nan=False); log.write(serialized+'\n')
         phase_pub.publish(String(data=serialized))
         if poses and poses[-1].stamp_ns != last_pose_stamp:
@@ -389,6 +413,7 @@ def main() -> None:
     except KeyboardInterrupt:
         pass
     finally:
+        gc.callbacks.remove(observe_gc)
         receiver_executor.shutdown(timeout_sec=2.)
         receiver_thread.join(timeout=2.)
         receiver.destroy_node()

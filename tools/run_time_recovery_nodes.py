@@ -43,6 +43,11 @@ def main() -> None:
             '--output', str(args.output), '--reference', str(args.reference_root/(args.side+'.json')), '--run-id', args.run_id],
     }
     (args.output/'node_commands.json').write_text(json.dumps(commands, indent=2))
+    # The monitor uses tiny NumPy matrices, not a training workload. Avoid
+    # creating 20 BLAS workers alongside AWSIM, RViz and ROS callbacks.
+    collector_env = dict(os.environ, OPENBLAS_NUM_THREADS='1', OMP_NUM_THREADS='1', MKL_NUM_THREADS='1')
+    (args.output/'collector_environment.json').write_text(json.dumps(
+        {key: collector_env[key] for key in ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS')}, indent=2))
     streams = {}; children = {}; result = {'closed_bag': False, 'error': None}
 
     def interrupted(signum, frame):
@@ -51,7 +56,8 @@ def main() -> None:
     try:
         for name, cmd in commands.items():
             streams[name] = (args.output/(name+'.log')).open('x')
-            children[name] = subprocess.Popen(cmd, stdout=streams[name], stderr=subprocess.STDOUT, start_new_session=True)
+            children[name] = subprocess.Popen(cmd, stdout=streams[name], stderr=subprocess.STDOUT,
+                start_new_session=True, env=collector_env if name == 'collector' else None)
         started = time.monotonic()
         while time.monotonic()-started < 1970:
             if (args.output/'finish_nodes.json').exists():
