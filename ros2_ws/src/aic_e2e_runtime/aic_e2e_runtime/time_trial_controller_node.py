@@ -16,6 +16,7 @@ from . import spatial_path_shadow_node_v4 as _source_layout
 from aic_transfuser_lite.control.long_sim_tracking_v4 import check_scan
 from aic_transfuser_lite.control.awsim_steering import command_steering, steering_response_gain
 from aic_transfuser_lite.control.awsim_steering_response import SteeringResponseState, compensate_steering_response
+from aic_transfuser_lite.control.vehicle_motion_v1 import IDEAL_POLICY, AWSIM_POLICY
 from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, scan_pose_in_rear, select_aligned_scan
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
 from aic_transfuser_lite.control.time_trial_v1 import (
@@ -43,6 +44,7 @@ def main() -> None:
     obstacle_policy = "straight_v1"
     steering_policy = "identity_v1"
     lookahead_policy = "fixed_1m_v1"
+    vehicle_model_policy = IDEAL_POLICY
     record_vehicle_motion = False
     speed_policy = args.speed_policy or "source_capped_0p25"
     if args.trial_config is not None:
@@ -53,6 +55,7 @@ def main() -> None:
         obstacle_policy = config.get("obstacle_policy", "straight_v1")
         steering_policy = config.get("steering_policy", "identity_v1")
         lookahead_policy = config.get("lookahead_policy", "fixed_1m_v1")
+        vehicle_model_policy = config.get("vehicle_model_policy", IDEAL_POLICY)
         record_vehicle_motion = config.get("record_vehicle_motion", False)
         if (config["checkpoint_sha256"] != args.checkpoint_sha256
                 or config["geometry"]["rear_axle_forward_in_base_link_m"] != args.rear_axle_forward_m):
@@ -192,6 +195,7 @@ def main() -> None:
                         "obstacle_policy": obstacle_policy,
                         "steering_policy": steering_policy, "steering_response_gain": steering_gain,
                         "lookahead_policy": lookahead_policy,
+                        "vehicle_model_policy": vehicle_model_policy,
                         "execution_profile": execution_profile, "drive_limit_sim_s": drive_sim_s,
                         "rear_axle_forward_m": args.rear_axle_forward_m})
         reason = "WAIT_AUTHORIZATION" if live else "SHADOW_ONLY"
@@ -201,6 +205,8 @@ def main() -> None:
         speed = None
         measured_steer = None
         steering_observation = None
+        motion_observation = None
+        heading_rate = reported_lateral = None
         candidate_response_state = None
         checking_scan = False
         scan_alignment = None
@@ -227,6 +233,17 @@ def main() -> None:
                 "receipt_monotonic_ns": cache["steering"][1],
                 "age_wall_s": (now-cache["steering"][1])/1e9,
             }
+            if vehicle_model_policy == AWSIM_POLICY:
+                velocity = cache["velocity"][0]
+                heading_rate, reported_lateral = float(velocity.heading_rate), float(velocity.lateral_velocity)
+                motion_observation = {"stamp_ns": stamp(velocity.header.stamp), "frame": velocity.header.frame_id,
+                    "receipt_monotonic_ns": cache["velocity"][1],
+                    "age_sim_s": (clock_ns-stamp(velocity.header.stamp))/1e9,
+                    "heading_rate_radps": encode_scan_values([heading_rate])[0],
+                    "reported_lateral_mps": encode_scan_values([reported_lateral])[0]}
+                if (velocity.header.frame_id != "base_link"
+                        or abs(stamp(velocity.header.stamp)-steering_observation["stamp_ns"]) > 50_000_000):
+                    raise ValueError("MOTION_FRAME_OR_CAPTURE_SKEW")
             if not np.isfinite([speed, float(cache["steering"][0].steering_tire_angle)]).all():
                 speed = None
                 measured_steer = None
@@ -288,6 +305,7 @@ def main() -> None:
             details.update(time_trial_control(plan, current, speed_mps=speed,
                                               speed_policy=speed_policy,
                                               lookahead_policy=lookahead_policy,
+                                              vehicle_model_policy=vehicle_model_policy,
                                               rear_axle_offset_m=(args.rear_axle_forward_m, 0.)))
             steer = details["steer_rad"]; accel = details["acceleration_mps2"]; target = details["target_speed_mps"]
             response_target, candidate_response_state, response = compensate_steering_response(
@@ -308,6 +326,8 @@ def main() -> None:
                     laser.range_min, laser.range_max, speed_mps=speed, measured_steer_rad=measured_steer,
                     issued_steer_rad=mapping["issued_tire_target_rad"], scan_in_current_rear=scan_alignment,
                     previous_steer_rad=mapping["previous_tire_target_rad"],
+                    vehicle_model_policy=vehicle_model_policy,
+                    heading_rate_radps=heading_rate, reported_lateral_mps=reported_lateral,
                     envelope_policy="curvature_support_v2" if obstacle_policy == "steering_support_v2" else "isotropic_v1")
                 details["obstacle_guard"] = guard
                 details["scan_in_current_rear"] = scan_alignment
@@ -326,6 +346,7 @@ def main() -> None:
                         "latest_plan_json": cache["plan"][0].data if "plan" in cache else None,
                         "obstacle_policy": obstacle_policy, "measured_steer_rad": measured_steer,
                         "steering_observation": steering_observation,
+                        "motion_observation": motion_observation, "vehicle_model_policy": vehicle_model_policy,
                         "issued_steer_rad": steering_gain*steer, "previous_steer_rad": steering_gain*previous[0],
                         "issued_input_steer_rad": steer, "previous_input_steer_rad": previous[0],
                         "steering_policy": steering_policy, "scan_in_current_rear": scan_alignment,
@@ -358,7 +379,8 @@ def main() -> None:
             record({"event": "COMMAND_SENT", "reason": reason, "plan_id": plan_id,
                     "steer_rad": steer, "acceleration_mps2": accel, "target_speed_mps": target,
                     "speed_mps": speed, "measured_steer_rad": measured_steer,
-                    "steering_observation": steering_observation, "details": details})
+                    "steering_observation": steering_observation,
+                    "motion_observation": motion_observation, "details": details})
         else:
             response_state = None
             if actual and actual != ["/time_path_controller"]:

@@ -15,6 +15,7 @@ from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPos
 from aic_transfuser_lite.control.time_trial_v1 import time_trial_control, validate_trial_config
 from aic_transfuser_lite.control.awsim_steering import CALIBRATED_POLICIES, LEAD_POLICY, command_steering
 from aic_transfuser_lite.control.awsim_steering_response import SteeringResponseState, compensate_steering_response
+from aic_transfuser_lite.control.vehicle_motion_v1 import IDEAL_POLICY, AWSIM_POLICY, stopping_motion
 
 
 def response_record_matches(recorded: Any, expected: Any) -> bool:
@@ -31,7 +32,8 @@ def response_record_matches(recorded: Any, expected: Any) -> bool:
 def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str, Any]],
                             rear_axle_forward_m: float, *,
                             speed_policy: str = "source_capped_0p25", obstacle_policy: str = "straight_v1",
-                            steering_policy: str = "identity_v1", lookahead_policy: str = "fixed_1m_v1") -> dict[str, Any]:
+                            steering_policy: str = "identity_v1", lookahead_policy: str = "fixed_1m_v1",
+                            vehicle_model_policy: str = IDEAL_POLICY) -> dict[str, Any]:
     """Reproduce decisions from recorded raw predictions, poses, and measured speed.
 
     This covers the calculation before the separate output steering-rate clamp.
@@ -43,10 +45,12 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
     post_control_rejections: Counter[str] = Counter()
     actuator_matched = 0
     response_matched = 0
+    motion_matched = 0
     expected_response_state = None
     scan_reasons = {"OBSERVATION_POSE_MISSING", "FRESH_ALIGNED_SCAN_MISSING", "POSE_ENDPOINT_IDENTITY",
                     "SCAN_FRAME", "SCAN_POSE_IDENTITY_OR_AGE", "SCAN_POSE_ALIGNMENT", "SCAN_CONTRACT",
-                    "SCAN_COVERAGE", "SCAN_UNKNOWN", "STOPPING_SWEEP_OCCUPIED", "SWEEP_VEHICLE_STATE"}
+                    "SCAN_COVERAGE", "SCAN_UNKNOWN", "STOPPING_SWEEP_OCCUPIED", "SWEEP_VEHICLE_STATE",
+                    "MOTION_MEASUREMENT_REQUIRED", "MOTION_YAW_RATE_INVALID", "MOTION_REAR_LATERAL_INVALID"}
     for command in commands:
         details = command.get("details", {})
         if not command.get("plan_id") or not all(k in details for k in ("observation_pose", "current_pose")):
@@ -59,7 +63,7 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
         try:
             calculated = time_trial_control(TimePlan(plan["plan_id"], observed, np.array(plan["raw_xy_m"])),
                 current, speed_mps=command["speed_mps"], rear_axle_offset_m=(rear_axle_forward_m, 0.),
-                speed_policy=speed_policy, lookahead_policy=lookahead_policy)
+                speed_policy=speed_policy, lookahead_policy=lookahead_policy, vehicle_model_policy=vehicle_model_policy)
         except ValueError as exc:
             expected_response_state = None
             if command["reason"] != str(exc):
@@ -80,6 +84,10 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
                 maximum_error = max(maximum_error, error)
                 if not np.isfinite(error) or error > 1e-9:
                     raise ValueError(f"recorded control differs: {key} error={error}")
+            if vehicle_model_policy == AWSIM_POLICY:
+                for key in ("vehicle_model_policy", "static_wheelbase_m", "nominal_response_length_m"):
+                    if not response_record_matches(details.get(key), calculated[key]):
+                        raise ValueError("recorded vehicle model differs: " + key)
             if "steering_actuator" in details:
                 stored = details["steering_actuator"]
                 response_target = calculated["steer_rad"]
@@ -104,6 +112,26 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
                         and abs(command["steer_rad"]-mapping["issued_input_rad"]) > 1e-9):
                     raise ValueError("recorded issued steering differs")
                 actuator_matched += 1
+                if vehicle_model_policy == AWSIM_POLICY:
+                    observed_motion = command.get("motion_observation")
+                    if not observed_motion or observed_motion.get("frame") != "base_link":
+                        raise ValueError("recorded motion observation missing or wrong frame")
+                    try:
+                        expected_motion = stopping_motion(command["speed_mps"], command["measured_steer_rad"],
+                            mapping["issued_tire_target_rad"], mapping["previous_tire_target_rad"],
+                            policy=vehicle_model_policy,
+                            heading_rate_radps=float(observed_motion["heading_rate_radps"]),
+                            reported_lateral_mps=float(observed_motion["reported_lateral_mps"]))
+                    except ValueError as exc:
+                        if command["reason"] != str(exc):
+                            raise ValueError("recorded motion rejection differs") from exc
+                    else:
+                        if command["reason"].startswith("MOTION_"):
+                            raise ValueError("recorded motion rejection could not be reproduced")
+                        if command["reason"] == "TIME_PATH_TRACKING" and not response_record_matches(
+                                details.get("obstacle_guard", {}).get("vehicle_motion"), expected_motion):
+                            raise ValueError("recorded stopping motion differs")
+                    motion_matched += 1
             elif steering_policy == LEAD_POLICY and command["reason"] == "TIME_PATH_TRACKING":
                 raise ValueError("recorded steering actuator missing")
             else:
@@ -114,6 +142,7 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
             "tolerance": 1e-9, "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
             "post_control_rejections": dict(post_control_rejections), "actuator_mapping_matched": actuator_matched,
             "steering_response_matched": response_matched,
+            "vehicle_motion_matched": motion_matched,
             "scan_guard_decisions_replayed": False}
 
 
@@ -189,13 +218,14 @@ def main() -> None:
             raise ValueError("recorded runtime/config speed policy mismatch")
         config = json.loads(config_bytes)
         for key, default in (("obstacle_policy", "straight_v1"), ("steering_policy", "identity_v1"),
-                             ("lookahead_policy", "fixed_1m_v1")):
+                             ("lookahead_policy", "fixed_1m_v1"), ("vehicle_model_policy", IDEAL_POLICY)):
             if config.get(key, default) != publishers[0].get(key, default):
                 raise ValueError("recorded runtime/config mismatch: " + key)
     replay = replay_recorded_control(active, plans, publishers[0]["rear_axle_forward_m"], speed_policy=speed_policy,
         obstacle_policy=publishers[0].get("obstacle_policy", "straight_v1"),
         steering_policy=publishers[0].get("steering_policy", "identity_v1"),
-        lookahead_policy=publishers[0].get("lookahead_policy", "fixed_1m_v1"))
+        lookahead_policy=publishers[0].get("lookahead_policy", "fixed_1m_v1"),
+        vehicle_model_policy=publishers[0].get("vehicle_model_policy", IDEAL_POLICY))
     late_speeds = [c["speed_mps"] for c in active if c["sim_ns"] >= end - 3_000_000_000 and c["speed_mps"] is not None]
     result = {"status": ("LAP_COMPLETED" if host.get("judge_lap_confirmed") and host["status"] == "COMPLETE_LAP" else "LAP_NOT_COMPLETED") if host["scope"] == "ONE_LAP_MODEL_TRIAL" else ("COMPLETED_NO_POSITIVE_DRIVE" if positive == 0 else "COMPLETED_POSITIVE_COMMANDS_OBSERVED"),
         "evaluator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),

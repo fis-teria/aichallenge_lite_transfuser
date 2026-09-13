@@ -62,6 +62,9 @@ def main() -> None:
     processes = []; streams = []; result = {"status": "FAILED", "scope": "ISOLATED_SYNTHETIC_ROS_NOT_AWSIM"}
     start = time.monotonic(); last_sensor = 0.; counter = 0
     fixture_speed_mps = .1
+    motion_model = fixture_config is not None and fixture_config.get("vehicle_model_policy") == "awsim_understeer_v1"
+    fixture_heading_rate = 0. if motion_model else .17
+    fixture_lateral_mps = 0. if motion_model else -.02
     fixture_scan_offset_ns = 0
 
     def launch(module, extra, name):
@@ -91,10 +94,10 @@ def main() -> None:
         clock = Clock(); set_stamp(clock.clock, t); pubs["clock"].publish(clock)
         velocity = VelocityReport(); set_stamp(velocity.header.stamp, t); velocity.header.frame_id = "base_link"
         velocity.longitudinal_velocity = fixture_speed_mps
-        velocity.heading_rate = .17; velocity.lateral_velocity = -.02
+        velocity.heading_rate = fixture_heading_rate; velocity.lateral_velocity = fixture_lateral_mps
         pubs["velocity"].publish(velocity)
         imu = Imu(); set_stamp(imu.header.stamp, t); imu.header.frame_id = "tamagawa/imu_link"
-        imu.angular_velocity.z = .17; pubs["imu"].publish(imu)
+        imu.angular_velocity.z = fixture_heading_rate; pubs["imu"].publish(imu)
         steering = SteeringReport(); set_stamp(steering.stamp, t); pubs["steering"].publish(steering)
         pose = Odometry(); set_stamp(pose.header.stamp, t); pose.header.frame_id = "map"; pose.child_frame_id = "base_link"
         pose.pose.pose.orientation.w = 1.; pose.pose.pose.position.x = .1 * (wall - start); pubs["pose"].publish(pose)
@@ -182,8 +185,8 @@ def main() -> None:
                 selected = [r for r in observed if r["role"] == role]
                 if len(selected) < 5 or any(type(r["stamp_ns"]) is not int for r in selected):
                     raise RuntimeError("MOTION_OBSERVATION_MISSING:" + role)
-            if (abs(next(r for r in observed if r["role"] == "imu")["angular_xyz_radps"][2]-.17) > 1e-6
-                    or abs(next(r for r in observed if r["role"] == "velocity")["longitudinal_lateral_mps_heading_radps"][2]-.17) > 1e-6):
+            if (abs(next(r for r in observed if r["role"] == "imu")["angular_xyz_radps"][2]-fixture_heading_rate) > 1e-6
+                    or abs(next(r for r in observed if r["role"] == "velocity")["longitudinal_lateral_mps_heading_radps"][2]-fixture_heading_rate) > 1e-6):
                 raise RuntimeError("MOTION_ANGULAR_UNITS_OR_FIELDS")
             sources = [r for r in motion if r["event"] == "MOTION_SOURCES"]
             if not sources or any(v != ["/time_ros_fixture"] for v in sources[-1]["sources"].values()):
@@ -223,6 +226,13 @@ def main() -> None:
                     if (fixture_config.get("lookahead_policy") == "stopping_preview_v1"
                             and row["details"]["selected_lookahead_distance_m"] < 1.72):
                         raise RuntimeError("STOPPING_PREVIEW_NOT_APPLIED_AT_SPEED")
+                    if motion_model:
+                        motion = guard["vehicle_motion"]
+                        if (motion["policy"] != fixture_config["vehicle_model_policy"]
+                                or abs(motion["nominal_response_length_m"]-(1.087+.045*fixture_speed_mps**2)) > 1e-6
+                                or motion["nominal_response_length_m"] != row["details"]["nominal_response_length_m"]
+                                or motion["lateral_displacement_bound_m"] <= 0):
+                            raise RuntimeError("PP_AND_STOPPING_MODEL_MISMATCH")
                 mapping_count += len(turning)
             result["calibrated_left_right_shadow_commands"] = mapping_count
             if fixture_config["steering_policy"] == "awsim_grip_0p6_lead_v1":
@@ -246,6 +256,22 @@ def main() -> None:
             result["actuator_infeasible_brake_commands"] = len(rejected)
             result["infeasible_curve_reason"] = infeasible_reason
             oracle_curvature = 0.
+        if motion_model:
+            result["vehicle_model_shadow_commands"] = mapping_count
+            motion_brakes = {}
+            for bad_yaw, bad_lateral, reason in ((float("nan"), 0., "MOTION_YAW_RATE_INVALID"),
+                    (10., 0., "MOTION_YAW_RATE_INVALID"), (0., .2, "MOTION_REAR_LATERAL_INVALID")):
+                fixture_heading_rate, fixture_lateral_mps = bad_yaw, bad_lateral
+                began = time.monotonic()
+                spin_for(.8, publish_oracle)
+                records = [json.loads(line) for line in (args.output/"oracle/control.jsonl").read_text().splitlines()]
+                rejected = [r for r in records if r.get("event") == "COMMAND_SENT" and r["monotonic_ns"]/1e9 > began+.4]
+                if not rejected or any(r["reason"] != reason or r["acceleration_mps2"] >= 0
+                                       or r["target_speed_mps"] != 0 for r in rejected):
+                    raise RuntimeError("MOTION_INVALID_DID_NOT_BRAKE:" + reason)
+                motion_brakes[reason] = motion_brakes.get(reason, 0)+len(rejected)
+            fixture_heading_rate = fixture_lateral_mps = 0.
+            result["invalid_motion_brake_commands"] = motion_brakes
         stale_started = time.monotonic()
         spin_for(1.2)  # Sensors continue; stop sending plans.
         stale = [c for c in commands if c["wall"] > stale_started + .65]

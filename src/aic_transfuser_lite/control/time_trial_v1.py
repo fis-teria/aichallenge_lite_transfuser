@@ -10,6 +10,7 @@ import numpy as np
 from .time_reference_v1 import TimePlan, TimedBodyPose, prepare_time_reference, reference_control
 from .time_geometry_v2 import validate_time_geometry
 from .awsim_steering import CALIBRATED_POLICIES, steering_asset_contract
+from .vehicle_motion_v1 import IDEAL_POLICY, WHEELBASE_M, effective_response_length, validate_vehicle_model_config
 from .waypoint_controller import ControllerConfig, select_lookahead, control_from_waypoints
 from ..runtime.awsim_trial_session import trial_duration_limits
 
@@ -33,6 +34,7 @@ def validate_trial_config(config: dict[str, Any]) -> str:
     if type(config.get("record_vehicle_motion", False)) is not bool:
         raise ValueError("TRIAL_MOTION_RECORDING_FLAG")
     steering_asset_contract(config)
+    validate_vehicle_model_config(config)
     lookahead_policy = config.get("lookahead_policy", "fixed_1m_v1")
     if lookahead_policy not in LOOKAHEAD_POLICIES:
         raise ValueError("TRIAL_LOOKAHEAD_POLICY")
@@ -78,7 +80,8 @@ def interpolate_body_pose(poses: Sequence[TimedBodyPose], stamp_ns: int,
 def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: float,
                        rear_axle_offset_m: tuple[float, float], speed_cap_mps: float | None = None,
                        speed_policy: str = "source_capped_0p25",
-                       lookahead_policy: str = "fixed_1m_v1") -> dict[str, Any]:
+                       lookahead_policy: str = "fixed_1m_v1",
+                       vehicle_model_policy: str = IDEAL_POLICY) -> dict[str, Any]:
     """SI units; age-aligned XY, explicit source-speed or fixed-5-km/h target.
 
     The static selected-scene rear axle differs by about 1 mm from base_link.
@@ -103,7 +106,8 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
     if (predicted_speed > 1e-6 or speed_policy == "fixed_5kmh") and not geometry["motion_resolved"]:
         raise ValueError("TIME_PATH_MOTION_UNRESOLVED")
     reference = replace(reference, target_speed_mps=target_speed)
-    config = ControllerConfig(wheelbase_m=1.087, min_lookahead_m=1., max_steer_rad=.5,
+    response_length = effective_response_length(max(0., speed_mps), vehicle_model_policy)
+    config = ControllerConfig(wheelbase_m=response_length, min_lookahead_m=1., max_steer_rad=.5,
                               min_accel_mps2=-1., max_accel_mps2=1., speed_kp=4.)
     target = np.zeros(2)
     minimum_preview = (max(1., .4+max(0., speed_mps)*.5+speed_mps**2/2)
@@ -139,6 +143,8 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
     return {"steer_rad": command.steering_rad, "acceleration_mps2": command.acceleration_mps2,
             "target_speed_mps": target_speed, "predicted_source_speed_mps": predicted_speed,
             "speed_policy": speed_policy, "overspeed_limit_mps": overspeed,
+            "vehicle_model_policy": vehicle_model_policy, "static_wheelbase_m": WHEELBASE_M,
+            "nominal_response_length_m": response_length,
             "lookahead_policy": lookahead_policy, "selected_lookahead_distance_m": float(np.linalg.norm(target)),
             "minimum_preview_distance_m": minimum_preview,
             "plan_age_sec": reference.age_sec, "lookahead_rear_m": target.tolist(),

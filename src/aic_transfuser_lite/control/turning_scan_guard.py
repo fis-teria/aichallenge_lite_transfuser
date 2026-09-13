@@ -15,6 +15,7 @@ import numpy as np
 
 from .time_reference_v1 import TimedBodyPose
 from .time_trial_v1 import interpolate_body_pose
+from .vehicle_motion_v1 import IDEAL_POLICY, stopping_motion
 
 
 def select_aligned_scan(capture_receipts_ns: Sequence[tuple[int, int]], poses: Sequence[TimedBodyPose],
@@ -58,22 +59,24 @@ def scan_pose_in_rear(captured: TimedBodyPose, current: TimedBodyPose,
 
 
 def stopping_sweep(speed_mps: float, measured_steer_rad: float, issued_steer_rad: float,
-                   previous_steer_rad: float | None = None) -> tuple[np.ndarray, np.ndarray]:
+                   previous_steer_rad: float | None = None, *, vehicle_model_policy: str = IDEAL_POLICY,
+                   heading_rate_radps: float | None = None,
+                   reported_lateral_mps: float | None = None) -> tuple[np.ndarray, np.ndarray]:
     """Return rear-axle poses [S,3] and isotropic inflation [S], in metres/rad.
 
     All varying curvatures between the two steering values are enclosed by
     positional error <= half_curvature_span*s^2/2 and heading error <= span*s.
     Sampling inflation also covers motion between adjacent pose samples.
     """
-    steering = np.array([measured_steer_rad, issued_steer_rad,
-                         issued_steer_rad if previous_steer_rad is None else previous_steer_rad])
-    if (not np.isfinite(speed_mps) or not np.isfinite(steering).all()
-            or not -.03 <= speed_mps <= 6./3.6
-            or np.max(abs(steering)) > .5):
-        raise ValueError("SWEEP_VEHICLE_STATE")
+    motion = stopping_motion(speed_mps, measured_steer_rad, issued_steer_rad, previous_steer_rad,
+        policy=vehicle_model_policy, heading_rate_radps=heading_rate_radps, reported_lateral_mps=reported_lateral_mps)
+    return _sweep_from_motion(speed_mps, motion)
+
+
+def _sweep_from_motion(speed_mps: float, motion: dict[str, Any]) -> tuple[np.ndarray, np.ndarray]:
     speed = max(0., speed_mps)
     travel = .4 + speed*.5 + speed**2/2.
-    k = np.tan(steering)/1.087
+    k = np.asarray(motion["curvature_interval_per_m"])
     middle, half_span = float((k.min()+k.max())/2.), float((k.max()-k.min())/2.)
     distances = np.linspace(0., travel, int(math.ceil(travel/.025))+1)
     yaw = middle*distances
@@ -85,7 +88,8 @@ def stopping_sweep(speed_mps: float, measured_steer_rad: float, issued_steer_rad
     # Existing +/- .85 m half-width includes the 1.30 m kart plus .20 m each side.
     radius = math.hypot(1.984, .85)
     between_samples = (distances[1]-distances[0])/2.*(1.+radius*float(max(abs(k))))
-    inflation = half_span*(distances**2/2.+radius*distances)+between_samples
+    inflation = (half_span*(distances**2/2.+radius*distances)+between_samples
+                 + motion["lateral_displacement_bound_m"])
     return np.column_stack([xy, yaw]), inflation
 
 
@@ -94,7 +98,9 @@ def check_turning_scan(ranges: np.ndarray, angle_min: float, angle_increment: fl
                        measured_steer_rad: float, issued_steer_rad: float,
                        scan_in_current_rear: tuple[float, float, float],
                        previous_steer_rad: float | None = None,
-                       envelope_policy: str = "isotropic_v1") -> dict[str, Any]:
+                       envelope_policy: str = "isotropic_v1", vehicle_model_policy: str = IDEAL_POLICY,
+                       heading_rate_radps: float | None = None,
+                       reported_lateral_mps: float | None = None) -> dict[str, Any]:
     """Scan ranges [N] at its original capture pose, expressed in current rear.
 
     scan_in_current_rear=(forward_m,left_m,yaw_rad), obtained using time-aligned
@@ -116,14 +122,16 @@ def check_turning_scan(ranges: np.ndarray, angle_min: float, angle_increment: fl
         raise ValueError("SCAN_COVERAGE")
     if np.any(np.isnan(r) | np.isneginf(r) | (r < range_min) | (np.isfinite(r) & (r > range_max))):
         raise ValueError("SCAN_UNKNOWN")
-    poses, inflation = stopping_sweep(speed_mps, measured_steer_rad, issued_steer_rad, previous_steer_rad)
+    motion = stopping_motion(speed_mps, measured_steer_rad, issued_steer_rad, previous_steer_rad,
+        policy=vehicle_model_policy, heading_rate_radps=heading_rate_radps, reported_lateral_mps=reported_lateral_mps)
+    poses, inflation = _sweep_from_motion(speed_mps, motion)
     sensor = np.asarray(scan_in_current_rear, dtype=float)
     if np.linalg.norm(sensor[:2]-[1.649, 0.]) > .35 or abs(sensor[2]) > .15:
         raise ValueError("SCAN_POSE_ALIGNMENT")
     if envelope_policy == "curvature_support_v2":
         from .curvature_support_v2 import check_support_ranges
         return check_support_ranges(r, angles, range_max, angle_increment, sensor, speed_mps,
-                                    measured_steer_rad, issued_steer_rad, previous_steer_rad)
+                                    measured_steer_rad, issued_steer_rad, previous_steer_rad, motion=motion)
     # Include angular gaps conservatively in the rectangle inflation. No
     # obstacle behind a hit is declared free solely because that hit lies off
     # the centerline of the predicted path.
@@ -151,7 +159,8 @@ def check_turning_scan(ranges: np.ndarray, angle_min: float, angle_increment: fl
     margins = np.minimum(r, range_max)-required
     if np.any(margins[observed] <= 0.):
         raise ValueError("STOPPING_SWEEP_OCCUPIED")
-    return {"policy": "STEERING_INTERVAL_SWEEP_V1", "scope": "FORWARD_SCAN_PROXIMITY_NOT_ALL_AROUND_FREE_SPACE",
+    return {"policy": "STEERING_INTERVAL_SWEEP_V1", "vehicle_motion": motion,
+        "scope": "FORWARD_SCAN_PROXIMITY_NOT_ALL_AROUND_FREE_SPACE",
         "minimum_ray_margin_m": float(margins[observed].min()) if observed.any() else float(range_max),
         "checked_rays": int(observed.sum()), "sweep_samples": len(poses),
         "stopping_travel_m": .4+max(0., speed_mps)*.5+speed_mps**2/2.,

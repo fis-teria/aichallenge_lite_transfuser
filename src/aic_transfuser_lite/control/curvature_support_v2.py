@@ -12,10 +12,11 @@ import math
 from typing import Any
 
 import numpy as np
+from .vehicle_motion_v1 import MAX_CURVATURE_PER_M, stopping_motion
 
 
 def curvature_support_envelope(k_min: float, k_max: float, travel_m: float,
-                               angle_step_rad: float, sensor_xy_m: np.ndarray
+                               angle_step_rad: float, sensor_xy_m: np.ndarray, *, lateral_padding_m: float = 0.
                                ) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
     """Return unit normals [64,2], support distances [64] in m, and bounds.
 
@@ -25,8 +26,9 @@ def curvature_support_envelope(k_min: float, k_max: float, travel_m: float,
     """
     sensor = np.asarray(sensor_xy_m, dtype=float)
     if (sensor.shape != (2,) or not np.isfinite(sensor).all()
-            or not np.isfinite([k_min, k_max, travel_m, angle_step_rad]).all()
-            or not -float(np.tan(.5))/1.087 <= k_min <= k_max <= float(np.tan(.5))/1.087
+            or not np.isfinite([k_min, k_max, travel_m, angle_step_rad, lateral_padding_m]).all()
+            or not -MAX_CURVATURE_PER_M <= k_min <= k_max <= MAX_CURVATURE_PER_M
+            or not 0 <= lateral_padding_m <= .1
             or not .4 <= travel_m <= .4+(6/3.6)*.5+(6/3.6)**2/2
             or not 0 < angle_step_rad <= .02):
         raise ValueError("SUPPORT_ENVELOPE_CONTRACT")
@@ -54,9 +56,9 @@ def curvature_support_envelope(k_min: float, k_max: float, travel_m: float,
     between_samples = ds/2*(1+radius*k_bound)
     # Include sensor offset and polygon facets when covering angular gaps.
     facet_cos = math.cos(math.pi/64)
-    reach = (travel_m+radius+integration_bound+between_samples)/facet_cos + float(np.linalg.norm(sensor))
+    reach = (travel_m+radius+integration_bound+between_samples+lateral_padding_m)/facet_cos + float(np.linalg.norm(sensor))
     angular_padding = reach*angle_step_rad/(1-angle_step_rad/facet_cos)
-    padding = between_samples+angular_padding
+    padding = between_samples+angular_padding+lateral_padding_m
     support = (position+body).max(axis=0)+padding
     return normals, support, {"policy": "CURVATURE_INTERVAL_SUPPORT_V2", "support_directions": 64,
         "sweep_samples": len(distances), "integration_step_m": float(ds),
@@ -68,14 +70,15 @@ def curvature_support_envelope(k_min: float, k_max: float, travel_m: float,
 def check_support_ranges(ranges: np.ndarray, angles: np.ndarray, range_max: float,
                          angle_step_rad: float, sensor: np.ndarray, speed_mps: float,
                          measured_steer_rad: float, issued_steer_rad: float,
-                         previous_steer_rad: float | None) -> dict[str, Any]:
+                         previous_steer_rad: float | None, *, motion: dict[str, Any] | None = None) -> dict[str, Any]:
     """Internal ray test after check_turning_scan validates scan/state/frame."""
-    steering = [measured_steer_rad, issued_steer_rad,
-                issued_steer_rad if previous_steer_rad is None else previous_steer_rad]
-    k = np.tan(steering)/1.087
+    if motion is None:
+        motion = stopping_motion(speed_mps, measured_steer_rad, issued_steer_rad, previous_steer_rad)
+    k_min, k_max = motion["curvature_interval_per_m"]
     speed = max(0., speed_mps)
-    normals, support, metadata = curvature_support_envelope(float(k.min()), float(k.max()),
-        .4+speed*.5+speed**2/2, angle_step_rad, sensor[:2])
+    normals, support, metadata = curvature_support_envelope(k_min, k_max,
+        .4+speed*.5+speed**2/2, angle_step_rad, sensor[:2],
+        lateral_padding_m=motion["lateral_displacement_bound_m"])
     remaining = support-normals@sensor[:2]
     directions = normals@np.column_stack([np.cos(angles+sensor[2]), np.sin(angles+sensor[2])]).T
     parallel = abs(directions) < 1e-12
@@ -89,7 +92,7 @@ def check_support_ranges(ranges: np.ndarray, angles: np.ndarray, range_max: floa
     margins = np.minimum(ranges, range_max)-required
     if np.any(margins[observed] <= 0.):
         raise ValueError("STOPPING_SWEEP_OCCUPIED")
-    return {**metadata, "scope": "FORWARD_SCAN_PROXIMITY_NOT_ALL_AROUND_FREE_SPACE",
+    return {**metadata, "vehicle_motion": motion, "scope": "FORWARD_SCAN_PROXIMITY_NOT_ALL_AROUND_FREE_SPACE",
         "minimum_ray_margin_m": float(margins[observed].min()) if observed.any() else float(range_max),
         "checked_rays": int(observed.sum()), "measured_steer_rad": measured_steer_rad,
         "issued_steer_rad": issued_steer_rad, "previous_steer_rad": previous_steer_rad,
