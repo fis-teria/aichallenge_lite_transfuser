@@ -28,6 +28,8 @@ def trial_speed_limits(speed_policy: str) -> tuple[float, float]:
 def validate_trial_config(config: dict[str, Any]) -> str:
     """Reject descriptive JSON settings that disagree with this bounded runtime."""
     policy = config.get("speed_policy", "source_capped_0p25")
+    if config.get("obstacle_policy", "straight_v1") not in ("straight_v1", "steering_sweep_v1"):
+        raise ValueError("TRIAL_OBSTACLE_POLICY")
     ceiling, overspeed = trial_speed_limits(policy)
     drive_sim_s, drive_wall_s, outer_wall_s = trial_duration_limits(config.get("execution_profile", "bounded_10s"))
     expected = {"speed_cap_mps": ceiling, "overspeed_limit_mps": overspeed,

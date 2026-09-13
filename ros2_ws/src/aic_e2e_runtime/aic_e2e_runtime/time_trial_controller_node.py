@@ -14,6 +14,7 @@ import numpy as np
 
 from . import spatial_path_shadow_node_v4 as _source_layout
 from aic_transfuser_lite.control.long_sim_tracking_v4 import check_scan
+from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, scan_pose_in_rear
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
 from aic_transfuser_lite.control.time_trial_v1 import (
     SPEED_POLICIES, interpolate_body_pose, time_trial_control, trial_speed_limits, validate_trial_config,
@@ -37,12 +38,14 @@ def main() -> None:
     args, ros_args = parser.parse_known_args()
     config_sha = None
     execution_profile = "bounded_10s"
+    obstacle_policy = "straight_v1"
     speed_policy = args.speed_policy or "source_capped_0p25"
     if args.trial_config is not None:
         config_bytes = args.trial_config.read_bytes()
         config = json.loads(config_bytes)
         speed_policy = validate_trial_config(config)
         execution_profile = config.get("execution_profile", "bounded_10s")
+        obstacle_policy = config.get("obstacle_policy", "straight_v1")
         if (config["checkpoint_sha256"] != args.checkpoint_sha256
                 or config["geometry"]["rear_axle_forward_in_base_link_m"] != args.rear_axle_forward_m):
             raise ValueError("TRIAL_CONFIG_IDENTITY")
@@ -136,6 +139,7 @@ def main() -> None:
                 record({"event": "PUBLISHER_CREATED", "topic": topic, "live": live,
                         "speed_policy": speed_policy, "overspeed_limit_mps": overspeed_limit_mps,
                         "trial_config_sha256": config_sha,
+                        "obstacle_policy": obstacle_policy,
                         "execution_profile": execution_profile, "drive_limit_sim_s": drive_sim_s,
                         "rear_axle_forward_m": args.rear_axle_forward_m})
         reason = "WAIT_AUTHORIZATION" if live else "SHADOW_ONLY"
@@ -143,6 +147,10 @@ def main() -> None:
         details = {}; plan_id = None
         velocity_fresh = False
         speed = None
+        measured_steer = None
+        checking_scan = False
+        scan_alignment = None
+        dt = min(.1, max(0., wall - previous[1]))
         try:
             if state["fault"]:
                 raise ValueError(state["fault"])
@@ -158,6 +166,7 @@ def main() -> None:
                 if names(topics[role][0]) != [topics[role][2]]:
                     raise ValueError("SOURCE_" + role)
             speed = float(cache["velocity"][0].longitudinal_velocity)
+            measured_steer = float(cache["steering"][0].steering_tire_angle)
             if not np.isfinite([speed, float(cache["steering"][0].steering_tire_angle)]).all():
                 speed = None
                 raise ValueError("NONFINITE_VEHICLE_STATE")
@@ -188,21 +197,12 @@ def main() -> None:
                 if brake_reason is not None:
                     raise ValueError(brake_reason)
             laser = cache["scan"][0]
-            try:
+            clearance = None
+            if obstacle_policy == "straight_v1":
+                checking_scan = True
                 clearance = check_scan(laser.ranges, laser.angle_min, laser.angle_increment,
                                        laser.range_min, laser.range_max, speed)
-            except ValueError as exc:
-                if not state["scan_rejection_recorded"]:
-                    scalar_names = ("angle_min", "angle_increment", "range_min", "range_max")
-                    record({"event": "SCAN_GUARD_REJECTED", "reason": str(exc), "speed_mps": speed,
-                            "scan_stamp_ns": stamp(laser.header.stamp), "scan_frame": laser.header.frame_id,
-                            "scan": {**dict(zip(scalar_names, encode_scan_values(getattr(laser, k) for k in scalar_names))),
-                                     "ranges": encode_scan_values(laser.ranges)},
-                            "current_pose": state["current_pose"], "pose_history": [p.__dict__ for p in poses],
-                            "latest_plan_json": cache["plan"][0].data if "plan" in cache else None,
-                            "plan_admission": "NOT_CHECKED_AFTER_SCAN_REJECTION"})
-                    state["scan_rejection_recorded"] = True
-                raise
+                checking_scan = False
             message, received = cache["plan"]
             value = json.loads(message.data)
             if (names(topics["plan"][0]) != [topics["plan"][2]] or value.get("event") != "PLAN"
@@ -228,10 +228,36 @@ def main() -> None:
                                               speed_policy=speed_policy,
                                               rear_axle_offset_m=(args.rear_axle_forward_m, 0.)))
             steer = details["steer_rad"]; accel = details["acceleration_mps2"]; target = details["target_speed_mps"]
+            if obstacle_policy == "steering_sweep_v1":
+                steer = float(np.clip(steer, previous[0] - .8*dt, previous[0] + .8*dt))
+                checking_scan = True
+                if laser.header.frame_id != "lidar":
+                    raise ValueError("SCAN_FRAME")
+                captured = interpolate_body_pose(poses, stamp(laser.header.stamp))
+                scan_alignment = scan_pose_in_rear(captured, current, args.rear_axle_forward_m)
+                guard = check_turning_scan(laser.ranges, laser.angle_min, laser.angle_increment,
+                    laser.range_min, laser.range_max, speed_mps=speed, measured_steer_rad=measured_steer,
+                    issued_steer_rad=steer, scan_in_current_rear=scan_alignment, previous_steer_rad=previous[0])
+                details["obstacle_guard"] = guard
+                details["scan_in_current_rear"] = scan_alignment
+                details["clearance_m"] = guard["minimum_ray_margin_m"]
+                checking_scan = False
             plan_id = plan.plan_id; reason = "TIME_PATH_TRACKING" if live else "SHADOW_CONTROL"
         except (ValueError, KeyError, TypeError) as exc:
-            reason = str(exc); accel = -1.; target = 0.
-            if reason == "STOPPING_CORRIDOR_OCCUPIED" and state["positive_count"]:
+            if checking_scan and str(exc) in ("STOPPING_CORRIDOR_OCCUPIED", "STOPPING_SWEEP_OCCUPIED") and not state["scan_rejection_recorded"]:
+                scalar_names = ("angle_min", "angle_increment", "range_min", "range_max")
+                record({"event": "SCAN_GUARD_REJECTED", "reason": str(exc), "speed_mps": speed,
+                        "scan_stamp_ns": stamp(laser.header.stamp), "scan_frame": laser.header.frame_id,
+                        "scan": {**dict(zip(scalar_names, encode_scan_values(getattr(laser, k) for k in scalar_names))),
+                                 "ranges": encode_scan_values(laser.ranges)},
+                        "current_pose": state["current_pose"], "pose_history": [p.__dict__ for p in poses],
+                        "latest_plan_json": cache["plan"][0].data if "plan" in cache else None,
+                        "obstacle_policy": obstacle_policy, "measured_steer_rad": measured_steer,
+                        "issued_steer_rad": steer, "previous_steer_rad": previous[0], "scan_in_current_rear": scan_alignment,
+                        "plan_admission": "NOT_CHECKED_AFTER_SCAN_REJECTION" if obstacle_policy == "straight_v1" else "IDENTITY_AND_CONTROL_CHECKED_BEFORE_SCAN"})
+                state["scan_rejection_recorded"] = True
+            reason = str(exc); accel = -1.; target = 0.; steer = previous[0]
+            if reason in ("STOPPING_CORRIDOR_OCCUPIED", "STOPPING_SWEEP_OCCUPIED") and state["positive_count"]:
                 state["fault"] = reason
         if reason in ("SCHEDULED_BRAKE", "REQUESTED_BRAKE") and velocity_fresh and speed is not None and abs(speed) < .03:
             if state["stop_since_ns"] is None:
@@ -239,7 +265,6 @@ def main() -> None:
             state["stop_confirmed"] = clock_ns - state["stop_since_ns"] >= 1_000_000_000
         else:
             state["stop_since_ns"] = None
-        dt = min(.1, max(0., wall - previous[1]))
         steer = float(np.clip(steer, previous[0] - .8 * dt, previous[0] + .8 * dt))
         previous[:] = [steer, wall]
         # Do not fight a competing sender. The outer host supervisor terminates
@@ -254,7 +279,7 @@ def main() -> None:
                 state["positive_count"] += 1
             record({"event": "COMMAND_SENT", "reason": reason, "plan_id": plan_id,
                     "steer_rad": steer, "acceleration_mps2": accel, "target_speed_mps": target,
-                    "speed_mps": speed, "details": details})
+                    "speed_mps": speed, "measured_steer_rad": measured_steer, "details": details})
         elif actual and actual != ["/time_path_controller"]:
             state["fault"] = "COMPETING_CONTROLLER"
         temporary = args.output / "control_heartbeat.pending"
