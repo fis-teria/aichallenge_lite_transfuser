@@ -50,7 +50,7 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
                 raise ValueError("recorded rejection could not be reproduced") from exc
         else:
             if command["reason"] != "TIME_PATH_TRACKING":
-                post_guard = obstacle_policy == "steering_sweep_v1" and command["reason"] in scan_reasons
+                post_guard = obstacle_policy in ("steering_sweep_v1", "steering_support_v2") and command["reason"] in scan_reasons
                 actuator_rejected = (steering_policy == "awsim_grip_0p6_v1"
                                      and command["reason"] == "STEERING_ACTUATOR_INFEASIBLE"
                                      and abs(calculated["steer_rad"]) > .3)

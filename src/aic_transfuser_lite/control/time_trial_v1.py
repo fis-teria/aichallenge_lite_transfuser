@@ -36,7 +36,7 @@ def validate_trial_config(config: dict[str, Any]) -> str:
         raise ValueError("TRIAL_LOOKAHEAD_POLICY")
     if lookahead_policy == "feasible_1_to_1p5m_v1" and config.get("steering_policy") != "awsim_grip_0p6_v1":
         raise ValueError("TRIAL_LOOKAHEAD_REQUIRES_CALIBRATION")
-    if config.get("obstacle_policy", "straight_v1") not in ("straight_v1", "steering_sweep_v1"):
+    if config.get("obstacle_policy", "straight_v1") not in ("straight_v1", "steering_sweep_v1", "steering_support_v2"):
         raise ValueError("TRIAL_OBSTACLE_POLICY")
     ceiling, overspeed = trial_speed_limits(policy)
     drive_sim_s, drive_wall_s, outer_wall_s = trial_duration_limits(config.get("execution_profile", "bounded_10s"))

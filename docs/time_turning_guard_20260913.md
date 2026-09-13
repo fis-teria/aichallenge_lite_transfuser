@@ -191,3 +191,48 @@ PPの固定1m目標点選択。物理上限を考慮せず近い点を選んで�
 これはPPの目標点選択だけの変更で、他の旧profileは保全して切り戻し可能。
 改善指標は未変更の経路から物理上限内の指令を生成できることと、その実走結果。
 保存したturn10の回帰例、範囲外/全点到達不能、左右旋回のテスト後にturn11を1回実施する。
+
+## turn11実行前確認
+
+source `d2d7d1e001fd40f73c6396258bb694177c45b25c`、Windows/WSL一致。
+WSL限定51passed (0.47s)、全体2098passed/4skipped/63warnings (80.50s)。
+Humble build0.90s、10module一致。ROS smoke実モデルPath6、左右28、
+到達不能な曲線の制動10、stale11/clock7/overspeed12、child exit0。
+新規設定は `configs/control/time_path_feasible_turning_5kmh_20260913.json`。
+archive SHA256 `1a9e7cbd9b5e8fce41d47559168cd53a178f09b28f47ffed4f767b26b94f53e9`、
+config SHA256 `9c55ee9ce44184de71cb3a1ba754efa5e46f864c5a62a48f7feb1171d2c34370`。
+専有root `/home/graneple/e2e_autonomous/time_turning_feasible_20260913`、SOURCEは
+その中の `source_d2d7d1e`。前述timeoutコマンドのroot/configをこの値へ、run IDを
+`codex-time-turn-11` へ変更して1回実行する。有限枠/実行先/通常RVizは同一。
+
+## turn11結果と監視の幾何境界
+
+turn11は発進30.699999314sim秒後に `CONTROL_STOPPING_SWEEP_OCCUPIED`、未完走。
+608回追従、目標点を1.2m超へ選んだのは7回。実操舵は-0.088705rad、要求物理角
+-0.097906rad、補正した入力-0.163176rad。0.15s遅れを合わせた実操舵誤差の平均絶対値
+0.001148radで、操舵変換の不一致は改善した。停止地点は前回より先へ進みyawも
+1.832radまで旋回したが、コーナー通過には至らなかった。
+wall74.802s、cleanup error0、ホストfreeze前の停車実測なし。通常RViz購読あり。
+終了後active0、既存Compose39個を保全。47ファイルhash検証、archive
+`523f0333730448a99ede33ad5ab5f88048aa1250ae944a38dc7401124885c62d`。
+
+保存scanのWSL再計算では、後輪原点[3.942211,0.438657]mの観測点が
+膨張した停止範囲に入り、ray余裕-0.004566m。実操舵を固定する計算では+0.020362m、
+要求角へ即時到達する計算では+0.083596mだが、どちらも実際の変動操舵の保証には使えない。
+元の等方膨張0.055337mは姿勢不確かさを全方向へ広げるため過大な部分がある。
+単に矩形の回転区間へ置換する検算でも-0.000475mなので、それだけの変更は採用しない。
+
+次の原因所有層は、変動曲率で到達可能な車体範囲の上界計算。
+`steering_support_v2` では64方向の支持半平面で全停止範囲を包む。距離sでのheadingは
+[k_min*s,k_max*s]内。各方向の位置射影をそのheading区間で最大化して積分し、
+車体4頂点も全heading区間で最大化する。積分は5mm以下で、曲率上限Kに対し
+各区間K*ds²/2の誤差上界を加える（必要なmidpoint上界K*ds²/4以上）。sample間の
+移動/回転、sensor offset、64面の外接誤差、scan角度間隔の余裕も加える。
+これにより曲率が区間内で時間変化する場合も含み、固定操舵への置換はしない。
+全停止範囲を凸包へ広げるので内側の空間では過剰拒否が残り得る。
+
+既存車体寸法・余裕・停止距離・操舵区間を保ち、旧v1は保存する。
+scan/frame/NaN/authority/時計の拒否とホスト終了を維持。改善指標は保存した偽陽性候補で
+余分な幾何膨張を減らし、独立積分した変動操舵軌跡を全て包むこと、その後の実走結果。
+実装版のsnapshot回帰、左右/内外障害物/観測不足、最大全曲率区間での包絡テストを通す。
+新規turn12を1回実施する判断は、その検証とHumble smokeが通った後に行う。

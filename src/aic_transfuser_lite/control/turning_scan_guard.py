@@ -93,7 +93,8 @@ def check_turning_scan(ranges: np.ndarray, angle_min: float, angle_increment: fl
                        range_min: float, range_max: float, *, speed_mps: float,
                        measured_steer_rad: float, issued_steer_rad: float,
                        scan_in_current_rear: tuple[float, float, float],
-                       previous_steer_rad: float | None = None) -> dict[str, Any]:
+                       previous_steer_rad: float | None = None,
+                       envelope_policy: str = "isotropic_v1") -> dict[str, Any]:
     """Scan ranges [N] at its original capture pose, expressed in current rear.
 
     scan_in_current_rear=(forward_m,left_m,yaw_rad), obtained using time-aligned
@@ -102,6 +103,8 @@ def check_turning_scan(ranges: np.ndarray, angle_min: float, angle_increment: fl
     old +/-1.3 rad required FOV is preserved; all supplied rays are checked.
     """
     r = np.asarray(ranges, dtype=float)
+    if envelope_policy not in ("isotropic_v1", "curvature_support_v2"):
+        raise ValueError("SCAN_ENVELOPE_POLICY")
     if (r.ndim != 1 or not 100 <= len(r) <= 4096
             or len(scan_in_current_rear) != 3
             or not np.isfinite([angle_min, angle_increment, range_min, range_max, *scan_in_current_rear]).all()
@@ -117,6 +120,10 @@ def check_turning_scan(ranges: np.ndarray, angle_min: float, angle_increment: fl
     sensor = np.asarray(scan_in_current_rear, dtype=float)
     if np.linalg.norm(sensor[:2]-[1.649, 0.]) > .35 or abs(sensor[2]) > .15:
         raise ValueError("SCAN_POSE_ALIGNMENT")
+    if envelope_policy == "curvature_support_v2":
+        from .curvature_support_v2 import check_support_ranges
+        return check_support_ranges(r, angles, range_max, angle_increment, sensor, speed_mps,
+                                    measured_steer_rad, issued_steer_rad, previous_steer_rad)
     # Include angular gaps conservatively in the rectangle inflation. No
     # obstacle behind a hit is declared free solely because that hit lies off
     # the centerline of the predicted path.

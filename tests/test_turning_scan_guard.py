@@ -34,32 +34,35 @@ def test_clear_straight_and_mirrored_corners():
     assert result['full_body_free_space_verified'] is False
 
 
-def test_turn_clears_outer_corner_but_straight_and_steering_lag_reject():
+@pytest.mark.parametrize('envelope_policy', ['isotropic_v1', 'curvature_support_v2'])
+def test_turn_clears_outer_corner_but_straight_and_steering_lag_reject(envelope_policy):
     r = scan_with_hit(3.77, .839)
     with pytest.raises(ValueError, match='CORRIDOR_OCCUPIED'):
         check_scan(r, ANGLES[0], ANGLES[1]-ANGLES[0], 0., 25., 1.25)
-    assert check(r, measured=-.12, issued=-.12)['minimum_ray_margin_m'] > 0
+    assert check(r, measured=-.12, issued=-.12, envelope_policy=envelope_policy)['minimum_ray_margin_m'] > 0
     with pytest.raises(ValueError, match='SWEEP_OCCUPIED'):
-        check(r, measured=0., issued=-.12)
+        check(r, measured=0., issued=-.12, envelope_policy=envelope_policy)
     with pytest.raises(ValueError, match='SWEEP_OCCUPIED'):
-        check(r, measured=-.12, issued=-.12, previous_steer_rad=0.)
+        check(r, measured=-.12, issued=-.12, previous_steer_rad=0., envelope_policy=envelope_policy)
     with pytest.raises(ValueError, match='SWEEP_OCCUPIED'):
-        check(r)
+        check(r, envelope_policy=envelope_policy)
 
 
-def test_turning_into_inner_obstacle_and_front_obstacle_still_reject():
+@pytest.mark.parametrize('envelope_policy', ['isotropic_v1', 'curvature_support_v2'])
+def test_turning_into_inner_obstacle_and_front_obstacle_still_reject(envelope_policy):
     for sign in (-1, 1):
         with pytest.raises(ValueError, match='SWEEP_OCCUPIED'):
-            check(scan_with_hit(3., sign*1.2), measured=sign*.3, issued=sign*.3)
+            check(scan_with_hit(3., sign*1.2), measured=sign*.3, issued=sign*.3, envelope_policy=envelope_policy)
         with pytest.raises(ValueError, match='SWEEP_OCCUPIED'):
-            check(scan_with_hit(2., 0.), measured=sign*.3, issued=sign*.3)
+            check(scan_with_hit(2., 0.), measured=sign*.3, issued=sign*.3, envelope_policy=envelope_policy)
 
 
 @pytest.mark.parametrize('bad', [np.nan, -np.inf, -.1, 25.1])
-def test_unknown_rays_never_become_free(bad):
+@pytest.mark.parametrize('envelope_policy', ['isotropic_v1', 'curvature_support_v2'])
+def test_unknown_rays_never_become_free(bad, envelope_policy):
     r = np.full(751, np.inf); r[300] = bad
     with pytest.raises(ValueError, match='SCAN_UNKNOWN'):
-        check(r, measured=-.1, issued=-.1)
+        check(r, measured=-.1, issued=-.1, envelope_policy=envelope_policy)
 
 
 @pytest.mark.parametrize('bad', [np.zeros((751, 1)), np.zeros(10)])

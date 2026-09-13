@@ -170,12 +170,15 @@ def main() -> None:
         positive = [c for c in commands if c["accel"] > 0 and abs(c["speed"]-expected_target) < 1e-5 and abs(c["steer"]) < 1e-8]
         if not positive:
             raise RuntimeError("ORACLE_DID_NOT_REACH_SHADOW_PP")
-        if fixture_config is not None and fixture_config.get("obstacle_policy") == "steering_sweep_v1":
+        if fixture_config is not None and fixture_config.get("obstacle_policy") in ("steering_sweep_v1", "steering_support_v2"):
             records = [json.loads(line) for line in (args.output/"oracle/control.jsonl").read_text().splitlines()]
-            verified = [r for r in records if r.get("details", {}).get("obstacle_guard", {}).get("policy") == "STEERING_INTERVAL_SWEEP_V1"]
+            expected_guard = ("CURVATURE_INTERVAL_SUPPORT_V2" if fixture_config["obstacle_policy"] == "steering_support_v2"
+                              else "STEERING_INTERVAL_SWEEP_V1")
+            verified = [r for r in records if r.get("details", {}).get("obstacle_guard", {}).get("policy") == expected_guard]
             if not verified:
                 raise RuntimeError("SWEEP_GUARD_NOT_EXECUTED")
             result["sweep_guard_commands"] = len(verified)
+            result["sweep_guard_policy"] = expected_guard
             result["scan_ahead_of_pose_ns"] = fixture_scan_offset_ns
         if fixture_config is not None and fixture_config.get("steering_policy") == "awsim_grip_0p6_v1":
             mapping_count = 0

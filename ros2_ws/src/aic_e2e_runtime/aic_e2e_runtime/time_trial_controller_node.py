@@ -243,7 +243,7 @@ def main() -> None:
             mapping = command_steering(steer, previous[0], dt, policy=steering_policy)
             details["steering_actuator"] = mapping
             steer = mapping["issued_input_rad"]
-            if obstacle_policy == "steering_sweep_v1":
+            if obstacle_policy in ("steering_sweep_v1", "steering_support_v2"):
                 checking_scan = True
                 selected, captured = select_aligned_scan([(stamp(m.header.stamp), receipt) for m, receipt in scans],
                     poses, current, now_sim_ns=clock_ns, now_receipt_ns=now)
@@ -254,7 +254,8 @@ def main() -> None:
                 guard = check_turning_scan(laser.ranges, laser.angle_min, laser.angle_increment,
                     laser.range_min, laser.range_max, speed_mps=speed, measured_steer_rad=measured_steer,
                     issued_steer_rad=mapping["issued_tire_target_rad"], scan_in_current_rear=scan_alignment,
-                    previous_steer_rad=mapping["previous_tire_target_rad"])
+                    previous_steer_rad=mapping["previous_tire_target_rad"],
+                    envelope_policy="curvature_support_v2" if obstacle_policy == "steering_support_v2" else "isotropic_v1")
                 details["obstacle_guard"] = guard
                 details["scan_in_current_rear"] = scan_alignment
                 details["scan_stamp_ns"] = captured.stamp_ns
