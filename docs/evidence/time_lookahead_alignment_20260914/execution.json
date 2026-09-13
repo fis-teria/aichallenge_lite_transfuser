@@ -1,0 +1,28 @@
+[
+  {
+    "name": "pytest",
+    "command": [
+      "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q"
+    ],
+    "source_commit": "42143fe7357804fc2bf60b7a6abe329d8ec99238",
+    "exit": 0,
+    "seconds": 82.38674709500629
+  },
+  {
+    "name": "audit",
+    "command": [
+      "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+      "tools/audit_time_lookahead.py",
+      "--records",
+      "../runs/time_recovery_finetune_evidence_20260914",
+      "--output",
+      "../runs/time_lookahead_alignment_audit_20260914"
+    ],
+    "source_commit": "42143fe7357804fc2bf60b7a6abe329d8ec99238",
+    "exit": 0,
+    "seconds": 13.99976516100287
+  }
+]
