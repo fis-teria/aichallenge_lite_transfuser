@@ -6,6 +6,7 @@ from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     PhaseWindow, TARGET_MPS, phase_at_s, project_course, recovery_teacher_mask, validate_nominal, load_pose_course,
     bounded_collection_command, reference_rows_with_wrap, check_collection_input_time, select_collection_input,
     select_collection_motion,
+    check_collection_decision_age, collection_snapshot_retry_allowed,
 )
 
 
@@ -180,3 +181,17 @@ def test_scan_alignment_needs_pose_timeline_even_when_latest_motion_is_fresh():
     poses.insert(1, pose(22_024_999_507))
     index, captured = select_aligned_scan(scans, poses, poses[-1], **clocks)
     assert index == 0 and captured.stamp_ns == scans[0][0]
+
+
+def test_expired_snapshot_retry_is_bounded_and_does_not_retry_physical_or_reset_faults():
+    assert collection_snapshot_retry_allowed('STALE_scan', attempt=0, elapsed_ns=59_000_000)
+    assert not collection_snapshot_retry_allowed('STALE_scan', attempt=1, elapsed_ns=60_000_000)
+    assert not collection_snapshot_retry_allowed('STALE_scan', attempt=0, elapsed_ns=80_000_001)
+    for reason in ('STOPPING_SWEEP_OCCUPIED', 'CLOCK_RESET', 'SOURCE_pose', 'OVERSPEED_OR_REVERSE',
+                   'COLLECTION_COMPUTATION_TIMEOUT', 'SCAN_POSE_ALIGNMENT'):
+        assert not collection_snapshot_retry_allowed(reason, attempt=0, elapsed_ns=1)
+    check_collection_decision_age(started_ns=100, now_ns=100_000_100)
+    with pytest.raises(ValueError, match='COMPUTATION_TIMEOUT'):
+        check_collection_decision_age(started_ns=100, now_ns=100_000_101)
+    with pytest.raises(ValueError, match='COMPUTATION_TIMEOUT'):
+        check_collection_decision_age(started_ns=100, now_ns=99)

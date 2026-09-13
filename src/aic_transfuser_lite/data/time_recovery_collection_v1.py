@@ -21,6 +21,25 @@ PHASES = {"baseline", "approach", "hold", "recovery", "braking", "invalid"}
 ELIGIBLE_PHASES = {"baseline", "recovery"}
 
 
+def collection_snapshot_retry_allowed(reason: str, *, attempt: int, elapsed_ns: int) -> bool:
+    """One fresh-snapshot retry, only for timing and before the 100 ms deadline.
+
+    Reserve 20 ms for the second computation. Geometric, actuator, source and
+    clock-reset faults never retry. A retry sends no unvalidated go command.
+    """
+    return (attempt == 0 and 0 <= elapsed_ns <= 80_000_000
+            and (reason.startswith('STALE_') or reason in {
+                'CLOCK_STALE', 'NOMINAL_STALE_OR_FUTURE', 'FRESH_ALIGNED_SCAN_MISSING',
+                'STATE_FRAME_OR_CAPTURE_SKEW'}))
+
+
+def check_collection_decision_age(*, started_ns: int, now_ns: int) -> None:
+    """Bound sensor selection plus computation before any go publication."""
+    if (type(started_ns) is not int or type(now_ns) is not int or started_ns < 0
+            or not 0 <= now_ns-started_ns <= 100_000_000):
+        raise ValueError('COLLECTION_COMPUTATION_TIMEOUT')
+
+
 def check_collection_input_time(role: str, *, capture_ns: int, receipt_ns: int,
                                 now_sim_ns: int, now_wall_ns: int) -> None:
     """Use existing TimePath input budgets, retaining original capture clocks.

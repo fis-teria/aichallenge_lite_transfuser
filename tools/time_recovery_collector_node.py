@@ -21,6 +21,7 @@ from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, s
 from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     TARGET_MPS, bounded_collection_command, check_collection_input_time, phase_at_s, project_course,
     select_collection_input, select_collection_motion, validate_nominal,
+    check_collection_decision_age, collection_snapshot_retry_allowed,
 )
 
 
@@ -132,8 +133,10 @@ def main() -> None:
             return (*sensor_clock, sensor_fault[0], sensor_generation[0], dict(cache),
                     {r:tuple(h) for r,h in histories.items()}, tuple(poses), tuple(scans), dict(sensor_counts))
 
-    def tick() -> None:
+    def tick(attempt: int = 0, started_ns: int | None = None, retry_reasons: tuple[str, ...] = ()) -> None:
         nonlocal publisher, last_path_wall, last_pose_stamp
+        if started_ns is None:
+            started_ns = time.monotonic_ns()
         clock_ns, clock_receipt, fault, generation, cache, histories, poses, scans, counts = snapshot()
         if fault:
             state['fault'] = fault
@@ -241,6 +244,9 @@ def main() -> None:
                 reason = 'RECOVERY_TEACHER_TRACKING'
                 accel = bounded_accel; target = TARGET_MPS
         except (ValueError, KeyError, TypeError) as exc:
+            if not state['fault'] and collection_snapshot_retry_allowed(str(exc), attempt=attempt,
+                    elapsed_ns=time.monotonic_ns()-started_ns):
+                return tick(1, started_ns, (*retry_reasons, str(exc)))
             reason = str(exc); angle = previous[0]; accel = -1.; target = 0.; state['ready_ticks'] = 0
             if state['armed_ns'] is not None and reason != 'REQUESTED_BRAKE':
                 state['fault'] = reason
@@ -254,6 +260,7 @@ def main() -> None:
         phase = ('invalid' if state['fault'] or state['armed_ns'] is None else
                  'braking' if state['stop_reason'] else phase_at_s(projection['s_m'], reference['intervals']) if projection else 'invalid')
         state['phase'] = phase
+        retry_after_snapshot = None
         if publisher is not None and names(final_topic) == ['/time_recovery_collector'] and clock_ns is not None:
             # Recheck the *same* selected samples before publishing. A clock
             # reset, bad pose or processing delay must not publish an old go
@@ -267,24 +274,32 @@ def main() -> None:
                     if publish_sim is None or publish_wall-publish_receipt > 500_000_000:
                         raise ValueError('CLOCK_STALE')
                     if target > 0:
+                        check_collection_decision_age(started_ns=started_ns, now_ns=publish_wall)
                         for role, (m, receipt) in inputs.items():
                             check_collection_input_time(role,
                                 capture_ns=stamp(m.stamp if role in ('nominal','steering') else m.header.stamp),
                                 receipt_ns=receipt, now_sim_ns=publish_sim, now_wall_ns=publish_wall)
                 except ValueError as exc:
-                    reason = str(exc); angle = previous[0]; accel = -1.; target = 0.
-                    phase = 'invalid'; state['phase'] = phase; state['ready_ticks'] = 0
-                    if state['armed_ns'] is not None or sensor_fault[0]:
-                        state['fault'] = reason
-                command = AckermannControlCommand()
-                command_stamp = publish_sim if publish_sim is not None else clock_ns
-                command.stamp.sec = command_stamp//10**9; command.stamp.nanosec = command_stamp%10**9
-                command.lateral.stamp = command.stamp; command.longitudinal.stamp = command.stamp
-                command.lateral.steering_tire_angle = angle
-                command.longitudinal.speed = target; command.longitudinal.acceleration = accel
-                publisher.publish(command); state['commands'] += 1
+                    if not state['fault'] and not sensor_fault[0] and collection_snapshot_retry_allowed(
+                            str(exc), attempt=attempt, elapsed_ns=publish_wall-started_ns):
+                        retry_after_snapshot = str(exc)
+                    else:
+                        reason = str(exc); angle = previous[0]; accel = -1.; target = 0.
+                        phase = 'invalid'; state['phase'] = phase; state['ready_ticks'] = 0
+                        if state['fault'] is None and (state['armed_ns'] is not None or sensor_fault[0]):
+                            state['fault'] = reason
+                if retry_after_snapshot is None:
+                    command = AckermannControlCommand()
+                    command_stamp = publish_sim if publish_sim is not None else clock_ns
+                    command.stamp.sec = command_stamp//10**9; command.stamp.nanosec = command_stamp%10**9
+                    command.lateral.stamp = command.stamp; command.longitudinal.stamp = command.stamp
+                    command.lateral.steering_tire_angle = angle
+                    command.longitudinal.speed = target; command.longitudinal.acceleration = accel
+                    publisher.publish(command); state['commands'] += 1
         elif actual and actual != ['/time_recovery_collector']:
             state['fault'] = 'COMPETING_CONTROLLER'
+        if retry_after_snapshot is not None:
+            return tick(1, started_ns, (*retry_reasons, retry_after_snapshot))
         previous[:] = [angle, wall]
         row = dict(event='CONTROL_AND_PHASE', monotonic_ns=now, sim_ns=clock_ns, reason=reason,
                    phase=phase, projection=projection, speed_mps=state['speed_mps'],
@@ -303,6 +318,8 @@ def main() -> None:
             row['pose_history_ns'] = [p.stamp_ns for p in poses]
             row['scan_history_ns'] = [(stamp(m.header.stamp), t) for m,t in scans]
         row['processing_ms'] = (time.monotonic_ns()-now)/1e6
+        row['snapshot_retry_reasons'] = retry_reasons
+        row['decision_wall_ms'] = (time.monotonic_ns()-started_ns)/1e6
         serialized = json.dumps(row, allow_nan=False); log.write(serialized+'\n')
         phase_pub.publish(String(data=serialized))
         if poses and poses[-1].stamp_ns != last_pose_stamp:
@@ -324,7 +341,17 @@ def main() -> None:
     node.create_timer(.05, tick)
     receiver_executor = SingleThreadedExecutor()
     receiver_executor.add_node(receiver)
-    receiver_thread = threading.Thread(target=receiver_executor.spin, name='recovery-inputs', daemon=True)
+    def spin_receiver():
+        try:
+            receiver_executor.spin()
+        except Exception:
+            # SIGINT may invalidate the shared ROS context before this thread
+            # wakes. A live-context receiver failure remains explicit and stops.
+            if rclpy.ok():
+                with sensor_lock:
+                    sensor_fault[0] = 'RECEIVER_EXECUTOR_FAILED'
+                raise
+    receiver_thread = threading.Thread(target=spin_receiver, name='recovery-inputs', daemon=True)
     receiver_thread.start()
     try:
         rclpy.spin(node)

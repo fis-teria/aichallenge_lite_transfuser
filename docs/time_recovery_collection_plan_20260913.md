@@ -274,3 +274,16 @@ callback遅延後に最新poseとvelocityが60msずれ、同時刻帯にそろ�
 独立した時計で再現する既存TimePath契約に適合しない。r01〜r09は診断用として保全し、学習採用しない。
 新runは通常のrosbag system-time receiptを保持し、sensorの元sim headerと`/clock`を別に記録する。
 既存epoch判定やcausal selectorを緩めず、新bagで1 epochと実入力/将来30点の再現を検証する。
+
+35b0713のWSL full pytestは2,215 passed / 4 skipped / 63 warnings（117.70s）。
+preflight-r10は無走行で100回連続READY、通常RViz、正常bag close成立。49filesのhash検証・SQLite検査がPASS。
+修正bagは既存readerで1 epoch、fallback 0。既存学習/実推論と同じreceipt+50ms freezeで、実画像・LiDARから
+入力[1,4,3,224,384]/[1,4,2,750]と将来XY[30,2]を再現し、全30点が実観測と一致した。
+これは停止中の接続確認であり復帰教師の採用例ではない。比較用freeze0ではcurrent velocityが未到着で除外された。
+
+left020-r11は発進約5.89秒でSTALE_scan、停止確認・bag close成立。
+採用scanはsnapshot時点では約72ms古いが、計算約59msとsim時計の進行によりpublish直前に150msを超えた。
+期限再検査は維持する。時刻関連のsnapshot失敗に限り、新たに受信した実測snapshotで最大1回再計算する。
+初回80ms以内のみ再計算を許し、snapshot取得からpublishまで100msを超えたgo指令は拒否する。
+同じscanを再利用して期限を変える処理ではない。再計算でも不適格なら制動・fault latch。
+障害物、速度、source、clock reset、車体/scan alignmentの異常は再計算対象にしない。
