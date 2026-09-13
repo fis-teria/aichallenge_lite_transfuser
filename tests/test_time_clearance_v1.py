@@ -1,4 +1,5 @@
 import json
+import importlib.util
 from pathlib import Path
 
 import numpy as np
@@ -6,6 +7,10 @@ import pytest
 
 from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
 from aic_transfuser_lite.evaluation.time_clearance_v1 import PoseIndex, project_to_polyline, scan_margin
+
+spec = importlib.util.spec_from_file_location("compare_time_clearance", Path(__file__).parents[1]/"tools/compare_time_teacher_clearance.py")
+comparison = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(comparison)
 
 
 def pose(t, x=0., yaw=0.):
@@ -60,3 +65,24 @@ def test_exact_frozen_rejection_and_unknown_are_distinct():
     r = scan_margin(f["scan"], f["scan_in_current_rear"], **kwargs)
     assert r["reason"] == "PASS"
     assert 0 < r["minimum_ray_margin_m"] < f["scan"]["range_max"]
+
+
+def test_world_transform_keeps_left_positive_and_explicit_shape():
+    p = TimedBodyPose(0, "sim", "0", "map", "base_link", 10., 20., np.pi/2)
+    assert comparison.to_world(np.array([[1., 2.]]), p) == pytest.approx(np.array([[8., 21.]]))
+    with pytest.raises(ValueError, match="WORLD_POINTS"):
+        comparison.to_world(np.array([1., 2.]), p)
+
+
+def test_following_uses_future_capture_and_restores_rear_offset(tmp_path):
+    obs = [{"role": "pose", "stamp_ns": t, "epoch": "0", "frame": "map", "child_frame": "base_link",
+            "position_xyz_m": [x, .2, 0.], "quaternion_xyzw": [0., 0., 0., 1.]}
+           for t, x in [(990_000_000, .99), (1_010_000_000, 1.01)]]
+    (tmp_path/"vehicle_observations.jsonl").write_text("\n".join(json.dumps(r) for r in obs))
+    from dataclasses import asdict
+    row = {"sim_ns": 0, "details": {"current_pose": asdict(pose(0)),
+        "reference_xy_rear_m": [[-comparison.REAR_OFFSET_M, 0.], [3.-comparison.REAR_OFFSET_M, 0.]]}}
+    result = comparison.following_error(tmp_path, [row], 2_000_000_000)
+    assert result["distance_m"]["count"] == 1
+    assert result["distance_m"]["max"] == pytest.approx(.2)
+    assert result["excluded"] == {}

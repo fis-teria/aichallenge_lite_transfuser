@@ -133,6 +133,79 @@ def compare_path(xy: np.ndarray, current: TimedBodyPose, scan: dict[str, Any], s
     return {**result, "pp_physical_steer_rad": pp["steer_rad"], "lookahead_rear_m": pp["lookahead_rear_m"]}
 
 
+def to_world(points: np.ndarray, pose: TimedBodyPose) -> np.ndarray:
+    """Base-link points [N,2] metres to the pose's unchanged world frame."""
+    points = np.asarray(points, float)
+    if points.ndim != 2 or points.shape[1] != 2 or not np.isfinite(points).all():
+        raise ValueError("WORLD_POINTS_SHAPE_OR_NONFINITE")
+    c, s = math.cos(pose.yaw_rad), math.sin(pose.yaw_rad)
+    return points @ np.array([[c, s], [-s, c]])+np.array([pose.x_m, pose.y_m])
+
+
+def scan_alignment(bag: Bag, rows: list[dict[str, Any]], center_ns: int,
+                   reject: dict[str, Any], fault: TimedBodyPose) -> dict[str, Any]:
+    """Nearest observed returns in unchanged map coordinates; no fitted registration."""
+    from scipy.spatial import cKDTree
+    cloud, ids = [], set()
+    for row in rows:
+        if row["reason"] != "EVALUATED" or abs(row["observation_ns"]-center_ns) > 1_000_000_000:
+            continue
+        if row["scan_row_id"] in ids:
+            continue
+        ids.add(row["scan_row_id"])
+        msg, _ = bag.message(row["scan_row_id"])
+        pose = bag.poses.at(stamp(msg))
+        ranges = np.asarray(msg.ranges, float)
+        angles = msg.angle_min+np.arange(len(ranges))*msg.angle_increment
+        keep = np.isfinite(ranges) & (ranges >= msg.range_min) & (ranges <= msg.range_max)
+        points = ranges[keep, None]*np.column_stack([np.cos(angles[keep]), np.sin(angles[keep])])
+        cloud.append(to_world(points+np.array([1.649999976158142, 0.]), pose))
+    if not cloud:
+        return {"reason": "NO_MATCHED_SCAN_CLOUD"}
+    sensor = np.asarray(reject["scan_in_current_rear"])
+    scan = reject["scan"]
+    ranges = np.asarray(scan["ranges"], float)
+    angles = scan["angle_min"]+np.arange(len(ranges))*scan["angle_increment"]+sensor[2]
+    keep = np.isfinite(ranges) & (ranges <= 6.) & (ranges >= scan["range_min"])
+    points = sensor[:2]+ranges[keep, None]*np.column_stack([np.cos(angles[keep]), np.sin(angles[keep])])
+    world = to_world(points+np.array([REAR_OFFSET_M, 0.]), fault)
+    distance, _ = cKDTree(np.concatenate(cloud)).query(world)
+    return {"scope": "NEAREST_RETURNS_NO_FITTED_REGISTRATION_NOT_GROUND_TRUTH",
+        "teacher_scan_row_ids": sorted(ids), "teacher_points": sum(map(len, cloud)),
+        "runtime_return_count": int(keep.sum()), "runtime_range_limit_m": 6.,
+        "nearest_return_distance_m": stats(distance.tolist()),
+        "fraction_within_0p1m": float(np.mean(distance <= .1))}
+
+
+def following_error(trial: Path, tracking: list[dict[str, Any]], reject_ns: int) -> dict[str, Any]:
+    poses = []
+    for row in records(trial/"vehicle_observations.jsonl"):
+        if row.get("role") != "pose":
+            continue
+        x, y, z, w = row["quaternion_xyzw"]
+        poses.append(TimedBodyPose(row["stamp_ns"], "sim", row["epoch"], row["frame"], row["child_frame"],
+            *row["position_xyz_m"][:2], math.atan2(2*(w*z+x*y), 1-2*(y*y+z*z))))
+    index = PoseIndex(poses)
+    errors, reasons = [], Counter()
+    for row in tracking:
+        if row["sim_ns"] < reject_ns-12_000_000_000:
+            continue
+        current = TimedBodyPose(**row["details"]["current_pose"])
+        target_ns = current.stamp_ns+1_000_000_000
+        if target_ns > reject_ns:
+            reasons["FUTURE_AFTER_REJECTION"] += 1
+            continue
+        try:
+            future = index.at(target_ns)
+            path = to_world(np.asarray(row["details"]["reference_xy_rear_m"])+[REAR_OFFSET_M, 0.], current)
+            errors.append(project_to_polyline(np.array([future.x_m, future.y_m]), path)["distance_m"])
+        except ValueError as exc:
+            reasons[str(exc)] += 1
+    return {"scope": "ONE_SECOND_FUTURE_ESTIMATED_POSE_TO_RECORDED_RAW_POLYLINE_NOT_TEACHER_ERROR",
+        "distance_m": stats(errors), "excluded": dict(reasons), "ambiguous_pose_stamps": len(index.ambiguous),
+        "vehicle_observations_sha256": sha(trial/"vehicle_observations.jsonl")}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--root", type=Path, required=True, help="Native e2e_autonomous root")
@@ -177,7 +250,7 @@ def main() -> None:
         "cache_manifest_sha256": identity["manifest_sha256"], "checkpoint_sha256": sha(checkpoint),
         "predictions_sha256": sha(predictions_file), "control_sha256": sha(trial/"control.jsonl"),
         "fault_pose": asdict(fault), "runs": {}}
-    plot_data = {}
+    plot_data, full_teacher_xy = {}, {}
     for run_id in RUN_IDS:
         metadata = split_runs[run_id]
         split = metadata["split"]
@@ -252,7 +325,6 @@ def main() -> None:
                 record["reason"] = "EVALUATED"
             except ValueError as exc:
                 record["reason"] = str(exc)
-        bag.con.close()
         valid = [r for r in rows if r["reason"] == "EVALUATED"]
         run_summary = {"split": split, "input_hashes": hashes, "tf_static": bag.tf,
             "ambiguous_pose_stamps": len(bag.poses.ambiguous), "selection_counts": dict(Counter(r["reason"] for r in rows)),
@@ -263,6 +335,9 @@ def main() -> None:
         if valid:
             nearest = min(valid, key=lambda r: abs(r["progress_m"]))
             run_summary["nearest_evaluated_anchor"] = nearest
+        if split == "validation":
+            run_summary["scan_alignment_to_runtime"] = scan_alignment(bag, rows, poses[center].stamp_ns, reject, fault)
+        bag.con.close()
         for condition in ["actual_speed", "common_speed"]:
             for kind in ["observed_steer", "teacher_pp"]+(["model_pp"] if split == "validation" else []):
                 results = [r["results"][condition][kind] for r in valid]
@@ -272,6 +347,7 @@ def main() -> None:
         write(out/(run_id+".json"), rows)
         summary["runs"][run_id] = run_summary
         plot_data[run_id] = (xy[section], valid)
+        full_teacher_xy[run_id] = xy
         print(json.dumps({"completed": run_id, "counts": run_summary["selection_counts"],
             "offset": run_summary["fault_to_teacher_projection"], "comparisons": run_summary["comparisons"]}), flush=True)
     f = reject
@@ -282,7 +358,8 @@ def main() -> None:
     summary["runtime_last12s_ray_margin_m"] = stats([r["details"]["obstacle_guard"]["minimum_ray_margin_m"]
         for r in tracking if r["sim_ns"] >= reject["sim_ns"]-12_000_000_000])
     summary["runtime_last12s_teacher_distance_m"] = {run_id: stats([
-        project_to_polyline(p, xy)["distance_m"] for p in runtime_xy[late]]) for run_id, (xy, _) in plot_data.items()}
+        project_to_polyline(p, xy)["distance_m"] for p in runtime_xy[late]]) for run_id, xy in full_teacher_xy.items()}
+    summary["runtime_last12s_following"] = following_error(trial, tracking, reject["sim_ns"])
     write(out/"summary.json", summary)
     import matplotlib
     matplotlib.use("Agg")
