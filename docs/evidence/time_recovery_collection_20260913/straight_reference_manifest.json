@@ -1,0 +1,62 @@
+{
+  "schema": "measured_time_recovery_collection_v1",
+  "target_speed_mps": 1.3888888888888888,
+  "teacher_source": "MEASURED_FUTURE_POSE_ONLY",
+  "model_input": false,
+  "sources_sha256": {
+    "occupancy_grid_map.yaml": "39d5aba44234c1e09fc57421d467d64c1769259cd3c3656032f008d2db4e6a79",
+    "pure_pursuit.launch.xml": "d3e481bb949da5c23d7403ad315640a985c468c58f431f8d3daf422227612693",
+    "base.csv": "c563a757a243a2521a68acacd565492e1ea158db7e7d68327682583d24fc79e7",
+    "occupancy_grid_map.pgm": "c24af2130a8df96047a49d5b7759af7a0b29645c023e7f3bc6d4ba436275725a"
+  },
+  "references": {
+    "left": {
+      "signed_offset_m": 0.2,
+      "intervals": [
+        {
+          "phase": "approach",
+          "start_s_m": 5.968136786216238,
+          "end_s_m": 9.968136786216238,
+          "training_eligible": false
+        },
+        {
+          "phase": "hold",
+          "start_s_m": 9.968136786216238,
+          "end_s_m": 15.968136786216238,
+          "training_eligible": false
+        },
+        {
+          "phase": "recovery",
+          "start_s_m": 15.968136786216238,
+          "end_s_m": 21.968136786216238,
+          "training_eligible": true
+        }
+      ],
+      "reference_sha256": "5bdbd7a02763b5e61f0f56d3bb03a6824bac86922c85449b6e5b73f71c0a4bbf"
+    },
+    "right": {
+      "signed_offset_m": -0.2,
+      "intervals": [
+        {
+          "phase": "approach",
+          "start_s_m": 5.968136786216238,
+          "end_s_m": 9.968136786216238,
+          "training_eligible": false
+        },
+        {
+          "phase": "hold",
+          "start_s_m": 9.968136786216238,
+          "end_s_m": 15.968136786216238,
+          "training_eligible": false
+        },
+        {
+          "phase": "recovery",
+          "start_s_m": 15.968136786216238,
+          "end_s_m": 21.968136786216238,
+          "training_eligible": true
+        }
+      ],
+      "reference_sha256": "6598d19899184d2ebac8e45fed88416aac498794daab34272337ea25e6698097"
+    }
+  }
+}

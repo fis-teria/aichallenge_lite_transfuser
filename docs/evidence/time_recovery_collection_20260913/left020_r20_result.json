@@ -1,0 +1,203 @@
+{
+  "status": "COMPLETE_LAP",
+  "run_id": "codex-time-recovery-left020-r20",
+  "side": "left",
+  "official_start_requested": true,
+  "started_unix_s": 1789305454.954442,
+  "scope": "MEASURED_RECOVERY_AWSIM",
+  "fixed_target_mps": 1.3888888888888888,
+  "source_sha": "0484dc369f66282e05faa61dc98c80d687a9c6c4",
+  "sim_limit_s": 1800,
+  "wall_limit_s": 1860,
+  "outer_limit_s": 1980,
+  "run_byte_limit": 2147483648,
+  "task_bag_byte_limit": 12884901888,
+  "required_free_bytes": 10737418240,
+  "prior_task_bag_bytes": 9710968523,
+  "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU, 595.91.07\n",
+  "simulator_assets": {
+    "AWSIM_Data/level1": "9ab2e1e8865c02885594e0bbdde372302530f047b5a2e89c455be6a18f3e090b",
+    "AWSIM_Data/StreamingAssets/Vehicle/vehicle.yaml": "5b66e58691091c82d5511535ca458d4c89e85f3b59fa0d0c4a2c7eee47887244",
+    "AWSIM_Data/Managed/Assembly-CSharp.dll": "859e5560dbffd7d0833cd1fe5eb1f36b87fa8d22f6e45eb0e1203d04a1ea6d13"
+  },
+  "reference_sha256": "5bdbd7a02763b5e61f0f56d3bb03a6824bac86922c85449b6e5b73f71c0a4bbf",
+  "commands": [
+    [
+      "docker",
+      "run",
+      "--rm",
+      "--name",
+      "codex-time-recovery-left020-r20-nodes",
+      "--network",
+      "host",
+      "-e",
+      "ROS_DOMAIN_ID=1",
+      "-e",
+      "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_recovery_collection_20260913/codex-time-recovery-left020-r20/cyclonedds.xml:/opt/autoware/cyclonedds.xml:ro",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_recovery_collection_20260913:/capture",
+      "-v",
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro",
+      "--entrypoint",
+      "bash",
+      "codex-cartographer-v4-build:20260910",
+      "-lc",
+      "source /aichallenge/workspace/install/setup.bash && source /capture/cpp_install/setup.bash && export PYTHONPATH=/capture/source/src:${PYTHONPATH:-} && exec python3 /capture/source/tools/run_time_recovery_nodes.py --output /capture/codex-time-recovery-left020-r20 --reference-root /capture/references --side left --run-id codex-time-recovery-left020-r20"
+    ],
+    [
+      "make",
+      "dev",
+      "DEV_AUTO_START=false",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=2",
+      "AWSIM_VEHICLES=1",
+      "RUN_ID=codex-time-recovery-left020-r20",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_recovery_collection_20260913/codex-time-recovery-left020-r20",
+      "AWSIM_TIMEOUT=1920",
+      "AWSIM_EXTRA_ARGS=-logFile /output/codex-time-recovery-left020-r20/awsim_unity.log"
+    ]
+  ],
+  "bag_bytes": 1483096064,
+  "last_control": {
+    "run_id": "codex-time-recovery-left020-r20",
+    "fault": null,
+    "armed_ns": 26714999402,
+    "armed_wall": 43748.873774421,
+    "stop_reason": "JUDGE_LAP_PLUS_FUTURE",
+    "stop_since_ns": 423464990534,
+    "stop_confirmed": true,
+    "ready_ticks": 0,
+    "commands": 8711,
+    "speed_mps": 0.0,
+    "max_speed_mps": 1.4958345890045166,
+    "phase": "braking",
+    "nominal_count": 42429,
+    "trajectory_count": 426,
+    "rviz_subscribers": [
+      "rviz2",
+      "rosbag2_recorder"
+    ],
+    "monotonic_ns": 44148673495870,
+    "sim_ns": 426509990466,
+    "reason": "REQUESTED_BRAKE",
+    "projection": {
+      "s_m": 18.0052566639569,
+      "offset_m": 0.14990780572022266,
+      "distance_m": 0.14990780572022266,
+      "segment_index": 6,
+      "heading_error_rad": -0.025566505825516114
+    }
+  },
+  "cleanup_errors": [],
+  "judge_sections": [
+    {
+      "current": 0,
+      "next": 0,
+      "started": "False",
+      "line": "Section line hit: current=0, next=0, started=False",
+      "run_id": "codex-time-recovery-left020-r20",
+      "epoch": 0,
+      "byte_offset": 102668
+    },
+    {
+      "current": 0,
+      "next": 1,
+      "started": "True",
+      "line": "Section line hit: current=0, next=1, started=True",
+      "run_id": "codex-time-recovery-left020-r20",
+      "epoch": 0,
+      "byte_offset": 102719
+    },
+    {
+      "current": 1,
+      "next": 2,
+      "started": "True",
+      "line": "Section line hit: current=1, next=2, started=True",
+      "run_id": "codex-time-recovery-left020-r20",
+      "epoch": 0,
+      "byte_offset": 102769
+    },
+    {
+      "current": 2,
+      "next": 3,
+      "started": "True",
+      "line": "Section line hit: current=2, next=3, started=True",
+      "run_id": "codex-time-recovery-left020-r20",
+      "epoch": 0,
+      "byte_offset": 102819
+    },
+    {
+      "current": 3,
+      "next": 4,
+      "started": "True",
+      "line": "Section line hit: current=3, next=4, started=True",
+      "run_id": "codex-time-recovery-left020-r20",
+      "epoch": 0,
+      "byte_offset": 102869
+    },
+    {
+      "current": 4,
+      "next": 5,
+      "started": "True",
+      "line": "Section line hit: current=4, next=5, started=True",
+      "run_id": "codex-time-recovery-left020-r20",
+      "epoch": 0,
+      "byte_offset": 102919
+    },
+    {
+      "current": 5,
+      "next": 6,
+      "started": "True",
+      "line": "Section line hit: current=5, next=6, started=True",
+      "run_id": "codex-time-recovery-left020-r20",
+      "epoch": 0,
+      "byte_offset": 102969
+    },
+    {
+      "current": 6,
+      "next": 7,
+      "started": "True",
+      "line": "Section line hit: current=6, next=7, started=True",
+      "run_id": "codex-time-recovery-left020-r20",
+      "epoch": 0,
+      "byte_offset": 103019
+    },
+    {
+      "current": 7,
+      "next": 0,
+      "started": "True",
+      "line": "Section line hit: current=7, next=0, started=True",
+      "run_id": "codex-time-recovery-left020-r20",
+      "epoch": 0,
+      "byte_offset": 103069
+    }
+  ],
+  "judge_laps": [
+    {
+      "lap_seconds": 373.77,
+      "laps": 1,
+      "line": "Lap completed: 373.77s, total laps: 1",
+      "run_id": "codex-time-recovery-left020-r20",
+      "epoch": 0,
+      "byte_offset": 103119,
+      "lap_increment_valid": true,
+      "ordered_section_evidence": true
+    }
+  ],
+  "lap_confirmed": true,
+  "ended_unix_s": 1789305916.5121539,
+  "free_bytes": 10682028032,
+  "nodes": {
+    "closed_bag": true,
+    "error": null,
+    "bag_exit": 0,
+    "collector_exit": 0,
+    "pure_pursuit_exit": 0,
+    "generator_exit": 0,
+    "paths_exit": 0
+  }
+}

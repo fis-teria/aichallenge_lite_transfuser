@@ -1,6 +1,16 @@
 # TimePath 復帰教師の収集方法と現地確認
 
-## 判断
+## 現在の結果
+
+2026-09-13の初回収集を完了した。`graneple@192.168.3.10` で左右20cmの各1周、
+正常停止・bag close・WSL転送・全ファイルSHA-256・実入力と未来3秒の教師再現まで確認済み。
+左r20の復帰後最大誤差は2.63cm、右r19は4.30cm。各57候補が有効。
+途中で時刻監視により停止した左r17/r18も復帰部分runとして分けて保全した。
+学習用materialize・split・学習は未実施。詳細と保存先は
+[初回収集結果](time_recovery_collection_result_20260913.md) を参照する。
+以下は初期計画と、修正・試行の時系列記録である。
+
+## 初期計画（収集実施前）
 
 2026-09-13追記：ユーザーがAWSIM実行環境での収集開始を指示。
 この文書を今回の実行・進捗の参照元とする。最初の完了条件は、左右0.20mの各1周を
@@ -404,3 +414,15 @@ right020-r19はCOMPLETE_LAP、実JudgeLog lap373.82秒、順序付きsection/lap
 原bagを保持したまま、WSLへ転送・展開検証したr17/r18/r19の一時輸送archiveを整理して空きを確保する。
 027196a以降の変更は集計用artifactと容量予算だけで、既に2222件通過した制御/教師ロジックは同一。
 最終runの実行結果とWSLの原本・教師再現監査で確認する。
+
+left020-r20はCOMPLETE_LAP、実JudgeLog lap373.77秒、lap+4秒、正常停止3秒、全child終了0、bag close成立。
+WSLで左右完走run各60filesをSHA検証し、SQLite quick_check PASS。
+各57候補すべてで入力履歴・全30未来点が有効、代表3件の画像/LiDAR実tensorと教師再現もPASS。
+左r20のhold中央値+0.22250m、復帰後5m最大絶対offset0.02635m。
+右r19はhold中央値-0.23070m、復帰後最大0.04302m。左右の初回採用条件を満たした。
+左r20の判断時間最大82.42ms、判断中GCは0回、明示GC89回・最大20.46ms・peak RSS76.25MiB。
+最終集計は `evidence/time_recovery_collection_20260913/summary.json` と実測図に保存。
+完走2本のbagは約2.78GiB、部分復帰2本を含む4本は約4.27GiB。
+輸送archiveだけをSHA照合して整理し、新しい原bagはAWSIM側とWSL側に保持する。
+最終空きは約9.95GiB（終了後flushを含む）で、追加収集前に容量の再確保が必要。
+実行中containerは0、元repositoryのHEADと既存dirty155件を保持。今回の有限pilot収集をここで終了する。
