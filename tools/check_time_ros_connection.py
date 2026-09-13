@@ -202,10 +202,14 @@ def main() -> None:
             records = [json.loads(line) for line in (args.output/"oracle/control.jsonl").read_text().splitlines()]
             rejected = [r for r in records if r.get("event") == "COMMAND_SENT"
                         and r["monotonic_ns"]/1e9 > infeasible_started+.5]
-            if not rejected or any(r["reason"] != "STEERING_ACTUATOR_INFEASIBLE"
+            infeasible_reason = ("STEERING_FEASIBLE_LOOKAHEAD_MISSING"
+                                 if fixture_config.get("lookahead_policy") == "feasible_1_to_1p5m_v1"
+                                 else "STEERING_ACTUATOR_INFEASIBLE")
+            if not rejected or any(r["reason"] != infeasible_reason
                                    or r["acceleration_mps2"] >= 0 or r["target_speed_mps"] != 0 for r in rejected):
                 raise RuntimeError("INFEASIBLE_ACTUATOR_DID_NOT_BRAKE")
             result["actuator_infeasible_brake_commands"] = len(rejected)
+            result["infeasible_curve_reason"] = infeasible_reason
             oracle_curvature = 0.
         stale_started = time.monotonic()
         spin_for(1.2)  # Sensors continue; stop sending plans.

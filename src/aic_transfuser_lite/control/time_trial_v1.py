@@ -10,11 +10,12 @@ import numpy as np
 from .time_reference_v1 import TimePlan, TimedBodyPose, prepare_time_reference, reference_control
 from .time_geometry_v2 import validate_time_geometry
 from .awsim_steering import steering_asset_contract
-from .waypoint_controller import ControllerConfig, select_lookahead
+from .waypoint_controller import ControllerConfig, select_lookahead, control_from_waypoints
 from ..runtime.awsim_trial_session import trial_duration_limits
 
 
 SPEED_POLICIES = ("source_capped_0p25", "fixed_5kmh")
+LOOKAHEAD_POLICIES = ("fixed_1m_v1", "feasible_1_to_1p5m_v1")
 
 
 def trial_speed_limits(speed_policy: str) -> tuple[float, float]:
@@ -30,6 +31,11 @@ def validate_trial_config(config: dict[str, Any]) -> str:
     """Reject descriptive JSON settings that disagree with this bounded runtime."""
     policy = config.get("speed_policy", "source_capped_0p25")
     steering_asset_contract(config)
+    lookahead_policy = config.get("lookahead_policy", "fixed_1m_v1")
+    if lookahead_policy not in LOOKAHEAD_POLICIES:
+        raise ValueError("TRIAL_LOOKAHEAD_POLICY")
+    if lookahead_policy == "feasible_1_to_1p5m_v1" and config.get("steering_policy") != "awsim_grip_0p6_v1":
+        raise ValueError("TRIAL_LOOKAHEAD_REQUIRES_CALIBRATION")
     if config.get("obstacle_policy", "straight_v1") not in ("straight_v1", "steering_sweep_v1"):
         raise ValueError("TRIAL_OBSTACLE_POLICY")
     ceiling, overspeed = trial_speed_limits(policy)
@@ -69,7 +75,8 @@ def interpolate_body_pose(poses: Sequence[TimedBodyPose], stamp_ns: int,
 
 def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: float,
                        rear_axle_offset_m: tuple[float, float], speed_cap_mps: float | None = None,
-                       speed_policy: str = "source_capped_0p25") -> dict[str, Any]:
+                       speed_policy: str = "source_capped_0p25",
+                       lookahead_policy: str = "fixed_1m_v1") -> dict[str, Any]:
     """SI units; age-aligned XY, explicit source-speed or fixed-5-km/h target.
 
     The static selected-scene rear axle differs by about 1 mm from base_link.
@@ -77,6 +84,8 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
     Reject geometry failures instead of cutting/fixing the predicted trajectory.
     """
     ceiling, overspeed = trial_speed_limits(speed_policy)
+    if lookahead_policy not in LOOKAHEAD_POLICIES:
+        raise ValueError("TRIAL_LOOKAHEAD_POLICY")
     if speed_cap_mps is None:
         speed_cap_mps = ceiling
     if (not np.isfinite([speed_mps, speed_cap_mps]).all() or not -.03 <= speed_mps <= overspeed
@@ -101,15 +110,32 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
         if not len(forward):
             raise ValueError("NO_FORWARD_REFERENCE")
         target = select_lookahead(forward, config.min_lookahead_m)
+        if lookahead_policy == "feasible_1_to_1p5m_v1":
+            target = None
+            # Use the same float32 target representation as existing PP. Keep
+            # time order and the original points; do not jump beyond 1.5 m.
+            for point in np.asarray(forward, dtype=np.float32):
+                x, y = map(float, point)
+                squared = x*x + y*y
+                angle = math.atan(config.wheelbase_m * (2*y / max(squared, 1e-6)))
+                if 1. <= math.sqrt(squared) <= 1.5 and abs(angle) <= .3:
+                    target = point
+                    break
+            if target is None:
+                raise ValueError("STEERING_FEASIBLE_LOOKAHEAD_MISSING")
         required = math.atan(2 * config.wheelbase_m * target[1] / max(float(target @ target), 1e-6))
         if abs(required) > config.max_steer_rad:
             raise ValueError("STEERING_INFEASIBLE")
         if np.linalg.norm(forward[-1]) < .1 + max(0., speed_mps) * .5 + speed_mps ** 2 / 2:
             raise ValueError("REFERENCE_STOPPING_DISTANCE")
-    command = reference_control(reference, current_speed_mps=max(0., speed_mps), config=config)
+    if lookahead_policy == "feasible_1_to_1p5m_v1" and target_speed > 1e-6:
+        command = control_from_waypoints(np.asarray([target]), target_speed, max(0., speed_mps), config)
+    else:
+        command = reference_control(reference, current_speed_mps=max(0., speed_mps), config=config)
     return {"steer_rad": command.steering_rad, "acceleration_mps2": command.acceleration_mps2,
             "target_speed_mps": target_speed, "predicted_source_speed_mps": predicted_speed,
             "speed_policy": speed_policy, "overspeed_limit_mps": overspeed,
+            "lookahead_policy": lookahead_policy, "selected_lookahead_distance_m": float(np.linalg.norm(target)),
             "plan_age_sec": reference.age_sec, "lookahead_rear_m": target.tolist(),
             "reference_xy_rear_m": reference.xy_current_m.tolist(),
             "source_body_frame": reference.source_body_frame, "tracking_frame": reference.tracking_frame,

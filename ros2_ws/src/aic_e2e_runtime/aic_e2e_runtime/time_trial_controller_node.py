@@ -41,6 +41,7 @@ def main() -> None:
     execution_profile = "bounded_10s"
     obstacle_policy = "straight_v1"
     steering_policy = "identity_v1"
+    lookahead_policy = "fixed_1m_v1"
     speed_policy = args.speed_policy or "source_capped_0p25"
     if args.trial_config is not None:
         config_bytes = args.trial_config.read_bytes()
@@ -49,6 +50,7 @@ def main() -> None:
         execution_profile = config.get("execution_profile", "bounded_10s")
         obstacle_policy = config.get("obstacle_policy", "straight_v1")
         steering_policy = config.get("steering_policy", "identity_v1")
+        lookahead_policy = config.get("lookahead_policy", "fixed_1m_v1")
         if (config["checkpoint_sha256"] != args.checkpoint_sha256
                 or config["geometry"]["rear_axle_forward_in_base_link_m"] != args.rear_axle_forward_m):
             raise ValueError("TRIAL_CONFIG_IDENTITY")
@@ -148,6 +150,7 @@ def main() -> None:
                         "trial_config_sha256": config_sha,
                         "obstacle_policy": obstacle_policy,
                         "steering_policy": steering_policy, "steering_response_gain": steering_gain,
+                        "lookahead_policy": lookahead_policy,
                         "execution_profile": execution_profile, "drive_limit_sim_s": drive_sim_s,
                         "rear_axle_forward_m": args.rear_axle_forward_m})
         reason = "WAIT_AUTHORIZATION" if live else "SHADOW_ONLY"
@@ -234,6 +237,7 @@ def main() -> None:
                        "observation_pose": observed.__dict__}
             details.update(time_trial_control(plan, current, speed_mps=speed,
                                               speed_policy=speed_policy,
+                                              lookahead_policy=lookahead_policy,
                                               rear_axle_offset_m=(args.rear_axle_forward_m, 0.)))
             steer = details["steer_rad"]; accel = details["acceleration_mps2"]; target = details["target_speed_mps"]
             mapping = command_steering(steer, previous[0], dt, policy=steering_policy)

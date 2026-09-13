@@ -19,7 +19,7 @@ from aic_transfuser_lite.control.awsim_steering import command_steering
 def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str, Any]],
                             rear_axle_forward_m: float, *,
                             speed_policy: str = "source_capped_0p25", obstacle_policy: str = "straight_v1",
-                            steering_policy: str = "identity_v1") -> dict[str, Any]:
+                            steering_policy: str = "identity_v1", lookahead_policy: str = "fixed_1m_v1") -> dict[str, Any]:
     """Reproduce decisions from recorded raw predictions, poses, and measured speed.
 
     This covers the calculation before the separate output steering-rate clamp.
@@ -44,7 +44,7 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
         try:
             calculated = time_trial_control(TimePlan(plan["plan_id"], observed, np.array(plan["raw_xy_m"])),
                 current, speed_mps=command["speed_mps"], rear_axle_offset_m=(rear_axle_forward_m, 0.),
-                speed_policy=speed_policy)
+                speed_policy=speed_policy, lookahead_policy=lookahead_policy)
         except ValueError as exc:
             if command["reason"] != str(exc):
                 raise ValueError("recorded rejection could not be reproduced") from exc
@@ -156,12 +156,14 @@ def main() -> None:
                 or speed_policy != host["speed_policy"]):
             raise ValueError("recorded runtime/config speed policy mismatch")
         config = json.loads(config_bytes)
-        for key, default in (("obstacle_policy", "straight_v1"), ("steering_policy", "identity_v1")):
+        for key, default in (("obstacle_policy", "straight_v1"), ("steering_policy", "identity_v1"),
+                             ("lookahead_policy", "fixed_1m_v1")):
             if config.get(key, default) != publishers[0].get(key, default):
                 raise ValueError("recorded runtime/config mismatch: " + key)
     replay = replay_recorded_control(active, plans, publishers[0]["rear_axle_forward_m"], speed_policy=speed_policy,
         obstacle_policy=publishers[0].get("obstacle_policy", "straight_v1"),
-        steering_policy=publishers[0].get("steering_policy", "identity_v1"))
+        steering_policy=publishers[0].get("steering_policy", "identity_v1"),
+        lookahead_policy=publishers[0].get("lookahead_policy", "fixed_1m_v1"))
     late_speeds = [c["speed_mps"] for c in active if c["sim_ns"] >= end - 3_000_000_000 and c["speed_mps"] is not None]
     result = {"status": ("LAP_COMPLETED" if host.get("judge_lap_confirmed") and host["status"] == "COMPLETE_LAP" else "LAP_NOT_COMPLETED") if host["scope"] == "ONE_LAP_MODEL_TRIAL" else ("COMPLETED_NO_POSITIVE_DRIVE" if positive == 0 else "COMPLETED_POSITIVE_COMMANDS_OBSERVED"),
         "evaluator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),

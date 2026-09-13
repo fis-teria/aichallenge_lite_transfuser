@@ -147,3 +147,47 @@ bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python tools/e
   --run /home/thistle/e2e_autonomous/runs/time_turning_20260913/codex-time-turn-09 \
   --output /home/thistle/e2e_autonomous/runs/time_turning_20260913/evaluation09
 ```
+
+## turn10実行前確認
+
+source `ee708287b6419056af8328a1a086dff99e8e1132`、Windows/WSL同一commit。
+WSL限定47passed (0.38s)、全体2094passed/4skipped/63warnings (80.20s)。
+Humble build0.91s。10module source/install一致。ROS smokeで実モデルPath一致6、
+左右の非ゼロ操舵変換28、到達不能角の制動10、stale11/clock7/overspeed12、child exit0。
+最初のhash検証補助コマンドは存在しないvisualizer filenameを指定して失敗したが、
+実際のPath配信元time_path_node.pyを含む正しい10moduleで再確認して一致した。
+archive SHA256 `e0416a392f64044a42702fbdf65871f3c25ccd5e65830c8331e6d970e1f8fb8b`、
+config SHA256 `f3bb6675487acd841b6575eda050b24822d7f1b08ea8820b9afc3752a2f52f20`。
+
+専有root `/home/graneple/e2e_autonomous/time_turning_calibrated_20260913`、
+その中の `source_ee70828` がSOURCE。車両設定とDLLは実行前hash照合が必須。
+
+```bash
+timeout --signal=TERM --kill-after=10s 710s python3 SOURCE/tools/run_time_path_awsim_trial.py \
+  --deployment /home/graneple/e2e_autonomous/time_turning_calibrated_20260913 \
+  --run-id codex-time-turn-10 --display :1 \
+  --config configs/control/time_path_calibrated_turning_5kmh_20260913.json </dev/null
+```
+
+## turn10結果と目標点の到達可能性
+
+turn10は発進せず `STOPPED_NO_LAP / PROGRESS_STALLED`、停止実測確認あり。
+wall49.321s、outer exit1、cleanup error0、active container0、既存Compose39個保全。
+103回の `STEERING_ACTUATOR_INFEASIBLE` が原因。要求物理角の絶対値は
+0.313707〜0.316088rad、15回はAWSIM自体の30deg×0.6限界も超えている。
+入力上限をAWSIM限界へ広げても全件は解消しない。48ファイルのhashをnative WSLまで検証。
+archive `c2c3f18ec4be8a90316e2629469025aec7865493b70e69d01601bf47cdcd9bb2`。
+archive内のlatest log symlinkは内包された対象を確認し、WSLでは通常fileとして検証した。
+
+WSLで同じ未変更の残存経路を調べると、103件全てに1.397〜1.463m先の到達可能点がある。
+先頭例は[1.369716,-0.277234]m、要求角-0.299336rad。新しい原因所有層は
+PPの固定1m目標点選択。物理上限を考慮せず近い点を選んでから拒否している。
+
+次の変更は `feasible_1_to_1p5m_v1` の明示profileで、残存経路の元の点を時間順に調べ、
+1.0〜1.5m内かつ要求物理角±0.3rad内の最初の点を選ぶ。範囲外への探索延長、
+点の生成/変形、経路の差し替え、角度clampでの救済はしない。該当点がなければ
+`STEERING_FEASIBLE_LOOKAHEAD_MISSING` で制動する。全点の既存geometry検証と
+選んだ指令に対する旋回監視、時刻/authority/停止距離/overspeedは維持する。
+これはPPの目標点選択だけの変更で、他の旧profileは保全して切り戻し可能。
+改善指標は未変更の経路から物理上限内の指令を生成できることと、その実走結果。
+保存したturn10の回帰例、範囲外/全点到達不能、左右旋回のテスト後にturn11を1回実施する。

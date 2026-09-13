@@ -142,3 +142,46 @@ def test_speed_profiles_reject_mismatched_runtime_configuration():
         validate_trial_config({**fixed, "speed_policy": "fixed_50kmh"})
     with pytest.raises(ValueError, match="TRIAL_SPEED_CONTRACT"):
         time_trial_control(plan(), pose(), speed_mps=0., rear_axle_offset_m=(.001, 0.), speed_policy="fixed_5kmh", speed_cap_mps=.25)
+
+
+def test_recorded_startup_selects_feasible_original_point_without_changing_path():
+    fixture = json.loads((Path(__file__).parent/"fixtures/time_path/startup_actuator_limit.json").read_text())
+    observed = TimedBodyPose(**fixture["observation_pose"])
+    current = TimedBodyPose(**fixture["current_pose"])
+    xy = np.array(fixture["raw_xy_m"])
+    p = TimePlan(fixture["plan_id"], observed, xy)
+    options = dict(speed_mps=fixture["speed_mps"], rear_axle_offset_m=(.0010000169277191162, 0.), speed_policy="fixed_5kmh")
+    old = time_trial_control(p, current, **options)
+    assert old["steer_rad"] == pytest.approx(fixture["recorded_required_tire_rad"])
+    assert abs(old["steer_rad"]) > .3
+    new = time_trial_control(p, current, **options, lookahead_policy="feasible_1_to_1p5m_v1")
+    assert abs(new["steer_rad"]) <= .3
+    assert 1. <= new["selected_lookahead_distance_m"] <= 1.5
+    assert new["target_speed_mps"] == 5./3.6
+    np.testing.assert_array_equal(new["reference_xy_rear_m"], old["reference_xy_rear_m"])
+    np.testing.assert_array_equal(p.xy_m, xy)
+    assert any(np.array_equal(new["lookahead_rear_m"], np.asarray(point, dtype=np.float32))
+               for point in new["reference_xy_rear_m"][1:])
+
+
+@pytest.mark.parametrize("curvature", [-.4, .4])
+def test_feasible_lookahead_rejects_unreachable_curve_instead_of_clipping(curvature):
+    s = np.arange(1, 31)*.08
+    xy = np.column_stack((np.sin(curvature*s)/curvature, (1-np.cos(curvature*s))/curvature))
+    with pytest.raises(ValueError, match="FEASIBLE_LOOKAHEAD_MISSING"):
+        time_trial_control(TimePlan("curve", pose(), xy), pose(), speed_mps=.1,
+            rear_axle_offset_m=(.001, 0.), speed_policy="fixed_5kmh", lookahead_policy="feasible_1_to_1p5m_v1")
+
+
+def test_feasible_lookahead_never_extends_short_path_and_requires_calibrated_config():
+    with pytest.raises(ValueError, match="FEASIBLE_LOOKAHEAD_MISSING"):
+        time_trial_control(plan(.25), pose(), speed_mps=0., rear_axle_offset_m=(.001, 0.),
+                           speed_policy="fixed_5kmh", lookahead_policy="feasible_1_to_1p5m_v1")
+    root = Path(__file__).parents[1]/"configs/control"
+    config = json.loads((root/"time_path_feasible_turning_5kmh_20260913.json").read_text())
+    assert validate_trial_config(config) == "fixed_5kmh"
+    config.pop("steering_policy"); config.pop("steering_asset_sha256")
+    with pytest.raises(ValueError, match="REQUIRES_CALIBRATION"):
+        validate_trial_config(config)
+    with pytest.raises(ValueError, match="LOOKAHEAD_POLICY"):
+        validate_trial_config({**config, "lookahead_policy": "extend_past_horizon"})
