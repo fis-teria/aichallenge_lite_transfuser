@@ -71,9 +71,9 @@ def main() -> None:
         if any(w.phase == args.phase and w.start_ns+150_000_000 <= a.capture_ns < w.end_ns for w in windows)
         and recovery_teacher_mask(a.capture_ns, windows).all()]
     candidates.sort(key=lambda a:a.capture_ns)
-    # Representative bounded audit: counts below concern this sample only.
+    # Cover all candidates in a small pilot; keep larger diagnostic runs bounded.
     chosen = [candidates[i] for i in sorted(set(np.linspace(0, len(candidates)-1,
-              min(64, len(candidates)), dtype=int).tolist()))] if candidates else []
+              min(256, len(candidates)), dtype=int).tolist()))] if candidates else []
     event_windows = EventWindows(index.events)
     velocities = {e.sequence:e for e in index.events if e.role == 'velocity'}
     invalid_velocity_ids = {rid for rid,e in velocities.items()
@@ -130,7 +130,8 @@ def main() -> None:
         availability='bag_receipt_proxy_not_measured_preprocessing_completion', freeze_delay_ns=freeze_delay,
         runtime_config_sha256=hashlib.sha256(runtime_bytes).hexdigest(), runtime_config=str(args.runtime_config),
         phase_candidates_with_150ms_start_margin=len(candidates), audited_anchors=len(records),
-        selection_policy='Up to 64 uniform anchors plus up to 8 targeted at invalid raw heading histories',
+        selection_policy='All candidates up to 256, otherwise uniform, plus up to 8 targeted at invalid raw heading histories',
+        all_phase_candidates_audited=len(records)==len(candidates),
         audited_input_eligible=sum(r['input_eligible'] for r in records),
         audited_full_observed_future=sum(r['usable_full'] and r.get('phase_and_xy_full',False) for r in records),
         input_reasons=dict(Counter(r['input_invalid_reason'] or 'OK' for r in records)),

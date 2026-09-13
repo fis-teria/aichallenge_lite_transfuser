@@ -93,10 +93,14 @@ def main() -> None:
             windows[-1]=PhaseWindow(windows[-1].start_ns,b,phase)
         else:
             windows.append(PhaseWindow(a,b,phase))
-    pose_rows=[]; rejections=Counter()
+    pose_rows=[]; rejections=Counter(); excluded_pose_phases=Counter()
     for _,m in messages('/localization/kinematic_state'):
         t=stamp(m.header.stamp)
         if armed is None or end is None or not armed <= t <= end: continue
+        control_phase=next((w.phase for w in windows if w.start_ns<=t<w.end_ns),'uncovered')
+        if control_phase not in ('baseline','approach','hold','recovery'):
+            excluded_pose_phases[control_phase]+=1
+            continue
         p=m.pose.pose; q=p.orientation
         yaw=math.atan2(2*(q.w*q.z+q.x*q.y),1-2*(q.y*q.y+q.z*q.z))
         try:
@@ -133,6 +137,10 @@ def main() -> None:
         source_sha=result['source_sha'],reference_sha256=result['reference_sha256'],counts=counts,sensors=sensor_meta,
         stop_confirmed=final.get('stop_confirmed',False),fault=final.get('fault'),lap_confirmed=result.get('lap_confirmed',False),
         lap_records=result.get('judge_laps',[]),phase_metrics=metrics,pose_projection_rejections=dict(rejections),
+        pose_metrics_scope='ACTIVE_TRACKING_ONLY_EXCLUDES_BRAKING_INVALID_UNCOVERED',
+        excluded_pose_control_phases=dict(excluded_pose_phases),
+        fully_traversed_recovery_intervals=sum(a.phase=='recovery' and b.phase=='baseline'
+            and a.end_ns==b.start_ns for a,b in zip(windows,windows[1:])),
         moving_speed_median_kmh=float(np.median(moving)*3.6) if len(moving) else None,
         max_measured_speed_kmh=float(max(speeds)*3.6) if speeds else None,
         tracking_target_kmh=sorted({round(r['target_speed_mps']*3.6,6) for r in track}),

@@ -361,3 +361,9 @@ recovery後5mのoffset絶対中央値<=0.10m、holdからの絶対offset低減>=
 実測した1周容量と表示間引きに基づき、以降の1run上限を3GiBから2GiBへ縮小する。
 失敗分を含むtask累積10GiBと最低空き10GiBは維持する。
 転送と展開をWSLで検証した一時輸送tar7件のみ削除し、約1.769GiBを確保。原bagは全て保全。
+
+監査のpose統計は走行中のbaseline/approach/hold/recoveryに限定し、制動中・異常・時刻未被覆は除外する。
+直線区間がlap境界付近にあるため、終了制動中のposeを空間的にrecoveryと数えることを防ぐ。
+recoveryからbaselineまで到達した時間区間の本数を別に記録する。
+小pilotの因果監査は最大256候補まで全件を調べ、元画像・LiDARを使う実入力構成は代表3件で確認する。
+256候補超は有界の均等抽出とし、全候補確認かどうかをreportに明記する。学習materializeは行わない。
