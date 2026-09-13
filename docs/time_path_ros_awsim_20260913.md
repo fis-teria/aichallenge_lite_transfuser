@@ -46,4 +46,25 @@ wheelbaseは1.087mで現ホストvehicle_infoとも一致する。
 
 ## 現在の結果
 
-実装・WSLテスト・Humble接続・AWSIMは未完了。実行結果と再現コマンドを追記する。
+ROS接続実装済み。共通入力一致・時刻/座標・制御のWSL限定テスト20 passed。
+実装`fc381a2`の全体WSLテスト2,015 passed / 4 skipped / 63 warnings（128.44秒）。
+Humble実checkpointのPath転送6件完全一致、合成oracleのshadow制御111件、
+plan失効brake11件、clock停止brake7件、vehicle command publisherなし。
+これは隔離合成ROS試験であり、AWSIM走行ではない。
+
+GPU不整合はユーザーが画面側で再起動後に解消。GPU Docker CUDA=True、driver 595.91.07。
+元boot ID `b3fd6d92-e22c-4145-8416-2e73ffb72cae`から
+`89fc0b1b-6809-42c0-9a88-7ca1ebe23858`へ変更。
+SSHからの再起動はsudo/対話認証で拒否され、アシスタントからの再起動は未実行。
+
+trial01: 再起動後のXorg/Xwayland差でDISPLAY_AUTH_UNKNOWN、起動/駆動なし。
+現デスクトップはXorg `:1`、認証パス`/run/user/1000/gdm/Xauthority`と確認して修正。
+trial02: AWSIM実入力で121 plan、推論側rejected2、故障なし。Start helperは
+`startup race-arm evidence did not become exact false`で失敗し、駆動認可なし。
+先行原因はautoware-commandだけが旧DDS mountを参照する設定不一致。
+次の試行では3サービスのDDS設定を統一し、公式Startの確認条件は保全する。
+過去試行はすべて専有ディレクトリに保全し、所有した実行コンテナは停止・down済み。
+
+隔離DDSはunicast peerとParticipantIndex autoを明示した。
+[Cyclone DDS公式設定資料](https://cyclonedds.io/docs/cyclonedds/latest/config/config_file_reference.html)に従い、
+ホストsysctlを変更せず試験専用設定を使用する。

@@ -103,7 +103,7 @@ def main() -> None:
         runtime_dds.write_text(dds.replace('</Domain>', discovery+'</Domain>'))
         override = output / "compose.json"
         override.write_text(json.dumps({"services": {service: {"volumes": [
-            str(runtime_dds) + ":/opt/autoware/cyclonedds.xml:ro"]} for service in ("simulator", "autoware")}}, indent=2))
+            str(runtime_dds) + ":/opt/autoware/cyclonedds.xml:ro"]} for service in ("simulator", "autoware", "autoware-command")}}, indent=2))
         env.update(DISPLAY=args.display, XAUTHORITY=str(auth[0]), COMPOSE_PROJECT_NAME=args.run_id,
             COMPOSE_FILE=":".join(map(str, (repo/"docker-compose.yml", repo/"docker-compose.gpu.yml", override))),
             CONTROL_METHOD="v4_20_external", V4_SHADOW_ENABLED="false")
@@ -161,6 +161,15 @@ def main() -> None:
                             raise RuntimeError("PHYSICAL_DEVICE_MOUNT")
                         inspections.append(info)
                     (output/"inspect.json").write_text(json.dumps(inspections, indent=2))
+                    try:
+                        tree = run(["xwininfo", "-root", "-tree"]).stdout
+                        windows = [line for line in tree.splitlines() if 'autoware.rviz' in line]
+                        if len(windows) == 1:
+                            run(["xwd", "-silent", "-id", windows[0].strip().split()[0],
+                                 "-out", str(output/"normal_rviz.xwd")])
+                            result["rviz_window"] = windows[0].strip()
+                    except Exception as exc:
+                        result["rviz_capture_error"] = str(exc)
                     start_cmd = ["make", "awsim-request-start", *make_args]
                     result["commands"].append(start_cmd)
                     official = launch(start_cmd, "official_start")
