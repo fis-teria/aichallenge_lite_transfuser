@@ -1,0 +1,241 @@
+{
+  "scope": "OFFLINE_CAPTURE_ALIGNED_RESPONSE_DIAGNOSIS_NOT_RUNTIME_CALIBRATION",
+  "armed_ns": 16704999626,
+  "end_ns": 114354997443,
+  "source_graph_samples": 97,
+  "frames": {
+    "imu": [
+      "imu_link"
+    ],
+    "velocity": [
+      "base_link"
+    ],
+    "steering": [
+      "physical_tire_angle"
+    ],
+    "pose": [
+      "map"
+    ]
+  },
+  "quality": {
+    "imu": {
+      "messages": 1953,
+      "unique_captures": 1953,
+      "ambiguous_captures_excluded": 0,
+      "invalid_captures": 0,
+      "maximum_gap_s": 0.04999999900000773,
+      "unbracketed_grid_points": 0,
+      "angular_outlier_grid_points": 0
+    },
+    "velocity": {
+      "messages": 2790,
+      "unique_captures": 2790,
+      "ambiguous_captures_excluded": 0,
+      "invalid_captures": 0,
+      "maximum_gap_s": 0.0350000000000108,
+      "unbracketed_grid_points": 0,
+      "angular_outlier_grid_points": 0
+    },
+    "steering": {
+      "messages": 2790,
+      "unique_captures": 2790,
+      "ambiguous_captures_excluded": 0,
+      "invalid_captures": 0,
+      "maximum_gap_s": 0.0350000000000108,
+      "unbracketed_grid_points": 0
+    },
+    "pose": {
+      "messages": 4883,
+      "unique_captures": 4880,
+      "ambiguous_captures_excluded": 3,
+      "invalid_captures": 3,
+      "maximum_gap_s": 0.0350000000000108,
+      "unbracketed_grid_points": 18
+    }
+  },
+  "sample_period_s": 0.01,
+  "integration_window_s": 0.5,
+  "maximum_capture_bracket_s": 0.05,
+  "fits": [
+    {
+      "signal": "IMU",
+      "selection": "turning",
+      "samples": 5243,
+      "least_squares_gain": 0.928330755045445,
+      "ratio_quantiles_10_50_90": [
+        0.9071877569714425,
+        0.9323572344364888,
+        0.9588084198739679
+      ],
+      "kinematic_mae_radps": 0.009858594804110228
+    },
+    {
+      "signal": "IMU",
+      "selection": "low_angle_change",
+      "samples": 279,
+      "least_squares_gain": 0.9356879206421137,
+      "ratio_quantiles_10_50_90": [
+        0.9287323020405581,
+        0.9382342136141131,
+        0.9647021176630718
+      ],
+      "kinematic_mae_radps": 0.006390496200214796
+    },
+    {
+      "signal": "IMU",
+      "selection": "left",
+      "samples": 2752,
+      "least_squares_gain": 0.9354999318399754,
+      "ratio_quantiles_10_50_90": [
+        0.9145352953583719,
+        0.9379553111301118,
+        0.9624344318581134
+      ],
+      "kinematic_mae_radps": 0.008693623346189346
+    },
+    {
+      "signal": "IMU",
+      "selection": "right",
+      "samples": 2491,
+      "least_squares_gain": 0.9210543904994999,
+      "ratio_quantiles_10_50_90": [
+        0.900923261957639,
+        0.9268201686456695,
+        0.9558781687450125
+      ],
+      "kinematic_mae_radps": 0.01114562870704008
+    },
+    {
+      "signal": "VelocityReport",
+      "selection": "turning",
+      "samples": 5243,
+      "least_squares_gain": 0.9285771922560064,
+      "ratio_quantiles_10_50_90": [
+        0.9056921114435038,
+        0.9323342739440352,
+        0.960330285527968
+      ],
+      "kinematic_mae_radps": 0.00983092322366707
+    },
+    {
+      "signal": "VelocityReport",
+      "selection": "low_angle_change",
+      "samples": 279,
+      "least_squares_gain": 0.9358881908119934,
+      "ratio_quantiles_10_50_90": [
+        0.9285054579965096,
+        0.9385678773604842,
+        0.9649925654766486
+      ],
+      "kinematic_mae_radps": 0.006367396673077005
+    },
+    {
+      "signal": "VelocityReport",
+      "selection": "left",
+      "samples": 2752,
+      "least_squares_gain": 0.9356512199446786,
+      "ratio_quantiles_10_50_90": [
+        0.9129685188947004,
+        0.9382234137696557,
+        0.9640460328296222
+      ],
+      "kinematic_mae_radps": 0.008680387396148168
+    },
+    {
+      "signal": "VelocityReport",
+      "selection": "right",
+      "samples": 2491,
+      "least_squares_gain": 0.9213973994086376,
+      "ratio_quantiles_10_50_90": [
+        0.9000935106710886,
+        0.92710284977616,
+        0.9570424906886245
+      ],
+      "kinematic_mae_radps": 0.011102008971291325
+    },
+    {
+      "signal": "EKF_pose",
+      "selection": "turning",
+      "samples": 5243,
+      "least_squares_gain": 0.9220837494224933,
+      "ratio_quantiles_10_50_90": [
+        0.8876247435970919,
+        0.9276103629806391,
+        1.0114651517804003
+      ],
+      "kinematic_mae_radps": 0.010569669998086813
+    },
+    {
+      "signal": "EKF_pose",
+      "selection": "low_angle_change",
+      "samples": 279,
+      "least_squares_gain": 0.9328778121137353,
+      "ratio_quantiles_10_50_90": [
+        0.9046889698395826,
+        0.9346200238309434,
+        1.0092920916102075
+      ],
+      "kinematic_mae_radps": 0.006786795955224573
+    },
+    {
+      "signal": "EKF_pose",
+      "selection": "left",
+      "samples": 2752,
+      "least_squares_gain": 0.9289237660238102,
+      "ratio_quantiles_10_50_90": [
+        0.8901616997031185,
+        0.9346774573209071,
+        1.0211602539910116
+      ],
+      "kinematic_mae_radps": 0.009447448542874142
+    },
+    {
+      "signal": "EKF_pose",
+      "selection": "right",
+      "samples": 2491,
+      "least_squares_gain": 0.9151414664075905,
+      "ratio_quantiles_10_50_90": [
+        0.8819565771694273,
+        0.9193214926467291,
+        0.9958919719868838
+      ],
+      "kinematic_mae_radps": 0.01180947467281394
+    }
+  ],
+  "understeer_gradient_exploration": [
+    {
+      "window_s": [
+        10.0,
+        45.0
+      ],
+      "samples": 86,
+      "best_gradient_s2_per_m": 0.049,
+      "mae_radps": 0.000692951057066713
+    },
+    {
+      "window_s": [
+        45.0,
+        97.38499999900002
+      ],
+      "samples": 193,
+      "best_gradient_s2_per_m": 0.046,
+      "mae_radps": 0.0009661702691666535
+    },
+    {
+      "window_s": [
+        10.0,
+        97.38499999900002
+      ],
+      "samples": 279,
+      "best_gradient_s2_per_m": 0.0465,
+      "mae_radps": 0.0009117871053970717
+    }
+  ],
+  "imu_vs_report_mae_radps": 0.000136625130458729,
+  "imu_vs_pose_mae_radps": 0.0029087809166968115,
+  "boundary": "IMU and velocity reports are simulator-derived signals. Grade, motion transients and localization remain possible confounders; no runtime constants are changed by this analysis.",
+  "sha256": {
+    "control.jsonl": "e85af7a28b84a224ce8a71659212b0fea53306b8d830e0a284afb57e0cc3dddd",
+    "vehicle_observations.jsonl": "a4ff2d151d3451532e91d19ef6ce3fd54abf676e0492f3568c368f9fe1134a07"
+  }
+}

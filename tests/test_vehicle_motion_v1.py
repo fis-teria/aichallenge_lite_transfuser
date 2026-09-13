@@ -11,6 +11,7 @@ from aic_transfuser_lite.control.vehicle_motion_v1 import (
     body_curvature_for_tire, physical_tire_for_curvature, effective_response_length, stopping_motion,
 )
 from aic_transfuser_lite.control.curvature_support_v2 import curvature_support_envelope
+from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan
 from aic_transfuser_lite.control.time_trial_v1 import time_trial_control, validate_trial_config
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
 from aic_transfuser_lite.control.awsim_steering import CALIBRATED_POLICY, command_steering
@@ -152,3 +153,19 @@ def test_independent_braking_vehicle_with_lateral_motion_is_contained(direction)
         yaw += omega*dt
         c, s = math.cos(yaw), math.sin(yaw)
         assert np.max((corners@np.array([[c,s],[-s,c]])+p)@n.T-h) <= 1e-8
+
+
+def test_recorded_side_clearance_rejects_with_motion_uncertainty_preserved():
+    f = json.loads((Path(__file__).parent/'fixtures/time_path/turn16_side_margin_rejection.json').read_text())
+    scan = f['scan']
+    args = (np.array(scan['ranges'],float), scan['angle_min'], scan['angle_increment'], scan['range_min'], scan['range_max'])
+    options = {k:f[k] for k in ('speed_mps','measured_steer_rad','issued_steer_rad','previous_steer_rad','scan_in_current_rear')}
+    options['envelope_policy'] = 'curvature_support_v2'
+    old = check_turning_scan(*args, **options)
+    assert old['minimum_ray_margin_m'] == pytest.approx(.12044124271057566)
+    # The old margin omitted sideways travel. A tiny new rejection margin is
+    # still a rejection; do not drop physical uncertainty to pass this scan.
+    with pytest.raises(ValueError, match='STOPPING_SWEEP_OCCUPIED'):
+        check_turning_scan(*args, **options, vehicle_model_policy=AWSIM_POLICY,
+            heading_rate_radps=f['motion_observation']['heading_rate_radps'],
+            reported_lateral_mps=f['motion_observation']['reported_lateral_mps'])

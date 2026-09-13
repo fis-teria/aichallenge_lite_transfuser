@@ -1,0 +1,59 @@
+{
+  "scope": "FROZEN_SCAN_ONLY_NOT_NEW_DRIVE_OR_FREE_SPACE_CERTIFICATION",
+  "policies": {
+    "ideal_bicycle_v1": {
+      "minimum_ray_margin_m": 0.12044124271057566,
+      "ray_index": 469,
+      "observed_range_m": 2.3806021213531494,
+      "required_range_m": 2.2601608786425738,
+      "hit_rear_xy_m": [
+        3.828275180670949,
+        0.9226595217355659
+      ],
+      "motion": {
+        "policy": "ideal_bicycle_v1",
+        "static_wheelbase_m": 1.087,
+        "nominal_response_length_m": 1.087,
+        "lateral_displacement_bound_m": 0.0,
+        "curvature_interval_per_m": [
+          -0.007837000867014587,
+          -0.00264038839241996
+        ]
+      }
+    },
+    "awsim_understeer_v1": {
+      "minimum_ray_margin_m": -0.004498958185470858,
+      "ray_index": 475,
+      "observed_range_m": 2.2702887058258057,
+      "required_range_m": 2.2747876640112765,
+      "hit_rear_xy_m": [
+        3.7038112410547894,
+        0.9322236421622312
+      ],
+      "motion": {
+        "policy": "awsim_understeer_v1",
+        "static_wheelbase_m": 1.087,
+        "nominal_response_length_m": 1.1614073560059408,
+        "lateral_displacement_bound_m": 0.05357650995254516,
+        "scope": "EMPIRICAL_AWSIM_ONLY_CONDITIONAL_BRAKING_BOUNDS",
+        "gradient_interval_s2_per_m": [
+          0.0,
+          0.2
+        ],
+        "braking_speed_interval_mps": [
+          0.0,
+          1.2858836650848389
+        ],
+        "heading_rate_radps": -0.004633900243788958,
+        "reported_lateral_mps": 0.007400453090667725,
+        "rear_lateral_mps": 0.008211385688571188,
+        "measured_curvature_per_m": -0.0036036698883512345,
+        "low_speed_full_curvature_interval": false,
+        "curvature_interval_per_m": [
+          -0.007837000867014587,
+          -0.002024478717763576
+        ]
+      }
+    }
+  }
+}
