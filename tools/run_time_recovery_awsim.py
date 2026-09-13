@@ -203,8 +203,10 @@ def main() -> None:
                 if official.wait(timeout=20):
                     raise RuntimeError('OFFICIAL_START_FAILED')
                 result['official_start_requested']=True
-                (output/'drive_authorized.json').write_text(json.dumps({'run_id':args.run_id,'scope':'MEASURED_RECOVERY_AWSIM',
+                authorization = output/'drive_authorized.pending'
+                authorization.write_text(json.dumps({'run_id':args.run_id,'scope':'MEASURED_RECOVERY_AWSIM',
                     'expires_monotonic_s':time.monotonic()+20,'source':'USER_REQUEST_20260913'}))
+                authorization.replace(output/'drive_authorized.json')
             if time.monotonic()-started > 120 and not result['official_start_requested']:
                 raise RuntimeError('STOPPED_PREFLIGHT_TIMEOUT:'+str(control.get('reason')))
             time.sleep(.1)

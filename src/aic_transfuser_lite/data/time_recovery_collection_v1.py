@@ -139,6 +139,19 @@ def validate_nominal(*, stamp_ns: int, now_ns: int, received_ns: int, now_wall_n
         raise ValueError("NOMINAL_FIXED_SPEED_MISMATCH")
     if not -.03 <= measured_speed_mps <= OVERSPEED_MPS:
         raise ValueError("OVERSPEED_OR_REVERSE")
-    if abs(steering_input_rad) > .5:
+    # The pinned official PP emits bounded nominal input up to 0.64 rad.
+    # The final publisher separately retains the existing 0.5 rad / 0.8 rad/s
+    # limits BEFORE the unchanged stopping-sweep monitor is evaluated.
+    if abs(steering_input_rad) > .640001:
         raise ValueError("NOMINAL_STEERING_LIMIT")
 
+
+def bounded_collection_command(angle_rad: float, acceleration_mps2: float,
+                               previous_angle_rad: float, dt_wall_s: float) -> tuple[float, float]:
+    """Final AWSIM input (rad, m/s^2); fixed existing amplitude/rate limits."""
+    if (not np.isfinite([angle_rad, acceleration_mps2, previous_angle_rad, dt_wall_s]).all()
+            or abs(previous_angle_rad) > .500001 or not 0 <= dt_wall_s <= .1):
+        raise ValueError('FINAL_COMMAND_CONTRACT')
+    bounded = float(np.clip(angle_rad, -.5, .5))
+    issued = float(np.clip(bounded, previous_angle_rad-.8*dt_wall_s, previous_angle_rad+.8*dt_wall_s))
+    return issued, float(np.clip(acceleration_mps2, -1., 1.))

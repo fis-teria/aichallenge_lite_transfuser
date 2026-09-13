@@ -187,3 +187,10 @@ WSL full pytest: 2,209 passed / 4 skipped / 63 warnings（95.38s、598488e）。
 左右とも基準s=233.233～257.233mの同一区間を選択。復帰区間はs=247.233～257.233m。
 left020-r01は公式start未要求・走行前に終了。sidecarのPYTHONPATH上書きによりros2cli
 metadataを見つけられなかった。ROS環境の既存PYTHONPATHへsource/srcを追加する形へ修正。
+
+left020-r02: 正常RVizと単一最終publisher、PPパラメータの読取は成立。
+start後も新collectorのnominal許容値0.5radが公式PPの0.64rad上限と不一致で、発進しなかった。
+WSLで閉じたbagのSQLite検査ok、PP最大値0.639999986rad・実速度0、初期横ずれ+0.664mを確認。
+公式PPの名目入力は0.64radまで受理し、最終入力は従来どおり0.5rad/0.8rad/s・加速度±1m/s²で制限する。
+停止監視に渡すのは制限後の入力×実装済み0.6応答gain。共有監視とphysicsは変更しない。
+名目入力の拒否でarm/stop要求の処理まで飛ばしていた順序も修正する。

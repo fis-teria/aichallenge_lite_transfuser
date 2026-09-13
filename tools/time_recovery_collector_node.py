@@ -17,7 +17,9 @@ import numpy as np
 
 from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
 from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, select_aligned_scan, scan_pose_in_rear
-from aic_transfuser_lite.data.time_recovery_collection_v1 import TARGET_MPS, phase_at_s, project_course, validate_nominal
+from aic_transfuser_lite.data.time_recovery_collection_v1 import (
+    TARGET_MPS, bounded_collection_command, phase_at_s, project_course, validate_nominal,
+)
 
 
 def main() -> None:
@@ -118,6 +120,24 @@ def main() -> None:
                               and names(topics['velocity'][0]) == ['/awsim_d1'])
         state['speed_mps'] = speed if speed is not None and math.isfinite(speed) else None
         try:
+            # Authorization and stop intent must be consumed even if a later
+            # sensor/nominal check rejects; otherwise a post-start reject could
+            # remain unarmed indefinitely and evade measured-stop handling.
+            auth_path = args.output/'drive_authorized.json'
+            if state['armed_ns'] is None and auth_path.exists() and clock_ns is not None:
+                auth = json.loads(auth_path.read_text())
+                if (auth.get('run_id') != args.run_id or auth.get('scope') != 'MEASURED_RECOVERY_AWSIM'
+                        or wall > auth['expires_monotonic_s']):
+                    state['fault'] = 'AUTHORIZATION_INVALID'
+                    raise ValueError('AUTHORIZATION_INVALID')
+                state['armed_ns'] = clock_ns; state['armed_wall'] = wall
+            request = args.output/'stop_request.json'
+            if request.exists() and state['stop_reason'] is None:
+                value = json.loads(request.read_text())
+                if value.get('run_id') != args.run_id:
+                    state['fault'] = 'STOP_IDENTITY'
+                    raise ValueError('STOP_IDENTITY')
+                state['stop_reason'] = str(value['reason'])
             if state['fault']:
                 raise ValueError(state['fault'])
             if publisher is None or actual not in ([], ['/time_recovery_collector']):
@@ -152,24 +172,12 @@ def main() -> None:
                 raise ValueError('REFERENCE_SPEED_OR_FRAME')
             projection = project_course(baseline, [current.x_m, current.y_m], current.yaw_rad)
             state['max_speed_mps'] = max(state['max_speed_mps'], abs(speed))
-            auth_path = args.output/'drive_authorized.json'
-            if state['armed_ns'] is None and auth_path.exists():
-                auth = json.loads(auth_path.read_text())
-                if (auth.get('run_id') != args.run_id or auth.get('scope') != 'MEASURED_RECOVERY_AWSIM'
-                        or wall > auth['expires_monotonic_s']):
-                    raise ValueError('AUTHORIZATION_INVALID')
-                state['armed_ns'] = clock_ns; state['armed_wall'] = wall
-            request = args.output/'stop_request.json'
-            if request.exists() and state['stop_reason'] is None:
-                value = json.loads(request.read_text())
-                if value.get('run_id') != args.run_id:
-                    raise ValueError('STOP_IDENTITY')
-                state['stop_reason'] = str(value['reason'])
             if state['armed_ns'] is not None and (clock_ns-state['armed_ns'] >= 1800_000_000_000 or wall-state['armed_wall'] >= 1860):
                 raise ValueError('COLLECTION_DURATION_LIMIT')
             if state['stop_reason']:
                 raise ValueError('REQUESTED_BRAKE')
-            angle = float(np.clip(nominal.lateral.steering_tire_angle, previous[0]-.8*dt, previous[0]+.8*dt))
+            angle, bounded_accel = bounded_collection_command(float(nominal.lateral.steering_tire_angle),
+                float(nominal.longitudinal.acceleration), previous[0], dt)
             selected, captured = select_aligned_scan([(stamp(m.header.stamp), t) for m, t in scans],
                 poses, current, now_sim_ns=clock_ns, now_receipt_ns=now)
             laser = scans[selected][0]
@@ -186,7 +194,7 @@ def main() -> None:
                 reason = 'READY'; angle = previous[0]
             else:
                 reason = 'RECOVERY_TEACHER_TRACKING'
-                accel = float(np.clip(nominal.longitudinal.acceleration, -1., 1.)); target = TARGET_MPS
+                accel = bounded_accel; target = TARGET_MPS
         except (ValueError, KeyError, TypeError) as exc:
             reason = str(exc); angle = previous[0]; accel = -1.; target = 0.; state['ready_ticks'] = 0
             if state['armed_ns'] is not None and reason != 'REQUESTED_BRAKE':
@@ -215,6 +223,8 @@ def main() -> None:
                    phase=phase, projection=projection, speed_mps=state['speed_mps'],
                    issued_angle_rad=angle, target_speed_mps=target, acceleration_mps2=accel,
                    guard=details, current_pose=poses[-1].__dict__ if poses else None,
+                   nominal_angle_rad=float(cache['nominal'][0].lateral.steering_tire_angle)
+                       if 'nominal' in cache and math.isfinite(cache['nominal'][0].lateral.steering_tire_angle) else None,
                    nominal_stamp_ns=stamp(cache['nominal'][0].stamp) if 'nominal' in cache else None)
         serialized = json.dumps(row, allow_nan=False); log.write(serialized+'\n')
         phase_pub.publish(String(data=serialized))

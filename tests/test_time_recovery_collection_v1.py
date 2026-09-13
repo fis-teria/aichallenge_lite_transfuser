@@ -4,6 +4,7 @@ import csv
 
 from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     PhaseWindow, TARGET_MPS, phase_at_s, project_course, recovery_teacher_mask, validate_nominal, load_pose_course,
+    bounded_collection_command,
 )
 
 
@@ -55,7 +56,7 @@ def nominal():
 @pytest.mark.parametrize("field,value,reason", [
     ("stamp_ns", 800_000_000, "STALE"), ("stamp_ns", 1_071_000_000, "FUTURE"),
     ("now_wall_ns", 2_300_000_001, "STALE"), ("received_ns", 2_100_000_001, "FUTURE"),
-    ("target_mps", .75, "FIXED_SPEED"), ("steering_input_rad", .501, "STEERING"),
+    ("target_mps", .75, "FIXED_SPEED"), ("steering_input_rad", .641, "STEERING"),
     ("measured_speed_mps", 1.7, "OVERSPEED"), ("acceleration_mps2", float("nan"), "NONFINITE"),
 ])
 def test_nominal_freshness_speed_and_angle(field, value, reason):
@@ -83,3 +84,13 @@ def test_pose_course_keeps_positions_and_replaces_speed(tmp_path):
     write(qw=.5)
     with pytest.raises(ValueError, match='QUATERNION'):
         load_pose_course(path)
+
+
+def test_official_nominal_bound_keeps_existing_final_actuator_limits():
+    settings = nominal(); settings['steering_input_rad'] = -.64
+    validate_nominal(**settings)
+    assert bounded_collection_command(-.64, 1.3889, 0., .05) == pytest.approx((-.04, 1.))
+    assert bounded_collection_command(-.64, -1.5, -.48, .05) == pytest.approx((-.5, -1.))
+    assert bounded_collection_command(.64, .3, .48, .05) == pytest.approx((.5, .3))
+    with pytest.raises(ValueError, match='CONTRACT'):
+        bounded_collection_command(.1, .2, .51, .05)
