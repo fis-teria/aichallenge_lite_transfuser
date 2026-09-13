@@ -41,6 +41,9 @@ def _identity(manifest: dict[str, Any]) -> str:
 
 
 def validate_time_split(manifest: dict[str, Any], *, require_verified: bool = False) -> None:
+    if isinstance(manifest, dict) and manifest.get("format") == "time_recovery_extension_v1":
+        _validate_recovery_extension(manifest, require_verified=require_verified)
+        return
     keys = {"format", "scope", "seed", "counts_per_speed", "receipt_sha256", "runs",
             "sources_verified", "manifest_sha256"}
     if type(manifest) is not dict or set(manifest) != keys:
@@ -59,11 +62,21 @@ def validate_time_split(manifest: dict[str, Any], *, require_verified: bool = Fa
         raise ValueError("raw sources have not been hash verified at the destination")
     if type(manifest["runs"]) is not list or not manifest["runs"]:
         raise ValueError("split requires run records")
+    counts_seen = _validate_run_records(manifest["runs"])
+    for speed in {speed for speed, _ in counts_seen}:
+        if any(counts_seen[speed, split] != count for split, count in COUNTS.items()):
+            raise ValueError("each speed setting requires 6/2/2 whole runs")
+    if manifest["manifest_sha256"] != _identity(manifest):
+        raise ValueError("frozen split manifest hash mismatch")
+
+
+def _validate_run_records(runs: list[dict[str, Any]]) -> Counter[tuple[int, str]]:
+    """Check content disjointness for both fixed 20-lap and recovery extensions."""
     ids: set[str] = set()
     hashes: set[str] = set()
     paths: set[str] = set()
     counts_seen: Counter[tuple[int, str]] = Counter()
-    for run in manifest["runs"]:
+    for run in runs:
         if type(run) is not dict or set(run) != {"run_id", "speed_cap_kmh", "split", "sources"}:
             raise ValueError("run schema mismatch")
         rid = run["run_id"]
@@ -86,9 +99,29 @@ def validate_time_split(manifest: dict[str, Any], *, require_verified: bool = Fa
                 raise ValueError("duplicate raw content/path across runs or parts")
             paths.add(source["path"])
             hashes.add(source["sha256"])
-    for speed in {speed for speed, _ in counts_seen}:
-        if any(counts_seen[speed, split] != count for split, count in COUNTS.items()):
-            raise ValueError("each speed setting requires 6/2/2 whole runs")
+    return counts_seen
+
+
+def _validate_recovery_extension(manifest: dict[str, Any], *, require_verified: bool) -> None:
+    keys = {"format", "scope", "base_manifest", "additional_runs", "runs",
+            "sources_verified", "manifest_sha256"}
+    if set(manifest) != keys or manifest["scope"] != "same_course_recovery_run_holdout":
+        raise ValueError("recovery split schema mismatch")
+    base = manifest["base_manifest"]
+    if not isinstance(base, dict) or base.get("format") != FORMAT:
+        raise ValueError("recovery extension requires the original 20-lap split")
+    validate_time_split(base, require_verified=require_verified)
+    additions = manifest["additional_runs"]
+    if (not isinstance(additions, list) or not additions
+            or any(not isinstance(r, dict) or r.get("split") not in {"train", "validation"} for r in additions)
+            or {r["split"] for r in additions} != {"train", "validation"}):
+        raise ValueError("recovery requires whole train and validation runs; test stays sealed")
+    expected = sorted(base["runs"] + additions, key=lambda r: r["run_id"])
+    if manifest["runs"] != expected:
+        raise ValueError("original split assignments changed")
+    _validate_run_records(expected)
+    if type(manifest["sources_verified"]) is not bool or (require_verified and not manifest["sources_verified"]):
+        raise ValueError("recovery sources not verified")
     if manifest["manifest_sha256"] != _identity(manifest):
         raise ValueError("frozen split manifest hash mismatch")
 

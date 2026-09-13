@@ -1,0 +1,36 @@
+{
+  "experiment": "command_off_recovery_finetune_20260914",
+  "base_cache": "datasets/cache/time_training_20260913_v2",
+  "base_cache_sha256": "f8ac104391d7a7c483d53aa06fcf058bc06cc6a5a540c6b940d1b4db821f75f5",
+  "initialization": "runs/time_p1_20laps_20260913/command_off/best.pt",
+  "initialization_sha256": "e857db4b67d3d9f6a77c2865cfc1fa53e9903e7a1d2d8a371407fbe009a1a44f",
+  "raw_roots": {
+    "old": "raw/time_recovery_collection_20260913",
+    "new": "raw/time_recovery_batches_20260914"
+  },
+  "types": "runs/time_recovery_collection_20260913/types",
+  "runs": [
+    {"run_id":"codex-time-recovery-right020-r19","root":"old","split":"train","probe":"time_recovery_collection_20260913/codex-time-recovery-right020-r19_causal_probe.json"},
+    {"run_id":"codex-time-recovery-left020-r20","root":"old","split":"train","probe":"time_recovery_collection_20260913/codex-time-recovery-left020-r20_causal_probe.json"},
+    {"run_id":"codex-time-recovery-left040-r21","root":"new","split":"train","probe":"time_recovery_batches_20260914/codex-time-recovery-left040-r21_causal_probe.json"},
+    {"run_id":"codex-time-recovery-right040-r22","root":"new","split":"validation","probe":"time_recovery_batches_20260914/codex-time-recovery-right040-r22_causal_probe.json"},
+    {"run_id":"codex-time-recovery-left020-r23","root":"new","split":"validation","probe":"time_recovery_batches_20260914/codex-time-recovery-left020-r23_causal_probe.json"},
+    {"run_id":"codex-time-recovery-left040-r25","root":"new","split":"train","probe":"time_recovery_batches_20260914/codex-time-recovery-left040-r25_causal_probe.json"}
+  ],
+  "excluded": ["r17/r18 partial laps", "r24/r26 auxiliary", "r01-r16 diagnostic runs"],
+  "recovery_repeats": 40,
+  "training": {
+    "epochs": 3,
+    "batch_size": 32,
+    "workers": 4,
+    "seed": 42,
+    "learning_rate": 0.00003,
+    "weight_decay": 0.0001,
+    "max_grad_norm": 1.0,
+    "precision": "float32"
+  },
+  "selection": "minimum_combined_validation_run_macro_3s_error_m",
+  "test_usage": "sealed",
+  "runtime": "fixed_target_5kmh_existing_vehicle_model_and_safety_normal_rviz",
+  "awsim_budget": {"baseline_laps":1,"candidate_laps":1,"maximum_attempts":4,"maximum_outer_wall_s_per_attempt":720,"same_physical_failure_limit":2}
+}

@@ -132,7 +132,9 @@ def run_training_arm(train: Dataset[TimeSample], validation: Dataset[TimeSample]
                      split_manifest: dict[str, Any], teacher_manifest: dict[str, Any],
                      identity: TimeCheckpointIdentity, config: TimeModelConfig,
                      plan: CorpusTrainingPlan, output: Path, device: str = "cuda",
-                     resume: bool = False) -> dict[str, Any]:
+                     resume: bool = False, initialization: Path | None = None,
+                     initialization_sha256: str | None = None,
+                     initialization_identity: TimeCheckpointIdentity | None = None) -> dict[str, Any]:
     """Complete a finite arm, select on validation run-macro 3s error, reload best."""
     plan.validate(); config.validate(); identity.validate()
     if len(train_run_ids) != len(train) or len(validation_run_ids) != len(validation):
@@ -158,6 +160,20 @@ def run_training_arm(train: Dataset[TimeSample], validation: Dataset[TimeSample]
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
     model = build_time_model(config).to(device)
+    initial_source = None
+    if initialization is not None:
+        if initialization_identity is None or initialization_sha256 is None:
+            raise ValueError("finetune requires the pinned checkpoint hash and original identity")
+        actual_sha = hashlib.sha256(initialization.read_bytes()).hexdigest()
+        if actual_sha != initialization_sha256:
+            raise ValueError("initialization checkpoint hash mismatch")
+        # The source identity validates the inherited weights. New checkpoints
+        # retain the new split/teacher identity and never inherit optimizer/RNG.
+        load_time_checkpoint(initialization, config=config, identity=initialization_identity,
+                             model=model, mode="finetune")
+        initial_source = {"sha256": actual_sha, "identity": asdict(initialization_identity)}
+    elif initialization_sha256 is not None or initialization_identity is not None:
+        raise ValueError("initialization metadata without a checkpoint")
     initial_sha = weights_digest(model)
     optimizer = torch.optim.AdamW(model.parameters(), lr=plan.learning_rate, weight_decay=plan.weight_decay)
     max_steps = math.ceil(len(train) / plan.batch_size) * plan.epochs
@@ -168,6 +184,8 @@ def run_training_arm(train: Dataset[TimeSample], validation: Dataset[TimeSample]
         "selection": "minimum_validation_run_macro_3s_error_m", "allow_tf32": False,
         "cudnn_benchmark": False, "cudnn_deterministic": True, "loss_scaler": None,
         "device_type": device, "torch_version": torch.__version__}
+    if initial_source is not None:
+        frozen_plan["initialization"] = initial_source
     state: dict[str, Any] = {"plan": frozen_plan, "history": [], "best_score_m": None,
         "best_epoch": None, "initial_weights_sha256": initial_sha, "total_anchors_visited": 0,
         "epoch_totals": {"visited": 0, "input_invalid": 0, "teacher_unsupported": 0,
