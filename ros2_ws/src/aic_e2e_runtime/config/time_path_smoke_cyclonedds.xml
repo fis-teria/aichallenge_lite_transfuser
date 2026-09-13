@@ -6,6 +6,10 @@
       <Interfaces><NetworkInterface name="lo"/></Interfaces>
       <AllowMulticast>false</AllowMulticast>
     </General>
-    <Discovery><Peers><Peer Address="127.0.0.1"/></Peers></Discovery>
+    <Discovery>
+      <ParticipantIndex>auto</ParticipantIndex>
+      <MaxAutoParticipantIndex>20</MaxAutoParticipantIndex>
+      <Peers><Peer Address="127.0.0.1"/></Peers>
+    </Discovery>
   </Domain>
 </CycloneDDS>
