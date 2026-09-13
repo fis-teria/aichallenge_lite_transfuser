@@ -63,6 +63,8 @@ timeout --signal=TERM --kill-after=10s 710s python3 SOURCE/tools/run_time_path_a
   --config configs/control/time_path_turning_5kmh_20260913.json </dev/null
 ```
 
-現在: 実装・unit test追加済み、まだ未検証・未適用・未実行。
+現在: 実装済み。`1c0cf319cd99c0dc0c40ce051bc64bfea5403fd4` をWindowsから同期し、
+native WSLの限定テスト33passed (0.31s)。次は新設定を実際に使うHumble接続smokeと全体テスト。
+まだホストへ適用・走行していない。
 lap07には実操舵値が保存されていないため、新監視の完全な実測再計算とは称さない。
 今回から実操舵と使用した監視区間・元scan姿勢を記録する。

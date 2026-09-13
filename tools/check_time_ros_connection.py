@@ -23,7 +23,11 @@ def main() -> None:
     ap.add_argument("--checkpoint-sha256", required=True)
     ap.add_argument("--output", type=Path, required=True)
     ap.add_argument("--speed-policy", choices=("source_capped_0p25", "fixed_5kmh"), default="source_capped_0p25")
+    ap.add_argument("--trial-config", type=Path)
     args = ap.parse_args()
+    fixture_config = json.loads(args.trial_config.read_text()) if args.trial_config else None
+    if fixture_config is not None:
+        args.speed_policy = fixture_config["speed_policy"]
     if os.environ.get("ROS_DOMAIN_ID") != "93":
         raise ValueError("ISOLATED_DOMAIN_93_REQUIRED")
     args.output.mkdir(parents=True, exist_ok=False)
@@ -89,7 +93,7 @@ def main() -> None:
         pose = Odometry(); set_stamp(pose.header.stamp, t); pose.header.frame_id = "map"; pose.child_frame_id = "base_link"
         pose.pose.pose.orientation.w = 1.; pose.pose.pose.position.x = .1 * (wall - start); pubs["pose"].publish(pose)
         if counter % 5 == 0:
-            scan = LaserScan(); set_stamp(scan.header.stamp, t); scan.header.frame_id = "lidar_link"
+            scan = LaserScan(); set_stamp(scan.header.stamp, t); scan.header.frame_id = "lidar" if fixture_config else "lidar_link"
             scan.angle_min = -float(np.pi); scan.angle_increment = float(2*np.pi/750)
             scan.angle_max = scan.angle_min + 749 * scan.angle_increment
             scan.range_min = .1; scan.range_max = 25.; scan.ranges = [25.] * 750; pubs["scan"].publish(scan)
@@ -134,10 +138,16 @@ def main() -> None:
         stop(model_process)
         oracle = Node("time_path_inference", enable_rosout=False)
         oracle_publisher = oracle.create_publisher(String, "/time_path/plan", 10)
+        controller_settings = ["--speed-policy", args.speed_policy]
+        if fixture_config is not None:
+            fixture_config["checkpoint_sha256"] = "0"*64
+            fixture_path = args.output/"oracle_trial_config.json"
+            fixture_path.write_text(json.dumps(fixture_config))
+            controller_settings = ["--trial-config", str(fixture_path)]
         controller = launch("time_trial_controller_node", ["--output", str(args.output / "oracle"),
             "--run-id", "ros-smoke-oracle", "--checkpoint-sha256", "0"*64,
             "--rear-axle-forward-m", ".0010000169277191162", "--pose-source", "/time_ros_fixture",
-            "--speed-policy", args.speed_policy,
+            *controller_settings,
             "--sensor-source", "/time_ros_fixture", "--synthetic-shadow-fixture"], "controller")
         oracle_source_speed = .8 if args.speed_policy == "fixed_5kmh" else .15
         expected_target = 5./3.6 if args.speed_policy == "fixed_5kmh" else .15
@@ -151,6 +161,12 @@ def main() -> None:
         positive = [c for c in commands if c["accel"] > 0 and abs(c["speed"]-expected_target) < 1e-5 and abs(c["steer"]) < 1e-8]
         if not positive:
             raise RuntimeError("ORACLE_DID_NOT_REACH_SHADOW_PP")
+        if fixture_config is not None and fixture_config.get("obstacle_policy") == "steering_sweep_v1":
+            records = [json.loads(line) for line in (args.output/"oracle/control.jsonl").read_text().splitlines()]
+            verified = [r for r in records if r.get("details", {}).get("obstacle_guard", {}).get("policy") == "STEERING_INTERVAL_SWEEP_V1"]
+            if not verified:
+                raise RuntimeError("SWEEP_GUARD_NOT_EXECUTED")
+            result["sweep_guard_commands"] = len(verified)
         stale_started = time.monotonic()
         spin_for(1.2)  # Sensors continue; stop sending plans.
         stale = [c for c in commands if c["wall"] > stale_started + .65]
