@@ -290,8 +290,8 @@ left020-r11は発進約5.89秒でSTALE_scan、停止確認・bag close成立。
 
 d741ea7のWSL full pytestは2,216 passed / 4 skipped / 63 warnings（78.90s）。
 left020-r12は約262秒、s=238.57mのapproachまで走行してMOTION_YAW_RATE_INVALID、正常停止・bag close成立。
-時刻関連の停止は解消していた。WSLで全52files相当のmanifest、SQLite、元sensor時刻を検査した。
-（正確なfiles件数は対応audit.jsonを参照。）指定hold/recoveryには未到達として保全する。
+時刻関連の停止は解消していた。WSLでmanifest記載の全ファイル、SQLite、元sensor時刻を検査した。
+指定hold/recoveryには未到達として保全する。
 
 故障時のVelocityReport.heading_rateは−1256.5009765625rad/sの1件、前後は約0.135/0.138rad/s。
 IMUは同時刻付近0.136162rad/s、poseも連続。現物と同SHAのDLLにあるEuler差分の折返し不具合と整合する。

@@ -1,0 +1,133 @@
+{
+  "tf_static": {
+    "camera_link": {
+      "parent": "base_link",
+      "translation": [
+        0.8,
+        0.0,
+        0.7
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "camera_optical_link": {
+      "parent": "camera_link",
+      "translation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation": [
+        0.5,
+        -0.4999999999999999,
+        0.5,
+        -0.5000000000000001
+      ]
+    },
+    "gnss_link": {
+      "parent": "sensor_kit_base_link",
+      "translation": [
+        -0.26,
+        0.0,
+        0.0
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "imu_link": {
+      "parent": "sensor_kit_base_link",
+      "translation": [
+        0.85,
+        0.0,
+        0.0
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        -0.7071067811883519,
+        0.7071067811847432
+      ]
+    },
+    "lidar_base_link": {
+      "parent": "base_link",
+      "translation": [
+        1.65,
+        0.0,
+        0.0
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "lidar": {
+      "parent": "lidar_base_link",
+      "translation": [
+        0.0,
+        0.0,
+        0.0377
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "sensor_kit_base_link": {
+      "parent": "base_link",
+      "translation": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    "viewer": {
+      "parent": "map",
+      "translation": [
+        89648.53366311034,
+        43155.796682459295,
+        6.5
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  },
+  "raw_heading_abs_gt10": [
+    [
+      233414994782,
+      1256.4359130859375
+    ],
+    [
+      288504993551,
+      -1256.5009765625
+    ]
+  ],
+  "nearest_imu_comparison_count": 8359,
+  "absolute_difference_radps_quantiles": [
+    0.00021015296806581318,
+    0.0017442118376493436,
+    0.0034958893060684205,
+    0.009617418050765991
+  ]
+}

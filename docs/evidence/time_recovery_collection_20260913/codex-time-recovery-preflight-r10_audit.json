@@ -1,0 +1,96 @@
+{
+  "run_id": "codex-time-recovery-preflight-r10",
+  "status": "PREFLIGHT_PASSED",
+  "verified_files": 49,
+  "sqlite_quick_check": "ok",
+  "source_sha": "35b071359b7ac3a748033357fcd703d6c80c531f",
+  "reference_sha256": "09c1e6b612fb70f606cc1f9ce8097245ebaa8911e9b5bfc7572fa943a0cf9329",
+  "counts": {
+    "/recovery_teacher/trajectory": 7,
+    "/recovery_teacher/baseline_path": 37,
+    "/recovery_teacher/observed_path": 37,
+    "/recovery_teacher/phase": 607,
+    "/recovery_teacher/reference_path": 37,
+    "/control/command/control_cmd": 388,
+    "/recovery_teacher/nominal_control_cmd": 3022,
+    "/recovery_teacher/raw_control_cmd": 3022,
+    "/awsim/state": 2,
+    "/awsim/status": 73,
+    "/clock": 1478,
+    "/sensing/lidar/scan": 148,
+    "/sensing/camera/camera_info": 70,
+    "/sensing/gnss/nav_sat_fix": 147,
+    "/vehicle/status/steering_status": 211,
+    "/sensing/camera/image_raw": 70,
+    "/sensing/imu/imu_raw": 147,
+    "/vehicle/status/velocity_status": 211,
+    "/tf": 361,
+    "/localization/kinematic_state": 358,
+    "/localization/pose": 358,
+    "/tf_static": 2
+  },
+  "sensors": {
+    "camera": {
+      "count": 70,
+      "shapes": [
+        {
+          "shape": [
+            256,
+            384,
+            "bgr8"
+          ],
+          "count": 70
+        }
+      ],
+      "backward_headers": 0,
+      "maximum_capture_gap_s": 0.104999998,
+      "invalid_messages": 0
+    },
+    "lidar": {
+      "count": 148,
+      "shapes": [
+        {
+          "shape": [
+            750,
+            "lidar"
+          ],
+          "count": 148
+        }
+      ],
+      "backward_headers": 0,
+      "maximum_capture_gap_s": 0.100000001,
+      "invalid_messages": 0
+    }
+  },
+  "stop_confirmed": false,
+  "fault": null,
+  "lap_confirmed": false,
+  "lap_records": [],
+  "phase_metrics": {
+    "baseline": {
+      "pose_count": 0
+    },
+    "approach": {
+      "pose_count": 0
+    },
+    "hold": {
+      "pose_count": 0
+    },
+    "recovery": {
+      "pose_count": 0
+    },
+    "after_recovery": {
+      "pose_count": 0
+    }
+  },
+  "pose_projection_rejections": {},
+  "moving_speed_median_kmh": null,
+  "max_measured_speed_kmh": null,
+  "tracking_target_kmh": [],
+  "phase_only_three_second_camera_candidates": {},
+  "absolute_offset_reduction_m": null,
+  "recovery_interval_reached": false,
+  "training_materialized": false,
+  "full_body_collision_free_verified": false,
+  "note": "Phase candidates still require time-corpus sensor/history/observed-future validation; no training performed."
+}
