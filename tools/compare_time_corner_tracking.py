@@ -320,8 +320,6 @@ def main() -> None:
         bag.con.close()
         print(json.dumps({"reference_done": run_id, "fault_left_m": center.left_m,
                           "offline_anchors": len(valid_offline)}), flush=True)
-    primary = lines[PRIMARY]
-    primary_center = centers[PRIMARY]
     coverage = []
     # Audit all accepted recovery anchors, including train, without re-inference.
     for spec in identity["plan"]["runs"]:
@@ -333,16 +331,25 @@ def main() -> None:
         if sha(source/"bag/bag_0.db3") != expected:
             raise ValueError("COVERAGE_BAG_HASH_MISMATCH")
         bag = Bag(source)
+        own_line = RecordedLine(bag.poses.rows)
+        own_line.usable &= np.array([a.stamp_ns not in bag.poses.ambiguous and b.stamp_ns not in bag.poses.ambiguous
+                                     for a, b in zip(own_line.rows, own_line.rows[1:])])
+        own_fault = own_line.project(np.array([current_fault.x_m, current_fault.y_m]), yaw_hint_rad=current_fault.yaw_rad)
         apath = cache/split/run_id/"anchors.jsonl"
         if sha(apath) != expected_files[f"{split}/{run_id}/anchors.jsonl"]:
             raise ValueError("COVERAGE_ANCHOR_HASH_MISMATCH")
         rows = []
         for a in records(apath):
             p = anchor_observation(bag, a)
-            result = primary.project(np.array([p.x_m, p.y_m]), yaw_hint_rad=p.yaw_rad, max_distance_m=5.)
-            rows.append({"anchor_id": a["anchor_id"], "progress_to_fault_m": result.progress_m-primary_center.progress_m,
+            # Select the recorded passage, not a geometrically similar later lap.
+            timed_progress = float(np.interp(p.stamp_ns, own_line.times, own_line.arc))
+            result = own_line.project(np.array([p.x_m, p.y_m]), yaw_hint_rad=p.yaw_rad, max_distance_m=5.,
+                progress_bounds_m=(max(0., timed_progress-2.), min(float(own_line.arc[-1]), timed_progress+2.)))
+            rows.append({"anchor_id": a["anchor_id"], "progress_to_fault_m": result.progress_m-own_fault.progress_m,
                          "left_m": result.left_m, "map_xy_m": [p.x_m, p.y_m]})
         coverage.append({"run_id": run_id, "split": split, "accepted_anchors": len(rows),
+            "method": "own_run_capture_time_selects_passage_then_spatial_projection; relative_to_matched_fault_location",
+            "own_run_fault_projection": asdict(own_fault),
             "bag_sha256": expected, "anchors_sha256": sha(apath),
             "progress_to_fault_m": stats([r["progress_to_fault_m"] for r in rows]),
             "in_fault_minus40_plus8m": sum(-40. <= r["progress_to_fault_m"] <= 8. for r in rows)})

@@ -50,6 +50,18 @@ def test_progress_bounds_exclude_another_pass():
         reference.project(np.zeros(2), progress_bounds_m=(1., 0.))
 
 
+def test_progress_selects_original_passage_when_geometry_repeats():
+    poses = [pose(i*20_000_000, i*.02) for i in range(101)]
+    poses += [pose((101+i)*20_000_000, i*.02) for i in range(101)]
+    reference = RecordedLine(poses)
+    early = reference.project(np.array([1., .2]), progress_bounds_m=(0., 2.))
+    late = reference.project(np.array([1., .2]), progress_bounds_m=(4., 6.))
+    assert early.left_m == pytest.approx(late.left_m)
+    assert early.progress_m == pytest.approx(1.)
+    assert late.progress_m == pytest.approx(5.)
+    assert early.stamp_ns < late.stamp_ns
+
+
 def test_wrapped_body_yaw_and_conflicting_capture_stamps():
     reference = RecordedLine([pose(0, 0., yaw=3.13), pose(20_000_000, -.02, yaw=-3.13)])
     assert abs(reference.project(np.array([-.01, .1])).body_yaw_rad) == pytest.approx(math.pi)
