@@ -1,0 +1,26 @@
+[
+  {
+    "log": "baseline_evaluation.log",
+    "command": [
+      "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+      "tools/evaluate_time_awsim_trial.py",
+      "--run",
+      "../runs/time_recovery_finetune_evidence_20260914/baseline/codex-time-recovery-model-base01",
+      "--output",
+      "../runs/time_recovery_finetune_evidence_20260914/baseline_evaluation"
+    ],
+    "exit": 0,
+    "seconds": 3.5221767059993
+  },
+  {
+    "log": "pytest_5451333.log",
+    "command": [
+      "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q"
+    ],
+    "exit": 0,
+    "seconds": 75.95633659500163
+  }
+]

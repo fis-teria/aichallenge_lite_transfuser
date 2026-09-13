@@ -1,0 +1,65 @@
+........................................................................ [  3%]
+........................................................................ [  6%]
+........................................................................ [  9%]
+........................................................................ [ 12%]
+........................................................................ [ 16%]
+........................................................................ [ 19%]
+............................................................s........... [ 22%]
+........................................................................ [ 25%]
+........................................................................ [ 29%]
+........................................................................ [ 32%]
+........................................................................ [ 35%]
+........................................................................ [ 38%]
+........................................................................ [ 41%]
+........................................................................ [ 45%]
+..................................................................s..... [ 48%]
+........................................................................ [ 51%]
+........................................................................ [ 54%]
+........................................................................ [ 58%]
+........................................................................ [ 61%]
+........................................................................ [ 64%]
+....................s................................................... [ 67%]
+........................................................................ [ 70%]
+........................................................................ [ 74%]
+........................................................................ [ 77%]
+........................................................................ [ 80%]
+........................................................................ [ 83%]
+........................................................................ [ 87%]
+........................................................................ [ 90%]
+........................................................................ [ 93%]
+..........s............................................................. [ 96%]
+.......................................................................  [100%]
+=============================== warnings summary ===============================
+tests/test_cli_full_control_train_v3.py: 6 warnings
+tests/test_cls_pooling.py: 4 warnings
+tests/test_ego_features.py: 1 warning
+tests/test_full_control_lite_v3_shape.py: 3 warnings
+tests/test_full_control_training_v3.py: 4 warnings
+tests/test_model_registry_v3.py: 1 warning
+tests/test_model_shapes.py: 1 warning
+tests/test_model_v1_shapes.py: 3 warnings
+tests/test_optional_heads.py: 2 warnings
+tests/test_reproducible_ablation.py: 3 warnings
+tests/test_runtime_input_history_v3.py: 1 warning
+tests/test_runtime_v3.py: 8 warnings
+tests/test_spatial_diagnostic_training_v4.py: 5 warnings
+tests/test_spatial_diagnostic_validation_v4.py: 7 warnings
+tests/test_spatial_ten_v4.py: 1 warning
+tests/test_temporal_model_v3.py: 2 warnings
+tests/test_time_backbone_p0.py: 4 warnings
+tests/test_time_checkpoint_p1.py: 1 warning
+tests/test_time_corpus_runner_v1.py: 1 warning
+tests/test_time_path_v1.py: 2 warnings
+tests/test_time_pipeline_p1.py: 2 warnings
+tests/test_time_recovery_training_v1.py: 1 warning
+tests/test_v1_compatibility_view.py: 1 warning
+  /home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_mpc_solution_guard.py:151: OSQP unavailable; synthetic tests are not real solver validation
+SKIPPED [1] tests/test_spatial_bootstrap_v4.py:484: existing environment lacks full Draft2020 validator; no install
+SKIPPED [1] tests/test_spatial_runtime_v4.py:242: existing environment lacks jsonschema; no dependency installation authorized
+SKIPPED [1] tests/test_tiny_lidar_sim.py:318: Optional fixed official package not supplied
+2227 passed, 4 skipped, 64 warnings in 74.69s (0:01:14)
