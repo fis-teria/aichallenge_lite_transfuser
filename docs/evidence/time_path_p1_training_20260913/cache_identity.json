@@ -1,0 +1,910 @@
+{
+  "format": "time_training_cache_v1",
+  "corpus_artifact_manifest_sha256": "f1728db8448c61c50c075ef4f8c7ca9a639044fddd35392d5e68bedf037bb61c",
+  "contract": {
+    "format": "time_sqlite_corpus_v1",
+    "dt_s": 0.1,
+    "points": 30,
+    "frame": "base_link_at_observation",
+    "freeze_delay_receipt_ns": 50000000,
+    "availability": "bag_receipt_proxy_not_measured_preprocessing_completion",
+    "config": {
+      "image_shape": [
+        3,
+        224,
+        384
+      ],
+      "lidar_shape": [
+        2,
+        750
+      ],
+      "ego_features": 4,
+      "camera_history_length": 4,
+      "lidar_history_length": 4,
+      "ego_history_length": 10,
+      "command_history_length": 10,
+      "tolerance_ns": 50000000,
+      "teacher_tolerance_ms": 50.0,
+      "lidar_min_range_m": 0.0,
+      "lidar_max_range_m": 25.0,
+      "lidar_angle_min_rad": -3.141592653589793,
+      "capture_clock": "sim",
+      "available_clock": "bag_receipt",
+      "pose_world_frame": "map",
+      "pose_body_frame": "base_link"
+    },
+    "split_sha256": "0339b8cadc704b5b418279fd3c058008060fecd4268b30d7e3e6235aabab80b0",
+    "pilot_only": null,
+    "stop_probability": null,
+    "runtime_ready": false
+  },
+  "config": {
+    "image_shape": [
+      3,
+      224,
+      384
+    ],
+    "lidar_shape": [
+      2,
+      750
+    ],
+    "ego_features": 4,
+    "camera_history_length": 4,
+    "lidar_history_length": 4,
+    "ego_history_length": 10,
+    "command_history_length": 10,
+    "tolerance_ns": 50000000,
+    "teacher_tolerance_ms": 50.0,
+    "lidar_min_range_m": 0.0,
+    "lidar_max_range_m": 25.0,
+    "lidar_angle_min_rad": -3.141592653589793,
+    "capture_clock": "sim",
+    "available_clock": "bag_receipt",
+    "pose_world_frame": "map",
+    "pose_body_frame": "base_link"
+  },
+  "split_manifest": {
+    "format": "time_run_holdout_v1",
+    "scope": "same_course_same_conditions_run_holdout",
+    "seed": 42,
+    "counts_per_speed": {
+      "train": 6,
+      "validation": 2,
+      "test": 2
+    },
+    "receipt_sha256": "476321a3cd619bf2300779cf9cb498cff97a89e4e51a97238c8612be449b9581",
+    "runs": [
+      {
+        "run_id": "5kmh_run01",
+        "speed_cap_kmh": 5,
+        "sources": [
+          {
+            "path": "runs/5kmh_run01/bag/bag_0.db3",
+            "sha256": "27e9ed05ab4c453bb7be689e3996fdf4daf8420858cb028524910b355fa56d84"
+          }
+        ],
+        "split": "train"
+      },
+      {
+        "run_id": "5kmh_run02",
+        "speed_cap_kmh": 5,
+        "sources": [
+          {
+            "path": "runs/5kmh_run02/bag/bag_0.db3",
+            "sha256": "8d9b745a1af014168de9163df8767f2d9a30d036c544a280ecf5c39ef4fd4214"
+          }
+        ],
+        "split": "train"
+      },
+      {
+        "run_id": "5kmh_run03",
+        "speed_cap_kmh": 5,
+        "sources": [
+          {
+            "path": "runs/5kmh_run03/bag/bag_0.db3",
+            "sha256": "8a2e823cb2f8ba634ba16d54073d9e449c6404d67adc5028e0509f87a663a558"
+          }
+        ],
+        "split": "validation"
+      },
+      {
+        "run_id": "5kmh_run04",
+        "speed_cap_kmh": 5,
+        "sources": [
+          {
+            "path": "runs/5kmh_run04/bag/bag_0.db3",
+            "sha256": "0c7447d136ebb3c954e5017cb87f23858a495e2458265c394299114b73ea0914"
+          }
+        ],
+        "split": "train"
+      },
+      {
+        "run_id": "5kmh_run05",
+        "speed_cap_kmh": 5,
+        "sources": [
+          {
+            "path": "runs/5kmh_run05/bag/bag_0.db3",
+            "sha256": "0a1155de908cf443f19fa27288bcc1ee14660b836c6386517099c21c93d8796b"
+          }
+        ],
+        "split": "train"
+      },
+      {
+        "run_id": "5kmh_run06",
+        "speed_cap_kmh": 5,
+        "sources": [
+          {
+            "path": "runs/5kmh_run06/bag/bag_0.db3",
+            "sha256": "4724b0da7036e2863ccff883a5d0043d487af174c8cfee5be78c9207261751df"
+          }
+        ],
+        "split": "validation"
+      },
+      {
+        "run_id": "5kmh_run07",
+        "speed_cap_kmh": 5,
+        "sources": [
+          {
+            "path": "runs/5kmh_run07/bag/bag_0.db3",
+            "sha256": "1f9efdba897b39e2c6ef7a3177b980957068a0294c35c1b0c54f164b74b5282c"
+          }
+        ],
+        "split": "train"
+      },
+      {
+        "run_id": "5kmh_run08",
+        "speed_cap_kmh": 5,
+        "sources": [
+          {
+            "path": "runs/5kmh_run08/bag/bag_0.db3",
+            "sha256": "b07a0cd33a9307bfb752fef5fe445e19154403be7a651a257c67ed417ffd9567"
+          }
+        ],
+        "split": "test"
+      },
+      {
+        "run_id": "5kmh_run09",
+        "speed_cap_kmh": 5,
+        "sources": [
+          {
+            "path": "runs/5kmh_run09/bag/bag_0.db3",
+            "sha256": "5e86b64238fe18c5e1085f68b7b4d571453ed104b427eef98c9cbd6d6fa893d5"
+          }
+        ],
+        "split": "train"
+      },
+      {
+        "run_id": "5kmh_run10",
+        "speed_cap_kmh": 5,
+        "sources": [
+          {
+            "path": "runs/5kmh_run10/bag/bag_0.db3",
+            "sha256": "3003efda093f358522b6008391975c2eb17f0b0e4322a901a322562c4fbee8cf"
+          }
+        ],
+        "split": "test"
+      },
+      {
+        "run_id": "8kmh_run01",
+        "speed_cap_kmh": 8,
+        "sources": [
+          {
+            "path": "runs/8kmh_run01/bag/bag_0.db3",
+            "sha256": "ae46465bd1cad9eedf28dd6825aad20b11f81a29156418dfb912c82e0403df24"
+          }
+        ],
+        "split": "train"
+      },
+      {
+        "run_id": "8kmh_run02",
+        "speed_cap_kmh": 8,
+        "sources": [
+          {
+            "path": "runs/8kmh_run02/bag/bag_0.db3",
+            "sha256": "dbed99a9a4d6e6c9439db07c4dbe41d90ed5f4b73f4b17647f57257c0175c779"
+          }
+        ],
+        "split": "test"
+      },
+      {
+        "run_id": "8kmh_run03",
+        "speed_cap_kmh": 8,
+        "sources": [
+          {
+            "path": "runs/8kmh_run03/bag/bag_0.db3",
+            "sha256": "69c692bd6f74b56e62c234ba20fc95db6181f176bcc7f3bf05c514752c928edc"
+          }
+        ],
+        "split": "train"
+      },
+      {
+        "run_id": "8kmh_run04",
+        "speed_cap_kmh": 8,
+        "sources": [
+          {
+            "path": "runs/8kmh_run04/bag/bag_0.db3",
+            "sha256": "f86b5a001570191888181f41226f1dc90bda25e5684acc6521961a18b8cbcdd2"
+          }
+        ],
+        "split": "train"
+      },
+      {
+        "run_id": "8kmh_run05",
+        "speed_cap_kmh": 8,
+        "sources": [
+          {
+            "path": "runs/8kmh_run05/bag/bag_0.db3",
+            "sha256": "8341a6db92031da52c836adc0d680b09fec3a74ba1cfe7206b41118b21f70768"
+          }
+        ],
+        "split": "train"
+      },
+      {
+        "run_id": "8kmh_run06",
+        "speed_cap_kmh": 8,
+        "sources": [
+          {
+            "path": "runs/8kmh_run06/bag/bag_0.db3",
+            "sha256": "9bd0eca249645f596573578085afb426ede8d0ba171111ee092dd0b2b3814e45"
+          }
+        ],
+        "split": "validation"
+      },
+      {
+        "run_id": "8kmh_run07",
+        "speed_cap_kmh": 8,
+        "sources": [
+          {
+            "path": "runs/8kmh_run07/bag/bag_0.db3",
+            "sha256": "1afea70aa9ed5f8e2bdf49759d7b37ad28ac5bb14f6f613b09b40a01923f1a9c"
+          }
+        ],
+        "split": "test"
+      },
+      {
+        "run_id": "8kmh_run08",
+        "speed_cap_kmh": 8,
+        "sources": [
+          {
+            "path": "runs/8kmh_run08/bag/bag_0.db3",
+            "sha256": "8940e80855372feb52c063b61c06194a72831704704a953d6f25be5b4a3dcbc5"
+          }
+        ],
+        "split": "train"
+      },
+      {
+        "run_id": "8kmh_run09",
+        "speed_cap_kmh": 8,
+        "sources": [
+          {
+            "path": "runs/8kmh_run09/bag/bag_0.db3",
+            "sha256": "16d4dcb2f2103ef8a9516674ce9b1285373d7d3e0c5ae6c920f3bcc92913cf38"
+          }
+        ],
+        "split": "validation"
+      },
+      {
+        "run_id": "8kmh_run10",
+        "speed_cap_kmh": 8,
+        "sources": [
+          {
+            "path": "runs/8kmh_run10/bag/bag_0.db3",
+            "sha256": "48cdf59219fddb62e3ac343501a617432ec9ff57f661586234c0c07351e7cd70"
+          }
+        ],
+        "split": "train"
+      }
+    ],
+    "sources_verified": true,
+    "manifest_sha256": "0339b8cadc704b5b418279fd3c058008060fecd4268b30d7e3e6235aabab80b0"
+  },
+  "splits": [
+    "train",
+    "validation"
+  ],
+  "runs": [
+    {
+      "run_id": "5kmh_run01",
+      "anchors": 3907,
+      "input_valid": 3891,
+      "real_input_replay_equal": [
+        "5kmh_run01:epoch0000:5034999887",
+        "5kmh_run01:epoch0000:209994995306"
+      ],
+      "input_reason_refinements": [],
+      "split": "train"
+    },
+    {
+      "run_id": "5kmh_run02",
+      "anchors": 3907,
+      "input_valid": 3892,
+      "real_input_replay_equal": [
+        "5kmh_run02:epoch0000:5034999887",
+        "5kmh_run02:epoch0000:210099995303"
+      ],
+      "input_reason_refinements": [],
+      "split": "train"
+    },
+    {
+      "run_id": "5kmh_run03",
+      "anchors": 3905,
+      "input_valid": 3901,
+      "real_input_replay_equal": [
+        "5kmh_run03:epoch0000:5139999885",
+        "5kmh_run03:epoch0000:210099995303"
+      ],
+      "input_reason_refinements": [],
+      "split": "validation"
+    },
+    {
+      "run_id": "5kmh_run04",
+      "anchors": 3905,
+      "input_valid": 3884,
+      "real_input_replay_equal": [
+        "5kmh_run04:epoch0000:5244999882",
+        "5kmh_run04:epoch0000:210519995294"
+      ],
+      "input_reason_refinements": [],
+      "split": "train"
+    },
+    {
+      "run_id": "5kmh_run05",
+      "anchors": 3906,
+      "input_valid": 3895,
+      "real_input_replay_equal": [
+        "5kmh_run05:epoch0000:5244999882",
+        "5kmh_run05:epoch0000:210204995301"
+      ],
+      "input_reason_refinements": [],
+      "split": "train"
+    },
+    {
+      "run_id": "5kmh_run06",
+      "anchors": 3906,
+      "input_valid": 3895,
+      "real_input_replay_equal": [
+        "5kmh_run06:epoch0000:5244999882",
+        "5kmh_run06:epoch0000:210414995296"
+      ],
+      "input_reason_refinements": [],
+      "split": "validation"
+    },
+    {
+      "run_id": "5kmh_run07",
+      "anchors": 3907,
+      "input_valid": 3890,
+      "real_input_replay_equal": [
+        "5kmh_run07:epoch0000:5244999882",
+        "5kmh_run07:epoch0000:210099995303"
+      ],
+      "input_reason_refinements": [],
+      "split": "train"
+    },
+    {
+      "run_id": "5kmh_run09",
+      "anchors": 3906,
+      "input_valid": 3886,
+      "real_input_replay_equal": [
+        "5kmh_run09:epoch0000:5244999882",
+        "5kmh_run09:epoch0000:210309995299"
+      ],
+      "input_reason_refinements": [
+        {
+          "anchor_id": "5kmh_run09:epoch0000:5139999885",
+          "source_reason": "CURRENT_SENSOR_MISSING",
+          "replay_reason": "ANCHOR_OUTSIDE_EPOCH"
+        }
+      ],
+      "split": "train"
+    },
+    {
+      "run_id": "8kmh_run01",
+      "anchors": 2213,
+      "input_valid": 2203,
+      "real_input_replay_equal": [
+        "8kmh_run01:epoch0000:5349999880",
+        "8kmh_run01:epoch0000:121164997291"
+      ],
+      "input_reason_refinements": [],
+      "split": "train"
+    },
+    {
+      "run_id": "8kmh_run03",
+      "anchors": 2215,
+      "input_valid": 2207,
+      "real_input_replay_equal": [
+        "8kmh_run03:epoch0000:5139999885",
+        "8kmh_run03:epoch0000:121059997294"
+      ],
+      "input_reason_refinements": [],
+      "split": "train"
+    },
+    {
+      "run_id": "8kmh_run04",
+      "anchors": 2215,
+      "input_valid": 2205,
+      "real_input_replay_equal": [
+        "8kmh_run04:epoch0000:5349999880",
+        "8kmh_run04:epoch0000:121269997289"
+      ],
+      "input_reason_refinements": [
+        {
+          "anchor_id": "8kmh_run04:epoch0000:5139999885",
+          "source_reason": "CURRENT_SENSOR_MISSING",
+          "replay_reason": "ANCHOR_OUTSIDE_EPOCH"
+        }
+      ],
+      "split": "train"
+    },
+    {
+      "run_id": "8kmh_run05",
+      "anchors": 2215,
+      "input_valid": 2205,
+      "real_input_replay_equal": [
+        "8kmh_run05:epoch0000:5244999882",
+        "8kmh_run05:epoch0000:121374997287"
+      ],
+      "input_reason_refinements": [
+        {
+          "anchor_id": "8kmh_run05:epoch0000:5139999885",
+          "source_reason": "CURRENT_SENSOR_MISSING",
+          "replay_reason": "ANCHOR_OUTSIDE_EPOCH"
+        }
+      ],
+      "split": "train"
+    },
+    {
+      "run_id": "8kmh_run06",
+      "anchors": 2212,
+      "input_valid": 2201,
+      "real_input_replay_equal": [
+        "8kmh_run06:epoch0000:5349999880",
+        "8kmh_run06:epoch0000:121374997287"
+      ],
+      "input_reason_refinements": [],
+      "split": "validation"
+    },
+    {
+      "run_id": "8kmh_run08",
+      "anchors": 2214,
+      "input_valid": 2202,
+      "real_input_replay_equal": [
+        "8kmh_run08:epoch0000:5244999882",
+        "8kmh_run08:epoch0000:121059997294"
+      ],
+      "input_reason_refinements": [],
+      "split": "train"
+    },
+    {
+      "run_id": "8kmh_run09",
+      "anchors": 2214,
+      "input_valid": 2195,
+      "real_input_replay_equal": [
+        "8kmh_run09:epoch0000:5349999880",
+        "8kmh_run09:epoch0000:120744997301"
+      ],
+      "input_reason_refinements": [],
+      "split": "validation"
+    },
+    {
+      "run_id": "8kmh_run10",
+      "anchors": 2216,
+      "input_valid": 2208,
+      "real_input_replay_equal": [
+        "8kmh_run10:epoch0000:5349999880",
+        "8kmh_run10:epoch0000:121479997284"
+      ],
+      "input_reason_refinements": [
+        {
+          "anchor_id": "8kmh_run10:epoch0000:5244999882",
+          "source_reason": "CURRENT_SENSOR_MISSING",
+          "replay_reason": "ANCHOR_OUTSIDE_EPOCH"
+        }
+      ],
+      "split": "train"
+    }
+  ],
+  "cache_files": [
+    {
+      "path": "train/5kmh_run01/anchors.jsonl",
+      "bytes": 3596146,
+      "sha256": "f05e8487b4a10bd2936e1945de285834086d7be8ee625b067abd704cf6fd7403"
+    },
+    {
+      "path": "train/5kmh_run01/camera_rgb.npy",
+      "bytes": 1008193664,
+      "sha256": "eadfdbf0e4dd5669547eeb58f55eb432a9507d5cc480ba7c86edbd99b028cb17"
+    },
+    {
+      "path": "train/5kmh_run01/inputs.npz",
+      "bytes": 1670295,
+      "sha256": "26048da4222cdefc358f3d0d34be1860575808ab519c81b64d3e17825d0e52c1"
+    },
+    {
+      "path": "train/5kmh_run01/labels.npz",
+      "bytes": 1118959,
+      "sha256": "1f8485a9e2ea28d4b23dc47d30f35e9b6d32eef3dc160cbf6115bf42955155a7"
+    },
+    {
+      "path": "train/5kmh_run01/lidar.npy",
+      "bytes": 30432128,
+      "sha256": "306bee402a28086c4787a3c25ddd3e1e9d734345b78f38485964ac232854c0b8"
+    },
+    {
+      "path": "train/5kmh_run02/anchors.jsonl",
+      "bytes": 3595973,
+      "sha256": "a889a2154c1ef27938d684c761bb019be5ad413020940c32d1e179bfbc7b3c08"
+    },
+    {
+      "path": "train/5kmh_run02/camera_rgb.npy",
+      "bytes": 1008193664,
+      "sha256": "b8542f4a6c9437a5350b314594a3df3f374c49e51359878d04be8c3a6debd30d"
+    },
+    {
+      "path": "train/5kmh_run02/inputs.npz",
+      "bytes": 1670295,
+      "sha256": "8ab60c75d65553753423736edf52aaeeab98068fb3e5d8a5fa8d521992fb46cc"
+    },
+    {
+      "path": "train/5kmh_run02/labels.npz",
+      "bytes": 1118940,
+      "sha256": "0b4c0f03c3d320590460f731041a79e3db75370da8d3ea3ac1ad1ccf9adaefcd"
+    },
+    {
+      "path": "train/5kmh_run02/lidar.npy",
+      "bytes": 30384128,
+      "sha256": "5db6787992ef0a7d093f3318b24dc47b130ada0f4e34641c5d05409c47e7a6ce"
+    },
+    {
+      "path": "train/5kmh_run04/anchors.jsonl",
+      "bytes": 3594319,
+      "sha256": "8163df44e9f3f180e2d2573055f85d09e353f57b547af0f63f4b0044c9c7c75b"
+    },
+    {
+      "path": "train/5kmh_run04/camera_rgb.npy",
+      "bytes": 1007677568,
+      "sha256": "abb7c95b2696a3835a69483494c4be74905f71d3de31c6aff06443bbd4d0bdc8"
+    },
+    {
+      "path": "train/5kmh_run04/inputs.npz",
+      "bytes": 1669441,
+      "sha256": "7b63367d85653cb2c22f49178e6e8f9b8e5bf152a0d66a60e7a31b96583555ee"
+    },
+    {
+      "path": "train/5kmh_run04/labels.npz",
+      "bytes": 1118501,
+      "sha256": "bd229bcbb8715926c5c4acabf633b404c91b95ce0022dfcba257181c2d4f729c"
+    },
+    {
+      "path": "train/5kmh_run04/lidar.npy",
+      "bytes": 30492128,
+      "sha256": "3d7f34e150bac9b7eaca2652b6ea5065ada60d1fc74bf48b27461bedd9eb1cdf"
+    },
+    {
+      "path": "train/5kmh_run05/anchors.jsonl",
+      "bytes": 3595316,
+      "sha256": "c9f71006ca413e7428b911c923ad8827ddb52b8cfe5ccb196008261899f02adb"
+    },
+    {
+      "path": "train/5kmh_run05/camera_rgb.npy",
+      "bytes": 1007935616,
+      "sha256": "d119caa0224c99a885a4c74f795e993263313a63c33c3f94913cb3805d7b8a3d"
+    },
+    {
+      "path": "train/5kmh_run05/inputs.npz",
+      "bytes": 1669868,
+      "sha256": "7d286f0c65780a5862cb3146cd4e3cf88b764ad84e02640a1bc1958a576c5267"
+    },
+    {
+      "path": "train/5kmh_run05/labels.npz",
+      "bytes": 1118704,
+      "sha256": "b8c0cf9e7c2adbc806710d1803e73d64c5a40b627e797cee086420ebcb72ccfd"
+    },
+    {
+      "path": "train/5kmh_run05/lidar.npy",
+      "bytes": 30252128,
+      "sha256": "c90ab3cb8598e3a29808d67f5194ac140755bae0f1fc9cf76ffeae790294c1b1"
+    },
+    {
+      "path": "train/5kmh_run07/anchors.jsonl",
+      "bytes": 3596270,
+      "sha256": "e2f0a0696215ae0623352e456c929e7f7b6082f2ace9e8123cff9f645f247b01"
+    },
+    {
+      "path": "train/5kmh_run07/camera_rgb.npy",
+      "bytes": 1008193664,
+      "sha256": "96a2f19a1792fadec6871f0d7f49626f6e2db2efd52acc1a44f2f8fafc8d5f45"
+    },
+    {
+      "path": "train/5kmh_run07/inputs.npz",
+      "bytes": 1670295,
+      "sha256": "1ba77aeaa2ce1639be30b9dfcda6f2d7076ad87b6d940e9a5ec94ecdf037e23e"
+    },
+    {
+      "path": "train/5kmh_run07/labels.npz",
+      "bytes": 1118815,
+      "sha256": "8a8d98800927a33a9579a6f9cca146e3fa35ce8a4fc619b34adc5c55867b6516"
+    },
+    {
+      "path": "train/5kmh_run07/lidar.npy",
+      "bytes": 30390128,
+      "sha256": "99213385f74ad16bd018c846d6514017a9ff884767b31dcc7a416b4f9b6c24c5"
+    },
+    {
+      "path": "train/5kmh_run09/anchors.jsonl",
+      "bytes": 3594759,
+      "sha256": "073f9ec9c7b0acd26f8c53385275dbd29006e5dab5dd1654d692dfe2de74e7ad"
+    },
+    {
+      "path": "train/5kmh_run09/camera_rgb.npy",
+      "bytes": 1007677568,
+      "sha256": "3e7b6e79aea9afe7481c956e9cc9c4b2c43b94bc2f7e79b616454e50136ff425"
+    },
+    {
+      "path": "train/5kmh_run09/inputs.npz",
+      "bytes": 1669868,
+      "sha256": "645cd3f9cf91bcb70d87ae362c174536a1f9e6a8bc0f57fc87a06d7e70c1446d"
+    },
+    {
+      "path": "train/5kmh_run09/labels.npz",
+      "bytes": 1118494,
+      "sha256": "fbb7f2e8abdfcf236ec679570c6e25fa68dda092cd2a2f5db15de85da260ae0f"
+    },
+    {
+      "path": "train/5kmh_run09/lidar.npy",
+      "bytes": 30366128,
+      "sha256": "8aaafc67b29c809dedceb2e1ae354f201cc77901590bf449f1689eb06957145c"
+    },
+    {
+      "path": "train/8kmh_run01/anchors.jsonl",
+      "bytes": 2003705,
+      "sha256": "7065b8fca18460e1c8f2d37e7b264edecde18c9fc0bdb8145c5353032738ebf8"
+    },
+    {
+      "path": "train/8kmh_run01/camera_rgb.npy",
+      "bytes": 571060352,
+      "sha256": "890a0ea01bd1a7ccdd0e8368ec6741ac7ee96d9dc3fa2cf2d41c135cc5e99182"
+    },
+    {
+      "path": "train/8kmh_run01/inputs.npz",
+      "bytes": 946957,
+      "sha256": "bc9b7a1dc1a0fd8afc126e6b672a1bf3d691c4302ff932b6b1cfd979a4e03d3f"
+    },
+    {
+      "path": "train/8kmh_run01/labels.npz",
+      "bytes": 619138,
+      "sha256": "e1f2ae0751de38242eb3a4e0e8448b7c66cd46d732687ddf2b29f0e55788a7b6"
+    },
+    {
+      "path": "train/8kmh_run01/lidar.npy",
+      "bytes": 17082128,
+      "sha256": "f995459bb9223e68bd50a77524dbfbd7704b6b6c2c89c0f705d65ee1de2f3d72"
+    },
+    {
+      "path": "train/8kmh_run03/anchors.jsonl",
+      "bytes": 2005404,
+      "sha256": "56dd995a860b9445b22cb9149c8ee5167fa6045dde2ffbbabdbfc6a4359561e1"
+    },
+    {
+      "path": "train/8kmh_run03/camera_rgb.npy",
+      "bytes": 571576448,
+      "sha256": "9c592624d588fada8cbc57072ff546fecf580a1d2e23d48a4bddb8d486d5e0dc"
+    },
+    {
+      "path": "train/8kmh_run03/inputs.npz",
+      "bytes": 947811,
+      "sha256": "ca8f4363fe5a31b73116afa3fda615023897163a206cb903754da8eb9b6d4959"
+    },
+    {
+      "path": "train/8kmh_run03/labels.npz",
+      "bytes": 619893,
+      "sha256": "e381efc25ad43ed7a9895b4841880c50fd5163c2728d69e759f3304c53dc24ee"
+    },
+    {
+      "path": "train/8kmh_run03/lidar.npy",
+      "bytes": 17280128,
+      "sha256": "504eefb4b2bb0ac6e616447abbe247a3b1abcec801a3217b39f1133607c80faa"
+    },
+    {
+      "path": "train/8kmh_run04/anchors.jsonl",
+      "bytes": 2005514,
+      "sha256": "f3f68e9969912710eec936411353bf7ea46b9dc8f0776e8fe87ce9b559c5967a"
+    },
+    {
+      "path": "train/8kmh_run04/camera_rgb.npy",
+      "bytes": 571318400,
+      "sha256": "d8e01a6330a85155cb867c7765217dc4984954d002f68224a4b82f4423999d1e"
+    },
+    {
+      "path": "train/8kmh_run04/inputs.npz",
+      "bytes": 947811,
+      "sha256": "ee0ad306a3bacef0bfbd2a30c467842350d0a443aaedf223dfd51fb0f014d165"
+    },
+    {
+      "path": "train/8kmh_run04/labels.npz",
+      "bytes": 619538,
+      "sha256": "3d2f1ea4ac026e71900337f85570d6d11184054d5c43400d20aad85f54e8a247"
+    },
+    {
+      "path": "train/8kmh_run04/lidar.npy",
+      "bytes": 17250128,
+      "sha256": "c213a83d555f21f73e522abbb95679c85b006dbdc2d4836c70aa89bd78fd1097"
+    },
+    {
+      "path": "train/8kmh_run05/anchors.jsonl",
+      "bytes": 2005399,
+      "sha256": "c25f62958bdbfadaf296ceed12bd78771098768f73af128648809546b7a61f11"
+    },
+    {
+      "path": "train/8kmh_run05/camera_rgb.npy",
+      "bytes": 571318400,
+      "sha256": "d908ce7009eb15038c1bf2227528424b2304cd0e5e433a5462a929d6ab140081"
+    },
+    {
+      "path": "train/8kmh_run05/inputs.npz",
+      "bytes": 947811,
+      "sha256": "5387b846899a33b3be050ac54ad979fc3c8863f403a24d44ca91848714360931"
+    },
+    {
+      "path": "train/8kmh_run05/labels.npz",
+      "bytes": 619495,
+      "sha256": "4051c1c544e3bf02e97f69b6f08885b8ce51ed22ca4fdeb882987a3e6c2d55ff"
+    },
+    {
+      "path": "train/8kmh_run05/lidar.npy",
+      "bytes": 17196128,
+      "sha256": "928077cf580216ead45cb398e3d30aef735b7904a6babfd1dcc932377b95a33e"
+    },
+    {
+      "path": "train/8kmh_run08/anchors.jsonl",
+      "bytes": 2004608,
+      "sha256": "b27d6eb309e235e3aedee8b77aee8261b97d32c6745143a4e88232910f245950"
+    },
+    {
+      "path": "train/8kmh_run08/camera_rgb.npy",
+      "bytes": 571318400,
+      "sha256": "459fc1c96a14eedc98e4e3b3afdc2221a64148d089b5059ca60c736db5da790f"
+    },
+    {
+      "path": "train/8kmh_run08/inputs.npz",
+      "bytes": 947384,
+      "sha256": "840a5f2bd188c8ea6f765a814bd616c1ea3587c3637cc894b4da36d0a22b39b6"
+    },
+    {
+      "path": "train/8kmh_run08/labels.npz",
+      "bytes": 619259,
+      "sha256": "d44b4ac86cc209e0f70dda25cd6df8c8be7441d3c037a51f160735968e76dc94"
+    },
+    {
+      "path": "train/8kmh_run08/lidar.npy",
+      "bytes": 17316128,
+      "sha256": "ff987e097f98a9db594f4f82bc261a0e636d96d2c04f2f686185f9d21811564e"
+    },
+    {
+      "path": "train/8kmh_run10/anchors.jsonl",
+      "bytes": 2006487,
+      "sha256": "ff136d5b283197e68ec3f4f30655ad5cd241e9327cd272cf83ef50051eb77616"
+    },
+    {
+      "path": "train/8kmh_run10/camera_rgb.npy",
+      "bytes": 571576448,
+      "sha256": "ee1fab03aa8bf30c21e06b799c1cc53b955f2f930071356ca0bdde4722ec1813"
+    },
+    {
+      "path": "train/8kmh_run10/inputs.npz",
+      "bytes": 948238,
+      "sha256": "f1dfb319978d333d2c6d33a369d4170337e76eaea5a08e5b30d117ade8913f0f"
+    },
+    {
+      "path": "train/8kmh_run10/labels.npz",
+      "bytes": 619885,
+      "sha256": "a0a1ab36a23cd7c947e252683763cc9249af5402a472e46904929b63a8109385"
+    },
+    {
+      "path": "train/8kmh_run10/lidar.npy",
+      "bytes": 17172128,
+      "sha256": "bb72d41bf7a93d5aa254a398e51cb3fa9e467603a2364b6d1ef91476086603a3"
+    },
+    {
+      "path": "validation/5kmh_run03/anchors.jsonl",
+      "bytes": 3613356,
+      "sha256": "4bd0b43773bd0da41f13ab0596e497ea84ef1a574d9775a72e25b017ff767d49"
+    },
+    {
+      "path": "validation/5kmh_run03/camera_rgb.npy",
+      "bytes": 1007677568,
+      "sha256": "b1a523a14043f5d43b50a7eab3fc28e528e503374a7bfa823b94333e60f59e0e"
+    },
+    {
+      "path": "validation/5kmh_run03/inputs.npz",
+      "bytes": 1669441,
+      "sha256": "b59d95bc2329bb2edd14717f300dfcf795839791bb9fe04c3314f403d3090180"
+    },
+    {
+      "path": "validation/5kmh_run03/labels.npz",
+      "bytes": 1118238,
+      "sha256": "ab0e3f6b4c2ee4a067580196fe05b661852ff7d7992e438c0bacda74c7b65854"
+    },
+    {
+      "path": "validation/5kmh_run03/lidar.npy",
+      "bytes": 30510128,
+      "sha256": "13799b461e9d31c3262c3cd4e474adf8c5eee920c64c69647c8d3460be19586d"
+    },
+    {
+      "path": "validation/5kmh_run06/anchors.jsonl",
+      "bytes": 3614722,
+      "sha256": "0729d9f223947bcfc42e0a12729cb82e0578d80a9ebae462d81d698c384ca94d"
+    },
+    {
+      "path": "validation/5kmh_run06/camera_rgb.npy",
+      "bytes": 1007935616,
+      "sha256": "b9d83cf13b5caa6844ab71d20296046822b8237f347f32b19eb08262cb6a212a"
+    },
+    {
+      "path": "validation/5kmh_run06/inputs.npz",
+      "bytes": 1669868,
+      "sha256": "ee0275a1865a880b676ae70919f19d17988ba98d0ac6cee9d22f9dcf739f163d"
+    },
+    {
+      "path": "validation/5kmh_run06/labels.npz",
+      "bytes": 1118442,
+      "sha256": "13f17e2f9bf184349f5ef635c11b148948dffd5ddbf7ffd07d23d55328c1fa8a"
+    },
+    {
+      "path": "validation/5kmh_run06/lidar.npy",
+      "bytes": 30354128,
+      "sha256": "e241000bf458b4f14062b7cbb79b9560bab561ace60485729c5a50669f17c054"
+    },
+    {
+      "path": "validation/8kmh_run06/anchors.jsonl",
+      "bytes": 2014101,
+      "sha256": "40ebdd4f14018cde1b98263c02a31826bcec43d20d46c99cef9fe9f325bae0db"
+    },
+    {
+      "path": "validation/8kmh_run06/camera_rgb.npy",
+      "bytes": 570802304,
+      "sha256": "5e406451fd2166909c696a3c6b45ef12aefc8541388ee53f0df85528429ecd09"
+    },
+    {
+      "path": "validation/8kmh_run06/inputs.npz",
+      "bytes": 946530,
+      "sha256": "cada14929002cbb1cd94e7b3818fd6f7f5ee0cfb46adbfc111a022e1f1808d6c"
+    },
+    {
+      "path": "validation/8kmh_run06/labels.npz",
+      "bytes": 619080,
+      "sha256": "2498f5a721c60a9d852cf1bd6bbd7c2be947978050859382c0b229332cf0860a"
+    },
+    {
+      "path": "validation/8kmh_run06/lidar.npy",
+      "bytes": 17172128,
+      "sha256": "5acb9b5ac8fa4e7e6f8e629bf2b7cea59b75575e04d037b92593681d937338aa"
+    },
+    {
+      "path": "validation/8kmh_run09/anchors.jsonl",
+      "bytes": 2015681,
+      "sha256": "ace0e3cf1b2c5be0cd3c096406fb7ab829b54ab01c3b32fa12efaf75a07716b0"
+    },
+    {
+      "path": "validation/8kmh_run09/camera_rgb.npy",
+      "bytes": 571318400,
+      "sha256": "d3858582a524615a11214fb5b7704ea9f46a548bacf75a4da4c7a9f2235f74d4"
+    },
+    {
+      "path": "validation/8kmh_run09/inputs.npz",
+      "bytes": 947384,
+      "sha256": "20b25762b31d0a3b3d8e984b08ae429429fa9ca97f943bfe3d83092ba8e4b079"
+    },
+    {
+      "path": "validation/8kmh_run09/labels.npz",
+      "bytes": 619784,
+      "sha256": "03cc350894095a440ac9d676305808718c59b3501fff2fdf7d4f79a91a6a7a31"
+    },
+    {
+      "path": "validation/8kmh_run09/lidar.npy",
+      "bytes": 17088128,
+      "sha256": "185c0bd28ec3dba7d347996fb216a03eede352993306be5b77000490b36fd4e9"
+    }
+  ],
+  "manifest_sha256": "f8ac104391d7a7c483d53aa06fcf058bc06cc6a5a540c6b940d1b4db821f75f5"
+}

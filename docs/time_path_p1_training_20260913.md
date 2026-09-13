@@ -1,8 +1,69 @@
 # 時間基準モデルの初回実データ学習
 
-2026-09-13のユーザー指示で、検証・分割済み20周コーパスを使う本学習を開始する。
-初回はcommand OFF/ONの各10epoch。重みはscratch、seed42、同じ初期tensor・epochごとの提示順。
+2026-09-13のユーザー指示により、検証・分割済み20周コーパスでcommand OFF/ONを各10epoch学習し、完了した。
+重みはscratch、seed42、同じ初期tensor・epochごとの提示順。
 train12周36,726アンカー（支持35,360件）、validation4周12,237アンカーを使い、test4周は学習/モデル選定から隔離する。
+
+## 結果
+
+以下はBF16でのモデル選定結果。各horizonは4周を等重みで平均した位置誤差[m]、ADEは全有効点をまとめたEuclidean平均[m]。
+同一コース・同条件の別周回であり、未知コースへの汎化やAWSIMの追従性能を示す値ではない。
+
+| 入力 | 選択epoch | 0.5秒 | 1秒 | 2秒 | 3秒 | 全点ADE |
+|---|---:|---:|---:|---:|---:|---:|
+| 過去指令OFF | 10 | 0.008856 | 0.012142 | 0.026062 | 0.064843 | 0.020854 |
+| 過去指令ON | 8 | 0.011378 | 0.012836 | 0.026691 | 0.064459 | 0.020981 |
+| 現在実測速度を保つ直線予測 | — | 0.014597 | 0.063372 | 0.282187 | 0.650788 | 0.188899 |
+
+3秒誤差の数値上の最良はONだが、OFFとの差は約0.000384m（0.384mm）。1 seed・4周の比較で優位性を断定しない。
+最終epochを自動採用せず、事前指定したvalidation run-macro 3秒誤差の最小epochを選択した。
+
+### 選択済み重みのfloat32再評価
+
+BF16で選んだOFF epoch10 / ON epoch8の重みを固定し、同じvalidation全件をfloat32で再評価した。
+追加学習、epochの選び直し、test split評価はしていない。TF32は無効。
+
+| 入力 | 3秒先run-macro誤差[m] | 全点ADE[m] |
+|---|---:|---:|
+| 過去指令OFF | 0.063942 | 0.019848 |
+| 過去指令ON | 0.074370 | 0.025027 |
+
+float32ではOFFが小さい。**最初のruntime/shadow接続候補はOFF**とする。
+根拠は、この設定での誤差と、過去送出指令への入力依存が少ないこと。実走行での優位性は未検証。
+ONはBF16からfloat32への変更で3秒誤差が約0.00991m増えたため、精度設定を省略して両者を同一結果として扱わない。
+当初のBF16選定結果`comparison.json`は保全し、再評価は別の[float32結果](evidence/time_path_p1_training_20260913/float32/summary.json)へ保存した。
+
+### 母数・検証
+
+- 各armの更新11,480回、提示367,260件、支持教師353,600件。各epochの入力欠損158件と、入力有効だが教師支持なし1,208件も提示母数に残した。
+- 初期tensor SHA、全10epochの提示順SHA、学習設定・更新数・支持数がOFF/ONで一致。config差は`use_command_history`だけ。
+- validation母数12,237件、各horizonの教師支持11,822件、誤差計算可能11,780件（96.2654%）。4/4周に支持あり。
+- validation入力欠損45件、入力有効時の不正予測0件、不正な有効教師0件。定速baselineとの誤差計算対象も同じ11,780件。
+- `accepted_*`はoffline選択flagに基づく値で、Safety Supervisorの採用率や実走行安全性を表さない。
+- 両方のbest checkpointをCUDAで再ロードし、全validation予測が保存epochと完全一致した。
+- 学習・各epoch検証・best再読込検証を含む時間はOFF 5,882.51秒、ON 5,833.27秒、合計約195.3分。
+- report CLIが完了epoch数、有限予算、teacher identity、選択epoch、保存/再読込metricsを再照合。最終のWSL `pytest -q`は **2,001 passed / 4 skipped / 63 warnings**（79.28秒）。
+
+![検証誤差の推移](evidence/time_path_p1_training_20260913/validation_curves.png)
+
+小さい証跡は[比較結果](evidence/time_path_p1_training_20260913/comparison.json)、
+[hashと母数の照合結果](evidence/time_path_p1_training_20260913/bf16_summary.json)、
+[全体テストログ](evidence/time_path_p1_training_20260913/full_de164a5.log)に保存した。
+WSLから複製した22ファイル・567,634 bytesは、[転送元一覧](evidence/time_path_p1_training_20260913/source_files.json)のSHA-256とサイズに全件一致した（[検証結果](evidence/time_path_p1_training_20260913/transfer_verification.json)）。
+モデル重み・cache・raw bagをGitへ追加していない。
+
+## 保存した重み
+
+保存先はnative WSLの`/home/thistle/e2e_autonomous/runs/time_p1_20laps_20260913/`。
+各armに`best.pt`、再開用`last.pt`、初期`initial.pt`、全epochのmetrics/予測、identity/plan/historyがある。
+
+| ファイル（上記保存先から相対） | SHA-256 |
+|---|---|
+| `command_off/best.pt` | `e857db4b67d3d9f6a77c2865cfc1fa53e9903e7a1d2d8a371407fbe009a1a44f` |
+| `command_on/best.pt` | `e1ab142e7dbbf5593cb01778e2da94f1fe5ba80539d40a62ad38cb2dfd0ca8a4` |
+
+teacher manifestのcanonical JSONによるidentity SHAは`09d0073d1e8216aae7824efefb9094147d658ff746ae89911b5ace531244e021`。転送元一覧のファイルバイト列のSHAとは区別する。
+両armの初期tensor SHAは`9ee60335ab543451143c6a3005d026753713724e189c4df5058b0a1d9cdf6d9a`。
 
 ## 学習条件
 
@@ -58,6 +119,20 @@ bash tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 MKL_NU
 中断時は同じコマンドに`--resume`を付ける。既存の予算・config・source identityが違えば拒否する。
 各armの`status.json`、`history.json`、`last.pt`、`best.pt`、`best_validation.json`と、両arm終了後の`comparison.json`を確認する。
 
+完了したrunの集計と、選択済みbest重みだけのprecision再評価は次のコマンドで再現できる。
+出力名は未使用のものを指定する。モデル再学習・epoch再選択・test split評価は行わない。
+
+```bash
+bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
+  tools/report_time_training_run.py --run ../runs/time_p1_20laps_20260913 \
+  --output ../runs/time_p1_training_evidence_20260913/report
+bash tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 \
+  .venv/bin/python -u tools/evaluate_time_corpus_precision.py \
+  --run ../runs/time_p1_20laps_20260913 --cache ../datasets/cache/time_training_20260913_v2 \
+  --output ../runs/time_p1_training_evidence_20260913/float32 \
+  --precision float32 --batch-size 32 --workers 4
+```
+
 ## 事前GPU確認
 
 WSLのPyTorch2.7.1+cu128、RTX4080 16GB。モデル12,251,426パラメータ。
@@ -77,7 +152,7 @@ WSLのPyTorch2.7.1+cu128、RTX4080 16GB。モデル12,251,426パラメータ。
 
 実行ログは`/home/thistle/e2e_autonomous/runs/time_p1_training_evidence_20260913/`、
 学習結果は`/home/thistle/e2e_autonomous/runs/time_p1_20laps_20260913/`。
-学習完了後の最良checkpoint・比較値は追記する。
+小さい結果証跡はWindows正本の`docs/evidence/time_path_p1_training_20260913/`にも保存した。
 
 ## 学習中に確認した旧V4データ
 
@@ -94,6 +169,11 @@ WSLのPyTorch2.7.1+cu128、RTX4080 16GB。モデル12,251,426パラメータ。
 
 ## 実行テスト先
 
-現在の実データ学習はnative WSLで継続する。runtime/AWSIMの実行テストを行う場合の指定先は、`graneple@192.168.3.10` とする。今回のTimePath checkpointは既存V3 loaderと互換ではないため、専用の30点XY loader、因果4/4/10履歴、receipt＋50ms freeze契約が必要になる。
+実データ学習・offline評価はnative WSLで実施した。ユーザー指定によりruntime/AWSIM実行テスト先は、`graneple@192.168.3.10` とする。今回のTimePath checkpointは既存V3 loaderと互換ではないため、専用の30点XY loader、因果4/4/10履歴、receipt＋50ms freeze契約が必要になる。
 
-runtime/shadowへ進む前に、`base_link`からrear axleへの校正済み変換も確認する。これらの条件が揃った実行テストはまだ実施していない。`192.168.3.10:22`への初回SSH BatchMode接続確認はConnectTimeout 8秒でタイムアウトしており、現在の接続状態を示すものではない。SSH先でのruntime操作やAWSIM試験を完了済みとは扱わない。
+runtime/shadowへ進む前に、`base_link`からrear axleへの校正済み変換も確認する。これらの条件が揃った実行テストはまだ実施していない。
+
+初回SSHはConnectTimeout 8秒でタイムアウトしたが、学習完了後の再確認では接続成功し、hostname=`graneple-local`、Ubuntu 22.04系/kernel `6.8.0-138-generic`を確認した。
+実際のcheckoutは`/home/graneple/git/autononous_ai`（綴りに注意）、branch=`agent/gate2-v30-current-state`。
+既存のAGENTS/docs/submodule変更があるdirty worktreeを保全し、コピー・変更・起動・pushはしていない。
+読み取り確認時点ではAWSIM/ROS/RViz/学習・推論プロセスは見つからなかった。接続確認をruntime試験の完了とは扱わない。

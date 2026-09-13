@@ -1,0 +1,47 @@
+{
+  "format": "time_corpus_training_identity_v1",
+  "cache_sha256": "f8ac104391d7a7c483d53aa06fcf058bc06cc6a5a540c6b940d1b4db821f75f5",
+  "contract": {
+    "format": "time_sqlite_corpus_v1",
+    "dt_s": 0.1,
+    "points": 30,
+    "frame": "base_link_at_observation",
+    "freeze_delay_receipt_ns": 50000000,
+    "availability": "bag_receipt_proxy_not_measured_preprocessing_completion",
+    "config": {
+      "image_shape": [
+        3,
+        224,
+        384
+      ],
+      "lidar_shape": [
+        2,
+        750
+      ],
+      "ego_features": 4,
+      "camera_history_length": 4,
+      "lidar_history_length": 4,
+      "ego_history_length": 10,
+      "command_history_length": 10,
+      "tolerance_ns": 50000000,
+      "teacher_tolerance_ms": 50.0,
+      "lidar_min_range_m": 0.0,
+      "lidar_max_range_m": 25.0,
+      "lidar_angle_min_rad": -3.141592653589793,
+      "capture_clock": "sim",
+      "available_clock": "bag_receipt",
+      "pose_world_frame": "map",
+      "pose_body_frame": "base_link"
+    },
+    "split_sha256": "0339b8cadc704b5b418279fd3c058008060fecd4268b30d7e3e6235aabab80b0",
+    "pilot_only": null,
+    "stop_probability": null,
+    "runtime_ready": false
+  },
+  "train_anchor_order_sha256": "af9371335fa103940ac8398ba8226c5f3de9387e4f651bf2334c03637a3cc949",
+  "validation_anchor_order_sha256": "b76092f23684b709dc14a03fe864f43064f2fe0a49763cd6589daf3aa633a272",
+  "train_anchor_count": 36726,
+  "validation_anchor_count": 12237,
+  "source_code_sha256": "d46352d33de15ed0b5dd2ff3acd1bc8b8ec3259b809010fb8fd3a835af79c0c2",
+  "manifest_sha256": "09d0073d1e8216aae7824efefb9094147d658ff746ae89911b5ace531244e021"
+}

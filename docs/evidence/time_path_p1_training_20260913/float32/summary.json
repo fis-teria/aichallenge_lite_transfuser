@@ -1,0 +1,34 @@
+{
+  "status": "COMPLETE",
+  "arms": {
+    "command_off": {
+      "source_best_checkpoint": "/home/thistle/e2e_autonomous/runs/time_p1_20laps_20260913/command_off/best.pt",
+      "source_best_sha256": "e857db4b67d3d9f6a77c2865cfc1fa53e9903e7a1d2d8a371407fbe009a1a44f",
+      "selected_epoch": 10,
+      "selection_precision": "bf16",
+      "reevaluation_precision": "float32",
+      "metrics_path": "/home/thistle/e2e_autonomous/runs/time_p1_training_evidence_20260913/float32/command_off_metrics.json",
+      "predictions_path": "/home/thistle/e2e_autonomous/runs/time_p1_training_evidence_20260913/float32/command_off_predictions.npy",
+      "run_macro_3s_raw_error_m": 0.06394194532185793,
+      "all_point_ade_m": 0.019848035648465157
+    },
+    "command_on": {
+      "source_best_checkpoint": "/home/thistle/e2e_autonomous/runs/time_p1_20laps_20260913/command_on/best.pt",
+      "source_best_sha256": "e1ab142e7dbbf5593cb01778e2da94f1fe5ba80539d40a62ad38cb2dfd0ca8a4",
+      "selected_epoch": 8,
+      "selection_precision": "bf16",
+      "reevaluation_precision": "float32",
+      "metrics_path": "/home/thistle/e2e_autonomous/runs/time_p1_training_evidence_20260913/float32/command_on_metrics.json",
+      "predictions_path": "/home/thistle/e2e_autonomous/runs/time_p1_training_evidence_20260913/float32/command_on_predictions.npy",
+      "run_macro_3s_raw_error_m": 0.07436974067240953,
+      "all_point_ade_m": 0.025026952847838402
+    }
+  },
+  "cache_manifest_sha256": "f8ac104391d7a7c483d53aa06fcf058bc06cc6a5a540c6b940d1b4db821f75f5",
+  "teacher_manifest_sha256": "09d0073d1e8216aae7824efefb9094147d658ff746ae89911b5ace531244e021",
+  "scope": "offline_fixed_condition_run_holdout_precision_reevaluation",
+  "test_evaluated": false,
+  "runtime_ready": false,
+  "epoch_reselection": false,
+  "retraining": false
+}
