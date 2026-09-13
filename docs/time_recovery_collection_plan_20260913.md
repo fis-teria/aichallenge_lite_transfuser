@@ -115,7 +115,7 @@ WSLの正本checkoutで以下を実施する（入力・出力はWSL native file
 
 ```bash
 bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q
-bash tools/with_wsl_training_lock.sh .venv/bin/python tools/generate_time_recovery_collection.py \
+bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python tools/generate_time_recovery_collection.py \
   --inputs /home/thistle/e2e_autonomous/runs/time_recovery_collection_20260913/inputs \
   --output /home/thistle/e2e_autonomous/runs/time_recovery_collection_20260913/references
 ```
@@ -181,3 +181,9 @@ WSL転送後も既存データやremote bagを勝手に削除しない。
 専用C++ buildは成功。WSLの全pytestと参照生成、停止状態のROS接続、pilotの順で確認中。
 AWSIM自身のlap上限は2に設定するが、収集停止条件は最初の検証済み1周+4秒とする。
 1周でAWSIM自体が終了して将来poseが欠けるのを避け、collectorの30分上限も維持する。
+
+WSL full pytest: 2,209 passed / 4 skipped / 63 warnings（95.38s、598488e）。
+左右0.20mの参照生成と新規entrypoint 4本のPython構文検証が成功。
+左右とも基準s=233.233～257.233mの同一区間を選択。復帰区間はs=247.233～257.233m。
+left020-r01は公式start未要求・走行前に終了。sidecarのPYTHONPATH上書きによりros2cli
+metadataを見つけられなかった。ROS環境の既存PYTHONPATHへsource/srcを追加する形へ修正。

@@ -115,7 +115,7 @@ def main() -> None:
         compose = ['docker','compose','-p',args.run_id]
         inside = '/capture/'+args.run_id
         shell = ('source /aichallenge/workspace/install/setup.bash && source /capture/cpp_install/setup.bash && '
-            'export PYTHONPATH=/capture/source/src && exec '+shlex.join(['python3','/capture/source/tools/run_time_recovery_nodes.py',
+            'export PYTHONPATH=/capture/source/src:${PYTHONPATH:-} && exec '+shlex.join(['python3','/capture/source/tools/run_time_recovery_nodes.py',
             '--output',inside,'--reference-root','/capture/references','--side',args.side,'--run-id',args.run_id]))
         probe_cmd = ['docker','run','--rm','--name',args.run_id+'-nodes','--network','host','-e','ROS_DOMAIN_ID=1',
             '-e','CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml','-v',str(runtime_dds)+':/opt/autoware/cyclonedds.xml:ro',
