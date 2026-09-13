@@ -1,0 +1,1951 @@
+{
+  "status": "COMPLETE_OFFLINE_EVALUATION",
+  "source_commit": "8044aea4b5a655c9986bfd35d9dc6182c823e980",
+  "methods": [
+    "raw",
+    "mean3",
+    "mean5",
+    "d2_lambda1",
+    "d2_lambda10",
+    "d2_lambda100"
+  ],
+  "trials": {
+    "baseline": {
+      "run_id": "codex-time-recovery-model-base01",
+      "source_sha256": {
+        "host_result.json": "66e3d833738babbb82bae617d505dc749a6d3c0b5df22daae8075b4c25af92da",
+        "control.jsonl": "4ab11d74cfdb79defcb526117bb2238e5d3a9185450aeced66da3162108c0cec",
+        "inference.jsonl": "ade2e2363434a89cce50bff2c27b2612b794ff055dc46622e747e111ebc9f971",
+        "trial_config.json": "d1b0a0e24836af77924dd6f9119124cb02681e9d850a75d2690da22101a9d54c"
+      },
+      "checkpoint_sha256": "e857db4b67d3d9f6a77c2865cfc1fa53e9903e7a1d2d8a371407fbe009a1a44f",
+      "active_commands": 2016,
+      "eligible_commands": 1958,
+      "unavailable_commands": 58,
+      "used_unique_plans": 873,
+      "launch_eligible_commands": 104,
+      "raw_control_replay": {
+        "status": "PASS",
+        "matched_commands": 1958,
+        "unavailable_commands": 58,
+        "maximum_absolute_error": 8.881784197001252e-16,
+        "tolerance": 1e-09,
+        "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+        "post_control_rejections": {
+          "MOTION_YAW_RATE_INVALID": 1,
+          "STOPPING_SWEEP_OCCUPIED": 1
+        },
+        "actuator_mapping_matched": 1956,
+        "steering_response_matched": 1956,
+        "vehicle_motion_matched": 1956,
+        "scan_guard_decisions_replayed": false
+      },
+      "methods": {
+        "raw": {
+          "full_recorded_interval": {
+            "commands": 1958,
+            "pp_pass": 1956,
+            "reasons": {
+              "PP_OK": 1956,
+              "TIME_PATH_INITIAL_DIRECTION": 2
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 1958,
+              "min": 0.0009975862987113837,
+              "mean": 0.22828458526269504,
+              "median": 0.25310608296069137,
+              "p95": 0.29848459331024746,
+              "max": 0.2999974059104569
+            },
+            "selected_steer_rad": {
+              "count": 1956,
+              "min": -0.29930687723519395,
+              "mean": -0.0008547590498392595,
+              "median": 0.001616323095553498,
+              "p95": 0.18969201935422425,
+              "max": 0.2096511851595982
+            }
+          },
+          "launch_first_5p2s": {
+            "commands": 104,
+            "pp_pass": 104,
+            "reasons": {
+              "PP_OK": 104
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 104,
+              "min": 0.0009975862987113837,
+              "mean": 0.2144328729974864,
+              "median": 0.2422115957365509,
+              "p95": 0.2875708103795243,
+              "max": 0.29955165679208945
+            },
+            "selected_steer_rad": {
+              "count": 104,
+              "min": -0.29930687723519395,
+              "mean": -0.05098155916420968,
+              "median": -0.035807583253716455,
+              "p95": 0.06628200385243296,
+              "max": 0.07015744690731848
+            }
+          },
+          "used_unique_predictions": {
+            "paths": 873,
+            "same_time_point_displacement_m": {
+              "count": 26190,
+              "min": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "p95": 0.0,
+              "max": 0.0
+            },
+            "per_path_max_displacement_m": {
+              "count": 873,
+              "min": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "p95": 0.0,
+              "max": 0.0
+            },
+            "same_time_lateral_displacement_abs_m": {
+              "count": 26190,
+              "min": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "p95": 0.0,
+              "max": 0.0
+            },
+            "endpoint_max_displacement_m": 0.0,
+            "first_0p3s_implied_speed_change_abs_mps": {
+              "count": 873,
+              "min": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "p95": 0.0,
+              "max": 0.0
+            },
+            "raw_discrete_acceleration_rms_mps2": {
+              "count": 873,
+              "min": 0.05960189488607289,
+              "mean": 0.18964283666814621,
+              "median": 0.15281474127905356,
+              "p95": 0.36870921140064883,
+              "max": 1.2440385094671973
+            },
+            "changed_discrete_acceleration_rms_mps2": {
+              "count": 873,
+              "min": 0.05960189488607289,
+              "mean": 0.18964283666814621,
+              "median": 0.15281474127905356,
+              "p95": 0.36870921140064883,
+              "max": 1.2440385094671973
+            }
+          }
+        },
+        "mean3": {
+          "full_recorded_interval": {
+            "commands": 1958,
+            "pp_pass": 1956,
+            "reasons": {
+              "PP_OK": 1956,
+              "TIME_PATH_INITIAL_DIRECTION": 2
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 1958,
+              "min": 0.0006972755650858642,
+              "mean": 0.22809934541148844,
+              "median": 0.25298526838445645,
+              "p95": 0.29850719999590436,
+              "max": 0.29999731099260507
+            },
+            "selected_steer_rad": {
+              "count": 1956,
+              "min": -0.2996307209086435,
+              "mean": -0.0008457140482572565,
+              "median": 0.0016437949887266163,
+              "p95": 0.19015958860640766,
+              "max": 0.21016681241613921
+            }
+          },
+          "launch_first_5p2s": {
+            "commands": 104,
+            "pp_pass": 104,
+            "reasons": {
+              "PP_OK": 104
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 104,
+              "min": 0.0006972755650858642,
+              "mean": 0.21419400745415046,
+              "median": 0.24195072085836705,
+              "p95": 0.287623387124281,
+              "max": 0.2996411967808766
+            },
+            "selected_steer_rad": {
+              "count": 104,
+              "min": -0.2996307209086435,
+              "mean": -0.05111822143455749,
+              "median": -0.03577368550412685,
+              "p95": 0.0665412109444481,
+              "max": 0.07045788385622566
+            }
+          },
+          "used_unique_predictions": {
+            "paths": 873,
+            "same_time_point_displacement_m": {
+              "count": 26190,
+              "min": 0.0,
+              "mean": 0.0004896364344805119,
+              "median": 0.0003305638933821357,
+              "p95": 0.0012323578090693908,
+              "max": 0.020830347637491566
+            },
+            "per_path_max_displacement_m": {
+              "count": 873,
+              "min": 0.0004348633364467469,
+              "mean": 0.002015830382264121,
+              "median": 0.0017358200970045306,
+              "p95": 0.004234309204366415,
+              "max": 0.020830347637491566
+            },
+            "same_time_lateral_displacement_abs_m": {
+              "count": 26190,
+              "min": 0.0,
+              "mean": 0.0003825495070998833,
+              "median": 0.00024280510842800162,
+              "p95": 0.00108971074223515,
+              "max": 0.020147691170374557
+            },
+            "endpoint_max_displacement_m": 0.0,
+            "first_0p3s_implied_speed_change_abs_mps": {
+              "count": 873,
+              "min": 5.689946315889927e-06,
+              "mean": 0.001556702868358915,
+              "median": 0.0013121962295503664,
+              "p95": 0.0028173889892070037,
+              "max": 0.022460973121549488
+            },
+            "raw_discrete_acceleration_rms_mps2": {
+              "count": 873,
+              "min": 0.05960189488607289,
+              "mean": 0.18964283666814621,
+              "median": 0.15281474127905356,
+              "p95": 0.36870921140064883,
+              "max": 1.2440385094671973
+            },
+            "changed_discrete_acceleration_rms_mps2": {
+              "count": 873,
+              "min": 0.04184675054332466,
+              "mean": 0.1501767302532368,
+              "median": 0.10579765502062116,
+              "p95": 0.31646291829699896,
+              "max": 0.7818649243892195
+            }
+          }
+        },
+        "mean5": {
+          "full_recorded_interval": {
+            "commands": 1958,
+            "pp_pass": 1956,
+            "reasons": {
+              "PP_OK": 1956,
+              "TIME_PATH_INITIAL_DIRECTION": 2
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 1958,
+              "min": 9.722252336480386e-05,
+              "mean": 0.22772945647072246,
+              "median": 0.2526220576195516,
+              "p95": 0.29855119075248193,
+              "max": 0.29999790195239856
+            },
+            "selected_steer_rad": {
+              "count": 1956,
+              "min": -0.29990277747663524,
+              "mean": -0.0008260240620397996,
+              "median": 0.0016985905730477618,
+              "p95": 0.19109700603352425,
+              "max": 0.21120173704843634
+            }
+          },
+          "launch_first_5p2s": {
+            "commands": 104,
+            "pp_pass": 104,
+            "reasons": {
+              "PP_OK": 104
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 104,
+              "min": 9.722252336480386e-05,
+              "mean": 0.21371579260867155,
+              "median": 0.24137405321572902,
+              "p95": 0.2877293470300056,
+              "max": 0.29982145908923463
+            },
+            "selected_steer_rad": {
+              "count": 104,
+              "min": -0.29990277747663524,
+              "mean": -0.05135740801174411,
+              "median": -0.03570199913203669,
+              "p95": 0.06706078161326604,
+              "max": 0.07106264279894582
+            }
+          },
+          "used_unique_predictions": {
+            "paths": 873,
+            "same_time_point_displacement_m": {
+              "count": 26190,
+              "min": 0.0,
+              "mean": 0.0012775386285263858,
+              "median": 0.0009058917296757314,
+              "p95": 0.0033130098557630715,
+              "max": 0.024359614061492237
+            },
+            "per_path_max_displacement_m": {
+              "count": 873,
+              "min": 0.0008335081847152664,
+              "mean": 0.00281709136706214,
+              "median": 0.0024436439589857408,
+              "p95": 0.005008465577783863,
+              "max": 0.024359614061492237
+            },
+            "same_time_lateral_displacement_abs_m": {
+              "count": 26190,
+              "min": 0.0,
+              "mean": 0.0010282465216614992,
+              "median": 0.0006613388657569913,
+              "p95": 0.0030091086775065317,
+              "max": 0.022490897774696345
+            },
+            "endpoint_max_displacement_m": 0.0,
+            "first_0p3s_implied_speed_change_abs_mps": {
+              "count": 873,
+              "min": 7.345737693453813e-06,
+              "mean": 0.002858856275984163,
+              "median": 0.002117558901075123,
+              "p95": 0.0058215448243073885,
+              "max": 0.04042739792181793
+            },
+            "raw_discrete_acceleration_rms_mps2": {
+              "count": 873,
+              "min": 0.05960189488607289,
+              "mean": 0.18964283666814621,
+              "median": 0.15281474127905356,
+              "p95": 0.36870921140064883,
+              "max": 1.2440385094671973
+            },
+            "changed_discrete_acceleration_rms_mps2": {
+              "count": 873,
+              "min": 0.040572447826106306,
+              "mean": 0.15525513914423544,
+              "median": 0.11141627409985437,
+              "p95": 0.31816166990418315,
+              "max": 0.9294511983829568
+            }
+          }
+        },
+        "d2_lambda1": {
+          "full_recorded_interval": {
+            "commands": 1958,
+            "pp_pass": 1956,
+            "reasons": {
+              "PP_OK": 1956,
+              "TIME_PATH_INITIAL_DIRECTION": 2
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 1958,
+              "min": 0.0010002945118313677,
+              "mean": 0.22828492180592952,
+              "median": 0.2530977372434291,
+              "p95": 0.29848767767854534,
+              "max": 0.29999691437033976
+            },
+            "selected_steer_rad": {
+              "count": 1956,
+              "min": -0.29929978665002727,
+              "mean": -0.0008579965216430837,
+              "median": 0.0016170589429823873,
+              "p95": 0.18967898081872098,
+              "max": 0.20963018316567625
+            }
+          },
+          "launch_first_5p2s": {
+            "commands": 104,
+            "pp_pass": 104,
+            "reasons": {
+              "PP_OK": 104
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 104,
+              "min": 0.0010002945118313677,
+              "mean": 0.21443754841931087,
+              "median": 0.24222471293261566,
+              "p95": 0.28756646233460065,
+              "max": 0.29954531116894617
+            },
+            "selected_steer_rad": {
+              "count": 104,
+              "min": -0.29929978665002727,
+              "mean": -0.05100244623586818,
+              "median": -0.035827596514795654,
+              "p95": 0.06627549761427014,
+              "max": 0.0701364636691493
+            }
+          },
+          "used_unique_predictions": {
+            "paths": 873,
+            "same_time_point_displacement_m": {
+              "count": 26190,
+              "min": 0.0,
+              "mean": 0.0002539290733280351,
+              "median": 6.183030292249007e-05,
+              "p95": 0.0011068797138880798,
+              "max": 0.024389050574164736
+            },
+            "per_path_max_displacement_m": {
+              "count": 873,
+              "min": 0.0003802065772867697,
+              "mean": 0.002353862319744307,
+              "median": 0.00203197090476767,
+              "p95": 0.005042973138541365,
+              "max": 0.024389050574164736
+            },
+            "same_time_lateral_displacement_abs_m": {
+              "count": 26190,
+              "min": 0.0,
+              "mean": 0.00014330697924174967,
+              "median": 2.220698542974419e-05,
+              "p95": 0.0006374106754666531,
+              "max": 0.023690572207859438
+            },
+            "endpoint_max_displacement_m": 0.0,
+            "first_0p3s_implied_speed_change_abs_mps": {
+              "count": 873,
+              "min": 4.0174719662111613e-07,
+              "mean": 0.001953645230721934,
+              "median": 0.00174955567881252,
+              "p95": 0.003148213485461903,
+              "max": 0.030179206891844418
+            },
+            "raw_discrete_acceleration_rms_mps2": {
+              "count": 873,
+              "min": 0.05960189488607289,
+              "mean": 0.18964283666814621,
+              "median": 0.15281474127905356,
+              "p95": 0.36870921140064883,
+              "max": 1.2440385094671973
+            },
+            "changed_discrete_acceleration_rms_mps2": {
+              "count": 873,
+              "min": 0.038657191732900435,
+              "mean": 0.1441391258339323,
+              "median": 0.09961507952078269,
+              "p95": 0.31395795619509903,
+              "max": 0.693783024827446
+            }
+          }
+        },
+        "d2_lambda10": {
+          "full_recorded_interval": {
+            "commands": 1958,
+            "pp_pass": 1956,
+            "reasons": {
+              "PP_OK": 1956,
+              "TIME_PATH_INITIAL_DIRECTION": 2
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 1958,
+              "min": 0.00061752144911148,
+              "mean": 0.22832084292538674,
+              "median": 0.253042336000307,
+              "p95": 0.29852298160124235,
+              "max": 0.29999702898098773
+            },
+            "selected_steer_rad": {
+              "count": 1956,
+              "min": -0.29952465796094035,
+              "mean": -0.0009030097723759465,
+              "median": 0.0015961388215858358,
+              "p95": 0.18940145209113637,
+              "max": 0.20929474058144656
+            }
+          },
+          "launch_first_5p2s": {
+            "commands": 104,
+            "pp_pass": 104,
+            "reasons": {
+              "PP_OK": 104
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 104,
+              "min": 0.00061752144911148,
+              "mean": 0.2144348277983054,
+              "median": 0.24237671134753502,
+              "p95": 0.28751030646861075,
+              "max": 0.2994638173144978
+            },
+            "selected_steer_rad": {
+              "count": 104,
+              "min": -0.29952465796094035,
+              "mean": -0.05129446442814846,
+              "median": -0.03599726934414489,
+              "p95": 0.06616918212198146,
+              "max": 0.06991281948973875
+            }
+          },
+          "used_unique_predictions": {
+            "paths": 873,
+            "same_time_point_displacement_m": {
+              "count": 26190,
+              "min": 0.0,
+              "mean": 0.0008595338320680854,
+              "median": 0.0004709713212290178,
+              "p95": 0.0028765272842770796,
+              "max": 0.045401153770806335
+            },
+            "per_path_max_displacement_m": {
+              "count": 873,
+              "min": 0.0010332369521911708,
+              "mean": 0.003931416823039057,
+              "median": 0.003435489630596397,
+              "p95": 0.007970758669228641,
+              "max": 0.045401153770806335
+            },
+            "same_time_lateral_displacement_abs_m": {
+              "count": 26190,
+              "min": 0.0,
+              "mean": 0.0005459388785421046,
+              "median": 0.0002117386695072959,
+              "p95": 0.002175478873468467,
+              "max": 0.04367058595836952
+            },
+            "endpoint_max_displacement_m": 0.0,
+            "first_0p3s_implied_speed_change_abs_mps": {
+              "count": 873,
+              "min": 6.861588422557574e-06,
+              "mean": 0.0024744165957472568,
+              "median": 0.0011899426364359034,
+              "p95": 0.006945189726752597,
+              "max": 0.06340943369735119
+            },
+            "raw_discrete_acceleration_rms_mps2": {
+              "count": 873,
+              "min": 0.05960189488607289,
+              "mean": 0.18964283666814621,
+              "median": 0.15281474127905356,
+              "p95": 0.36870921140064883,
+              "max": 1.2440385094671973
+            },
+            "changed_discrete_acceleration_rms_mps2": {
+              "count": 873,
+              "min": 0.028987167276479077,
+              "mean": 0.12680235928213773,
+              "median": 0.08528074140615706,
+              "p95": 0.2963487824164798,
+              "max": 0.5018406818907092
+            }
+          }
+        },
+        "d2_lambda100": {
+          "full_recorded_interval": {
+            "commands": 1958,
+            "pp_pass": 1957,
+            "reasons": {
+              "PP_OK": 1957,
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 1
+            },
+            "gained_pp_pass": 2,
+            "lost_pp_pass": 1,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 1958,
+              "min": -0.0015420739816828233,
+              "mean": 0.22831572802079833,
+              "median": 0.2527725694302413,
+              "p95": 0.29865023457027323,
+              "max": 0.29999472692400475
+            },
+            "selected_steer_rad": {
+              "count": 1957,
+              "min": -0.2996341853497677,
+              "mean": -0.0010574034642472962,
+              "median": 0.00161760934618846,
+              "p95": 0.18813853364185404,
+              "max": 0.2074074993893121
+            }
+          },
+          "launch_first_5p2s": {
+            "commands": 104,
+            "pp_pass": 103,
+            "reasons": {
+              "PP_OK": 103,
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 1
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 1,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 104,
+              "min": -0.0015420739816828233,
+              "mean": 0.2140834784165513,
+              "median": 0.24280696919840222,
+              "p95": 0.2874788190512044,
+              "max": 0.2994080593953413
+            },
+            "selected_steer_rad": {
+              "count": 103,
+              "min": -0.2996341853497677,
+              "mean": -0.04924662688419526,
+              "median": -0.031898245017378715,
+              "p95": 0.06560548343004673,
+              "max": 0.06921823975075722
+            }
+          },
+          "used_unique_predictions": {
+            "paths": 873,
+            "same_time_point_displacement_m": {
+              "count": 26190,
+              "min": 0.0,
+              "mean": 0.0031023638256352792,
+              "median": 0.002168994192051121,
+              "p95": 0.008897990979476682,
+              "max": 0.06072206942749992
+            },
+            "per_path_max_displacement_m": {
+              "count": 873,
+              "min": 0.0023523771747839513,
+              "mean": 0.007284191457169002,
+              "median": 0.005519759160967497,
+              "p95": 0.012667597664171675,
+              "max": 0.06072206942749992
+            },
+            "same_time_lateral_displacement_abs_m": {
+              "count": 26190,
+              "min": 0.0,
+              "mean": 0.0022332438723653555,
+              "median": 0.0012456740208500526,
+              "p95": 0.008054471987648033,
+              "max": 0.056823143647931784
+            },
+            "endpoint_max_displacement_m": 0.0,
+            "first_0p3s_implied_speed_change_abs_mps": {
+              "count": 873,
+              "min": 2.5674826411581364e-06,
+              "mean": 0.005957359584492395,
+              "median": 0.001983720760287744,
+              "p95": 0.01369740143289495,
+              "max": 0.1553466229431198
+            },
+            "raw_discrete_acceleration_rms_mps2": {
+              "count": 873,
+              "min": 0.05960189488607289,
+              "mean": 0.18964283666814621,
+              "median": 0.15281474127905356,
+              "p95": 0.36870921140064883,
+              "max": 1.2440385094671973
+            },
+            "changed_discrete_acceleration_rms_mps2": {
+              "count": 873,
+              "min": 0.019556204961675736,
+              "mean": 0.11216786715310365,
+              "median": 0.07394441952640299,
+              "p95": 0.2746596407729301,
+              "max": 0.3741865173550196
+            }
+          }
+        }
+      },
+      "scope": "paired counterfactual geometry/PP at recorded poses, not actuator/scan replay or closed loop"
+    },
+    "candidate": {
+      "run_id": "codex-time-recovery-model-candidate01",
+      "source_sha256": {
+        "host_result.json": "9eb1368e1a2990380519e2aa98df46d027c68fcc062e4b63116a6e678f4bfeed",
+        "control.jsonl": "6d9c5ad499dd09f85d9e37c78ae5c65643b20108648925fe602d47a12d075e28",
+        "inference.jsonl": "4e242f1e1a3be01d3021081cfb29b156cdf530d298a2628ad86eb5f421d48393",
+        "trial_config.json": "ddcc17f1a31395e3fdce345c230df5f6d212bcd2ffd955a45ee10dbef459111c"
+      },
+      "checkpoint_sha256": "c2fdb6fd1daf525524fe44d3f793d84b482760aa1f9f1fa84d5315222ab9fbe0",
+      "active_commands": 103,
+      "eligible_commands": 103,
+      "unavailable_commands": 0,
+      "used_unique_plans": 49,
+      "launch_eligible_commands": 103,
+      "raw_control_replay": {
+        "status": "PASS",
+        "matched_commands": 103,
+        "unavailable_commands": 0,
+        "maximum_absolute_error": 0.0,
+        "tolerance": 1e-09,
+        "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+        "post_control_rejections": {},
+        "actuator_mapping_matched": 0,
+        "steering_response_matched": 0,
+        "vehicle_motion_matched": 0,
+        "scan_guard_decisions_replayed": false
+      },
+      "methods": {
+        "raw": {
+          "full_recorded_interval": {
+            "commands": 103,
+            "pp_pass": 0,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 103
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 103,
+              "min": -0.0016715531380552817,
+              "mean": -0.0006320820537457951,
+              "median": -0.0005743326056248943,
+              "p95": -0.0005429082076636283,
+              "max": -0.0005301518915517556
+            },
+            "selected_steer_rad": null
+          },
+          "launch_first_5p2s": {
+            "commands": 103,
+            "pp_pass": 0,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 103
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 103,
+              "min": -0.0016715531380552817,
+              "mean": -0.0006320820537457951,
+              "median": -0.0005743326056248943,
+              "p95": -0.0005429082076636283,
+              "max": -0.0005301518915517556
+            },
+            "selected_steer_rad": null
+          },
+          "used_unique_predictions": {
+            "paths": 49,
+            "same_time_point_displacement_m": {
+              "count": 1470,
+              "min": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "p95": 0.0,
+              "max": 0.0
+            },
+            "per_path_max_displacement_m": {
+              "count": 49,
+              "min": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "p95": 0.0,
+              "max": 0.0
+            },
+            "same_time_lateral_displacement_abs_m": {
+              "count": 1470,
+              "min": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "p95": 0.0,
+              "max": 0.0
+            },
+            "endpoint_max_displacement_m": 0.0,
+            "first_0p3s_implied_speed_change_abs_mps": {
+              "count": 49,
+              "min": 0.0,
+              "mean": 0.0,
+              "median": 0.0,
+              "p95": 0.0,
+              "max": 0.0
+            },
+            "raw_discrete_acceleration_rms_mps2": {
+              "count": 49,
+              "min": 0.6447359071142825,
+              "mean": 0.6449266178592299,
+              "median": 0.6448529898805268,
+              "p95": 0.6455888356726783,
+              "max": 0.6465504454284563
+            },
+            "changed_discrete_acceleration_rms_mps2": {
+              "count": 49,
+              "min": 0.6447359071142825,
+              "mean": 0.6449266178592299,
+              "median": 0.6448529898805268,
+              "p95": 0.6455888356726783,
+              "max": 0.6465504454284563
+            }
+          }
+        },
+        "mean3": {
+          "full_recorded_interval": {
+            "commands": 103,
+            "pp_pass": 0,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 103
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 103,
+              "min": -0.0020221280627935045,
+              "mean": -0.0009821820781859758,
+              "median": -0.0009243764576338243,
+              "p95": -0.0008929553054098761,
+              "max": -0.0008802118132593684
+            },
+            "selected_steer_rad": null
+          },
+          "launch_first_5p2s": {
+            "commands": 103,
+            "pp_pass": 0,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 103
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 103,
+              "min": -0.0020221280627935045,
+              "mean": -0.0009821820781859758,
+              "median": -0.0009243764576338243,
+              "p95": -0.0008929553054098761,
+              "max": -0.0008802118132593684
+            },
+            "selected_steer_rad": null
+          },
+          "used_unique_predictions": {
+            "paths": 49,
+            "same_time_point_displacement_m": {
+              "count": 1470,
+              "min": 0.0,
+              "mean": 0.0012498052826802634,
+              "median": 0.00040929604207684257,
+              "p95": 0.004200975305089581,
+              "max": 0.008228133249626608
+            },
+            "per_path_max_displacement_m": {
+              "count": 49,
+              "min": 0.008185694310015059,
+              "mean": 0.008190429998344686,
+              "median": 0.008188497270025923,
+              "p95": 0.008209743296546603,
+              "max": 0.008228133249626608
+            },
+            "same_time_lateral_displacement_abs_m": {
+              "count": 1470,
+              "min": 0.0,
+              "mean": 0.0005744423970681403,
+              "median": 0.0003515283266703195,
+              "p95": 0.0010548998291293797,
+              "max": 0.005372655888398489
+            },
+            "endpoint_max_displacement_m": 0.0,
+            "first_0p3s_implied_speed_change_abs_mps": {
+              "count": 49,
+              "min": 0.022953974870456667,
+              "mean": 0.023093285953258758,
+              "median": 0.022969764283169658,
+              "p95": 0.02417175408998983,
+              "max": 0.025006594897169
+            },
+            "raw_discrete_acceleration_rms_mps2": {
+              "count": 49,
+              "min": 0.6447359071142825,
+              "mean": 0.6449266178592299,
+              "median": 0.6448529898805268,
+              "p95": 0.6455888356726783,
+              "max": 0.6465504454284563
+            },
+            "changed_discrete_acceleration_rms_mps2": {
+              "count": 49,
+              "min": 0.522969656697504,
+              "mean": 0.5230886909083401,
+              "median": 0.5230291748283633,
+              "p95": 0.5235349815111016,
+              "max": 0.5243902443541492
+            }
+          }
+        },
+        "mean5": {
+          "full_recorded_interval": {
+            "commands": 103,
+            "pp_pass": 0,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 103
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 103,
+              "min": -0.002722547993747104,
+              "mean": -0.0016817364867559748,
+              "median": -0.0016238778308221846,
+              "p95": -0.0015924876415607469,
+              "max": -0.0015796874966472196
+            },
+            "selected_steer_rad": null
+          },
+          "launch_first_5p2s": {
+            "commands": 103,
+            "pp_pass": 0,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 103
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 103,
+              "min": -0.002722547993747104,
+              "mean": -0.0016817364867559748,
+              "median": -0.0016238778308221846,
+              "p95": -0.0015924876415607469,
+              "max": -0.0015796874966472196
+            },
+            "selected_steer_rad": null
+          },
+          "used_unique_predictions": {
+            "paths": 49,
+            "same_time_point_displacement_m": {
+              "count": 1470,
+              "min": 0.0,
+              "mean": 0.0032800963953038714,
+              "median": 0.0012327827841704096,
+              "p95": 0.010616801682211883,
+              "max": 0.012013168382021298
+            },
+            "per_path_max_displacement_m": {
+              "count": 49,
+              "min": 0.012003845306620525,
+              "mean": 0.012007673848074631,
+              "median": 0.012007600160214016,
+              "p95": 0.012008006609579232,
+              "max": 0.012013168382021298
+            },
+            "same_time_lateral_displacement_abs_m": {
+              "count": 1470,
+              "min": 0.0,
+              "mean": 0.0014288479209689656,
+              "median": 0.0010581493377685575,
+              "p95": 0.005301675349473953,
+              "max": 0.005372655888398489
+            },
+            "endpoint_max_displacement_m": 0.0,
+            "first_0p3s_implied_speed_change_abs_mps": {
+              "count": 49,
+              "min": 0.007154829558251863,
+              "mean": 0.007255047275925498,
+              "median": 0.007169980880281618,
+              "p95": 0.00800845855196354,
+              "max": 0.008581729420551187
+            },
+            "raw_discrete_acceleration_rms_mps2": {
+              "count": 49,
+              "min": 0.6447359071142825,
+              "mean": 0.6449266178592299,
+              "median": 0.6448529898805268,
+              "p95": 0.6455888356726783,
+              "max": 0.6465504454284563
+            },
+            "changed_discrete_acceleration_rms_mps2": {
+              "count": 49,
+              "min": 0.5504627487245788,
+              "mean": 0.5506337029292512,
+              "median": 0.5505444438370903,
+              "p95": 0.5513468866280368,
+              "max": 0.5524581912437833
+            }
+          }
+        },
+        "d2_lambda1": {
+          "full_recorded_interval": {
+            "commands": 103,
+            "pp_pass": 0,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 103
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 103,
+              "min": -0.0016643228339440208,
+              "mean": -0.0006249454409343125,
+              "median": -0.0005671816750754677,
+              "p95": -0.0005357818564391382,
+              "max": -0.0005230003429421703
+            },
+            "selected_steer_rad": null
+          },
+          "launch_first_5p2s": {
+            "commands": 103,
+            "pp_pass": 0,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 103
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 103,
+              "min": -0.0016643228339440208,
+              "mean": -0.0006249454409343125,
+              "median": -0.0005671816750754677,
+              "p95": -0.0005357818564391382,
+              "max": -0.0005230003429421703
+            },
+            "selected_steer_rad": null
+          },
+          "used_unique_predictions": {
+            "paths": 49,
+            "same_time_point_displacement_m": {
+              "count": 1470,
+              "min": 0.0,
+              "mean": 0.0006079949500614227,
+              "median": 9.651179978418812e-05,
+              "p95": 0.0019992589814473217,
+              "max": 0.00841034318073636
+            },
+            "per_path_max_displacement_m": {
+              "count": 49,
+              "min": 0.008388275376955651,
+              "mean": 0.00839212344108457,
+              "median": 0.008391510189351246,
+              "p95": 0.008400437917048795,
+              "max": 0.00841034318073636
+            },
+            "same_time_lateral_displacement_abs_m": {
+              "count": 1470,
+              "min": 0.0,
+              "mean": 0.0003980986769128938,
+              "median": 2.712394046223976e-05,
+              "p95": 0.001752623838115357,
+              "max": 0.006121662450649273
+            },
+            "endpoint_max_displacement_m": 0.0,
+            "first_0p3s_implied_speed_change_abs_mps": {
+              "count": 49,
+              "min": 0.032287694596291466,
+              "mean": 0.032434837288145155,
+              "median": 0.032306008614287535,
+              "p95": 0.03355628667384347,
+              "max": 0.034428514970445315
+            },
+            "raw_discrete_acceleration_rms_mps2": {
+              "count": 49,
+              "min": 0.6447359071142825,
+              "mean": 0.6449266178592299,
+              "median": 0.6448529898805268,
+              "p95": 0.6455888356726783,
+              "max": 0.6465504454284563
+            },
+            "changed_discrete_acceleration_rms_mps2": {
+              "count": 49,
+              "min": 0.52069498227851,
+              "mean": 0.5208235245606082,
+              "median": 0.5207481708662244,
+              "p95": 0.5213979435530244,
+              "max": 0.5223586671404079
+            }
+          }
+        },
+        "d2_lambda10": {
+          "full_recorded_interval": {
+            "commands": 103,
+            "pp_pass": 0,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 103
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 103,
+              "min": -0.0019024795342140188,
+              "mean": -0.0008637220313132878,
+              "median": -0.0008059904439002286,
+              "p95": -0.0007745642029082566,
+              "max": -0.0007618220177319501
+            },
+            "selected_steer_rad": null
+          },
+          "launch_first_5p2s": {
+            "commands": 103,
+            "pp_pass": 0,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 103
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 103,
+              "min": -0.0019024795342140188,
+              "mean": -0.0008637220313132878,
+              "median": -0.0008059904439002286,
+              "p95": -0.0007745642029082566,
+              "max": -0.0007618220177319501
+            },
+            "selected_steer_rad": null
+          },
+          "used_unique_predictions": {
+            "paths": 49,
+            "same_time_point_displacement_m": {
+              "count": 1470,
+              "min": 0.0,
+              "mean": 0.0030839013387228744,
+              "median": 0.0009697467808193882,
+              "p95": 0.013682514412368934,
+              "max": 0.016861006687927307
+            },
+            "per_path_max_displacement_m": {
+              "count": 49,
+              "min": 0.0167784559633828,
+              "mean": 0.01678760456288341,
+              "median": 0.01678410990160912,
+              "p95": 0.01682072842797027,
+              "max": 0.016861006687927307
+            },
+            "same_time_lateral_displacement_abs_m": {
+              "count": 1470,
+              "min": 0.0,
+              "mean": 0.0010468007139501996,
+              "median": 0.00023973932457750907,
+              "p95": 0.007120976167975387,
+              "max": 0.01074081101605007
+            },
+            "endpoint_max_displacement_m": 0.0,
+            "first_0p3s_implied_speed_change_abs_mps": {
+              "count": 49,
+              "min": 0.028478840694048907,
+              "mean": 0.02866903345358301,
+              "median": 0.028505246737029366,
+              "p95": 0.03012788573725063,
+              "max": 0.03122875519756113
+            },
+            "raw_discrete_acceleration_rms_mps2": {
+              "count": 49,
+              "min": 0.6447359071142825,
+              "mean": 0.6449266178592299,
+              "median": 0.6448529898805268,
+              "p95": 0.6455888356726783,
+              "max": 0.6465504454284563
+            },
+            "changed_discrete_acceleration_rms_mps2": {
+              "count": 49,
+              "min": 0.450406434064599,
+              "mean": 0.450501160864485,
+              "median": 0.4504367888557955,
+              "p95": 0.45096689789711736,
+              "max": 0.451745921597717
+            }
+          }
+        },
+        "d2_lambda100": {
+          "full_recorded_interval": {
+            "commands": 103,
+            "pp_pass": 0,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 103
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 103,
+              "min": -0.004163194857045582,
+              "mean": -0.0031435646739456638,
+              "median": -0.0030869246121649763,
+              "p95": -0.0030555450843725907,
+              "max": -0.0030427499569469774
+            },
+            "selected_steer_rad": null
+          },
+          "launch_first_5p2s": {
+            "commands": 103,
+            "pp_pass": 0,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 103
+            },
+            "gained_pp_pass": 0,
+            "lost_pp_pass": 0,
+            "no_candidate_commands": 0,
+            "best_steering_margin_rad": {
+              "count": 103,
+              "min": -0.004163194857045582,
+              "mean": -0.0031435646739456638,
+              "median": -0.0030869246121649763,
+              "p95": -0.0030555450843725907,
+              "max": -0.0030427499569469774
+            },
+            "selected_steer_rad": null
+          },
+          "used_unique_predictions": {
+            "paths": 49,
+            "same_time_point_displacement_m": {
+              "count": 1470,
+              "min": 0.0,
+              "mean": 0.013151984409507524,
+              "median": 0.006353763470885337,
+              "p95": 0.04699630004752097,
+              "max": 0.04884352154719236
+            },
+            "per_path_max_displacement_m": {
+              "count": 49,
+              "min": 0.04860480607881166,
+              "mean": 0.04862056898372833,
+              "median": 0.04860792730205798,
+              "p95": 0.048720511752717834,
+              "max": 0.04884352154719236
+            },
+            "same_time_lateral_displacement_abs_m": {
+              "count": 1470,
+              "min": 0.0,
+              "mean": 0.00287546226879847,
+              "median": 0.001962497333335953,
+              "p95": 0.013011255838547401,
+              "max": 0.01428185535523362
+            },
+            "endpoint_max_displacement_m": 0.0,
+            "first_0p3s_implied_speed_change_abs_mps": {
+              "count": 49,
+              "min": 0.06746700363498118,
+              "mean": 0.06817209290382246,
+              "median": 0.06821446685157884,
+              "p95": 0.06823979857408281,
+              "max": 0.06824445150451447
+            },
+            "raw_discrete_acceleration_rms_mps2": {
+              "count": 49,
+              "min": 0.6447359071142825,
+              "mean": 0.6449266178592299,
+              "median": 0.6448529898805268,
+              "p95": 0.6455888356726783,
+              "max": 0.6465504454284563
+            },
+            "changed_discrete_acceleration_rms_mps2": {
+              "count": 49,
+              "min": 0.3287165621520042,
+              "mean": 0.32876027026743526,
+              "median": 0.3287540766042192,
+              "p95": 0.3287678566654588,
+              "max": 0.3290157670506513
+            }
+          }
+        }
+      },
+      "scope": "paired counterfactual geometry/PP at recorded poses, not actuator/scan replay or closed loop"
+    }
+  },
+  "validation": {
+    "anchor_count": 12346,
+    "input_valid_count": 12301,
+    "run_ids": [
+      "5kmh_run03",
+      "5kmh_run06",
+      "8kmh_run06",
+      "8kmh_run09",
+      "codex-time-recovery-right040-r22",
+      "codex-time-recovery-left020-r23"
+    ],
+    "groups": {
+      "nominal": [
+        "5kmh_run03",
+        "5kmh_run06",
+        "8kmh_run06",
+        "8kmh_run09"
+      ],
+      "recovery": [
+        "codex-time-recovery-left020-r23",
+        "codex-time-recovery-right040-r22"
+      ]
+    },
+    "test_evaluated": false,
+    "source_sha256": {
+      "cache_identity": "0003daa61995ce0b6c5fe965e8a250bf2c5d840341400dbfcabe63ad2d3afa13",
+      "predictions": "dcad3223d4412449b80a986dee41a46935a969ca3137bc8392f3b4340ac2b3d4",
+      "best_validation": "cac05075fc6a2e7be705b8cf71a1cfe5c33a27306c0fc982220254aa6bbb2bd1",
+      "checkpoint": "c2fdb6fd1daf525524fe44d3f793d84b482760aa1f9f1fa84d5315222ab9fbe0"
+    },
+    "verified_cache_files": [
+      {
+        "path": "validation/5kmh_run03/anchors.jsonl",
+        "bytes": 3613356,
+        "sha256": "4bd0b43773bd0da41f13ab0596e497ea84ef1a574d9775a72e25b017ff767d49"
+      },
+      {
+        "path": "validation/5kmh_run03/inputs.npz",
+        "bytes": 1669441,
+        "sha256": "b59d95bc2329bb2edd14717f300dfcf795839791bb9fe04c3314f403d3090180"
+      },
+      {
+        "path": "validation/5kmh_run03/labels.npz",
+        "bytes": 1118238,
+        "sha256": "ab0e3f6b4c2ee4a067580196fe05b661852ff7d7992e438c0bacda74c7b65854"
+      },
+      {
+        "path": "validation/5kmh_run06/anchors.jsonl",
+        "bytes": 3614722,
+        "sha256": "0729d9f223947bcfc42e0a12729cb82e0578d80a9ebae462d81d698c384ca94d"
+      },
+      {
+        "path": "validation/5kmh_run06/inputs.npz",
+        "bytes": 1669868,
+        "sha256": "ee0275a1865a880b676ae70919f19d17988ba98d0ac6cee9d22f9dcf739f163d"
+      },
+      {
+        "path": "validation/5kmh_run06/labels.npz",
+        "bytes": 1118442,
+        "sha256": "13f17e2f9bf184349f5ef635c11b148948dffd5ddbf7ffd07d23d55328c1fa8a"
+      },
+      {
+        "path": "validation/8kmh_run06/anchors.jsonl",
+        "bytes": 2014101,
+        "sha256": "40ebdd4f14018cde1b98263c02a31826bcec43d20d46c99cef9fe9f325bae0db"
+      },
+      {
+        "path": "validation/8kmh_run06/inputs.npz",
+        "bytes": 946530,
+        "sha256": "cada14929002cbb1cd94e7b3818fd6f7f5ee0cfb46adbfc111a022e1f1808d6c"
+      },
+      {
+        "path": "validation/8kmh_run06/labels.npz",
+        "bytes": 619080,
+        "sha256": "2498f5a721c60a9d852cf1bd6bbd7c2be947978050859382c0b229332cf0860a"
+      },
+      {
+        "path": "validation/8kmh_run09/anchors.jsonl",
+        "bytes": 2015681,
+        "sha256": "ace0e3cf1b2c5be0cd3c096406fb7ab829b54ab01c3b32fa12efaf75a07716b0"
+      },
+      {
+        "path": "validation/8kmh_run09/inputs.npz",
+        "bytes": 947384,
+        "sha256": "20b25762b31d0a3b3d8e984b08ae429429fa9ca97f943bfe3d83092ba8e4b079"
+      },
+      {
+        "path": "validation/8kmh_run09/labels.npz",
+        "bytes": 619784,
+        "sha256": "03cc350894095a440ac9d676305808718c59b3501fff2fdf7d4f79a91a6a7a31"
+      },
+      {
+        "path": "validation/codex-time-recovery-left020-r23/anchors.jsonl",
+        "bytes": 54346,
+        "sha256": "647bd0aefdae1d6b00e980978147a756d18c97df57ed0f1ec84eca49e0d8aff9"
+      },
+      {
+        "path": "validation/codex-time-recovery-left020-r23/inputs.npz",
+        "bytes": 24210,
+        "sha256": "7a26f3724e25695f66bbd3f0bcf5e2cb15a6274a406b3198f7853c0bc553b7c4"
+      },
+      {
+        "path": "validation/codex-time-recovery-left020-r23/labels.npz",
+        "bytes": 16676,
+        "sha256": "2be7f6abe3e219b1804b8d96c39a6d51fce9443523c6e20cb4ea9f8320f6d32d"
+      },
+      {
+        "path": "validation/codex-time-recovery-right040-r22/anchors.jsonl",
+        "bytes": 56609,
+        "sha256": "89b9c62742d2f708fe4992a1b632694f5ed23aa7ff17dcfeb0faaf60141fedd6"
+      },
+      {
+        "path": "validation/codex-time-recovery-right040-r22/inputs.npz",
+        "bytes": 26345,
+        "sha256": "73cb817311909088ff9ca1988bb3d6981ccd3bda611a1effb84b3e4b524e1f28"
+      },
+      {
+        "path": "validation/codex-time-recovery-right040-r22/labels.npz",
+        "bytes": 18029,
+        "sha256": "395ee4c43e582c6378a7d9b183095a889ce876fd3b3528b6323d1d0b9fc5ef4a"
+      }
+    ],
+    "methods": {
+      "raw": {
+        "all_point_ade_m": 0.016224626451730728,
+        "all_point_count": 356670,
+        "horizon_run_macro": {
+          "0.5s": {
+            "raw_error_m": 0.007078908539066712,
+            "accepted_error_m": 0.007078908539066712,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "1s": {
+            "raw_error_m": 0.0092519650546213,
+            "accepted_error_m": 0.0092519650546213,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "2s": {
+            "raw_error_m": 0.019765723031014204,
+            "accepted_error_m": 0.019765723031014204,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "3s": {
+            "raw_error_m": 0.047770344031353794,
+            "accepted_error_m": 0.047770344031353794,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          }
+        },
+        "group_run_macro_ade_m": {
+          "nominal": 0.018425596179440618,
+          "recovery": 0.013878884725272655
+        },
+        "input_valid_prediction_change": {
+          "paths": 12301,
+          "same_time_point_displacement_m": {
+            "count": 369030,
+            "min": 0.0,
+            "mean": 0.0,
+            "median": 0.0,
+            "p95": 0.0,
+            "max": 0.0
+          },
+          "per_path_max_displacement_m": {
+            "count": 12301,
+            "min": 0.0,
+            "mean": 0.0,
+            "median": 0.0,
+            "p95": 0.0,
+            "max": 0.0
+          },
+          "same_time_lateral_displacement_abs_m": {
+            "count": 369030,
+            "min": 0.0,
+            "mean": 0.0,
+            "median": 0.0,
+            "p95": 0.0,
+            "max": 0.0
+          },
+          "endpoint_max_displacement_m": 0.0,
+          "first_0p3s_implied_speed_change_abs_mps": {
+            "count": 12301,
+            "min": 0.0,
+            "mean": 0.0,
+            "median": 0.0,
+            "p95": 0.0,
+            "max": 0.0
+          },
+          "raw_discrete_acceleration_rms_mps2": {
+            "count": 12301,
+            "min": 0.05654362648623933,
+            "mean": 0.25172203816951416,
+            "median": 0.20281696466890387,
+            "p95": 0.6053369199062623,
+            "max": 1.2180070454335465
+          },
+          "changed_discrete_acceleration_rms_mps2": {
+            "count": 12301,
+            "min": 0.05654362648623933,
+            "mean": 0.25172203816951416,
+            "median": 0.20281696466890387,
+            "p95": 0.6053369199062623,
+            "max": 1.2180070454335465
+          }
+        }
+      },
+      "mean3": {
+        "all_point_ade_m": 0.01611160673201084,
+        "all_point_count": 356670,
+        "horizon_run_macro": {
+          "0.5s": {
+            "raw_error_m": 0.006932554688925545,
+            "accepted_error_m": 0.006932554688925545,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "1s": {
+            "raw_error_m": 0.00920392689295113,
+            "accepted_error_m": 0.00920392689295113,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "2s": {
+            "raw_error_m": 0.019753875986983378,
+            "accepted_error_m": 0.019753875986983378,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "3s": {
+            "raw_error_m": 0.047770344031353794,
+            "accepted_error_m": 0.047770344031353794,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          }
+        },
+        "group_run_macro_ade_m": {
+          "nominal": 0.018301851116120815,
+          "recovery": 0.013876141048967838
+        },
+        "input_valid_prediction_change": {
+          "paths": 12301,
+          "same_time_point_displacement_m": {
+            "count": 369030,
+            "min": 0.0,
+            "mean": 0.0005894916047355024,
+            "median": 0.00032652652678566196,
+            "p95": 0.0018093136580610981,
+            "max": 0.020504472641399565
+          },
+          "per_path_max_displacement_m": {
+            "count": 12301,
+            "min": 0.0005871486947445652,
+            "mean": 0.0030132166741705,
+            "median": 0.002478563344826432,
+            "p95": 0.009051552343397525,
+            "max": 0.020504472641399565
+          },
+          "same_time_lateral_displacement_abs_m": {
+            "count": 369030,
+            "min": 0.0,
+            "mean": 0.000448867887088111,
+            "median": 0.0002583339810371399,
+            "p95": 0.001467832177877426,
+            "max": 0.01992454007267952
+          },
+          "endpoint_max_displacement_m": 0.0,
+          "first_0p3s_implied_speed_change_abs_mps": {
+            "count": 12301,
+            "min": 2.8168367216530044e-07,
+            "mean": 0.004792751702381119,
+            "median": 0.0011890576215118909,
+            "p95": 0.007056896520877043,
+            "max": 0.07405339751410941
+          },
+          "raw_discrete_acceleration_rms_mps2": {
+            "count": 12301,
+            "min": 0.05654362648623933,
+            "mean": 0.25172203816951416,
+            "median": 0.20281696466890387,
+            "p95": 0.6053369199062623,
+            "max": 1.2180070454335465
+          },
+          "changed_discrete_acceleration_rms_mps2": {
+            "count": 12301,
+            "min": 0.02238479469348576,
+            "mean": 0.17515874584284893,
+            "median": 0.12374970953482081,
+            "p95": 0.489813977310456,
+            "max": 0.9191540315408028
+          }
+        }
+      },
+      "mean5": {
+        "all_point_ade_m": 0.016093561425805092,
+        "all_point_count": 356670,
+        "horizon_run_macro": {
+          "0.5s": {
+            "raw_error_m": 0.006834997717911999,
+            "accepted_error_m": 0.006834997717911999,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "1s": {
+            "raw_error_m": 0.009197311087821921,
+            "accepted_error_m": 0.009197311087821921,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "2s": {
+            "raw_error_m": 0.0197690239486595,
+            "accepted_error_m": 0.0197690239486595,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "3s": {
+            "raw_error_m": 0.047770344031353794,
+            "accepted_error_m": 0.047770344031353794,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          }
+        },
+        "group_run_macro_ade_m": {
+          "nominal": 0.018291527405381203,
+          "recovery": 0.013909132685512304
+        },
+        "input_valid_prediction_change": {
+          "paths": 12301,
+          "same_time_point_displacement_m": {
+            "count": 369030,
+            "min": 0.0,
+            "mean": 0.0014883010945023372,
+            "median": 0.000908656609509933,
+            "p95": 0.004761752280927949,
+            "max": 0.024036763628012995
+          },
+          "per_path_max_displacement_m": {
+            "count": 12301,
+            "min": 0.0008342240091774481,
+            "mean": 0.003730607893088273,
+            "median": 0.003116010566794965,
+            "p95": 0.010362063956353522,
+            "max": 0.024036763628012995
+          },
+          "same_time_lateral_displacement_abs_m": {
+            "count": 369030,
+            "min": 0.0,
+            "mean": 0.0011955477861859964,
+            "median": 0.000718139111995697,
+            "p95": 0.004098004102706908,
+            "max": 0.0222456231713295
+          },
+          "endpoint_max_displacement_m": 0.0,
+          "first_0p3s_implied_speed_change_abs_mps": {
+            "count": 12301,
+            "min": 2.9197790596402484e-07,
+            "mean": 0.007876062757652263,
+            "median": 0.002632751354255225,
+            "p95": 0.01815005109498058,
+            "max": 0.08282489847924443
+          },
+          "raw_discrete_acceleration_rms_mps2": {
+            "count": 12301,
+            "min": 0.05654362648623933,
+            "mean": 0.25172203816951416,
+            "median": 0.20281696466890387,
+            "p95": 0.6053369199062623,
+            "max": 1.2180070454335465
+          },
+          "changed_discrete_acceleration_rms_mps2": {
+            "count": 12301,
+            "min": 0.018653941031262604,
+            "mean": 0.17796559645180207,
+            "median": 0.12567664079942864,
+            "p95": 0.49857184090205936,
+            "max": 0.9234866793728954
+          }
+        }
+      },
+      "d2_lambda1": {
+        "all_point_ade_m": 0.01610398106276989,
+        "all_point_count": 356670,
+        "horizon_run_macro": {
+          "0.5s": {
+            "raw_error_m": 0.006909917186324795,
+            "accepted_error_m": 0.006909917186324795,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "1s": {
+            "raw_error_m": 0.00923833871881167,
+            "accepted_error_m": 0.00923833871881167,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "2s": {
+            "raw_error_m": 0.019763005431741476,
+            "accepted_error_m": 0.019763005431741476,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "3s": {
+            "raw_error_m": 0.047770344031353794,
+            "accepted_error_m": 0.047770344031353794,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          }
+        },
+        "group_run_macro_ade_m": {
+          "nominal": 0.018294953741133213,
+          "recovery": 0.013854630757123232
+        },
+        "input_valid_prediction_change": {
+          "paths": 12301,
+          "same_time_point_displacement_m": {
+            "count": 369030,
+            "min": 0.0,
+            "mean": 0.00032305897511403524,
+            "median": 7.201069979924658e-05,
+            "p95": 0.0014148844745513122,
+            "max": 0.023927518054622433
+          },
+          "per_path_max_displacement_m": {
+            "count": 12301,
+            "min": 0.0005344262206459798,
+            "mean": 0.003417065313538983,
+            "median": 0.0028204255468481268,
+            "p95": 0.01065330211042538,
+            "max": 0.023927518054622433
+          },
+          "same_time_lateral_displacement_abs_m": {
+            "count": 369030,
+            "min": 0.0,
+            "mean": 0.00017172626990124686,
+            "median": 3.0115246772766113e-05,
+            "p95": 0.0008192323613911861,
+            "max": 0.023332003504037857
+          },
+          "endpoint_max_displacement_m": 0.0,
+          "first_0p3s_implied_speed_change_abs_mps": {
+            "count": 12301,
+            "min": 1.426373239521439e-07,
+            "mean": 0.0058344390996827354,
+            "median": 0.0011944511203512143,
+            "p95": 0.00886088751093439,
+            "max": 0.08961200409251546
+          },
+          "raw_discrete_acceleration_rms_mps2": {
+            "count": 12301,
+            "min": 0.05654362648623933,
+            "mean": 0.25172203816951416,
+            "median": 0.20281696466890387,
+            "p95": 0.6053369199062623,
+            "max": 1.2180070454335465
+          },
+          "changed_discrete_acceleration_rms_mps2": {
+            "count": 12301,
+            "min": 0.019944267632206573,
+            "mean": 0.16584473935740227,
+            "median": 0.1148803382640729,
+            "p95": 0.4833316462409945,
+            "max": 0.9115795917436091
+          }
+        }
+      },
+      "d2_lambda10": {
+        "all_point_ade_m": 0.015958871692419052,
+        "all_point_count": 356670,
+        "horizon_run_macro": {
+          "0.5s": {
+            "raw_error_m": 0.006640132904673616,
+            "accepted_error_m": 0.006640132904673616,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "1s": {
+            "raw_error_m": 0.009020195653041204,
+            "accepted_error_m": 0.009020195653041204,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "2s": {
+            "raw_error_m": 0.01974248078962167,
+            "accepted_error_m": 0.01974248078962167,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "3s": {
+            "raw_error_m": 0.047770344031353794,
+            "accepted_error_m": 0.047770344031353794,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          }
+        },
+        "group_run_macro_ade_m": {
+          "nominal": 0.018152167554944754,
+          "recovery": 0.013835783582180738
+        },
+        "input_valid_prediction_change": {
+          "paths": 12301,
+          "same_time_point_displacement_m": {
+            "count": 369030,
+            "min": 0.0,
+            "mean": 0.0010672422914707216,
+            "median": 0.000530258247846383,
+            "p95": 0.003792729482257831,
+            "max": 0.04457252558716907
+          },
+          "per_path_max_displacement_m": {
+            "count": 12301,
+            "min": 0.0007075998736389663,
+            "mean": 0.005371559434694765,
+            "median": 0.004254943890040331,
+            "p95": 0.01657930841609186,
+            "max": 0.04457252558716907
+          },
+          "same_time_lateral_displacement_abs_m": {
+            "count": 369030,
+            "min": 0.0,
+            "mean": 0.0006435799456584365,
+            "median": 0.00026210304349660873,
+            "p95": 0.0025528238562401366,
+            "max": 0.04302835464477539
+          },
+          "endpoint_max_displacement_m": 0.0,
+          "first_0p3s_implied_speed_change_abs_mps": {
+            "count": 12301,
+            "min": 5.296720498870755e-07,
+            "mean": 0.010313362499455222,
+            "median": 0.002806370978695738,
+            "p95": 0.0230938732951822,
+            "max": 0.12823872417473048
+          },
+          "raw_discrete_acceleration_rms_mps2": {
+            "count": 12301,
+            "min": 0.05654362648623933,
+            "mean": 0.25172203816951416,
+            "median": 0.20281696466890387,
+            "p95": 0.6053369199062623,
+            "max": 1.2180070454335465
+          },
+          "changed_discrete_acceleration_rms_mps2": {
+            "count": 12301,
+            "min": 0.01334081923404728,
+            "mean": 0.13974753960584155,
+            "median": 0.09098885957835871,
+            "p95": 0.4561804828804624,
+            "max": 0.8795379928704968
+          }
+        }
+      },
+      "d2_lambda100": {
+        "all_point_ade_m": 0.01622043550014496,
+        "all_point_count": 356670,
+        "horizon_run_macro": {
+          "0.5s": {
+            "raw_error_m": 0.007861314496646324,
+            "accepted_error_m": 0.007861314496646324,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "1s": {
+            "raw_error_m": 0.008760240006571015,
+            "accepted_error_m": 0.008760240006571015,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "2s": {
+            "raw_error_m": 0.019536749615023535,
+            "accepted_error_m": 0.019536749615023535,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          },
+          "3s": {
+            "raw_error_m": 0.047770344031353794,
+            "accepted_error_m": 0.047770344031353794,
+            "run_count": 6,
+            "raw_supported_runs": 6,
+            "accepted_supported_runs": 6
+          }
+        },
+        "group_run_macro_ade_m": {
+          "nominal": 0.018536036601290107,
+          "recovery": 0.013970558997243643
+        },
+        "input_valid_prediction_change": {
+          "paths": 12301,
+          "same_time_point_displacement_m": {
+            "count": 369030,
+            "min": 0.0,
+            "mean": 0.0032883954791316492,
+            "median": 0.0020426420088008315,
+            "p95": 0.010828837254028858,
+            "max": 0.060540820407182866
+          },
+          "per_path_max_displacement_m": {
+            "count": 12301,
+            "min": 0.0011130914739501158,
+            "mean": 0.008580651171249402,
+            "median": 0.006753560471165033,
+            "p95": 0.021770538756760185,
+            "max": 0.060540820407182866
+          },
+          "same_time_lateral_displacement_abs_m": {
+            "count": 369030,
+            "min": 0.0,
+            "mean": 0.002450917166138156,
+            "median": 0.00130482017993927,
+            "p95": 0.00909482929855585,
+            "max": 0.05652441270649433
+          },
+          "endpoint_max_displacement_m": 0.0,
+          "first_0p3s_implied_speed_change_abs_mps": {
+            "count": 12301,
+            "min": 5.518124872594399e-07,
+            "mean": 0.015179270576099782,
+            "median": 0.007587910406427589,
+            "p95": 0.04230147070828205,
+            "max": 0.1798078362817156
+          },
+          "raw_discrete_acceleration_rms_mps2": {
+            "count": 12301,
+            "min": 0.05654362648623933,
+            "mean": 0.25172203816951416,
+            "median": 0.20281696466890387,
+            "p95": 0.6053369199062623,
+            "max": 1.2180070454335465
+          },
+          "changed_discrete_acceleration_rms_mps2": {
+            "count": 12301,
+            "min": 0.0071556874457648165,
+            "mean": 0.12325547279691386,
+            "median": 0.07504014635622897,
+            "p95": 0.4274790314790352,
+            "max": 0.8216480506400164
+          }
+        }
+      }
+    },
+    "scope": "saved candidate validation predictions, paired at unchanged supported times; no new model inference"
+  },
+  "elapsed_s": 14.05975239899999,
+  "scope": "same saved path before/after smoothing; recorded poses frozen, not simulated future state",
+  "not_evaluated": [
+    "closed_loop_driving",
+    "scan_clearance_after_smoothing",
+    "hypothetical_actuator_response",
+    "cross_prediction_temporal_filtering",
+    "test_split",
+    "unknown_courses"
+  ],
+  "runtime_modified": false
+}
