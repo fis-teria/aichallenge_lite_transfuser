@@ -160,3 +160,23 @@ def test_r07_delayed_velocity_does_not_allow_expired_pose_to_mask_skew():
     # altering any of the original stamps or admitting the expired pose.
     history['pose'].append((199_674_995_537, 36_672_896_000_000))
     assert select_collection_motion(history, **clocks) == {'pose': 2, 'velocity': 0, 'steering': 0}
+
+
+def test_scan_alignment_needs_pose_timeline_even_when_latest_motion_is_fresh():
+    from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
+    from aic_transfuser_lite.control.turning_scan_guard import select_aligned_scan
+    def pose(t):
+        return TimedBodyPose(t, 'sim', '0', 'map', 'base_link', 0., 0., 0.)
+    # r08 scan=22.036611470 s lies just over 50 ms after 21.984999508 s.
+    # Dropping the intermediate pose breaks bracketing although newest pose
+    # and state are fresh. A future scan must not be used instead.
+    poses = [pose(21_984_999_508), pose(22_044_999_507), pose(22_084_999_506)]
+    scans = [(22_036_611_470, 1_000_000_000), (22_086_616_755, 1_050_000_000)]
+    clocks = dict(now_sim_ns=22_099_999_506, now_receipt_ns=1_075_000_000)
+    with pytest.raises(ValueError, match='FRESH_ALIGNED_SCAN_MISSING'):
+        select_aligned_scan(scans, poses, poses[-1], **clocks)
+    # Synthetic intermediate measured sample demonstrates the required queue
+    # semantics; this does not fabricate a missing pose during collection.
+    poses.insert(1, pose(22_024_999_507))
+    index, captured = select_aligned_scan(scans, poses, poses[-1], **clocks)
+    assert index == 0 and captured.stamp_ns == scans[0][0]

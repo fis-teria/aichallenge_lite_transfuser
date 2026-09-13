@@ -109,10 +109,11 @@ def main() -> None:
                                       p.position.x, p.position.y, yaw))
 
     for role, (topic, kind, _) in topics.items():
-        # A blocked callback must not replay five old motion reports against
-        # the latest /clock. Retain history after receipt, not in the DDS queue.
+        # Latest motion reports must not replay a DDS backlog against /clock.
+        # Pose retains the sensor-data queue: the scan's original capture time
+        # needs both measured interpolation endpoints, not just the latest pose.
         qos = (QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
-               if role in ('pose', 'velocity', 'steering', 'nominal') else qos_profile_sensor_data)
+               if role in ('velocity', 'steering', 'nominal') else qos_profile_sensor_data)
         node.create_subscription(kind, topic, lambda m, role=role: receive(role, m), qos)
 
     def tick() -> None:

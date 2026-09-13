@@ -253,3 +253,10 @@ motion側のDDS depth5が古いreportを順に配送する構成を、clock同�
 各capture/receipt期限と元の50ms skewを同時に満たす最新の実測3組を選ぶ。
 適格な組がなければ停止する。r07の記録済み前pose=199.630sは160ms古いため救済に使わない回帰テストも追加。
 未受信の補間値を作らず、時計・stale/skew閾値・車両/制御/監視パラメータは変更しない。
+
+717c409のWSL full pytestは2,214 passed / 4 skipped / 63 warnings（120.88s）。
+left020-r08は発進1.49秒後にFRESH_ALIGNED_SCAN_MISSING。新着scanはcurrent poseより約1.6ms未来で使えず、
+前scan=22.0366sの補間に必要な中間poseもdepth1受信では抜けた。正常制動、3秒停止確認・bag close成立。
+poseは前後の実測補間点が必要なので従来sensor-data depth5へ戻す。velocity/steering/nominalはdepth1、
+motionの同時刻帯選択は維持する。欠けたposeを外挿で埋めず、scan選択・各50ms補間端点期限を保持する。
+新着scanが未来の場合と、中間poseを欠いた場合/保持した場合のscan選択を回帰テストで確認する。
