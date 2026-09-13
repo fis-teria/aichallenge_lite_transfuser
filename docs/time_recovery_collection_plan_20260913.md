@@ -392,3 +392,15 @@ GC時間・回収件数・peak RSSを別gc.jsonlへ保存し、計算内の予�
 r17の部分復帰はWSLで57filesのSHA/SQLiteがPASS、1 epoch、復帰候補56/56件が入力履歴と全30未来点を満たした。
 代表3件を元画像・LiDARから実入力tensorへ組み立て、教師XY全30点の完全一致を確認した。
 これは部分区間の再現確認で、1周達成や本学習への投入を意味しない。
+
+80931c7のWSL full pytestは2,222 passed / 4 skipped / 63 warnings（74.77s）。
+right020-r19はCOMPLETE_LAP、実JudgeLog lap373.82秒、順序付きsection/lap証拠、lap+4秒、
+3秒停止確認、全child正常終了とbag closeが成立した。GCは全て判断処理の外で実行し、
+89回の最大21.61ms、peak RSS79,000KiB（約77.1MiB）。これは当該1周での測定である。
+
+最終GC修正を左側でも検証して当初の左右各1周を満たすため、left020-r20を最後の1本として追加する。
+開始前にtask累積上限を10GiBから12GiBへ明示変更し、この追加1本を有限に予約する。
+各run2GiB、最低空き10GiB、30分sim/31分wall/33分outerは維持する。右は追加しない。
+原bagを保持したまま、WSLへ転送・展開検証したr17/r18/r19の一時輸送archiveを整理して空きを確保する。
+027196a以降の変更は集計用artifactと容量予算だけで、既に2222件通過した制御/教師ロジックは同一。
+最終runの実行結果とWSLの原本・教師再現監査で確認する。

@@ -20,7 +20,7 @@ def main() -> None:
     args = parser.parse_args()
     args.output.mkdir(exist_ok=False)
     names = ['codex-time-recovery-left020-r17', 'codex-time-recovery-left020-r18',
-             'codex-time-recovery-right020-r19']
+             'codex-time-recovery-right020-r19', 'codex-time-recovery-left020-r20']
     records = []
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.5), sharey=True)
     for name in names:
@@ -59,7 +59,7 @@ def main() -> None:
             verified_files=audit['verified_files'], raw_path=str(run),
             raw_manifest_sha256=replay['raw_manifest_sha256'],
             fault=audit['fault'], training_materialized=False, split_assigned=False))
-        if name.endswith('r17'):
+        if name.endswith(('r17','r18')):
             continue
         axis = axes[0 if side == 'left' else 1]
         controls = [json.loads(line) for line in (run/'control.jsonl').read_text().splitlines()]

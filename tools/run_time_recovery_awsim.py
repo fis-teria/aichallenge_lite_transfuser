@@ -44,7 +44,7 @@ def main() -> None:
                   started_unix_s=time.time(), scope='MEASURED_RECOVERY_AWSIM', fixed_target_mps=5/3.6,
                   source_sha=(ROOT/'deployed_commit.txt').read_text().strip(),
                   sim_limit_s=1800, wall_limit_s=1860, outer_limit_s=1980,
-                  run_byte_limit=2*1024**3, task_bag_byte_limit=10*1024**3, required_free_bytes=10*1024**3)
+                  run_byte_limit=2*1024**3, task_bag_byte_limit=12*1024**3, required_free_bytes=10*1024**3)
     started = time.monotonic(); judge = JudgeLog(args.run_id); read_offset=0; pending=b''
     lap_seen_ns = None; fault_wall = None; last_size_check = 0.; rviz_window = None; control = {}
 
