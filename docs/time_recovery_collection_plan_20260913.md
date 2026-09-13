@@ -341,3 +341,23 @@ left020-r15はs=120.33m付近でSTALE_imu、正常停止・bag close成立。
 発進前に別processのPath発行heartbeat・point数・RViz購読を確認する。
 IMUもvelocity/steering同様に最新depth1とする（scan補間に必要なpose queue/historyは保持）。
 表示traceの形状・単位・有限性・重複時刻・epoch reset・件数上限はunit testで確認する。
+
+22eb2deのWSL full pytestは2,220 passed / 4 skipped / 63 warnings（73.53s）。
+left020-r16はCOMPLETE_LAP、JudgeLogの順序付きsection/lap証拠、lap+4秒、3秒停止確認、全child正常終了、bag close成立。
+bagは1,483,673,600 bytes。ただし指定holdの実測offset中央値は約-0.060m、recovery中央値は約+0.297mであり、
+「左20cm保持から復帰」の採用例とは数えない。コーナー追従と摂動が重なった診断用完走runとして保存する。
+
+候補選択のsigned mean curvatureはS字の左右を相殺していた。V3 generatorに省略時は従来どおりの
+任意maximum_abs_base_curvature_inv_m条件を追加し、今回だけ0.01/m以下に制約する。
+左右を相殺する実座標の蛇行fixtureがsigned meanだけでは通り、絶対上限では落ちることを回帰テストする。
+新しいphase長はapproach4m/hold6m/recovery6m。初期収束用に開始s>=5mを要求し、
+基準s約5.97～21.97mの直線を使う。左右の変更経路を10cm間隔で調べ、従来のcenter clearance1.4mを満たす。
+107～131m案は同じclearanceを満たさず不採用。閾値を下げて採用しない。
+
+次のpilotの採用目安を実行前に固定する: 指定側へ符号を揃えたhold offset中央値>=0.10m、
+recovery後5mのoffset絶対中央値<=0.10m、holdからの絶対offset低減>=0.05m。
+加えて正常1周・停止・close・transfer hash・実sensor/history/future再現が必要。
+これらは小さな直線復帰pilotの条件であり、約85cm逸脱からの復帰性能を示すものではない。
+実測した1周容量と表示間引きに基づき、以降の1run上限を3GiBから2GiBへ縮小する。
+失敗分を含むtask累積10GiBと最低空き10GiBは維持する。
+転送と展開をWSLで検証した一時輸送tar7件のみ削除し、約1.769GiBを確保。原bagは全て保全。

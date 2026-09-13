@@ -63,6 +63,7 @@ class RecoveryReferenceConfigV3:
     geometry_curvature_threshold_inv_m: float
     preferred_abs_curvature_inv_m: float
     requests: tuple[RecoverySegmentRequestV3, ...]
+    maximum_abs_base_curvature_inv_m: float | None = None
 
     @property
     def segment_length_m(self) -> float:
@@ -82,6 +83,10 @@ class RecoveryReferenceConfigV3:
             raise ValueError("recovery Reference lengths and limits must be finite and positive")
         if not self.requests:
             raise ValueError("at least one recovery segment request is required")
+        if (self.maximum_abs_base_curvature_inv_m is not None
+                and (not math.isfinite(self.maximum_abs_base_curvature_inv_m)
+                     or self.maximum_abs_base_curvature_inv_m <= 0.0)):
+            raise ValueError("maximum absolute base curvature must be finite and positive")
         if self.preferred_abs_curvature_inv_m < self.geometry_curvature_threshold_inv_m:
             raise ValueError("preferred curvature must be at least the geometry threshold")
         ids: set[str] = set()
@@ -192,6 +197,8 @@ def load_recovery_reference_config_v3(path: str | Path) -> RecoveryReferenceConf
             )
             for item in requests
         ),
+        maximum_abs_base_curvature_inv_m=(float(raw['maximum_abs_base_curvature_inv_m'])
+            if raw.get('maximum_abs_base_curvature_inv_m') is not None else None),
     )
     config.validate()
     return config
@@ -346,6 +353,11 @@ def generate_recovery_reference_v3(
                 continue
             relative = s[start_index : end_index + 1] - start_s
             mean_curvature = float(np.mean(kappa[start_index : end_index + 1]))
+            # A signed mean can hide a tight S bend. This optional selection
+            # constraint preserves legacy behavior when omitted.
+            if (config.maximum_abs_base_curvature_inv_m is not None
+                    and np.max(np.abs(kappa[start_index:end_index+1])) > config.maximum_abs_base_curvature_inv_m):
+                continue
             geometry = _geometry_name(mean_curvature, config.geometry_curvature_threshold_inv_m)
             if geometry != request.geometry:
                 continue

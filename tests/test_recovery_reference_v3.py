@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -19,10 +20,30 @@ from aic_transfuser_lite.data.recovery_reference_v3 import (
     load_recovery_reference_config_v3,
     render_official_mpc_recovery_config_v3,
     write_generated_recovery_reference_v3,
+    _recompute_geometry,
 )
 
 
 ROOT = Path(__file__).parents[1]
+
+
+def test_signed_mean_does_not_admit_s_bends_with_absolute_curvature_limit():
+    x = np.linspace(5., 60., 160)
+    y = 30.+2.*np.sin(x*.5)
+    s, yaw, kappa = _recompute_geometry(x, y)
+    points = tuple(MpcReferencePointV3(float(s[i]),float(x[i]),float(y[i]),
+        float(yaw[i]),float(kappa[i]),1.,0.) for i in range(len(x)))
+    config = RecoveryReferenceConfigV3(4.,6.,6.,8.,1.4,.015,.015,
+        (RecoverySegmentRequestV3('mixed','left',.2,'mixed'),))
+    unbounded = generate_recovery_reference_v3(points, _map(), config)
+    chosen = unbounded.selected_segments[0]
+    assert abs(chosen['mean_base_curvature_inv_m']) < .015
+    assert max(abs(p.kappa_radpm) for p in points[chosen['start_point_id']:chosen['end_point_id']+1]) > .1
+    with pytest.raises(ValueError, match='no safe, non-overlapping interval'):
+        generate_recovery_reference_v3(points, _map(), replace(config, maximum_abs_base_curvature_inv_m=.01))
+    for value in (0., float('nan')):
+        with pytest.raises(ValueError, match='maximum absolute base curvature'):
+            replace(config, maximum_abs_base_curvature_inv_m=value).validate()
 
 
 def _circle_points(count: int = 160, radius_m: float = 20.0) -> tuple[MpcReferencePointV3, ...]:

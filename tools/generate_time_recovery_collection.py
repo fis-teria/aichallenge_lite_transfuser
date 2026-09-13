@@ -30,8 +30,9 @@ def main() -> None:
                 'sources_sha256': {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
                                   for p in args.inputs.iterdir() if p.is_file()}, 'references': {}}
     for side in ('left', 'right'):
-        config = RecoveryReferenceConfigV3(8., 6., 10., 8., 1.4, .015, .015,
-                    (RecoverySegmentRequestV3(side+'_020', side, .20, 'mixed'),))
+        config = RecoveryReferenceConfigV3(4., 6., 6., 8., 1.4, .015, .015,
+                    (RecoverySegmentRequestV3(side+'_020', side, .20, 'mixed'),),
+                    maximum_abs_base_curvature_inv_m=.01)
         generated = generate_recovery_reference_v3(points, occupancy, config)
         ref = args.output / (side+'.csv')
         with ref.open('x', newline='') as stream:
@@ -42,9 +43,11 @@ def main() -> None:
         # V3 point-index-rounded intervals and its hold=True are intentionally not
         # imported as time-teacher eligibility.
         start = generated.selected_segments[0]['base_start_s_m']
+        if start < 5.:
+            raise ValueError('RECOVERY_INTERVAL_TOO_CLOSE_TO_INITIAL_SETTLING')
         intervals = [dict(phase=phase, start_s_m=start+a, end_s_m=start+b,
                           training_eligible=phase == 'recovery')
-                     for phase, a, b in [('approach', 0, 8), ('hold', 8, 14), ('recovery', 14, 24)]]
+                     for phase, a, b in [('approach', 0, 4), ('hold', 4, 10), ('recovery', 10, 16)]]
         info = {'side': side, 'signed_offset_m': .2 if side == 'left' else -.2,
                 'config': asdict(config), 'intervals': intervals,
                 'baseline_xy_m': [[p.x_m, p.y_m] for p in points],
@@ -53,6 +56,7 @@ def main() -> None:
                 'reference_sha256': hashlib.sha256(ref.read_bytes()).hexdigest(),
                 'full_body_free_space_verified': False}
         info['controller_wrap_tail_minimum_m'] = 12.
+        info['selection_policy'] = 'MAXIMUM_ABSOLUTE_BASE_CURVATURE_AT_MOST_0.01_PER_M'
         (args.output / (side+'.json')).write_text(json.dumps(info, indent=2))
         manifest['references'][side] = {k: info[k] for k in ('signed_offset_m', 'intervals', 'reference_sha256')}
     (args.output/'manifest.json').write_text(json.dumps(manifest, indent=2))
