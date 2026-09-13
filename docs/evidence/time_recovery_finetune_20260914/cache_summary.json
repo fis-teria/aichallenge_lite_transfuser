@@ -1,0 +1,143 @@
+{
+  "manifest_sha256": "917df968ee8fb1951a2d150c2da82165aa351e7597e372054401601d02c09023",
+  "split_sha256": "7bedfe6ad82736170ddbb326a2c56f68ea19ea61c25f4b3bbf330eed310339e9",
+  "cache_files": 110,
+  "recovery_audits": [
+    {
+      "run_id": "codex-time-recovery-right020-r19",
+      "split": "train",
+      "phase_candidates": 57,
+      "accepted": 57,
+      "excluded": 0,
+      "raw_manifest_sha256": "2d716b8675003adbd1946f6e2fc0d9902d72ddf4e1851e789b92d5b79b835721",
+      "prior_probe_sha256": "a6c3965876b65a00616050f6512e736c39bda6cd67cee45698bbdf74cf09a1bd"
+    },
+    {
+      "run_id": "codex-time-recovery-left020-r20",
+      "split": "train",
+      "phase_candidates": 57,
+      "accepted": 57,
+      "excluded": 0,
+      "raw_manifest_sha256": "13f87594e52d56628694e834e459d5d404af35b35d7aff70e9c4ce984e803952",
+      "prior_probe_sha256": "9fae3f3f92c08461a6f15e81ca5c82f29102a2464681ff4eb5f009b67be5c065"
+    },
+    {
+      "run_id": "codex-time-recovery-left040-r21",
+      "split": "train",
+      "phase_candidates": 58,
+      "accepted": 58,
+      "excluded": 0,
+      "raw_manifest_sha256": "c85b1e29848546666b1b6696bfc914538808616aca9aa729012d0666e2574e3a",
+      "prior_probe_sha256": "cdda92751e67e24cca8068123b08a9501c52a21b8dabcd5524943c54650cb3e8"
+    },
+    {
+      "run_id": "codex-time-recovery-right040-r22",
+      "split": "validation",
+      "phase_candidates": 57,
+      "accepted": 57,
+      "excluded": 0,
+      "raw_manifest_sha256": "424c8cde4abeb6667602f5eb33a42393c07065f7510a163712c6e62a7710e246",
+      "prior_probe_sha256": "f9a0d69af6c81c50411f666e19a3bfa6ba4c71ceb38aa0c65ba383df2000d0d0"
+    },
+    {
+      "run_id": "codex-time-recovery-left020-r23",
+      "split": "validation",
+      "phase_candidates": 52,
+      "accepted": 52,
+      "excluded": 0,
+      "raw_manifest_sha256": "1c0012c3419c1c3fc4fd712e0cca17b0d984a568d4ea14adb0dd6370ee4bf536",
+      "prior_probe_sha256": "90f03eb8a5aabd4a75ba2d7ec6a449c9bfc7bf036e22106862d10e8439d7b945"
+    },
+    {
+      "run_id": "codex-time-recovery-left040-r25",
+      "split": "train",
+      "phase_candidates": 51,
+      "accepted": 51,
+      "excluded": 0,
+      "raw_manifest_sha256": "ad94eba10052e95ed627404ba80477dcae3152c803e1751c6f533e6c5aed0152",
+      "prior_probe_sha256": "2b9e712a712c72b8c03af239e7ad098eaef69d10ca8cc540f5804a9edb9ba34f"
+    }
+  ],
+  "real_replays": [
+    {
+      "run_id": "codex-time-recovery-right020-r19",
+      "real_input_replay_equal": [
+        "codex-time-recovery-right020-r19:epoch0000:47454998939",
+        "codex-time-recovery-right020-r19:epoch0000:50394998873"
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-left020-r20",
+      "real_input_replay_equal": [
+        "codex-time-recovery-left020-r20:epoch0000:47664998934",
+        "codex-time-recovery-left020-r20:epoch0000:50604998868"
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-left040-r21",
+      "real_input_replay_equal": [
+        "codex-time-recovery-left040-r21:epoch0000:47034998948",
+        "codex-time-recovery-left040-r21:epoch0000:50079998880"
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-right040-r22",
+      "real_input_replay_equal": [
+        "codex-time-recovery-right040-r22:epoch0000:47244998943",
+        "codex-time-recovery-right040-r22:epoch0000:50289998875"
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-left020-r23",
+      "real_input_replay_equal": [
+        "codex-time-recovery-left020-r23:epoch0000:337989992445",
+        "codex-time-recovery-left020-r23:epoch0000:340719992384"
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-left040-r25",
+      "real_input_replay_equal": [
+        "codex-time-recovery-left040-r25:epoch0000:338094992442",
+        "codex-time-recovery-left040-r25:epoch0000:340824992381"
+      ]
+    }
+  ],
+  "contract": {
+    "format": "time_sqlite_corpus_v1",
+    "dt_s": 0.1,
+    "points": 30,
+    "frame": "base_link_at_observation",
+    "freeze_delay_receipt_ns": 50000000,
+    "availability": "bag_receipt_proxy_not_measured_preprocessing_completion",
+    "config": {
+      "image_shape": [
+        3,
+        224,
+        384
+      ],
+      "lidar_shape": [
+        2,
+        750
+      ],
+      "ego_features": 4,
+      "camera_history_length": 4,
+      "lidar_history_length": 4,
+      "ego_history_length": 10,
+      "command_history_length": 10,
+      "tolerance_ns": 50000000,
+      "teacher_tolerance_ms": 50.0,
+      "lidar_min_range_m": 0.0,
+      "lidar_max_range_m": 25.0,
+      "lidar_angle_min_rad": -3.141592653589793,
+      "capture_clock": "sim",
+      "available_clock": "bag_receipt",
+      "pose_world_frame": "map",
+      "pose_body_frame": "base_link"
+    },
+    "split_sha256": "7bedfe6ad82736170ddbb326a2c56f68ea19ea61c25f4b3bbf330eed310339e9",
+    "pilot_only": null,
+    "stop_probability": null,
+    "runtime_ready": false,
+    "selection": "full_observed_recovery_only_150ms_margin"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "git_sha": "17777082d4d9c8cef0b2c7be482352a19fae7fa1",
+  "command": [
+    "timeout",
+    "--signal=TERM",
+    "--kill-after=20s",
+    "7200s",
+    "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+    "-u",
+    "tools/train_time_recovery.py",
+    "train",
+    "--plan",
+    "configs/time_path_p1/recovery_20260914.json",
+    "--cache",
+    "../datasets/cache/time_recovery_20260914",
+    "--output",
+    "../runs/time_recovery_finetune_20260914"
+  ],
+  "started_unix_s": 1789317778.2777781,
+  "outer_limit_s": 7220
+}

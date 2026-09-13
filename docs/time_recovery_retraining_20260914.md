@@ -1,7 +1,7 @@
 # 復帰データ追加学習とAWSIM比較
 
 ユーザー依頼: 採用した復帰データで再学習し、graneple@192.168.3.10でAWSIMテストを実施する。
-この文書を実行状態の正本とする。現在は変換・学習準備段階で、走行結果は未取得。
+この文書を実行状態の正本とする。現在はWSL追加学習中。旧モデルの比較走行は終了し、候補走行は学習後に実施する。
 
 既存の学習入口は20周固定のscratch OFF/ON比較専用であり、復帰区間の除外と追加runの固定split、
 既存checkpointからの追加学習を扱えない。データ変換と学習開始点のみを拡張する。
@@ -9,6 +9,36 @@
 新形式以外の6/2/2制約は変えない。旧checkpoint/cache/rawと旧実験部署は保全し、出力は新規パスに限定する。
 判定指標は通常走行・復帰holdoutの3秒誤差とAWSIM進捗/停止理由。ラベルshape/mask/履歴、split境界、
 finetune初期重みをテストし、実センサ再構成の一致も確認する。安全監視やcontrollerは変更しない。
+
+## 現在の実行状態
+
+- 変換・学習source: `17777082d4d9c8cef0b2c7be482352a19fae7fa1`。WindowsからWSLへ同期済み。
+- 前段source `6da2842` のWSL全体テスト: 2,227 passed / 4 skipped / 64 warnings、78.05秒。
+  `1777708` はcacheに既存runtime契約のframe/points/dtを保持する1行の修正。
+- 6runの原本照合・全332復帰候補の再教師化と採用一致・各run2件の実センサ/cache tensor一致が成功。
+  学習復帰223件、検証復帰109件。通常データを含むunique train36,949件、validation12,346件。
+  1epochの提示は45,646件、3epochで136,938提示/最大4,281更新。testは開封していない。
+- cache: `/home/thistle/e2e_autonomous/datasets/cache/time_recovery_20260914`、
+  identity `917df968ee8fb1951a2d150c2da82165aa351e7597e372054401601d02c09023`。
+- 学習出力: `/home/thistle/e2e_autonomous/runs/time_recovery_finetune_20260914`。
+  lock保持中は同期しない。`status.json`/`history.json`で進捗を確認し、同じ学習を重複起動しない。
+- 実行ログ: `/home/thistle/e2e_autonomous/runs/time_recovery_finetune_evidence_20260914/train_1777708.log`。
+  終了記録は同ディレクトリの`training_exit.json`。学習中断なら同一planの`--resume`を使う。
+- 旧モデル比較: `codex-time-recovery-model-base01`、専有deployment
+  `/home/graneple/e2e_autonomous/time_recovery_model_baseline_20260914`。
+  213moduleのsource/install一致、隔離ROSで実モデル経路6件一致・異常制動・publisher0を確認後に実行。
+  144.05秒wallで`FAILED / CONTROL_STOPPING_SWEEP_OCCUPIED`、完走なし。
+  発進から約98秒で監視作動。hostがfreeze終了したためfreeze前の実測停止確認は未成立。
+  起動したcontainerは0、cleanup error0。速度目標と監視は前回のvehicle_model設定と同じ。
+- 旧モデル記録58ファイル78,035,140bytesをnative WSLの上記evidence配下`baseline/`へ転送し全件一致。
+  archive SHA `f00fdd628f211fefbdfd66b65bd285df332bea63fe7054c68b658f2d28174c4d`。
+  内部のautoware.logリンクは解決先が同一archive内であることを確認。remote原本は保持。
+  native WSLでの制御計算再生・定量評価は学習lock解放後に行う。
+- 小さい証跡: `docs/evidence/time_recovery_finetune_20260914/`。
+  通常RVizのmagenta経路を保存画像で目視確認した。XWDは宣言BGR24・bytes_per_lineを使ってPNG化。
+
+残る処理は、学習完了/再読込一致、通常/復帰のholdout比較、新checkpointのruntime読込、
+候補のsource/install/hash確認と隔離ROS、同条件AWSIM、両走行のWSL評価、最終pytestと環境確認。
 
 ## 固定計画
 
