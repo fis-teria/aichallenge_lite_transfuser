@@ -1,0 +1,164 @@
+{
+  "event": "CONTROL_AND_PHASE",
+  "monotonic_ns": 42332188516617,
+  "sim_ns": 376009991595,
+  "reason": "STALE_scan",
+  "phase": "invalid",
+  "projection": {
+    "s_m": 324.33163111073645,
+    "offset_m": 0.1972484547416148,
+    "distance_m": 0.1972484547416148,
+    "segment_index": 110,
+    "heading_error_rad": -0.0035006476326309155
+  },
+  "speed_mps": 1.0593397617340088,
+  "issued_angle_rad": -0.12964531779289246,
+  "target_speed_mps": 0.0,
+  "acceleration_mps2": -1.0,
+  "guard": {
+    "policy": "CURVATURE_INTERVAL_SUPPORT_V2",
+    "support_directions": 64,
+    "sweep_samples": 300,
+    "integration_step_m": 0.004985853666429223,
+    "maximum_position_integration_error_m": 0.00028437651156762743,
+    "maximum_discretization_padding_m": 0.07198969877145009,
+    "stopping_travel_m": 1.4907702462623376,
+    "whole_sweep_convex_enclosure": true,
+    "vehicle_motion": {
+      "policy": "awsim_understeer_v1",
+      "static_wheelbase_m": 1.087,
+      "nominal_response_length_m": 1.1374990328855799,
+      "lateral_displacement_bound_m": 0.046780192852020265,
+      "scope": "EMPIRICAL_AWSIM_ONLY_CONDITIONAL_BRAKING_BOUNDS",
+      "gradient_interval_s2_per_m": [
+        0.0,
+        0.2
+      ],
+      "braking_speed_interval_mps": [
+        0.0,
+        1.0593397617340088
+      ],
+      "heading_rate_radps": -0.07974188774824142,
+      "reported_lateral_mps": -0.011907994747161865,
+      "rear_lateral_mps": 0.0020468365593777627,
+      "measured_curvature_per_m": -0.07527508230004863,
+      "low_speed_full_curvature_interval": false,
+      "curvature_interval_per_m": [
+        -0.07651973792815835,
+        -0.05713332268217475
+      ]
+    },
+    "scope": "FORWARD_SCAN_PROXIMITY_NOT_ALL_AROUND_FREE_SPACE",
+    "minimum_ray_margin_m": 2.2384339236577246,
+    "checked_rays": 750,
+    "measured_steer_rad": -0.08298593014478683,
+    "issued_steer_rad": -0.07478718906641006,
+    "previous_steer_rad": -0.07778719067573547,
+    "full_body_free_space_verified": false
+  },
+  "current_pose": {
+    "stamp_ns": 375989991595,
+    "clock": "sim",
+    "epoch": "0",
+    "world_frame": "map",
+    "body_frame": "base_link",
+    "x_m": 89654.0264670424,
+    "y_m": 43122.8722127357,
+    "yaw_rad": -2.29074279066497
+  },
+  "nominal_angle_rad": -0.12464531511068344,
+  "nominal_stamp_ns": 375999991595,
+  "input_timing_ns": {
+    "nominal": {
+      "capture_ns": 375999991595,
+      "receipt_monotonic_ns": 42332140311116,
+      "receipt_age_ns": 48205501
+    },
+    "steering": {
+      "capture_ns": 376004991595,
+      "receipt_monotonic_ns": 42332142078729,
+      "receipt_age_ns": 46437888
+    },
+    "velocity": {
+      "capture_ns": 376004991595,
+      "receipt_monotonic_ns": 42332142018091,
+      "receipt_age_ns": 46498526
+    },
+    "scan": {
+      "capture_ns": 375940690296,
+      "receipt_monotonic_ns": 42332075393116,
+      "receipt_age_ns": 113123501
+    },
+    "imu": {
+      "capture_ns": 375999991595,
+      "receipt_monotonic_ns": 42332137610830,
+      "receipt_age_ns": 50905787
+    },
+    "camera": {
+      "capture_ns": 375999991595,
+      "receipt_monotonic_ns": 42332143413920,
+      "receipt_age_ns": 45102697
+    },
+    "pose": {
+      "capture_ns": 375989991595,
+      "receipt_monotonic_ns": 42332122775618,
+      "receipt_age_ns": 65740999
+    },
+    "trajectory": {
+      "capture_ns": 375004991617,
+      "receipt_monotonic_ns": 42331213829557,
+      "receipt_age_ns": 974687060
+    }
+  },
+  "latest_received_capture_ns": {
+    "nominal": 375999991595,
+    "steering": 376004991595,
+    "velocity": 376004991595,
+    "scan": 375996281788,
+    "imu": 375999991595,
+    "camera": 375999991595,
+    "pose": 375989991595,
+    "trajectory": 375004991617
+  },
+  "guard_heading_rate_radps": -0.07974188774824142,
+  "raw_velocity_heading_rate_radps": -0.07968177646398544,
+  "guard_heading_rate_source": "/sensing/imu/imu_raw",
+  "processing_ms": 82.075504,
+  "snapshot_retry_reasons": [],
+  "decision_wall_ms": 82.108918,
+  "thread_cpu_ms": 14.328911,
+  "stage_wall_ms": {
+    "snapshot_selection": 2.510818,
+    "authority_clock": 2.043327,
+    "source_input_validation": 1.187816,
+    "motion_reference": 3.529268,
+    "scan_alignment": 0.331472,
+    "scan_guard": 72.021845
+  },
+  "gc_pauses": [
+    {
+      "generation": 0,
+      "duration_ms": 0.127836
+    },
+    {
+      "generation": 0,
+      "duration_ms": 0.161715
+    },
+    {
+      "generation": 0,
+      "duration_ms": 0.10117
+    },
+    {
+      "generation": 1,
+      "duration_ms": 1.6695
+    },
+    {
+      "generation": 2,
+      "duration_ms": 38.090984
+    },
+    {
+      "generation": 0,
+      "duration_ms": 0.043667
+    }
+  ]
+}

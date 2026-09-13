@@ -12,6 +12,7 @@ import json
 import math
 import os
 from pathlib import Path
+import resource
 import sys
 import threading
 import time
@@ -85,6 +86,8 @@ def main() -> None:
             ended = time.monotonic_ns(); began = gc_started.pop(generation)
             gc_events.append((began, ended, generation))
     gc.callbacks.append(observe_gc)
+    gc_log = (args.output/'gc.jsonl').open('x', buffering=1)
+    last_gc_wall = time.monotonic()
 
     def stamp(t) -> int:
         return int(t.sec)*10**9+int(t.nanosec)
@@ -168,7 +171,7 @@ def main() -> None:
                     {r:tuple(h) for r,h in histories.items()}, tuple(poses), tuple(scans), dict(sensor_counts), dict(imu_transforms))
 
     def tick(attempt: int = 0, started_ns: int | None = None, retry_reasons: tuple[str, ...] = ()) -> None:
-        nonlocal publisher
+        nonlocal publisher, last_gc_wall
         if started_ns is None:
             started_ns = time.monotonic_ns()
         stage_started = time.monotonic_ns(); thread_started = time.thread_time_ns(); stages = {}
@@ -393,8 +396,22 @@ def main() -> None:
         pending = args.output/'control_heartbeat.pending'
         pending.write_text(json.dumps(dict(state, monotonic_ns=now, sim_ns=clock_ns, reason=reason, projection=projection), allow_nan=False))
         pending.replace(args.output/'control_heartbeat.json')
+        # Keep cyclic collection out of scan selection/calculation/publication.
+        # Refcounts still release ordinary message/array objects immediately.
+        if time.monotonic()-last_gc_wall >= 5.:
+            began = time.monotonic_ns(); collected = gc.collect()
+            last_gc_wall = time.monotonic()
+            gc_log.write(json.dumps(dict(monotonic_ns=began, collected=collected,
+                duration_ms=(time.monotonic_ns()-began)/1e6,
+                peak_rss_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))+'\n')
 
     node.create_timer(.05, tick)
+    automatic_gc_enabled = gc.isenabled()
+    gc.collect(); gc.freeze(); gc.disable()
+    (args.output/'gc_policy.json').write_text(json.dumps(dict(
+        policy='FROZEN_STARTUP_GRAPH_AND_EXPLICIT_COLLECTION_AFTER_PUBLICATION',
+        collect_interval_s=5., frozen_objects=gc.get_freeze_count(),
+        automatic_enabled=gc.isenabled()), indent=2))
     receiver_executor = SingleThreadedExecutor()
     receiver_executor.add_node(receiver)
     def spin_receiver():
@@ -418,9 +435,12 @@ def main() -> None:
         receiver_executor.shutdown(timeout_sec=2.)
         receiver_thread.join(timeout=2.)
         receiver.destroy_node()
-        log.close(); node.destroy_node()
+        log.close(); gc_log.close(); node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
+        gc.unfreeze()
+        if automatic_gc_enabled:
+            gc.enable()
 
 
 if __name__ == '__main__':

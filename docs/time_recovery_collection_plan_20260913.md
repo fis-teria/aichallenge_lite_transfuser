@@ -379,3 +379,16 @@ left020-r17では直線の実測hold中央値+0.223m、recovery後5mの中央値
 再試行前に最大20msだけGILを解放して、実測メッセージの到着を待つ。再計算用20msを残し、
 待機は80ms-elapsedを上限とする。1回の再試行、100ms判断期限、全鮮度・skew・scan補間期限はそのまま。
 未到着のposeやscanは生成せず、待機後も全検査に合格しなければ停止する。待機予算はunit testで確認する。
+
+d89a6d6のWSL full pytestは2,222 passed / 4 skipped / 63 warnings（73.69s）。
+left020-r18はs=324.33mでSTALE_scan、正常停止・bag close成立。直線復帰は再現し、hold約+0.224m、
+recovery後の最大絶対offset約0.026m。1周は未達であり、復帰部分runとして保全する。
+停止tickは82.11ms（thread CPU14.33ms）で、その計算中にGC generation2が38.09ms発生した。
+collectorの起動時オブジェクトをgc.freezeし、自動cyclic GCを停止する。通常のreference count解放は維持する。
+cyclic GCは停止せず、command発行・phase・heartbeat保存の後に5秒周期で明示実行する。
+GC時間・回収件数・peak RSSを別gc.jsonlへ保存し、計算内の予期しない全世代走査を避ける。
+共通監視・制動・capture/receipt/skew・100ms判断期限は変更しない。次の右側pilotで長時間のGC/メモリも確認する。
+
+r17の部分復帰はWSLで57filesのSHA/SQLiteがPASS、1 epoch、復帰候補56/56件が入力履歴と全30未来点を満たした。
+代表3件を元画像・LiDARから実入力tensorへ組み立て、教師XY全30点の完全一致を確認した。
+これは部分区間の再現確認で、1周達成や本学習への投入を意味しない。
