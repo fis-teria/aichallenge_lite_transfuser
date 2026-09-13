@@ -68,13 +68,21 @@ def test_trial_rejects_discontinuous_path_without_cutting_it():
     np.testing.assert_array_equal(p.xy_m, xy)
 
 
-def test_recorded_awsim_near_origin_prediction_reproduces_foldback_stop():
-    """Trial 03 never drove: preserve the observed geometry rejection."""
+def test_recorded_awsim_near_origin_prediction_uses_resolved_geometry_without_correction():
+    """Trial 03 failed on a centimetre-scale first step, preserved verbatim."""
     fixture = json.loads((Path(__file__).parent / "fixtures/time_path/near_origin_foldback.json").read_text())
     xy = np.array(fixture["raw_xy_m"], dtype=np.float64)
     observed = pose(fixture["observation_ns"])
     p = TimePlan(fixture["plan_id"], observed, xy)
     current = replace(observed, stamp_ns=observed.stamp_ns + 150_000_000)
-    with pytest.raises(ValueError, match="^TIME_PATH_FOLDBACK$"):
-        time_trial_control(p, current, speed_mps=0., rear_axle_offset_m=(.0010000169277191162, 0.))
+    command = time_trial_control(p, current, speed_mps=0., rear_axle_offset_m=(.0010000169277191162, 0.))
+    assert 0 < command["target_speed_mps"] <= .25
+    assert command["acceleration_mps2"] > 0
+    assert command["geometry"]["raw_points_checked"] == 31
     np.testing.assert_array_equal(p.xy_m, xy)
+
+
+def test_stationary_prediction_noise_never_authorizes_motion():
+    xy = np.column_stack((np.full(30, .012), np.tile([.01, -.01], 15)))
+    with pytest.raises(ValueError, match="TIME_PATH_MOTION_UNRESOLVED"):
+        time_trial_control(TimePlan("noise", pose(), xy), pose(), speed_mps=0., rear_axle_offset_m=(.001, 0.))

@@ -173,9 +173,11 @@ def main() -> None:
                 raise ValueError("POSE_VELOCITY_SKEW")
             observed = interpolate_body_pose(poses, obs_ns)
             plan = TimePlan(value["plan_id"], observed, np.asarray(value["raw_xy_m"], dtype=float))
-            details = time_trial_control(plan, current, speed_mps=speed,
-                                          rear_axle_offset_m=(args.rear_axle_forward_m, 0.))
-            details.update(clearance_m=clearance, current_pose=current.__dict__, observation_pose=observed.__dict__)
+            plan_id = plan.plan_id
+            details = {"clearance_m": clearance, "current_pose": current.__dict__,
+                       "observation_pose": observed.__dict__}
+            details.update(time_trial_control(plan, current, speed_mps=speed,
+                                              rear_axle_offset_m=(args.rear_axle_forward_m, 0.)))
             steer = details["steer_rad"]; accel = details["acceleration_mps2"]; target = details["target_speed_mps"]
             plan_id = plan.plan_id; reason = "TIME_PATH_TRACKING" if live else "SHADOW_CONTROL"
         except (ValueError, KeyError, TypeError) as exc:

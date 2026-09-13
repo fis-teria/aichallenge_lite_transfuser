@@ -8,6 +8,7 @@ from typing import Any, Sequence
 import numpy as np
 
 from .time_reference_v1 import TimePlan, TimedBodyPose, prepare_time_reference, reference_control
+from .time_geometry_v2 import validate_time_geometry
 from .waypoint_controller import ControllerConfig, select_lookahead
 
 
@@ -45,18 +46,10 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
     if len(rear_axle_offset_m) != 2 or not np.isfinite(rear_axle_offset_m).all() or np.linalg.norm(rear_axle_offset_m) > .002:
         raise ValueError("BODY_POINT_OFFSET_REQUIRES_FUTURE_HEADING")
     reference = prepare_time_reference(plan, current, rear_axle_offset_m=rear_axle_offset_m)
-    # Finite-step plausibility is an explicit trial gate, not a correction of raw output.
-    steps = np.diff(np.vstack((np.zeros((1, 2)), plan.xy_m)), axis=0)
-    lengths = np.linalg.norm(steps, axis=1)
-    if lengths.max() > .6:
-        raise ValueError("TIME_PATH_STEP_DISCONTINUITY")
-    moving = steps[lengths > .01]
-    if len(moving) > 1:
-        headings = np.arctan2(moving[:, 1], moving[:, 0])
-        turns = np.arctan2(np.sin(np.diff(headings)), np.cos(np.diff(headings)))
-        if np.any(np.abs(turns) > 1.2):
-            raise ValueError("TIME_PATH_FOLDBACK")
+    geometry = validate_time_geometry(plan.xy_m)
     predicted_speed = reference.target_speed_mps
+    if predicted_speed > 1e-6 and not geometry["motion_resolved"]:
+        raise ValueError("TIME_PATH_MOTION_UNRESOLVED")
     target_speed = min(speed_cap_mps, predicted_speed)
     reference = replace(reference, target_speed_mps=target_speed)
     config = ControllerConfig(wheelbase_m=1.087, min_lookahead_m=1., max_steer_rad=.5,
@@ -78,4 +71,5 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
             "target_speed_mps": target_speed, "predicted_source_speed_mps": predicted_speed,
             "plan_age_sec": reference.age_sec, "lookahead_rear_m": target.tolist(),
             "reference_xy_rear_m": reference.xy_current_m.tolist(),
-            "source_body_frame": reference.source_body_frame, "tracking_frame": reference.tracking_frame}
+            "source_body_frame": reference.source_body_frame, "tracking_frame": reference.tracking_frame,
+            "geometry": geometry}

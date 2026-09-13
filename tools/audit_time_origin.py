@@ -15,6 +15,7 @@ from typing import Any
 import numpy as np
 
 from aic_transfuser_lite.data.time_training_cache_v1 import TimeTrainingCacheDataset
+from aic_transfuser_lite.control.time_geometry_v2 import validate_time_geometry
 
 
 def old_foldback(xy_m: np.ndarray) -> bool:
@@ -31,6 +32,17 @@ def quantiles(values: np.ndarray) -> dict[str, float] | None:
         return None
     return dict(zip(("min", "median", "p95", "p99", "max"),
                     np.quantile(values, (0, .5, .95, .99, 1)).tolist()))
+
+
+def geometry_reasons(paths: np.ndarray) -> dict[str, int]:
+    reasons: Counter[str] = Counter()
+    for path in paths:
+        try:
+            result = validate_time_geometry(path)
+            reasons["RESOLVED" if result["motion_resolved"] else "MOTION_UNRESOLVED"] += 1
+        except ValueError as exc:
+            reasons[str(exc)] += 1
+    return dict(reasons)
 
 
 def main() -> None:
@@ -76,12 +88,14 @@ def main() -> None:
                 "teacher_first_norm_m": quantiles(np.linalg.norm(gt[:, 0], axis=1)),
                 "teacher_first_y_m": quantiles(gt[:, 0, 1]),
                 "teacher_old_foldback": sum(old_foldback(x) for x in gt),
+                "teacher_new_geometry": geometry_reasons(gt),
                 "teacher_3s_endpoint_norm_m": quantiles(np.linalg.norm(gt[:, -1], axis=1))}
             if split == "validation":
                 pred = predictions[mask]
                 if not np.isfinite(pred).all():
                     raise ValueError("nonfinite eligible predictions")
                 row.update(prediction_old_foldback=sum(old_foldback(x) for x in pred),
+                    prediction_new_geometry=geometry_reasons(pred),
                     prediction_first_error_m=quantiles(np.linalg.norm(pred[:, 0] - gt[:, 0], axis=1)),
                     prediction_first_x_m=quantiles(pred[:, 0, 0]),
                     prediction_first_y_m=quantiles(pred[:, 0, 1]))
