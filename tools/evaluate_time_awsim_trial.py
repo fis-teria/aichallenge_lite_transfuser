@@ -12,11 +12,12 @@ import numpy as np
 
 from aic_transfuser_lite.control.time_geometry_v2 import validate_time_geometry
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
-from aic_transfuser_lite.control.time_trial_v1 import time_trial_control
+from aic_transfuser_lite.control.time_trial_v1 import time_trial_control, validate_trial_config
 
 
 def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str, Any]],
-                            rear_axle_forward_m: float) -> dict[str, Any]:
+                            rear_axle_forward_m: float, *,
+                            speed_policy: str = "source_capped_0p25") -> dict[str, Any]:
     """Reproduce decisions from recorded raw predictions, poses, and measured speed.
 
     This covers the calculation before the separate output steering-rate clamp.
@@ -35,7 +36,8 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
         current = TimedBodyPose(**details["current_pose"])
         try:
             calculated = time_trial_control(TimePlan(plan["plan_id"], observed, np.array(plan["raw_xy_m"])),
-                current, speed_mps=command["speed_mps"], rear_axle_offset_m=(rear_axle_forward_m, 0.))
+                current, speed_mps=command["speed_mps"], rear_axle_offset_m=(rear_axle_forward_m, 0.),
+                speed_policy=speed_policy)
         except ValueError as exc:
             if command["reason"] != str(exc):
                 raise ValueError("recorded rejection could not be reproduced") from exc
@@ -62,7 +64,8 @@ def main() -> None:
     def rows(name: str) -> list[dict[str, Any]]:
         return [json.loads(line) for line in (args.run/name).read_text().splitlines()]
     host = json.loads((args.run/"host_result.json").read_text())
-    if host["status"] != "COMPLETE_BOUNDED_TRIAL" or host["scope"] != "10_SIM_SECOND_LOW_SPEED_MODEL_TRIAL":
+    if host["status"] != "COMPLETE_BOUNDED_TRIAL" or host["scope"] not in (
+            "10_SIM_SECOND_LOW_SPEED_MODEL_TRIAL", "10_SIM_SECOND_MODEL_TRIAL"):
         raise ValueError("completed 10-second bounded trial required")
     control = rows("control.jsonl")
     inference = rows("inference.jsonl")
@@ -107,7 +110,16 @@ def main() -> None:
     publishers = [r for r in control if r.get("event") == "PUBLISHER_CREATED"]
     if len(publishers) != 1:
         raise ValueError("one recorded controller publisher required")
-    replay = replay_recorded_control(active, plans, publishers[0]["rear_axle_forward_m"])
+    speed_policy = publishers[0].get("speed_policy", "source_capped_0p25")
+    if host["scope"] == "10_SIM_SECOND_MODEL_TRIAL":
+        config_bytes = (args.run/"trial_config.json").read_bytes()
+        config_sha = hashlib.sha256(config_bytes).hexdigest()
+        if (config_sha != host["trial_config_sha256"] or config_sha != publishers[0]["trial_config_sha256"]
+                or speed_policy != validate_trial_config(json.loads(config_bytes))
+                or speed_policy != host["speed_policy"]):
+            raise ValueError("recorded runtime/config speed policy mismatch")
+    replay = replay_recorded_control(active, plans, publishers[0]["rear_axle_forward_m"], speed_policy=speed_policy)
+    late_speeds = [c["speed_mps"] for c in active if c["sim_ns"] >= start + 7_000_000_000 and c["speed_mps"] is not None]
     result = {"status": "COMPLETED_NO_POSITIVE_DRIVE" if positive == 0 else "COMPLETED_POSITIVE_COMMANDS_OBSERVED",
         "evaluator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "scope": "BOUNDED_SAME_SCENE_TEST_NOT_LAP_OR_AVOIDANCE_ACCEPTANCE",
@@ -120,6 +132,10 @@ def main() -> None:
                                                      if "geometry" in c.get("details", {})}),
         "active_new_geometry_reasons": dict(geometry_reasons),
         "control_replay": replay,
+        "speed_policy": speed_policy,
+        "active_target_speed_mps": quantiles([c["target_speed_mps"] for c in active]),
+        "final_3s_measured_speed_kmh": quantiles(np.asarray(late_speeds)*3.6) if late_speeds else None,
+        "active_samples_within_0p25_kmh_of_5": sum(c["speed_mps"] is not None and abs(c["speed_mps"]*3.6-5.) <= .25 for c in active),
         "recorded_pose_count": len(measured_xy),
         "recorded_pose_travel_m": float(np.linalg.norm(np.diff(measured_xy, axis=0), axis=1).sum()) if len(measured_xy) > 1 else None,
         "recorded_pose_net_displacement_m": float(np.linalg.norm(measured_xy[-1] - measured_xy[0])) if len(measured_xy) > 1 else None,

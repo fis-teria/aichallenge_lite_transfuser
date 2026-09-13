@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 from collections import deque
+import hashlib
 import json
 import math
 import os
@@ -14,7 +15,9 @@ import numpy as np
 from . import spatial_path_shadow_node_v4 as _source_layout
 from aic_transfuser_lite.control.long_sim_tracking_v4 import check_scan
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
-from aic_transfuser_lite.control.time_trial_v1 import interpolate_body_pose, time_trial_control
+from aic_transfuser_lite.control.time_trial_v1 import (
+    SPEED_POLICIES, interpolate_body_pose, time_trial_control, trial_speed_limits, validate_trial_config,
+)
 
 
 def main() -> None:
@@ -27,7 +30,21 @@ def main() -> None:
     parser.add_argument("--sensor-source", default="/awsim_d1")
     parser.add_argument("--authorize-awsim-only", action="store_true")
     parser.add_argument("--synthetic-shadow-fixture", action="store_true")
+    settings = parser.add_mutually_exclusive_group()
+    settings.add_argument("--trial-config", type=Path)
+    settings.add_argument("--speed-policy", choices=SPEED_POLICIES)
     args, ros_args = parser.parse_known_args()
+    config_sha = None
+    speed_policy = args.speed_policy or "source_capped_0p25"
+    if args.trial_config is not None:
+        config_bytes = args.trial_config.read_bytes()
+        config = json.loads(config_bytes)
+        speed_policy = validate_trial_config(config)
+        if (config["checkpoint_sha256"] != args.checkpoint_sha256
+                or config["geometry"]["rear_axle_forward_in_base_link_m"] != args.rear_axle_forward_m):
+            raise ValueError("TRIAL_CONFIG_IDENTITY")
+        config_sha = hashlib.sha256(config_bytes).hexdigest()
+    _, overspeed_limit_mps = trial_speed_limits(speed_policy)
     live = args.authorize_awsim_only
     if live and args.synthetic_shadow_fixture:
         raise ValueError("SYNTHETIC_FIXTURE_CANNOT_ACTUATE")
@@ -111,6 +128,8 @@ def main() -> None:
             elif not live or any(e.node_name == "awsim_d1" for e in node.get_subscriptions_info_by_topic(topic)):
                 publisher = node.create_publisher(AckermannControlCommand, topic, 10)
                 record({"event": "PUBLISHER_CREATED", "topic": topic, "live": live,
+                        "speed_policy": speed_policy, "overspeed_limit_mps": overspeed_limit_mps,
+                        "trial_config_sha256": config_sha,
                         "rear_axle_forward_m": args.rear_axle_forward_m})
         reason = "WAIT_AUTHORIZATION" if live else "SHADOW_ONLY"
         steer, accel, target = previous[0], -1., 0.
@@ -137,7 +156,7 @@ def main() -> None:
                 raise ValueError("NONFINITE_VEHICLE_STATE")
             velocity_fresh = True
             state["max_speed_mps"] = max(state["max_speed_mps"], abs(speed))
-            if not -.03 <= speed <= .45:
+            if not -.03 <= speed <= overspeed_limit_mps:
                 state["fault"] = "OVERSPEED_OR_REVERSE"; raise ValueError(state["fault"])
             auth = args.output / "drive_authorized.json"
             if live and auth.exists() and state["armed_ns"] is None:
@@ -177,6 +196,7 @@ def main() -> None:
             details = {"clearance_m": clearance, "current_pose": current.__dict__,
                        "observation_pose": observed.__dict__}
             details.update(time_trial_control(plan, current, speed_mps=speed,
+                                              speed_policy=speed_policy,
                                               rear_axle_offset_m=(args.rear_axle_forward_m, 0.)))
             steer = details["steer_rad"]; accel = details["acceleration_mps2"]; target = details["target_speed_mps"]
             plan_id = plan.plan_id; reason = "TIME_PATH_TRACKING" if live else "SHADOW_CONTROL"

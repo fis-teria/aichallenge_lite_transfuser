@@ -33,6 +33,8 @@ def main() -> None:
     ap.add_argument("--deployment", type=Path, required=True)
     ap.add_argument("--run-id", required=True)
     ap.add_argument("--display", required=True, help="Verified active desktop, e.g. :0 or :1")
+    ap.add_argument("--config", type=Path, default=Path("configs/control/time_path_awsim_trial_20260913.json"),
+                    help="Trial configuration relative to this source tree")
     args = ap.parse_args()
     if not re.fullmatch(r"codex-time-[a-z0-9-]+", args.run_id):
         raise ValueError("INVALID_OWNED_RUN_ID")
@@ -43,11 +45,17 @@ def main() -> None:
         raise ValueError("UNEXPECTED_DEPLOYMENT_ROOT")
     repo = Path("/home/graneple/git/autononous_ai/aichallenge-racingkart")
     source = Path(__file__).resolve().parents[1]
-    config = json.loads((source / "configs/control/time_path_awsim_trial_20260913.json").read_text())
+    config_path = (source / args.config).resolve()
+    if config_path.parent != source / "configs/control":
+        raise ValueError("CONFIG_MUST_BE_IN_SOURCE_CONTROL_DIRECTORY")
+    config = json.loads(config_path.read_text())
     output = deployment / args.run_id; output.mkdir(exist_ok=False)
+    (output / "trial_config.json").write_bytes(config_path.read_bytes())
     env = dict(os.environ)
     result = {"status": "FAILED", "run_id": args.run_id, "start_time_utc": time.time(),
-              "scope": "10_SIM_SECOND_LOW_SPEED_MODEL_TRIAL", "official_start_requested": False}
+              "scope": "10_SIM_SECOND_MODEL_TRIAL", "official_start_requested": False,
+              "speed_policy": config.get("speed_policy", "source_capped_0p25"),
+              "trial_config_sha256": sha(config_path)}
     streams = []; processes = []; compose = None; owned = False
     started = time.monotonic()
 
@@ -121,7 +129,7 @@ def main() -> None:
         source_in_container = Path("/time") / source.relative_to(deployment)
         node_command = ["python3", str(source_in_container / "tools/run_time_path_trial_nodes.py"),
                         "--output", str(inside), "--run-id", args.run_id, "--checkpoint", "/time/command_off_best.pt",
-                        "--config", str(source_in_container / "configs/control/time_path_awsim_trial_20260913.json")]
+                        "--config", str(source_in_container / config_path.relative_to(source))]
         shell = "source /aichallenge/workspace/install/setup.bash && source /time/install/setup.bash && exec " + shlex.join(node_command)
         probe_command = ["docker", "run", "--rm", "--name", sidecar, "--gpus", "all", "--network", "host",
             "-e", "ROS_DOMAIN_ID=1", "-e", "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",

@@ -7,7 +7,9 @@ import numpy as np
 import pytest
 
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose, prepare_time_reference
-from aic_transfuser_lite.control.time_trial_v1 import interpolate_body_pose, time_trial_control
+from aic_transfuser_lite.control.time_trial_v1 import (
+    interpolate_body_pose, time_trial_control, trial_speed_limits, validate_trial_config,
+)
 
 
 def pose(stamp=0, x=0., y=0., yaw=0.):
@@ -86,3 +88,57 @@ def test_stationary_prediction_noise_never_authorizes_motion():
     xy = np.column_stack((np.full(30, .012), np.tile([.01, -.01], 15)))
     with pytest.raises(ValueError, match="TIME_PATH_MOTION_UNRESOLVED"):
         time_trial_control(TimePlan("noise", pose(), xy), pose(), speed_mps=0., rear_axle_offset_m=(.001, 0.))
+
+
+@pytest.mark.parametrize("source_speed", [.15, .8, 1.8])
+def test_fixed_5kmh_target_does_not_use_source_point_spacing(source_speed):
+    p = plan(source_speed)
+    result = time_trial_control(p, pose(), speed_mps=0., rear_axle_offset_m=(.001, 0.), speed_policy="fixed_5kmh")
+    assert result["target_speed_mps"] * 3.6 == pytest.approx(5.)
+    assert result["predicted_source_speed_mps"] == pytest.approx(source_speed)
+    assert result["acceleration_mps2"] == 1.
+    assert result["steer_rad"] == 0.
+    assert result["speed_policy"] == "fixed_5kmh"
+    np.testing.assert_array_equal(p.xy_m, plan(source_speed).xy_m)
+
+
+def test_fixed_speed_brakes_on_overshoot_and_rejects_overspeed_stationary_short_path():
+    def control(p=plan(1.), speed=1.5):
+        return time_trial_control(p, pose(), speed_mps=speed, rear_axle_offset_m=(.001, 0.), speed_policy="fixed_5kmh")
+    assert control()["acceleration_mps2"] < 0
+    with pytest.raises(ValueError, match="TRIAL_SPEED_CONTRACT"):
+        control(speed=6./3.6 + 1e-6)
+    with pytest.raises(ValueError, match="MOTION_UNRESOLVED"):
+        control(plan(0.), speed=0.)
+    with pytest.raises(ValueError, match="REFERENCE_STOPPING_DISTANCE"):
+        control(plan(.5), speed=5./3.6)
+    assert control(plan(.6), speed=5./3.6)["target_speed_mps"] == pytest.approx(5./3.6)
+    with pytest.raises(ValueError, match="STALE"):
+        time_trial_control(plan(1.), pose(600_000_000), speed_mps=1., rear_axle_offset_m=(.001, 0.), speed_policy="fixed_5kmh")
+
+
+def test_fixed_speed_scan_stopping_distance_scales_with_measured_speed():
+    from aic_transfuser_lite.control.long_sim_tracking_v4 import check_scan
+    # A finite 1.8 m front clearance permits the old crawl, not 5 km/h.
+    ranges = np.full(750, np.inf); ranges[375] = 1.8 + 1.5 - 1.165
+    parameters = (ranges, -np.pi, 2*np.pi/750, .1, 25.)
+    assert check_scan(*parameters, .25) == pytest.approx(1.8)
+    with pytest.raises(ValueError, match="STOPPING_CORRIDOR_OCCUPIED"):
+        check_scan(*parameters, 5./3.6)
+
+
+def test_speed_profiles_reject_mismatched_runtime_configuration():
+    root = Path(__file__).resolve().parents[1] / "configs/control"
+    old = json.loads((root/"time_path_awsim_trial_20260913.json").read_text())
+    fixed = json.loads((root/"time_path_fixed_5kmh_awsim_20260913.json").read_text())
+    assert validate_trial_config(old) == "source_capped_0p25"
+    assert validate_trial_config(fixed) == "fixed_5kmh"
+    assert trial_speed_limits("fixed_5kmh") == pytest.approx((5./3.6, 6./3.6))
+    for key, bad in (("speed_cap_mps", .25), ("overspeed_limit_mps", .45),
+                     ("drive_limit_sim_s", 100.), ("speed_cap_mps", float("nan"))):
+        with pytest.raises(ValueError, match="TRIAL_CONFIG_MISMATCH"):
+            validate_trial_config({**fixed, key: bad})
+    with pytest.raises(ValueError, match="TRIAL_SPEED_POLICY"):
+        validate_trial_config({**fixed, "speed_policy": "fixed_50kmh"})
+    with pytest.raises(ValueError, match="TRIAL_SPEED_CONTRACT"):
+        time_trial_control(plan(), pose(), speed_mps=0., rear_axle_offset_m=(.001, 0.), speed_policy="fixed_5kmh", speed_cap_mps=.25)

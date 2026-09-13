@@ -1,4 +1,4 @@
-"""Finite low-speed AWSIM policy over an unmodified 30-point time prediction."""
+"""Finite AWSIM speed policies over an unmodified 30-point time prediction."""
 from __future__ import annotations
 
 from dataclasses import replace
@@ -10,6 +10,35 @@ import numpy as np
 from .time_reference_v1 import TimePlan, TimedBodyPose, prepare_time_reference, reference_control
 from .time_geometry_v2 import validate_time_geometry
 from .waypoint_controller import ControllerConfig, select_lookahead
+
+
+SPEED_POLICIES = ("source_capped_0p25", "fixed_5kmh")
+
+
+def trial_speed_limits(speed_policy: str) -> tuple[float, float]:
+    """Return (normal target ceiling, measured overspeed limit), both m/s."""
+    if speed_policy == "source_capped_0p25":
+        return .25, .45
+    if speed_policy == "fixed_5kmh":
+        return 5. / 3.6, 6. / 3.6
+    raise ValueError("TRIAL_SPEED_POLICY")
+
+
+def validate_trial_config(config: dict[str, Any]) -> str:
+    """Reject descriptive JSON settings that disagree with this bounded runtime."""
+    policy = config.get("speed_policy", "source_capped_0p25")
+    ceiling, overspeed = trial_speed_limits(policy)
+    expected = {"speed_cap_mps": ceiling, "overspeed_limit_mps": overspeed,
+                "drive_limit_sim_s": 10., "drive_limit_wall_s": 30., "outer_limit_wall_s": 120.,
+                "plan_max_age_s": .5, "controller_wall_period_s": .05,
+                "stop_confirmation_speed_mps": .03, "stop_confirmation_duration_sim_s": 1.}
+    for key, value in expected.items():
+        actual = config.get(key)
+        if type(actual) not in (int, float) or not math.isclose(actual, value, rel_tol=0., abs_tol=1e-12):
+            raise ValueError("TRIAL_CONFIG_MISMATCH:" + key)
+    if config.get("scope") != "BOUNDED_AWSIM_TRIAL_ONLY":
+        raise ValueError("TRIAL_CONFIG_SCOPE")
+    return policy
 
 
 def interpolate_body_pose(poses: Sequence[TimedBodyPose], stamp_ns: int,
@@ -33,24 +62,29 @@ def interpolate_body_pose(poses: Sequence[TimedBodyPose], stamp_ns: int,
 
 
 def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: float,
-                       rear_axle_offset_m: tuple[float, float], speed_cap_mps: float = .25) -> dict[str, Any]:
-    """SI units; age-aligned source speed, capped trial speed, bounded PP.
+                       rear_axle_offset_m: tuple[float, float], speed_cap_mps: float | None = None,
+                       speed_policy: str = "source_capped_0p25") -> dict[str, Any]:
+    """SI units; age-aligned XY, explicit source-speed or fixed-5-km/h target.
 
     The static selected-scene rear axle differs by about 1 mm from base_link.
     A larger offset requires a future body-heading contract, not this trial.
     Reject geometry failures instead of cutting/fixing the predicted trajectory.
     """
-    if (not np.isfinite([speed_mps, speed_cap_mps]).all() or not -.03 <= speed_mps <= .45
-            or not 0 < speed_cap_mps <= .25):
+    ceiling, overspeed = trial_speed_limits(speed_policy)
+    if speed_cap_mps is None:
+        speed_cap_mps = ceiling
+    if (not np.isfinite([speed_mps, speed_cap_mps]).all() or not -.03 <= speed_mps <= overspeed
+            or not 0 < speed_cap_mps <= ceiling
+            or (speed_policy == "fixed_5kmh" and speed_cap_mps != ceiling)):
         raise ValueError("TRIAL_SPEED_CONTRACT")
     if len(rear_axle_offset_m) != 2 or not np.isfinite(rear_axle_offset_m).all() or np.linalg.norm(rear_axle_offset_m) > .002:
         raise ValueError("BODY_POINT_OFFSET_REQUIRES_FUTURE_HEADING")
     reference = prepare_time_reference(plan, current, rear_axle_offset_m=rear_axle_offset_m)
     geometry = validate_time_geometry(plan.xy_m)
     predicted_speed = reference.target_speed_mps
-    if predicted_speed > 1e-6 and not geometry["motion_resolved"]:
+    target_speed = ceiling if speed_policy == "fixed_5kmh" else min(speed_cap_mps, predicted_speed)
+    if (predicted_speed > 1e-6 or speed_policy == "fixed_5kmh") and not geometry["motion_resolved"]:
         raise ValueError("TIME_PATH_MOTION_UNRESOLVED")
-    target_speed = min(speed_cap_mps, predicted_speed)
     reference = replace(reference, target_speed_mps=target_speed)
     config = ControllerConfig(wheelbase_m=1.087, min_lookahead_m=1., max_steer_rad=.5,
                               min_accel_mps2=-1., max_accel_mps2=1., speed_kp=4.)
@@ -69,6 +103,7 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
     command = reference_control(reference, current_speed_mps=max(0., speed_mps), config=config)
     return {"steer_rad": command.steering_rad, "acceleration_mps2": command.acceleration_mps2,
             "target_speed_mps": target_speed, "predicted_source_speed_mps": predicted_speed,
+            "speed_policy": speed_policy, "overspeed_limit_mps": overspeed,
             "plan_age_sec": reference.age_sec, "lookahead_rear_m": target.tolist(),
             "reference_xy_rear_m": reference.xy_current_m.tolist(),
             "source_body_frame": reference.source_body_frame, "tracking_frame": reference.tracking_frame,

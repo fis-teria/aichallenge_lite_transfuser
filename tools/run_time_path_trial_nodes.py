@@ -26,6 +26,7 @@ def main() -> None:
         [sys.executable, "-m", "aic_e2e_runtime.time_path_node", *common,
          "--checkpoint", str(args.checkpoint), "--device", "cuda"],
         [sys.executable, "-m", "aic_e2e_runtime.time_trial_controller_node", *common,
+         "--trial-config", str(args.config),
          "--rear-axle-forward-m", str(config["geometry"]["rear_axle_forward_in_base_link_m"]),
          "--pose-source", "/localization/ekf_localizer", "--authorize-awsim-only"],
     ]

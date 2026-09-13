@@ -22,6 +22,7 @@ def main() -> None:
     ap.add_argument("--checkpoint", type=Path, required=True)
     ap.add_argument("--checkpoint-sha256", required=True)
     ap.add_argument("--output", type=Path, required=True)
+    ap.add_argument("--speed-policy", choices=("source_capped_0p25", "fixed_5kmh"), default="source_capped_0p25")
     args = ap.parse_args()
     if os.environ.get("ROS_DOMAIN_ID") != "93":
         raise ValueError("ISOLATED_DOMAIN_93_REQUIRED")
@@ -55,6 +56,7 @@ def main() -> None:
                                    "accel": m.longitudinal.acceleration, "steer": m.lateral.steering_tire_angle}), 10)
     processes = []; streams = []; result = {"status": "FAILED", "scope": "ISOLATED_SYNTHETIC_ROS_NOT_AWSIM"}
     start = time.monotonic(); last_sensor = 0.; counter = 0
+    fixture_speed_mps = .1
 
     def launch(module, extra, name):
         stream = (args.output / (name + ".log")).open("x"); streams.append(stream)
@@ -82,7 +84,7 @@ def main() -> None:
         t = round((100 + wall - start) * 1e9)
         clock = Clock(); set_stamp(clock.clock, t); pubs["clock"].publish(clock)
         velocity = VelocityReport(); set_stamp(velocity.header.stamp, t); velocity.header.frame_id = "base_link"
-        velocity.longitudinal_velocity = .1; pubs["velocity"].publish(velocity)
+        velocity.longitudinal_velocity = fixture_speed_mps; pubs["velocity"].publish(velocity)
         steering = SteeringReport(); set_stamp(steering.stamp, t); pubs["steering"].publish(steering)
         pose = Odometry(); set_stamp(pose.header.stamp, t); pose.header.frame_id = "map"; pose.child_frame_id = "base_link"
         pose.pose.pose.orientation.w = 1.; pose.pose.pose.position.x = .1 * (wall - start); pubs["pose"].publish(pose)
@@ -135,15 +137,18 @@ def main() -> None:
         controller = launch("time_trial_controller_node", ["--output", str(args.output / "oracle"),
             "--run-id", "ros-smoke-oracle", "--checkpoint-sha256", "0"*64,
             "--rear-axle-forward-m", ".0010000169277191162", "--pose-source", "/time_ros_fixture",
+            "--speed-policy", args.speed_policy,
             "--sensor-source", "/time_ros_fixture", "--synthetic-shadow-fixture"], "controller")
+        oracle_source_speed = .8 if args.speed_policy == "fixed_5kmh" else .15
+        expected_target = 5./3.6 if args.speed_policy == "fixed_5kmh" else .15
         def publish_oracle(t):
             value = {"event": "PLAN", "run_id": "ros-smoke-oracle", "epoch": "0", "plan_id": str(t),
                      "observation_ns": t, "clock": "sim", "frame": "base_link", "dt_s": .1,
                      "checkpoint_sha256": "0"*64, "precision": "float32", "producer_kind": "SYNTHETIC_ROS_FIXTURE",
-                     "raw_xy_m": [[.15*i*.1, 0.] for i in range(1,31)]}
+                     "raw_xy_m": [[oracle_source_speed*i*.1, 0.] for i in range(1,31)]}
             message = String(); message.data = json.dumps(value); oracle_publisher.publish(message)
         spin_for(7, publish_oracle)
-        positive = [c for c in commands if c["accel"] > 0 and abs(c["speed"]-.15) < 1e-5 and abs(c["steer"]) < 1e-8]
+        positive = [c for c in commands if c["accel"] > 0 and abs(c["speed"]-expected_target) < 1e-5 and abs(c["steer"]) < 1e-8]
         if not positive:
             raise RuntimeError("ORACLE_DID_NOT_REACH_SHADOW_PP")
         stale_started = time.monotonic()
@@ -156,8 +161,18 @@ def main() -> None:
         paused = [c for c in commands if c["wall"] > pause_started + .65]
         if not paused or any(c["accel"] >= 0 for c in paused):
             raise RuntimeError("PAUSED_CLOCK_DID_NOT_BRAKE")
+        fixture_speed_mps = (6./3.6 if args.speed_policy == "fixed_5kmh" else .45) + .05
+        overspeed_started = time.monotonic()
+        spin_for(1., publish_oracle)
+        overspeed = [c for c in commands if c["wall"] > overspeed_started + .4]
+        heartbeat = json.loads((args.output / "oracle/control_heartbeat.json").read_text())
+        if (not overspeed or any(c["accel"] >= 0 or c["speed"] != 0 for c in overspeed)
+                or heartbeat["fault"] != "OVERSPEED_OR_REVERSE"):
+            raise RuntimeError("OVERSPEED_DID_NOT_BRAKE")
         result.update(status="PASS", oracle_positive_shadow_commands=len(positive),
                       stale_plan_brake_commands=len(stale), paused_clock_brake_commands=len(paused),
+                      speed_policy=args.speed_policy, expected_target_speed_mps=expected_target,
+                      overspeed_brake_commands=len(overspeed),
                       vehicle_command_publishers=0)
         oracle.destroy_node()
     except Exception as exc:
