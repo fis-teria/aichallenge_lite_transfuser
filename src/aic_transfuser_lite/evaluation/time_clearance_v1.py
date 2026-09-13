@@ -91,5 +91,6 @@ def scan_margin(scan: dict[str, Any], sensor: Sequence[float], *, speed_mps: flo
     far = np.where(projected > 1e-12, intersections, np.inf).min(axis=0)
     outside = (parallel & (remaining[:, None] < 0)).any(axis=0)
     required = np.where(~outside & (far >= np.maximum(near, 0.)), far, 0.)
-    margins = np.where(required > 0, np.minimum(scan["ranges"], scan["range_max"])-required, np.inf)
+    ranges = np.asarray(scan["ranges"], dtype=float)
+    margins = np.where(required > 0, np.minimum(ranges, scan["range_max"])-required, np.inf)
     return {"reason": "STOPPING_SWEEP_OCCUPIED", "minimum_ray_margin_m": float(margins.min())}

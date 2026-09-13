@@ -56,3 +56,7 @@ def test_exact_frozen_rejection_and_unknown_are_distinct():
     f["scan"]["ranges"][0] = float("nan")
     r = scan_margin(f["scan"], f["scan_in_current_rear"], **kwargs)
     assert r == {"reason": "SCAN_UNKNOWN", "minimum_ray_margin_m": None}
+    f["scan"]["ranges"] = ["inf"]*len(f["scan"]["ranges"])
+    r = scan_margin(f["scan"], f["scan_in_current_rear"], **kwargs)
+    assert r["reason"] == "PASS"
+    assert 0 < r["minimum_ray_margin_m"] < f["scan"]["range_max"]
