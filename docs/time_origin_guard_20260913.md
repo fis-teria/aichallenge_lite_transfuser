@@ -88,6 +88,11 @@ trial04の89経路は全件新形状判定でRESOLVED。実指令にも `distanc
 試行時間54.565 wall秒、入力欠損による推論拒否3件、推論故障なし、cleanup errorなし。
 推論時間は中央値51.40 ms、p95 102.33 ms。50 ms入力確定待ちや制御までの総遅延は含まない。
 
+保存した生予測、観測pose、現在pose、実測速度からWSLで制御計算を再実行し、**201/201指令が一致**した。
+比較対象は形状判定とPure Pursuit計算（出力時の操舵角速度制限前）。許容差1e-9に対し最大数値差4.44e-16。
+最終集計と図はcode `a354943`、WSL `evaluation04_replay/` に保存。
+元のtrial03ログはposeがないため `NOT_RECORDED` とし、再現できたと扱わないことも確認した。
+
 ![実測速度・加速度指令・操舵指令](evidence/time_origin_guard_20260913/control_timeline.png)
 
 ![生30点の予測](evidence/time_origin_guard_20260913/raw_time_paths.png)
@@ -113,6 +118,14 @@ trial04の89経路は全件新形状判定でRESOLVED。実指令にも `distanc
 [AWSIMホスト結果](evidence/time_origin_guard_20260913/host_result.json)、
 [WSL評価](evidence/time_origin_guard_20260913/summary.json)を保存した。
 生の20記録ファイルは[転送照合](evidence/time_origin_guard_20260913/trial04_transfer_verification.json)済み。
+選択した最終成果物12件も[コピー元とのSHA-256照合](evidence/time_origin_guard_20260913/final_artifact_verification.json)を完了した。
+最終時点の[ホスト確認](evidence/time_origin_guard_20260913/final_environment.json)では、今回のコンテナ・Compose project・AWSIM/ROS processは0。
+既存39 Compose projectは保全した。
+
+主な変更は [形状検証](../src/aic_transfuser_lite/control/time_geometry_v2.py)、
+[制御への適用](../src/aic_transfuser_lite/control/time_trial_v1.py)、
+[ROS再現ログ](../ros2_ws/src/aic_e2e_runtime/aic_e2e_runtime/time_trial_controller_node.py)、
+[回帰テスト](../tests/test_time_geometry_v2.py)、監査・評価CLI。
 
 host rootは `/home/graneple/e2e_autonomous/time_origin_guard_20260913`。
 WSL rootは `/home/thistle/e2e_autonomous/runs/time_origin_guard_20260913`。
