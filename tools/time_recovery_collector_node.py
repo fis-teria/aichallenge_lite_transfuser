@@ -18,7 +18,7 @@ import numpy as np
 from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
 from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, select_aligned_scan, scan_pose_in_rear
 from aic_transfuser_lite.data.time_recovery_collection_v1 import (
-    TARGET_MPS, bounded_collection_command, phase_at_s, project_course, validate_nominal,
+    TARGET_MPS, bounded_collection_command, check_collection_input_time, phase_at_s, project_course, validate_nominal,
 )
 
 
@@ -156,9 +156,7 @@ def main() -> None:
                 if names(topics[role][0]) != [topics[role][2]]:
                     raise ValueError('SOURCE_'+role)
                 t = stamp(m.stamp if role in ('steering', 'nominal') else m.header.stamp)
-                max_age = 1_500_000_000 if role == 'trajectory' else 150_000_000
-                if not -20_000_000 <= clock_ns-t <= max_age or now-receipt > (2_000_000_000 if role == 'trajectory' else 300_000_000):
-                    raise ValueError('STALE_'+role)
+                check_collection_input_time(role, capture_ns=t, receipt_ns=receipt, now_sim_ns=clock_ns, now_wall_ns=now)
             if not fresh_velocity:
                 raise ValueError('VELOCITY_INVALID')
             current = max(poses, key=lambda p: p.stamp_ns)
@@ -231,6 +229,8 @@ def main() -> None:
                    nominal_angle_rad=float(cache['nominal'][0].lateral.steering_tire_angle)
                        if 'nominal' in cache and math.isfinite(cache['nominal'][0].lateral.steering_tire_angle) else None,
                    nominal_stamp_ns=stamp(cache['nominal'][0].stamp) if 'nominal' in cache else None)
+        row['input_timing_ns'] = {role: dict(capture_ns=stamp(m.stamp if role in ('nominal','steering') else m.header.stamp),
+            receipt_monotonic_ns=receipt, receipt_age_ns=now-receipt) for role,(m,receipt) in cache.items()}
         serialized = json.dumps(row, allow_nan=False); log.write(serialized+'\n')
         phase_pub.publish(String(data=serialized))
         if poses and poses[-1].stamp_ns != last_pose_stamp:

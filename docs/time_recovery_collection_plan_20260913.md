@@ -209,3 +209,12 @@ left020-r04は修正した閉路を走行。初期横ずれ+0.664mから約−0.
 pose自体の欠測ではなくclock受信キューの遅れが疑われる（旧depth10で200Hzなら最大約50ms）。
 公式PPのclock QoSと同じBEST_EFFORT/depth1へ変更し、最新clockを受け取る。
 元stampとfuture/stale閾値は維持。正常停止の3秒確認、bag closeは成立。指定20cm区間はまだ未到達。
+
+left020-r05: 時計QoS修正後18.705秒走行し、STALE_cameraで正常制動・停止を確認。
+同時刻のbagではカメラが約105ms間隔で継続しており、collectorへの配送欠け/遅延が疑われる。
+カメラpublisherはBEST_EFFORT/depth1（bagのoffered QoSで確認）。RELIABLE受信への変更は不適合なので行わない。
+新collectorが全sensorへ150msを当てたのは、既存TimePathのカメラ契約と不一致だった。
+`time_path_node.py` のcamera anchor/receipt admissionは500msであるため、cameraだけ既存500msへそろえる。
+pose/velocity/steering/scan/nominalは引き続きcapture150ms、receipt300ms、未来20ms。
+この違いを回帰テストで固定し、各入力の元stamp・receiptもcontrol.jsonlへ追加する。
+bagの欠損/履歴/将来poseの品質検査は別に行い、watchdog通過だけで教師として採用しない。

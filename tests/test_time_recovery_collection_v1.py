@@ -4,7 +4,7 @@ import csv
 
 from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     PhaseWindow, TARGET_MPS, phase_at_s, project_course, recovery_teacher_mask, validate_nominal, load_pose_course,
-    bounded_collection_command, reference_rows_with_wrap,
+    bounded_collection_command, reference_rows_with_wrap, check_collection_input_time,
 )
 
 
@@ -101,3 +101,16 @@ def test_official_nominal_bound_keeps_existing_final_actuator_limits():
     assert bounded_collection_command(.64, .3, .48, .05) == pytest.approx((.5, .3))
     with pytest.raises(ValueError, match='CONTRACT'):
         bounded_collection_command(.1, .2, .51, .05)
+
+
+def test_camera_uses_timepath_budget_while_control_state_keeps_150ms():
+    clocks=dict(capture_ns=1_000_000_000,receipt_ns=2_000_000_000,
+                now_sim_ns=1_180_000_000,now_wall_ns=2_180_000_000)
+    check_collection_input_time('camera', **clocks)
+    for role in ('pose','velocity','steering','scan','nominal'):
+        with pytest.raises(ValueError,match='STALE_'+role):
+            check_collection_input_time(role,**clocks)
+    for field,value in [('now_sim_ns',1_500_000_001),('now_wall_ns',2_500_000_001),
+                        ('now_sim_ns',979_999_999)]:
+        with pytest.raises(ValueError,match='STALE_camera'):
+            check_collection_input_time('camera',**dict(clocks,**{field:value}))

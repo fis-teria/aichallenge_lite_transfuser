@@ -21,6 +21,23 @@ PHASES = {"baseline", "approach", "hold", "recovery", "braking", "invalid"}
 ELIGIBLE_PHASES = {"baseline", "recovery"}
 
 
+def check_collection_input_time(role: str, *, capture_ns: int, receipt_ns: int,
+                                now_sim_ns: int, now_wall_ns: int) -> None:
+    """Use existing TimePath input budgets, retaining original capture clocks.
+
+    Camera inference admission uses 500 ms (time_path_node.py); the 150 ms
+    control-state / scan contract is a different, higher-rate input budget.
+    Trajectory publication is 1 Hz and the official PP uses a 1.5 s limit.
+    """
+    limits = {'camera': (500_000_000, 500_000_000), 'trajectory': (1_500_000_000, 2_000_000_000),
+              **{r: (150_000_000, 300_000_000) for r in ('pose', 'velocity', 'steering', 'scan', 'nominal')}}
+    if role not in limits or any(type(t) is not int or t < 0 for t in (capture_ns, receipt_ns, now_sim_ns, now_wall_ns)):
+        raise ValueError('INPUT_TIME_CONTRACT')
+    capture_limit, receipt_limit = limits[role]
+    if not -20_000_000 <= now_sim_ns-capture_ns <= capture_limit or not 0 <= now_wall_ns-receipt_ns <= receipt_limit:
+        raise ValueError('STALE_'+role)
+
+
 def load_pose_course(path: Path) -> tuple[MpcReferencePointV3, ...]:
     """Read official map pose CSV [N,8], replace only its speed with 5 km/h."""
     with path.open(newline="", encoding="utf-8") as stream:
