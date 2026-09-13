@@ -328,3 +328,16 @@ Python切替間隔5ms: guard中央値245.61ms/最大260.92ms、1ms:59.04/65.93ms
 3条件の監視marginは全て8.024104617691828mで一致。これは合成競合試験であり閉ループ性能ではない。
 collector内だけ`sys.setswitchinterval(0.0005)`とし、NumPyがGILを解放した後の受信threadからの戻りを短くする。
 現在値をrunへ保存する。センサ・判断期限・再計算回数・数式・車両設定は変えない。
+
+73baa2aのWSL full pytestは2,218 passed / 4 skipped / 63 warnings（75.63s）。
+left020-r15はs=120.33m付近でSTALE_imu、正常停止・bag close成立。
+制御tickの間隔が約260ms空き、その間にもraw bag側ではIMU/LiDARが通常周期で到着していた。
+直前phase publishの6.9/14.8ms後にbaseline/reference Path、222.2ms後に213,076byteのobserved Path、
+236.5ms後に次のphaseが記録された（r15_visualization_delay.json）。
+増え続けるRViz履歴のPython ROS message生成・変換がcollectorのGILを占有するため、
+通常nav_msgs/Pathの生成/発行を別Python process `time_recovery_paths` へ移す。
+観測線のみ表示用10cm間引き・最大10,000点とし、map座標と元pose値を保持する。
+教師用の元odometryやcamera/LiDARの保存周期は変更しない。Pathは従来と同じ3topic・2Hz。
+発進前に別processのPath発行heartbeat・point数・RViz購読を確認する。
+IMUもvelocity/steering同様に最新depth1とする（scan補間に必要なpose queue/historyは保持）。
+表示traceの形状・単位・有限性・重複時刻・epoch reset・件数上限はunit testで確認する。

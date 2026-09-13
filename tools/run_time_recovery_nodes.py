@@ -41,6 +41,8 @@ def main() -> None:
         'bag': ['ros2', 'bag', 'record', '--storage', 'sqlite3', '-o', str(args.output/'bag'), *TOPICS],
         'collector': ['python3', str(Path(__file__).with_name('time_recovery_collector_node.py')),
             '--output', str(args.output), '--reference', str(args.reference_root/(args.side+'.json')), '--run-id', args.run_id],
+        'paths': ['python3', str(Path(__file__).with_name('time_recovery_paths_node.py')),
+            '--output', str(args.output), '--reference', str(args.reference_root/(args.side+'.json'))],
     }
     (args.output/'node_commands.json').write_text(json.dumps(commands, indent=2))
     # The monitor uses tiny NumPy matrices, not a training workload. Avoid
@@ -76,7 +78,7 @@ def main() -> None:
     finally:
         # Host freezes/stops its simulator before requesting child shutdown.
         # SQLite must receive SIGINT and finish before any offline reader opens it.
-        for name in ('bag', 'collector', 'pure_pursuit', 'generator'):
+        for name in ('bag', 'collector', 'pure_pursuit', 'generator', 'paths'):
             child = children.get(name)
             if child is None:
                 continue

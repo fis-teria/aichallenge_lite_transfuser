@@ -176,6 +176,14 @@ def main() -> None:
                 p.write_text(json.dumps(dict(result, judge_sections=judge.section_events, judge_laps=judge.laps),allow_nan=False))
                 p.replace(output/'progress.json')
             if control.get('ready_ticks',0) >= 100 and make.poll() == 0 and not result['official_start_requested']:
+                path_heartbeat = output/'path_heartbeat.json'
+                display = json.loads(path_heartbeat.read_text()) if path_heartbeat.exists() else {}
+                if (not display or time.monotonic_ns()-display['monotonic_ns'] > 2_000_000_000
+                        or any(display.get('point_counts',{}).get(name,0) < minimum
+                               for name,minimum in (('baseline',20),('reference',20),('observed',1)))):
+                    if time.monotonic()-started > 120:
+                        raise RuntimeError('RVIZ_PATH_PUBLICATION_NOT_READY')
+                    time.sleep(.1); continue
                 if not any(n.startswith('rviz') for n in control['rviz_subscribers']):
                     if time.monotonic()-started > 120:
                         raise RuntimeError('RVIZ_NOT_SUBSCRIBED')

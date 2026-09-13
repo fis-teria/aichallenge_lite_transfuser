@@ -52,8 +52,7 @@ def main() -> None:
     from rclpy.executors import SingleThreadedExecutor
     from rclpy.qos import qos_profile_sensor_data, QoSProfile, ReliabilityPolicy, DurabilityPolicy
     from rosgraph_msgs.msg import Clock
-    from nav_msgs.msg import Odometry, Path as RosPath
-    from geometry_msgs.msg import PoseStamped
+    from nav_msgs.msg import Odometry
     from sensor_msgs.msg import Image, LaserScan, Imu
     from tf2_msgs.msg import TFMessage
     from std_msgs.msg import String, Float32MultiArray
@@ -76,9 +75,6 @@ def main() -> None:
     log = (args.output/'control.jsonl').open('x', buffering=1)
     final_topic = '/control/command/control_cmd'; publisher = None
     phase_pub = node.create_publisher(String, '/recovery_teacher/phase', 10)
-    paths = {name: node.create_publisher(RosPath, '/recovery_teacher/'+name+'_path', 1)
-             for name in ('baseline', 'reference', 'observed')}
-    trace = deque(maxlen=10000); last_path_wall = 0.; last_pose_stamp = None
     gc_events = deque(maxlen=32); gc_started = {}
     def observe_gc(phase, info):
         generation = info['generation']
@@ -160,7 +156,7 @@ def main() -> None:
         # Pose retains the sensor-data queue: the scan's original capture time
         # needs both measured interpolation endpoints, not just the latest pose.
         qos = (QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
-               if role in ('velocity', 'steering', 'nominal') else qos_profile_sensor_data)
+               if role in ('velocity', 'steering', 'imu', 'nominal') else qos_profile_sensor_data)
         receiver.create_subscription(kind, topic, lambda m, role=role: receive(role, m), qos)
 
     def snapshot():
@@ -171,7 +167,7 @@ def main() -> None:
                     {r:tuple(h) for r,h in histories.items()}, tuple(poses), tuple(scans), dict(sensor_counts), dict(imu_transforms))
 
     def tick(attempt: int = 0, started_ns: int | None = None, retry_reasons: tuple[str, ...] = ()) -> None:
-        nonlocal publisher, last_path_wall, last_pose_stamp
+        nonlocal publisher
         if started_ns is None:
             started_ns = time.monotonic_ns()
         stage_started = time.monotonic_ns(); thread_started = time.thread_time_ns(); stages = {}
@@ -387,17 +383,6 @@ def main() -> None:
                             for begin,end,g in tuple(gc_events) if end >= started_ns]
         serialized = json.dumps(row, allow_nan=False); log.write(serialized+'\n')
         phase_pub.publish(String(data=serialized))
-        if poses and poses[-1].stamp_ns != last_pose_stamp:
-            last_pose_stamp = poses[-1].stamp_ns; trace.append([poses[-1].x_m, poses[-1].y_m])
-        if clock_ns is not None and wall-last_path_wall >= .5:
-            for name, points in [('baseline', baseline), ('reference', reference['reference_xy_m']), ('observed', trace)]:
-                path = RosPath(); path.header.frame_id = 'map'
-                path.header.stamp.sec = clock_ns//10**9; path.header.stamp.nanosec = clock_ns%10**9
-                for x, y in points:
-                    p = PoseStamped(); p.header = path.header; p.pose.position.x = float(x); p.pose.position.y = float(y)
-                    p.pose.orientation.w = 1.; path.poses.append(p)
-                paths[name].publish(path)
-            last_path_wall = wall
         state['rviz_subscribers'] = [e.node_name for e in node.get_subscriptions_info_by_topic('/recovery_teacher/reference_path')]
         pending = args.output/'control_heartbeat.pending'
         pending.write_text(json.dumps(dict(state, monotonic_ns=now, sim_ns=clock_ns, reason=reason, projection=projection), allow_nan=False))
