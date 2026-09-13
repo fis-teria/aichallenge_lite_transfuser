@@ -1,0 +1,140 @@
+{
+  "campaign_id": "time_recovery_batches_20260914",
+  "generator_source_sha": "8333fae192799f85dbcd9cde921b1e368f11920b",
+  "runtime_source_sha": "0484dc369f66282e05faa61dc98c80d687a9c6c4",
+  "max_attempts": 8,
+  "max_bag_bytes": 17179869184,
+  "batch_size": 2,
+  "started_unix": 1789312941.9080136,
+  "deadline_unix": 1789327341.9080136,
+  "attempts": [
+    {
+      "run_id": "codex-time-recovery-left040-r21",
+      "profile": "straight040",
+      "side": "left",
+      "reference_sha256": "a473d0acd33a0bcfeac78d33f439483041bca99498edd187c1aa3befef223e12",
+      "started_unix": 1789312941.9080136,
+      "state": "WSL_MOVED",
+      "pid": 553955,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "bag_bytes": 1488781089,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_batches_20260914/codex-time-recovery-left040-r21",
+      "quality_category": "COMPLETE_RECOVERY_PILOT",
+      "failed_gates": [],
+      "pair": 1
+    },
+    {
+      "run_id": "codex-time-recovery-right040-r22",
+      "profile": "straight040",
+      "side": "right",
+      "reference_sha256": "b8c4788b705fc2e6b64d57a6dd45216bd0f84f0c64e0375294abdd7276aa337f",
+      "started_unix": 1789313427.75069,
+      "state": "WSL_MOVED",
+      "pid": 561172,
+      "bag_bytes": 1497079585,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_batches_20260914/codex-time-recovery-right040-r22",
+      "quality_category": "COMPLETE_RECOVERY_PILOT",
+      "failed_gates": [],
+      "pair": 1
+    },
+    {
+      "run_id": "codex-time-recovery-left020-r23",
+      "profile": "curve020",
+      "side": "left",
+      "reference_sha256": "ac9eb9479d48b35d789b7e75af088d407a31e6ba7805853da35457f9a41de810",
+      "started_unix": 1789314190.224599,
+      "state": "WSL_MOVED",
+      "pid": 570606,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "bag_bytes": 1502527265,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_batches_20260914/codex-time-recovery-left020-r23",
+      "quality_category": "COMPLETE_RECOVERY_PILOT",
+      "failed_gates": [],
+      "pair": 2
+    },
+    {
+      "run_id": "codex-time-recovery-right020-r24",
+      "profile": "curve020",
+      "side": "right",
+      "reference_sha256": "2b9cdcb89f9fbb428fab35ef2d4f4fda611825a8d22e5a826c46a1bf8bcfe8be",
+      "started_unix": 1789314670.0454965,
+      "state": "WSL_MOVED",
+      "pid": 577650,
+      "bag_bytes": 1498361633,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_batches_20260914/codex-time-recovery-right020-r24",
+      "quality_category": "DIAGNOSTIC_OR_PARTIAL",
+      "failed_gates": [
+        "measured_hold_magnitude",
+        "reduced_by_at_least_5cm"
+      ],
+      "pair": 2
+    },
+    {
+      "run_id": "codex-time-recovery-left040-r25",
+      "profile": "curve040",
+      "side": "left",
+      "reference_sha256": "abd3bb7898df302ffa07e2263166f8faa09979b60c186b337723695b2a0c7854",
+      "started_unix": 1789315380.734597,
+      "state": "RECORDED",
+      "pid": 586912,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "bag_bytes": 1495023393
+    },
+    {
+      "run_id": "codex-time-recovery-right040-r26",
+      "profile": "curve040",
+      "side": "right",
+      "reference_sha256": "b1aa7c092e1ac1b3bb760b196db6c8e4eff0241a9dac3a8b1982847a44532342",
+      "started_unix": 1789315846.550592,
+      "state": "STARTED",
+      "pid": 593391
+    }
+  ],
+  "completed_batches": [
+    {
+      "prefix": "pair01_20260914",
+      "snapshot_sha256": "bca418e8df74ba21b9834298c55e420fe5e2143cbb6ef8cd3988b2bbe153d889",
+      "completed_unix": 1789314158.8405764,
+      "accepted_runs": 2
+    },
+    {
+      "prefix": "pair02_20260914",
+      "snapshot_sha256": "96e251f01ade222d3bd3c2ccc4b4d7aa5780fe68d89212ee080a718e2a0495c5",
+      "completed_unix": 1789315356.7757428,
+      "accepted_runs": 1
+    }
+  ],
+  "planned_conditions": [
+    [
+      "straight040",
+      "left"
+    ],
+    [
+      "straight040",
+      "right"
+    ],
+    [
+      "curve020",
+      "left"
+    ],
+    [
+      "curve020",
+      "right"
+    ],
+    [
+      "curve040",
+      "left"
+    ],
+    [
+      "curve040",
+      "right"
+    ]
+  ]
+}

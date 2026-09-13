@@ -1,0 +1,8295 @@
+{
+  "run_id": "codex-time-recovery-left040-r25",
+  "phase": "recovery",
+  "status": "PASS",
+  "raw_status": "COMPLETE_LAP",
+  "source_sha": "0484dc369f66282e05faa61dc98c80d687a9c6c4",
+  "raw_manifest_sha256": "ad94eba10052e95ed627404ba80477dcae3152c803e1751c6f533e6c5aed0152",
+  "availability": "bag_receipt_proxy_not_measured_preprocessing_completion",
+  "freeze_delay_ns": 50000000,
+  "runtime_config_sha256": "d1b0a0e24836af77924dd6f9119124cb02681e9d850a75d2690da22101a9d54c",
+  "runtime_config": "configs/control/time_path_vehicle_model_5kmh_20260913.json",
+  "phase_candidates_with_150ms_start_margin": 51,
+  "audited_anchors": 51,
+  "selection_policy": "All candidates up to 256, otherwise uniform, plus up to 8 targeted at invalid raw heading histories",
+  "all_phase_candidates_audited": true,
+  "audited_input_eligible": 51,
+  "audited_full_observed_future": 51,
+  "input_reasons": {
+    "OK": 51
+  },
+  "teacher_reasons": {
+    "OK": 51
+  },
+  "fallback_counts": {},
+  "epochs": 1,
+  "replay_smoke": [
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:338094992442",
+      "status": "PASS",
+      "image_shape": [
+        1,
+        4,
+        3,
+        224,
+        384
+      ],
+      "lidar_shape": [
+        1,
+        4,
+        2,
+        750
+      ],
+      "xy_shape": [
+        30,
+        2
+      ],
+      "final_xy_m": [
+        3.238543748855591,
+        -0.38507577776908875
+      ]
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:340824992381",
+      "status": "PASS",
+      "image_shape": [
+        1,
+        4,
+        3,
+        224,
+        384
+      ],
+      "lidar_shape": [
+        1,
+        4,
+        2,
+        750
+      ],
+      "xy_shape": [
+        30,
+        2
+      ],
+      "final_xy_m": [
+        3.195333957672119,
+        -0.2361384928226471
+      ]
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:343449992323",
+      "status": "PASS",
+      "image_shape": [
+        1,
+        4,
+        3,
+        224,
+        384
+      ],
+      "lidar_shape": [
+        1,
+        4,
+        2,
+        750
+      ],
+      "xy_shape": [
+        30,
+        2
+      ],
+      "final_xy_m": [
+        3.027517318725586,
+        -0.0025184631813317537
+      ]
+    }
+  ],
+  "invalid_raw_heading_message_count": 2,
+  "training_materialized": false,
+  "split_assigned": false,
+  "scope": "Representative input/future replay only; no full-corpus acceptance or model evaluation",
+  "anchors": [
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:338094992442",
+      "camera_row_id": 255914,
+      "epoch": "epoch0000",
+      "observation_ns": 338094992442,
+      "freeze_ns": 1789315741902778261,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            255686
+          ],
+          [
+            255763
+          ],
+          [
+            255838
+          ],
+          [
+            255914
+          ]
+        ],
+        "lidar": [
+          [
+            255656
+          ],
+          [
+            255732
+          ],
+          [
+            255806
+          ],
+          [
+            255879
+          ]
+        ],
+        "final_command": [
+          [
+            255153
+          ],
+          [
+            255227
+          ],
+          [
+            255304
+          ],
+          [
+            255374
+          ],
+          [
+            255446
+          ],
+          [
+            255520
+          ],
+          [
+            255596
+          ],
+          [
+            255671
+          ],
+          [
+            255745
+          ],
+          [
+            255819
+          ]
+        ],
+        "actual_steering": [
+          [
+            255245
+          ],
+          [
+            255300
+          ],
+          [
+            255379
+          ],
+          [
+            255454
+          ],
+          [
+            255532
+          ],
+          [
+            255614
+          ],
+          [
+            255689
+          ],
+          [
+            255766
+          ],
+          [
+            255817
+          ],
+          [
+            255897
+          ]
+        ],
+        "velocity": [
+          [
+            255246,
+            255273
+          ],
+          [
+            255301,
+            255326
+          ],
+          [
+            255380,
+            255403
+          ],
+          [
+            255455,
+            255480
+          ],
+          [
+            255533,
+            255555
+          ],
+          [
+            255615,
+            255642
+          ],
+          [
+            255690,
+            255717
+          ],
+          [
+            255767,
+            255792
+          ],
+          [
+            255818,
+            255842
+          ],
+          [
+            255898,
+            255923
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        255913
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:338199992440",
+      "camera_row_id": 256001,
+      "epoch": "epoch0000",
+      "observation_ns": 338199992440,
+      "freeze_ns": 1789315742016376610,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            255763
+          ],
+          [
+            255838
+          ],
+          [
+            255914
+          ],
+          [
+            256001
+          ]
+        ],
+        "lidar": [
+          [
+            255769
+          ],
+          [
+            255845
+          ],
+          [
+            255916
+          ],
+          [
+            255991
+          ]
+        ],
+        "final_command": [
+          [
+            255227
+          ],
+          [
+            255304
+          ],
+          [
+            255374
+          ],
+          [
+            255446
+          ],
+          [
+            255520
+          ],
+          [
+            255596
+          ],
+          [
+            255671
+          ],
+          [
+            255745
+          ],
+          [
+            255819
+          ],
+          [
+            255892
+          ]
+        ],
+        "actual_steering": [
+          [
+            255325
+          ],
+          [
+            255379
+          ],
+          [
+            255454
+          ],
+          [
+            255532
+          ],
+          [
+            255614
+          ],
+          [
+            255689
+          ],
+          [
+            255766
+          ],
+          [
+            255841
+          ],
+          [
+            255897
+          ],
+          [
+            255975
+          ]
+        ],
+        "velocity": [
+          [
+            255326,
+            255354
+          ],
+          [
+            255380,
+            255403
+          ],
+          [
+            255455,
+            255480
+          ],
+          [
+            255533,
+            255555
+          ],
+          [
+            255615,
+            255642
+          ],
+          [
+            255690,
+            255717
+          ],
+          [
+            255767,
+            255792
+          ],
+          [
+            255842,
+            255872
+          ],
+          [
+            255898,
+            255923
+          ],
+          [
+            255976,
+            256005
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        255990,
+        256008
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:338304992438",
+      "camera_row_id": 256079,
+      "epoch": "epoch0000",
+      "observation_ns": 338304992438,
+      "freeze_ns": 1789315742117509502,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            255838
+          ],
+          [
+            255914
+          ],
+          [
+            256001
+          ],
+          [
+            256079
+          ]
+        ],
+        "lidar": [
+          [
+            255845
+          ],
+          [
+            255916
+          ],
+          [
+            255991
+          ],
+          [
+            256065
+          ]
+        ],
+        "final_command": [
+          [
+            255304
+          ],
+          [
+            255374
+          ],
+          [
+            255446
+          ],
+          [
+            255520
+          ],
+          [
+            255596
+          ],
+          [
+            255671
+          ],
+          [
+            255745
+          ],
+          [
+            255819
+          ],
+          [
+            255892
+          ],
+          [
+            255968
+          ]
+        ],
+        "actual_steering": [
+          [
+            255402
+          ],
+          [
+            255454
+          ],
+          [
+            255532
+          ],
+          [
+            255614
+          ],
+          [
+            255689
+          ],
+          [
+            255766
+          ],
+          [
+            255841
+          ],
+          [
+            255922
+          ],
+          [
+            255975
+          ],
+          [
+            256050
+          ]
+        ],
+        "velocity": [
+          [
+            255403,
+            255429
+          ],
+          [
+            255455,
+            255480
+          ],
+          [
+            255533,
+            255555
+          ],
+          [
+            255615,
+            255642
+          ],
+          [
+            255690,
+            255717
+          ],
+          [
+            255767,
+            255792
+          ],
+          [
+            255842,
+            255872
+          ],
+          [
+            255923,
+            255952
+          ],
+          [
+            255976,
+            256005
+          ],
+          [
+            256051,
+            256083
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        256078
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:338409992435",
+      "camera_row_id": 256151,
+      "epoch": "epoch0000",
+      "observation_ns": 338409992435,
+      "freeze_ns": 1789315742217003199,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            255914
+          ],
+          [
+            256001
+          ],
+          [
+            256079
+          ],
+          [
+            256151
+          ]
+        ],
+        "lidar": [
+          [
+            255916
+          ],
+          [
+            255991
+          ],
+          [
+            256065
+          ],
+          [
+            256139
+          ]
+        ],
+        "final_command": [
+          [
+            255374
+          ],
+          [
+            255446
+          ],
+          [
+            255520
+          ],
+          [
+            255596
+          ],
+          [
+            255671
+          ],
+          [
+            255745
+          ],
+          [
+            255819
+          ],
+          [
+            255892
+          ],
+          [
+            255968
+          ],
+          [
+            256043
+          ]
+        ],
+        "actual_steering": [
+          [
+            255479
+          ],
+          [
+            255532
+          ],
+          [
+            255614
+          ],
+          [
+            255689
+          ],
+          [
+            255766
+          ],
+          [
+            255841
+          ],
+          [
+            255922
+          ],
+          [
+            256004
+          ],
+          [
+            256050
+          ],
+          [
+            256132
+          ]
+        ],
+        "velocity": [
+          [
+            255480,
+            255505
+          ],
+          [
+            255533,
+            255555
+          ],
+          [
+            255615,
+            255642
+          ],
+          [
+            255690,
+            255717
+          ],
+          [
+            255767,
+            255792
+          ],
+          [
+            255842,
+            255872
+          ],
+          [
+            255923,
+            255952
+          ],
+          [
+            256005,
+            256028
+          ],
+          [
+            256051,
+            256083
+          ],
+          [
+            256133,
+            256162
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        256154
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:338514992433",
+      "camera_row_id": 256234,
+      "epoch": "epoch0000",
+      "observation_ns": 338514992433,
+      "freeze_ns": 1789315742333382877,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            256001
+          ],
+          [
+            256079
+          ],
+          [
+            256151
+          ],
+          [
+            256234
+          ]
+        ],
+        "lidar": [
+          [
+            255991
+          ],
+          [
+            256065
+          ],
+          [
+            256139
+          ],
+          [
+            256213
+          ]
+        ],
+        "final_command": [
+          [
+            255487
+          ],
+          [
+            255563
+          ],
+          [
+            255636
+          ],
+          [
+            255710
+          ],
+          [
+            255784
+          ],
+          [
+            255882
+          ],
+          [
+            255933
+          ],
+          [
+            256010
+          ],
+          [
+            256084
+          ],
+          [
+            256156
+          ]
+        ],
+        "actual_steering": [
+          [
+            255554
+          ],
+          [
+            255614
+          ],
+          [
+            255689
+          ],
+          [
+            255766
+          ],
+          [
+            255841
+          ],
+          [
+            255922
+          ],
+          [
+            256004
+          ],
+          [
+            256082
+          ],
+          [
+            256132
+          ],
+          [
+            256207
+          ]
+        ],
+        "velocity": [
+          [
+            255555,
+            255585
+          ],
+          [
+            255615,
+            255642
+          ],
+          [
+            255690,
+            255717
+          ],
+          [
+            255767,
+            255792
+          ],
+          [
+            255842,
+            255872
+          ],
+          [
+            255923,
+            255952
+          ],
+          [
+            256005,
+            256028
+          ],
+          [
+            256083,
+            256103
+          ],
+          [
+            256133,
+            256162
+          ],
+          [
+            256208,
+            256237
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        256226,
+        256242
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:338619992431",
+      "camera_row_id": 256308,
+      "epoch": "epoch0000",
+      "observation_ns": 338619992431,
+      "freeze_ns": 1789315742433290638,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            256079
+          ],
+          [
+            256151
+          ],
+          [
+            256234
+          ],
+          [
+            256308
+          ]
+        ],
+        "lidar": [
+          [
+            256065
+          ],
+          [
+            256139
+          ],
+          [
+            256213
+          ],
+          [
+            256286
+          ]
+        ],
+        "final_command": [
+          [
+            255563
+          ],
+          [
+            255636
+          ],
+          [
+            255710
+          ],
+          [
+            255784
+          ],
+          [
+            255882
+          ],
+          [
+            255933
+          ],
+          [
+            256010
+          ],
+          [
+            256084
+          ],
+          [
+            256156
+          ],
+          [
+            256230
+          ]
+        ],
+        "actual_steering": [
+          [
+            255641
+          ],
+          [
+            255689
+          ],
+          [
+            255766
+          ],
+          [
+            255841
+          ],
+          [
+            255922
+          ],
+          [
+            256004
+          ],
+          [
+            256082
+          ],
+          [
+            256161
+          ],
+          [
+            256207
+          ],
+          [
+            256282
+          ]
+        ],
+        "velocity": [
+          [
+            255642,
+            255664
+          ],
+          [
+            255690,
+            255717
+          ],
+          [
+            255767,
+            255792
+          ],
+          [
+            255842,
+            255872
+          ],
+          [
+            255923,
+            255952
+          ],
+          [
+            256005,
+            256028
+          ],
+          [
+            256083,
+            256103
+          ],
+          [
+            256162,
+            256184
+          ],
+          [
+            256208,
+            256237
+          ],
+          [
+            256283,
+            256312
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        256300,
+        256314
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:338724992428",
+      "camera_row_id": 256388,
+      "epoch": "epoch0000",
+      "observation_ns": 338724992428,
+      "freeze_ns": 1789315742534857356,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            256151
+          ],
+          [
+            256234
+          ],
+          [
+            256308
+          ],
+          [
+            256388
+          ]
+        ],
+        "lidar": [
+          [
+            256139
+          ],
+          [
+            256213
+          ],
+          [
+            256286
+          ],
+          [
+            256364
+          ]
+        ],
+        "final_command": [
+          [
+            255636
+          ],
+          [
+            255710
+          ],
+          [
+            255784
+          ],
+          [
+            255882
+          ],
+          [
+            255933
+          ],
+          [
+            256010
+          ],
+          [
+            256084
+          ],
+          [
+            256156
+          ],
+          [
+            256230
+          ],
+          [
+            256304
+          ]
+        ],
+        "actual_steering": [
+          [
+            255716
+          ],
+          [
+            255766
+          ],
+          [
+            255841
+          ],
+          [
+            255922
+          ],
+          [
+            256004
+          ],
+          [
+            256082
+          ],
+          [
+            256161
+          ],
+          [
+            256236
+          ],
+          [
+            256282
+          ],
+          [
+            256360
+          ]
+        ],
+        "velocity": [
+          [
+            255717,
+            255741
+          ],
+          [
+            255767,
+            255792
+          ],
+          [
+            255842,
+            255872
+          ],
+          [
+            255923,
+            255952
+          ],
+          [
+            256005,
+            256028
+          ],
+          [
+            256083,
+            256103
+          ],
+          [
+            256162,
+            256184
+          ],
+          [
+            256237,
+            256261
+          ],
+          [
+            256283,
+            256312
+          ],
+          [
+            256361,
+            256396
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        256387
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:338829992426",
+      "camera_row_id": 256468,
+      "epoch": "epoch0000",
+      "observation_ns": 338829992426,
+      "freeze_ns": 1789315742650279175,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            256234
+          ],
+          [
+            256308
+          ],
+          [
+            256388
+          ],
+          [
+            256468
+          ]
+        ],
+        "lidar": [
+          [
+            256213
+          ],
+          [
+            256286
+          ],
+          [
+            256364
+          ],
+          [
+            256436
+          ]
+        ],
+        "final_command": [
+          [
+            255710
+          ],
+          [
+            255784
+          ],
+          [
+            255882
+          ],
+          [
+            255933
+          ],
+          [
+            256010
+          ],
+          [
+            256084
+          ],
+          [
+            256156
+          ],
+          [
+            256230
+          ],
+          [
+            256304
+          ],
+          [
+            256379
+          ]
+        ],
+        "actual_steering": [
+          [
+            255791
+          ],
+          [
+            255841
+          ],
+          [
+            255922
+          ],
+          [
+            256004
+          ],
+          [
+            256082
+          ],
+          [
+            256161
+          ],
+          [
+            256236
+          ],
+          [
+            256311
+          ],
+          [
+            256360
+          ],
+          [
+            256442
+          ]
+        ],
+        "velocity": [
+          [
+            255792,
+            255818
+          ],
+          [
+            255842,
+            255872
+          ],
+          [
+            255923,
+            255952
+          ],
+          [
+            256005,
+            256028
+          ],
+          [
+            256083,
+            256103
+          ],
+          [
+            256162,
+            256184
+          ],
+          [
+            256237,
+            256261
+          ],
+          [
+            256312,
+            256340
+          ],
+          [
+            256361,
+            256396
+          ],
+          [
+            256443,
+            256471
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        256461,
+        256477
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:338934992424",
+      "camera_row_id": 256543,
+      "epoch": "epoch0000",
+      "observation_ns": 338934992424,
+      "freeze_ns": 1789315742752653419,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            256308
+          ],
+          [
+            256388
+          ],
+          [
+            256468
+          ],
+          [
+            256543
+          ]
+        ],
+        "lidar": [
+          [
+            256286
+          ],
+          [
+            256364
+          ],
+          [
+            256436
+          ],
+          [
+            256510
+          ]
+        ],
+        "final_command": [
+          [
+            255784
+          ],
+          [
+            255882
+          ],
+          [
+            255933
+          ],
+          [
+            256010
+          ],
+          [
+            256084
+          ],
+          [
+            256156
+          ],
+          [
+            256230
+          ],
+          [
+            256304
+          ],
+          [
+            256379
+          ],
+          [
+            256453
+          ]
+        ],
+        "actual_steering": [
+          [
+            255871
+          ],
+          [
+            255922
+          ],
+          [
+            256004
+          ],
+          [
+            256082
+          ],
+          [
+            256161
+          ],
+          [
+            256236
+          ],
+          [
+            256311
+          ],
+          [
+            256395
+          ],
+          [
+            256442
+          ],
+          [
+            256519
+          ]
+        ],
+        "velocity": [
+          [
+            255872,
+            255898
+          ],
+          [
+            255923,
+            255952
+          ],
+          [
+            256005,
+            256028
+          ],
+          [
+            256083,
+            256103
+          ],
+          [
+            256162,
+            256184
+          ],
+          [
+            256237,
+            256261
+          ],
+          [
+            256312,
+            256340
+          ],
+          [
+            256396,
+            256420
+          ],
+          [
+            256443,
+            256471
+          ],
+          [
+            256520,
+            256547
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        256537,
+        256551
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:339039992421",
+      "camera_row_id": 256618,
+      "epoch": "epoch0000",
+      "observation_ns": 339039992421,
+      "freeze_ns": 1789315742852049860,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            256388
+          ],
+          [
+            256468
+          ],
+          [
+            256543
+          ],
+          [
+            256618
+          ]
+        ],
+        "lidar": [
+          [
+            256364
+          ],
+          [
+            256436
+          ],
+          [
+            256510
+          ],
+          [
+            256584
+          ]
+        ],
+        "final_command": [
+          [
+            255882
+          ],
+          [
+            255933
+          ],
+          [
+            256010
+          ],
+          [
+            256084
+          ],
+          [
+            256156
+          ],
+          [
+            256230
+          ],
+          [
+            256304
+          ],
+          [
+            256379
+          ],
+          [
+            256453
+          ],
+          [
+            256527
+          ]
+        ],
+        "actual_steering": [
+          [
+            255951
+          ],
+          [
+            256004
+          ],
+          [
+            256082
+          ],
+          [
+            256161
+          ],
+          [
+            256236
+          ],
+          [
+            256311
+          ],
+          [
+            256395
+          ],
+          [
+            256470
+          ],
+          [
+            256519
+          ],
+          [
+            256597
+          ]
+        ],
+        "velocity": [
+          [
+            255952,
+            255976
+          ],
+          [
+            256005,
+            256028
+          ],
+          [
+            256083,
+            256103
+          ],
+          [
+            256162,
+            256184
+          ],
+          [
+            256237,
+            256261
+          ],
+          [
+            256312,
+            256340
+          ],
+          [
+            256396,
+            256420
+          ],
+          [
+            256471,
+            256495
+          ],
+          [
+            256520,
+            256547
+          ],
+          [
+            256598,
+            256621
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        256608,
+        256624
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:339144992419",
+      "camera_row_id": 256699,
+      "epoch": "epoch0000",
+      "observation_ns": 339144992419,
+      "freeze_ns": 1789315742951065094,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            256468
+          ],
+          [
+            256543
+          ],
+          [
+            256618
+          ],
+          [
+            256699
+          ]
+        ],
+        "lidar": [
+          [
+            256436
+          ],
+          [
+            256510
+          ],
+          [
+            256584
+          ],
+          [
+            256659
+          ]
+        ],
+        "final_command": [
+          [
+            255933
+          ],
+          [
+            256010
+          ],
+          [
+            256084
+          ],
+          [
+            256156
+          ],
+          [
+            256230
+          ],
+          [
+            256304
+          ],
+          [
+            256379
+          ],
+          [
+            256453
+          ],
+          [
+            256527
+          ],
+          [
+            256627
+          ]
+        ],
+        "actual_steering": [
+          [
+            256027
+          ],
+          [
+            256082
+          ],
+          [
+            256161
+          ],
+          [
+            256236
+          ],
+          [
+            256311
+          ],
+          [
+            256395
+          ],
+          [
+            256470
+          ],
+          [
+            256546
+          ],
+          [
+            256597
+          ],
+          [
+            256679
+          ]
+        ],
+        "velocity": [
+          [
+            256028,
+            256051
+          ],
+          [
+            256083,
+            256103
+          ],
+          [
+            256162,
+            256184
+          ],
+          [
+            256237,
+            256261
+          ],
+          [
+            256312,
+            256340
+          ],
+          [
+            256396,
+            256420
+          ],
+          [
+            256471,
+            256495
+          ],
+          [
+            256547,
+            256570
+          ],
+          [
+            256598,
+            256621
+          ],
+          [
+            256680,
+            256706
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        256697
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:339249992417",
+      "camera_row_id": 256782,
+      "epoch": "epoch0000",
+      "observation_ns": 339249992417,
+      "freeze_ns": 1789315743067656092,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            256543
+          ],
+          [
+            256618
+          ],
+          [
+            256699
+          ],
+          [
+            256782
+          ]
+        ],
+        "lidar": [
+          [
+            256549
+          ],
+          [
+            256622
+          ],
+          [
+            256700
+          ],
+          [
+            256773
+          ]
+        ],
+        "final_command": [
+          [
+            256010
+          ],
+          [
+            256084
+          ],
+          [
+            256156
+          ],
+          [
+            256230
+          ],
+          [
+            256304
+          ],
+          [
+            256379
+          ],
+          [
+            256453
+          ],
+          [
+            256527
+          ],
+          [
+            256627
+          ],
+          [
+            256674
+          ]
+        ],
+        "actual_steering": [
+          [
+            256102
+          ],
+          [
+            256161
+          ],
+          [
+            256236
+          ],
+          [
+            256311
+          ],
+          [
+            256395
+          ],
+          [
+            256470
+          ],
+          [
+            256546
+          ],
+          [
+            256620
+          ],
+          [
+            256679
+          ],
+          [
+            256757
+          ]
+        ],
+        "velocity": [
+          [
+            256103,
+            256133
+          ],
+          [
+            256162,
+            256184
+          ],
+          [
+            256237,
+            256261
+          ],
+          [
+            256312,
+            256340
+          ],
+          [
+            256396,
+            256420
+          ],
+          [
+            256471,
+            256495
+          ],
+          [
+            256547,
+            256570
+          ],
+          [
+            256621,
+            256653
+          ],
+          [
+            256680,
+            256706
+          ],
+          [
+            256758,
+            256786
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        256772,
+        256796
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:339354992414",
+      "camera_row_id": 256857,
+      "epoch": "epoch0000",
+      "observation_ns": 339354992414,
+      "freeze_ns": 1789315743167566420,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            256618
+          ],
+          [
+            256699
+          ],
+          [
+            256782
+          ],
+          [
+            256857
+          ]
+        ],
+        "lidar": [
+          [
+            256622
+          ],
+          [
+            256700
+          ],
+          [
+            256773
+          ],
+          [
+            256845
+          ]
+        ],
+        "final_command": [
+          [
+            256084
+          ],
+          [
+            256156
+          ],
+          [
+            256230
+          ],
+          [
+            256304
+          ],
+          [
+            256379
+          ],
+          [
+            256453
+          ],
+          [
+            256527
+          ],
+          [
+            256627
+          ],
+          [
+            256674
+          ],
+          [
+            256751
+          ]
+        ],
+        "actual_steering": [
+          [
+            256183
+          ],
+          [
+            256236
+          ],
+          [
+            256311
+          ],
+          [
+            256395
+          ],
+          [
+            256470
+          ],
+          [
+            256546
+          ],
+          [
+            256620
+          ],
+          [
+            256705
+          ],
+          [
+            256757
+          ],
+          [
+            256832
+          ]
+        ],
+        "velocity": [
+          [
+            256184,
+            256208
+          ],
+          [
+            256237,
+            256261
+          ],
+          [
+            256312,
+            256340
+          ],
+          [
+            256396,
+            256420
+          ],
+          [
+            256471,
+            256495
+          ],
+          [
+            256547,
+            256570
+          ],
+          [
+            256621,
+            256653
+          ],
+          [
+            256706,
+            256731
+          ],
+          [
+            256758,
+            256786
+          ],
+          [
+            256833,
+            256861
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        256847,
+        256869
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:339459992412",
+      "camera_row_id": 256932,
+      "epoch": "epoch0000",
+      "observation_ns": 339459992412,
+      "freeze_ns": 1789315743267865264,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            256699
+          ],
+          [
+            256782
+          ],
+          [
+            256857
+          ],
+          [
+            256932
+          ]
+        ],
+        "lidar": [
+          [
+            256700
+          ],
+          [
+            256773
+          ],
+          [
+            256845
+          ],
+          [
+            256921
+          ]
+        ],
+        "final_command": [
+          [
+            256156
+          ],
+          [
+            256230
+          ],
+          [
+            256304
+          ],
+          [
+            256379
+          ],
+          [
+            256453
+          ],
+          [
+            256527
+          ],
+          [
+            256627
+          ],
+          [
+            256674
+          ],
+          [
+            256751
+          ],
+          [
+            256825
+          ]
+        ],
+        "actual_steering": [
+          [
+            256260
+          ],
+          [
+            256311
+          ],
+          [
+            256395
+          ],
+          [
+            256470
+          ],
+          [
+            256546
+          ],
+          [
+            256620
+          ],
+          [
+            256705
+          ],
+          [
+            256785
+          ],
+          [
+            256832
+          ],
+          [
+            256913
+          ]
+        ],
+        "velocity": [
+          [
+            256261,
+            256283
+          ],
+          [
+            256312,
+            256340
+          ],
+          [
+            256396,
+            256420
+          ],
+          [
+            256471,
+            256495
+          ],
+          [
+            256547,
+            256570
+          ],
+          [
+            256621,
+            256653
+          ],
+          [
+            256706,
+            256731
+          ],
+          [
+            256786,
+            256806
+          ],
+          [
+            256833,
+            256861
+          ],
+          [
+            256914,
+            256940
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        256920,
+        256946
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:339564992410",
+      "camera_row_id": 257011,
+      "epoch": "epoch0000",
+      "observation_ns": 339564992410,
+      "freeze_ns": 1789315743384152778,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            256782
+          ],
+          [
+            256857
+          ],
+          [
+            256932
+          ],
+          [
+            257011
+          ]
+        ],
+        "lidar": [
+          [
+            256773
+          ],
+          [
+            256845
+          ],
+          [
+            256921
+          ],
+          [
+            256993
+          ]
+        ],
+        "final_command": [
+          [
+            256265
+          ],
+          [
+            256341
+          ],
+          [
+            256414
+          ],
+          [
+            256488
+          ],
+          [
+            256564
+          ],
+          [
+            256637
+          ],
+          [
+            256714
+          ],
+          [
+            256788
+          ],
+          [
+            256862
+          ],
+          [
+            256934
+          ]
+        ],
+        "actual_steering": [
+          [
+            256339
+          ],
+          [
+            256395
+          ],
+          [
+            256470
+          ],
+          [
+            256546
+          ],
+          [
+            256620
+          ],
+          [
+            256705
+          ],
+          [
+            256785
+          ],
+          [
+            256860
+          ],
+          [
+            256913
+          ],
+          [
+            256988
+          ]
+        ],
+        "velocity": [
+          [
+            256340,
+            256361
+          ],
+          [
+            256396,
+            256420
+          ],
+          [
+            256471,
+            256495
+          ],
+          [
+            256547,
+            256570
+          ],
+          [
+            256621,
+            256653
+          ],
+          [
+            256706,
+            256731
+          ],
+          [
+            256786,
+            256806
+          ],
+          [
+            256861,
+            256883
+          ],
+          [
+            256914,
+            256940
+          ],
+          [
+            256989,
+            257015
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        256995,
+        257018
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:339669992407",
+      "camera_row_id": 257089,
+      "epoch": "epoch0000",
+      "observation_ns": 339669992407,
+      "freeze_ns": 1789315743485542238,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            256857
+          ],
+          [
+            256932
+          ],
+          [
+            257011
+          ],
+          [
+            257089
+          ]
+        ],
+        "lidar": [
+          [
+            256845
+          ],
+          [
+            256921
+          ],
+          [
+            256993
+          ],
+          [
+            257069
+          ]
+        ],
+        "final_command": [
+          [
+            256341
+          ],
+          [
+            256414
+          ],
+          [
+            256488
+          ],
+          [
+            256564
+          ],
+          [
+            256637
+          ],
+          [
+            256714
+          ],
+          [
+            256788
+          ],
+          [
+            256862
+          ],
+          [
+            256934
+          ],
+          [
+            257006
+          ]
+        ],
+        "actual_steering": [
+          [
+            256419
+          ],
+          [
+            256470
+          ],
+          [
+            256546
+          ],
+          [
+            256620
+          ],
+          [
+            256705
+          ],
+          [
+            256785
+          ],
+          [
+            256860
+          ],
+          [
+            256939
+          ],
+          [
+            256988
+          ],
+          [
+            257066
+          ]
+        ],
+        "velocity": [
+          [
+            256420,
+            256443
+          ],
+          [
+            256471,
+            256495
+          ],
+          [
+            256547,
+            256570
+          ],
+          [
+            256621,
+            256653
+          ],
+          [
+            256706,
+            256731
+          ],
+          [
+            256786,
+            256806
+          ],
+          [
+            256861,
+            256883
+          ],
+          [
+            256940,
+            256965
+          ],
+          [
+            256989,
+            257015
+          ],
+          [
+            257067,
+            257095
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        257071,
+        257097
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:339774992405",
+      "camera_row_id": 257169,
+      "epoch": "epoch0000",
+      "observation_ns": 339774992405,
+      "freeze_ns": 1789315743585774029,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            256932
+          ],
+          [
+            257011
+          ],
+          [
+            257089
+          ],
+          [
+            257169
+          ]
+        ],
+        "lidar": [
+          [
+            256921
+          ],
+          [
+            256993
+          ],
+          [
+            257069
+          ],
+          [
+            257145
+          ]
+        ],
+        "final_command": [
+          [
+            256414
+          ],
+          [
+            256488
+          ],
+          [
+            256564
+          ],
+          [
+            256637
+          ],
+          [
+            256714
+          ],
+          [
+            256788
+          ],
+          [
+            256862
+          ],
+          [
+            256934
+          ],
+          [
+            257006
+          ],
+          [
+            257082
+          ]
+        ],
+        "actual_steering": [
+          [
+            256494
+          ],
+          [
+            256546
+          ],
+          [
+            256620
+          ],
+          [
+            256705
+          ],
+          [
+            256785
+          ],
+          [
+            256860
+          ],
+          [
+            256939
+          ],
+          [
+            257014
+          ],
+          [
+            257066
+          ],
+          [
+            257142
+          ]
+        ],
+        "velocity": [
+          [
+            256495,
+            256520
+          ],
+          [
+            256547,
+            256570
+          ],
+          [
+            256621,
+            256653
+          ],
+          [
+            256706,
+            256731
+          ],
+          [
+            256786,
+            256806
+          ],
+          [
+            256861,
+            256883
+          ],
+          [
+            256940,
+            256965
+          ],
+          [
+            257015,
+            257042
+          ],
+          [
+            257067,
+            257095
+          ],
+          [
+            257143,
+            257175
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        257165
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:339879992403",
+      "camera_row_id": 257246,
+      "epoch": "epoch0000",
+      "observation_ns": 339879992403,
+      "freeze_ns": 1789315743702278218,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            257011
+          ],
+          [
+            257089
+          ],
+          [
+            257169
+          ],
+          [
+            257246
+          ]
+        ],
+        "lidar": [
+          [
+            256993
+          ],
+          [
+            257069
+          ],
+          [
+            257145
+          ],
+          [
+            257216
+          ]
+        ],
+        "final_command": [
+          [
+            256488
+          ],
+          [
+            256564
+          ],
+          [
+            256637
+          ],
+          [
+            256714
+          ],
+          [
+            256788
+          ],
+          [
+            256862
+          ],
+          [
+            256934
+          ],
+          [
+            257006
+          ],
+          [
+            257082
+          ],
+          [
+            257157
+          ]
+        ],
+        "actual_steering": [
+          [
+            256569
+          ],
+          [
+            256620
+          ],
+          [
+            256705
+          ],
+          [
+            256785
+          ],
+          [
+            256860
+          ],
+          [
+            256939
+          ],
+          [
+            257014
+          ],
+          [
+            257094
+          ],
+          [
+            257142
+          ],
+          [
+            257225
+          ]
+        ],
+        "velocity": [
+          [
+            256570,
+            256598
+          ],
+          [
+            256621,
+            256653
+          ],
+          [
+            256706,
+            256731
+          ],
+          [
+            256786,
+            256806
+          ],
+          [
+            256861,
+            256883
+          ],
+          [
+            256940,
+            256965
+          ],
+          [
+            257015,
+            257042
+          ],
+          [
+            257095,
+            257120
+          ],
+          [
+            257143,
+            257175
+          ],
+          [
+            257226,
+            257250
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        257241,
+        257254
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:339984992400",
+      "camera_row_id": 257323,
+      "epoch": "epoch0000",
+      "observation_ns": 339984992400,
+      "freeze_ns": 1789315743802179972,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            257089
+          ],
+          [
+            257169
+          ],
+          [
+            257246
+          ],
+          [
+            257323
+          ]
+        ],
+        "lidar": [
+          [
+            257069
+          ],
+          [
+            257145
+          ],
+          [
+            257216
+          ],
+          [
+            257290
+          ]
+        ],
+        "final_command": [
+          [
+            256564
+          ],
+          [
+            256637
+          ],
+          [
+            256714
+          ],
+          [
+            256788
+          ],
+          [
+            256862
+          ],
+          [
+            256934
+          ],
+          [
+            257006
+          ],
+          [
+            257082
+          ],
+          [
+            257157
+          ],
+          [
+            257231
+          ]
+        ],
+        "actual_steering": [
+          [
+            256652
+          ],
+          [
+            256705
+          ],
+          [
+            256785
+          ],
+          [
+            256860
+          ],
+          [
+            256939
+          ],
+          [
+            257014
+          ],
+          [
+            257094
+          ],
+          [
+            257174
+          ],
+          [
+            257225
+          ],
+          [
+            257302
+          ]
+        ],
+        "velocity": [
+          [
+            256653,
+            256680
+          ],
+          [
+            256706,
+            256731
+          ],
+          [
+            256786,
+            256806
+          ],
+          [
+            256861,
+            256883
+          ],
+          [
+            256940,
+            256965
+          ],
+          [
+            257015,
+            257042
+          ],
+          [
+            257095,
+            257120
+          ],
+          [
+            257175,
+            257202
+          ],
+          [
+            257226,
+            257250
+          ],
+          [
+            257303,
+            257327
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        257321
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:340089992398",
+      "camera_row_id": 257400,
+      "epoch": "epoch0000",
+      "observation_ns": 340089992398,
+      "freeze_ns": 1789315743902387096,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            257169
+          ],
+          [
+            257246
+          ],
+          [
+            257323
+          ],
+          [
+            257400
+          ]
+        ],
+        "lidar": [
+          [
+            257145
+          ],
+          [
+            257216
+          ],
+          [
+            257290
+          ],
+          [
+            257388
+          ]
+        ],
+        "final_command": [
+          [
+            256637
+          ],
+          [
+            256714
+          ],
+          [
+            256788
+          ],
+          [
+            256862
+          ],
+          [
+            256934
+          ],
+          [
+            257006
+          ],
+          [
+            257082
+          ],
+          [
+            257157
+          ],
+          [
+            257231
+          ],
+          [
+            257305
+          ]
+        ],
+        "actual_steering": [
+          [
+            256730
+          ],
+          [
+            256785
+          ],
+          [
+            256860
+          ],
+          [
+            256939
+          ],
+          [
+            257014
+          ],
+          [
+            257094
+          ],
+          [
+            257174
+          ],
+          [
+            257249
+          ],
+          [
+            257302
+          ],
+          [
+            257378
+          ]
+        ],
+        "velocity": [
+          [
+            256731,
+            256758
+          ],
+          [
+            256786,
+            256806
+          ],
+          [
+            256861,
+            256883
+          ],
+          [
+            256940,
+            256965
+          ],
+          [
+            257015,
+            257042
+          ],
+          [
+            257095,
+            257120
+          ],
+          [
+            257175,
+            257202
+          ],
+          [
+            257250,
+            257277
+          ],
+          [
+            257303,
+            257327
+          ],
+          [
+            257379,
+            257404
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        257399
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:340299992393",
+      "camera_row_id": 257560,
+      "epoch": "epoch0000",
+      "observation_ns": 340299992393,
+      "freeze_ns": 1789315744118063738,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            257323
+          ],
+          [
+            257400
+          ],
+          [],
+          [
+            257560
+          ]
+        ],
+        "lidar": [
+          [
+            257329
+          ],
+          [
+            257388
+          ],
+          [
+            257465
+          ],
+          [
+            257538
+          ]
+        ],
+        "final_command": [
+          [
+            256788
+          ],
+          [
+            256862
+          ],
+          [
+            256934
+          ],
+          [
+            257006
+          ],
+          [
+            257082
+          ],
+          [
+            257157
+          ],
+          [
+            257231
+          ],
+          [
+            257305
+          ],
+          [
+            257380
+          ],
+          [
+            257454
+          ]
+        ],
+        "actual_steering": [
+          [
+            256880
+          ],
+          [
+            256939
+          ],
+          [
+            257014
+          ],
+          [
+            257094
+          ],
+          [
+            257174
+          ],
+          [
+            257249
+          ],
+          [
+            257326
+          ],
+          [
+            257403
+          ],
+          [
+            257460
+          ],
+          [
+            257534
+          ]
+        ],
+        "velocity": [
+          [
+            256883,
+            256914
+          ],
+          [
+            256940,
+            256965
+          ],
+          [
+            257015,
+            257042
+          ],
+          [
+            257095,
+            257120
+          ],
+          [
+            257175,
+            257202
+          ],
+          [
+            257250,
+            257277
+          ],
+          [
+            257327,
+            257351
+          ],
+          [
+            257404,
+            257428
+          ],
+          [
+            257461,
+            257487
+          ],
+          [
+            257535,
+            257564
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        257549,
+        257568
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:340404992391",
+      "camera_row_id": 257635,
+      "epoch": "epoch0000",
+      "observation_ns": 340404992391,
+      "freeze_ns": 1789315744218729764,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            257400
+          ],
+          [],
+          [
+            257560
+          ],
+          [
+            257635
+          ]
+        ],
+        "lidar": [
+          [
+            257388
+          ],
+          [
+            257465
+          ],
+          [
+            257538
+          ],
+          [
+            257612
+          ]
+        ],
+        "final_command": [
+          [
+            256862
+          ],
+          [
+            256934
+          ],
+          [
+            257006
+          ],
+          [
+            257082
+          ],
+          [
+            257157
+          ],
+          [
+            257231
+          ],
+          [
+            257305
+          ],
+          [
+            257380
+          ],
+          [
+            257454
+          ],
+          [
+            257528
+          ]
+        ],
+        "actual_steering": [
+          [
+            256962
+          ],
+          [
+            257014
+          ],
+          [
+            257094
+          ],
+          [
+            257174
+          ],
+          [
+            257249
+          ],
+          [
+            257326
+          ],
+          [
+            257403
+          ],
+          [
+            257486
+          ],
+          [
+            257534
+          ],
+          [
+            257609
+          ]
+        ],
+        "velocity": [
+          [
+            256965,
+            256989
+          ],
+          [
+            257015,
+            257042
+          ],
+          [
+            257095,
+            257120
+          ],
+          [
+            257175,
+            257202
+          ],
+          [
+            257250,
+            257277
+          ],
+          [
+            257327,
+            257351
+          ],
+          [
+            257404,
+            257428
+          ],
+          [
+            257487,
+            257513
+          ],
+          [
+            257535,
+            257564
+          ],
+          [
+            257610,
+            257639
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        257624,
+        257641
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:340509992389",
+      "camera_row_id": 257713,
+      "epoch": "epoch0000",
+      "observation_ns": 340509992389,
+      "freeze_ns": 1789315744318887908,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [],
+          [
+            257560
+          ],
+          [
+            257635
+          ],
+          [
+            257713
+          ]
+        ],
+        "lidar": [
+          [
+            257465
+          ],
+          [
+            257538
+          ],
+          [
+            257612
+          ],
+          [
+            257686
+          ]
+        ],
+        "final_command": [
+          [
+            256934
+          ],
+          [
+            257006
+          ],
+          [
+            257082
+          ],
+          [
+            257157
+          ],
+          [
+            257231
+          ],
+          [
+            257305
+          ],
+          [
+            257380
+          ],
+          [
+            257454
+          ],
+          [
+            257528
+          ],
+          [
+            257602
+          ]
+        ],
+        "actual_steering": [
+          [
+            257041
+          ],
+          [
+            257094
+          ],
+          [
+            257174
+          ],
+          [
+            257249
+          ],
+          [
+            257326
+          ],
+          [
+            257403
+          ],
+          [
+            257486
+          ],
+          [
+            257563
+          ],
+          [
+            257609
+          ],
+          [
+            257684
+          ]
+        ],
+        "velocity": [
+          [
+            257042,
+            257067
+          ],
+          [
+            257095,
+            257120
+          ],
+          [
+            257175,
+            257202
+          ],
+          [
+            257250,
+            257277
+          ],
+          [
+            257327,
+            257351
+          ],
+          [
+            257404,
+            257428
+          ],
+          [
+            257487,
+            257513
+          ],
+          [
+            257564,
+            257588
+          ],
+          [
+            257610,
+            257639
+          ],
+          [
+            257685,
+            257721
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        257711
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:340614992386",
+      "camera_row_id": 257795,
+      "epoch": "epoch0000",
+      "observation_ns": 340614992386,
+      "freeze_ns": 1789315744435400040,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            257560
+          ],
+          [
+            257635
+          ],
+          [
+            257713
+          ],
+          [
+            257795
+          ]
+        ],
+        "lidar": [
+          [
+            257538
+          ],
+          [
+            257612
+          ],
+          [
+            257686
+          ],
+          [
+            257758
+          ]
+        ],
+        "final_command": [
+          [
+            257049
+          ],
+          [
+            257124
+          ],
+          [
+            257198
+          ],
+          [
+            257270
+          ],
+          [
+            257366
+          ],
+          [
+            257421
+          ],
+          [
+            257495
+          ],
+          [
+            257569
+          ],
+          [
+            257643
+          ],
+          [
+            257715
+          ]
+        ],
+        "actual_steering": [
+          [
+            257119
+          ],
+          [
+            257174
+          ],
+          [
+            257249
+          ],
+          [
+            257326
+          ],
+          [
+            257403
+          ],
+          [
+            257486
+          ],
+          [
+            257563
+          ],
+          [
+            257638
+          ],
+          [
+            257684
+          ],
+          [
+            257767
+          ]
+        ],
+        "velocity": [
+          [
+            257120,
+            257143
+          ],
+          [
+            257175,
+            257202
+          ],
+          [
+            257250,
+            257277
+          ],
+          [
+            257327,
+            257351
+          ],
+          [
+            257404,
+            257428
+          ],
+          [
+            257487,
+            257513
+          ],
+          [
+            257564,
+            257588
+          ],
+          [
+            257639,
+            257663
+          ],
+          [
+            257685,
+            257721
+          ],
+          [
+            257768,
+            257798
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        257785,
+        257804
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:340719992384",
+      "camera_row_id": 257872,
+      "epoch": "epoch0000",
+      "observation_ns": 340719992384,
+      "freeze_ns": 1789315744535891012,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            257635
+          ],
+          [
+            257713
+          ],
+          [
+            257795
+          ],
+          [
+            257872
+          ]
+        ],
+        "lidar": [
+          [
+            257612
+          ],
+          [
+            257686
+          ],
+          [
+            257758
+          ],
+          [
+            257835
+          ]
+        ],
+        "final_command": [
+          [
+            257124
+          ],
+          [
+            257198
+          ],
+          [
+            257270
+          ],
+          [
+            257366
+          ],
+          [
+            257421
+          ],
+          [
+            257495
+          ],
+          [
+            257569
+          ],
+          [
+            257643
+          ],
+          [
+            257715
+          ],
+          [
+            257787
+          ]
+        ],
+        "actual_steering": [
+          [
+            257201
+          ],
+          [
+            257249
+          ],
+          [
+            257326
+          ],
+          [
+            257403
+          ],
+          [
+            257486
+          ],
+          [
+            257563
+          ],
+          [
+            257638
+          ],
+          [
+            257720
+          ],
+          [
+            257767
+          ],
+          [
+            257845
+          ]
+        ],
+        "velocity": [
+          [
+            257202,
+            257226
+          ],
+          [
+            257250,
+            257277
+          ],
+          [
+            257327,
+            257351
+          ],
+          [
+            257404,
+            257428
+          ],
+          [
+            257487,
+            257513
+          ],
+          [
+            257564,
+            257588
+          ],
+          [
+            257639,
+            257663
+          ],
+          [
+            257721,
+            257745
+          ],
+          [
+            257768,
+            257798
+          ],
+          [
+            257846,
+            257876
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        257862,
+        257879
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:340824992381",
+      "camera_row_id": 257947,
+      "epoch": "epoch0000",
+      "observation_ns": 340824992381,
+      "freeze_ns": 1789315744635591377,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            257713
+          ],
+          [
+            257795
+          ],
+          [
+            257872
+          ],
+          [
+            257947
+          ]
+        ],
+        "lidar": [
+          [
+            257686
+          ],
+          [
+            257758
+          ],
+          [
+            257835
+          ],
+          [
+            257909
+          ]
+        ],
+        "final_command": [
+          [
+            257198
+          ],
+          [
+            257270
+          ],
+          [
+            257366
+          ],
+          [
+            257421
+          ],
+          [
+            257495
+          ],
+          [
+            257569
+          ],
+          [
+            257643
+          ],
+          [
+            257715
+          ],
+          [
+            257787
+          ],
+          [
+            257864
+          ]
+        ],
+        "actual_steering": [
+          [
+            257276
+          ],
+          [
+            257326
+          ],
+          [
+            257403
+          ],
+          [
+            257486
+          ],
+          [
+            257563
+          ],
+          [
+            257638
+          ],
+          [
+            257720
+          ],
+          [
+            257797
+          ],
+          [
+            257845
+          ],
+          [
+            257922
+          ]
+        ],
+        "velocity": [
+          [
+            257277,
+            257303
+          ],
+          [
+            257327,
+            257351
+          ],
+          [
+            257404,
+            257428
+          ],
+          [
+            257487,
+            257513
+          ],
+          [
+            257564,
+            257588
+          ],
+          [
+            257639,
+            257663
+          ],
+          [
+            257721,
+            257745
+          ],
+          [
+            257798,
+            257824
+          ],
+          [
+            257846,
+            257876
+          ],
+          [
+            257923,
+            257953
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        257936,
+        257952
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:340929992379",
+      "camera_row_id": 258024,
+      "epoch": "epoch0000",
+      "observation_ns": 340929992379,
+      "freeze_ns": 1789315744738820464,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            257795
+          ],
+          [
+            257872
+          ],
+          [
+            257947
+          ],
+          [
+            258024
+          ]
+        ],
+        "lidar": [
+          [
+            257758
+          ],
+          [
+            257835
+          ],
+          [
+            257909
+          ],
+          [
+            257983
+          ]
+        ],
+        "final_command": [
+          [
+            257270
+          ],
+          [
+            257366
+          ],
+          [
+            257421
+          ],
+          [
+            257495
+          ],
+          [
+            257569
+          ],
+          [
+            257643
+          ],
+          [
+            257715
+          ],
+          [
+            257787
+          ],
+          [
+            257864
+          ],
+          [
+            257938
+          ]
+        ],
+        "actual_steering": [
+          [
+            257350
+          ],
+          [
+            257403
+          ],
+          [
+            257486
+          ],
+          [
+            257563
+          ],
+          [
+            257638
+          ],
+          [
+            257720
+          ],
+          [
+            257797
+          ],
+          [
+            257875
+          ],
+          [
+            257922
+          ],
+          [
+            258003
+          ]
+        ],
+        "velocity": [
+          [
+            257351,
+            257379
+          ],
+          [
+            257404,
+            257428
+          ],
+          [
+            257487,
+            257513
+          ],
+          [
+            257564,
+            257588
+          ],
+          [
+            257639,
+            257663
+          ],
+          [
+            257721,
+            257745
+          ],
+          [
+            257798,
+            257824
+          ],
+          [
+            257876,
+            257900
+          ],
+          [
+            257923,
+            257953
+          ],
+          [
+            258004,
+            258032
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        258021
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:341034992377",
+      "camera_row_id": 258102,
+      "epoch": "epoch0000",
+      "observation_ns": 341034992377,
+      "freeze_ns": 1789315744851755119,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            257872
+          ],
+          [
+            257947
+          ],
+          [
+            258024
+          ],
+          [
+            258102
+          ]
+        ],
+        "lidar": [
+          [
+            257880
+          ],
+          [
+            257954
+          ],
+          [
+            258026
+          ],
+          [
+            258093
+          ]
+        ],
+        "final_command": [
+          [
+            257366
+          ],
+          [
+            257421
+          ],
+          [
+            257495
+          ],
+          [
+            257569
+          ],
+          [
+            257643
+          ],
+          [
+            257715
+          ],
+          [
+            257787
+          ],
+          [
+            257864
+          ],
+          [
+            257938
+          ],
+          [
+            258014
+          ]
+        ],
+        "actual_steering": [
+          [
+            257427
+          ],
+          [
+            257486
+          ],
+          [
+            257563
+          ],
+          [
+            257638
+          ],
+          [
+            257720
+          ],
+          [
+            257797
+          ],
+          [
+            257875
+          ],
+          [
+            257951
+          ],
+          [
+            258003
+          ],
+          [
+            258080
+          ]
+        ],
+        "velocity": [
+          [
+            257428,
+            257461
+          ],
+          [
+            257487,
+            257513
+          ],
+          [
+            257564,
+            257588
+          ],
+          [
+            257639,
+            257663
+          ],
+          [
+            257721,
+            257745
+          ],
+          [
+            257798,
+            257824
+          ],
+          [
+            257876,
+            257900
+          ],
+          [
+            257953,
+            257979
+          ],
+          [
+            258004,
+            258032
+          ],
+          [
+            258081,
+            258106
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        258097,
+        258109
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:341139992374",
+      "camera_row_id": 258181,
+      "epoch": "epoch0000",
+      "observation_ns": 341139992374,
+      "freeze_ns": 1789315744952088911,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            257947
+          ],
+          [
+            258024
+          ],
+          [
+            258102
+          ],
+          [
+            258181
+          ]
+        ],
+        "lidar": [
+          [
+            257954
+          ],
+          [
+            258026
+          ],
+          [
+            258093
+          ],
+          [
+            258171
+          ]
+        ],
+        "final_command": [
+          [
+            257421
+          ],
+          [
+            257495
+          ],
+          [
+            257569
+          ],
+          [
+            257643
+          ],
+          [
+            257715
+          ],
+          [
+            257787
+          ],
+          [
+            257864
+          ],
+          [
+            257938
+          ],
+          [
+            258014
+          ],
+          [
+            258112
+          ]
+        ],
+        "actual_steering": [
+          [
+            257511
+          ],
+          [
+            257563
+          ],
+          [
+            257638
+          ],
+          [
+            257720
+          ],
+          [
+            257797
+          ],
+          [
+            257875
+          ],
+          [
+            257951
+          ],
+          [
+            258030
+          ],
+          [
+            258080
+          ],
+          [
+            258156
+          ]
+        ],
+        "velocity": [
+          [
+            257513,
+            257535
+          ],
+          [
+            257564,
+            257588
+          ],
+          [
+            257639,
+            257663
+          ],
+          [
+            257721,
+            257745
+          ],
+          [
+            257798,
+            257824
+          ],
+          [
+            257876,
+            257900
+          ],
+          [
+            257953,
+            257979
+          ],
+          [
+            258032,
+            258054
+          ],
+          [
+            258081,
+            258106
+          ],
+          [
+            258157,
+            258185
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        258169,
+        258187
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:341244992372",
+      "camera_row_id": 258260,
+      "epoch": "epoch0000",
+      "observation_ns": 341244992372,
+      "freeze_ns": 1789315745053382350,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            258024
+          ],
+          [
+            258102
+          ],
+          [
+            258181
+          ],
+          [
+            258260
+          ]
+        ],
+        "lidar": [
+          [
+            258026
+          ],
+          [
+            258093
+          ],
+          [
+            258171
+          ],
+          [
+            258248
+          ]
+        ],
+        "final_command": [
+          [
+            257495
+          ],
+          [
+            257569
+          ],
+          [
+            257643
+          ],
+          [
+            257715
+          ],
+          [
+            257787
+          ],
+          [
+            257864
+          ],
+          [
+            257938
+          ],
+          [
+            258014
+          ],
+          [
+            258112
+          ],
+          [
+            258161
+          ]
+        ],
+        "actual_steering": [
+          [
+            257587
+          ],
+          [
+            257638
+          ],
+          [
+            257720
+          ],
+          [
+            257797
+          ],
+          [
+            257875
+          ],
+          [
+            257951
+          ],
+          [
+            258030
+          ],
+          [
+            258105
+          ],
+          [
+            258156
+          ],
+          [
+            258241
+          ]
+        ],
+        "velocity": [
+          [
+            257588,
+            257610
+          ],
+          [
+            257639,
+            257663
+          ],
+          [
+            257721,
+            257745
+          ],
+          [
+            257798,
+            257824
+          ],
+          [
+            257876,
+            257900
+          ],
+          [
+            257953,
+            257979
+          ],
+          [
+            258032,
+            258054
+          ],
+          [
+            258106,
+            258130
+          ],
+          [
+            258157,
+            258185
+          ],
+          [
+            258242,
+            258268
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        258258
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:341349992370",
+      "camera_row_id": 258343,
+      "epoch": "epoch0000",
+      "observation_ns": 341349992370,
+      "freeze_ns": 1789315745170176620,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            258102
+          ],
+          [
+            258181
+          ],
+          [
+            258260
+          ],
+          [
+            258343
+          ]
+        ],
+        "lidar": [
+          [
+            258093
+          ],
+          [
+            258171
+          ],
+          [
+            258248
+          ],
+          [
+            258320
+          ]
+        ],
+        "final_command": [
+          [
+            257569
+          ],
+          [
+            257643
+          ],
+          [
+            257715
+          ],
+          [
+            257787
+          ],
+          [
+            257864
+          ],
+          [
+            257938
+          ],
+          [
+            258014
+          ],
+          [
+            258112
+          ],
+          [
+            258161
+          ],
+          [
+            258236
+          ]
+        ],
+        "actual_steering": [
+          [
+            257662
+          ],
+          [
+            257720
+          ],
+          [
+            257797
+          ],
+          [
+            257875
+          ],
+          [
+            257951
+          ],
+          [
+            258030
+          ],
+          [
+            258105
+          ],
+          [
+            258184
+          ],
+          [
+            258241
+          ],
+          [
+            258316
+          ]
+        ],
+        "velocity": [
+          [
+            257663,
+            257685
+          ],
+          [
+            257721,
+            257745
+          ],
+          [
+            257798,
+            257824
+          ],
+          [
+            257876,
+            257900
+          ],
+          [
+            257953,
+            257979
+          ],
+          [
+            258032,
+            258054
+          ],
+          [
+            258106,
+            258130
+          ],
+          [
+            258185,
+            258208
+          ],
+          [
+            258242,
+            258268
+          ],
+          [
+            258317,
+            258345
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        258332,
+        258359
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:341454992367",
+      "camera_row_id": 258416,
+      "epoch": "epoch0000",
+      "observation_ns": 341454992367,
+      "freeze_ns": 1789315745269354365,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            258181
+          ],
+          [
+            258260
+          ],
+          [
+            258343
+          ],
+          [
+            258416
+          ]
+        ],
+        "lidar": [
+          [
+            258171
+          ],
+          [
+            258248
+          ],
+          [
+            258320
+          ],
+          [
+            258397
+          ]
+        ],
+        "final_command": [
+          [
+            257643
+          ],
+          [
+            257715
+          ],
+          [
+            257787
+          ],
+          [
+            257864
+          ],
+          [
+            257938
+          ],
+          [
+            258014
+          ],
+          [
+            258112
+          ],
+          [
+            258161
+          ],
+          [
+            258236
+          ],
+          [
+            258310
+          ]
+        ],
+        "actual_steering": [
+          [
+            257744
+          ],
+          [
+            257797
+          ],
+          [
+            257875
+          ],
+          [
+            257951
+          ],
+          [
+            258030
+          ],
+          [
+            258105
+          ],
+          [
+            258184
+          ],
+          [
+            258267
+          ],
+          [
+            258316
+          ],
+          [
+            258391
+          ]
+        ],
+        "velocity": [
+          [
+            257745,
+            257768
+          ],
+          [
+            257798,
+            257824
+          ],
+          [
+            257876,
+            257900
+          ],
+          [
+            257953,
+            257979
+          ],
+          [
+            258032,
+            258054
+          ],
+          [
+            258106,
+            258130
+          ],
+          [
+            258185,
+            258208
+          ],
+          [
+            258268,
+            258291
+          ],
+          [
+            258317,
+            258345
+          ],
+          [
+            258392,
+            258420
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        258406,
+        258433
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:341559992365",
+      "camera_row_id": 258491,
+      "epoch": "epoch0000",
+      "observation_ns": 341559992365,
+      "freeze_ns": 1789315745371420639,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            258260
+          ],
+          [
+            258343
+          ],
+          [
+            258416
+          ],
+          [
+            258491
+          ]
+        ],
+        "lidar": [
+          [
+            258248
+          ],
+          [
+            258320
+          ],
+          [
+            258397
+          ],
+          [
+            258470
+          ]
+        ],
+        "final_command": [
+          [
+            257715
+          ],
+          [
+            257787
+          ],
+          [
+            257864
+          ],
+          [
+            257938
+          ],
+          [
+            258014
+          ],
+          [
+            258112
+          ],
+          [
+            258161
+          ],
+          [
+            258236
+          ],
+          [
+            258310
+          ],
+          [
+            258386
+          ]
+        ],
+        "actual_steering": [
+          [
+            257823
+          ],
+          [
+            257875
+          ],
+          [
+            257951
+          ],
+          [
+            258030
+          ],
+          [
+            258105
+          ],
+          [
+            258184
+          ],
+          [
+            258267
+          ],
+          [
+            258344
+          ],
+          [
+            258391
+          ],
+          [
+            258466
+          ]
+        ],
+        "velocity": [
+          [
+            257824,
+            257846
+          ],
+          [
+            257876,
+            257900
+          ],
+          [
+            257953,
+            257979
+          ],
+          [
+            258032,
+            258054
+          ],
+          [
+            258106,
+            258130
+          ],
+          [
+            258185,
+            258208
+          ],
+          [
+            258268,
+            258291
+          ],
+          [
+            258345,
+            258366
+          ],
+          [
+            258392,
+            258420
+          ],
+          [
+            258467,
+            258499
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        258480,
+        258507
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:341664992363",
+      "camera_row_id": 258577,
+      "epoch": "epoch0000",
+      "observation_ns": 341664992363,
+      "freeze_ns": 1789315745485917250,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            258343
+          ],
+          [
+            258416
+          ],
+          [
+            258491
+          ],
+          [
+            258577
+          ]
+        ],
+        "lidar": [
+          [
+            258320
+          ],
+          [
+            258397
+          ],
+          [
+            258470
+          ],
+          [
+            258542
+          ]
+        ],
+        "final_command": [
+          [
+            257826
+          ],
+          [
+            257901
+          ],
+          [
+            257973
+          ],
+          [
+            258047
+          ],
+          [
+            258124
+          ],
+          [
+            258198
+          ],
+          [
+            258273
+          ],
+          [
+            258349
+          ],
+          [
+            258421
+          ],
+          [
+            258493
+          ]
+        ],
+        "actual_steering": [
+          [
+            257899
+          ],
+          [
+            257951
+          ],
+          [
+            258030
+          ],
+          [
+            258105
+          ],
+          [
+            258184
+          ],
+          [
+            258267
+          ],
+          [
+            258344
+          ],
+          [
+            258419
+          ],
+          [
+            258466
+          ],
+          [
+            258550
+          ]
+        ],
+        "velocity": [
+          [
+            257900,
+            257923
+          ],
+          [
+            257953,
+            257979
+          ],
+          [
+            258032,
+            258054
+          ],
+          [
+            258106,
+            258130
+          ],
+          [
+            258185,
+            258208
+          ],
+          [
+            258268,
+            258291
+          ],
+          [
+            258345,
+            258366
+          ],
+          [
+            258420,
+            258443
+          ],
+          [
+            258467,
+            258499
+          ],
+          [
+            258552,
+            258579
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        258556,
+        258583
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:341769992360",
+      "camera_row_id": 258651,
+      "epoch": "epoch0000",
+      "observation_ns": 341769992360,
+      "freeze_ns": 1789315745587338839,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            258416
+          ],
+          [
+            258491
+          ],
+          [
+            258577
+          ],
+          [
+            258651
+          ]
+        ],
+        "lidar": [
+          [
+            258397
+          ],
+          [
+            258470
+          ],
+          [
+            258542
+          ],
+          [
+            258619
+          ]
+        ],
+        "final_command": [
+          [
+            257901
+          ],
+          [
+            257973
+          ],
+          [
+            258047
+          ],
+          [
+            258124
+          ],
+          [
+            258198
+          ],
+          [
+            258273
+          ],
+          [
+            258349
+          ],
+          [
+            258421
+          ],
+          [
+            258493
+          ],
+          [
+            258570
+          ]
+        ],
+        "actual_steering": [
+          [
+            257978
+          ],
+          [
+            258030
+          ],
+          [
+            258105
+          ],
+          [
+            258184
+          ],
+          [
+            258267
+          ],
+          [
+            258344
+          ],
+          [
+            258419
+          ],
+          [
+            258498
+          ],
+          [
+            258550
+          ],
+          [
+            258627
+          ]
+        ],
+        "velocity": [
+          [
+            257979,
+            258004
+          ],
+          [
+            258032,
+            258054
+          ],
+          [
+            258106,
+            258130
+          ],
+          [
+            258185,
+            258208
+          ],
+          [
+            258268,
+            258291
+          ],
+          [
+            258345,
+            258366
+          ],
+          [
+            258420,
+            258443
+          ],
+          [
+            258499,
+            258524
+          ],
+          [
+            258552,
+            258579
+          ],
+          [
+            258628,
+            258654
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        258631,
+        258656
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:341874992358",
+      "camera_row_id": 258727,
+      "epoch": "epoch0000",
+      "observation_ns": 341874992358,
+      "freeze_ns": 1789315745686295985,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            258491
+          ],
+          [
+            258577
+          ],
+          [
+            258651
+          ],
+          [
+            258727
+          ]
+        ],
+        "lidar": [
+          [
+            258470
+          ],
+          [
+            258542
+          ],
+          [
+            258619
+          ],
+          [
+            258691
+          ]
+        ],
+        "final_command": [
+          [
+            257973
+          ],
+          [
+            258047
+          ],
+          [
+            258124
+          ],
+          [
+            258198
+          ],
+          [
+            258273
+          ],
+          [
+            258349
+          ],
+          [
+            258421
+          ],
+          [
+            258493
+          ],
+          [
+            258570
+          ],
+          [
+            258642
+          ]
+        ],
+        "actual_steering": [
+          [
+            258053
+          ],
+          [
+            258105
+          ],
+          [
+            258184
+          ],
+          [
+            258267
+          ],
+          [
+            258344
+          ],
+          [
+            258419
+          ],
+          [
+            258498
+          ],
+          [
+            258578
+          ],
+          [
+            258627
+          ],
+          [
+            258702
+          ]
+        ],
+        "velocity": [
+          [
+            258054,
+            258081
+          ],
+          [
+            258106,
+            258130
+          ],
+          [
+            258185,
+            258208
+          ],
+          [
+            258268,
+            258291
+          ],
+          [
+            258345,
+            258366
+          ],
+          [
+            258420,
+            258443
+          ],
+          [
+            258499,
+            258524
+          ],
+          [
+            258579,
+            258604
+          ],
+          [
+            258628,
+            258654
+          ],
+          [
+            258703,
+            258729
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        258705,
+        258732
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:341979992356",
+      "camera_row_id": 258803,
+      "epoch": "epoch0000",
+      "observation_ns": 341979992356,
+      "freeze_ns": 1789315745787764469,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            258577
+          ],
+          [
+            258651
+          ],
+          [
+            258727
+          ],
+          [
+            258803
+          ]
+        ],
+        "lidar": [
+          [
+            258542
+          ],
+          [
+            258619
+          ],
+          [
+            258691
+          ],
+          [
+            258767
+          ]
+        ],
+        "final_command": [
+          [
+            258047
+          ],
+          [
+            258124
+          ],
+          [
+            258198
+          ],
+          [
+            258273
+          ],
+          [
+            258349
+          ],
+          [
+            258421
+          ],
+          [
+            258493
+          ],
+          [
+            258570
+          ],
+          [
+            258642
+          ],
+          [
+            258716
+          ]
+        ],
+        "actual_steering": [
+          [
+            258129
+          ],
+          [
+            258184
+          ],
+          [
+            258267
+          ],
+          [
+            258344
+          ],
+          [
+            258419
+          ],
+          [
+            258498
+          ],
+          [
+            258578
+          ],
+          [
+            258653
+          ],
+          [
+            258702
+          ],
+          [
+            258784
+          ]
+        ],
+        "velocity": [
+          [
+            258130,
+            258157
+          ],
+          [
+            258185,
+            258208
+          ],
+          [
+            258268,
+            258291
+          ],
+          [
+            258345,
+            258366
+          ],
+          [
+            258420,
+            258443
+          ],
+          [
+            258499,
+            258524
+          ],
+          [
+            258579,
+            258604
+          ],
+          [
+            258654,
+            258679
+          ],
+          [
+            258703,
+            258729
+          ],
+          [
+            258785,
+            258810
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        258801
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:342084992353",
+      "camera_row_id": 258884,
+      "epoch": "epoch0000",
+      "observation_ns": 342084992353,
+      "freeze_ns": 1789315745902797930,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            258651
+          ],
+          [
+            258727
+          ],
+          [
+            258803
+          ],
+          [
+            258884
+          ]
+        ],
+        "lidar": [
+          [
+            258659
+          ],
+          [
+            258731
+          ],
+          [
+            258805
+          ],
+          [
+            258875
+          ]
+        ],
+        "final_command": [
+          [
+            258124
+          ],
+          [
+            258198
+          ],
+          [
+            258273
+          ],
+          [
+            258349
+          ],
+          [
+            258421
+          ],
+          [
+            258493
+          ],
+          [
+            258570
+          ],
+          [
+            258642
+          ],
+          [
+            258716
+          ],
+          [
+            258790
+          ]
+        ],
+        "actual_steering": [
+          [
+            258207
+          ],
+          [
+            258267
+          ],
+          [
+            258344
+          ],
+          [
+            258419
+          ],
+          [
+            258498
+          ],
+          [
+            258578
+          ],
+          [
+            258653
+          ],
+          [
+            258728
+          ],
+          [
+            258784
+          ],
+          [
+            258862
+          ]
+        ],
+        "velocity": [
+          [
+            258208,
+            258242
+          ],
+          [
+            258268,
+            258291
+          ],
+          [
+            258345,
+            258366
+          ],
+          [
+            258420,
+            258443
+          ],
+          [
+            258499,
+            258524
+          ],
+          [
+            258579,
+            258604
+          ],
+          [
+            258654,
+            258679
+          ],
+          [
+            258729,
+            258761
+          ],
+          [
+            258785,
+            258810
+          ],
+          [
+            258863,
+            258888
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        258882
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:342189992351",
+      "camera_row_id": 258962,
+      "epoch": "epoch0000",
+      "observation_ns": 342189992351,
+      "freeze_ns": 1789315746003720304,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            258727
+          ],
+          [
+            258803
+          ],
+          [
+            258884
+          ],
+          [
+            258962
+          ]
+        ],
+        "lidar": [
+          [
+            258731
+          ],
+          [
+            258805
+          ],
+          [
+            258875
+          ],
+          [
+            258950
+          ]
+        ],
+        "final_command": [
+          [
+            258198
+          ],
+          [
+            258273
+          ],
+          [
+            258349
+          ],
+          [
+            258421
+          ],
+          [
+            258493
+          ],
+          [
+            258570
+          ],
+          [
+            258642
+          ],
+          [
+            258716
+          ],
+          [
+            258790
+          ],
+          [
+            258865
+          ]
+        ],
+        "actual_steering": [
+          [
+            258290
+          ],
+          [
+            258344
+          ],
+          [
+            258419
+          ],
+          [
+            258498
+          ],
+          [
+            258578
+          ],
+          [
+            258653
+          ],
+          [
+            258728
+          ],
+          [
+            258809
+          ],
+          [
+            258862
+          ],
+          [
+            258939
+          ]
+        ],
+        "velocity": [
+          [
+            258291,
+            258317
+          ],
+          [
+            258345,
+            258366
+          ],
+          [
+            258420,
+            258443
+          ],
+          [
+            258499,
+            258524
+          ],
+          [
+            258579,
+            258604
+          ],
+          [
+            258654,
+            258679
+          ],
+          [
+            258729,
+            258761
+          ],
+          [
+            258810,
+            258835
+          ],
+          [
+            258863,
+            258888
+          ],
+          [
+            258940,
+            258966
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        258960
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:342294992349",
+      "camera_row_id": 259037,
+      "epoch": "epoch0000",
+      "observation_ns": 342294992349,
+      "freeze_ns": 1789315746104884993,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            258803
+          ],
+          [
+            258884
+          ],
+          [
+            258962
+          ],
+          [
+            259037
+          ]
+        ],
+        "lidar": [
+          [
+            258805
+          ],
+          [
+            258875
+          ],
+          [
+            258950
+          ],
+          [
+            259029
+          ]
+        ],
+        "final_command": [
+          [
+            258273
+          ],
+          [
+            258349
+          ],
+          [
+            258421
+          ],
+          [
+            258493
+          ],
+          [
+            258570
+          ],
+          [
+            258642
+          ],
+          [
+            258716
+          ],
+          [
+            258790
+          ],
+          [
+            258865
+          ],
+          [
+            258941
+          ]
+        ],
+        "actual_steering": [
+          [
+            258365
+          ],
+          [
+            258419
+          ],
+          [
+            258498
+          ],
+          [
+            258578
+          ],
+          [
+            258653
+          ],
+          [
+            258728
+          ],
+          [
+            258809
+          ],
+          [
+            258887
+          ],
+          [
+            258939
+          ],
+          [
+            259015
+          ]
+        ],
+        "velocity": [
+          [
+            258366,
+            258392
+          ],
+          [
+            258420,
+            258443
+          ],
+          [
+            258499,
+            258524
+          ],
+          [
+            258579,
+            258604
+          ],
+          [
+            258654,
+            258679
+          ],
+          [
+            258729,
+            258761
+          ],
+          [
+            258810,
+            258835
+          ],
+          [
+            258888,
+            258912
+          ],
+          [
+            258940,
+            258966
+          ],
+          [
+            259016,
+            259047
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        259036
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:342399992346",
+      "camera_row_id": 259122,
+      "epoch": "epoch0000",
+      "observation_ns": 342399992346,
+      "freeze_ns": 1789315746220726878,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            258884
+          ],
+          [
+            258962
+          ],
+          [
+            259037
+          ],
+          [
+            259122
+          ]
+        ],
+        "lidar": [
+          [
+            258875
+          ],
+          [
+            258950
+          ],
+          [
+            259029
+          ],
+          [
+            259103
+          ]
+        ],
+        "final_command": [
+          [
+            258349
+          ],
+          [
+            258421
+          ],
+          [
+            258493
+          ],
+          [
+            258570
+          ],
+          [
+            258642
+          ],
+          [
+            258716
+          ],
+          [
+            258790
+          ],
+          [
+            258865
+          ],
+          [
+            258941
+          ],
+          [
+            259019
+          ]
+        ],
+        "actual_steering": [
+          [
+            258442
+          ],
+          [
+            258498
+          ],
+          [
+            258578
+          ],
+          [
+            258653
+          ],
+          [
+            258728
+          ],
+          [
+            258809
+          ],
+          [
+            258887
+          ],
+          [
+            258965
+          ],
+          [
+            259015
+          ],
+          [
+            259096
+          ]
+        ],
+        "velocity": [
+          [
+            258443,
+            258467
+          ],
+          [
+            258499,
+            258524
+          ],
+          [
+            258579,
+            258604
+          ],
+          [
+            258654,
+            258679
+          ],
+          [
+            258729,
+            258761
+          ],
+          [
+            258810,
+            258835
+          ],
+          [
+            258888,
+            258912
+          ],
+          [
+            258966,
+            258990
+          ],
+          [
+            259016,
+            259047
+          ],
+          [
+            259098,
+            259124
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        259110,
+        259132
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:342504992344",
+      "camera_row_id": 259195,
+      "epoch": "epoch0000",
+      "observation_ns": 342504992344,
+      "freeze_ns": 1789315746321297550,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            258962
+          ],
+          [
+            259037
+          ],
+          [
+            259122
+          ],
+          [
+            259195
+          ]
+        ],
+        "lidar": [
+          [
+            258950
+          ],
+          [
+            259029
+          ],
+          [
+            259103
+          ],
+          [
+            259177
+          ]
+        ],
+        "final_command": [
+          [
+            258421
+          ],
+          [
+            258493
+          ],
+          [
+            258570
+          ],
+          [
+            258642
+          ],
+          [
+            258716
+          ],
+          [
+            258790
+          ],
+          [
+            258865
+          ],
+          [
+            258941
+          ],
+          [
+            259019
+          ],
+          [
+            259091
+          ]
+        ],
+        "actual_steering": [
+          [
+            258522
+          ],
+          [
+            258578
+          ],
+          [
+            258653
+          ],
+          [
+            258728
+          ],
+          [
+            258809
+          ],
+          [
+            258887
+          ],
+          [
+            258965
+          ],
+          [
+            259046
+          ],
+          [
+            259096
+          ],
+          [
+            259172
+          ]
+        ],
+        "velocity": [
+          [
+            258524,
+            258552
+          ],
+          [
+            258579,
+            258604
+          ],
+          [
+            258654,
+            258679
+          ],
+          [
+            258729,
+            258761
+          ],
+          [
+            258810,
+            258835
+          ],
+          [
+            258888,
+            258912
+          ],
+          [
+            258966,
+            258990
+          ],
+          [
+            259047,
+            259073
+          ],
+          [
+            259098,
+            259124
+          ],
+          [
+            259173,
+            259199
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        259184,
+        259202
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:342609992342",
+      "camera_row_id": 259270,
+      "epoch": "epoch0000",
+      "observation_ns": 342609992342,
+      "freeze_ns": 1789315746420611062,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            259037
+          ],
+          [
+            259122
+          ],
+          [
+            259195
+          ],
+          [
+            259270
+          ]
+        ],
+        "lidar": [
+          [
+            259029
+          ],
+          [
+            259103
+          ],
+          [
+            259177
+          ],
+          [
+            259251
+          ]
+        ],
+        "final_command": [
+          [
+            258493
+          ],
+          [
+            258570
+          ],
+          [
+            258642
+          ],
+          [
+            258716
+          ],
+          [
+            258790
+          ],
+          [
+            258865
+          ],
+          [
+            258941
+          ],
+          [
+            259019
+          ],
+          [
+            259091
+          ],
+          [
+            259165
+          ]
+        ],
+        "actual_steering": [
+          [
+            258603
+          ],
+          [
+            258653
+          ],
+          [
+            258728
+          ],
+          [
+            258809
+          ],
+          [
+            258887
+          ],
+          [
+            258965
+          ],
+          [
+            259046
+          ],
+          [
+            259123
+          ],
+          [
+            259172
+          ],
+          [
+            259247
+          ]
+        ],
+        "velocity": [
+          [
+            258604,
+            258628
+          ],
+          [
+            258654,
+            258679
+          ],
+          [
+            258729,
+            258761
+          ],
+          [
+            258810,
+            258835
+          ],
+          [
+            258888,
+            258912
+          ],
+          [
+            258966,
+            258990
+          ],
+          [
+            259047,
+            259073
+          ],
+          [
+            259124,
+            259148
+          ],
+          [
+            259173,
+            259199
+          ],
+          [
+            259248,
+            259274
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        259257,
+        259276
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:342714992339",
+      "camera_row_id": 259348,
+      "epoch": "epoch0000",
+      "observation_ns": 342714992339,
+      "freeze_ns": 1789315746521227465,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            259122
+          ],
+          [
+            259195
+          ],
+          [
+            259270
+          ],
+          [
+            259348
+          ]
+        ],
+        "lidar": [
+          [
+            259103
+          ],
+          [
+            259177
+          ],
+          [
+            259251
+          ],
+          [
+            259326
+          ]
+        ],
+        "final_command": [
+          [
+            258611
+          ],
+          [
+            258683
+          ],
+          [
+            258754
+          ],
+          [
+            258853
+          ],
+          [
+            258904
+          ],
+          [
+            258981
+          ],
+          [
+            259019
+          ],
+          [
+            259091
+          ],
+          [
+            259165
+          ],
+          [
+            259239
+          ]
+        ],
+        "actual_steering": [
+          [
+            258678
+          ],
+          [
+            258728
+          ],
+          [
+            258809
+          ],
+          [
+            258887
+          ],
+          [
+            258965
+          ],
+          [
+            259046
+          ],
+          [
+            259123
+          ],
+          [
+            259198
+          ],
+          [
+            259247
+          ],
+          [
+            259330
+          ]
+        ],
+        "velocity": [
+          [
+            258679,
+            258703
+          ],
+          [
+            258729,
+            258761
+          ],
+          [
+            258810,
+            258835
+          ],
+          [
+            258888,
+            258912
+          ],
+          [
+            258966,
+            258990
+          ],
+          [
+            259047,
+            259073
+          ],
+          [
+            259124,
+            259148
+          ],
+          [
+            259199,
+            259223
+          ],
+          [
+            259248,
+            259274
+          ],
+          [
+            259331,
+            259359
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        259350
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:342819992337",
+      "camera_row_id": 259432,
+      "epoch": "epoch0000",
+      "observation_ns": 342819992337,
+      "freeze_ns": 1789315746638460613,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            259195
+          ],
+          [
+            259270
+          ],
+          [
+            259348
+          ],
+          [
+            259432
+          ]
+        ],
+        "lidar": [
+          [
+            259177
+          ],
+          [
+            259251
+          ],
+          [
+            259326
+          ],
+          [
+            259400
+          ]
+        ],
+        "final_command": [
+          [
+            258683
+          ],
+          [
+            258754
+          ],
+          [
+            258853
+          ],
+          [
+            258904
+          ],
+          [
+            258981
+          ],
+          [
+            259056
+          ],
+          [
+            259127
+          ],
+          [
+            259206
+          ],
+          [
+            259280
+          ],
+          [
+            259353
+          ]
+        ],
+        "actual_steering": [
+          [
+            258760
+          ],
+          [
+            258809
+          ],
+          [
+            258887
+          ],
+          [
+            258965
+          ],
+          [
+            259046
+          ],
+          [
+            259123
+          ],
+          [
+            259198
+          ],
+          [
+            259273
+          ],
+          [
+            259330
+          ],
+          [
+            259405
+          ]
+        ],
+        "velocity": [
+          [
+            258761,
+            258785
+          ],
+          [
+            258810,
+            258835
+          ],
+          [
+            258888,
+            258912
+          ],
+          [
+            258966,
+            258990
+          ],
+          [
+            259047,
+            259073
+          ],
+          [
+            259124,
+            259148
+          ],
+          [
+            259199,
+            259223
+          ],
+          [
+            259274,
+            259307
+          ],
+          [
+            259331,
+            259359
+          ],
+          [
+            259406,
+            259436
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        259423,
+        259439
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:342924992335",
+      "camera_row_id": 259510,
+      "epoch": "epoch0000",
+      "observation_ns": 342924992335,
+      "freeze_ns": 1789315746738816905,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            259270
+          ],
+          [
+            259348
+          ],
+          [
+            259432
+          ],
+          [
+            259510
+          ]
+        ],
+        "lidar": [
+          [
+            259251
+          ],
+          [
+            259326
+          ],
+          [
+            259400
+          ],
+          [
+            259472
+          ]
+        ],
+        "final_command": [
+          [
+            258754
+          ],
+          [
+            258853
+          ],
+          [
+            258904
+          ],
+          [
+            258981
+          ],
+          [
+            259056
+          ],
+          [
+            259127
+          ],
+          [
+            259206
+          ],
+          [
+            259280
+          ],
+          [
+            259353
+          ],
+          [
+            259427
+          ]
+        ],
+        "actual_steering": [
+          [
+            258834
+          ],
+          [
+            258887
+          ],
+          [
+            258965
+          ],
+          [
+            259046
+          ],
+          [
+            259123
+          ],
+          [
+            259198
+          ],
+          [
+            259273
+          ],
+          [
+            259358
+          ],
+          [
+            259405
+          ],
+          [
+            259482
+          ]
+        ],
+        "velocity": [
+          [
+            258835,
+            258863
+          ],
+          [
+            258888,
+            258912
+          ],
+          [
+            258966,
+            258990
+          ],
+          [
+            259047,
+            259073
+          ],
+          [
+            259124,
+            259148
+          ],
+          [
+            259199,
+            259223
+          ],
+          [
+            259274,
+            259307
+          ],
+          [
+            259359,
+            259385
+          ],
+          [
+            259406,
+            259436
+          ],
+          [
+            259483,
+            259513
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        259507
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:343029992332",
+      "camera_row_id": 259583,
+      "epoch": "epoch0000",
+      "observation_ns": 343029992332,
+      "freeze_ns": 1789315746837983467,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            259348
+          ],
+          [
+            259432
+          ],
+          [
+            259510
+          ],
+          [
+            259583
+          ]
+        ],
+        "lidar": [
+          [
+            259326
+          ],
+          [
+            259400
+          ],
+          [
+            259472
+          ],
+          [
+            259548
+          ]
+        ],
+        "final_command": [
+          [
+            258853
+          ],
+          [
+            258904
+          ],
+          [
+            258981
+          ],
+          [
+            259056
+          ],
+          [
+            259127
+          ],
+          [
+            259206
+          ],
+          [
+            259280
+          ],
+          [
+            259353
+          ],
+          [
+            259427
+          ],
+          [
+            259501
+          ]
+        ],
+        "actual_steering": [
+          [
+            258911
+          ],
+          [
+            258965
+          ],
+          [
+            259046
+          ],
+          [
+            259123
+          ],
+          [
+            259198
+          ],
+          [
+            259273
+          ],
+          [
+            259358
+          ],
+          [
+            259435
+          ],
+          [
+            259482
+          ],
+          [
+            259563
+          ]
+        ],
+        "velocity": [
+          [
+            258912,
+            258940
+          ],
+          [
+            258966,
+            258990
+          ],
+          [
+            259047,
+            259073
+          ],
+          [
+            259124,
+            259148
+          ],
+          [
+            259199,
+            259223
+          ],
+          [
+            259274,
+            259307
+          ],
+          [
+            259359,
+            259385
+          ],
+          [
+            259436,
+            259460
+          ],
+          [
+            259483,
+            259513
+          ],
+          [
+            259564,
+            259591
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        259582
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:343134992330",
+      "camera_row_id": 259666,
+      "epoch": "epoch0000",
+      "observation_ns": 343134992330,
+      "freeze_ns": 1789315746953464027,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            259432
+          ],
+          [
+            259510
+          ],
+          [
+            259583
+          ],
+          [
+            259666
+          ]
+        ],
+        "lidar": [
+          [
+            259440
+          ],
+          [
+            259514
+          ],
+          [
+            259585
+          ],
+          [
+            259659
+          ]
+        ],
+        "final_command": [
+          [
+            258904
+          ],
+          [
+            258981
+          ],
+          [
+            259056
+          ],
+          [
+            259127
+          ],
+          [
+            259206
+          ],
+          [
+            259280
+          ],
+          [
+            259353
+          ],
+          [
+            259427
+          ],
+          [
+            259501
+          ],
+          [
+            259594
+          ]
+        ],
+        "actual_steering": [
+          [
+            258989
+          ],
+          [
+            259046
+          ],
+          [
+            259123
+          ],
+          [
+            259198
+          ],
+          [
+            259273
+          ],
+          [
+            259358
+          ],
+          [
+            259435
+          ],
+          [
+            259512
+          ],
+          [
+            259563
+          ],
+          [
+            259641
+          ]
+        ],
+        "velocity": [
+          [
+            258990,
+            259016
+          ],
+          [
+            259047,
+            259073
+          ],
+          [
+            259124,
+            259148
+          ],
+          [
+            259199,
+            259223
+          ],
+          [
+            259274,
+            259307
+          ],
+          [
+            259359,
+            259385
+          ],
+          [
+            259436,
+            259460
+          ],
+          [
+            259513,
+            259535
+          ],
+          [
+            259564,
+            259591
+          ],
+          [
+            259642,
+            259670
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        259658,
+        259673
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:343239992327",
+      "camera_row_id": 259742,
+      "epoch": "epoch0000",
+      "observation_ns": 343239992327,
+      "freeze_ns": 1789315747055105788,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            259510
+          ],
+          [
+            259583
+          ],
+          [
+            259666
+          ],
+          [
+            259742
+          ]
+        ],
+        "lidar": [
+          [
+            259514
+          ],
+          [
+            259585
+          ],
+          [
+            259659
+          ],
+          [
+            259734
+          ]
+        ],
+        "final_command": [
+          [
+            258981
+          ],
+          [
+            259056
+          ],
+          [
+            259127
+          ],
+          [
+            259206
+          ],
+          [
+            259280
+          ],
+          [
+            259353
+          ],
+          [
+            259427
+          ],
+          [
+            259501
+          ],
+          [
+            259594
+          ],
+          [
+            259646
+          ]
+        ],
+        "actual_steering": [
+          [
+            259072
+          ],
+          [
+            259123
+          ],
+          [
+            259198
+          ],
+          [
+            259273
+          ],
+          [
+            259358
+          ],
+          [
+            259435
+          ],
+          [
+            259512
+          ],
+          [
+            259589
+          ],
+          [
+            259641
+          ],
+          [
+            259719
+          ]
+        ],
+        "velocity": [
+          [
+            259073,
+            259098
+          ],
+          [
+            259124,
+            259148
+          ],
+          [
+            259199,
+            259223
+          ],
+          [
+            259274,
+            259307
+          ],
+          [
+            259359,
+            259385
+          ],
+          [
+            259436,
+            259460
+          ],
+          [
+            259513,
+            259535
+          ],
+          [
+            259591,
+            259616
+          ],
+          [
+            259642,
+            259670
+          ],
+          [
+            259720,
+            259746
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        259736,
+        259750
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:343344992325",
+      "camera_row_id": 259819,
+      "epoch": "epoch0000",
+      "observation_ns": 343344992325,
+      "freeze_ns": 1789315747156038533,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            259583
+          ],
+          [
+            259666
+          ],
+          [
+            259742
+          ],
+          [
+            259819
+          ]
+        ],
+        "lidar": [
+          [
+            259585
+          ],
+          [
+            259659
+          ],
+          [
+            259734
+          ],
+          [
+            259810
+          ]
+        ],
+        "final_command": [
+          [
+            259056
+          ],
+          [
+            259127
+          ],
+          [
+            259206
+          ],
+          [
+            259280
+          ],
+          [
+            259353
+          ],
+          [
+            259427
+          ],
+          [
+            259501
+          ],
+          [
+            259594
+          ],
+          [
+            259646
+          ],
+          [
+            259726
+          ]
+        ],
+        "actual_steering": [
+          [
+            259147
+          ],
+          [
+            259198
+          ],
+          [
+            259273
+          ],
+          [
+            259358
+          ],
+          [
+            259435
+          ],
+          [
+            259512
+          ],
+          [
+            259589
+          ],
+          [
+            259669
+          ],
+          [
+            259719
+          ],
+          [
+            259794
+          ]
+        ],
+        "velocity": [
+          [
+            259148,
+            259173
+          ],
+          [
+            259199,
+            259223
+          ],
+          [
+            259274,
+            259307
+          ],
+          [
+            259359,
+            259385
+          ],
+          [
+            259436,
+            259460
+          ],
+          [
+            259513,
+            259535
+          ],
+          [
+            259591,
+            259616
+          ],
+          [
+            259670,
+            259698
+          ],
+          [
+            259720,
+            259746
+          ],
+          [
+            259795,
+            259828
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        259818
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    },
+    {
+      "anchor_id": "codex-time-recovery-left040-r25:epoch0000:343449992323",
+      "camera_row_id": 259901,
+      "epoch": "epoch0000",
+      "observation_ns": 343449992323,
+      "freeze_ns": 1789315747270591958,
+      "epoch_bounds_ns": [
+        4999999,
+        426239990472
+      ],
+      "input_invalid_reason": null,
+      "teacher_reasons": [
+        "OK"
+      ],
+      "history_row_ids": {
+        "camera": [
+          [
+            259666
+          ],
+          [
+            259742
+          ],
+          [
+            259819
+          ],
+          [
+            259901
+          ]
+        ],
+        "lidar": [
+          [
+            259659
+          ],
+          [
+            259734
+          ],
+          [
+            259810
+          ],
+          [
+            259884
+          ]
+        ],
+        "final_command": [
+          [
+            259127
+          ],
+          [
+            259206
+          ],
+          [
+            259280
+          ],
+          [
+            259353
+          ],
+          [
+            259427
+          ],
+          [
+            259501
+          ],
+          [
+            259594
+          ],
+          [
+            259646
+          ],
+          [
+            259726
+          ],
+          [
+            259801
+          ]
+        ],
+        "actual_steering": [
+          [
+            259222
+          ],
+          [
+            259273
+          ],
+          [
+            259358
+          ],
+          [
+            259435
+          ],
+          [
+            259512
+          ],
+          [
+            259589
+          ],
+          [
+            259669
+          ],
+          [
+            259745
+          ],
+          [
+            259794
+          ],
+          [
+            259876
+          ]
+        ],
+        "velocity": [
+          [
+            259223,
+            259248
+          ],
+          [
+            259274,
+            259307
+          ],
+          [
+            259359,
+            259385
+          ],
+          [
+            259436,
+            259460
+          ],
+          [
+            259513,
+            259535
+          ],
+          [
+            259591,
+            259616
+          ],
+          [
+            259670,
+            259698
+          ],
+          [
+            259746,
+            259773
+          ],
+          [
+            259795,
+            259828
+          ],
+          [
+            259877,
+            259905
+          ]
+        ]
+      },
+      "observation_pose_row_ids": [
+        259892,
+        259911
+      ],
+      "stop_reason": "UNKNOWN",
+      "input_eligible": true,
+      "usable_partial": true,
+      "usable_full": true,
+      "invalid_raw_heading_history_row_ids": [],
+      "phase_and_xy_full": true
+    }
+  ]
+}
