@@ -49,7 +49,7 @@ def check_collection_input_time(role: str, *, capture_ns: int, receipt_ns: int,
     Trajectory publication is 1 Hz and the official PP uses a 1.5 s limit.
     """
     limits = {'camera': (500_000_000, 500_000_000), 'trajectory': (1_500_000_000, 2_000_000_000),
-              **{r: (150_000_000, 300_000_000) for r in ('pose', 'velocity', 'steering', 'scan', 'nominal')}}
+              **{r: (150_000_000, 300_000_000) for r in ('pose', 'velocity', 'steering', 'imu', 'scan', 'nominal')}}
     if role not in limits or any(type(t) is not int or t < 0 for t in (capture_ns, receipt_ns, now_sim_ns, now_wall_ns)):
         raise ValueError('INPUT_TIME_CONTRACT')
     capture_limit, receipt_limit = limits[role]
@@ -79,7 +79,7 @@ def select_collection_input(role: str, capture_receipts_ns: Sequence[tuple[int, 
 
 
 def select_collection_motion(histories: Mapping[str, Sequence[tuple[int, int]]], *,
-                             now_sim_ns: int, now_wall_ns: int) -> dict[str, int] | None:
+                             now_sim_ns: int, now_wall_ns: int, include_imu: bool = False) -> dict[str, int] | None:
     """Newest coherent measured motion triple, with unchanged 50 ms skew limits.
 
     Prefer the newest admissible velocity, then the newest pose and steering
@@ -87,8 +87,9 @@ def select_collection_motion(histories: Mapping[str, Sequence[tuple[int, int]]],
     and receipt deadline. Return indices into the original bounded histories;
     never interpolate, extrapolate, or alter a measurement's stamp.
     """
+    peers = ('pose', 'steering', 'imu') if include_imu else ('pose', 'steering')
     usable: dict[str, list[tuple[int, int, int]]] = {}
-    for role in ('pose', 'velocity', 'steering'):
+    for role in ('velocity', *peers):
         usable[role] = []
         for i, (capture, receipt) in enumerate(histories.get(role, ())):
             if select_collection_input(role, [(capture, receipt)],
@@ -96,14 +97,39 @@ def select_collection_motion(histories: Mapping[str, Sequence[tuple[int, int]]],
                 usable[role].append((capture, receipt, i))
     for velocity_stamp, _, velocity_index in sorted(usable['velocity'], reverse=True):
         selected = {'velocity': velocity_index}
-        for role in ('pose', 'steering'):
+        for role in peers:
             aligned = [item for item in usable[role] if abs(item[0]-velocity_stamp) <= 50_000_000]
             if not aligned:
                 break
             selected[role] = max(aligned)[2]
-        if len(selected) == 3:
+        if len(selected) == len(peers)+1:
             return selected
     return None
+
+
+def validate_collection_imu_axes(transforms: Mapping[str, tuple[str, Sequence[float]]]) -> None:
+    """Verify imu_link -> sensor_kit_base_link -> base_link preserves +Z.
+
+    Angular Z is invariant under these measured static yaw-only rotations;
+    sensor translations do not alter angular velocity. Never assume a pitched
+    or rolled IMU's raw Z is body yaw rate.
+    """
+    for child, parent in (('imu_link', 'sensor_kit_base_link'), ('sensor_kit_base_link', 'base_link')):
+        if child not in transforms:
+            raise ValueError('IMU_AXES_MISSING')
+        actual_parent, rotation = transforms[child]
+        q = np.asarray(rotation, dtype=float)
+        if (actual_parent != parent or q.shape != (4,) or not np.isfinite(q).all()
+                or abs(float(q@q)-1.) > 1e-6 or q[0]**2+q[1]**2 > 1e-8):
+            raise ValueError('IMU_AXES_NOT_VERTICAL')
+
+
+def collection_imu_yaw_rate(angular_radps: Sequence[float], frame: str) -> float:
+    """Measured IMU rad/s; callers must validate axes, time and source first."""
+    value = np.asarray(angular_radps, dtype=float)
+    if frame != 'imu_link' or value.shape != (3,) or not np.isfinite(value).all():
+        raise ValueError('IMU_RATE_CONTRACT')
+    return float(value[2])
 
 
 def load_pose_course(path: Path) -> tuple[MpcReferencePointV3, ...]:

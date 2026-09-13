@@ -44,7 +44,7 @@ def main() -> None:
                   started_unix_s=time.time(), scope='MEASURED_RECOVERY_AWSIM', fixed_target_mps=5/3.6,
                   source_sha=(ROOT/'deployed_commit.txt').read_text().strip(),
                   sim_limit_s=1800, wall_limit_s=1860, outer_limit_s=1980,
-                  run_byte_limit=3*1024**3, required_free_bytes=10*1024**3)
+                  run_byte_limit=3*1024**3, task_bag_byte_limit=10*1024**3, required_free_bytes=10*1024**3)
     started = time.monotonic(); judge = JudgeLog(args.run_id); read_offset=0; pending=b''
     lap_seen_ns = None; fault_wall = None; last_size_check = 0.; rviz_window = None; control = {}
 
@@ -71,6 +71,9 @@ def main() -> None:
             raise RuntimeError('ACTIVE_CONTAINER_PRESENT')
         if shutil.disk_usage(ROOT).free < 10*1024**3:
             raise RuntimeError('INSUFFICIENT_DISK')
+        result['prior_task_bag_bytes'] = sum(p.stat().st_size for p in ROOT.glob('codex-time-recovery-*/bag/*') if p.is_file())
+        if result['prior_task_bag_bytes']+result['run_byte_limit'] > result['task_bag_byte_limit']:
+            raise RuntimeError('TASK_BAG_BUDGET_EXHAUSTED')
         if any(Path(p).exists() for p in ('/dev/vcu','/dev/gnss','/dev/ttyUSB0')):
             raise RuntimeError('PHYSICAL_DEVICE_PRESENT')
         result['gpu'] = run(['nvidia-smi','--query-gpu=name,driver_version','--format=csv,noheader']).stdout
@@ -166,7 +169,8 @@ def main() -> None:
                 last_size_check = time.monotonic()
                 size = sum(p.stat().st_size for p in (output/'bag').glob('*') if p.is_file())
                 result['bag_bytes'] = size
-                if size >= 3*1024**3 or shutil.disk_usage(ROOT).free < 10*1024**3:
+                if (size >= 3*1024**3 or result['prior_task_bag_bytes']+size >= result['task_bag_byte_limit']
+                        or shutil.disk_usage(ROOT).free < 10*1024**3):
                     request_stop('DISK_BOUND')
                 p = output/'progress.pending'
                 p.write_text(json.dumps(dict(result, judge_sections=judge.section_events, judge_laps=judge.laps),allow_nan=False))

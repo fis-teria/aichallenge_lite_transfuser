@@ -22,6 +22,7 @@ from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     TARGET_MPS, bounded_collection_command, check_collection_input_time, phase_at_s, project_course,
     select_collection_input, select_collection_motion, validate_nominal,
     check_collection_decision_age, collection_snapshot_retry_allowed,
+    validate_collection_imu_axes, collection_imu_yaw_rate,
 )
 
 
@@ -38,11 +39,12 @@ def main() -> None:
     import rclpy
     from rclpy.node import Node
     from rclpy.executors import SingleThreadedExecutor
-    from rclpy.qos import qos_profile_sensor_data, QoSProfile, ReliabilityPolicy
+    from rclpy.qos import qos_profile_sensor_data, QoSProfile, ReliabilityPolicy, DurabilityPolicy
     from rosgraph_msgs.msg import Clock
     from nav_msgs.msg import Odometry, Path as RosPath
     from geometry_msgs.msg import PoseStamped
-    from sensor_msgs.msg import Image, LaserScan
+    from sensor_msgs.msg import Image, LaserScan, Imu
+    from tf2_msgs.msg import TFMessage
     from std_msgs.msg import String, Float32MultiArray
     from autoware_auto_vehicle_msgs.msg import VelocityReport, SteeringReport
     from autoware_auto_control_msgs.msg import AckermannControlCommand
@@ -54,6 +56,7 @@ def main() -> None:
     sensor_lock = threading.Lock()
     cache = {}; poses = deque(maxlen=256); scans = deque(maxlen=4); histories = {}
     sensor_clock = [None, 0]; sensor_fault = [None]; sensor_generation = [0]
+    imu_transforms = {}
     previous = [0., time.monotonic()]
     state = dict(run_id=args.run_id, fault=None, armed_ns=None, armed_wall=None,
                  stop_reason=None, stop_since_ns=None, stop_confirmed=False,
@@ -90,6 +93,7 @@ def main() -> None:
         'pose': ('/localization/kinematic_state', Odometry, '/localization/ekf_localizer'),
         'velocity': ('/vehicle/status/velocity_status', VelocityReport, '/awsim_d1'),
         'steering': ('/vehicle/status/steering_status', SteeringReport, '/awsim_d1'),
+        'imu': ('/sensing/imu/imu_raw', Imu, '/awsim_d1'),
         'camera': ('/sensing/camera/image_raw', Image, '/awsim_d1'),
         'scan': ('/sensing/lidar/scan', LaserScan, '/awsim_d1'),
         'nominal': ('/recovery_teacher/nominal_control_cmd', AckermannControlCommand, '/recovery_teacher_pure_pursuit'),
@@ -118,6 +122,19 @@ def main() -> None:
                                           p.position.x, p.position.y, yaw))
 
     sensor_counts = {'nominal': 0, 'trajectory': 0}
+    def receive_static(m) -> None:
+        with sensor_lock:
+            for transform in m.transforms:
+                if transform.child_frame_id in ('imu_link', 'sensor_kit_base_link'):
+                    q = transform.transform.rotation
+                    imu_transforms[transform.child_frame_id] = (transform.header.frame_id, (q.x,q.y,q.z,q.w))
+            if len(imu_transforms) == 2:
+                try:
+                    validate_collection_imu_axes(imu_transforms)
+                except ValueError as exc:
+                    sensor_fault[0] = str(exc)
+    receiver.create_subscription(TFMessage, '/tf_static', receive_static,
+        QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE, durability=DurabilityPolicy.TRANSIENT_LOCAL))
     for role, (topic, kind, _) in topics.items():
         # Latest motion reports must not replay a DDS backlog against /clock.
         # Pose retains the sensor-data queue: the scan's original capture time
@@ -131,18 +148,19 @@ def main() -> None:
         # The receiver never waits for scan geometry, ROS graph queries or disk IO.
         with sensor_lock:
             return (*sensor_clock, sensor_fault[0], sensor_generation[0], dict(cache),
-                    {r:tuple(h) for r,h in histories.items()}, tuple(poses), tuple(scans), dict(sensor_counts))
+                    {r:tuple(h) for r,h in histories.items()}, tuple(poses), tuple(scans), dict(sensor_counts), dict(imu_transforms))
 
     def tick(attempt: int = 0, started_ns: int | None = None, retry_reasons: tuple[str, ...] = ()) -> None:
         nonlocal publisher, last_path_wall, last_pose_stamp
         if started_ns is None:
             started_ns = time.monotonic_ns()
-        clock_ns, clock_receipt, fault, generation, cache, histories, poses, scans, counts = snapshot()
+        clock_ns, clock_receipt, fault, generation, cache, histories, poses, scans, counts, imu_axes = snapshot()
         if fault:
             state['fault'] = fault
         state['nominal_count'] = counts['nominal']; state['trajectory_count'] = counts['trajectory']
         now = time.monotonic_ns(); wall = time.monotonic(); dt = min(.1, max(0., wall-previous[1]))
         speed = None; fresh_velocity = False; details = {}; reason = 'STARTUP'; projection = None; current = None
+        guard_yaw_rate = None
         inputs = dict(cache); motion_selected = None; input_times = {}
         if clock_ns is not None:
             for role, history in histories.items():
@@ -152,7 +170,7 @@ def main() -> None:
                     now_sim_ns=clock_ns, now_wall_ns=now)
                 if selected is not None:
                     inputs[role] = history[selected]
-            motion_selected = select_collection_motion(input_times, now_sim_ns=clock_ns, now_wall_ns=now)
+            motion_selected = select_collection_motion(input_times, now_sim_ns=clock_ns, now_wall_ns=now, include_imu=True)
             if motion_selected is not None:
                 for role, selected in motion_selected.items():
                     inputs[role] = histories[role][selected]
@@ -194,7 +212,7 @@ def main() -> None:
                 raise ValueError('AWSIM_COMMAND_SUBSCRIBER_MISSING')
             if clock_ns is None or now-clock_receipt > 500_000_000:
                 raise ValueError('CLOCK_STALE')
-            for role in ('pose', 'velocity', 'steering', 'scan', 'camera', 'nominal', 'trajectory'):
+            for role in ('pose', 'velocity', 'steering', 'imu', 'scan', 'camera', 'nominal', 'trajectory'):
                 m, receipt = inputs[role]
                 if names(topics[role][0]) != [topics[role][2]]:
                     raise ValueError('SOURCE_'+role)
@@ -205,10 +223,19 @@ def main() -> None:
             pose_stamp = stamp(inputs['pose'][0].header.stamp)
             current = next(p for p in reversed(poses) if p.stamp_ns == pose_stamp)
             velocity = inputs['velocity'][0]; steering = inputs['steering'][0]; nominal, received = inputs['nominal']
+            imu = inputs['imu'][0]
             if (motion_selected is None or velocity.header.frame_id != 'base_link'
                     or abs(current.stamp_ns-stamp(velocity.header.stamp)) > 50_000_000
-                    or abs(stamp(steering.stamp)-stamp(velocity.header.stamp)) > 50_000_000):
+                    or abs(stamp(steering.stamp)-stamp(velocity.header.stamp)) > 50_000_000
+                    or abs(stamp(imu.header.stamp)-stamp(velocity.header.stamp)) > 50_000_000):
                 raise ValueError('STATE_FRAME_OR_CAPTURE_SKEW')
+            validate_collection_imu_axes(imu_axes)
+            if not (args.output/'imu_axes.json').exists():
+                (args.output/'imu_axes.json').write_text(json.dumps(dict(transforms=imu_axes,
+                    tf_publishers=names('/tf_static'), heading_rate_source=topics['imu'][0],
+                    angular_unit='rad/s', source='MEASURED_IMU_Z_WITH_VALIDATED_BODY_Z_AXES'),indent=2))
+            w = imu.angular_velocity
+            guard_yaw_rate = collection_imu_yaw_rate([w.x,w.y,w.z], imu.header.frame_id)
             validate_nominal(stamp_ns=stamp(nominal.stamp), now_ns=clock_ns, received_ns=received,
                 now_wall_ns=now, target_mps=float(nominal.longitudinal.speed),
                 acceleration_mps2=float(nominal.longitudinal.acceleration),
@@ -236,7 +263,7 @@ def main() -> None:
                 speed_mps=speed, measured_steer_rad=float(steering.steering_tire_angle),
                 issued_steer_rad=.6*angle, previous_steer_rad=.6*previous[0], scan_in_current_rear=alignment,
                 envelope_policy='curvature_support_v2', vehicle_model_policy='awsim_understeer_v1',
-                heading_rate_radps=float(velocity.heading_rate), reported_lateral_mps=float(velocity.lateral_velocity))
+                heading_rate_radps=guard_yaw_rate, reported_lateral_mps=float(velocity.lateral_velocity))
             state['ready_ticks'] += 1
             if state['armed_ns'] is None:
                 reason = 'READY'; angle = previous[0]
@@ -312,8 +339,12 @@ def main() -> None:
             receipt_monotonic_ns=receipt, receipt_age_ns=now-receipt) for role,(m,receipt) in inputs.items()}
         row['latest_received_capture_ns'] = {role:stamp(m.stamp if role in ('nominal','steering') else m.header.stamp)
                                             for role,(m,receipt) in cache.items()}
+        row['guard_heading_rate_radps'] = guard_yaw_rate
+        row['raw_velocity_heading_rate_radps'] = (float(inputs['velocity'][0].heading_rate)
+            if 'velocity' in inputs and math.isfinite(inputs['velocity'][0].heading_rate) else None)
+        row['guard_heading_rate_source'] = topics['imu'][0]
         if reason == 'STATE_FRAME_OR_CAPTURE_SKEW':
-            row['motion_history_ns'] = {role:input_times.get(role, []) for role in ('pose','velocity','steering')}
+            row['motion_history_ns'] = {role:input_times.get(role, []) for role in ('pose','velocity','steering','imu')}
         if reason == 'FRESH_ALIGNED_SCAN_MISSING':
             row['pose_history_ns'] = [p.stamp_ns for p in poses]
             row['scan_history_ns'] = [(stamp(m.header.stamp), t) for m,t in scans]

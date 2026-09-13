@@ -7,6 +7,7 @@ from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     bounded_collection_command, reference_rows_with_wrap, check_collection_input_time, select_collection_input,
     select_collection_motion,
     check_collection_decision_age, collection_snapshot_retry_allowed,
+    validate_collection_imu_axes, collection_imu_yaw_rate,
 )
 
 
@@ -195,3 +196,31 @@ def test_expired_snapshot_retry_is_bounded_and_does_not_retry_physical_or_reset_
         check_collection_decision_age(started_ns=100, now_ns=100_000_101)
     with pytest.raises(ValueError, match='COMPUTATION_TIMEOUT'):
         check_collection_decision_age(started_ns=100, now_ns=99)
+
+
+def test_imu_must_be_fresh_and_aligned_with_selected_measured_velocity():
+    clocks = dict(now_sim_ns=1_000_000_000, now_wall_ns=2_000_000_000, include_imu=True)
+    history = {r:[(990_000_000,1_990_000_000)] for r in ('pose','velocity','steering')}
+    assert select_collection_motion(history, **clocks) is None
+    history['imu'] = [(939_999_999,1_950_000_000)]
+    assert select_collection_motion(history, **clocks) is None
+    history['imu'].append((950_000_000,1_950_000_000))
+    assert select_collection_motion(history, **clocks) == {'pose':0,'velocity':0,'steering':0,'imu':1}
+    history['imu'] = [(990_000_000,1_699_999_999)]
+    assert select_collection_motion(history, **clocks) is None
+
+
+def test_imu_yaw_source_requires_verified_vertical_axes_and_finite_radps():
+    transforms = {'imu_link': ('sensor_kit_base_link',(0.,0.,-2**-.5,2**-.5)),
+                  'sensor_kit_base_link': ('base_link',(0.,0.,0.,1.))}
+    validate_collection_imu_axes(transforms)
+    assert collection_imu_yaw_rate([-.00002,-.01362,.1361621916294098], 'imu_link') == .1361621916294098
+    with pytest.raises(ValueError, match='AXES_MISSING'):
+        validate_collection_imu_axes({})
+    for bad in [('wrong_parent',(0.,0.,0.,1.)), ('sensor_kit_base_link',(2**-.5,0.,0.,2**-.5)),
+                ('sensor_kit_base_link',(0.,0.,0.,2.))]:
+        with pytest.raises(ValueError, match='AXES_NOT_VERTICAL'):
+            validate_collection_imu_axes(dict(transforms,imu_link=bad))
+    for angular,frame in [([0.,0.,float('nan')],'imu_link'),([0.,0.,.1],'other'),([0.,.1],'imu_link')]:
+        with pytest.raises(ValueError, match='RATE_CONTRACT'):
+            collection_imu_yaw_rate(angular,frame)

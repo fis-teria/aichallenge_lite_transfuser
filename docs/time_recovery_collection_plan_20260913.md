@@ -287,3 +287,26 @@ left020-r11は発進約5.89秒でSTALE_scan、停止確認・bag close成立。
 初回80ms以内のみ再計算を許し、snapshot取得からpublishまで100msを超えたgo指令は拒否する。
 同じscanを再利用して期限を変える処理ではない。再計算でも不適格なら制動・fault latch。
 障害物、速度、source、clock reset、車体/scan alignmentの異常は再計算対象にしない。
+
+d741ea7のWSL full pytestは2,216 passed / 4 skipped / 63 warnings（78.90s）。
+left020-r12は約262秒、s=238.57mのapproachまで走行してMOTION_YAW_RATE_INVALID、正常停止・bag close成立。
+時刻関連の停止は解消していた。WSLで全52files相当のmanifest、SQLite、元sensor時刻を検査した。
+（正確なfiles件数は対応audit.jsonを参照。）指定hold/recoveryには未到達として保全する。
+
+故障時のVelocityReport.heading_rateは−1256.5009765625rad/sの1件、前後は約0.135/0.138rad/s。
+IMUは同時刻付近0.136162rad/s、poseも連続。現物と同SHAのDLLにあるEuler差分の折返し不具合と整合する。
+根拠は既存 `v4_run21_yaw_rate_source_audit.md` と今回の `r12_motion_fault_observed.json`。
+このrunには同種の巨大raw headingが2件ある。単純なクランプや受信35msでの2π補正は行わない。
+
+collection監視のyaw rateを、元stamp付きのIMU angular_velocity.zへ変更する。
+`imu_link -> sensor_kit_base_link -> base_link` のstatic TFはyaw回転のみで+Zが一致することを実記録で確認。
+実行中もこの鎖・quaternion・+Z軸を検査し、IMU freshness150/300ms、velocityとのskew50ms、発行元を必須にする。
+正常8,359組のraw headingと近傍IMU差は中央値0.000210、p99 0.003496、最大0.009617rad/s。
+IMUはquaternion差分で角速度を生成しており、VelocityReportのEuler差分とは別経路である。
+車体/scan監視の数式・閾値、AWSIM DLL/scene/physics、PP設定、モデル入力の本実装は変更しない。
+元VelocityReport、IMU、採用源をすべて保存する。raw headingが物理範囲外の履歴を含むanchorは、
+因果再現probeで除外する。本学習へのmaterialize時も同じ除外が必要であり、未対応の既存converterへ直接投入しない。
+
+失敗診断が増えたため、当初の成功pilot2本の6GiB予算とは別に、今回task全bagの累積上限を10GiBとして明示・強制する。
+各runは3GiBまで、開始前にその全量を累積予算へ予約可能なことを確認し、実行中も空き10GiBを維持する。
+既存datasetと今回の原bagは削除せず、最初の左右各1周が成立した時点で今回のpilot収集を終了する。
