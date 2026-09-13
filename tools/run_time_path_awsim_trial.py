@@ -1,0 +1,211 @@
+"""Owned single-vehicle make-dev trial, finite model-only drive then measured stop.
+
+Run under: timeout --signal=TERM --kill-after=10s 110s python3 <this file> ...
+Normal Autoware RViz is reused. No remote Git operation, global cleanup or
+simulator/driver modification. The prepared install and checkpoint are explicit.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import shlex
+import signal
+import subprocess
+import time
+
+from integrate_normal_rviz_v4 import integrate
+
+
+def sha(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024*1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--deployment", type=Path, required=True)
+    ap.add_argument("--run-id", required=True)
+    args = ap.parse_args()
+    if not re.fullmatch(r"codex-time-[a-z0-9-]+", args.run_id):
+        raise ValueError("INVALID_OWNED_RUN_ID")
+    deployment = args.deployment.resolve()
+    if deployment.parent != Path("/home/graneple/e2e_autonomous"):
+        raise ValueError("UNEXPECTED_DEPLOYMENT_ROOT")
+    repo = Path("/home/graneple/git/autononous_ai/aichallenge-racingkart")
+    source = Path(__file__).resolve().parents[1]
+    config = json.loads((source / "configs/control/time_path_awsim_trial_20260913.json").read_text())
+    output = deployment / args.run_id; output.mkdir(exist_ok=False)
+    env = dict(os.environ)
+    result = {"status": "FAILED", "run_id": args.run_id, "start_time_utc": time.time(),
+              "scope": "10_SIM_SECOND_LOW_SPEED_MODEL_TRIAL", "official_start_requested": False}
+    streams = []; processes = []; compose = None; owned = False
+    started = time.monotonic()
+
+    def run(command, timeout=8, check=True):
+        return subprocess.run(command, cwd=repo, env=env, text=True, capture_output=True, timeout=timeout, check=check)
+
+    def launch(command, name):
+        stream = (output / (name + ".log")).open("x"); streams.append(stream)
+        process = subprocess.Popen(command, cwd=repo, env=env, stdout=stream, stderr=subprocess.STDOUT, start_new_session=True)
+        processes.append(process); return process
+
+    def interrupted(signum, frame):
+        raise RuntimeError("OUTER_SUPERVISOR_TERMINATED")
+    signal.signal(signal.SIGTERM, interrupted)
+    try:
+        inventory = run(["docker", "ps", "-a", "--format", "{{json .}}"])
+        (output / "containers_before.jsonl").write_text(inventory.stdout)
+        (output / "compose_before.json").write_text(run(["docker", "compose", "ls", "--all", "--format", "json"]).stdout)
+        if run(["docker", "ps", "-q"]).stdout.strip():
+            raise RuntimeError("ACTIVE_CONTAINER_PRESENT")
+        if any(Path(p).exists() for p in ("/dev/vcu", "/dev/gnss", "/dev/ttyUSB0")):
+            raise RuntimeError("PHYSICAL_DEVICE_PRESENT")
+        gpu = run(["nvidia-smi", "--query-gpu=name,driver_version", "--format=csv,noheader"], check=False)
+        result["gpu"] = {"returncode": gpu.returncode, "stdout": gpu.stdout, "stderr": gpu.stderr}
+        if gpu.returncode:
+            raise RuntimeError("GPU_PREFLIGHT_FAILED")
+        scene = repo / "aichallenge/simulator/AWSIM/AWSIM_Data/level1"
+        if sha(scene) != config["geometry"]["scene_sha256"]:
+            raise RuntimeError("SCENE_GEOMETRY_IDENTITY_CHANGED")
+        checkpoint = deployment / "command_off_best.pt"
+        if sha(checkpoint) != config["checkpoint_sha256"]:
+            raise RuntimeError("CHECKPOINT_IDENTITY_CHANGED")
+        if not (deployment / "install/setup.bash").is_file():
+            raise RuntimeError("ROS_INSTALL_MISSING")
+        auth = list(Path("/run/user/1000").glob(".mutter-Xwaylandauth.*"))
+        if len(auth) != 1:
+            raise RuntimeError("DISPLAY_AUTH_UNKNOWN")
+        # Task-local transport keeps the established loopback transport; the
+        # isolated image cannot require a host-global 10 MB sysctl minimum.
+        dds = (repo / "vehicle/cyclonedds.xml").read_text()
+        if 'name="lo"' not in dds or '<SocketReceiveBufferSize min="10MB"/>' not in dds:
+            raise RuntimeError("UNRECOGNIZED_DDS_PROFILE")
+        runtime_dds = output / "cyclonedds.xml"
+        dds = dds.replace('<SocketReceiveBufferSize min="10MB"/>', '<SocketReceiveBufferSize min="128kB"/>')
+        dds = dds.replace('<AllowMulticast>default</AllowMulticast>', '<AllowMulticast>false</AllowMulticast>')
+        discovery = ('<Discovery><ParticipantIndex>auto</ParticipantIndex><MaxAutoParticipantIndex>120</MaxAutoParticipantIndex>'
+                     '<Peers><Peer Address="127.0.0.1"/></Peers></Discovery>')
+        runtime_dds.write_text(dds.replace('</Domain>', discovery+'</Domain>'))
+        override = output / "compose.json"
+        override.write_text(json.dumps({"services": {service: {"volumes": [
+            str(runtime_dds) + ":/opt/autoware/cyclonedds.xml:ro"]} for service in ("simulator", "autoware")}}, indent=2))
+        env.update(DISPLAY=":0", XAUTHORITY=str(auth[0]), COMPOSE_PROJECT_NAME=args.run_id,
+            COMPOSE_FILE=":".join(map(str, (repo/"docker-compose.yml", repo/"docker-compose.gpu.yml", override))),
+            CONTROL_METHOD="v4_20_external", V4_SHADOW_ENABLED="false")
+        compose = ["docker", "compose", "-p", args.run_id]
+        rviz = repo / "aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz"
+        rviz_bytes = rviz.read_bytes()
+        (output / "autoware.rviz.before").write_bytes(rviz_bytes)
+        text = rviz_bytes.decode("utf-8")
+        if "/visualization/time_path/raw_path" not in text:
+            newline = "\r\n" if "\r\n" in text else "\n"
+            rviz.write_bytes(integrate(text.replace("\r\n", "\n"), time_path=True).replace("\n", newline).encode("utf-8"))
+        result["rviz_config"] = str(rviz); result["rviz_sha256"] = sha(rviz)
+        sidecar = args.run_id + "-nodes"
+        inside = Path("/time") / output.name
+        source_in_container = Path("/time") / source.relative_to(deployment)
+        node_command = ["python3", str(source_in_container / "tools/run_time_path_trial_nodes.py"),
+                        "--output", str(inside), "--run-id", args.run_id, "--checkpoint", "/time/command_off_best.pt",
+                        "--config", str(source_in_container / "configs/control/time_path_awsim_trial_20260913.json")]
+        shell = "source /aichallenge/workspace/install/setup.bash && source /time/install/setup.bash && exec " + shlex.join(node_command)
+        probe_command = ["docker", "run", "--rm", "--name", sidecar, "--gpus", "all", "--network", "host",
+            "-e", "ROS_DOMAIN_ID=1", "-e", "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+            "-v", str(runtime_dds)+":/opt/autoware/cyclonedds.xml:ro", "-v", str(deployment)+":/time",
+            "-v", str(repo/"aichallenge")+":/aichallenge:ro", "--entrypoint", "bash",
+            "codex-cartographer-v4-build:20260910", "-lc", shell]
+        make_args = ["CONTROL_METHOD=v4_20_external", "CAPTURE=false", "ROSBAG=false", "AWSIM_LAPS=1",
+                     "RUN_ID="+args.run_id, "OUTPUT_HOST_ROOT="+str(output)]
+        result["commands"] = [probe_command, ["make", "dev", "DEV_AUTO_START=false", *make_args]]
+        owned = True
+        probe = launch(probe_command, "nodes")
+        make = launch(result["commands"][1], "make")
+        while time.monotonic() - started < 95:
+            if probe.poll() is not None:
+                raise RuntimeError("TRIAL_NODES_EXIT")
+            if make.poll() is not None and make.returncode:
+                raise RuntimeError("MAKE_DEV_FAILED")
+            ip = output/"inference_heartbeat.json"; cp = output/"control_heartbeat.json"
+            if cp.exists():
+                control = json.loads(cp.read_text()); result["last_control"] = control
+                if control["fault"]:
+                    raise RuntimeError("CONTROL_"+control["fault"])
+                if time.monotonic_ns() - control["monotonic_ns"] > 1_000_000_000:
+                    raise RuntimeError("CONTROLLER_WATCHDOG")
+                if control["stop_confirmed"]:
+                    result["status"] = "COMPLETE_BOUNDED_TRIAL"; break
+            if ip.exists() and cp.exists() and make.poll() == 0 and not result["official_start_requested"]:
+                inference = json.loads(ip.read_text()); result["last_inference"] = inference
+                if inference["plans"] >= 5 and control["reason"] == "WAIT_AUTHORIZATION" and control["commands"] >= 5:
+                    inspections = []
+                    for service in ("simulator", "autoware"):
+                        cid = run(compose+["ps", "-q", service]).stdout.strip()
+                        info = json.loads(run(["docker", "inspect", cid]).stdout)[0]
+                        if info["Config"]["Labels"].get("com.docker.compose.project") != args.run_id:
+                            raise RuntimeError("COMPOSE_OWNER_MISMATCH")
+                        if any(m["Destination"] in ("/dev/vcu", "/dev/gnss") for m in info["Mounts"]):
+                            raise RuntimeError("PHYSICAL_DEVICE_MOUNT")
+                        inspections.append(info)
+                    (output/"inspect.json").write_text(json.dumps(inspections, indent=2))
+                    start_cmd = ["make", "awsim-request-start", *make_args]
+                    result["commands"].append(start_cmd)
+                    official = launch(start_cmd, "official_start")
+                    if official.wait(timeout=20):
+                        raise RuntimeError("OFFICIAL_START_FAILED")
+                    result["official_start_requested"] = True
+                    (output/"drive_authorized.json").write_text(json.dumps({"scope": "TIME_PATH_AWSIM_TRIAL",
+                        "run_id": args.run_id, "expires_monotonic_s": time.monotonic()+20,
+                        "source": "USER_REQUEST_20260913"}))
+            if time.monotonic()-started > 45 and not cp.exists():
+                raise RuntimeError("CONTROLLER_STARTUP_TIMEOUT")
+            time.sleep(.1)
+        else:
+            raise RuntimeError("TRIAL_WALL_LIMIT")
+    except Exception as exc:
+        result["error"] = f"{type(exc).__name__}: {exc}"
+    finally:
+        cleanup = []
+        if owned and compose is not None:
+            # Freeze owned simulation before stopping its only controller.
+            for service in ("simulator", "autoware"):
+                try:
+                    cid = run(compose+["ps", "-q", service], timeout=3).stdout.strip()
+                    if cid:
+                        if service == "simulator":
+                            run(["docker", "pause", cid], timeout=3, check=False)
+                            run(["docker", "kill", cid], timeout=3)
+                        else:
+                            run(["docker", "stop", "-t", "2", cid], timeout=5)
+                except Exception as exc:
+                    cleanup.append(str(exc))
+            run(["docker", "stop", "-t", "2", args.run_id+"-nodes"], timeout=5, check=False)
+            for process in processes:
+                if process.poll() is None:
+                    os.killpg(process.pid, signal.SIGTERM)
+                    try:
+                        process.wait(timeout=2)
+                    except subprocess.TimeoutExpired:
+                        os.killpg(process.pid, signal.SIGKILL); process.wait(timeout=2)
+            try:
+                run(compose+["down", "--timeout", "2"], timeout=8)
+            except Exception as exc:
+                cleanup.append(str(exc))
+        for stream in streams:
+            stream.close()
+        result.update(cleanup_errors=cleanup, end_time_utc=time.time(), wall_s=time.monotonic()-started)
+        (output/"host_result.json").write_text(json.dumps(result, indent=2, allow_nan=False))
+        (output/"containers_after.jsonl").write_text(run(["docker", "ps", "-a", "--format", "{{json .}}"], check=False).stdout)
+        (output/"compose_after.json").write_text(run(["docker", "compose", "ls", "--all", "--format", "json"], check=False).stdout)
+        print(json.dumps(result, allow_nan=False))
+    if result["status"] != "COMPLETE_BOUNDED_TRIAL":
+        raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main()
