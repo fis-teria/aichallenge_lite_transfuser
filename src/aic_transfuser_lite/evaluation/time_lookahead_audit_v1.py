@@ -24,9 +24,13 @@ def unit_roots(coefficients: tuple[float, float, float]) -> list[float]:
         discriminant = b*b-4*a*c
         if discriminant < -1e-14*scale*scale:
             return []
-        square = math.sqrt(max(0., discriminant))
-        q = -.5*(b+math.copysign(square, b))
-        roots = [-b/(2*a)] if q == 0. else [q/a, c/q]
+        if abs(discriminant) <= 1e-14*scale*scale:
+            # A cancelled tangency must not become a fictitious finite interval.
+            roots = [-b/(2*a)]
+        else:
+            square = math.sqrt(discriminant)
+            q = -.5*(b+math.copysign(square, b))
+            roots = [q/a, c/q]
     return sorted({max(0., min(1., u)) for u in roots if -1e-12 <= u <= 1.+1e-12})
 
 
