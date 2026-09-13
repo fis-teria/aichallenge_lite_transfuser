@@ -14,7 +14,7 @@ from aic_transfuser_lite.data.recovery_reference_v3 import (
     RecoveryReferenceConfigV3, RecoverySegmentRequestV3, generate_recovery_reference_v3,
     load_occupancy_map_v3,
 )
-from aic_transfuser_lite.data.time_recovery_collection_v1 import load_pose_course
+from aic_transfuser_lite.data.time_recovery_collection_v1 import load_pose_course, reference_rows_with_wrap
 
 
 def main() -> None:
@@ -37,7 +37,7 @@ def main() -> None:
         with ref.open('x', newline='') as stream:
             writer = csv.writer(stream)
             writer.writerow(['s_m', 'x_m', 'y_m', 'psi_rad', 'kappa_radpm', 'vx_mps', 'ax_mps2'])
-            writer.writerows(asdict(p).values() for p in generated.points)
+            writer.writerows(reference_rows_with_wrap(generated.points))
         # Spatial phase boundaries use the ORIGINAL course progress, continuously.
         # V3 point-index-rounded intervals and its hold=True are intentionally not
         # imported as time-teacher eligibility.
@@ -52,6 +52,7 @@ def main() -> None:
                 'selected_segments': list(generated.selected_segments),
                 'reference_sha256': hashlib.sha256(ref.read_bytes()).hexdigest(),
                 'full_body_free_space_verified': False}
+        info['controller_wrap_tail_minimum_m'] = 12.
         (args.output / (side+'.json')).write_text(json.dumps(info, indent=2))
         manifest['references'][side] = {k: info[k] for k in ('signed_offset_m', 'intervals', 'reference_sha256')}
     (args.output/'manifest.json').write_text(json.dumps(manifest, indent=2))

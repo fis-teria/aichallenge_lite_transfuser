@@ -4,7 +4,7 @@ import csv
 
 from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     PhaseWindow, TARGET_MPS, phase_at_s, project_course, recovery_teacher_mask, validate_nominal, load_pose_course,
-    bounded_collection_command,
+    bounded_collection_command, reference_rows_with_wrap,
 )
 
 
@@ -81,6 +81,13 @@ def test_pose_course_keeps_positions_and_replaces_speed(tmp_path):
     assert points[0].x_m == 10.
     assert all(p.vx_mps == TARGET_MPS and p.ax_mps2 == 0. for p in points)
     assert all(b.s_m > a.s_m for a,b in zip(points,points[1:]))
+    wrapped = np.asarray(reference_rows_with_wrap(points))
+    assert wrapped.ndim == 2 and wrapped.shape[1] == 7
+    np.testing.assert_allclose(wrapped[20,1:3], wrapped[0,1:3])
+    assert (np.diff(wrapped[:,0]) > 0).all()
+    assert wrapped[-1,0]-wrapped[20,0] >= 12.
+    assert np.allclose(np.linalg.norm(np.diff(wrapped[:,1:3],axis=0),axis=1), 20*np.sin(np.pi/20))
+    assert np.all(wrapped[:,5] == TARGET_MPS)
     write(qw=.5)
     with pytest.raises(ValueError, match='QUATERNION'):
         load_pose_course(path)

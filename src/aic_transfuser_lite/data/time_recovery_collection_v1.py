@@ -41,6 +41,32 @@ def load_pose_course(path: Path) -> tuple[MpcReferencePointV3, ...]:
                  float(yaw[i]), float(kappa[i]), TARGET_MPS, 0.) for i, r in enumerate(rows))
 
 
+def reference_rows_with_wrap(points: Sequence[MpcReferencePointV3], tail_m: float = 12.) -> list[list[float]]:
+    """Open controller CSV with a continuous closing segment and >=12 m prefix.
+
+    The official PP searches only forward to the end of the supplied array.
+    Internal projection uses a periodic course without a duplicate endpoint;
+    exporting that internal representation directly loses its closing segment.
+    The copied prefix also preserves the PP's up-to-10 m curvature window at
+    the lap boundary. It changes no physical reference coordinates or speeds.
+    """
+    if len(points) < 20 or not math.isfinite(tail_m) or tail_m <= 0:
+        raise ValueError('REFERENCE_WRAP_CONTRACT')
+    xy = np.asarray([[p.x_m, p.y_m] for p in points])
+    edges = np.linalg.norm(np.roll(xy, -1, axis=0)-xy, axis=1)
+    if not np.isfinite(edges).all() or (edges <= 1e-6).any() or edges.sum() <= tail_m:
+        raise ValueError('REFERENCE_WRAP_GEOMETRY')
+    count = int(np.searchsorted(np.r_[0., np.cumsum(edges[:-1])], tail_m))+1
+    sequence = [*points, *points[:count]]
+    rows = []; progress = 0.
+    for i, p in enumerate(sequence):
+        if i:
+            previous = sequence[i-1]
+            progress += math.hypot(p.x_m-previous.x_m, p.y_m-previous.y_m)
+        rows.append([progress, p.x_m, p.y_m, p.psi_rad, p.kappa_radpm, p.vx_mps, p.ax_mps2])
+    return rows
+
+
 def project_course(xy: np.ndarray, position: Sequence[float], yaw_rad: float) -> dict[str, float | int]:
     """Project map pose onto a closed reference [N,2]; left offset is positive."""
     xy = np.asarray(xy, dtype=float)
