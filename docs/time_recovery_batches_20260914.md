@@ -83,3 +83,39 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
 生成物と全試行台帳はWSLの `runs/time_recovery_batches_20260914/`、原本は
 `raw/time_recovery_batches_20260914/` へ保存する。2周ごとの転送・削除は既存の照合手順を使い、
 対象runの全ファイルとdir構造・symlinkを確認してから、元位置には案内だけを残す。
+
+## 実行記録
+
+参照生成のsourceは `8333fae192799f85dbcd9cde921b1e368f11920b`。
+WSL smokeは既定20cmのバイト一致、全8参照のshape・速度・位相と、接続部分を含む
+0.1m刻みの地図clearance、不正値の拒否を確認した。
+同じsourceの全pytestは **2222 passed, 4 skipped, 63 warnings (76.95s)**。
+skipsは未導入のOSQP、jsonschema 2件、optional公式LiDAR小袋による。
+実走sourceは検証済み `0484dc369f66282e05faa61dc98c80d687a9c6c4` を維持する。
+
+追加の収集台帳と転送は `docs/evidence/time_recovery_batches_20260914/` の補助手順を使う。
+`start_owned_run.py` は1本だけ起動し、8試行/16GiB/2本滞留/期限と参照SHAを確認する。
+`move_pair.py` は明示された2本に限定し、pack、WSL verify、限定mount内cleanupを別々に実行する。
+`summarize_pair.py` は上記の採用条件を数値で判定する。途中終了も削除せずWSLへ保管する。
+
+```bash
+# AWSIM host: 1本完了後に次を起動。run IDは再利用しない。
+python3 /home/graneple/e2e_autonomous/time_recovery_collection_20260913/start_owned_run_20260914.py \
+  --run-id codex-time-recovery-left040-r21 --profile straight040 --side left
+# AWSIM host: 明示した2本がclose済みの時だけ圧縮。
+python3 move_pair.py pack --pair 1 \
+  --runs codex-time-recovery-left040-r21 codex-time-recovery-right040-r22
+# packのarchive/snapshot/shippingをWSLへ転送してから、記録されたsnapshot SHAを指定。
+tools/with_wsl_training_lock.sh .venv/bin/python \
+  docs/evidence/time_recovery_batches_20260914/move_pair.py verify --pair 1 \
+  --runs codex-time-recovery-left040-r21 codex-time-recovery-right040-r22 \
+  --snapshot-sha256 "$SNAPSHOT_SHA256"
+```
+
+verify後に既存 `audit_time_recovery_collection.py` と `causal_replay_probe.py` を各runに実行し、
+`summarize_pair.py --pair 1 --runs RUN1 RUN2` で実測成立と全入力候補/3秒未来を確認する。
+これらのPython実行は全てWSLのworktree lock内で行う。
+cleanupは検証receiptと採用区分を含む案内を準備した後、同じsnapshot SHAとrun IDで実行する。
+専用rootのみmount、network none/read-only rootfs/cap-drop ALL/DAC_OVERRIDEのみの一時containerで
+元ファイル全件を再照合してから移動済み案内へ置換し、転送用archiveだけ削除する。
+完了receiptをWSLにも保管し、台帳を `WSL_MOVED` に更新してから次の組へ進む。
