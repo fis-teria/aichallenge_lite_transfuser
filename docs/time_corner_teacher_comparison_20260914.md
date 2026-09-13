@@ -131,6 +131,8 @@ run間の経過時間を合わせず、同方向の最寄りの走行位置で�
   座標・符号・yaw wrap・shape・欠損・future境界・教師原点ID・受信時刻・周回の重なりを含む関連21テスト成功。
   比較CLIはexit 0、96.51秒。r2/r3間で6参照・追従・予測位置の集計が完全一致することも確認した。
   実走の主参照への進行量の最大1ステップ変化は0.157mで、大きな場所の飛び移りは見られなかった。
+- 重複した同一poseしかない入力の明示的な拒否も追加し、source
+  `bd7a1b47fe9489d6de660b6d0d303d5d1b73855a`で関連22テスト成功。実データの比較処理結果には影響しない入力検証。
 - 最初のr1解析は復帰位置を表示用poseから引いた際に曖昧なstampを検出して中断。
   教師生成が保存したOdometryのメッセージIDとfreeze条件へ戻してr2で再現した。
   学習済み教師・checkpoint・制御実装を変更したものではない。
@@ -153,9 +155,10 @@ bash tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 OPENBL
 出力先は未使用のディレクトリを指定する。
 全フレーム結果と原本はWSLに保持し、小さな集計・図・実行ログをWindowsへ戻す。
 
-小規模証跡12ファイルをSHA-256で照合して保存した。
+小規模証跡14ファイルをSHA-256で照合して保存した。
 [全比較の集計](evidence/time_corner_teacher_comparison_20260914/summary.json)、
 [集計の整合性確認](evidence/time_corner_teacher_comparison_20260914/consistency_checks.json)、
 [実行結果](evidence/time_corner_teacher_comparison_20260914/comparison_exit.json)、
 [全体テスト](evidence/time_corner_teacher_comparison_20260914/pytest.log)、
-[追加の回帰確認](evidence/time_corner_teacher_comparison_20260914/regression.log)。
+[追加の回帰確認](evidence/time_corner_teacher_comparison_20260914/regression.log)、
+[最終の入力検証を含む回帰確認](evidence/time_corner_teacher_comparison_20260914/final_regression.log)。
