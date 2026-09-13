@@ -66,6 +66,7 @@ def main() -> None:
     fixture_heading_rate = 0. if motion_model else .17
     fixture_lateral_mps = 0. if motion_model else -.02
     fixture_scan_offset_ns = 0
+    fixture_pose_x_m = None
 
     def launch(module, extra, name):
         stream = (args.output / (name + ".log")).open("x"); streams.append(stream)
@@ -100,7 +101,9 @@ def main() -> None:
         imu.angular_velocity.z = fixture_heading_rate; pubs["imu"].publish(imu)
         steering = SteeringReport(); set_stamp(steering.stamp, t); pubs["steering"].publish(steering)
         pose = Odometry(); set_stamp(pose.header.stamp, t); pose.header.frame_id = "map"; pose.child_frame_id = "base_link"
-        pose.pose.pose.orientation.w = 1.; pose.pose.pose.position.x = .1 * (wall - start); pubs["pose"].publish(pose)
+        pose.pose.pose.orientation.w = 1.
+        pose.pose.pose.position.x = .1*(wall-start) if fixture_pose_x_m is None else fixture_pose_x_m
+        pubs["pose"].publish(pose)
         if counter % 5 == 0:
             scan = LaserScan(); set_stamp(scan.header.stamp, t+fixture_scan_offset_ns); scan.header.frame_id = "lidar" if fixture_config else "lidar_link"
             scan.angle_min = -float(np.pi); scan.angle_increment = float(2*np.pi/750)
@@ -164,11 +167,14 @@ def main() -> None:
         oracle_source_speed = .8 if args.speed_policy == "fixed_5kmh" else .15
         expected_target = 5./3.6 if args.speed_policy == "fixed_5kmh" else .15
         oracle_curvature = 0.
+        oracle_xy_override = None
         def publish_oracle(t):
             distances = np.arange(1, 31)*oracle_source_speed*.1
             xy = (np.column_stack((np.sin(oracle_curvature*distances)/oracle_curvature,
                                   (1-np.cos(oracle_curvature*distances))/oracle_curvature))
                   if oracle_curvature else np.column_stack((distances, np.zeros(30))))
+            if oracle_xy_override is not None:
+                xy = oracle_xy_override
             value = {"event": "PLAN", "run_id": "ros-smoke-oracle", "epoch": "0", "plan_id": str(t),
                      "observation_ns": t, "clock": "sim", "frame": "base_link", "dt_s": .1,
                      "checkpoint_sha256": "0"*64, "precision": "float32", "producer_kind": "SYNTHETIC_ROS_FIXTURE",
@@ -204,7 +210,7 @@ def main() -> None:
             result["sweep_guard_policy"] = expected_guard
             result["scan_ahead_of_pose_ns"] = fixture_scan_offset_ns
         if fixture_config is not None and fixture_config.get("steering_policy") in ("awsim_grip_0p6_v1", "awsim_grip_0p6_lead_v1"):
-            if fixture_config.get("lookahead_policy") == "stopping_preview_v1":
+            if fixture_config.get("lookahead_policy") in ("stopping_preview_v1", "stopping_preview_segment_v1"):
                 fixture_speed_mps = 1.2  # Exercise the moving-speed preview, not just startup.
             mapping_count = 0
             for direction in (-1., 1.):
@@ -223,7 +229,7 @@ def main() -> None:
                     if (direction*required < .05 or abs(.6*row["steer_rad"]-actuator_target) > 1e-5
                             or abs(guard["issued_steer_rad"]-.6*row["steer_rad"]) > 1e-9):
                         raise RuntimeError("CALIBRATED_TIRE_AND_INPUT_ANGLE_MISMATCH")
-                    if (fixture_config.get("lookahead_policy") == "stopping_preview_v1"
+                    if (fixture_config.get("lookahead_policy") in ("stopping_preview_v1", "stopping_preview_segment_v1")
                             and row["details"]["selected_lookahead_distance_m"] < 1.72):
                         raise RuntimeError("STOPPING_PREVIEW_NOT_APPLIED_AT_SPEED")
                     if motion_model:
@@ -248,7 +254,7 @@ def main() -> None:
             rejected = [r for r in records if r.get("event") == "COMMAND_SENT"
                         and r["monotonic_ns"]/1e9 > infeasible_started+.5]
             infeasible_reason = ("STEERING_FEASIBLE_LOOKAHEAD_MISSING"
-                                 if fixture_config.get("lookahead_policy") in ("feasible_1_to_1p5m_v1", "stopping_preview_v1")
+                                 if fixture_config.get("lookahead_policy") in ("feasible_1_to_1p5m_v1", "stopping_preview_v1", "stopping_preview_segment_v1")
                                  else "STEERING_ACTUATOR_INFEASIBLE")
             if not rejected or any(r["reason"] != infeasible_reason
                                    or r["acceleration_mps2"] >= 0 or r["target_speed_mps"] != 0 for r in rejected):
@@ -272,6 +278,32 @@ def main() -> None:
                 motion_brakes[reason] = motion_brakes.get(reason, 0)+len(rejected)
             fixture_heading_rate = fixture_lateral_mps = 0.
             result["invalid_motion_brake_commands"] = motion_brakes
+        if fixture_config is not None and fixture_config.get("lookahead_policy") == "stopping_preview_segment_v1":
+            # Recorded geometry on stationary synthetic sensors. This checks the
+            # real ROS -> PP -> lead -> actuator -> clear-scan path, not AWSIM.
+            fixture = json.loads((Path(__file__).resolve().parents[1]/
+                "tests/fixtures/time_path/recovery_startup_segment.json").read_text())
+            fixture_speed_mps = 0.
+            fixture_pose_x_m = .1*(time.monotonic()-start)
+            oracle_xy_override = np.asarray(fixture["raw_xy_m"], dtype=float)
+            began = time.monotonic()
+            spin_for(2., publish_oracle)
+            records = [json.loads(line) for line in (args.output/"oracle/control.jsonl").read_text().splitlines()]
+            segments = [r for r in records if r.get("reason") == "SHADOW_CONTROL"
+                        and r["monotonic_ns"]/1e9 > began+.8
+                        and r.get("details", {}).get("lookahead_selection", {}).get("kind") == "segment"]
+            if len(segments) < 3:
+                raise RuntimeError("SEGMENT_TARGET_DID_NOT_REACH_ROS_CONTROL")
+            for row in segments:
+                detail = row["details"]; selection = detail["lookahead_selection"]
+                if (row["target_speed_mps"] != expected_target or row["acceleration_mps2"] <= 0
+                        or abs(detail["steer_rad"]) > .3 or selection["steering_margin_rad"] < 0
+                        or not 1. <= selection["distance_m"] <= 1.5
+                        or "steering_response" not in detail or "steering_actuator" not in detail
+                        or detail["obstacle_guard"]["minimum_ray_margin_m"] <= 0):
+                    raise RuntimeError("SEGMENT_TARGET_CONTROL_CONTRACT")
+            result["segment_target_shadow_commands"] = len(segments)
+            result["segment_scope"] = "RECORDED_GEOMETRY_WITH_SYNTHETIC_STATIONARY_CLEAR_SCAN"
         stale_started = time.monotonic()
         spin_for(1.2)  # Sensors continue; stop sending plans.
         stale = [c for c in commands if c["wall"] > stale_started + .65]

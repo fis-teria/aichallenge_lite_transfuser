@@ -11,63 +11,7 @@ from typing import Any
 
 import numpy as np
 
-
-def unit_roots(coefficients: tuple[float, float, float]) -> list[float]:
-    """Real roots of a*u²+b*u+c inside [0,1], including linear/tangent cases."""
-    a, b, c = coefficients
-    if not all(math.isfinite(v) for v in coefficients):
-        raise ValueError('NONFINITE_POLYNOMIAL')
-    scale = max(1., abs(a), abs(b), abs(c))
-    if abs(a) <= 1e-14*scale:
-        roots = [] if abs(b) <= 1e-14*scale else [-c/b]
-    else:
-        discriminant = b*b-4*a*c
-        if discriminant < -1e-14*scale*scale:
-            return []
-        if abs(discriminant) <= 1e-14*scale*scale:
-            # A cancelled tangency must not become a fictitious finite interval.
-            roots = [-b/(2*a)]
-        else:
-            square = math.sqrt(discriminant)
-            q = -.5*(b+math.copysign(square, b))
-            roots = [q/a, c/q]
-    return sorted({max(0., min(1., u)) for u in roots if -1e-12 <= u <= 1.+1e-12})
-
-
-def segment_intervals(a: np.ndarray, b: np.ndarray, minimum_m: float, maximum_m: float,
-                      response_length_m: float, limit_rad: float | None) -> list[tuple[float, float]]:
-    """Fractions on segment a->b satisfying forward/radial/optional angle bounds.
-
-    Position in m; length in m; angles in rad. A 2e-12 coefficient-scaled
-    numerical tolerance is used only to classify algebraic roots, not to
-    authorize a float32 PP target. Zero-width tangencies are reported explicitly.
-    """
-    a = np.asarray(a, dtype=float); b = np.asarray(b, dtype=float)
-    if (a.shape != (2,) or b.shape != (2,) or not np.isfinite([a, b]).all()
-            or not all(math.isfinite(v) for v in (minimum_m, maximum_m, response_length_m))
-            or not 0 < minimum_m < maximum_m or response_length_m <= 0
-            or (limit_rad is not None and (not math.isfinite(limit_rad) or not 0 < limit_rad < math.pi/2))):
-        raise ValueError('INVALID_SEGMENT_AUDIT')
-    delta = b-a
-    aa = float(delta@delta); bb = float(2*a@delta); cc = float(a@a)
-    constraints = [(aa, bb, cc-minimum_m**2), (-aa, -bb, maximum_m**2-cc),
-                   (0., float(delta[0]), float(a[0]-1e-6))]
-    if limit_rad is not None:
-        tangent = math.tan(limit_rad)
-        for sign in (-1., 1.):
-            constraints.append((tangent*aa, tangent*bb+sign*2*response_length_m*float(delta[1]),
-                                tangent*cc+sign*2*response_length_m*float(a[1])))
-    roots = sorted({0., 1., *(u for polynomial in constraints for u in unit_roots(polynomial))})
-
-    def admitted(u: float) -> bool:
-        return all((p*u+q)*u+r >= -2e-12*max(1., abs(p), abs(q), abs(r)) for p, q, r in constraints)
-
-    intervals = [(left, right) for left, right in zip(roots, roots[1:])
-                 if right > left and admitted((left+right)/2)]
-    for u in roots:
-        if admitted(u) and not any(left-1e-12 <= u <= right+1e-12 for left, right in intervals):
-            intervals.append((u, u))
-    return sorted(intervals)
+from ..control.polyline_lookahead_v1 import segment_intervals, unit_roots
 
 
 def angle_for_point(point: np.ndarray, response_length_m: float) -> float:

@@ -12,11 +12,13 @@ from .time_geometry_v2 import validate_time_geometry
 from .awsim_steering import CALIBRATED_POLICIES, steering_asset_contract
 from .vehicle_motion_v1 import IDEAL_POLICY, WHEELBASE_M, effective_response_length, validate_vehicle_model_config
 from .waypoint_controller import ControllerConfig, select_lookahead, control_from_waypoints
+from .polyline_lookahead_v1 import select_polyline_lookahead
 from ..runtime.awsim_trial_session import trial_duration_limits
 
 
 SPEED_POLICIES = ("source_capped_0p25", "fixed_5kmh")
-LOOKAHEAD_POLICIES = ("fixed_1m_v1", "feasible_1_to_1p5m_v1", "stopping_preview_v1")
+SEGMENT_LOOKAHEAD_POLICY = "stopping_preview_segment_v1"
+LOOKAHEAD_POLICIES = ("fixed_1m_v1", "feasible_1_to_1p5m_v1", "stopping_preview_v1", SEGMENT_LOOKAHEAD_POLICY)
 
 
 def trial_speed_limits(speed_policy: str) -> tuple[float, float]:
@@ -110,15 +112,24 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
     config = ControllerConfig(wheelbase_m=response_length, min_lookahead_m=1., max_steer_rad=.5,
                               min_accel_mps2=-1., max_accel_mps2=1., speed_kp=4.)
     target = np.zeros(2)
+    selection_details: dict[str, Any] = {}
     minimum_preview = (max(1., .4+max(0., speed_mps)*.5+speed_mps**2/2)
-                       if lookahead_policy == "stopping_preview_v1" else 1.)
+                       if lookahead_policy in ("stopping_preview_v1", SEGMENT_LOOKAHEAD_POLICY) else 1.)
     if target_speed > 1e-6:
         points = reference.xy_current_m[1:]
         forward = points[points[:, 0] > 1e-6]
         if not len(forward):
             raise ValueError("NO_FORWARD_REFERENCE")
         target = select_lookahead(forward, config.min_lookahead_m)
-        if lookahead_policy != "fixed_1m_v1":
+        if lookahead_policy == SEGMENT_LOOKAHEAD_POLICY:
+            selection = select_polyline_lookahead(reference.xy_current_m, reference.remaining_sec,
+                minimum_m=minimum_preview, maximum_m=minimum_preview+.5,
+                response_length_m=response_length)
+            selection['observation_horizon_s'] = selection['remaining_s']+reference.age_sec
+            selection['source_interval_s'] = [t+reference.age_sec for t in selection['reference_interval_s']]
+            selection_details['lookahead_selection'] = selection
+            target = np.asarray(selection['xy_m'], dtype=np.float32)
+        elif lookahead_policy != "fixed_1m_v1":
             target = None
             # Use the same float32 target representation as existing PP. Keep
             # time order and original points, with a bounded 0.5 m search band.
@@ -150,4 +161,4 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
             "plan_age_sec": reference.age_sec, "lookahead_rear_m": target.tolist(),
             "reference_xy_rear_m": reference.xy_current_m.tolist(),
             "source_body_frame": reference.source_body_frame, "tracking_frame": reference.tracking_frame,
-            "geometry": geometry}
+            "geometry": geometry, **selection_details}
