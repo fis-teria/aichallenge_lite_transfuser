@@ -180,7 +180,7 @@ def main() -> None:
             result["sweep_guard_commands"] = len(verified)
             result["sweep_guard_policy"] = expected_guard
             result["scan_ahead_of_pose_ns"] = fixture_scan_offset_ns
-        if fixture_config is not None and fixture_config.get("steering_policy") == "awsim_grip_0p6_v1":
+        if fixture_config is not None and fixture_config.get("steering_policy") in ("awsim_grip_0p6_v1", "awsim_grip_0p6_lead_v1"):
             if fixture_config.get("lookahead_policy") == "stopping_preview_v1":
                 fixture_speed_mps = 1.2  # Exercise the moving-speed preview, not just startup.
             mapping_count = 0
@@ -195,8 +195,9 @@ def main() -> None:
                     raise RuntimeError("CALIBRATED_TURN_NOT_EXECUTED")
                 for row in turning:
                     required = row["details"]["steer_rad"]
+                    actuator_target = row["details"].get("steering_response", {}).get("target_tire_rad", required)
                     guard = row["details"]["obstacle_guard"]
-                    if (direction*required < .05 or abs(.6*row["steer_rad"]-required) > 1e-5
+                    if (direction*required < .05 or abs(.6*row["steer_rad"]-actuator_target) > 1e-5
                             or abs(guard["issued_steer_rad"]-.6*row["steer_rad"]) > 1e-9):
                         raise RuntimeError("CALIBRATED_TIRE_AND_INPUT_ANGLE_MISMATCH")
                     if (fixture_config.get("lookahead_policy") == "stopping_preview_v1"
@@ -204,6 +205,12 @@ def main() -> None:
                         raise RuntimeError("STOPPING_PREVIEW_NOT_APPLIED_AT_SPEED")
                 mapping_count += len(turning)
             result["calibrated_left_right_shadow_commands"] = mapping_count
+            if fixture_config["steering_policy"] == "awsim_grip_0p6_lead_v1":
+                lead = [r for r in records if r.get("reason") == "SHADOW_CONTROL"
+                        and abs(r["details"]["steering_response"]["applied_correction_rad"]) > .001]
+                if not lead or any(r["steering_observation"] is None for r in lead):
+                    raise RuntimeError("STEERING_RESPONSE_LEAD_NOT_EXECUTED")
+                result["response_lead_shadow_commands"] = len(lead)
             oracle_curvature = .4
             infeasible_started = time.monotonic()
             spin_for(1., publish_oracle)

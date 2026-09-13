@@ -9,7 +9,7 @@ import numpy as np
 
 from .time_reference_v1 import TimePlan, TimedBodyPose, prepare_time_reference, reference_control
 from .time_geometry_v2 import validate_time_geometry
-from .awsim_steering import steering_asset_contract
+from .awsim_steering import CALIBRATED_POLICIES, steering_asset_contract
 from .waypoint_controller import ControllerConfig, select_lookahead, control_from_waypoints
 from ..runtime.awsim_trial_session import trial_duration_limits
 
@@ -34,7 +34,7 @@ def validate_trial_config(config: dict[str, Any]) -> str:
     lookahead_policy = config.get("lookahead_policy", "fixed_1m_v1")
     if lookahead_policy not in LOOKAHEAD_POLICIES:
         raise ValueError("TRIAL_LOOKAHEAD_POLICY")
-    if lookahead_policy != "fixed_1m_v1" and config.get("steering_policy") != "awsim_grip_0p6_v1":
+    if lookahead_policy != "fixed_1m_v1" and config.get("steering_policy") not in CALIBRATED_POLICIES:
         raise ValueError("TRIAL_LOOKAHEAD_REQUIRES_CALIBRATION")
     if config.get("obstacle_policy", "straight_v1") not in ("straight_v1", "steering_sweep_v1", "steering_support_v2"):
         raise ValueError("TRIAL_OBSTACLE_POLICY")

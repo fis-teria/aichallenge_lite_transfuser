@@ -15,6 +15,7 @@ import numpy as np
 from . import spatial_path_shadow_node_v4 as _source_layout
 from aic_transfuser_lite.control.long_sim_tracking_v4 import check_scan
 from aic_transfuser_lite.control.awsim_steering import command_steering, steering_response_gain
+from aic_transfuser_lite.control.awsim_steering_response import SteeringResponseState, compensate_steering_response
 from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, scan_pose_in_rear, select_aligned_scan
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
 from aic_transfuser_lite.control.time_trial_v1 import (
@@ -89,6 +90,7 @@ def main() -> None:
     poses: deque[TimedBodyPose] = deque(maxlen=256)
     scans: deque[tuple[LaserScan, int]] = deque(maxlen=4)
     previous = [0., time.monotonic()]
+    response_state: SteeringResponseState | None = None
     state = {"fault": None, "armed_ns": None, "armed_wall": None, "stop_since_ns": None,
              "stop_confirmed": False, "positive_count": 0, "commands": 0, "max_speed_mps": 0.,
              "requested_stop_reason": None, "speed_mps": None, "current_pose": None,
@@ -105,10 +107,11 @@ def main() -> None:
         log.flush()
 
     def on_clock(message) -> None:
-        nonlocal clock_ns, clock_receipt, epoch
+        nonlocal clock_ns, clock_receipt, epoch, response_state
         t = stamp(message.clock)
         if clock_ns is not None and t < clock_ns:
             state["fault"] = "CLOCK_RESET"; epoch += 1; poses.clear(); scans.clear(); cache.clear()
+            response_state = None
         clock_ns = t; clock_receipt = time.monotonic_ns()
 
     node.create_subscription(Clock, "/clock", on_clock, 10)
@@ -137,7 +140,7 @@ def main() -> None:
         node.create_subscription(kind, input_topic, lambda m, role=role: receive(role, m), qos_profile_sensor_data)
 
     def tick() -> None:
-        nonlocal publisher
+        nonlocal publisher, response_state
         wall = time.monotonic(); now = time.monotonic_ns()
         actual = names(topic)
         if publisher is None:
@@ -159,6 +162,8 @@ def main() -> None:
         velocity_fresh = False
         speed = None
         measured_steer = None
+        steering_observation = None
+        candidate_response_state = None
         checking_scan = False
         scan_alignment = None
         dt = min(.1, max(0., wall - previous[1]))
@@ -178,8 +183,15 @@ def main() -> None:
                     raise ValueError("SOURCE_" + role)
             speed = float(cache["velocity"][0].longitudinal_velocity)
             measured_steer = float(cache["steering"][0].steering_tire_angle)
+            steering_observation = {
+                "stamp_ns": stamp(cache["steering"][0].stamp),
+                "age_sim_s": (clock_ns-stamp(cache["steering"][0].stamp))/1e9,
+                "receipt_monotonic_ns": cache["steering"][1],
+                "age_wall_s": (now-cache["steering"][1])/1e9,
+            }
             if not np.isfinite([speed, float(cache["steering"][0].steering_tire_angle)]).all():
                 speed = None
+                measured_steer = None
                 raise ValueError("NONFINITE_VEHICLE_STATE")
             velocity_fresh = True
             state["speed_mps"] = speed
@@ -240,7 +252,10 @@ def main() -> None:
                                               lookahead_policy=lookahead_policy,
                                               rear_axle_offset_m=(args.rear_axle_forward_m, 0.)))
             steer = details["steer_rad"]; accel = details["acceleration_mps2"]; target = details["target_speed_mps"]
-            mapping = command_steering(steer, previous[0], dt, policy=steering_policy)
+            response_target, candidate_response_state, response = compensate_steering_response(
+                steer, clock_ns, response_state, policy=steering_policy)
+            details["steering_response"] = response
+            mapping = command_steering(response_target, previous[0], dt, policy=steering_policy)
             details["steering_actuator"] = mapping
             steer = mapping["issued_input_rad"]
             if obstacle_policy in ("steering_sweep_v1", "steering_support_v2"):
@@ -272,12 +287,15 @@ def main() -> None:
                         "current_pose": state["current_pose"], "pose_history": [p.__dict__ for p in poses],
                         "latest_plan_json": cache["plan"][0].data if "plan" in cache else None,
                         "obstacle_policy": obstacle_policy, "measured_steer_rad": measured_steer,
+                        "steering_observation": steering_observation,
                         "issued_steer_rad": steering_gain*steer, "previous_steer_rad": steering_gain*previous[0],
                         "issued_input_steer_rad": steer, "previous_input_steer_rad": previous[0],
                         "steering_policy": steering_policy, "scan_in_current_rear": scan_alignment,
+                        "steering_response": details.get("steering_response"),
                         "plan_admission": "NOT_CHECKED_AFTER_SCAN_REJECTION" if obstacle_policy == "straight_v1" else "IDENTITY_AND_CONTROL_CHECKED_BEFORE_SCAN"})
                 state["scan_rejection_recorded"] = True
             reason = str(exc); accel = -1.; target = 0.; steer = previous[0]
+            response_state = candidate_response_state = None
             if reason in ("STOPPING_CORRIDOR_OCCUPIED", "STOPPING_SWEEP_OCCUPIED") and state["positive_count"]:
                 state["fault"] = reason
         if reason in ("SCHEDULED_BRAKE", "REQUESTED_BRAKE") and velocity_fresh and speed is not None and abs(speed) < .03:
@@ -296,13 +314,17 @@ def main() -> None:
             command.lateral.steering_tire_angle = steer
             command.longitudinal.acceleration = float(accel); command.longitudinal.speed = float(target)
             publisher.publish(command); state["commands"] += 1
+            response_state = candidate_response_state
             if accel > 0:
                 state["positive_count"] += 1
             record({"event": "COMMAND_SENT", "reason": reason, "plan_id": plan_id,
                     "steer_rad": steer, "acceleration_mps2": accel, "target_speed_mps": target,
-                    "speed_mps": speed, "measured_steer_rad": measured_steer, "details": details})
-        elif actual and actual != ["/time_path_controller"]:
-            state["fault"] = "COMPETING_CONTROLLER"
+                    "speed_mps": speed, "measured_steer_rad": measured_steer,
+                    "steering_observation": steering_observation, "details": details})
+        else:
+            response_state = None
+            if actual and actual != ["/time_path_controller"]:
+                state["fault"] = "COMPETING_CONTROLLER"
         temporary = args.output / "control_heartbeat.pending"
         temporary.write_text(json.dumps({**state, "reason": reason, "monotonic_ns": now,
                                          "sim_ns": clock_ns, "topic": topic}, allow_nan=False))

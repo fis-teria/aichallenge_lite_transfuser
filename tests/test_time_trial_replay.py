@@ -5,7 +5,8 @@ import pytest
 
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
 from aic_transfuser_lite.control.time_trial_v1 import time_trial_control
-from aic_transfuser_lite.control.awsim_steering import command_steering, CALIBRATED_POLICY
+from aic_transfuser_lite.control.awsim_steering import command_steering, CALIBRATED_POLICY, LEAD_POLICY
+from aic_transfuser_lite.control.awsim_steering_response import compensate_steering_response
 from tools.evaluate_time_awsim_trial import replay_recorded_control
 
 
@@ -58,3 +59,28 @@ def test_replay_still_rejects_wrong_math_unknown_reason_and_nan():
     command["details"]["steer_rad"] = float("nan")
     with pytest.raises(ValueError, match="control differs"):
         replay_recorded_control([command], [plan], .001)
+
+
+def test_response_replay_checks_sequential_state_and_compensated_command():
+    command, plan = recorded_turn()
+    rows = []
+    state = None
+    previous_input = .15
+    for i in range(2):
+        row = deepcopy(command)
+        row["sim_ns"] = i*50_000_000
+        target, state, response = compensate_steering_response(row["details"]["steer_rad"], row["sim_ns"], state, policy=LEAD_POLICY)
+        mapping = command_steering(target, previous_input, .05, policy=LEAD_POLICY)
+        row["details"].update(steering_response=response, steering_actuator=mapping)
+        row["steer_rad"] = previous_input = mapping["issued_input_rad"]
+        rows.append(row)
+    result = replay_recorded_control(rows, [plan], .001, steering_policy=LEAD_POLICY)
+    assert result["steering_response_matched"] == 2
+    corrupted = deepcopy(rows)
+    corrupted[1]["details"]["steering_response"]["previous_state"]["nominal_tire_rad"] += .01
+    with pytest.raises(ValueError, match="response differs"):
+        replay_recorded_control(corrupted, [plan], .001, steering_policy=LEAD_POLICY)
+    corrupted = deepcopy(rows)
+    del corrupted[0]["details"]["steering_response"]
+    with pytest.raises(ValueError, match="response missing"):
+        replay_recorded_control(corrupted, [plan], .001, steering_policy=LEAD_POLICY)

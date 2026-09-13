@@ -273,3 +273,55 @@ max(1m, 0.4+v*0.5+v²/2)へ速度連動させる。探索幅は従来と同じ+0
 監視方式はturn12と同一。未変更の経路に適切な点がなければ既存の拒否を維持する。
 改善指標は記録された拒否瞬間で、実操舵/前回入力を残して新指令の監視が通ること、
 その後のコーナー実走。turn12 regressionと走行速度でのROS fixture後にturn13を1回実施する。
+
+## turn13実行前確認
+
+source `50b83a765294ec8346bcbb04da1203771b8a768f`、Windows/WSL一致。
+WSL限定75passed (1.62s)、全体2122passed/4skipped/63warnings (87.74s)。
+turn12回帰で実操舵/前回入力/rate limitを残した新PP指令が同一support guardを通過。
+0〜6km/hのpreview距離/上限/元経路不変を検証した。
+Humble build0.92s、11module一致。ROS smokeの左右旋回は実測速度fixture1.2m/sで実施し、
+preview1.72m以上の適用28件、実モデルPath6、support guard111、到達不能曲線の制動10、
+stale11/clock7/overspeed12、child exit0。
+archive SHA256 `c38c42b3a036ac18fca76d5c968f668ff009cd392964f43f0951c3caf014a92a`、
+config SHA256 `f3aad671d0a403e90d1cfa1190fddff2f376d686736770355606337f58269142`。
+専有root `/home/graneple/e2e_autonomous/time_turning_preview_20260913`、SOURCEは
+その中の `source_50b83a7`。設定 `configs/control/time_path_preview_turning_5kmh_20260913.json`、
+run ID `codex-time-turn-13` として、同じ710s+10s外側timeoutで1回実行する。
+
+## turn13結果と固定5km/hでの操舵応答改善
+
+turn13は最初のコーナーを通過し、公式section 0→1→2へ進んだ。
+発進79.394998226sim秒後、走行99.717404mで後続コーナーの
+`CONTROL_STOPPING_SWEEP_OCCUPIED` により終了、未完走。追従1587回、
+最大実測1.308060m/s（4.7090km/h）。通常RVizに未変更のモデル経路を表示した。
+wall123.057s、cleanup error0、active container0、既存Compose39個を保全。
+ホストfreeze前の停車実測はない。47ファイルのhash検証とWSL評価を完了し、
+制御再生1589件一致、最大誤差4.44e-16。archive SHA256
+`c97f721287e574dd934012b5dce7a4d8bfd41d6e18ea7ffc150f8fa90ab97cf5`。
+証拠は `docs/evidence/time_turning_20260913/turn13/`。
+
+拒否時の実操舵+0.138781radに対してPP要求は+0.145663rad、前回要求は
++0.143785rad。実操舵固定でも拒否、要求角へ即時到達する仮定なら+0.025472m。
+同じ観測で目標点を1〜3mへ変えても、実操舵を含む監視は拒否した。
+低速化の提案に対して、ユーザーは「固定5km/hを維持して操舵応答の改善を進める」
+と明示した。正常目標速度を変更せず、次の原因所有層を操舵の動的応答とする。
+
+同一hashの実行DLLとvehicle.yamlでは、入力gain0.6に加えて遅延0.07s、
+一次応答0.02sがある。既存補正はgainのみ。次は物理PP要求の変化率に
+0.09sの先行補償を与え、既存の入力角±0.5rad・入力変化率0.8rad/s内で指令する。
+変化率はシミュレーション時計で求め、フィルタ・上限・初期化を明示する。
+到達不能な元のPP要求は引き続き拒否し、補償だけを残りの角度余裕で制限する。
+操舵reportのstamp/受信時刻も記録し、report遅れを物理遅れへ混同しない。
+監視には引き続き実操舵、前回と今回の物理指令を渡す。監視、車体寸法、
+停止距離、モデル経路、重み、AWSIM物理設定は同一。独立した遅延/一次応答モデルの
+回帰、WSL全体テスト、Humble smokeが通った後、新規turn14を有限枠で1回実施する。
+
+検証/実行コマンド（Windows commit後に `tools/sync_to_wsl.ps1` で同期）:
+```bash
+cd /home/thistle/e2e_autonomous/e2e_lite_transfuser
+bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -m pytest -q tests/test_awsim_steering_response.py tests/test_awsim_steering.py tests/test_time_trial_replay.py tests/test_time_trial_v1.py tests/test_curvature_support_v2.py tests/test_turning_scan_guard.py
+bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -m pytest -q
+# .10専有deploymentでHumble buildと隔離ROS smoke後、run ID未使用を確認して実行:
+timeout --signal=TERM --kill-after=10s 710s python3 SOURCE/tools/run_time_path_awsim_trial.py --deployment DEPLOYMENT --run-id codex-time-turn-14 --display :1 --config configs/control/time_path_response_turning_5kmh_20260913.json
+```

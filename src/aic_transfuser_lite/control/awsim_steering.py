@@ -10,6 +10,8 @@ from typing import Any
 
 
 CALIBRATED_POLICY = "awsim_grip_0p6_v1"
+LEAD_POLICY = "awsim_grip_0p6_lead_v1"
+CALIBRATED_POLICIES = (CALIBRATED_POLICY, LEAD_POLICY)
 CALIBRATED_ASSETS = {
     "AWSIM_Data/StreamingAssets/Vehicle/vehicle.yaml": "5b66e58691091c82d5511535ca458d4c89e85f3b59fa0d0c4a2c7eee47887244",
     "AWSIM_Data/Managed/Assembly-CSharp.dll": "859e5560dbffd7d0833cd1fe5eb1f36b87fa8d22f6e45eb0e1203d04a1ea6d13",
@@ -20,7 +22,7 @@ def steering_response_gain(policy: str) -> float:
     """Steady tire angle / ROS input angle; reports already use tire radians."""
     if policy == "identity_v1":
         return 1.
-    if policy == CALIBRATED_POLICY:
+    if policy in CALIBRATED_POLICIES:
         return .6
     raise ValueError("TRIAL_STEERING_POLICY")
 
@@ -29,7 +31,7 @@ def steering_asset_contract(config: dict[str, Any]) -> dict[str, str]:
     """Return required immutable asset hashes; reject unspecified calibration."""
     policy = config.get("steering_policy", "identity_v1")
     steering_response_gain(policy)
-    expected = CALIBRATED_ASSETS if policy == CALIBRATED_POLICY else {}
+    expected = CALIBRATED_ASSETS if policy in CALIBRATED_POLICIES else {}
     if config.get("steering_asset_sha256", {}) != expected:
         raise ValueError("TRIAL_STEERING_ASSET_IDENTITY")
     return dict(expected)

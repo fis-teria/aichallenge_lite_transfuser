@@ -13,7 +13,19 @@ import numpy as np
 from aic_transfuser_lite.control.time_geometry_v2 import validate_time_geometry
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
 from aic_transfuser_lite.control.time_trial_v1 import time_trial_control, validate_trial_config
-from aic_transfuser_lite.control.awsim_steering import command_steering
+from aic_transfuser_lite.control.awsim_steering import CALIBRATED_POLICIES, LEAD_POLICY, command_steering
+from aic_transfuser_lite.control.awsim_steering_response import SteeringResponseState, compensate_steering_response
+
+
+def response_record_matches(recorded: Any, expected: Any) -> bool:
+    """Check a nested scalar/state journal with the control replay tolerance."""
+    if isinstance(expected, dict):
+        return (isinstance(recorded, dict) and recorded.keys() == expected.keys()
+                and all(response_record_matches(recorded[k], v) for k, v in expected.items()))
+    if isinstance(expected, float):
+        return (type(recorded) in (float, int) and np.isfinite(recorded)
+                and abs(recorded-expected) <= 1e-9)
+    return type(recorded) is type(expected) and recorded == expected
 
 
 def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str, Any]],
@@ -30,6 +42,8 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
     maximum_error = 0.
     post_control_rejections: Counter[str] = Counter()
     actuator_matched = 0
+    response_matched = 0
+    expected_response_state = None
     scan_reasons = {"OBSERVATION_POSE_MISSING", "FRESH_ALIGNED_SCAN_MISSING", "POSE_ENDPOINT_IDENTITY",
                     "SCAN_FRAME", "SCAN_POSE_IDENTITY_OR_AGE", "SCAN_POSE_ALIGNMENT", "SCAN_CONTRACT",
                     "SCAN_COVERAGE", "SCAN_UNKNOWN", "STOPPING_SWEEP_OCCUPIED", "SWEEP_VEHICLE_STATE"}
@@ -37,6 +51,7 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
         details = command.get("details", {})
         if not command.get("plan_id") or not all(k in details for k in ("observation_pose", "current_pose")):
             skipped += 1
+            expected_response_state = None
             continue
         plan = by_id[command["plan_id"]]
         observed = TimedBodyPose(**details["observation_pose"])
@@ -46,12 +61,13 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
                 current, speed_mps=command["speed_mps"], rear_axle_offset_m=(rear_axle_forward_m, 0.),
                 speed_policy=speed_policy, lookahead_policy=lookahead_policy)
         except ValueError as exc:
+            expected_response_state = None
             if command["reason"] != str(exc):
                 raise ValueError("recorded rejection could not be reproduced") from exc
         else:
             if command["reason"] != "TIME_PATH_TRACKING":
                 post_guard = obstacle_policy in ("steering_sweep_v1", "steering_support_v2") and command["reason"] in scan_reasons
-                actuator_rejected = (steering_policy == "awsim_grip_0p6_v1"
+                actuator_rejected = (steering_policy in CALIBRATED_POLICIES
                                      and command["reason"] == "STEERING_ACTUATOR_INFEASIBLE"
                                      and abs(calculated["steer_rad"]) > .3)
                 if not (post_guard or actuator_rejected):
@@ -66,7 +82,18 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
                     raise ValueError(f"recorded control differs: {key} error={error}")
             if "steering_actuator" in details:
                 stored = details["steering_actuator"]
-                mapping = command_steering(calculated["steer_rad"], stored["previous_input_rad"],
+                response_target = calculated["steer_rad"]
+                if "steering_response" in details:
+                    recorded_response = details["steering_response"]
+                    response_target, next_response_state, response = compensate_steering_response(
+                        response_target, command["sim_ns"], expected_response_state, policy=steering_policy)
+                    if not response_record_matches(recorded_response, response):
+                        raise ValueError("recorded steering response differs")
+                    expected_response_state = next_response_state if command["reason"] == "TIME_PATH_TRACKING" else None
+                    response_matched += 1
+                elif steering_policy == LEAD_POLICY:
+                    raise ValueError("recorded steering response missing")
+                mapping = command_steering(response_target, stored["previous_input_rad"],
                                            stored["dt_s"], policy=steering_policy)
                 if stored["policy"] != steering_policy:
                     raise ValueError("recorded steering policy differs")
@@ -77,11 +104,16 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
                         and abs(command["steer_rad"]-mapping["issued_input_rad"]) > 1e-9):
                     raise ValueError("recorded issued steering differs")
                 actuator_matched += 1
+            elif steering_policy == LEAD_POLICY and command["reason"] == "TIME_PATH_TRACKING":
+                raise ValueError("recorded steering actuator missing")
+            else:
+                expected_response_state = None
         matched += 1
     return {"status": "PASS" if matched else "NOT_RECORDED", "matched_commands": matched,
             "unavailable_commands": skipped, "maximum_absolute_error": maximum_error,
             "tolerance": 1e-9, "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
             "post_control_rejections": dict(post_control_rejections), "actuator_mapping_matched": actuator_matched,
+            "steering_response_matched": response_matched,
             "scan_guard_decisions_replayed": False}
 
 
