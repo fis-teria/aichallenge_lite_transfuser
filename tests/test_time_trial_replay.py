@@ -7,7 +7,16 @@ from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPos
 from aic_transfuser_lite.control.time_trial_v1 import time_trial_control
 from aic_transfuser_lite.control.awsim_steering import command_steering, CALIBRATED_POLICY, LEAD_POLICY
 from aic_transfuser_lite.control.awsim_steering_response import compensate_steering_response
-from tools.evaluate_time_awsim_trial import replay_recorded_control
+from tools.evaluate_time_awsim_trial import replay_recorded_control, response_record_matches
+
+
+def test_nested_interpolation_lists_use_existing_scalar_replay_tolerance():
+    expected = {'fraction_interval': [.2881617239797429, .4804064803709701], 'indices': [22, 23]}
+    recorded = {'fraction_interval': [.2881617239797542, .48040648037097017], 'indices': [22, 23]}
+    assert response_record_matches(recorded, expected)
+    assert not response_record_matches({**recorded, 'fraction_interval': [.28816172, .48040648]}, expected)
+    assert not response_record_matches({**recorded, 'indices': [22]}, expected)
+    assert not response_record_matches({**recorded, 'indices': [22, 24]}, expected)
 
 
 def recorded_turn():

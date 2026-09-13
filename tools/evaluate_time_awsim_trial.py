@@ -23,6 +23,9 @@ def response_record_matches(recorded: Any, expected: Any) -> bool:
     if isinstance(expected, dict):
         return (isinstance(recorded, dict) and recorded.keys() == expected.keys()
                 and all(response_record_matches(recorded[k], v) for k, v in expected.items()))
+    if isinstance(expected, list):
+        return (isinstance(recorded, list) and len(recorded) == len(expected)
+                and all(response_record_matches(a, b) for a, b in zip(recorded, expected)))
     if isinstance(expected, float):
         return (type(recorded) in (float, int) and np.isfinite(recorded)
                 and abs(recorded-expected) <= 1e-9)
