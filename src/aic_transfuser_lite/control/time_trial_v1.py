@@ -9,6 +9,7 @@ import numpy as np
 
 from .time_reference_v1 import TimePlan, TimedBodyPose, prepare_time_reference, reference_control
 from .time_geometry_v2 import validate_time_geometry
+from .awsim_steering import steering_asset_contract
 from .waypoint_controller import ControllerConfig, select_lookahead
 from ..runtime.awsim_trial_session import trial_duration_limits
 
@@ -28,6 +29,7 @@ def trial_speed_limits(speed_policy: str) -> tuple[float, float]:
 def validate_trial_config(config: dict[str, Any]) -> str:
     """Reject descriptive JSON settings that disagree with this bounded runtime."""
     policy = config.get("speed_policy", "source_capped_0p25")
+    steering_asset_contract(config)
     if config.get("obstacle_policy", "straight_v1") not in ("straight_v1", "steering_sweep_v1"):
         raise ValueError("TRIAL_OBSTACLE_POLICY")
     ceiling, overspeed = trial_speed_limits(policy)

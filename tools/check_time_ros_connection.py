@@ -155,11 +155,16 @@ def main() -> None:
             "--sensor-source", "/time_ros_fixture", "--synthetic-shadow-fixture"], "controller")
         oracle_source_speed = .8 if args.speed_policy == "fixed_5kmh" else .15
         expected_target = 5./3.6 if args.speed_policy == "fixed_5kmh" else .15
+        oracle_curvature = 0.
         def publish_oracle(t):
+            distances = np.arange(1, 31)*oracle_source_speed*.1
+            xy = (np.column_stack((np.sin(oracle_curvature*distances)/oracle_curvature,
+                                  (1-np.cos(oracle_curvature*distances))/oracle_curvature))
+                  if oracle_curvature else np.column_stack((distances, np.zeros(30))))
             value = {"event": "PLAN", "run_id": "ros-smoke-oracle", "epoch": "0", "plan_id": str(t),
                      "observation_ns": t, "clock": "sim", "frame": "base_link", "dt_s": .1,
                      "checkpoint_sha256": "0"*64, "precision": "float32", "producer_kind": "SYNTHETIC_ROS_FIXTURE",
-                     "raw_xy_m": [[oracle_source_speed*i*.1, 0.] for i in range(1,31)]}
+                     "raw_xy_m": xy.tolist()}
             message = String(); message.data = json.dumps(value); oracle_publisher.publish(message)
         spin_for(7, publish_oracle)
         positive = [c for c in commands if c["accel"] > 0 and abs(c["speed"]-expected_target) < 1e-5 and abs(c["steer"]) < 1e-8]
@@ -172,6 +177,36 @@ def main() -> None:
                 raise RuntimeError("SWEEP_GUARD_NOT_EXECUTED")
             result["sweep_guard_commands"] = len(verified)
             result["scan_ahead_of_pose_ns"] = fixture_scan_offset_ns
+        if fixture_config is not None and fixture_config.get("steering_policy") == "awsim_grip_0p6_v1":
+            mapping_count = 0
+            for direction in (-1., 1.):
+                oracle_curvature = direction*.08
+                turn_started = time.monotonic()
+                spin_for(1.5, publish_oracle)
+                records = [json.loads(line) for line in (args.output/"oracle/control.jsonl").read_text().splitlines()]
+                turning = [r for r in records if r.get("reason") == "SHADOW_CONTROL"
+                           and r["monotonic_ns"]/1e9 > turn_started+.8]
+                if not turning:
+                    raise RuntimeError("CALIBRATED_TURN_NOT_EXECUTED")
+                for row in turning:
+                    required = row["details"]["steer_rad"]
+                    guard = row["details"]["obstacle_guard"]
+                    if (direction*required < .05 or abs(.6*row["steer_rad"]-required) > 1e-5
+                            or abs(guard["issued_steer_rad"]-.6*row["steer_rad"]) > 1e-9):
+                        raise RuntimeError("CALIBRATED_TIRE_AND_INPUT_ANGLE_MISMATCH")
+                mapping_count += len(turning)
+            result["calibrated_left_right_shadow_commands"] = mapping_count
+            oracle_curvature = .4
+            infeasible_started = time.monotonic()
+            spin_for(1., publish_oracle)
+            records = [json.loads(line) for line in (args.output/"oracle/control.jsonl").read_text().splitlines()]
+            rejected = [r for r in records if r.get("event") == "COMMAND_SENT"
+                        and r["monotonic_ns"]/1e9 > infeasible_started+.5]
+            if not rejected or any(r["reason"] != "STEERING_ACTUATOR_INFEASIBLE"
+                                   or r["acceleration_mps2"] >= 0 or r["target_speed_mps"] != 0 for r in rejected):
+                raise RuntimeError("INFEASIBLE_ACTUATOR_DID_NOT_BRAKE")
+            result["actuator_infeasible_brake_commands"] = len(rejected)
+            oracle_curvature = 0.
         stale_started = time.monotonic()
         spin_for(1.2)  # Sensors continue; stop sending plans.
         stale = [c for c in commands if c["wall"] > stale_started + .65]

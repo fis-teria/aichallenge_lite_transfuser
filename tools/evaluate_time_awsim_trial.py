@@ -13,11 +13,13 @@ import numpy as np
 from aic_transfuser_lite.control.time_geometry_v2 import validate_time_geometry
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
 from aic_transfuser_lite.control.time_trial_v1 import time_trial_control, validate_trial_config
+from aic_transfuser_lite.control.awsim_steering import command_steering
 
 
 def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str, Any]],
                             rear_axle_forward_m: float, *,
-                            speed_policy: str = "source_capped_0p25") -> dict[str, Any]:
+                            speed_policy: str = "source_capped_0p25", obstacle_policy: str = "straight_v1",
+                            steering_policy: str = "identity_v1") -> dict[str, Any]:
     """Reproduce decisions from recorded raw predictions, poses, and measured speed.
 
     This covers the calculation before the separate output steering-rate clamp.
@@ -26,6 +28,11 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
     by_id = {p["plan_id"]: p for p in plans}
     matched = skipped = 0
     maximum_error = 0.
+    post_control_rejections: Counter[str] = Counter()
+    actuator_matched = 0
+    scan_reasons = {"OBSERVATION_POSE_MISSING", "FRESH_ALIGNED_SCAN_MISSING", "POSE_ENDPOINT_IDENTITY",
+                    "SCAN_FRAME", "SCAN_POSE_IDENTITY_OR_AGE", "SCAN_POSE_ALIGNMENT", "SCAN_CONTRACT",
+                    "SCAN_COVERAGE", "SCAN_UNKNOWN", "STOPPING_SWEEP_OCCUPIED", "SWEEP_VEHICLE_STATE"}
     for command in commands:
         details = command.get("details", {})
         if not command.get("plan_id") or not all(k in details for k in ("observation_pose", "current_pose")):
@@ -43,16 +50,39 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
                 raise ValueError("recorded rejection could not be reproduced") from exc
         else:
             if command["reason"] != "TIME_PATH_TRACKING":
-                raise ValueError("recorded admission could not be reproduced")
+                post_guard = obstacle_policy == "steering_sweep_v1" and command["reason"] in scan_reasons
+                actuator_rejected = (steering_policy == "awsim_grip_0p6_v1"
+                                     and command["reason"] == "STEERING_ACTUATOR_INFEASIBLE"
+                                     and abs(calculated["steer_rad"]) > .3)
+                if not (post_guard or actuator_rejected):
+                    raise ValueError("recorded admission could not be reproduced")
+                if not (command["target_speed_mps"] == 0 and command["acceleration_mps2"] < 0):
+                    raise ValueError("post-control rejection did not brake")
+                post_control_rejections[command["reason"]] += 1
             for key in ("steer_rad", "acceleration_mps2", "target_speed_mps", "reference_xy_rear_m"):
                 error = float(np.max(np.abs(np.asarray(calculated[key]) - np.asarray(details[key]))))
                 maximum_error = max(maximum_error, error)
-                if error > 1e-9:
+                if not np.isfinite(error) or error > 1e-9:
                     raise ValueError(f"recorded control differs: {key} error={error}")
+            if "steering_actuator" in details:
+                stored = details["steering_actuator"]
+                mapping = command_steering(calculated["steer_rad"], stored["previous_input_rad"],
+                                           stored["dt_s"], policy=steering_policy)
+                if stored["policy"] != steering_policy:
+                    raise ValueError("recorded steering policy differs")
+                for key, expected in mapping.items():
+                    if key != "policy" and (not np.isfinite(stored[key]) or abs(stored[key]-expected) > 1e-9):
+                        raise ValueError("recorded steering mapping differs: " + key)
+                if (command["reason"] == "TIME_PATH_TRACKING"
+                        and abs(command["steer_rad"]-mapping["issued_input_rad"]) > 1e-9):
+                    raise ValueError("recorded issued steering differs")
+                actuator_matched += 1
         matched += 1
     return {"status": "PASS" if matched else "NOT_RECORDED", "matched_commands": matched,
             "unavailable_commands": skipped, "maximum_absolute_error": maximum_error,
-            "tolerance": 1e-9, "scope": "geometry_and_PP_before_output_steering_rate_clamp"}
+            "tolerance": 1e-9, "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+            "post_control_rejections": dict(post_control_rejections), "actuator_mapping_matched": actuator_matched,
+            "scan_guard_decisions_replayed": False}
 
 
 def main() -> None:
@@ -125,7 +155,13 @@ def main() -> None:
                 or speed_policy != validate_trial_config(json.loads(config_bytes))
                 or speed_policy != host["speed_policy"]):
             raise ValueError("recorded runtime/config speed policy mismatch")
-    replay = replay_recorded_control(active, plans, publishers[0]["rear_axle_forward_m"], speed_policy=speed_policy)
+        config = json.loads(config_bytes)
+        for key, default in (("obstacle_policy", "straight_v1"), ("steering_policy", "identity_v1")):
+            if config.get(key, default) != publishers[0].get(key, default):
+                raise ValueError("recorded runtime/config mismatch: " + key)
+    replay = replay_recorded_control(active, plans, publishers[0]["rear_axle_forward_m"], speed_policy=speed_policy,
+        obstacle_policy=publishers[0].get("obstacle_policy", "straight_v1"),
+        steering_policy=publishers[0].get("steering_policy", "identity_v1"))
     late_speeds = [c["speed_mps"] for c in active if c["sim_ns"] >= end - 3_000_000_000 and c["speed_mps"] is not None]
     result = {"status": ("LAP_COMPLETED" if host.get("judge_lap_confirmed") and host["status"] == "COMPLETE_LAP" else "LAP_NOT_COMPLETED") if host["scope"] == "ONE_LAP_MODEL_TRIAL" else ("COMPLETED_NO_POSITIVE_DRIVE" if positive == 0 else "COMPLETED_POSITIVE_COMMANDS_OBSERVED"),
         "evaluator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),

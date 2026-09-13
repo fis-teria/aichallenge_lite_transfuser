@@ -22,6 +22,7 @@ from integrate_normal_rviz_v4 import ensure_time_path, follow_ego_view
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from aic_transfuser_lite.runtime.awsim_trial_session import JudgeLog, LowSpeedStall, trial_duration_limits
+from aic_transfuser_lite.control.awsim_steering import steering_asset_contract
 
 
 def sha(path: Path) -> str:
@@ -102,6 +103,10 @@ def main() -> None:
         scene = repo / "aichallenge/simulator/AWSIM/AWSIM_Data/level1"
         if sha(scene) != config["geometry"]["scene_sha256"]:
             raise RuntimeError("SCENE_GEOMETRY_IDENTITY_CHANGED")
+        asset_hashes = {name: sha(scene.parent.parent / name) for name in steering_asset_contract(config)}
+        if asset_hashes != steering_asset_contract(config):
+            raise RuntimeError("STEERING_ACTUATOR_ASSET_CHANGED")
+        result["steering_asset_sha256"] = asset_hashes
         checkpoint = deployment / "command_off_best.pt"
         if sha(checkpoint) != config["checkpoint_sha256"]:
             raise RuntimeError("CHECKPOINT_IDENTITY_CHANGED")

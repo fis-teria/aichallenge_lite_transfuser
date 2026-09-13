@@ -91,3 +91,59 @@ wall83.901s、cleanup error0。通常RViz購読rviz2、既存Compose39個保全�
 上限を満たせない場合は拒否。clock resetでbufferを破棄し、未来poseの外挿は行わない。
 非同期5msずれを再現するunit/ROS smokeを追加してから、別run ID `codex-time-turn-09`
 で再検証する。turn08の結果は保全し、自動再試行ではなくこの診断に基づく新しい判断。
+
+## turn09実行前確認
+
+source `75ca90b068f06c3daf1c3fc95f9849b902784553` をWindows/WSL同期済み。
+WSL full 2081passed/4skipped/63warnings (79.05s)。Humble build0.94s、
+5ms先着scanを含むROS smokeでguard正加速111、stale11/clock7/overspeed12、
+実モデルPath一致6、実車両topic publisher0、child exit0。9module source/install一致。
+新しい専有rootは `/home/graneple/e2e_autonomous/time_turning_aligned_20260913`、
+SOURCEはその中の `source_75ca90b`。旧installとturn08記録は元rootに保全。
+archive SHA256 `04517c277524629a471e544f033f42e3046aa09a0e868ba58deb418d7680eb49`。
+config/checkpointはturn08と同一hash。上記実行コマンドのdeployment/SOURCE/run IDを
+このroot/source/`codex-time-turn-09` に置き換えて1回実施する。有限枠は同じ。
+
+## turn09結果と操舵接続の診断
+
+turn09は発進29.244999346sim秒後に `CONTROL_STOPPING_SWEEP_OCCUPIED`、
+未完走。585回の連続追従でscan補間欠損は0回となり、非同期修正は有効。
+wall72.981s、outer exit1、cleanup error0、停止実測前にホストがfreeze終了。
+RViz購読rviz2、終了後active container0、既存Compose39個を保全。
+実速度最大1.301809907m/s (4.6865km/h)。最初の拒否は実操舵-0.040193655rad、
+候補入力-0.063965410rad、前回入力-0.070386117rad。
+47ファイルをremote→Windows→native WSLへhash検証して保全した。
+archive SHA256 `34e42442e5583123ff2f1387a4d72196729220d35c0e58341c0bed989c5a70a0`。
+
+原因所有層を操舵指令の単位変換へ絞る。実行中に読み込まれたvehicle.yamlは
+`gripSteerFactor: 0.6`。同一hashの実行DLLではAckermann rad→符号反転deg→
+入力上限30deg→0.6倍→遅延/応答処理→車輪へ設定し、reportは実車輪角をradへ戻す。
+現制御はPPの物理角をそのまま入力していた。WSLでturn09の320点を比較すると、
+0.15s遅れの最小二乗倍率0.599981934、0.6倍の平均絶対誤差0.000886415rad、
+倍率1では0.020714471rad。これは受信時刻の遅れも含む集計で、完全な動特性同定ではない。
+
+必要な変更: PPの物理角を0.6で割ってAWSIM入力へ変換する専用profileを追加する。
+既存入力上限±0.5rad、rate0.8rad/sを維持し、到達不能な物理角は明示拒否する。
+監視へは実操舵と、入力を0.6倍した物理目標角を渡す。AWSIMの設定/物理/重みや
+生の予測経路は変更しない。改善指標は要求物理角と実操舵の整合、および以前の
+コーナー入口通過。asset hashが違えば開始前に拒否し、旧profileで切り戻せる。
+左右の倍率・上限・rate・異常値のunit testと、非ゼロ操舵のROS shadowを通してから
+新規turn10を1回実施する。turn09の同条件再実行や監視しきい値の緩和はしない。
+
+記録評価器も、PP計算後の監視拒否をPP計算不一致と誤判定していたため修正する。
+数学計算の再現と、その後の監視で拒否した件数を別に示す。既存の失敗した
+`evaluation08/` は保全し、新しい出力先で再評価する。
+
+turn10設定: `configs/control/time_path_calibrated_turning_5kmh_20260913.json`。
+PPの許容物理角0.5radに対し、このAWSIMの入力上限0.5radで実現可能な物理角は0.3rad。
+0.3rad超は `STEERING_ACTUATOR_INFEASIBLE` として制動する。監視やPPの要求角自体を
+clampして隠さない。COMMAND_SENTのsteer_radは従来どおり送信入力で、detailsの
+steer_radはPPの要求物理角。steering_actuatorに倍率・rate適用後入力・物理目標を記録する。
+
+```bash
+bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -m pytest -q \
+  tests/test_awsim_steering.py tests/test_time_trial_replay.py tests/test_turning_scan_guard.py tests/test_time_trial_v1.py
+bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python tools/evaluate_time_awsim_trial.py \
+  --run /home/thistle/e2e_autonomous/runs/time_turning_20260913/codex-time-turn-09 \
+  --output /home/thistle/e2e_autonomous/runs/time_turning_20260913/evaluation09
+```

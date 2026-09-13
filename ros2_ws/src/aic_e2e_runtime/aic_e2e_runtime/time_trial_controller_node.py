@@ -14,6 +14,7 @@ import numpy as np
 
 from . import spatial_path_shadow_node_v4 as _source_layout
 from aic_transfuser_lite.control.long_sim_tracking_v4 import check_scan
+from aic_transfuser_lite.control.awsim_steering import command_steering, steering_response_gain
 from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, scan_pose_in_rear, select_aligned_scan
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
 from aic_transfuser_lite.control.time_trial_v1 import (
@@ -39,6 +40,7 @@ def main() -> None:
     config_sha = None
     execution_profile = "bounded_10s"
     obstacle_policy = "straight_v1"
+    steering_policy = "identity_v1"
     speed_policy = args.speed_policy or "source_capped_0p25"
     if args.trial_config is not None:
         config_bytes = args.trial_config.read_bytes()
@@ -46,11 +48,13 @@ def main() -> None:
         speed_policy = validate_trial_config(config)
         execution_profile = config.get("execution_profile", "bounded_10s")
         obstacle_policy = config.get("obstacle_policy", "straight_v1")
+        steering_policy = config.get("steering_policy", "identity_v1")
         if (config["checkpoint_sha256"] != args.checkpoint_sha256
                 or config["geometry"]["rear_axle_forward_in_base_link_m"] != args.rear_axle_forward_m):
             raise ValueError("TRIAL_CONFIG_IDENTITY")
         config_sha = hashlib.sha256(config_bytes).hexdigest()
     _, overspeed_limit_mps = trial_speed_limits(speed_policy)
+    steering_gain = steering_response_gain(steering_policy)
     drive_sim_s, drive_wall_s, _ = trial_duration_limits(execution_profile)
     live = args.authorize_awsim_only
     if live and args.synthetic_shadow_fixture:
@@ -143,6 +147,7 @@ def main() -> None:
                         "speed_policy": speed_policy, "overspeed_limit_mps": overspeed_limit_mps,
                         "trial_config_sha256": config_sha,
                         "obstacle_policy": obstacle_policy,
+                        "steering_policy": steering_policy, "steering_response_gain": steering_gain,
                         "execution_profile": execution_profile, "drive_limit_sim_s": drive_sim_s,
                         "rear_axle_forward_m": args.rear_axle_forward_m})
         reason = "WAIT_AUTHORIZATION" if live else "SHADOW_ONLY"
@@ -231,8 +236,10 @@ def main() -> None:
                                               speed_policy=speed_policy,
                                               rear_axle_offset_m=(args.rear_axle_forward_m, 0.)))
             steer = details["steer_rad"]; accel = details["acceleration_mps2"]; target = details["target_speed_mps"]
+            mapping = command_steering(steer, previous[0], dt, policy=steering_policy)
+            details["steering_actuator"] = mapping
+            steer = mapping["issued_input_rad"]
             if obstacle_policy == "steering_sweep_v1":
-                steer = float(np.clip(steer, previous[0] - .8*dt, previous[0] + .8*dt))
                 checking_scan = True
                 selected, captured = select_aligned_scan([(stamp(m.header.stamp), receipt) for m, receipt in scans],
                     poses, current, now_sim_ns=clock_ns, now_receipt_ns=now)
@@ -242,7 +249,8 @@ def main() -> None:
                 scan_alignment = scan_pose_in_rear(captured, current, args.rear_axle_forward_m)
                 guard = check_turning_scan(laser.ranges, laser.angle_min, laser.angle_increment,
                     laser.range_min, laser.range_max, speed_mps=speed, measured_steer_rad=measured_steer,
-                    issued_steer_rad=steer, scan_in_current_rear=scan_alignment, previous_steer_rad=previous[0])
+                    issued_steer_rad=mapping["issued_tire_target_rad"], scan_in_current_rear=scan_alignment,
+                    previous_steer_rad=mapping["previous_tire_target_rad"])
                 details["obstacle_guard"] = guard
                 details["scan_in_current_rear"] = scan_alignment
                 details["scan_stamp_ns"] = captured.stamp_ns
@@ -259,7 +267,9 @@ def main() -> None:
                         "current_pose": state["current_pose"], "pose_history": [p.__dict__ for p in poses],
                         "latest_plan_json": cache["plan"][0].data if "plan" in cache else None,
                         "obstacle_policy": obstacle_policy, "measured_steer_rad": measured_steer,
-                        "issued_steer_rad": steer, "previous_steer_rad": previous[0], "scan_in_current_rear": scan_alignment,
+                        "issued_steer_rad": steering_gain*steer, "previous_steer_rad": steering_gain*previous[0],
+                        "issued_input_steer_rad": steer, "previous_input_steer_rad": previous[0],
+                        "steering_policy": steering_policy, "scan_in_current_rear": scan_alignment,
                         "plan_admission": "NOT_CHECKED_AFTER_SCAN_REJECTION" if obstacle_policy == "straight_v1" else "IDENTITY_AND_CONTROL_CHECKED_BEFORE_SCAN"})
                 state["scan_rejection_recorded"] = True
             reason = str(exc); accel = -1.; target = 0.; steer = previous[0]

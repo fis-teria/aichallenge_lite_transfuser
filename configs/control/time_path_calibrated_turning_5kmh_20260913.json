@@ -1,0 +1,40 @@
+{
+  "scope": "BOUNDED_AWSIM_TRIAL_ONLY",
+  "host": "graneple@192.168.3.10",
+  "checkpoint_sha256": "e857db4b67d3d9f6a77c2865cfc1fa53e9903e7a1d2d8a371407fbe009a1a44f",
+  "checkpoint_epoch": 10,
+  "command_history": false,
+  "precision": "float32",
+  "camera_receipt_freeze_ns": 50000000,
+  "capture_clock": "sim",
+  "receipt_clock": "monotonic",
+  "geometry": {
+    "scene_file": "AWSIM_Data/level1",
+    "scene_sha256": "9ab2e1e8865c02885594e0bbdde372302530f047b5a2e89c455be6a18f3e090b",
+    "vehicle": "GoKart1",
+    "base_link_transform_path_id": 796,
+    "rear_wheel_transform_path_ids": [568, 756],
+    "base_link_forward_in_root_m": -0.48500001430511475,
+    "rear_axle_forward_in_root_m": -0.48399999737739563,
+    "rear_axle_forward_in_base_link_m": 0.0010000169277191162,
+    "wheelbase_m": 1.087,
+    "scope": "STATIC_SCENE_PLANAR_GEOMETRY_NOT_DYNAMIC_CALIBRATION"
+  },
+  "speed_policy": "fixed_5kmh",
+  "execution_profile": "one_lap",
+  "obstacle_policy": "steering_sweep_v1",
+  "steering_policy": "awsim_grip_0p6_v1",
+  "steering_asset_sha256": {
+    "AWSIM_Data/StreamingAssets/Vehicle/vehicle.yaml": "5b66e58691091c82d5511535ca458d4c89e85f3b59fa0d0c4a2c7eee47887244",
+    "AWSIM_Data/Managed/Assembly-CSharp.dll": "859e5560dbffd7d0833cd1fe5eb1f36b87fa8d22f6e45eb0e1203d04a1ea6d13"
+  },
+  "drive_limit_sim_s": 600.0,
+  "drive_limit_wall_s": 600.0,
+  "outer_limit_wall_s": 720.0,
+  "speed_cap_mps": 1.3888888888888888,
+  "overspeed_limit_mps": 1.6666666666666665,
+  "plan_max_age_s": 0.5,
+  "controller_wall_period_s": 0.05,
+  "stop_confirmation_speed_mps": 0.03,
+  "stop_confirmation_duration_sim_s": 1.0
+}
