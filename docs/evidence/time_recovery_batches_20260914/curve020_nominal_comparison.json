@@ -1,0 +1,89 @@
+{
+  "scope": "POST_HOC_DIAGNOSTIC_ONLY_ORIGINAL_ACCEPTANCE_GATES_UNCHANGED",
+  "nominal_runs": [
+    "codex-time-recovery-right020-r19",
+    "codex-time-recovery-left020-r20"
+  ],
+  "method": "Deduplicate identical capture poses, then linear interpolation of nominal measured lateral offset at matching baseline progress; average of two unperturbed passes; common progress range only, no extrapolation",
+  "note": "Separates shared tracking/projection offset from added perturbation; does not identify their individual causes or validate a model. Not a substitute acceptance metric.",
+  "records": [
+    {
+      "run_id": "codex-time-recovery-left020-r23",
+      "requested_offset_m": 0.2,
+      "phase_metrics": {
+        "hold": {
+          "samples": 113,
+          "matched_s_range_m": [
+            279.56431557884656,
+            285.50081659440224
+          ],
+          "raw_offset_median_m": 0.3575661957196137,
+          "nominal_matched_offset_median_m": 0.13247462824430822,
+          "delta_from_nominal_median_m": 0.2193860314391855,
+          "delta_from_nominal_max_absolute_m": 0.2327071401073821
+        },
+        "recovery": {
+          "samples": 106,
+          "matched_s_range_m": [
+            285.5432257786029,
+            291.4965865161219
+          ],
+          "raw_offset_median_m": 0.20224195693510783,
+          "nominal_matched_offset_median_m": 0.07809669085788168,
+          "delta_from_nominal_median_m": 0.11441987044401801,
+          "delta_from_nominal_max_absolute_m": 0.1903907814160384
+        },
+        "after": {
+          "samples": 93,
+          "matched_s_range_m": [
+            291.53821718678404,
+            296.47690333065674
+          ],
+          "raw_offset_median_m": -0.00948165192237669,
+          "nominal_matched_offset_median_m": 0.02143046798646616,
+          "delta_from_nominal_median_m": -0.024079083139812836,
+          "delta_from_nominal_max_absolute_m": 0.03152802050785662
+        }
+      }
+    },
+    {
+      "run_id": "codex-time-recovery-right020-r24",
+      "requested_offset_m": -0.2,
+      "phase_metrics": {
+        "hold": {
+          "samples": 111,
+          "matched_s_range_m": [
+            279.5825084199027,
+            285.49263056319506
+          ],
+          "raw_offset_median_m": -0.08532856693972463,
+          "nominal_matched_offset_median_m": 0.1357952184955657,
+          "delta_from_nominal_median_m": -0.22036884528031483,
+          "delta_from_nominal_max_absolute_m": 0.23247472966055766
+        },
+        "recovery": {
+          "samples": 108,
+          "matched_s_range_m": [
+            285.5352886132917,
+            291.50036474947933
+          ],
+          "raw_offset_median_m": -0.02529754103979236,
+          "nominal_matched_offset_median_m": 0.07967737625333042,
+          "delta_from_nominal_median_m": -0.11373204043469384,
+          "delta_from_nominal_max_absolute_m": 0.1914347838898972
+        },
+        "after": {
+          "samples": 96,
+          "matched_s_range_m": [
+            291.54138878479256,
+            296.47949358895045
+          ],
+          "raw_offset_median_m": 0.05243007234874246,
+          "nominal_matched_offset_median_m": 0.02087986711524574,
+          "delta_from_nominal_median_m": 0.024816884048558373,
+          "delta_from_nominal_max_absolute_m": 0.032182315489763205
+        }
+      }
+    }
+  ]
+}

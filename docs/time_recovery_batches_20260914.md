@@ -176,3 +176,20 @@ AWSIM側を移動済み案内へ置換後、空きは20.99GiB。
 判定と原本照合の証拠は第1組と同じprefix形式で `pair02_20260914_*` に保存した。
 地図と前方監視は `pair02_20260914_measured_margin.json`、比較対象の旧通常走行は
 `curve_baseline_margin_20260914.json`。同じ不成立条件の無目的な追加収集は行わない。
+
+補助診断として、旧r19/r20の同一右カーブ通常走行を、共通の基準sで補間して比較した。
+実測holdの通常走行からの変化は左+21.94cm/右-22.04cm、復帰後の通常走行との差は
+両側とも最大約3.2cm。右20cmにも意図した軌跡変化の情報がある。
+上表の-8.53cmは基準折線に対する絶対位置であり、通常走行に対する変化量ではない。
+両者を混同してデータ破損・車両が寄らなかったと判断しない。
+基準折線の頂点付近では、別のposeでもprojectionのsが同じになる場合を観測した。
+比較では同一capture poseの重複だけを除き、通常走行側はsの単調増加を確認した。
+約5mの復帰後窓のうち双方で記録された共通範囲のみ使用し、外挿していない。
+これは収集後の補助診断であり、事前の採用基準やprimary区分は変更していない。
+共通する追従誤差と投影の影響はこの比較だけでは個別に分離できない。
+証拠は `curve020_nominal_comparison.json`、再現手順は以下。
+
+```bash
+tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
+  docs/evidence/time_recovery_batches_20260914/compare_curves_to_nominal.py --pair 2
+```
