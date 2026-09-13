@@ -6,7 +6,7 @@ import pytest
 from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
 from aic_transfuser_lite.evaluation.time_clearance_v1 import PoseIndex
 from aic_transfuser_lite.evaluation.time_corner_comparison_v1 import (
-    RecordedLine, angle_delta, future_tracking_error, world_points)
+    RecordedLine, angle_delta, future_tracking_error, replay_observation_pose, world_points)
 
 
 def pose(t, x=0., y=0., yaw=0., epoch="0"):
@@ -95,3 +95,39 @@ def test_future_uses_observation_frame_and_no_extrapolation():
     assert result["polyline_endpoint"]
     with pytest.raises(ValueError, match="FUTURE_SHAPE_OR_HORIZON"):
         future_tracking_error(raw[:29], observed, line().index, 1., before_ns=3_000_000_000)
+
+
+def test_replay_teacher_observation_uses_declared_receipt_eligible_sources():
+    sources = [(pose(0, 10., yaw=3.13), 1000), (pose(20_000_000, 10.02, yaw=-3.13), 1030)]
+    actual = replay_observation_pose(sources, observation_ns=10_000_000, freeze_receipt_ns=1040)
+    assert actual.x_m == pytest.approx(10.01)
+    assert actual.yaw_rad == pytest.approx(math.pi)
+    with pytest.raises(ValueError, match="NOT_AVAILABLE_AT_FREEZE"):
+        replay_observation_pose(sources, observation_ns=10_000_000, freeze_receipt_ns=1020)
+    with pytest.raises(ValueError, match="DUPLICATE_SOURCE_STAMP"):
+        replay_observation_pose([(pose(0), 1000), (pose(0, 99.), 1001)], observation_ns=0, freeze_receipt_ns=1040)
+    with pytest.raises(ValueError, match="OBSERVATION_POSE_MISSING"):
+        replay_observation_pose(sources, observation_ns=100_000_000, freeze_receipt_ns=1040)
+
+
+def test_teacher_anchor_adapter_reads_odometry_ids_not_display_pose():
+    import importlib.util
+    from pathlib import Path
+    import sys
+    from types import SimpleNamespace as NS
+    tools_path = str(Path(__file__).parents[1]/"tools")
+    sys.path.insert(0, tools_path)
+    try:
+        spec = importlib.util.spec_from_file_location("corner_comparison", Path(tools_path)/"compare_time_corner_tracking.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+    finally:
+        sys.path.remove(tools_path)
+    class FakeBag:
+        def message(self, row_id):
+            assert row_id == 42
+            return NS(__msgtype__="nav_msgs/msg/Odometry", child_frame_id="base_link",
+                header=NS(frame_id="map", stamp=NS(sec=1, nanosec=0)),
+                pose=NS(pose=NS(position=NS(x=3., y=4.), orientation=NS(x=0., y=0., z=0., w=1.)))), 2000
+    actual = module.anchor_observation(FakeBag(), {"observation_pose_row_ids": [42], "observation_ns": 1_000_000_000, "freeze_ns": 2100})
+    assert (actual.x_m, actual.y_m) == (3., 4.)

@@ -22,13 +22,28 @@ from aic_transfuser_lite.control.time_trial_v1 import time_trial_control
 from aic_transfuser_lite.data.time_split_v1 import content_sha256, validate_time_split
 from aic_transfuser_lite.evaluation.time_clearance_v1 import PoseIndex
 from aic_transfuser_lite.evaluation.time_corner_comparison_v1 import (
-    RecordedLine, angle_delta, future_tracking_error, world_points)
-from compare_time_teacher_clearance import Bag, body_pose, records, read, sha, stamp, stats, write
+    RecordedLine, angle_delta, future_tracking_error, replay_observation_pose, world_points)
+from compare_time_teacher_clearance import Bag, records, read, sha, stamp, stats, write
 
 
 NOMINAL = ("5kmh_run03", "5kmh_run06", "8kmh_run06", "8kmh_run09")
 SAME_HOST = ("codex-time-recovery-right040-r22", "codex-time-recovery-left020-r23")
 PRIMARY = SAME_HOST[1]
+
+
+def anchor_observation(bag: Bag, anchor: dict[str, Any]) -> TimedBodyPose:
+    sources = []
+    ids = anchor["observation_pose_row_ids"]
+    if len(set(ids)) != len(ids):
+        raise ValueError("ANCHOR_POSE_DUPLICATE_ROW_ID")
+    for row_id in ids:
+        message, receipt = bag.message(row_id)
+        if message.__msgtype__ != "nav_msgs/msg/Odometry":
+            raise ValueError("ANCHOR_POSE_NOT_ODOMETRY")
+        p, q = message.pose.pose.position, message.pose.pose.orientation
+        sources.append((TimedBodyPose(stamp(message), "sim", "0", message.header.frame_id, message.child_frame_id,
+            p.x, p.y, math.atan2(2*(q.w*q.z+q.x*q.y), 1-2*(q.y*q.y+q.z*q.z))), receipt))
+    return replay_observation_pose(sources, observation_ns=anchor["observation_ns"], freeze_receipt_ns=anchor["freeze_ns"])
 
 
 def runtime_poses(path: Path) -> PoseIndex:
@@ -238,7 +253,7 @@ def main() -> None:
             try:
                 if not valid_inputs[i] or not masks[i].all():
                     raise ValueError("INPUT_OR_FULL_TEACHER_INVALID")
-                obs = bag.poses.at(a["observation_ns"])
+                obs = anchor_observation(bag, a)
                 pred = np.asarray(predictions[offsets[run_id]+i])
                 if not np.isfinite(pred).all():
                     raise ValueError("INVALID_SAVED_PREDICTION")
@@ -323,7 +338,7 @@ def main() -> None:
             raise ValueError("COVERAGE_ANCHOR_HASH_MISMATCH")
         rows = []
         for a in records(apath):
-            p = bag.poses.at(a["observation_ns"])
+            p = anchor_observation(bag, a)
             result = primary.project(np.array([p.x_m, p.y_m]), yaw_hint_rad=p.yaw_rad, max_distance_m=5.)
             rows.append({"anchor_id": a["anchor_id"], "progress_to_fault_m": result.progress_m-primary_center.progress_m,
                          "left_m": result.left_m, "map_xy_m": [p.x_m, p.y_m]})

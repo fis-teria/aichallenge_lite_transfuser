@@ -8,6 +8,7 @@ from typing import Sequence
 import numpy as np
 
 from ..control.time_reference_v1 import TimedBodyPose
+from ..control.time_trial_v1 import interpolate_body_pose
 from .time_clearance_v1 import PoseIndex, project_to_polyline
 
 
@@ -23,6 +24,25 @@ def world_points(xy_m: np.ndarray, pose: TimedBodyPose) -> np.ndarray:
         raise ValueError("POINTS_SHAPE_OR_NONFINITE")
     c, s = math.cos(pose.yaw_rad), math.sin(pose.yaw_rad)
     return xy @ np.array([[c, s], [-s, c]]) + [pose.x_m, pose.y_m]
+
+
+def replay_observation_pose(sources: Sequence[tuple[TimedBodyPose, int]], *,
+                            observation_ns: int, freeze_receipt_ns: int) -> TimedBodyPose:
+    """Use only the teacher anchor's recorded source IDs, with receipt eligibility.
+
+    Sources are (capture-stamped map/base_link pose, bag receipt nanoseconds).
+    Unrelated messages with the same stamp must not replace the recorded IDs.
+    """
+    if len(sources) not in (1, 2) or type(observation_ns) is not int or type(freeze_receipt_ns) is not int:
+        raise ValueError("ANCHOR_POSE_SOURCE_CONTRACT")
+    if any(type(receipt) is not int or receipt > freeze_receipt_ns for _, receipt in sources):
+        raise ValueError("ANCHOR_POSE_NOT_AVAILABLE_AT_FREEZE")
+    poses = [p for p, _ in sources]
+    if len({p.stamp_ns for p in poses}) != len(poses):
+        raise ValueError("ANCHOR_POSE_DUPLICATE_SOURCE_STAMP")
+    if any((p.world_frame, p.body_frame) != ("map", "base_link") for p in poses):
+        raise ValueError("ANCHOR_POSE_FRAME")
+    return interpolate_body_pose(poses, observation_ns)
 
 
 @dataclass(frozen=True)
