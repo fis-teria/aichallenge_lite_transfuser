@@ -244,3 +244,12 @@ failureのclock=139.200sに対して新着nominal=139.225s（25ms未来）、直
 元stamp/receiptを保持し、未来20ms、各roleのcapture/receipt期限、source/skew検査は変更しない。
 適格sampleがなければ従来どおり停止。poseも選択したstampの実測poseを使用し、新着の未来poseへすり替えない。
 この実測ケースとclock追従・期限切れを回帰テストに追加した。
+
+d79c0f2のWSL full pytestは2,212 passed / 4 skipped / 63 warnings（90.44s）。
+left020-r07は約178.5秒、s=160.34mまで走行しSTATE_FRAME_OR_CAPTURE_SKEWで停止、3秒停止確認・bag close成立。
+直前にcallbackが約140ms遅延し、最新clock=199.790s、pose=199.715sに対してvelocity/steering=199.640sだった。
+motion側のDDS depth5が古いreportを順に配送する構成を、clock同様のBEST_EFFORT/depth1へそろえる。
+受信後の有界historyは維持し、pose/velocity/steeringを独立に選ぶ代わりに、
+各capture/receipt期限と元の50ms skewを同時に満たす最新の実測3組を選ぶ。
+適格な組がなければ停止する。r07の記録済み前pose=199.630sは160ms古いため救済に使わない回帰テストも追加。
+未受信の補間値を作らず、時計・stale/skew閾値・車両/制御/監視パラメータは変更しない。

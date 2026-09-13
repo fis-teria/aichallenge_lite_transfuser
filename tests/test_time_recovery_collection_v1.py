@@ -5,6 +5,7 @@ import csv
 from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     PhaseWindow, TARGET_MPS, phase_at_s, project_course, recovery_teacher_mask, validate_nominal, load_pose_course,
     bounded_collection_command, reference_rows_with_wrap, check_collection_input_time, select_collection_input,
+    select_collection_motion,
 )
 
 
@@ -126,3 +127,36 @@ def test_inflight_future_nominal_keeps_fresh_original_sample_until_clock_catches
     assert select_collection_input('pose',[],now_sim_ns=1,now_wall_ns=1) is None
     with pytest.raises(ValueError,match='CONTRACT'):
         select_collection_input('nominal',[(-1,0)],now_sim_ns=1,now_wall_ns=1)
+
+
+def test_motion_snapshot_pairs_history_without_relaxing_capture_or_skew():
+    # Independently newest pose and steering disagree; previous measured pose
+    # still satisfies both the original capture limit and the velocity skew.
+    history = {'pose': [(960_000_000, 1_980_000_000), (1_015_000_000, 1_990_000_000)],
+               'velocity': [(950_000_000, 1_985_000_000)],
+               'steering': [(955_000_000, 1_985_000_000)]}
+    clocks = dict(now_sim_ns=1_000_000_000, now_wall_ns=2_000_000_000)
+    assert select_collection_motion(history, **clocks) == {'pose': 0, 'velocity': 0, 'steering': 0}
+    history['velocity'].append((995_000_000, 1_995_000_000))
+    assert select_collection_motion(history, **clocks) == {'pose': 1, 'velocity': 1, 'steering': 0}
+    assert select_collection_motion({}, **clocks) is None
+    assert select_collection_motion(history, **dict(clocks, now_sim_ns=1_200_000_000)) is None
+    assert select_collection_motion(history, **dict(clocks, now_wall_ns=2_300_000_001)) is None
+    with pytest.raises(ValueError, match='CONTRACT'):
+        select_collection_motion({'velocity': [(-1, 0)]}, **clocks)
+
+
+def test_r07_delayed_velocity_does_not_allow_expired_pose_to_mask_skew():
+    # Exact logged r07 stamps: latest velocity is nearly 150 ms old after a
+    # callback stall. The previously selected pose is now expired. Merely using
+    # the previous control row is unsafe; without another aligned sample stop.
+    history = {'pose': [(199_629_995_537, 36_672_731_339_470),
+                        (199_714_995_536, 36_672_895_675_317)],
+               'velocity': [(199_639_995_537, 36_672_896_074_905)],
+               'steering': [(199_639_995_537, 36_672_896_245_582)]}
+    clocks = dict(now_sim_ns=199_789_995_534, now_wall_ns=36_672_897_912_439)
+    assert select_collection_motion(history, **clocks) is None
+    # A synthetic, actually received aligned pose would be admissible, without
+    # altering any of the original stamps or admitting the expired pose.
+    history['pose'].append((199_674_995_537, 36_672_896_000_000))
+    assert select_collection_motion(history, **clocks) == {'pose': 2, 'velocity': 0, 'steering': 0}

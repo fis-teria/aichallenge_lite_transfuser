@@ -19,7 +19,7 @@ from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
 from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, select_aligned_scan, scan_pose_in_rear
 from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     TARGET_MPS, bounded_collection_command, check_collection_input_time, phase_at_s, project_course,
-    select_collection_input, validate_nominal,
+    select_collection_input, select_collection_motion, validate_nominal,
 )
 
 
@@ -109,20 +109,29 @@ def main() -> None:
                                       p.position.x, p.position.y, yaw))
 
     for role, (topic, kind, _) in topics.items():
-        node.create_subscription(kind, topic, lambda m, role=role: receive(role, m), qos_profile_sensor_data)
+        # A blocked callback must not replay five old motion reports against
+        # the latest /clock. Retain history after receipt, not in the DDS queue.
+        qos = (QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
+               if role in ('pose', 'velocity', 'steering', 'nominal') else qos_profile_sensor_data)
+        node.create_subscription(kind, topic, lambda m, role=role: receive(role, m), qos)
 
     def tick() -> None:
         nonlocal publisher, last_path_wall, last_pose_stamp
         now = time.monotonic_ns(); wall = time.monotonic(); dt = min(.1, max(0., wall-previous[1]))
         speed = None; fresh_velocity = False; details = {}; reason = 'STARTUP'; projection = None; current = None
-        inputs = dict(cache)
+        inputs = dict(cache); motion_selected = None; input_times = {}
         if clock_ns is not None:
             for role, history in histories.items():
-                selected = select_collection_input(role,
-                    [(stamp(m.stamp if role in ('nominal','steering') else m.header.stamp), receipt) for m,receipt in history],
+                input_times[role] = [(stamp(m.stamp if role in ('nominal','steering') else m.header.stamp), receipt)
+                                     for m,receipt in history]
+                selected = select_collection_input(role, input_times[role],
                     now_sim_ns=clock_ns, now_wall_ns=now)
                 if selected is not None:
                     inputs[role] = history[selected]
+            motion_selected = select_collection_motion(input_times, now_sim_ns=clock_ns, now_wall_ns=now)
+            if motion_selected is not None:
+                for role, selected in motion_selected.items():
+                    inputs[role] = histories[role][selected]
         angle, accel, target = previous[0], -1., 0.
         actual = names(final_topic)
         if publisher is None and not actual:
@@ -172,7 +181,7 @@ def main() -> None:
             pose_stamp = stamp(inputs['pose'][0].header.stamp)
             current = next(p for p in reversed(poses) if p.stamp_ns == pose_stamp)
             velocity = inputs['velocity'][0]; steering = inputs['steering'][0]; nominal, received = inputs['nominal']
-            if (velocity.header.frame_id != 'base_link'
+            if (motion_selected is None or velocity.header.frame_id != 'base_link'
                     or abs(current.stamp_ns-stamp(velocity.header.stamp)) > 50_000_000
                     or abs(stamp(steering.stamp)-stamp(velocity.header.stamp)) > 50_000_000):
                 raise ValueError('STATE_FRAME_OR_CAPTURE_SKEW')
@@ -244,6 +253,8 @@ def main() -> None:
             receipt_monotonic_ns=receipt, receipt_age_ns=now-receipt) for role,(m,receipt) in inputs.items()}
         row['latest_received_capture_ns'] = {role:stamp(m.stamp if role in ('nominal','steering') else m.header.stamp)
                                             for role,(m,receipt) in cache.items()}
+        if reason == 'STATE_FRAME_OR_CAPTURE_SKEW':
+            row['motion_history_ns'] = {role:input_times.get(role, []) for role in ('pose','velocity','steering')}
         serialized = json.dumps(row, allow_nan=False); log.write(serialized+'\n')
         phase_pub.publish(String(data=serialized))
         if poses and poses[-1].stamp_ns != last_pose_stamp:

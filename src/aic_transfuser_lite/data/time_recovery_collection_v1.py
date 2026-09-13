@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import csv
 import math
 from pathlib import Path
-from typing import Sequence
+from typing import Mapping, Sequence
 
 import numpy as np
 
@@ -57,6 +57,34 @@ def select_collection_input(role: str, capture_receipts_ns: Sequence[tuple[int, 
             continue
         usable.append((capture, receipt, i))
     return max(usable)[2] if usable else None
+
+
+def select_collection_motion(histories: Mapping[str, Sequence[tuple[int, int]]], *,
+                             now_sim_ns: int, now_wall_ns: int) -> dict[str, int] | None:
+    """Newest coherent measured motion triple, with unchanged 50 ms skew limits.
+
+    Prefer the newest admissible velocity, then the newest pose and steering
+    within its skew window. Every member must independently satisfy its capture
+    and receipt deadline. Return indices into the original bounded histories;
+    never interpolate, extrapolate, or alter a measurement's stamp.
+    """
+    usable: dict[str, list[tuple[int, int, int]]] = {}
+    for role in ('pose', 'velocity', 'steering'):
+        usable[role] = []
+        for i, (capture, receipt) in enumerate(histories.get(role, ())):
+            if select_collection_input(role, [(capture, receipt)],
+                    now_sim_ns=now_sim_ns, now_wall_ns=now_wall_ns) is not None:
+                usable[role].append((capture, receipt, i))
+    for velocity_stamp, _, velocity_index in sorted(usable['velocity'], reverse=True):
+        selected = {'velocity': velocity_index}
+        for role in ('pose', 'steering'):
+            aligned = [item for item in usable[role] if abs(item[0]-velocity_stamp) <= 50_000_000]
+            if not aligned:
+                break
+            selected[role] = max(aligned)[2]
+        if len(selected) == 3:
+            return selected
+    return None
 
 
 def load_pose_course(path: Path) -> tuple[MpcReferencePointV3, ...]:
