@@ -30,6 +30,8 @@ def trial_speed_limits(speed_policy: str) -> tuple[float, float]:
 def validate_trial_config(config: dict[str, Any]) -> str:
     """Reject descriptive JSON settings that disagree with this bounded runtime."""
     policy = config.get("speed_policy", "source_capped_0p25")
+    if type(config.get("record_vehicle_motion", False)) is not bool:
+        raise ValueError("TRIAL_MOTION_RECORDING_FLAG")
     steering_asset_contract(config)
     lookahead_policy = config.get("lookahead_policy", "fixed_1m_v1")
     if lookahead_policy not in LOOKAHEAD_POLICIES:

@@ -33,7 +33,7 @@ def main() -> None:
     args.output.mkdir(parents=True, exist_ok=False)
     import rclpy
     from rclpy.node import Node
-    from sensor_msgs.msg import Image, LaserScan
+    from sensor_msgs.msg import Image, Imu, LaserScan
     from nav_msgs.msg import Odometry, Path as RosPath
     from rosgraph_msgs.msg import Clock
     from std_msgs.msg import String
@@ -43,7 +43,8 @@ def main() -> None:
     rclpy.init(); node = Node("time_ros_fixture", enable_rosout=False)
     kinds = {"clock": ("/clock", Clock), "image": ("/sensing/camera/image_raw", Image),
              "scan": ("/sensing/lidar/scan", LaserScan), "velocity": ("/vehicle/status/velocity_status", VelocityReport),
-             "steering": ("/vehicle/status/steering_status", SteeringReport), "pose": ("/localization/kinematic_state", Odometry)}
+             "steering": ("/vehicle/status/steering_status", SteeringReport), "pose": ("/localization/kinematic_state", Odometry),
+             "imu": ("/sensing/imu/imu_raw", Imu)}
     pubs = {name: node.create_publisher(kind, topic, 10) for name, (topic, kind) in kinds.items()}
     paths = {}; plans = {}; commands = []
     def ns(stamp):
@@ -89,7 +90,11 @@ def main() -> None:
         t = round((100 + wall - start) * 1e9)
         clock = Clock(); set_stamp(clock.clock, t); pubs["clock"].publish(clock)
         velocity = VelocityReport(); set_stamp(velocity.header.stamp, t); velocity.header.frame_id = "base_link"
-        velocity.longitudinal_velocity = fixture_speed_mps; pubs["velocity"].publish(velocity)
+        velocity.longitudinal_velocity = fixture_speed_mps
+        velocity.heading_rate = .17; velocity.lateral_velocity = -.02
+        pubs["velocity"].publish(velocity)
+        imu = Imu(); set_stamp(imu.header.stamp, t); imu.header.frame_id = "tamagawa/imu_link"
+        imu.angular_velocity.z = .17; pubs["imu"].publish(imu)
         steering = SteeringReport(); set_stamp(steering.stamp, t); pubs["steering"].publish(steering)
         pose = Odometry(); set_stamp(pose.header.stamp, t); pose.header.frame_id = "map"; pose.child_frame_id = "base_link"
         pose.pose.pose.orientation.w = 1.; pose.pose.pose.position.x = .1 * (wall - start); pubs["pose"].publish(pose)
@@ -170,6 +175,21 @@ def main() -> None:
         positive = [c for c in commands if c["accel"] > 0 and abs(c["speed"]-expected_target) < 1e-5 and abs(c["steer"]) < 1e-8]
         if not positive:
             raise RuntimeError("ORACLE_DID_NOT_REACH_SHADOW_PP")
+        if fixture_config is not None and fixture_config.get("record_vehicle_motion", False):
+            motion = [json.loads(line) for line in (args.output/"oracle/vehicle_observations.jsonl").read_text().splitlines()]
+            observed = [r for r in motion if r["event"] == "VEHICLE_OBSERVATION"]
+            for role in ("imu", "velocity", "steering", "pose"):
+                selected = [r for r in observed if r["role"] == role]
+                if len(selected) < 5 or any(type(r["stamp_ns"]) is not int for r in selected):
+                    raise RuntimeError("MOTION_OBSERVATION_MISSING:" + role)
+            if (abs(next(r for r in observed if r["role"] == "imu")["angular_xyz_radps"][2]-.17) > 1e-6
+                    or abs(next(r for r in observed if r["role"] == "velocity")["longitudinal_lateral_mps_heading_radps"][2]-.17) > 1e-6):
+                raise RuntimeError("MOTION_ANGULAR_UNITS_OR_FIELDS")
+            sources = [r for r in motion if r["event"] == "MOTION_SOURCES"]
+            if not sources or any(v != ["/time_ros_fixture"] for v in sources[-1]["sources"].values()):
+                raise RuntimeError("MOTION_SOURCES_MISMATCH")
+            result["motion_observation_roles"] = sorted({r["role"] for r in observed})
+            result["motion_observation_count"] = len(observed)
         if fixture_config is not None and fixture_config.get("obstacle_policy") in ("steering_sweep_v1", "steering_support_v2"):
             records = [json.loads(line) for line in (args.output/"oracle/control.jsonl").read_text().splitlines()]
             expected_guard = ("CURVATURE_INTERVAL_SUPPORT_V2" if fixture_config["obstacle_policy"] == "steering_support_v2"

@@ -43,6 +43,7 @@ def main() -> None:
     obstacle_policy = "straight_v1"
     steering_policy = "identity_v1"
     lookahead_policy = "fixed_1m_v1"
+    record_vehicle_motion = False
     speed_policy = args.speed_policy or "source_capped_0p25"
     if args.trial_config is not None:
         config_bytes = args.trial_config.read_bytes()
@@ -52,6 +53,7 @@ def main() -> None:
         obstacle_policy = config.get("obstacle_policy", "straight_v1")
         steering_policy = config.get("steering_policy", "identity_v1")
         lookahead_policy = config.get("lookahead_policy", "fixed_1m_v1")
+        record_vehicle_motion = config.get("record_vehicle_motion", False)
         if (config["checkpoint_sha256"] != args.checkpoint_sha256
                 or config["geometry"]["rear_axle_forward_in_base_link_m"] != args.rear_axle_forward_m):
             raise ValueError("TRIAL_CONFIG_IDENTITY")
@@ -69,12 +71,13 @@ def main() -> None:
         raise ValueError("AWSIM_ONLY_REQUIRED")
     args.output.mkdir(parents=True, exist_ok=True)
     log = (args.output / "control.jsonl").open("x")
+    motion_log = (args.output / "vehicle_observations.jsonl").open("x", buffering=65536) if record_vehicle_motion else None
     import rclpy
     from rclpy.node import Node
     from rclpy.qos import qos_profile_sensor_data
     from std_msgs.msg import String
     from nav_msgs.msg import Odometry
-    from sensor_msgs.msg import LaserScan
+    from sensor_msgs.msg import Imu, LaserScan
     from rosgraph_msgs.msg import Clock
     from autoware_auto_vehicle_msgs.msg import VelocityReport, SteeringReport
     from autoware_auto_control_msgs.msg import AckermannControlCommand
@@ -106,6 +109,30 @@ def main() -> None:
         log.write(json.dumps({"monotonic_ns": time.monotonic_ns(), "sim_ns": clock_ns, **value}, allow_nan=False) + "\n")
         log.flush()
 
+    def observe_motion(role: str, message) -> None:
+        """Diagnostic observations only; never enter model/control admission."""
+        if motion_log is None:
+            return
+        row = {"event": "VEHICLE_OBSERVATION", "role": role, "epoch": str(epoch),
+               "receipt_monotonic_ns": time.monotonic_ns(), "received_sim_ns": clock_ns,
+               "stamp_ns": stamp(message.stamp if role == "steering" else message.header.stamp)}
+        if role != "steering":
+            row["frame"] = message.header.frame_id
+        if role == "velocity":
+            row["longitudinal_lateral_mps_heading_radps"] = encode_scan_values(
+                [message.longitudinal_velocity, message.lateral_velocity, message.heading_rate])
+        elif role == "steering":
+            row["tire_rad"] = encode_scan_values([message.steering_tire_angle])[0]
+        elif role == "imu":
+            a = message.angular_velocity
+            row["angular_xyz_radps"] = encode_scan_values([a.x, a.y, a.z])
+        elif role == "pose":
+            p, q = message.pose.pose.position, message.pose.pose.orientation
+            row["child_frame"] = message.child_frame_id
+            row["position_xyz_m"] = encode_scan_values([p.x, p.y, p.z])
+            row["quaternion_xyzw"] = encode_scan_values([q.x, q.y, q.z, q.w])
+        motion_log.write(json.dumps(row, allow_nan=False) + "\n")
+
     def on_clock(message) -> None:
         nonlocal clock_ns, clock_receipt, epoch, response_state
         t = stamp(message.clock)
@@ -123,6 +150,8 @@ def main() -> None:
 
     def receive(role, message) -> None:
         cache[role] = (message, time.monotonic_ns())
+        if role in ("velocity", "steering", "pose"):
+            observe_motion(role, message)
         if role == "scan":
             scans.append(cache[role])
         if role == "pose":
@@ -138,6 +167,15 @@ def main() -> None:
 
     for role, (input_topic, kind, _) in topics.items():
         node.create_subscription(kind, input_topic, lambda m, role=role: receive(role, m), qos_profile_sensor_data)
+    if motion_log is not None:
+        node.create_subscription(Imu, "/sensing/imu/imu_raw", lambda m: observe_motion("imu", m), qos_profile_sensor_data)
+        def record_motion_sources() -> None:
+            sources = {role: names(topics[role][0]) for role in ("velocity", "steering", "pose")}
+            sources["imu"] = names("/sensing/imu/imu_raw")
+            motion_log.write(json.dumps({"event": "MOTION_SOURCES", "sim_ns": clock_ns,
+                "monotonic_ns": time.monotonic_ns(), "epoch": str(epoch), "sources": sources}) + "\n")
+            motion_log.flush()
+        node.create_timer(1., record_motion_sources)
 
     def tick() -> None:
         nonlocal publisher, response_state
@@ -336,6 +374,8 @@ def main() -> None:
     except KeyboardInterrupt:
         pass
     finally:
+        if motion_log is not None:
+            motion_log.close()
         record({"event": "CONTROLLER_END", **state}); log.close(); node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()

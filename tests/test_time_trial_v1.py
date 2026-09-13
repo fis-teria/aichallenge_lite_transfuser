@@ -226,3 +226,12 @@ def test_stopping_preview_uses_speed_and_never_extends_raw_reference(speed):
     assert result['minimum_preview_distance_m'] == pytest.approx(minimum)
     assert minimum <= result['selected_lookahead_distance_m'] <= minimum+.5
     assert result['steer_rad'] == 0.
+def test_motion_recording_flag_is_diagnostic_and_explicit_boolean():
+    root = Path(__file__).parents[1]/"configs/control"
+    original = json.loads((root/"time_path_response_turning_5kmh_20260913.json").read_text())
+    recording = json.loads((root/"time_path_motion_audit_5kmh_20260913.json").read_text())
+    assert recording == {**original, "record_vehicle_motion": True}
+    assert validate_trial_config(recording) == validate_trial_config(original) == "fixed_5kmh"
+    for bad in ("true", 1, None):
+        with pytest.raises(ValueError, match="MOTION_RECORDING_FLAG"):
+            validate_trial_config({**recording, "record_vehicle_motion": bad})
