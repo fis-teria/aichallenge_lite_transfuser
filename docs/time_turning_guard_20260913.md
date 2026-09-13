@@ -63,8 +63,31 @@ timeout --signal=TERM --kill-after=10s 710s python3 SOURCE/tools/run_time_path_a
   --config configs/control/time_path_turning_5kmh_20260913.json </dev/null
 ```
 
-現在: 実装済み。`1c0cf319cd99c0dc0c40ce051bc64bfea5403fd4` をWindowsから同期し、
-native WSLの限定テスト33passed (0.31s)。次は新設定を実際に使うHumble接続smokeと全体テスト。
-まだホストへ適用・走行していない。
+現在: 実装・事前検証済み。`1c0cf319cd99c0dc0c40ce051bc64bfea5403fd4` の
+native WSL限定テスト33passed (0.31s)。実行sourceは
+`a2e05e2e81ee92a9f06bd8787ee7fccc6a24db26`、Windows/WSL同一commit。
+全体2080passed/4skipped/63warnings (85.27s)。Humble build0.92s。
+隔離ROS smokeは実モデルPath一致6、新しいsweep guardを通った合成正加速110、
+stale11/clock7/overspeed12の制動、実車両topic publisher0、child exit0。
+9個のsource/install module hash一致、checkpointは従来と同一。
+source archive SHA256 `949770aca53a28f09497503d4c0b6827b2c9c65c7ae24a1938c48142fbacd60a`、
+config SHA256 `d9033a4f15bc6b404cff0be2ab2c487cfd13537327448656b5db3914ae5c0085`。
+正式SOURCEは専有root内 `source_a2e05e2`。次は上記turn08を1回実施する。
 lap07には実操舵値が保存されていないため、新監視の完全な実測再計算とは称さない。
 今回から実操舵と使用した監視区間・元scan姿勢を記録する。
+
+## turn08: scanとposeの到着順序の不具合
+
+turn08は `STOPPED_NO_LAP`、`PROGRESS_STALLED` で停車確認後終了、outer exit1、
+wall83.901s、cleanup error0。通常RViz購読rviz2、既存Compose39個保全。
+コーナー監視の合否を判断できる走行には至らなかった。
+264回の `OBSERVATION_POSE_MISSING` は全てplanとPPの検証後のscan姿勢補間で発生。
+最新scanがpose callbackより先に届くと、その時刻の後側poseがなく補間不能になる。
+新規監視接続で導入した不具合で、制動/再発進を繰り返した。減速後に
+`STEERING_INFEASIBLE` 97回も記録されたが、まずscanの時刻同期を修正する。
+
+原因所有層: 新監視に渡すscanの選択。4件のbounded bufferから、最新pose履歴で
+補間可能な一番新しいscanを選ぶ。元timestampを保持し、既存のcapture150ms/receipt300ms
+上限を満たせない場合は拒否。clock resetでbufferを破棄し、未来poseの外挿は行わない。
+非同期5msずれを再現するunit/ROS smokeを追加してから、別run ID `codex-time-turn-09`
+で再検証する。turn08の結果は保全し、自動再試行ではなくこの診断に基づく新しい判断。

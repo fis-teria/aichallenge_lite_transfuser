@@ -61,6 +61,7 @@ def main() -> None:
     processes = []; streams = []; result = {"status": "FAILED", "scope": "ISOLATED_SYNTHETIC_ROS_NOT_AWSIM"}
     start = time.monotonic(); last_sensor = 0.; counter = 0
     fixture_speed_mps = .1
+    fixture_scan_offset_ns = 0
 
     def launch(module, extra, name):
         stream = (args.output / (name + ".log")).open("x"); streams.append(stream)
@@ -93,7 +94,7 @@ def main() -> None:
         pose = Odometry(); set_stamp(pose.header.stamp, t); pose.header.frame_id = "map"; pose.child_frame_id = "base_link"
         pose.pose.pose.orientation.w = 1.; pose.pose.pose.position.x = .1 * (wall - start); pubs["pose"].publish(pose)
         if counter % 5 == 0:
-            scan = LaserScan(); set_stamp(scan.header.stamp, t); scan.header.frame_id = "lidar" if fixture_config else "lidar_link"
+            scan = LaserScan(); set_stamp(scan.header.stamp, t+fixture_scan_offset_ns); scan.header.frame_id = "lidar" if fixture_config else "lidar_link"
             scan.angle_min = -float(np.pi); scan.angle_increment = float(2*np.pi/750)
             scan.angle_max = scan.angle_min + 749 * scan.angle_increment
             scan.range_min = .1; scan.range_max = 25.; scan.ranges = [25.] * 750; pubs["scan"].publish(scan)
@@ -140,6 +141,9 @@ def main() -> None:
         oracle_publisher = oracle.create_publisher(String, "/time_path/plan", 10)
         controller_settings = ["--speed-policy", args.speed_policy]
         if fixture_config is not None:
+            # Real scan/pose callbacks are asynchronous: the newest scan may
+            # not yet have a following pose endpoint at the control tick.
+            fixture_scan_offset_ns = 5_000_000
             fixture_config["checkpoint_sha256"] = "0"*64
             fixture_path = args.output/"oracle_trial_config.json"
             fixture_path.write_text(json.dumps(fixture_config))
@@ -167,6 +171,7 @@ def main() -> None:
             if not verified:
                 raise RuntimeError("SWEEP_GUARD_NOT_EXECUTED")
             result["sweep_guard_commands"] = len(verified)
+            result["scan_ahead_of_pose_ns"] = fixture_scan_offset_ns
         stale_started = time.monotonic()
         spin_for(1.2)  # Sensors continue; stop sending plans.
         stale = [c for c in commands if c["wall"] > stale_started + .65]

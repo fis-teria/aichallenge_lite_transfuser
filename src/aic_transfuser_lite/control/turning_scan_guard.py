@@ -9,11 +9,36 @@ The 0.5 s delay and 1 m/s^2 effective braking remain trial assumptions.
 from __future__ import annotations
 
 import math
-from typing import Any
+from typing import Any, Sequence
 
 import numpy as np
 
 from .time_reference_v1 import TimedBodyPose
+from .time_trial_v1 import interpolate_body_pose
+
+
+def select_aligned_scan(capture_receipts_ns: Sequence[tuple[int, int]], poses: Sequence[TimedBodyPose],
+                        current: TimedBodyPose, *, now_sim_ns: int, now_receipt_ns: int) -> tuple[int, TimedBodyPose]:
+    """Newest fresh scan with a bracketed capture pose; never extrapolate/relabel.
+
+    Candidate pairs are (original capture in sim ns, callback in monotonic ns).
+    A just-arrived scan may precede the next pose callback. Use an older scan
+    only while it still satisfies the existing 150 ms capture / 300 ms receipt
+    limits. The runtime bounds the history to four scans and clears on reset.
+    """
+    for index in sorted(range(len(capture_receipts_ns)), key=lambda i: capture_receipts_ns[i][0], reverse=True):
+        captured, received = capture_receipts_ns[index]
+        if (captured > current.stamp_ns or not -20_000_000 <= now_sim_ns-captured <= 150_000_000
+                or not 0 <= now_receipt_ns-received <= 300_000_000):
+            continue
+        try:
+            pose = interpolate_body_pose(poses, captured)
+        except ValueError as exc:
+            if str(exc) != "OBSERVATION_POSE_MISSING":
+                raise
+            continue
+        return index, pose
+    raise ValueError("FRESH_ALIGNED_SCAN_MISSING")
 
 
 def scan_pose_in_rear(captured: TimedBodyPose, current: TimedBodyPose,

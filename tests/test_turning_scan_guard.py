@@ -6,7 +6,7 @@ import pytest
 
 from aic_transfuser_lite.control.long_sim_tracking_v4 import check_scan
 from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
-from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, scan_pose_in_rear, stopping_sweep
+from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, scan_pose_in_rear, select_aligned_scan, stopping_sweep
 
 
 ANGLES = np.linspace(-math.pi/2, math.pi/2, 751)
@@ -113,3 +113,18 @@ def test_varying_steering_trajectory_is_contained_by_sampled_interval_tube():
         reference = poses[i, :2]+np.array([1.984*np.cos(poses[i, 2])-.85*np.sin(poses[i, 2]),
                                          1.984*np.sin(poses[i, 2])+.85*np.cos(poses[i, 2])])
         assert np.linalg.norm(corner-reference) <= inflate[i]+1e-8
+
+
+def test_async_scan_selects_newest_bracketed_fresh_capture_without_restamping():
+    poses = [TimedBodyPose(t*1_000_000, 'sim', '0', 'map', 'base_link', t/1000., 0., 0.) for t in (100, 150, 200)]
+    # Newest scan at 205 ms arrived before its following pose callback.
+    captures = [(105_000_000, 1_100_000_000), (205_000_000, 1_200_000_000)]
+    index, capture = select_aligned_scan(captures, poses, poses[-1], now_sim_ns=200_000_000, now_receipt_ns=1_200_000_000)
+    assert index == 0 and capture.stamp_ns == 105_000_000 and capture.x_m == pytest.approx(.105)
+    next_pose = replace(poses[-1], stamp_ns=220_000_000, x_m=.220)
+    index, capture = select_aligned_scan(captures, [*poses, next_pose], next_pose, now_sim_ns=220_000_000, now_receipt_ns=1_220_000_000)
+    assert index == 1 and capture.stamp_ns == 205_000_000
+    with pytest.raises(ValueError, match='FRESH_ALIGNED_SCAN_MISSING'):
+        select_aligned_scan(captures[:1], poses, poses[-1], now_sim_ns=300_000_000, now_receipt_ns=1_300_000_000)
+    with pytest.raises(ValueError, match='FRESH_ALIGNED_SCAN_MISSING'):
+        select_aligned_scan(captures[:1], poses, poses[-1], now_sim_ns=200_000_000, now_receipt_ns=1_500_000_000)

@@ -14,7 +14,7 @@ import numpy as np
 
 from . import spatial_path_shadow_node_v4 as _source_layout
 from aic_transfuser_lite.control.long_sim_tracking_v4 import check_scan
-from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, scan_pose_in_rear
+from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, scan_pose_in_rear, select_aligned_scan
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
 from aic_transfuser_lite.control.time_trial_v1 import (
     SPEED_POLICIES, interpolate_body_pose, time_trial_control, trial_speed_limits, validate_trial_config,
@@ -81,6 +81,7 @@ def main() -> None:
     epoch = 0
     cache = {}
     poses: deque[TimedBodyPose] = deque(maxlen=256)
+    scans: deque[tuple[LaserScan, int]] = deque(maxlen=4)
     previous = [0., time.monotonic()]
     state = {"fault": None, "armed_ns": None, "armed_wall": None, "stop_since_ns": None,
              "stop_confirmed": False, "positive_count": 0, "commands": 0, "max_speed_mps": 0.,
@@ -101,7 +102,7 @@ def main() -> None:
         nonlocal clock_ns, clock_receipt, epoch
         t = stamp(message.clock)
         if clock_ns is not None and t < clock_ns:
-            state["fault"] = "CLOCK_RESET"; epoch += 1; poses.clear(); cache.clear()
+            state["fault"] = "CLOCK_RESET"; epoch += 1; poses.clear(); scans.clear(); cache.clear()
         clock_ns = t; clock_receipt = time.monotonic_ns()
 
     node.create_subscription(Clock, "/clock", on_clock, 10)
@@ -113,6 +114,8 @@ def main() -> None:
 
     def receive(role, message) -> None:
         cache[role] = (message, time.monotonic_ns())
+        if role == "scan":
+            scans.append(cache[role])
         if role == "pose":
             p = message.pose.pose; q = p.orientation
             if (message.header.frame_id != "map" or message.child_frame_id != "base_link"
@@ -231,15 +234,18 @@ def main() -> None:
             if obstacle_policy == "steering_sweep_v1":
                 steer = float(np.clip(steer, previous[0] - .8*dt, previous[0] + .8*dt))
                 checking_scan = True
+                selected, captured = select_aligned_scan([(stamp(m.header.stamp), receipt) for m, receipt in scans],
+                    poses, current, now_sim_ns=clock_ns, now_receipt_ns=now)
+                laser = scans[selected][0]
                 if laser.header.frame_id != "lidar":
                     raise ValueError("SCAN_FRAME")
-                captured = interpolate_body_pose(poses, stamp(laser.header.stamp))
                 scan_alignment = scan_pose_in_rear(captured, current, args.rear_axle_forward_m)
                 guard = check_turning_scan(laser.ranges, laser.angle_min, laser.angle_increment,
                     laser.range_min, laser.range_max, speed_mps=speed, measured_steer_rad=measured_steer,
                     issued_steer_rad=steer, scan_in_current_rear=scan_alignment, previous_steer_rad=previous[0])
                 details["obstacle_guard"] = guard
                 details["scan_in_current_rear"] = scan_alignment
+                details["scan_stamp_ns"] = captured.stamp_ns
                 details["clearance_m"] = guard["minimum_ray_margin_m"]
                 checking_scan = False
             plan_id = plan.plan_id; reason = "TIME_PATH_TRACKING" if live else "SHADOW_CONTROL"
