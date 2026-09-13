@@ -42,7 +42,7 @@ ONはBF16からfloat32への変更で3秒誤差が約0.00991m増えたため、�
 - `accepted_*`はoffline選択flagに基づく値で、Safety Supervisorの採用率や実走行安全性を表さない。
 - 両方のbest checkpointをCUDAで再ロードし、全validation予測が保存epochと完全一致した。
 - 学習・各epoch検証・best再読込検証を含む時間はOFF 5,882.51秒、ON 5,833.27秒、合計約195.3分。
-- report CLIが完了epoch数、有限予算、teacher identity、選択epoch、保存/再読込metricsを再照合。最終のWSL `pytest -q`は **2,001 passed / 4 skipped / 63 warnings**（79.28秒）。
+- report CLIが完了epoch数、有限予算、teacher identity、選択epoch、保存/再読込metricsを再照合。最終コード`de164a5`のWSL `pytest -q`は **2,001 passed / 4 skipped / 63 warnings**（79.28秒）。
 
 ![検証誤差の推移](evidence/time_path_p1_training_20260913/validation_curves.png)
 
@@ -142,7 +142,7 @@ WSLのPyTorch2.7.1+cu128、RTX4080 16GB。モデル12,251,426パラメータ。
 ## 実行確認
 
 - 学習コード: `2137dab87037636441587add6cfa36508db93696`。
-- WSL全体pytest: **1,987 passed / 4 skipped / 63 warnings**（75.19秒）。
+- 学習開始前のコード`2137dab`でのWSL全体pytest: **1,987 passed / 4 skipped / 63 warnings**（75.19秒）。これは前段の実行結果であり、report/precision CLI追加後の最終再検証は上記`de164a5`の2,001 passed。
 - CPU合成データの有限2epochを途中で中断し、optimizer/scheduler/RNG/cursor復元後の検証予測が連続実行と全件完全一致する回帰テストを実施済み。CUDA学習の中断再開完全一致を検証したという意味ではない。
 - cache identity: `f8ac104391d7a7c483d53aa06fcf058bc06cc6a5a540c6b940d1b4db821f75f5`。
 - train/validationの16周全件の採否照合と、各周2アンカーの実センサ再構成で全input tensorの完全一致を確認。
