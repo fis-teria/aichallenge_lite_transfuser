@@ -1,0 +1,2390 @@
+{
+  "scope": "OFFLINE_MATCHED_SECTION_NOT_CLOSED_LOOP_OR_COLLISION_PROOF",
+  "test_evaluated": false,
+  "retraining": false,
+  "runtime_modified": false,
+  "section_half_arc_m": 12.0,
+  "common_speed_mps": 1.2858836650848389,
+  "cache_manifest_sha256": "f8ac104391d7a7c483d53aa06fcf058bc06cc6a5a540c6b940d1b4db821f75f5",
+  "checkpoint_sha256": "e857db4b67d3d9f6a77c2865cfc1fa53e9903e7a1d2d8a371407fbe009a1a44f",
+  "predictions_sha256": "ea95247fb4666ea8cde5f58c8e98de3bd84f660be587ad4cbd19ee362d3b6e32",
+  "control_sha256": "e85af7a28b84a224ce8a71659212b0fea53306b8d830e0a284afb57e0cc3dddd",
+  "fault_pose": {
+    "stamp_ns": 114344997444,
+    "clock": "sim",
+    "epoch": "0",
+    "world_frame": "map",
+    "body_frame": "base_link",
+    "x_m": 89634.8201949727,
+    "y_m": 43161.26219578389,
+    "yaw_rad": 2.3523718279493626
+  },
+  "runs": {
+    "5kmh_run01": {
+      "split": "train",
+      "input_hashes": {
+        "anchors.jsonl": "f05e8487b4a10bd2936e1945de285834086d7be8ee625b067abd704cf6fd7403",
+        "labels.npz": "1f8485a9e2ea28d4b23dc47d30f35e9b6d32eef3dc160cbf6115bf42955155a7",
+        "inputs.npz": "26048da4222cdefc358f3d0d34be1860575808ab519c81b64d3e17825d0e52c1",
+        "bag_0.db3": "27e9ed05ab4c453bb7be689e3996fdf4daf8420858cb028524910b355fa56d84"
+      },
+      "tf_static": {
+        "map->viewer": {
+          "xyz_m": [
+            89648.53366311034,
+            43155.796682459295,
+            6.5
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "base_link->camera_link": {
+          "xyz_m": [
+            0.8,
+            0.0,
+            0.7
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "camera_link->camera_optical_link": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.5,
+            -0.4999999999999999,
+            0.5,
+            -0.5000000000000001
+          ]
+        },
+        "sensor_kit_base_link->gnss_link": {
+          "xyz_m": [
+            -0.26,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "sensor_kit_base_link->imu_link": {
+          "xyz_m": [
+            0.85,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            -0.7071067811883519,
+            0.7071067811847432
+          ]
+        },
+        "base_link->lidar_base_link": {
+          "xyz_m": [
+            1.65,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "lidar_base_link->lidar": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0377
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "base_link->sensor_kit_base_link": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      },
+      "ambiguous_pose_stamps": 21,
+      "selection_counts": {
+        "EVALUATED": 265,
+        "AMBIGUOUS_POSE_STAMP": 1
+      },
+      "fault_to_teacher_projection": {
+        "distance_m": 0.8473943115580341,
+        "left_distance_m": 0.8473943115580341,
+        "nearest_xy_m": [
+          89635.48953618361,
+          43161.781868240956
+        ],
+        "segment_index": 737,
+        "fraction": 0.4054539362592785
+      },
+      "nearest_teacher_pose": {
+        "stamp_ns": 139564996880,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89635.4939245612,
+        "y_m": 43161.776215984544,
+        "yaw_rad": 2.2309766774446955
+      },
+      "speed_mps": {
+        "count": 265,
+        "min": 0.6916576027870178,
+        "median": 0.8832952380180359,
+        "p95": 0.976244044303894,
+        "max": 0.987121045589447,
+        "mean": 0.8619250988060574
+      },
+      "ade_m": {
+        "count": 0
+      },
+      "fde3s_m": {
+        "count": 0
+      },
+      "comparisons": {
+        "actual_speed/observed_steer": {
+          "counts": {
+            "PASS": 265
+          },
+          "ray_margin_m": {
+            "count": 265,
+            "min": 0.2421362026322499,
+            "median": 1.2812409550423114,
+            "p95": 2.09079398289138,
+            "max": 2.1725429229977875,
+            "mean": 1.191171883190089
+          }
+        },
+        "actual_speed/teacher_pp": {
+          "counts": {
+            "PASS": 265
+          },
+          "ray_margin_m": {
+            "count": 265,
+            "min": 0.23943117893449295,
+            "median": 1.2804904621073647,
+            "p95": 2.0843738161905354,
+            "max": 2.1725429229977875,
+            "mean": 1.1853966045491238
+          }
+        },
+        "common_speed/observed_steer": {
+          "counts": {
+            "PASS": 265
+          },
+          "ray_margin_m": {
+            "count": 265,
+            "min": 0.22840106140961836,
+            "median": 1.2332322321459959,
+            "p95": 2.016608151991021,
+            "max": 2.0885314682174414,
+            "mean": 1.152526188781328
+          }
+        },
+        "common_speed/teacher_pp": {
+          "counts": {
+            "PASS": 265
+          },
+          "ray_margin_m": {
+            "count": 265,
+            "min": 0.2259716923948366,
+            "median": 1.2332322321459959,
+            "p95": 2.0157233355659367,
+            "max": 2.0766939794985664,
+            "mean": 1.1452668305688798
+          }
+        }
+      },
+      "nearest_evaluated_anchor": {
+        "anchor_id": "5kmh_run01:epoch0000:139539996881",
+        "observation_ns": 139539996881,
+        "progress_m": -0.02445909240222477,
+        "label_index": 1281,
+        "pose": {
+          "stamp_ns": 139539996881,
+          "clock": "sim",
+          "epoch": "0",
+          "world_frame": "map",
+          "body_frame": "base_link",
+          "x_m": 89635.50871816989,
+          "y_m": 43161.756738436234,
+          "yaw_rad": 2.230415236318945
+        },
+        "speed_mps": 0.8817718029022217,
+        "rear_lateral_mps": 0.009380096886116074,
+        "scan_capture_ns": 139536297574,
+        "scan_row_id": 94387,
+        "results": {
+          "actual_speed": {
+            "observed_steer": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3913874025877062
+            },
+            "teacher_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3913874025877062,
+              "pp_physical_steer_rad": 0.010610322530604406,
+              "lookahead_rear_m": [
+                1.2468115091323853,
+                0.007350945379585028
+              ]
+            }
+          },
+          "common_speed": {
+            "observed_steer": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3128313082649623
+            },
+            "teacher_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3128313082649623,
+              "pp_physical_steer_rad": 0.016640256097471273,
+              "lookahead_rear_m": [
+                1.9018886089324951,
+                0.02592008002102375
+              ]
+            }
+          }
+        },
+        "reason": "EVALUATED"
+      }
+    },
+    "5kmh_run02": {
+      "split": "train",
+      "input_hashes": {
+        "anchors.jsonl": "a889a2154c1ef27938d684c761bb019be5ad413020940c32d1e179bfbc7b3c08",
+        "labels.npz": "0b4c0f03c3d320590460f731041a79e3db75370da8d3ea3ac1ad1ccf9adaefcd",
+        "inputs.npz": "8ab60c75d65553753423736edf52aaeeab98068fb3e5d8a5fa8d521992fb46cc",
+        "bag_0.db3": "8d9b745a1af014168de9163df8767f2d9a30d036c544a280ecf5c39ef4fd4214"
+      },
+      "tf_static": {
+        "map->viewer": {
+          "xyz_m": [
+            89648.53366311034,
+            43155.796682459295,
+            6.5
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "base_link->camera_link": {
+          "xyz_m": [
+            0.8,
+            0.0,
+            0.7
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "camera_link->camera_optical_link": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.5,
+            -0.4999999999999999,
+            0.5,
+            -0.5000000000000001
+          ]
+        },
+        "sensor_kit_base_link->gnss_link": {
+          "xyz_m": [
+            -0.26,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "sensor_kit_base_link->imu_link": {
+          "xyz_m": [
+            0.85,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            -0.7071067811883519,
+            0.7071067811847432
+          ]
+        },
+        "base_link->lidar_base_link": {
+          "xyz_m": [
+            1.65,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "lidar_base_link->lidar": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0377
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "base_link->sensor_kit_base_link": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      },
+      "ambiguous_pose_stamps": 11,
+      "selection_counts": {
+        "EVALUATED": 265
+      },
+      "fault_to_teacher_projection": {
+        "distance_m": 0.8465110631401609,
+        "left_distance_m": 0.8465110631401609,
+        "nearest_xy_m": [
+          89635.49354941718,
+          43161.7752014097
+        ],
+        "segment_index": 735,
+        "fraction": 1.0
+      },
+      "nearest_teacher_pose": {
+        "stamp_ns": 139404996884,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89635.49354941718,
+        "y_m": 43161.7752014097,
+        "yaw_rad": 2.231141391012511
+      },
+      "speed_mps": {
+        "count": 265,
+        "min": 0.6912362575531006,
+        "median": 0.8839099407196045,
+        "p95": 0.975819981098175,
+        "max": 0.9867556691169739,
+        "mean": 0.8618267905037358
+      },
+      "ade_m": {
+        "count": 0
+      },
+      "fde3s_m": {
+        "count": 0
+      },
+      "comparisons": {
+        "actual_speed/observed_steer": {
+          "counts": {
+            "PASS": 265
+          },
+          "ray_margin_m": {
+            "count": 265,
+            "min": 0.22368030464413247,
+            "median": 1.2663618249390223,
+            "p95": 2.068517817192143,
+            "max": 2.1597032829446734,
+            "mean": 1.180443506867028
+          }
+        },
+        "actual_speed/teacher_pp": {
+          "counts": {
+            "PASS": 265
+          },
+          "ray_margin_m": {
+            "count": 265,
+            "min": 0.22142502959671984,
+            "median": 1.265953288086068,
+            "p95": 2.067574026654471,
+            "max": 2.152623422532989,
+            "mean": 1.174576103119481
+          }
+        },
+        "common_speed/observed_steer": {
+          "counts": {
+            "PASS": 265
+          },
+          "ray_margin_m": {
+            "count": 265,
+            "min": 0.21029180392843005,
+            "median": 1.2378772382916665,
+            "p95": 2.0079801333585254,
+            "max": 2.0764971914612183,
+            "mean": 1.141906503495379
+          }
+        },
+        "common_speed/teacher_pp": {
+          "counts": {
+            "PASS": 265
+          },
+          "ray_margin_m": {
+            "count": 265,
+            "min": 0.20804962638206193,
+            "median": 1.2371280726185212,
+            "p95": 2.0068355073815223,
+            "max": 2.0699303959227566,
+            "mean": 1.1345064824725484
+          }
+        }
+      },
+      "nearest_evaluated_anchor": {
+        "anchor_id": "5kmh_run02:epoch0000:139434996883",
+        "observation_ns": 139434996883,
+        "progress_m": 0.018039905984011284,
+        "label_index": 1281,
+        "pose": {
+          "stamp_ns": 139434996883,
+          "clock": "sim",
+          "epoch": "0",
+          "world_frame": "map",
+          "body_frame": "base_link",
+          "x_m": 89635.4827436749,
+          "y_m": 43161.789646967554,
+          "yaw_rad": 2.2314954564680236
+        },
+        "speed_mps": 0.8854910731315613,
+        "rear_lateral_mps": 0.009025730704908752,
+        "scan_capture_ns": 139390606992,
+        "scan_row_id": 94300,
+        "results": {
+          "actual_speed": {
+            "observed_steer": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.373959047133562
+            },
+            "teacher_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.373959047133562,
+              "pp_physical_steer_rad": 0.010045929979970397,
+              "lookahead_rear_m": [
+                1.2680217027664185,
+                0.0071967970579862595
+              ]
+            }
+          },
+          "common_speed": {
+            "observed_steer": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.2956713154664428
+            },
+            "teacher_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.2956713154664428,
+              "pp_physical_steer_rad": 0.015859690516227015,
+              "lookahead_rear_m": [
+                1.9056655168533325,
+                0.024801814928650856
+              ]
+            }
+          }
+        },
+        "reason": "EVALUATED"
+      }
+    },
+    "5kmh_run03": {
+      "split": "validation",
+      "input_hashes": {
+        "anchors.jsonl": "4bd0b43773bd0da41f13ab0596e497ea84ef1a574d9775a72e25b017ff767d49",
+        "labels.npz": "ab0e3f6b4c2ee4a067580196fe05b661852ff7d7992e438c0bacda74c7b65854",
+        "inputs.npz": "b59d95bc2329bb2edd14717f300dfcf795839791bb9fe04c3314f403d3090180",
+        "bag_0.db3": "8a2e823cb2f8ba634ba16d54073d9e449c6404d67adc5028e0509f87a663a558"
+      },
+      "tf_static": {
+        "map->viewer": {
+          "xyz_m": [
+            89648.53366311034,
+            43155.796682459295,
+            6.5
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "base_link->camera_link": {
+          "xyz_m": [
+            0.8,
+            0.0,
+            0.7
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "camera_link->camera_optical_link": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.5,
+            -0.4999999999999999,
+            0.5,
+            -0.5000000000000001
+          ]
+        },
+        "sensor_kit_base_link->gnss_link": {
+          "xyz_m": [
+            -0.26,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "sensor_kit_base_link->imu_link": {
+          "xyz_m": [
+            0.85,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            -0.7071067811883519,
+            0.7071067811847432
+          ]
+        },
+        "base_link->lidar_base_link": {
+          "xyz_m": [
+            1.65,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "lidar_base_link->lidar": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0377
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "base_link->sensor_kit_base_link": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      },
+      "ambiguous_pose_stamps": 13,
+      "selection_counts": {
+        "EVALUATED": 264,
+        "AMBIGUOUS_POSE_STAMP": 1
+      },
+      "fault_to_teacher_projection": {
+        "distance_m": 0.8468114369856194,
+        "left_distance_m": 0.8468114369856194,
+        "nearest_xy_m": [
+          89635.48910071662,
+          43161.78147866976
+        ],
+        "segment_index": 736,
+        "fraction": 0.15320698161830593
+      },
+      "nearest_teacher_pose": {
+        "stamp_ns": 139534996881,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89635.49075797609,
+        "y_m": 43161.77934389811,
+        "yaw_rad": 2.230928660806907
+      },
+      "speed_mps": {
+        "count": 264,
+        "min": 0.6912633180618286,
+        "median": 0.8828336000442505,
+        "p95": 0.975250193476677,
+        "max": 0.9866471290588379,
+        "mean": 0.8612401092594321
+      },
+      "ade_m": {
+        "count": 264,
+        "min": 0.004010006785392761,
+        "median": 0.008913785684853792,
+        "p95": 0.02194482702761888,
+        "max": 0.03272411972284317,
+        "mean": 0.010142182523850352
+      },
+      "fde3s_m": {
+        "count": 264,
+        "min": 0.006121510174125433,
+        "median": 0.024899587966501713,
+        "p95": 0.06087977681308983,
+        "max": 0.09101247787475586,
+        "mean": 0.028610131976716784
+      },
+      "comparisons": {
+        "actual_speed/observed_steer": {
+          "counts": {
+            "PASS": 264
+          },
+          "ray_margin_m": {
+            "count": 264,
+            "min": 0.24783778210845597,
+            "median": 1.291443622136546,
+            "p95": 2.0907771380351723,
+            "max": 2.1790881974202225,
+            "mean": 1.1988023258620433
+          }
+        },
+        "actual_speed/teacher_pp": {
+          "counts": {
+            "PASS": 264
+          },
+          "ray_margin_m": {
+            "count": 264,
+            "min": 0.24599520122441376,
+            "median": 1.290785418114703,
+            "p95": 2.089539251095306,
+            "max": 2.1696041994994957,
+            "mean": 1.193050633797156
+          }
+        },
+        "actual_speed/model_pp": {
+          "counts": {
+            "PASS": 264
+          },
+          "ray_margin_m": {
+            "count": 264,
+            "min": 0.245889012173223,
+            "median": 1.291271307519098,
+            "p95": 2.0846536676890657,
+            "max": 2.1755003213942774,
+            "mean": 1.1907695941233947
+          }
+        },
+        "common_speed/observed_steer": {
+          "counts": {
+            "PASS": 264
+          },
+          "ray_margin_m": {
+            "count": 264,
+            "min": 0.23448392641795734,
+            "median": 1.2413545285321788,
+            "p95": 2.01400345847771,
+            "max": 2.094161773923423,
+            "mean": 1.1596000138751057
+          }
+        },
+        "common_speed/teacher_pp": {
+          "counts": {
+            "PASS": 264
+          },
+          "ray_margin_m": {
+            "count": 264,
+            "min": 0.23252223630261437,
+            "median": 1.2413164273210355,
+            "p95": 2.0120461980046587,
+            "max": 2.086022230214101,
+            "mean": 1.1523117012873576
+          }
+        },
+        "common_speed/model_pp": {
+          "counts": {
+            "PASS": 264
+          },
+          "ray_margin_m": {
+            "count": 264,
+            "min": 0.23148731145822954,
+            "median": 1.239870344610431,
+            "p95": 2.013305770533687,
+            "max": 2.089927444264866,
+            "mean": 1.1496108905718112
+          }
+        }
+      },
+      "nearest_evaluated_anchor": {
+        "anchor_id": "5kmh_run03:epoch0000:139539996881",
+        "observation_ns": 139539996881,
+        "progress_m": 0.0058799473242316935,
+        "label_index": 1280,
+        "pose": {
+          "stamp_ns": 139539996881,
+          "clock": "sim",
+          "epoch": "0",
+          "world_frame": "map",
+          "body_frame": "base_link",
+          "x_m": 89635.48715226662,
+          "y_m": 43161.7839885337,
+          "yaw_rad": 2.2310873787659347
+        },
+        "speed_mps": 0.885179340839386,
+        "rear_lateral_mps": 0.007684428843859448,
+        "scan_capture_ns": 139537598642,
+        "scan_row_id": 94292,
+        "results": {
+          "actual_speed": {
+            "observed_steer": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3895143819901739
+            },
+            "teacher_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3895143819901739,
+              "pp_physical_steer_rad": 0.010746138662165994,
+              "lookahead_rear_m": [
+                1.2609187364578247,
+                0.007612651214003563
+              ]
+            },
+            "model_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3895143819901739,
+              "pp_physical_steer_rad": 0.020632876139401894,
+              "lookahead_rear_m": [
+                1.2621867656707764,
+                0.014648862183094025
+              ]
+            }
+          },
+          "common_speed": {
+            "observed_steer": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3121720429220496
+            },
+            "teacher_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3121720429220496,
+              "pp_physical_steer_rad": 0.016441943712554564,
+              "lookahead_rear_m": [
+                1.9005539417266846,
+                0.025575065985322
+              ]
+            },
+            "model_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3121720429220496,
+              "pp_physical_steer_rad": 0.021741134957931018,
+              "lookahead_rear_m": [
+                1.9032915830612183,
+                0.03392225131392479
+              ]
+            }
+          }
+        },
+        "ade_m": 0.008782798424363136,
+        "fde3s_m": 0.024272654205560684,
+        "reason": "EVALUATED"
+      },
+      "scan_alignment_to_runtime": {
+        "scope": "NEAREST_RETURNS_NO_FITTED_REGISTRATION_NOT_GROUND_TRUTH",
+        "teacher_scan_row_ids": [
+          93627,
+          93695,
+          93767,
+          93836,
+          93908,
+          93978,
+          94048,
+          94118,
+          94187,
+          94292,
+          94363,
+          94433,
+          94503,
+          94574,
+          94645,
+          94714,
+          94784,
+          94854,
+          94925
+        ],
+        "teacher_points": 13050,
+        "runtime_return_count": 469,
+        "runtime_range_limit_m": 6.0,
+        "nearest_return_distance_m": {
+          "count": 469,
+          "min": 0.00039450120116586766,
+          "median": 0.02656942937234545,
+          "p95": 0.056582791950962934,
+          "max": 0.07788533067293,
+          "mean": 0.027491271136004976
+        },
+        "fraction_within_0p1m": 1.0
+      }
+    },
+    "5kmh_run04": {
+      "split": "train",
+      "input_hashes": {
+        "anchors.jsonl": "8163df44e9f3f180e2d2573055f85d09e353f57b547af0f63f4b0044c9c7c75b",
+        "labels.npz": "bd229bcbb8715926c5c4acabf633b404c91b95ce0022dfcba257181c2d4f729c",
+        "inputs.npz": "7b63367d85653cb2c22f49178e6e8f9b8e5bf152a0d66a60e7a31b96583555ee",
+        "bag_0.db3": "0c7447d136ebb3c954e5017cb87f23858a495e2458265c394299114b73ea0914"
+      },
+      "tf_static": {
+        "map->viewer": {
+          "xyz_m": [
+            89648.53366311034,
+            43155.796682459295,
+            6.5
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "base_link->camera_link": {
+          "xyz_m": [
+            0.8,
+            0.0,
+            0.7
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "camera_link->camera_optical_link": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.5,
+            -0.4999999999999999,
+            0.5,
+            -0.5000000000000001
+          ]
+        },
+        "sensor_kit_base_link->gnss_link": {
+          "xyz_m": [
+            -0.26,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "sensor_kit_base_link->imu_link": {
+          "xyz_m": [
+            0.85,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            -0.7071067811883519,
+            0.7071067811847432
+          ]
+        },
+        "base_link->lidar_base_link": {
+          "xyz_m": [
+            1.65,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "lidar_base_link->lidar": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0377
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "base_link->sensor_kit_base_link": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      },
+      "ambiguous_pose_stamps": 11,
+      "selection_counts": {
+        "EVALUATED": 261,
+        "AMBIGUOUS_POSE_STAMP": 1,
+        "INPUT_OR_FULL_TEACHER_INVALID": 3
+      },
+      "fault_to_teacher_projection": {
+        "distance_m": 0.8492119629808148,
+        "left_distance_m": 0.8492119629808148,
+        "nearest_xy_m": [
+          89635.49110746828,
+          43161.782808289834
+        ],
+        "segment_index": 734,
+        "fraction": 0.9544860981143716
+      },
+      "nearest_teacher_pose": {
+        "stamp_ns": 139634996878,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89635.49061510885,
+        "y_m": 43161.78344279262,
+        "yaw_rad": 2.2312089679803133
+      },
+      "speed_mps": {
+        "count": 261,
+        "min": 0.6913293600082397,
+        "median": 0.8841372132301331,
+        "p95": 0.9763166904449463,
+        "max": 0.9867077469825745,
+        "mean": 0.8615003024938006
+      },
+      "ade_m": {
+        "count": 0
+      },
+      "fde3s_m": {
+        "count": 0
+      },
+      "comparisons": {
+        "actual_speed/observed_steer": {
+          "counts": {
+            "PASS": 261
+          },
+          "ray_margin_m": {
+            "count": 261,
+            "min": 0.21999238089337403,
+            "median": 1.273655104574856,
+            "p95": 2.0645838493582342,
+            "max": 2.166174035301862,
+            "mean": 1.178153309665707
+          }
+        },
+        "actual_speed/teacher_pp": {
+          "counts": {
+            "PASS": 261
+          },
+          "ray_margin_m": {
+            "count": 261,
+            "min": 0.21828168276164794,
+            "median": 1.273655104574856,
+            "p95": 2.062932669600082,
+            "max": 2.166174035301862,
+            "mean": 1.1724898458737552
+          }
+        },
+        "common_speed/observed_steer": {
+          "counts": {
+            "PASS": 261
+          },
+          "ray_margin_m": {
+            "count": 261,
+            "min": 0.20669457507855638,
+            "median": 1.2300298750703387,
+            "p95": 2.0004920844690064,
+            "max": 2.0670818179038055,
+            "mean": 1.138780743723504
+          }
+        },
+        "common_speed/teacher_pp": {
+          "counts": {
+            "PASS": 261
+          },
+          "ray_margin_m": {
+            "count": 261,
+            "min": 0.20488350061585947,
+            "median": 1.2292885245927254,
+            "p95": 1.9949069785177176,
+            "max": 2.0600428883914708,
+            "mean": 1.1317848931141168
+          }
+        }
+      },
+      "nearest_evaluated_anchor": {
+        "anchor_id": "5kmh_run04:epoch0000:139644996878",
+        "observation_ns": 139644996878,
+        "progress_m": 0.017645731547972332,
+        "label_index": 1280,
+        "pose": {
+          "stamp_ns": 139644996878,
+          "clock": "sim",
+          "epoch": "0",
+          "world_frame": "map",
+          "body_frame": "base_link",
+          "x_m": 89635.47979046218,
+          "y_m": 43161.797378317955,
+          "yaw_rad": 2.2317015912432563
+        },
+        "speed_mps": 0.8855931758880615,
+        "rear_lateral_mps": 0.008008385393577622,
+        "scan_capture_ns": 139635778839,
+        "scan_row_id": 94306,
+        "results": {
+          "actual_speed": {
+            "observed_steer": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3632588451654577
+            },
+            "teacher_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3632588451654577,
+              "pp_physical_steer_rad": 0.010324347547457324,
+              "lookahead_rear_m": [
+                1.2561291456222534,
+                0.007258136291056871
+              ]
+            }
+          },
+          "common_speed": {
+            "observed_steer": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.2835002418226165
+            },
+            "teacher_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.2835002418226165,
+              "pp_physical_steer_rad": 0.01653390303108839,
+              "lookahead_rear_m": [
+                1.899741768836975,
+                0.025696204975247383
+              ]
+            }
+          }
+        },
+        "reason": "EVALUATED"
+      }
+    },
+    "5kmh_run05": {
+      "split": "train",
+      "input_hashes": {
+        "anchors.jsonl": "c9f71006ca413e7428b911c923ad8827ddb52b8cfe5ccb196008261899f02adb",
+        "labels.npz": "b8c0cf9e7c2adbc806710d1803e73d64c5a40b627e797cee086420ebcb72ccfd",
+        "inputs.npz": "7d286f0c65780a5862cb3146cd4e3cf88b764ad84e02640a1bc1958a576c5267",
+        "bag_0.db3": "0a1155de908cf443f19fa27288bcc1ee14660b836c6386517099c21c93d8796b"
+      },
+      "tf_static": {
+        "map->viewer": {
+          "xyz_m": [
+            89648.53366311034,
+            43155.796682459295,
+            6.5
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "base_link->camera_link": {
+          "xyz_m": [
+            0.8,
+            0.0,
+            0.7
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "camera_link->camera_optical_link": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.5,
+            -0.4999999999999999,
+            0.5,
+            -0.5000000000000001
+          ]
+        },
+        "sensor_kit_base_link->gnss_link": {
+          "xyz_m": [
+            -0.26,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "sensor_kit_base_link->imu_link": {
+          "xyz_m": [
+            0.85,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            -0.7071067811883519,
+            0.7071067811847432
+          ]
+        },
+        "base_link->lidar_base_link": {
+          "xyz_m": [
+            1.65,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "lidar_base_link->lidar": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0377
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "base_link->sensor_kit_base_link": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      },
+      "ambiguous_pose_stamps": 17,
+      "selection_counts": {
+        "EVALUATED": 265
+      },
+      "fault_to_teacher_projection": {
+        "distance_m": 0.8494750956679218,
+        "left_distance_m": 0.8494750956679218,
+        "nearest_xy_m": [
+          89635.50217159708,
+          43161.76866969433
+        ],
+        "segment_index": 736,
+        "fraction": 0.2928457615343705
+      },
+      "nearest_teacher_pose": {
+        "stamp_ns": 139689996877,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89635.50522505239,
+        "y_m": 43161.76455815945,
+        "yaw_rad": 2.2314184478257744
+      },
+      "speed_mps": {
+        "count": 265,
+        "min": 0.6911265850067139,
+        "median": 0.88386070728302,
+        "p95": 0.9753177881240844,
+        "max": 0.9867748022079468,
+        "mean": 0.8615764215307415
+      },
+      "ade_m": {
+        "count": 0
+      },
+      "fde3s_m": {
+        "count": 0
+      },
+      "comparisons": {
+        "actual_speed/observed_steer": {
+          "counts": {
+            "PASS": 265
+          },
+          "ray_margin_m": {
+            "count": 265,
+            "min": 0.24578139761461593,
+            "median": 1.2775569194870182,
+            "p95": 2.0860314375702775,
+            "max": 2.1732179930138678,
+            "mean": 1.1940948694145677
+          }
+        },
+        "actual_speed/teacher_pp": {
+          "counts": {
+            "PASS": 265
+          },
+          "ray_margin_m": {
+            "count": 265,
+            "min": 0.24379658996883302,
+            "median": 1.2772838355164746,
+            "p95": 2.082197563499719,
+            "max": 2.171276757523155,
+            "mean": 1.1885220940163341
+          }
+        },
+        "common_speed/observed_steer": {
+          "counts": {
+            "PASS": 265
+          },
+          "ray_margin_m": {
+            "count": 265,
+            "min": 0.2323721115314158,
+            "median": 1.2418487083214007,
+            "p95": 2.0187801923036592,
+            "max": 2.0958469195361236,
+            "mean": 1.1552020860130454
+          }
+        },
+        "common_speed/teacher_pp": {
+          "counts": {
+            "PASS": 265
+          },
+          "ray_margin_m": {
+            "count": 265,
+            "min": 0.2301635621556125,
+            "median": 1.2416521074079232,
+            "p95": 2.0129429720644954,
+            "max": 2.0844144291149638,
+            "mean": 1.1480506398874997
+          }
+        }
+      },
+      "nearest_evaluated_anchor": {
+        "anchor_id": "5kmh_run05:epoch0000:139644996878",
+        "observation_ns": 139644996878,
+        "progress_m": -0.035365054781351546,
+        "label_index": 1280,
+        "pose": {
+          "stamp_ns": 139644996878,
+          "clock": "sim",
+          "epoch": "0",
+          "world_frame": "map",
+          "body_frame": "base_link",
+          "x_m": 89635.52665904736,
+          "y_m": 43161.73642924912,
+          "yaw_rad": 2.230525225559224
+        },
+        "speed_mps": 0.880540132522583,
+        "rear_lateral_mps": 0.008353365429020987,
+        "scan_capture_ns": 139642548945,
+        "scan_row_id": 94263,
+        "results": {
+          "actual_speed": {
+            "observed_steer": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3971411460690895
+            },
+            "teacher_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3971411460690895,
+              "pp_physical_steer_rad": 0.010531183426318627,
+              "lookahead_rear_m": [
+                1.2562209367752075,
+                0.007407297845929861
+              ]
+            }
+          },
+          "common_speed": {
+            "observed_steer": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3172120891342687
+            },
+            "teacher_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3172120891342687,
+              "pp_physical_steer_rad": 0.01630650137259335,
+              "lookahead_rear_m": [
+                1.899980902671814,
+                0.025348979979753494
+              ]
+            }
+          }
+        },
+        "reason": "EVALUATED"
+      }
+    },
+    "5kmh_run06": {
+      "split": "validation",
+      "input_hashes": {
+        "anchors.jsonl": "0729d9f223947bcfc42e0a12729cb82e0578d80a9ebae462d81d698c384ca94d",
+        "labels.npz": "13f17e2f9bf184349f5ef635c11b148948dffd5ddbf7ffd07d23d55328c1fa8a",
+        "inputs.npz": "ee0275a1865a880b676ae70919f19d17988ba98d0ac6cee9d22f9dcf739f163d",
+        "bag_0.db3": "4724b0da7036e2863ccff883a5d0043d487af174c8cfee5be78c9207261751df"
+      },
+      "tf_static": {
+        "map->viewer": {
+          "xyz_m": [
+            89648.53366311034,
+            43155.796682459295,
+            6.5
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "base_link->camera_link": {
+          "xyz_m": [
+            0.8,
+            0.0,
+            0.7
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "camera_link->camera_optical_link": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.5,
+            -0.4999999999999999,
+            0.5,
+            -0.5000000000000001
+          ]
+        },
+        "sensor_kit_base_link->gnss_link": {
+          "xyz_m": [
+            -0.26,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "sensor_kit_base_link->imu_link": {
+          "xyz_m": [
+            0.85,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            -0.7071067811883519,
+            0.7071067811847432
+          ]
+        },
+        "base_link->lidar_base_link": {
+          "xyz_m": [
+            1.65,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "lidar_base_link->lidar": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0377
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "base_link->sensor_kit_base_link": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      },
+      "ambiguous_pose_stamps": 13,
+      "selection_counts": {
+        "EVALUATED": 263,
+        "INPUT_OR_FULL_TEACHER_INVALID": 1,
+        "AMBIGUOUS_POSE_STAMP": 1
+      },
+      "fault_to_teacher_projection": {
+        "distance_m": 0.8480724839179482,
+        "left_distance_m": 0.8480724839179482,
+        "nearest_xy_m": [
+          89635.49012588733,
+          43161.78221454086
+        ],
+        "segment_index": 735,
+        "fraction": 0.7418714494934362
+      },
+      "nearest_teacher_pose": {
+        "stamp_ns": 139704996877,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89635.48734199483,
+        "y_m": 43161.78580098004,
+        "yaw_rad": 2.231359014333295
+      },
+      "speed_mps": {
+        "count": 263,
+        "min": 0.6911593675613403,
+        "median": 0.8849664330482483,
+        "p95": 0.9754823505878448,
+        "max": 0.9869371652603149,
+        "mean": 0.8617168121011538
+      },
+      "ade_m": {
+        "count": 263,
+        "min": 0.004326480440795422,
+        "median": 0.008993897587060928,
+        "p95": 0.021277862228453133,
+        "max": 0.02901403419673443,
+        "mean": 0.010136186832229221
+      },
+      "fde3s_m": {
+        "count": 263,
+        "min": 0.006355056539177895,
+        "median": 0.024199994280934334,
+        "p95": 0.06031873077154158,
+        "max": 0.08435334265232086,
+        "mean": 0.02761655636379644
+      },
+      "comparisons": {
+        "actual_speed/observed_steer": {
+          "counts": {
+            "PASS": 263
+          },
+          "ray_margin_m": {
+            "count": 263,
+            "min": 0.22063217425495762,
+            "median": 1.2746519248092465,
+            "p95": 2.0801965737759818,
+            "max": 2.172640325448829,
+            "mean": 1.1753895740743445
+          }
+        },
+        "actual_speed/teacher_pp": {
+          "counts": {
+            "PASS": 263
+          },
+          "ray_margin_m": {
+            "count": 263,
+            "min": 0.2188442082223061,
+            "median": 1.2740822785697978,
+            "p95": 2.0776427622015197,
+            "max": 2.163241141563051,
+            "mean": 1.1695310876612734
+          }
+        },
+        "actual_speed/model_pp": {
+          "counts": {
+            "PASS": 263
+          },
+          "ray_margin_m": {
+            "count": 263,
+            "min": 0.21850559077667797,
+            "median": 1.2725830151102442,
+            "p95": 2.070946040630789,
+            "max": 2.169435935839183,
+            "mean": 1.167256400771572
+          }
+        },
+        "common_speed/observed_steer": {
+          "counts": {
+            "PASS": 263
+          },
+          "ray_margin_m": {
+            "count": 263,
+            "min": 0.20747136429100288,
+            "median": 1.2331501363213009,
+            "p95": 2.0048084361559546,
+            "max": 2.089438427785432,
+            "mean": 1.1367816732985614
+          }
+        },
+        "common_speed/teacher_pp": {
+          "counts": {
+            "PASS": 263
+          },
+          "ray_margin_m": {
+            "count": 263,
+            "min": 0.20551958736307385,
+            "median": 1.2323684151202414,
+            "p95": 2.003972663754085,
+            "max": 2.0787920230167956,
+            "mean": 1.1294549041213642
+          }
+        },
+        "common_speed/model_pp": {
+          "counts": {
+            "PASS": 263
+          },
+          "ray_margin_m": {
+            "count": 263,
+            "min": 0.20490781249490175,
+            "median": 1.23282401116176,
+            "p95": 2.0039826148025286,
+            "max": 2.0821573499674484,
+            "mean": 1.1268149013354956
+          }
+        }
+      },
+      "nearest_evaluated_anchor": {
+        "anchor_id": "5kmh_run06:epoch0000:139749996876",
+        "observation_ns": 139749996876,
+        "progress_m": 0.03521333736733823,
+        "label_index": 1281,
+        "pose": {
+          "stamp_ns": 139749996876,
+          "clock": "sim",
+          "epoch": "0",
+          "world_frame": "map",
+          "body_frame": "base_link",
+          "x_m": 89635.46597791232,
+          "y_m": 43161.81379122061,
+          "yaw_rad": 2.232245805760746
+        },
+        "speed_mps": 0.8857727646827698,
+        "rear_lateral_mps": 0.0066481980489006,
+        "scan_capture_ns": 139741133073,
+        "scan_row_id": 94369,
+        "results": {
+          "actual_speed": {
+            "observed_steer": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3591753568698217
+            },
+            "teacher_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3591753568698217,
+              "pp_physical_steer_rad": 0.00991529116576547,
+              "lookahead_rear_m": [
+                1.2624884843826294,
+                0.007041197270154953
+              ]
+            },
+            "model_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3591753568698217,
+              "pp_physical_steer_rad": 0.0191046981275562,
+              "lookahead_rear_m": [
+                1.2599461078643799,
+                0.013514667749404907
+              ]
+            }
+          },
+          "common_speed": {
+            "observed_steer": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.2812954607639215
+            },
+            "teacher_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.2812954607639215,
+              "pp_physical_steer_rad": 0.01605124868584628,
+              "lookahead_rear_m": [
+                1.9019989967346191,
+                0.025005018338561058
+              ]
+            },
+            "model_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.2812954607639215,
+              "pp_physical_steer_rad": 0.020399773020955102,
+              "lookahead_rear_m": [
+                1.8983910083770752,
+                0.03166380897164345
+              ]
+            }
+          }
+        },
+        "ade_m": 0.006703157909214497,
+        "fde3s_m": 0.016201257705688477,
+        "reason": "EVALUATED"
+      },
+      "scan_alignment_to_runtime": {
+        "scope": "NEAREST_RETURNS_NO_FITTED_REGISTRATION_NOT_GROUND_TRUTH",
+        "teacher_scan_row_ids": [
+          93703,
+          93774,
+          93846,
+          93915,
+          93984,
+          94054,
+          94126,
+          94230,
+          94302,
+          94369,
+          94443,
+          94513,
+          94584,
+          94655,
+          94725,
+          94796,
+          94866,
+          94936,
+          95040
+        ],
+        "teacher_points": 13032,
+        "runtime_return_count": 469,
+        "runtime_range_limit_m": 6.0,
+        "nearest_return_distance_m": {
+          "count": 469,
+          "min": 0.00015751752063508705,
+          "median": 0.018803731974059674,
+          "p95": 0.05219177098670273,
+          "max": 0.07000376962328174,
+          "mean": 0.02191562411263713
+        },
+        "fraction_within_0p1m": 1.0
+      }
+    },
+    "5kmh_run07": {
+      "split": "train",
+      "input_hashes": {
+        "anchors.jsonl": "e2f0a0696215ae0623352e456c929e7f7b6082f2ace9e8123cff9f645f247b01",
+        "labels.npz": "8a8d98800927a33a9579a6f9cca146e3fa35ce8a4fc619b34adc5c55867b6516",
+        "inputs.npz": "1ba77aeaa2ce1639be30b9dfcda6f2d7076ad87b6d940e9a5ec94ecdf037e23e",
+        "bag_0.db3": "1f9efdba897b39e2c6ef7a3177b980957068a0294c35c1b0c54f164b74b5282c"
+      },
+      "tf_static": {
+        "map->viewer": {
+          "xyz_m": [
+            89648.53366311034,
+            43155.796682459295,
+            6.5
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "base_link->camera_link": {
+          "xyz_m": [
+            0.8,
+            0.0,
+            0.7
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "camera_link->camera_optical_link": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.5,
+            -0.4999999999999999,
+            0.5,
+            -0.5000000000000001
+          ]
+        },
+        "sensor_kit_base_link->gnss_link": {
+          "xyz_m": [
+            -0.26,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "sensor_kit_base_link->imu_link": {
+          "xyz_m": [
+            0.85,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            -0.7071067811883519,
+            0.7071067811847432
+          ]
+        },
+        "base_link->lidar_base_link": {
+          "xyz_m": [
+            1.65,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "lidar_base_link->lidar": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0377
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "base_link->sensor_kit_base_link": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      },
+      "ambiguous_pose_stamps": 7,
+      "selection_counts": {
+        "EVALUATED": 263,
+        "INPUT_OR_FULL_TEACHER_INVALID": 2
+      },
+      "fault_to_teacher_projection": {
+        "distance_m": 0.84696671724859,
+        "left_distance_m": 0.84696671724859,
+        "nearest_xy_m": [
+          89635.4977888185,
+          43161.77034851709
+        ],
+        "segment_index": 735,
+        "fraction": 0.4346929876132415
+      },
+      "nearest_teacher_pose": {
+        "stamp_ns": 139604996879,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89635.50247573057,
+        "y_m": 43161.76409877648,
+        "yaw_rad": 2.2308962478669407
+      },
+      "speed_mps": {
+        "count": 263,
+        "min": 0.6919032335281372,
+        "median": 0.8835708498954773,
+        "p95": 0.9756303369998931,
+        "max": 0.9867822527885437,
+        "mean": 0.8616040856665985
+      },
+      "ade_m": {
+        "count": 0
+      },
+      "fde3s_m": {
+        "count": 0
+      },
+      "comparisons": {
+        "actual_speed/observed_steer": {
+          "counts": {
+            "PASS": 263
+          },
+          "ray_margin_m": {
+            "count": 263,
+            "min": 0.2430191774166781,
+            "median": 1.2711198950851368,
+            "p95": 2.0900122852324188,
+            "max": 2.172212172998851,
+            "mean": 1.1964377673489444
+          }
+        },
+        "actual_speed/teacher_pp": {
+          "counts": {
+            "PASS": 263
+          },
+          "ray_margin_m": {
+            "count": 263,
+            "min": 0.24114235609864965,
+            "median": 1.2699766833391108,
+            "p95": 2.0838634712135544,
+            "max": 2.169196038267776,
+            "mean": 1.1908097287078625
+          }
+        },
+        "common_speed/observed_steer": {
+          "counts": {
+            "PASS": 263
+          },
+          "ray_margin_m": {
+            "count": 263,
+            "min": 0.22975316009592295,
+            "median": 1.2439691003792177,
+            "p95": 2.0188204944117283,
+            "max": 2.0891859581571754,
+            "mean": 1.1575792497455413
+          }
+        },
+        "common_speed/teacher_pp": {
+          "counts": {
+            "PASS": 263
+          },
+          "ray_margin_m": {
+            "count": 263,
+            "min": 0.22783181180280254,
+            "median": 1.2439691003792177,
+            "p95": 2.0188204944117283,
+            "max": 2.0813130131859148,
+            "mean": 1.1504624104728423
+          }
+        }
+      },
+      "nearest_evaluated_anchor": {
+        "anchor_id": "5kmh_run07:epoch0000:139644996878",
+        "observation_ns": 139644996878,
+        "progress_m": 0.03561766866576477,
+        "label_index": 1281,
+        "pose": {
+          "stamp_ns": 139644996878,
+          "clock": "sim",
+          "epoch": "0",
+          "world_frame": "map",
+          "body_frame": "base_link",
+          "x_m": 89635.48086832708,
+          "y_m": 43161.79241215107,
+          "yaw_rad": 2.2316796047986203
+        },
+        "speed_mps": 0.8855463862419128,
+        "rear_lateral_mps": 0.008529598921641846,
+        "scan_capture_ns": 139640407881,
+        "scan_row_id": 94303,
+        "results": {
+          "actual_speed": {
+            "observed_steer": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3851341971128697
+            },
+            "teacher_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3851341971128697,
+              "pp_physical_steer_rad": 0.009609451881793976,
+              "lookahead_rear_m": [
+                1.2516711950302124,
+                0.006707650143653154
+              ]
+            }
+          },
+          "common_speed": {
+            "observed_steer": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.307505112942298
+            },
+            "teacher_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.307505112942298,
+              "pp_physical_steer_rad": 0.015956705279860567,
+              "lookahead_rear_m": [
+                1.8971550464630127,
+                0.024731187149882317
+              ]
+            }
+          }
+        },
+        "reason": "EVALUATED"
+      }
+    },
+    "5kmh_run09": {
+      "split": "train",
+      "input_hashes": {
+        "anchors.jsonl": "073f9ec9c7b0acd26f8c53385275dbd29006e5dab5dd1654d692dfe2de74e7ad",
+        "labels.npz": "fbb7f2e8abdfcf236ec679570c6e25fa68dda092cd2a2f5db15de85da260ae0f",
+        "inputs.npz": "645cd3f9cf91bcb70d87ae362c174536a1f9e6a8bc0f57fc87a06d7e70c1446d",
+        "bag_0.db3": "5e86b64238fe18c5e1085f68b7b4d571453ed104b427eef98c9cbd6d6fa893d5"
+      },
+      "tf_static": {
+        "map->viewer": {
+          "xyz_m": [
+            89648.53366311034,
+            43155.796682459295,
+            6.5
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "base_link->camera_link": {
+          "xyz_m": [
+            0.8,
+            0.0,
+            0.7
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "camera_link->camera_optical_link": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.5,
+            -0.4999999999999999,
+            0.5,
+            -0.5000000000000001
+          ]
+        },
+        "sensor_kit_base_link->gnss_link": {
+          "xyz_m": [
+            -0.26,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "sensor_kit_base_link->imu_link": {
+          "xyz_m": [
+            0.85,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            -0.7071067811883519,
+            0.7071067811847432
+          ]
+        },
+        "base_link->lidar_base_link": {
+          "xyz_m": [
+            1.65,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "lidar_base_link->lidar": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0377
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        "base_link->sensor_kit_base_link": {
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "quaternion_xyzw": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      },
+      "ambiguous_pose_stamps": 22,
+      "selection_counts": {
+        "EVALUATED": 264,
+        "INPUT_OR_FULL_TEACHER_INVALID": 1
+      },
+      "fault_to_teacher_projection": {
+        "distance_m": 0.8480456425272961,
+        "left_distance_m": 0.8480456425272961,
+        "nearest_xy_m": [
+          89635.49439124666,
+          43161.77662828285
+        ],
+        "segment_index": 734,
+        "fraction": 1.0
+      },
+      "nearest_teacher_pose": {
+        "stamp_ns": 139644996878,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89635.49439124666,
+        "y_m": 43161.77662828285,
+        "yaw_rad": 2.2310750334073686
+      },
+      "speed_mps": {
+        "count": 264,
+        "min": 0.6912114024162292,
+        "median": 0.8844504058361053,
+        "p95": 0.975652739405632,
+        "max": 0.9870299696922302,
+        "mean": 0.861866367134181
+      },
+      "ade_m": {
+        "count": 0
+      },
+      "fde3s_m": {
+        "count": 0
+      },
+      "comparisons": {
+        "actual_speed/observed_steer": {
+          "counts": {
+            "PASS": 264
+          },
+          "ray_margin_m": {
+            "count": 264,
+            "min": 0.19358408837806307,
+            "median": 1.2537360182246355,
+            "p95": 2.0627997544250087,
+            "max": 2.141871864503924,
+            "mean": 1.1577853887784546
+          }
+        },
+        "actual_speed/teacher_pp": {
+          "counts": {
+            "PASS": 264
+          },
+          "ray_margin_m": {
+            "count": 264,
+            "min": 0.19133756068037078,
+            "median": 1.252851061892141,
+            "p95": 2.062048254431419,
+            "max": 2.1401433328853976,
+            "mean": 1.1520304073178194
+          }
+        },
+        "common_speed/observed_steer": {
+          "counts": {
+            "PASS": 264
+          },
+          "ray_margin_m": {
+            "count": 264,
+            "min": 0.18015397028469948,
+            "median": 1.2289689317556984,
+            "p95": 1.9842549218852514,
+            "max": 2.0496776015453024,
+            "mean": 1.1199926840229197
+          }
+        },
+        "common_speed/teacher_pp": {
+          "counts": {
+            "PASS": 264
+          },
+          "ray_margin_m": {
+            "count": 264,
+            "min": 0.1778383690554025,
+            "median": 1.2286820218668015,
+            "p95": 1.9827101340706663,
+            "max": 2.048984713182506,
+            "mean": 1.112799199710034
+          }
+        }
+      },
+      "nearest_evaluated_anchor": {
+        "anchor_id": "5kmh_run09:epoch0000:139644996878",
+        "observation_ns": 139644996878,
+        "progress_m": 0.0,
+        "label_index": 1281,
+        "pose": {
+          "stamp_ns": 139644996878,
+          "clock": "sim",
+          "epoch": "0",
+          "world_frame": "map",
+          "body_frame": "base_link",
+          "x_m": 89635.49439124666,
+          "y_m": 43161.77662828285,
+          "yaw_rad": 2.2310750334073686
+        },
+        "speed_mps": 0.8847246170043945,
+        "rear_lateral_mps": 0.006084809315156758,
+        "scan_capture_ns": 139639086246,
+        "scan_row_id": 94287,
+        "results": {
+          "actual_speed": {
+            "observed_steer": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3384247751542446
+            },
+            "teacher_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.3384247751542446,
+              "pp_physical_steer_rad": 0.011300099104351416,
+              "lookahead_rear_m": [
+                1.2613862752914429,
+                0.008011341094970703
+              ]
+            }
+          },
+          "common_speed": {
+            "observed_steer": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.260332752104891
+            },
+            "teacher_pp": {
+              "reason": "PASS",
+              "minimum_ray_margin_m": 1.260332752104891,
+              "pp_physical_steer_rad": 0.01709829316806768,
+              "lookahead_rear_m": [
+                1.9018375873565674,
+                0.026632536202669144
+              ]
+            }
+          }
+        },
+        "reason": "EVALUATED"
+      }
+    }
+  },
+  "runtime_rejection": {
+    "reason": "STOPPING_SWEEP_OCCUPIED",
+    "minimum_ray_margin_m": -0.004498958185470858
+  },
+  "runtime_last12s_ray_margin_m": {
+    "count": 240,
+    "min": 0.005731665526557794,
+    "median": 1.2958860860186943,
+    "p95": 2.076403118205083,
+    "max": 2.1792535686274395,
+    "mean": 1.2488269447500333
+  },
+  "runtime_last12s_teacher_distance_m": {
+    "5kmh_run01": {
+      "count": 240,
+      "min": 0.001338544187378609,
+      "median": 0.2982315079248884,
+      "p95": 0.7339302330052129,
+      "max": 0.8408886696611471,
+      "mean": 0.3728152450848313
+    },
+    "5kmh_run02": {
+      "count": 240,
+      "min": 0.002357750877281744,
+      "median": 0.29859636112429333,
+      "p95": 0.7333966934008674,
+      "max": 0.8400198829641798,
+      "mean": 0.3722460128991608
+    },
+    "5kmh_run03": {
+      "count": 240,
+      "min": 0.002216699165212704,
+      "median": 0.29893486944664865,
+      "p95": 0.733275376775748,
+      "max": 0.8401060786673734,
+      "mean": 0.37271083489959494
+    },
+    "5kmh_run04": {
+      "count": 240,
+      "min": 0.0018187201325152189,
+      "median": 0.29801480216693976,
+      "p95": 0.7352329031257989,
+      "max": 0.8424930244254165,
+      "mean": 0.3726934291120595
+    },
+    "5kmh_run05": {
+      "count": 240,
+      "min": 0.0014247097790019534,
+      "median": 0.29846532365814227,
+      "p95": 0.7361030682222501,
+      "max": 0.8426729545315734,
+      "mean": 0.37297919105166044
+    },
+    "5kmh_run06": {
+      "count": 240,
+      "min": 0.0011069513565927862,
+      "median": 0.2977667695040843,
+      "p95": 0.7347431226594414,
+      "max": 0.8415955274286974,
+      "mean": 0.37245997344574755
+    },
+    "5kmh_run07": {
+      "count": 240,
+      "min": 0.0014553467823271984,
+      "median": 0.2993799200757481,
+      "p95": 0.7337982908357513,
+      "max": 0.8404790721378833,
+      "mean": 0.37223792850268606
+    },
+    "5kmh_run09": {
+      "count": 240,
+      "min": 0.0008328827006848467,
+      "median": 0.29817983518452984,
+      "p95": 0.7348699026363942,
+      "max": 0.8415348070566068,
+      "mean": 0.37265697238077916
+    }
+  },
+  "runtime_last12s_following": {
+    "scope": "ONE_SECOND_FUTURE_ESTIMATED_POSE_TO_RECORDED_RAW_POLYLINE_NOT_TEACHER_ERROR",
+    "distance_m": {
+      "count": 221,
+      "min": 9.60238447943695e-06,
+      "median": 0.004894970769365926,
+      "p95": 0.015673109359527055,
+      "max": 0.01759751953777277,
+      "mean": 0.006439281345475723
+    },
+    "excluded": {
+      "FUTURE_AFTER_REJECTION": 19
+    },
+    "ambiguous_pose_stamps": 8,
+    "vehicle_observations_sha256": "a4ff2d151d3451532e91d19ef6ce3fd54abf676e0492f3568c368f9fe1134a07"
+  }
+}
