@@ -157,7 +157,8 @@ def main() -> None:
         make_args = ["CONTROL_METHOD=v4_20_external", "CAPTURE=false", "ROSBAG=false", "AWSIM_LAPS=1",
                      "RUN_ID="+args.run_id, "OUTPUT_HOST_ROOT="+str(output)]
         if execution_profile == "one_lap":
-            make_args += ["AWSIM_TIMEOUT=660", "AWSIM_EXTRA_ARGS=-logFile " + str(output/args.run_id/"awsim_unity.log")]
+            # Compose mounts this host output directory at /output in AWSIM.
+            make_args += ["AWSIM_TIMEOUT=660", "AWSIM_EXTRA_ARGS=-logFile " + str(Path("/output")/args.run_id/"awsim_unity.log")]
         result["commands"] = [probe_command, ["make", "dev", "DEV_AUTO_START=false", *make_args]]
         owned = True
         probe = launch(probe_command, "nodes")
