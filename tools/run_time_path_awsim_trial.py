@@ -80,6 +80,11 @@ def main() -> None:
         if not (deployment / "install/setup.bash").is_file():
             raise RuntimeError("ROS_INSTALL_MISSING")
         auth = list(Path("/run/user/1000").glob(".mutter-Xwaylandauth.*"))
+        # A reboot can select an Xorg desktop instead of Xwayland. Both are
+        # normal user-session authentication paths; never copy/read the secret.
+        xorg_auth = Path("/run/user/1000/gdm/Xauthority")
+        if xorg_auth.is_file():
+            auth.append(xorg_auth)
         if len(auth) != 1:
             raise RuntimeError("DISPLAY_AUTH_UNKNOWN")
         # Task-local transport keeps the established loopback transport; the
