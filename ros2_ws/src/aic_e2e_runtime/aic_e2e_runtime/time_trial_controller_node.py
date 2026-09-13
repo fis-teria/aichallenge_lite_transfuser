@@ -1,0 +1,221 @@
+"""Independent finite AWSIM trial controller; default publishes shadow only."""
+from __future__ import annotations
+
+import argparse
+from collections import deque
+import json
+import math
+import os
+from pathlib import Path
+import time
+
+import numpy as np
+
+from . import spatial_path_shadow_node_v4 as _source_layout
+from aic_transfuser_lite.control.long_sim_tracking_v4 import check_scan
+from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
+from aic_transfuser_lite.control.time_trial_v1 import interpolate_body_pose, time_trial_control
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--run-id", required=True)
+    parser.add_argument("--checkpoint-sha256", required=True)
+    parser.add_argument("--rear-axle-forward-m", type=float, required=True)
+    parser.add_argument("--pose-source", required=True)
+    parser.add_argument("--sensor-source", default="/awsim_d1")
+    parser.add_argument("--authorize-awsim-only", action="store_true")
+    args, ros_args = parser.parse_known_args()
+    live = args.authorize_awsim_only
+    if not math.isfinite(args.rear_axle_forward_m) or abs(args.rear_axle_forward_m) > .002:
+        raise ValueError("UNSUPPORTED_BODY_POINT_CALIBRATION")
+    if live and (os.environ.get("ROS_DOMAIN_ID") != "1" or args.sensor_source != "/awsim_d1"
+                 or any(Path(p).exists() for p in ("/dev/vcu", "/dev/gnss", "/dev/ttyUSB0"))):
+        raise ValueError("AWSIM_ONLY_REQUIRED")
+    args.output.mkdir(parents=True, exist_ok=True)
+    log = (args.output / "control.jsonl").open("x")
+    import rclpy
+    from rclpy.node import Node
+    from rclpy.qos import qos_profile_sensor_data
+    from std_msgs.msg import String
+    from nav_msgs.msg import Odometry
+    from sensor_msgs.msg import LaserScan
+    from rosgraph_msgs.msg import Clock
+    from autoware_auto_vehicle_msgs.msg import VelocityReport, SteeringReport
+    from autoware_auto_control_msgs.msg import AckermannControlCommand
+
+    rclpy.init(args=ros_args)
+    node = Node("time_path_controller", enable_rosout=False, start_parameter_services=False)
+    topic = "/control/command/control_cmd" if live else "/time_path/shadow/control_cmd"
+    publisher = None
+    clock_ns = None
+    clock_receipt = 0
+    epoch = 0
+    cache = {}
+    poses: deque[TimedBodyPose] = deque(maxlen=256)
+    previous = [0., time.monotonic()]
+    state = {"fault": None, "armed_ns": None, "armed_wall": None, "stop_since_ns": None,
+             "stop_confirmed": False, "positive_count": 0, "commands": 0, "max_speed_mps": 0.}
+
+    def stamp(t) -> int:
+        return int(t.sec) * 10**9 + int(t.nanosec)
+
+    def names(t) -> list[str]:
+        return [e.node_namespace.rstrip("/") + "/" + e.node_name for e in node.get_publishers_info_by_topic(t)]
+
+    def record(value) -> None:
+        log.write(json.dumps({"monotonic_ns": time.monotonic_ns(), "sim_ns": clock_ns, **value}, allow_nan=False) + "\n")
+        log.flush()
+
+    def on_clock(message) -> None:
+        nonlocal clock_ns, clock_receipt, epoch
+        t = stamp(message.clock)
+        if clock_ns is not None and t < clock_ns:
+            state["fault"] = "CLOCK_RESET"; epoch += 1; poses.clear(); cache.clear()
+        clock_ns = t; clock_receipt = time.monotonic_ns()
+
+    node.create_subscription(Clock, "/clock", on_clock, 10)
+    topics = {"plan": ("/time_path/plan", String, "/time_path_inference"),
+              "pose": ("/localization/kinematic_state", Odometry, args.pose_source),
+              "velocity": ("/vehicle/status/velocity_status", VelocityReport, args.sensor_source),
+              "steering": ("/vehicle/status/steering_status", SteeringReport, args.sensor_source),
+              "scan": ("/sensing/lidar/scan", LaserScan, args.sensor_source)}
+
+    def receive(role, message) -> None:
+        cache[role] = (message, time.monotonic_ns())
+        if role == "pose":
+            p = message.pose.pose; q = p.orientation
+            if (message.header.frame_id != "map" or message.child_frame_id != "base_link"
+                    or not np.isfinite([p.position.x, p.position.y, q.x, q.y, q.z, q.w]).all()
+                    or abs(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w - 1) > .01):
+                state["fault"] = "POSE_FRAME_OR_QUATERNION"
+                return
+            yaw = math.atan2(2*(q.w*q.z + q.x*q.y), 1-2*(q.y*q.y + q.z*q.z))
+            poses.append(TimedBodyPose(stamp(message.header.stamp), "sim", str(epoch), "map", "base_link",
+                                       float(p.position.x), float(p.position.y), yaw))
+
+    for role, (input_topic, kind, _) in topics.items():
+        node.create_subscription(kind, input_topic, lambda m, role=role: receive(role, m), qos_profile_sensor_data)
+
+    def tick() -> None:
+        nonlocal publisher
+        wall = time.monotonic(); now = time.monotonic_ns()
+        actual = names(topic)
+        if publisher is None:
+            if actual:
+                state["fault"] = "COMPETING_CONTROLLER"
+            elif not live or any(e.node_name == "awsim_d1" for e in node.get_subscriptions_info_by_topic(topic)):
+                publisher = node.create_publisher(AckermannControlCommand, topic, 10)
+                record({"event": "PUBLISHER_CREATED", "topic": topic, "live": live,
+                        "rear_axle_forward_m": args.rear_axle_forward_m})
+        reason = "WAIT_AUTHORIZATION" if live else "SHADOW_ONLY"
+        steer, accel, target = previous[0], -1., 0.
+        details = {}; plan_id = None
+        velocity_fresh = False
+        speed = None
+        try:
+            if state["fault"]:
+                raise ValueError(state["fault"])
+            if publisher is None or actual not in ([], ["/time_path_controller"]):
+                raise ValueError("COMMAND_AUTHORITY")
+            if clock_ns is None or now - clock_receipt > 500_000_000:
+                raise ValueError("CLOCK_STALE")
+            for role in ("velocity", "steering", "scan", "pose"):
+                m, received = cache[role]
+                t = stamp(m.stamp if role == "steering" else m.header.stamp)
+                if now - received > 300_000_000 or not -20_000_000 <= clock_ns - t <= 150_000_000:
+                    raise ValueError("STALE_" + role)
+                if names(topics[role][0]) != [topics[role][2]]:
+                    raise ValueError("SOURCE_" + role)
+            speed = float(cache["velocity"][0].longitudinal_velocity)
+            if not np.isfinite([speed, float(cache["steering"][0].steering_tire_angle)]).all():
+                raise ValueError("NONFINITE_VEHICLE_STATE")
+            velocity_fresh = True
+            state["max_speed_mps"] = max(state["max_speed_mps"], abs(speed))
+            if not -.03 <= speed <= .45:
+                state["fault"] = "OVERSPEED_OR_REVERSE"; raise ValueError(state["fault"])
+            auth = args.output / "drive_authorized.json"
+            if live and auth.exists() and state["armed_ns"] is None:
+                value = json.loads(auth.read_text())
+                if (value.get("scope") != "TIME_PATH_AWSIM_TRIAL" or value.get("run_id") != args.run_id
+                        or wall > value["expires_monotonic_s"]):
+                    state["fault"] = "AUTHORIZATION_INVALID"; raise ValueError(state["fault"])
+                state["armed_ns"] = clock_ns; state["armed_wall"] = wall
+                record({"event": "ARMED", "authorization": value})
+            armed = state["armed_ns"] is not None
+            if live and not armed:
+                raise ValueError("WAIT_AUTHORIZATION")
+            if live and (clock_ns - state["armed_ns"] >= 10_000_000_000 or wall - state["armed_wall"] >= 30):
+                raise ValueError("SCHEDULED_BRAKE")
+            laser = cache["scan"][0]
+            clearance = check_scan(laser.ranges, laser.angle_min, laser.angle_increment,
+                                   laser.range_min, laser.range_max, speed)
+            message, received = cache["plan"]
+            value = json.loads(message.data)
+            if (names(topics["plan"][0]) != [topics["plan"][2]] or value.get("event") != "PLAN"
+                    or value.get("run_id") != args.run_id or value.get("epoch") != str(epoch)
+                    or value.get("checkpoint_sha256") != args.checkpoint_sha256
+                    or value.get("clock") != "sim" or value.get("frame") != "base_link"
+                    or value.get("dt_s") != .1 or value.get("precision") != "float32"):
+                raise ValueError("PLAN_IDENTITY")
+            obs_ns = value["observation_ns"]
+            if (type(obs_ns) is not int or not 0 <= clock_ns - obs_ns <= 500_000_000
+                    or now - received > 500_000_000):
+                raise ValueError("PLAN_STALE")
+            current = max(poses, key=lambda p: p.stamp_ns)
+            if abs(current.stamp_ns - stamp(cache["velocity"][0].header.stamp)) > 50_000_000:
+                raise ValueError("POSE_VELOCITY_SKEW")
+            observed = interpolate_body_pose(poses, obs_ns)
+            plan = TimePlan(value["plan_id"], observed, np.asarray(value["raw_xy_m"], dtype=float))
+            details = time_trial_control(plan, current, speed_mps=speed,
+                                          rear_axle_offset_m=(args.rear_axle_forward_m, 0.))
+            details.update(clearance_m=clearance, current_pose=current.__dict__, observation_pose=observed.__dict__)
+            steer = details["steer_rad"]; accel = details["acceleration_mps2"]; target = details["target_speed_mps"]
+            plan_id = plan.plan_id; reason = "TIME_PATH_TRACKING" if live else "SHADOW_CONTROL"
+        except (ValueError, KeyError, TypeError) as exc:
+            reason = str(exc); accel = -1.; target = 0.
+            if reason == "STOPPING_CORRIDOR_OCCUPIED" and state["positive_count"]:
+                state["fault"] = reason
+        if reason == "SCHEDULED_BRAKE" and velocity_fresh and speed is not None and abs(speed) < .03:
+            if state["stop_since_ns"] is None:
+                state["stop_since_ns"] = clock_ns
+            state["stop_confirmed"] = clock_ns - state["stop_since_ns"] >= 1_000_000_000
+        else:
+            state["stop_since_ns"] = None
+        dt = min(.1, max(0., wall - previous[1]))
+        steer = float(np.clip(steer, previous[0] - .8 * dt, previous[0] + .8 * dt))
+        previous[:] = [steer, wall]
+        # Do not fight a competing sender. The outer host supervisor terminates
+        # this owned simulator on invalid authority; never commandeer a live graph.
+        if publisher is not None and names(topic) == ["/time_path_controller"] and clock_ns is not None:
+            command = AckermannControlCommand()
+            command.stamp.sec = clock_ns // 10**9; command.stamp.nanosec = clock_ns % 10**9
+            command.lateral.steering_tire_angle = steer
+            command.longitudinal.acceleration = float(accel); command.longitudinal.speed = float(target)
+            publisher.publish(command); state["commands"] += 1
+            if accel > 0:
+                state["positive_count"] += 1
+            record({"event": "COMMAND_SENT", "reason": reason, "plan_id": plan_id,
+                    "steer_rad": steer, "acceleration_mps2": accel, "target_speed_mps": target,
+                    "speed_mps": speed, "details": details})
+        elif actual and actual != ["/time_path_controller"]:
+            state["fault"] = "COMPETING_CONTROLLER"
+        temporary = args.output / "control_heartbeat.pending"
+        temporary.write_text(json.dumps({**state, "reason": reason, "monotonic_ns": now,
+                                         "sim_ns": clock_ns, "topic": topic}, allow_nan=False))
+        temporary.replace(args.output / "control_heartbeat.json")
+
+    node.create_timer(.05, tick)  # Independent process, wall time, no model imports.
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        record({"event": "CONTROLLER_END", **state}); log.close(); node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()

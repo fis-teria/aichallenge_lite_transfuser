@@ -37,6 +37,8 @@ setup(
     license="Apache-2.0",
     entry_points={
         "console_scripts": [
+            "time_path_node = aic_e2e_runtime.time_path_node:main",
+            "time_trial_controller_node = aic_e2e_runtime.time_trial_controller_node:main",
             "v4_pp_connection_node = aic_e2e_runtime.v4_pp_connection_node:main",
             "inference_node = aic_e2e_runtime.inference_node:main",
             "inference_node_v1 = aic_e2e_runtime.inference_node_v1:main",

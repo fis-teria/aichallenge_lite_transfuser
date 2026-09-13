@@ -1,6 +1,6 @@
-"""Synthetic/offline time-plan to existing Pure Pursuit calculation; no ROS I/O.
+"""Time-plan to existing Pure Pursuit calculation; no ROS I/O.
 
-All pose origins must explicitly be the rear axle. No implicit base_link offset.
+Base-link plans require an explicit calibrated tracking-origin offset.
 Prediction horizon is NOT a mission endpoint. Safety/actuator integration is absent.
 """
 from __future__ import annotations
@@ -50,14 +50,29 @@ class TimeReference:
     target_speed_mps: float
     age_sec: float
     status: str = 'OFFLINE_CONTROL_CALCULATION_ONLY'
+    source_body_frame: str = 'rear_axle'
+    tracking_frame: str = 'rear_axle'
 
 
 def prepare_time_reference(plan: TimePlan, current: TimedBodyPose, *, max_age_sec: float = .5,
-                           speed_window_sec: float = .3) -> TimeReference:
+                           speed_window_sec: float = .3,
+                           rear_axle_offset_m: tuple[float, float] | None = None) -> TimeReference:
+    """Keep source-point path/speed; express tracking targets at current rear axle.
+
+    A base_link path is still the predicted base_link locus, not a fabricated
+    future rear-axle trajectory. Future heading is not predicted by this model.
+    The AWSIM trial checks the 1 mm source-point offset separately.
+    """
     obs=plan.observation
     if (current.clock,current.epoch,current.world_frame,current.body_frame)!=(obs.clock,obs.epoch,obs.world_frame,obs.body_frame):
         raise ValueError('CLOCK_EPOCH_FRAME_MISMATCH')
-    if current.body_frame!='rear_axle':raise ValueError('EXPLICIT_REAR_AXLE_TRANSFORM_REQUIRED')
+    if current.body_frame == 'rear_axle' and rear_axle_offset_m is None:
+        offset = np.zeros(2)
+    elif current.body_frame == 'base_link' and type(rear_axle_offset_m) is tuple and len(rear_axle_offset_m) == 2:
+        offset = np.asarray(rear_axle_offset_m, dtype=float)
+        if not np.isfinite(offset).all():raise ValueError('INVALID_REAR_AXLE_TRANSFORM')
+    else:
+        raise ValueError('EXPLICIT_REAR_AXLE_TRANSFORM_REQUIRED')
     if not np.isfinite([max_age_sec,speed_window_sec]).all() or max_age_sec<=0 or speed_window_sec<=0:
         raise ValueError('invalid time reference settings')
     age=(current.stamp_ns-obs.stamp_ns)*1e-9
@@ -72,12 +87,12 @@ def prepare_time_reference(plan: TimePlan, current: TimedBodyPose, *, max_age_se
     c,s=math.cos(obs.yaw_rad),math.sin(obs.yaw_rad)
     world=points@np.array([[c,s],[-s,c]])+np.array([obs.x_m,obs.y_m])
     c,s=math.cos(current.yaw_rad),math.sin(current.yaw_rad)
-    local=(world-np.array([current.x_m,current.y_m]))@np.array([[c,-s],[s,c]])
+    local=(world-np.array([current.x_m,current.y_m]))@np.array([[c,-s],[s,c]]) - offset
     end=min(3.,age+speed_window_sec)
     speed_times=np.r_[age,times[(times>age)&(times<end)],end]
     # Integrate source interval chord lengths, never distance from current pose.
     speed=float(np.linalg.norm(np.diff(sample(speed_times),axis=0),axis=1).sum()/(end-age))
-    return TimeReference(plan.plan_id,remaining-age,local,speed,age)
+    return TimeReference(plan.plan_id,remaining-age,local,speed,age, source_body_frame=obs.body_frame)
 
 
 def reference_control(reference: TimeReference, *, current_speed_mps: float,
