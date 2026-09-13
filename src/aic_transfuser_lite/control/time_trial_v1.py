@@ -10,6 +10,7 @@ import numpy as np
 from .time_reference_v1 import TimePlan, TimedBodyPose, prepare_time_reference, reference_control
 from .time_geometry_v2 import validate_time_geometry
 from .waypoint_controller import ControllerConfig, select_lookahead
+from ..runtime.awsim_trial_session import trial_duration_limits
 
 
 SPEED_POLICIES = ("source_capped_0p25", "fixed_5kmh")
@@ -28,8 +29,9 @@ def validate_trial_config(config: dict[str, Any]) -> str:
     """Reject descriptive JSON settings that disagree with this bounded runtime."""
     policy = config.get("speed_policy", "source_capped_0p25")
     ceiling, overspeed = trial_speed_limits(policy)
+    drive_sim_s, drive_wall_s, outer_wall_s = trial_duration_limits(config.get("execution_profile", "bounded_10s"))
     expected = {"speed_cap_mps": ceiling, "overspeed_limit_mps": overspeed,
-                "drive_limit_sim_s": 10., "drive_limit_wall_s": 30., "outer_limit_wall_s": 120.,
+                "drive_limit_sim_s": drive_sim_s, "drive_limit_wall_s": drive_wall_s, "outer_limit_wall_s": outer_wall_s,
                 "plan_max_age_s": .5, "controller_wall_period_s": .05,
                 "stop_confirmation_speed_mps": .03, "stop_confirmation_duration_sim_s": 1.}
     for key, value in expected.items():

@@ -2,6 +2,7 @@
 from __future__ import annotations
 import argparse
 from pathlib import Path
+import re
 
 DISPLAY = '''    - Class: rviz_default_plugins/Path
       Name: V4-20 raw prediction
@@ -33,6 +34,22 @@ def integrate(text: str, *, ten: bool = False, time_path: bool = False) -> str:
     if text.count(anchor)!=1:
         raise ValueError('UNKNOWN_RVIZ_LAYOUT')
     return text.replace(anchor,anchor+display,1)
+
+
+def ensure_time_path(text: str) -> str:
+    """Enable the existing stock E2E Path without changing other RViz settings."""
+    topic = '/visualization/time_path/raw_path'
+    if topic not in text:
+        return integrate(text, time_path=True)
+    blocks = list(re.finditer(r'^    - Class:.*?(?=^    - Class:|^  [^ ]|\Z)', text, re.M | re.S))
+    matches = [m for m in blocks if topic in m[0]]
+    if len(matches) != 1 or not matches[0][0].startswith('    - Class: rviz_default_plugins/Path\n'):
+        raise ValueError('AMBIGUOUS_TIME_PATH_DISPLAY')
+    match = matches[0]
+    block, count = re.subn(r'^      Enabled: (?:true|false)$', '      Enabled: true', match[0], flags=re.M)
+    if count != 1:
+        raise ValueError('UNKNOWN_PATH_ENABLED_SETTING')
+    return text[:match.start()] + block + text[match.end():]
 
 
 def main() -> None:

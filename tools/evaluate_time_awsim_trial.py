@@ -64,9 +64,9 @@ def main() -> None:
     def rows(name: str) -> list[dict[str, Any]]:
         return [json.loads(line) for line in (args.run/name).read_text().splitlines()]
     host = json.loads((args.run/"host_result.json").read_text())
-    if host["status"] != "COMPLETE_BOUNDED_TRIAL" or host["scope"] not in (
-            "10_SIM_SECOND_LOW_SPEED_MODEL_TRIAL", "10_SIM_SECOND_MODEL_TRIAL"):
-        raise ValueError("completed 10-second bounded trial required")
+    if host["status"] not in ("COMPLETE_BOUNDED_TRIAL", "COMPLETE_LAP", "STOPPED_NO_LAP", "FAILED") or host["scope"] not in (
+            "10_SIM_SECOND_LOW_SPEED_MODEL_TRIAL", "10_SIM_SECOND_MODEL_TRIAL", "ONE_LAP_MODEL_TRIAL"):
+        raise ValueError("recognized recorded bounded trial required")
     control = rows("control.jsonl")
     inference = rows("inference.jsonl")
     plans = [p for p in inference if p.get("event") == "PLAN"]
@@ -75,8 +75,18 @@ def main() -> None:
     if len(armed) != 1 or not plans:
         raise ValueError("one authorized trial and nonempty predictions required")
     start = armed[0]["sim_ns"]
-    active = [c for c in commands if start <= c["sim_ns"] < start + 10_000_000_000]
-    active_plans = [p for p in plans if start <= p["observation_ns"] < start + 10_000_000_000]
+    publishers = [r for r in control if r.get("event") == "PUBLISHER_CREATED"]
+    if len(publishers) != 1:
+        raise ValueError("one recorded controller publisher required")
+    end = start + round(publishers[0].get("drive_limit_sim_s", 10.)*1e9)
+    stopped = [r["sim_ns"] for r in control if r.get("event") == "STOP_REQUESTED"]
+    if stopped:
+        end = min(end, min(stopped))
+    if commands:
+        end = min(end, max(c["sim_ns"] for c in commands)+1)
+    duration_s = (end-start)/1e9
+    active = [c for c in commands if start <= c["sim_ns"] < end]
+    active_plans = [p for p in plans if start <= p["observation_ns"] < end]
     if not active or not active_plans:
         raise ValueError("authorized interval must contain commands and observations")
     def quantiles(values: list[float] | np.ndarray) -> dict[str, float]:
@@ -107,11 +117,8 @@ def main() -> None:
     pose_by_stamp = {c["details"]["current_pose"]["stamp_ns"]: c["details"]["current_pose"] for c in active
                      if c.get("details", {}).get("current_pose") is not None}
     measured_xy = np.array([[p["x_m"], p["y_m"]] for _, p in sorted(pose_by_stamp.items())])
-    publishers = [r for r in control if r.get("event") == "PUBLISHER_CREATED"]
-    if len(publishers) != 1:
-        raise ValueError("one recorded controller publisher required")
     speed_policy = publishers[0].get("speed_policy", "source_capped_0p25")
-    if host["scope"] == "10_SIM_SECOND_MODEL_TRIAL":
+    if host["scope"] in ("10_SIM_SECOND_MODEL_TRIAL", "ONE_LAP_MODEL_TRIAL"):
         config_bytes = (args.run/"trial_config.json").read_bytes()
         config_sha = hashlib.sha256(config_bytes).hexdigest()
         if (config_sha != host["trial_config_sha256"] or config_sha != publishers[0]["trial_config_sha256"]
@@ -119,12 +126,16 @@ def main() -> None:
                 or speed_policy != host["speed_policy"]):
             raise ValueError("recorded runtime/config speed policy mismatch")
     replay = replay_recorded_control(active, plans, publishers[0]["rear_axle_forward_m"], speed_policy=speed_policy)
-    late_speeds = [c["speed_mps"] for c in active if c["sim_ns"] >= start + 7_000_000_000 and c["speed_mps"] is not None]
-    result = {"status": "COMPLETED_NO_POSITIVE_DRIVE" if positive == 0 else "COMPLETED_POSITIVE_COMMANDS_OBSERVED",
+    late_speeds = [c["speed_mps"] for c in active if c["sim_ns"] >= end - 3_000_000_000 and c["speed_mps"] is not None]
+    result = {"status": ("LAP_COMPLETED" if host.get("judge_lap_confirmed") and host["status"] == "COMPLETE_LAP" else "LAP_NOT_COMPLETED") if host["scope"] == "ONE_LAP_MODEL_TRIAL" else ("COMPLETED_NO_POSITIVE_DRIVE" if positive == 0 else "COMPLETED_POSITIVE_COMMANDS_OBSERVED"),
         "evaluator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "scope": "BOUNDED_SAME_SCENE_TEST_NOT_LAP_OR_AVOIDANCE_ACCEPTANCE",
         "source_host_status": host["status"], "official_start_requested": host["official_start_requested"],
-        "armed_sim_ns": start, "active_commands": len(active), "positive_acceleration_commands": positive,
+        "armed_sim_ns": start, "active_duration_sim_s": duration_s,
+        "judge_lap_confirmed": host.get("judge_lap_confirmed", False), "judge_laps": host.get("judge_laps", []),
+        "judge_sections": [s["next"] for s in host.get("judge_section_events", [])],
+        "host_error": host.get("error"), "requested_stop_reason": host["last_control"].get("requested_stop_reason"),
+        "active_commands": len(active), "positive_acceleration_commands": positive,
         "active_command_reasons": dict(Counter(c["reason"] for c in active)),
         "all_predictions": len(plans), "active_observation_predictions": len(active_plans),
         "foldback_statistics_policy": "legacy_step_heading_v1_not_current_admission",
@@ -174,10 +185,10 @@ def main() -> None:
         ax.set_xlabel("Observation base_link forward [m]"); ax.set_ylabel("Left [m]")
         ax.grid(alpha=.25); ax.set_aspect("equal", adjustable="datalim")
     axes[1].legend(loc="lower right", fontsize=8)
-    fig.suptitle(f"Proposed time model: 10 s AWSIM trial ({positive} positive acceleration commands)")
+    fig.suptitle(f"Proposed time model: {duration_s:.1f} s AWSIM trial ({positive} positive acceleration commands)")
     fig.tight_layout(); fig.savefig(args.output/"raw_time_paths.png", dpi=150); plt.close(fig)
     fig, axes = plt.subplots(3, 1, figsize=(10, 7), sharex=True)
-    timeline = [c for c in commands if start <= c["sim_ns"] < start + 12_000_000_000]
+    timeline = [c for c in commands if start <= c["sim_ns"] < end + 2_000_000_000]
     times = [(c["sim_ns"] - start) / 1e9 for c in timeline]
     axes[0].plot(times, [c["speed_mps"] if c["speed_mps"] is not None else np.nan for c in timeline], label="Measured speed")
     axes[0].plot(times, [c["target_speed_mps"] for c in timeline], label="Commanded target speed", alpha=.7)
@@ -187,7 +198,7 @@ def main() -> None:
     axes[2].set_xlabel("Time since drive authorization [sim s]")
     for ax in axes:
         ax.grid(alpha=.25)
-        ax.axvline(10., linestyle="--", color="#666666", linewidth=1)
+        ax.axvline(duration_s, linestyle="--", color="#666666", linewidth=1)
     fig.suptitle("Proposed time model: bounded AWSIM control and measured response")
     fig.tight_layout(); fig.savefig(args.output/"control_timeline.png", dpi=150); plt.close(fig)
     print(json.dumps(result, allow_nan=False))

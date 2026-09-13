@@ -1,6 +1,6 @@
 """Owned single-vehicle make-dev trial, finite model-only drive then measured stop.
 
-Run under: timeout --signal=TERM --kill-after=10s 110s python3 <this file> ...
+Run under an outer timeout of (configured outer wall limit - 10 s) + 10 s kill grace.
 Normal Autoware RViz is reused. No remote Git operation, global cleanup or
 simulator/driver modification. The prepared install and checkpoint are explicit.
 """
@@ -15,9 +15,13 @@ import re
 import shlex
 import signal
 import subprocess
+import sys
 import time
 
-from integrate_normal_rviz_v4 import integrate
+from integrate_normal_rviz_v4 import ensure_time_path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from aic_transfuser_lite.runtime.awsim_trial_session import JudgeLog, LowSpeedStall, trial_duration_limits
 
 
 def sha(path: Path) -> str:
@@ -49,15 +53,20 @@ def main() -> None:
     if config_path.parent != source / "configs/control":
         raise ValueError("CONFIG_MUST_BE_IN_SOURCE_CONTROL_DIRECTORY")
     config = json.loads(config_path.read_text())
+    execution_profile = config.get("execution_profile", "bounded_10s")
+    drive_sim_s, drive_wall_s, outer_wall_s = trial_duration_limits(execution_profile)
     output = deployment / args.run_id; output.mkdir(exist_ok=False)
     (output / "trial_config.json").write_bytes(config_path.read_bytes())
     env = dict(os.environ)
     result = {"status": "FAILED", "run_id": args.run_id, "start_time_utc": time.time(),
-              "scope": "10_SIM_SECOND_MODEL_TRIAL", "official_start_requested": False,
+              "scope": "ONE_LAP_MODEL_TRIAL" if execution_profile == "one_lap" else "10_SIM_SECOND_MODEL_TRIAL",
+              "official_start_requested": False, "execution_profile": execution_profile,
               "speed_policy": config.get("speed_policy", "source_capped_0p25"),
               "trial_config_sha256": sha(config_path)}
     streams = []; processes = []; compose = None; owned = False
     started = time.monotonic()
+    judge = JudgeLog(args.run_id); judge_offset = 0; judge_pending = b""
+    stall = LowSpeedStall(); rviz_window = None; next_capture_sim_s = 2.
 
     def run(command, timeout=8, check=True):
         return subprocess.run(command, cwd=repo, env=env, text=True, capture_output=True, timeout=timeout, check=check)
@@ -70,6 +79,14 @@ def main() -> None:
     def interrupted(signum, frame):
         raise RuntimeError("OUTER_SUPERVISOR_TERMINATED")
     signal.signal(signal.SIGTERM, interrupted)
+
+    def stop_request(reason: str) -> None:
+        path = output / "stop_request.json"
+        if not path.exists():
+            pending = output / "stop_request.pending"
+            pending.write_text(json.dumps({"run_id": args.run_id, "reason": reason}))
+            pending.replace(path)
+
     try:
         inventory = run(["docker", "ps", "-a", "--format", "{{json .}}"])
         (output / "containers_before.jsonl").write_text(inventory.stdout)
@@ -120,9 +137,10 @@ def main() -> None:
         rviz_bytes = rviz.read_bytes()
         (output / "autoware.rviz.before").write_bytes(rviz_bytes)
         text = rviz_bytes.decode("utf-8")
-        if "/visualization/time_path/raw_path" not in text:
-            newline = "\r\n" if "\r\n" in text else "\n"
-            rviz.write_bytes(integrate(text.replace("\r\n", "\n"), time_path=True).replace("\n", newline).encode("utf-8"))
+        newline = "\r\n" if "\r\n" in text else "\n"
+        enabled = ensure_time_path(text.replace("\r\n", "\n")).replace("\n", newline).encode("utf-8")
+        if enabled != rviz_bytes:
+            rviz.write_bytes(enabled)
         result["rviz_config"] = str(rviz); result["rviz_sha256"] = sha(rviz)
         sidecar = args.run_id + "-nodes"
         inside = Path("/time") / output.name
@@ -138,16 +156,31 @@ def main() -> None:
             "codex-cartographer-v4-build:20260910", "-lc", shell]
         make_args = ["CONTROL_METHOD=v4_20_external", "CAPTURE=false", "ROSBAG=false", "AWSIM_LAPS=1",
                      "RUN_ID="+args.run_id, "OUTPUT_HOST_ROOT="+str(output)]
+        if execution_profile == "one_lap":
+            make_args += ["AWSIM_TIMEOUT=660", "AWSIM_EXTRA_ARGS=-logFile " + str(output/args.run_id/"awsim_unity.log")]
         result["commands"] = [probe_command, ["make", "dev", "DEV_AUTO_START=false", *make_args]]
         owned = True
         probe = launch(probe_command, "nodes")
         make = launch(result["commands"][1], "make")
-        while time.monotonic() - started < 95:
+        while time.monotonic() - started < outer_wall_s - 25:
             if probe.poll() is not None:
                 raise RuntimeError("TRIAL_NODES_EXIT")
             if make.poll() is not None and make.returncode:
                 raise RuntimeError("MAKE_DEV_FAILED")
             ip = output/"inference_heartbeat.json"; cp = output/"control_heartbeat.json"
+            unity = output/args.run_id/"awsim_unity.log"
+            if execution_profile == "one_lap" and unity.exists():
+                if unity.stat().st_size < judge_offset:
+                    raise RuntimeError("JUDGE_LOG_TRUNCATED_OR_RESET")
+                line_offset = judge_offset - len(judge_pending)
+                with unity.open("rb") as stream:
+                    stream.seek(judge_offset); chunk = stream.read(256*1024); judge_offset = stream.tell()
+                lines = (judge_pending + chunk).split(b"\n"); judge_pending = lines.pop()
+                for line in lines:
+                    judge.feed(line.decode("utf-8", errors="replace"), byte_offset=line_offset)
+                    line_offset += len(line)+1
+                if judge.laps:
+                    stop_request("JUDGE_FIRST_LAP" if judge.completed else "JUDGE_LAP_EVIDENCE_INCOMPLETE")
             if cp.exists():
                 control = json.loads(cp.read_text()); result["last_control"] = control
                 if control["fault"]:
@@ -155,10 +188,31 @@ def main() -> None:
                 if time.monotonic_ns() - control["monotonic_ns"] > 1_000_000_000:
                     raise RuntimeError("CONTROLLER_WATCHDOG")
                 if control["stop_confirmed"]:
-                    result["status"] = "COMPLETE_BOUNDED_TRIAL"; break
+                    result["status"] = ("COMPLETE_LAP" if judge.completed else "STOPPED_NO_LAP") if execution_profile == "one_lap" else "COMPLETE_BOUNDED_TRIAL"
+                    break
+                if execution_profile == "one_lap" and control["armed_ns"] is not None:
+                    elapsed_sim_s = (control["sim_ns"] - control["armed_ns"]) / 1e9
+                    if control["reason"] == "CLOCK_STALE":
+                        raise RuntimeError("ARMED_CLOCK_STALE")
+                    if control.get("speed_mps") is not None and stall.update(control["sim_ns"], control["speed_mps"]):
+                        stop_request("PROGRESS_STALLED")
+                    if rviz_window is not None and elapsed_sim_s >= next_capture_sim_s:
+                        run(["xwd", "-silent", "-id", rviz_window, "-out", str(output/f"rviz_drive_{int(next_capture_sim_s):03d}.xwd")], timeout=3)
+                        next_capture_sim_s += 60.
+                progress = output/"lap_progress.pending"
+                progress.write_text(json.dumps({"sections":judge.section_events,"laps":judge.laps,
+                    "lap_confirmed":judge.completed,"last_control":control},allow_nan=False))
+                progress.replace(output/"lap_progress.json")
             if ip.exists() and cp.exists() and make.poll() == 0 and not result["official_start_requested"]:
                 inference = json.loads(ip.read_text()); result["last_inference"] = inference
                 if inference["plans"] >= 5 and control["reason"] == "WAIT_AUTHORIZATION" and control["commands"] >= 5:
+                    if not any(name.startswith("rviz") for name in inference.get("path_subscribers", [])):
+                        if time.monotonic()-started > 45:
+                            raise RuntimeError("RVIZ_PATH_NOT_SUBSCRIBED")
+                        time.sleep(.1); continue
+                    if execution_profile == "one_lap" and not unity.exists():
+                        raise RuntimeError("JUDGE_LOG_MISSING")
+                    result["rviz_path_subscribers"] = inference["path_subscribers"]
                     inspections = []
                     for service in ("simulator", "autoware"):
                         cid = run(compose+["ps", "-q", service]).stdout.strip()
@@ -173,11 +227,14 @@ def main() -> None:
                         tree = run(["xwininfo", "-root", "-tree"]).stdout
                         windows = [line for line in tree.splitlines() if 'autoware.rviz' in line]
                         if len(windows) == 1:
+                            rviz_window = windows[0].strip().split()[0]
                             run(["xwd", "-silent", "-id", windows[0].strip().split()[0],
                                  "-out", str(output/"normal_rviz.xwd")])
                             result["rviz_window"] = windows[0].strip()
                     except Exception as exc:
                         result["rviz_capture_error"] = str(exc)
+                    if rviz_window is None:
+                        raise RuntimeError("NORMAL_RVIZ_WINDOW_MISSING")
                     start_cmd = ["make", "awsim-request-start", *make_args]
                     result["commands"].append(start_cmd)
                     official = launch(start_cmd, "official_start")
@@ -224,11 +281,13 @@ def main() -> None:
         for stream in streams:
             stream.close()
         result.update(cleanup_errors=cleanup, end_time_utc=time.time(), wall_s=time.monotonic()-started)
+        result.update(judge_lap_confirmed=judge.completed, judge_section_events=judge.section_events,
+                      judge_laps=judge.laps, judge_order_invalid=judge.invalid)
         (output/"host_result.json").write_text(json.dumps(result, indent=2, allow_nan=False))
         (output/"containers_after.jsonl").write_text(run(["docker", "ps", "-a", "--format", "{{json .}}"], check=False).stdout)
         (output/"compose_after.json").write_text(run(["docker", "compose", "ls", "--all", "--format", "json"], check=False).stdout)
         print(json.dumps(result, allow_nan=False))
-    if result["status"] != "COMPLETE_BOUNDED_TRIAL":
+    if result["status"] not in ("COMPLETE_BOUNDED_TRIAL", "COMPLETE_LAP"):
         raise SystemExit(1)
 
 

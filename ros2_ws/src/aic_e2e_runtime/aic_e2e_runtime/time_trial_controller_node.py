@@ -18,6 +18,7 @@ from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPos
 from aic_transfuser_lite.control.time_trial_v1 import (
     SPEED_POLICIES, interpolate_body_pose, time_trial_control, trial_speed_limits, validate_trial_config,
 )
+from aic_transfuser_lite.runtime.awsim_trial_session import requested_stop, trial_duration_limits, trial_brake_reason
 
 
 def main() -> None:
@@ -35,16 +36,19 @@ def main() -> None:
     settings.add_argument("--speed-policy", choices=SPEED_POLICIES)
     args, ros_args = parser.parse_known_args()
     config_sha = None
+    execution_profile = "bounded_10s"
     speed_policy = args.speed_policy or "source_capped_0p25"
     if args.trial_config is not None:
         config_bytes = args.trial_config.read_bytes()
         config = json.loads(config_bytes)
         speed_policy = validate_trial_config(config)
+        execution_profile = config.get("execution_profile", "bounded_10s")
         if (config["checkpoint_sha256"] != args.checkpoint_sha256
                 or config["geometry"]["rear_axle_forward_in_base_link_m"] != args.rear_axle_forward_m):
             raise ValueError("TRIAL_CONFIG_IDENTITY")
         config_sha = hashlib.sha256(config_bytes).hexdigest()
     _, overspeed_limit_mps = trial_speed_limits(speed_policy)
+    drive_sim_s, drive_wall_s, _ = trial_duration_limits(execution_profile)
     live = args.authorize_awsim_only
     if live and args.synthetic_shadow_fixture:
         raise ValueError("SYNTHETIC_FIXTURE_CANNOT_ACTUATE")
@@ -76,7 +80,8 @@ def main() -> None:
     poses: deque[TimedBodyPose] = deque(maxlen=256)
     previous = [0., time.monotonic()]
     state = {"fault": None, "armed_ns": None, "armed_wall": None, "stop_since_ns": None,
-             "stop_confirmed": False, "positive_count": 0, "commands": 0, "max_speed_mps": 0.}
+             "stop_confirmed": False, "positive_count": 0, "commands": 0, "max_speed_mps": 0.,
+             "requested_stop_reason": None, "speed_mps": None, "current_pose": None}
 
     def stamp(t) -> int:
         return int(t.sec) * 10**9 + int(t.nanosec)
@@ -130,6 +135,7 @@ def main() -> None:
                 record({"event": "PUBLISHER_CREATED", "topic": topic, "live": live,
                         "speed_policy": speed_policy, "overspeed_limit_mps": overspeed_limit_mps,
                         "trial_config_sha256": config_sha,
+                        "execution_profile": execution_profile, "drive_limit_sim_s": drive_sim_s,
                         "rear_axle_forward_m": args.rear_axle_forward_m})
         reason = "WAIT_AUTHORIZATION" if live else "SHADOW_ONLY"
         steer, accel, target = previous[0], -1., 0.
@@ -155,6 +161,8 @@ def main() -> None:
                 speed = None
                 raise ValueError("NONFINITE_VEHICLE_STATE")
             velocity_fresh = True
+            state["speed_mps"] = speed
+            state["current_pose"] = max(poses, key=lambda p: p.stamp_ns).__dict__
             state["max_speed_mps"] = max(state["max_speed_mps"], abs(speed))
             if not -.03 <= speed <= overspeed_limit_mps:
                 state["fault"] = "OVERSPEED_OR_REVERSE"; raise ValueError(state["fault"])
@@ -169,8 +177,15 @@ def main() -> None:
             armed = state["armed_ns"] is not None
             if live and not armed:
                 raise ValueError("WAIT_AUTHORIZATION")
-            if live and (clock_ns - state["armed_ns"] >= 10_000_000_000 or wall - state["armed_wall"] >= 30):
-                raise ValueError("SCHEDULED_BRAKE")
+            stop_file = args.output / "stop_request.json"
+            if live and stop_file.exists() and state["requested_stop_reason"] is None:
+                state["requested_stop_reason"] = requested_stop(json.loads(stop_file.read_text()), args.run_id)
+                record({"event": "STOP_REQUESTED", "reason": state["requested_stop_reason"]})
+            if live:
+                brake_reason = trial_brake_reason(execution_profile, (clock_ns-state["armed_ns"])/1e9,
+                    wall-state["armed_wall"], state["requested_stop_reason"] is not None)
+                if brake_reason is not None:
+                    raise ValueError(brake_reason)
             laser = cache["scan"][0]
             clearance = check_scan(laser.ranges, laser.angle_min, laser.angle_increment,
                                    laser.range_min, laser.range_max, speed)
@@ -204,7 +219,7 @@ def main() -> None:
             reason = str(exc); accel = -1.; target = 0.
             if reason == "STOPPING_CORRIDOR_OCCUPIED" and state["positive_count"]:
                 state["fault"] = reason
-        if reason == "SCHEDULED_BRAKE" and velocity_fresh and speed is not None and abs(speed) < .03:
+        if reason in ("SCHEDULED_BRAKE", "REQUESTED_BRAKE") and velocity_fresh and speed is not None and abs(speed) < .03:
             if state["stop_since_ns"] is None:
                 state["stop_since_ns"] = clock_ns
             state["stop_confirmed"] = clock_ns - state["stop_since_ns"] >= 1_000_000_000

@@ -19,6 +19,10 @@ def main() -> None:
     ap.add_argument("--config", type=Path, required=True)
     args = ap.parse_args()
     config = json.loads(args.config.read_text())
+    # Use the installed, source-matched standard-library schedule helper.
+    from aic_e2e_runtime import spatial_path_shadow_node_v4 as _source_layout
+    from aic_transfuser_lite.runtime.awsim_trial_session import trial_duration_limits
+    _, _, outer_wall_s = trial_duration_limits(config.get("execution_profile", "bounded_10s"))
     args.output.mkdir(parents=True, exist_ok=True)
     common = ["--output", str(args.output), "--run-id", args.run_id,
               "--checkpoint-sha256", config["checkpoint_sha256"]]
@@ -39,7 +43,7 @@ def main() -> None:
             stream = (args.output / (name + ".log")).open("x"); streams.append(stream)
             children.append(subprocess.Popen(command, stdout=stream, stderr=subprocess.STDOUT, start_new_session=True))
         start = time.monotonic()
-        while time.monotonic() - start < 100:
+        while time.monotonic() - start < outer_wall_s - 20:
             if any(p.poll() is not None for p in children):
                 raise RuntimeError("TRIAL_NODE_EXIT")
             # Keep the controller alive to send braking until the host freezes

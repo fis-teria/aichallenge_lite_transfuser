@@ -16,6 +16,16 @@ def test_preserve_normal_rviz_and_refuse_duplicate():
     with pytest.raises(ValueError):integrate('unknown')
 
 
+def test_time_path_is_enabled_without_duplicates_or_changes_to_other_displays():
+    original='Panels: []\nVisualization Manager:\n  Class: ""\n  Displays:\n    - Class: Existing\n      Enabled: false\n  Global Options:\n    Fixed Frame: map\n'
+    configured = module.ensure_time_path(original)
+    assert configured.count('/visualization/time_path/raw_path') == 1
+    assert module.ensure_time_path(configured) == configured
+    disabled = configured.replace('Name: Time model raw prediction\n      Enabled: true', 'Name: Time model raw prediction\n      Enabled: false')
+    assert module.ensure_time_path(disabled) == configured
+    assert 'Class: Existing\n      Enabled: false' in configured
+
+
 def test_display_mount_is_rigid_and_keeps_full_raw():
     raw=np.c_[np.arange(46)*.2,np.sin(np.arange(46))]
     record=dict(event='PLAN',source='LONG_V4_20M_EPOCH12_UNCORRECTED',raw_xy_m=raw.tolist(),observation_pose_xyyaw=[0.,0.,0.])

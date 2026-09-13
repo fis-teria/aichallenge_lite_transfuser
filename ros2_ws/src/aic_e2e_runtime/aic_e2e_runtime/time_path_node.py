@@ -128,6 +128,7 @@ def main() -> None:
                             for e in node.get_publishers_info_by_topic(topic)] for role, (topic, _) in topics.items()}
             state["sources_ok"] = all(names == [args.sensor_source] for names in graph.values())
             state["sources"] = graph
+            state["path_subscribers"] = [e.node_name for e in node.get_subscriptions_info_by_topic("/visualization/time_path/raw_path")]
             last_graph_check = now
         if future is not None and future.done():
             try:

@@ -21,6 +21,7 @@ from aic_transfuser_lite.runtime.tiny_lidar_sim import (
     TINY_GUI_RETRY_PROFILE, TINY_GUI_RETRY2_PROFILE, TINY_GUI_LAP_PROFILE, GUI_AUTHORIZATIONS,
 )
 from spatial_dev_host_v4 import HostWatch, AttemptBudget, atomic_json, cleanup_owned
+from aic_transfuser_lite.runtime.awsim_trial_session import JudgeLog
 
 IMAGE = "sha256:8c650c13157ffabbc3a72bab08865ccff8338f9025b43a8f4405b4c6b96d1ba7"
 ASSETS = {
@@ -135,42 +136,6 @@ class TinyBudget(AttemptBudget):
         active["tiny_forward_exact"] = tiny_calls is not None
         self.value["used"]["tiny_forward"] += charged
         self.finish(consumption, exact=exact)
-
-
-class JudgeLog:
-    """Actual unchanged LapCount logs, never distance/proximity as a lap."""
-    def __init__(self, run_id: str = "SYNTHETIC"):
-        self.run_id = run_id
-        self.section_events = []
-        self.laps = []
-        self.invalid = False
-        self.previous_lap_count = 0
-
-    def feed(self, line: str, byte_offset: int | None = None) -> None:
-        hit = re.search(r"Section line hit: current=(-?\d+), next=(\d+), started=(\w+)", line)
-        if hit:
-            previous, next_section = int(hit[1]), int(hit[2])
-            if self.section_events:
-                prior = self.section_events[-1]["next"]
-                if previous != prior or (next_section != prior+1 and next_section != 0) or hit[3] != "True":
-                    self.invalid = True
-            elif next_section != 0 or hit[3] != "False":
-                self.invalid = True
-            self.section_events.append(dict(current=previous, next=next_section, started=hit[3], line=line,
-                run_id=self.run_id, epoch=0, byte_offset=byte_offset))
-        lap = re.search(r"Lap completed: ([\d.]+)s, total laps: (\d+)", line)
-        if lap:
-            count = int(lap[2])
-            increment_valid = count == self.previous_lap_count+1
-            self.laps.append(dict(lap_seconds=float(lap[1]), laps=count, line=line,
-                run_id=self.run_id, epoch=0, byte_offset=byte_offset, lap_increment_valid=increment_valid,
-                ordered_section_evidence=not self.invalid and increment_valid and len(self.section_events) >= 4
-                    and self.section_events[0]["next"] == 0 and self.section_events[-1]["next"] == 0))
-            self.previous_lap_count = count
-
-    @property
-    def completed(self) -> bool:
-        return bool(self.laps and self.laps[-1]["laps"] >= 1 and self.laps[-1]["ordered_section_evidence"])
 
 
 def compose_definition(source: Path, sim: Path, xvfb: Path, output: Path, official: Path,
