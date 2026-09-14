@@ -77,7 +77,8 @@ def test_wall_cap_and_clock_reset_are_explicit():
 
 
 @pytest.mark.parametrize('kwargs', [{'amplitude_rad':.11},{'duration_s':3.},{'max_heading_rad':.2},
-    {'max_lateral_m':1.},{'start_s_m':float('inf')},{'amplitude_rad':True}])
+    {'max_lateral_m':1.},{'start_s_m':float('inf')},{'amplitude_rad':True},
+    {'plateau_s':float('nan')},{'plateau_s':-.1},{'duration_s':2.,'plateau_s':1.6}])
 def test_unsafe_or_non_si_configuration_is_rejected(kwargs):
     with pytest.raises(ValueError,match='CONFIG'):
         SteeringPulseConfig(**{'start_s_m':88.,'amplitude_rad':.05,**kwargs})
@@ -100,3 +101,34 @@ def test_initial_lap_seam_does_not_skip_the_first_real_approach():
     approach=tick(config,spawn.state,1.,s_m=5.)
     assert approach.state.approach_seen
     assert tick(config,approach.state,70.,s_m=88.).state.stage=='active'
+
+
+@pytest.mark.parametrize('amplitude',[-.08,.08])
+def test_plateau_changes_area_without_extending_duration_or_amplitude(amplitude):
+    config=SteeringPulseConfig(88.,amplitude,duration_s=2.,plateau_s=1.5)
+    state=approached(); values=[]; times=np.linspace(0.,2.,2001)
+    for t in times:
+        decision=tick(config,state,float(t)); state=decision.state
+        values.append(decision.perturbation_rad)
+        if .25<=t<=1.75:
+            assert decision.perturbation_rad==pytest.approx(amplitude)
+    assert values[0]==values[-1]==0. and state.stage=='recovery'
+    assert max(map(abs,values))<=abs(amplitude)
+    assert max(abs(b-a)/.001 for a,b in zip(values,values[1:])) < .503
+    assert np.sum((np.asarray(values[:-1])+np.asarray(values[1:]))*.0005)==pytest.approx(amplitude*1.75)
+    assert tick(config,state,2.1).perturbation_rad==0.
+
+
+@pytest.mark.parametrize('amplitude',[-.08,.08])
+def test_plateau_state_goal_still_releases_before_total_deadline(amplitude):
+    config=SteeringPulseConfig(88.,amplitude,duration_s=2.,plateau_s=1.5)
+    state=tick(config,approached(),0.).state
+    active=tick(config,state,.5); sign=math.copysign(1.,amplitude)
+    release=tick(config,active.state,.8,lateral_m=sign*.06,heading_rad=sign*.04)
+    assert release.state.stage=='releasing' and release.state.reason=='STATE_GOAL'
+    assert release.perturbation_rad==pytest.approx(amplitude)
+    halfway=tick(config,release.state,.875)
+    assert halfway.perturbation_rad==pytest.approx(amplitude*.5)
+    assert halfway.phase=='hold'
+    end=tick(config,halfway.state,1.)
+    assert end.phase=='recovery' and end.perturbation_rad==0.

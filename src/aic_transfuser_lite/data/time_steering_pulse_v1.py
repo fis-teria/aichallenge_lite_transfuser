@@ -27,12 +27,14 @@ class SteeringPulseConfig:
     entry_heading_rad: float = math.radians(1.)
     min_speed_mps: float = 1.15
     max_speed_mps: float = 1.4
+    plateau_s: float = 0.0
 
     def __post_init__(self) -> None:
         if not all(type(v) in (float, int) and math.isfinite(v) for v in self.__dict__.values()):
             raise ValueError('PULSE_CONFIG_FINITE_SI')
         if (not 10. <= self.start_s_m <= 300. or not 0. < abs(self.amplitude_rad) <= .1
                 or not .25 <= self.duration_s <= 2. or not .25 <= self.start_window_m <= 2.
+                or not 0. <= self.plateau_s <= max(0., self.duration_s-.5)
                 or not .05 <= self.release_ramp_s <= min(.25, self.duration_s/2.)
                 or not 4. <= self.recovery_s <= 15.
                 or not 0. < self.goal_lateral_m < self.max_lateral_m <= .3
@@ -117,7 +119,14 @@ failure to reach the requested state never extends or amplifies it.
             next_state = replace(next_state, stage='recovery', zero_ns=sim_ns,
                                  reason=next_state.reason or 'DURATION_LIMIT')
         elif next_state.stage == 'active':
-            value = config.amplitude_rad*math.sin(math.pi*elapsed/config.duration_s)**2
+            if config.plateau_s == 0.:
+                value = config.amplitude_rad*math.sin(math.pi*elapsed/config.duration_s)**2
+            else:
+                # The total deadline includes both ramps and the plateau.
+                # A nonzero plateau leaves at least .25s for each cosine ramp.
+                ramp_s = (config.duration_s-config.plateau_s)/2.
+                ramp_fraction = min(1., elapsed/ramp_s, (config.duration_s-elapsed)/ramp_s)
+                value = config.amplitude_rad*.5*(1.-math.cos(math.pi*ramp_fraction))
             sign = math.copysign(1., config.amplitude_rad)
             reason = ('STATE_GOAL' if sign*lateral_m >= config.goal_lateral_m and sign*heading_rad >= config.goal_heading_rad
                 else 'LATERAL_LIMIT' if abs(lateral_m) >= config.max_lateral_m

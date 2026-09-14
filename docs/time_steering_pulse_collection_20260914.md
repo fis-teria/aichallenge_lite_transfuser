@@ -16,7 +16,7 @@
 | 状態 | 発行する外乱 | 教師phase |
 |---|---|---|
 | waiting | 0 | baseline。速度・位置・向きの開始条件を満たすまで待つ |
-| active | 指定振幅×sin²(πt/T) | hold。未来教師にしない |
+| active | 既定は指定振幅×sin²(πt/T)。`plateau_s>0`はcosineの両端と一定値区間 | hold。未来教師にしない |
 | releasing | 解除要求時の値から短時間で0へ | hold。解除途中も未来教師にしない |
 | recovery | 0 | recovery。実測未来を監査する |
 | complete / skipped | 0 | baseline。同じ走行で再投入しない |
@@ -74,3 +74,21 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -m pytest -q
 参照JSONに`steering_pulse`を指定した場合のみ有効。通常の収集launcherと同じ引数で起動し、
 `--speed-policy aligned_gain4_v1 --separate-cpus`を付ける。
 具体的なrun ID・root・参照hash・実測結果は方式確認後に追記する。
+
+## 校正1の結果と校正2の変更理由
+
+`r32`左、`r33`右を振幅±0.08rad、全長2秒、開始進捗88mで実施。
+両方が279.00 / 279.02秒で完走し、停止3秒とbag closeを確認した。
+解除時のcontrol観測は左+3.69cm / +1.52度、右-3.60cm / -1.60度。
+両方とも解除後に5cm以上・外向き2度以上を同時に満たすcontrol行は0。
+これはcameraアンカーの正式採用数ではないため、別途全候補の因果replayを実施する。
+
+左の外乱40行で`issued_angle - nominal_angle - requested_pulse`の最大絶対値は
+2.78e-17rad。合成要求は制限で削られていない。`effective_rad`は「同じ直前の実発行値から
+制限を適用した2指令の1周期差」であり、実際の投入振幅や累積効果を表す量ではない。
+
+校正2は残り左右各1回だけ。振幅±0.08rad、全長2秒、開始88m、既存の全監視を維持し、
+`plateau_s=1.5`を明示する。最初と最後の0.25秒はcosineで接続し、途中は一定値とする。
+単独波形の面積は0.08rad*sから0.14rad*sになるが、PPの補正や車両応答後の到達量は未確認。
+左右各1回の試行値を事前固定し、目標状態に到達した場合は従来どおり0.15秒で解除する。
+時間上限、状態上限、停止監視の優先順位は変更しない。
