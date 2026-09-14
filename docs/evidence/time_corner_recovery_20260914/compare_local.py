@@ -120,7 +120,7 @@ def main() -> None:
                     key:stats([r['references'][nominal_name][key] for r in selected if nominal_name in r['references']])
                     for key in ('direct_left_m','direct_distance_m','same_base_s_offset_difference_m','heading_difference_rad')}
         gates = {}
-        sign = np.sign(ref['signed_offset_m'])
+        sign = float(np.sign(ref['signed_offset_m']))
         for nominal_name in names:
             h = phases['hold']['references'][nominal_name]['same_base_s_offset_difference_m']
             a = phases['after']['references'][nominal_name]['same_base_s_offset_difference_m']
@@ -134,7 +134,7 @@ def main() -> None:
                      reference_sha256=ref['reference_sha256'],
                      control_sha256=hashlib.sha256((run/'control.jsonl').read_bytes()).hexdigest())
         report['runs'].append(entry)
-        with args.output.with_name(name+'_local_matches.jsonl').open('x') as stream:
+        with args.output.with_name(args.output.stem+'_'+name+'_local_matches.jsonl').open('x') as stream:
             for row in matched:
                 stream.write(json.dumps(row, allow_nan=False)+'\n')
         axis = axes[0,column]
