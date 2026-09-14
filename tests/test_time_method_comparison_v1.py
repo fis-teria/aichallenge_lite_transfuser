@@ -9,7 +9,17 @@ import torch
 
 from aic_transfuser_lite.data.time_outward_balanced_v1 import OutwardBalancedMixDataset
 from aic_transfuser_lite.data.time_recovery_training_v1 import MatchedRecoveryMixDataset, RecoveryMixDataset
-from aic_transfuser_lite.evaluation.time_method_selection_v1 import pp_agreement_score, select_epoch
+from aic_transfuser_lite.evaluation.time_method_selection_v1 import pp_agreement_score, select_epoch, validation_partitions
+
+
+def test_comparison_cannot_change_historical_inference_batch_order():
+    assert validation_partitions(['a', 'new', 'b', 'a', 'new'], ['a', 'b'], ['new']) == ([0, 2, 3], [1, 4])
+
+
+@pytest.mark.parametrize('selected,compared', [(['a'], ['a']), (['a'], ['new', 'missing']), ([], ['a'])])
+def test_comparison_rejects_leaking_missing_or_incomplete_roles(selected, compared):
+    with pytest.raises(ValueError, match='validation roles'):
+        validation_partitions(['a', 'new'], selected, compared)
 
 
 def mixed():

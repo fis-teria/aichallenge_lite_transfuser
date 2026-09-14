@@ -22,7 +22,7 @@ from aic_transfuser_lite.data.time_recovery_training_v1 import MatchedRecoveryMi
 from aic_transfuser_lite.data.time_split_v1 import content_sha256
 from aic_transfuser_lite.data.time_training_cache_v1 import TimeTrainingCacheDataset, verify_time_training_cache, _sha
 from aic_transfuser_lite.evaluation.time_batched_v1 import evaluate_time_batched
-from aic_transfuser_lite.evaluation.time_method_selection_v1 import pp_agreement_score, select_epoch
+from aic_transfuser_lite.evaluation.time_method_selection_v1 import pp_agreement_score, select_epoch, validation_partitions
 from aic_transfuser_lite.evaluation.time_metrics_v1 import time_horizon_metrics
 from aic_transfuser_lite.evaluation.time_recovery_comparison_v1 import pp_probe, component_errors, summarize_pp
 from aic_transfuser_lite.training.time_checkpoint_v1 import TimeCheckpointIdentity, load_time_checkpoint
@@ -273,6 +273,9 @@ def compare(ctx: dict[str, Any], plan: dict[str, Any], root: Path, out: Path) ->
     for rid in sorted(new_ids):
         groups[rid] = [i for i, r in enumerate(ds.run_ids) if r == rid]
     truth = pp_rows(ds, all_indices, ds.targets, ctx["controller"], teacher=True)
+    partitions = validation_partitions(ds.run_ids, plan["selection_run_ids"], plan["comparison_only_run_ids"])
+    if partitions[0] != ctx["selection"]:
+        raise ValueError("historical selection batch membership changed")
     reports, evaluated, cells = {}, {}, {}
     for arm in ("uniform", "balanced"):
         chosen = read(out / (arm + "_selection.json"))["choices"]
@@ -293,15 +296,22 @@ def compare(ctx: dict[str, Any], plan: dict[str, Any], root: Path, out: Path) ->
             config, identity = TimeModelConfig.from_dict(payload["config"]), TimeCheckpointIdentity(**payload["identity"])
             model = build_time_model(config).to("cuda")
             load_time_checkpoint(checkpoint, config=config, identity=identity, model=model, mode="finetune")
-            metrics, tensor = evaluate_time_batched(model, ds, run_ids=ds.run_ids,
-                split_manifest=ctx["cache"]["split_manifest"], batch_size=32, workers=4, precision="float32")
+            tensor = torch.full((len(ds), 30, 2), float("nan"))
+            # Match historical batch shapes exactly; appending comparison rows
+            # changes the final selected batch and may change CUDA rounding.
+            for indices in partitions:
+                _, values = evaluate_time_batched(model, Subset(ds, indices), run_ids=[ds.run_ids[i] for i in indices],
+                    split_manifest=ctx["cache"]["split_manifest"], batch_size=32, workers=4, precision="float32")
+                tensor[indices] = values
             prediction = tensor.numpy()
             np.save(result_dir / (key + "_predictions.npy"), prediction, allow_pickle=False)
             source_dir = ctx["historical"] if checkpoint.parent == ctx["historical"] else checkpoint.parent
             np.testing.assert_allclose(prediction[ctx["selection"]],
                 np.load(source_dir / f"validation_epoch_{epoch:02d}.npy"), rtol=0, atol=0, equal_nan=True)
             pps = pp_rows(ds, all_indices, prediction, ctx["controller"])
-            report = {"epoch": epoch, "checkpoint": str(checkpoint), "sha256": _sha(checkpoint), "groups": {}}
+            report = {"epoch": epoch, "checkpoint": str(checkpoint), "sha256": _sha(checkpoint),
+                "training_source_commit": identity.source_git_commit, "saved_selection_predictions_exact": True,
+                "evaluation_batches_separated_by_role": True, "groups": {}}
             for group, ix in groups.items():
                 runs = [ds.run_ids[i] for i in ix]
                 group_metrics = time_horizon_metrics(tensor[ix], torch.from_numpy(ds.targets[ix]),
@@ -315,6 +325,7 @@ def compare(ctx: dict[str, Any], plan: dict[str, Any], root: Path, out: Path) ->
             del model, payload; torch.cuda.empty_cache()
             print(json.dumps({"phase": "COMPARISON_MODEL_COMPLETE", "model": key, "epoch": epoch}), flush=True)
     summary = {"status": "COMPLETE", "scope": plan["scope"], "cells": cells, "models": reports,
+        "comparison_source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
         "selection_runs": plan["selection_run_ids"], "comparison_only_runs": plan["comparison_only_run_ids"],
         "comparison_runs_previously_reported": True, "sealed_test_read": False,
         "data_and_loss_unchanged": True, "new_awsim_trials": 0}

@@ -7,6 +7,17 @@ from typing import Any, Sequence
 import numpy as np
 
 
+def validation_partitions(run_ids: Sequence[str], selection_runs: Sequence[str],
+                          comparison_runs: Sequence[str]) -> tuple[list[int], list[int]]:
+    """Keep historical batch membership/order and comparison-only batches separate."""
+    selected, compared = set(selection_runs), set(comparison_runs)
+    if (not selected or not compared or selected & compared
+            or set(run_ids) != selected | compared):
+        raise ValueError("disjoint nonempty validation roles must cover exactly the available runs")
+    return ([i for i, rid in enumerate(run_ids) if rid in selected],
+            [i for i, rid in enumerate(run_ids) if rid in compared])
+
+
 def pp_agreement_score(teacher: Sequence[dict[str, Any]], predicted: Sequence[dict[str, Any]],
                        run_ids: Sequence[str], *, rejection_penalty_rad: float = .6) -> dict[str, Any]:
     """Run-equal absolute physical tire error [rad], on fixed teacher support.
