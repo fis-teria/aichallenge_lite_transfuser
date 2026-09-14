@@ -1,0 +1,416 @@
+{
+  "scope": "OFFLINE_REFERENCE_CENTER_CLEARANCE_NOT_FULL_BODY_OR_DRIVING_PROOF",
+  "source_commit": "b098b3f3286de89141eda1f0d04549d7672e56f4",
+  "input_sha256": {
+    "occupancy_grid_map.yaml": "39d5aba44234c1e09fc57421d467d64c1769259cd3c3656032f008d2db4e6a79",
+    "pure_pursuit.launch.xml": "d3e481bb949da5c23d7403ad315640a985c468c58f431f8d3daf422227612693",
+    "base.csv": "c563a757a243a2521a68acacd565492e1ea158db7e7d68327682583d24fc79e7",
+    "occupancy_grid_map.pgm": "c24af2130a8df96047a49d5b7759af7a0b29645c023e7f3bc6d4ba436275725a"
+  },
+  "clearance_m": 1.4,
+  "maximum_dense_step_m": 0.1,
+  "examined_offsets_m": [
+    0.2,
+    0.3,
+    0.4
+  ],
+  "runtime_changed": false,
+  "deployed": false,
+  "independent_heading_perturbation": false,
+  "heading_note": "Existing excursion geometry derives heading from the offset polyline; no independent yaw parameter",
+  "rows": [
+    {
+      "side": "left",
+      "offset_m": 0.2,
+      "config": {
+        "approach_length_m": 4.0,
+        "hold_length_m": 6.0,
+        "recovery_length_m": 6.0,
+        "minimum_segment_gap_m": 8.0,
+        "minimum_center_clearance_m": 1.4,
+        "geometry_curvature_threshold_inv_m": 0.015,
+        "preferred_abs_curvature_inv_m": 0.15,
+        "requests": [
+          {
+            "segment_id": "left_020",
+            "side": "left",
+            "offset_m": 0.2,
+            "geometry": "left_curve",
+            "base_start_range_m": [
+              76.0,
+              82.0
+            ]
+          }
+        ],
+        "maximum_abs_base_curvature_inv_m": 0.25
+      },
+      "candidates": [
+        {
+          "start_s_m": 76.8427979666932,
+          "end_s_m": 92.8427979666932,
+          "mean_base_curvature_inv_m": 0.1549380039933419,
+          "base_curvature_pass": true,
+          "left_curve_pass": true,
+          "center_clearance_1p4m_pass": true,
+          "joined_center_clearance_1p4m_pass": true,
+          "failed_dense_points": 0,
+          "first_failed_map_xy_m": []
+        },
+        {
+          "start_s_m": 79.88994279228969,
+          "end_s_m": 95.88994279228969,
+          "mean_base_curvature_inv_m": 0.15286331709979398,
+          "base_curvature_pass": true,
+          "left_curve_pass": true,
+          "center_clearance_1p4m_pass": true,
+          "joined_center_clearance_1p4m_pass": true,
+          "failed_dense_points": 0,
+          "first_failed_map_xy_m": []
+        }
+      ],
+      "generation_pass": true,
+      "selected": {
+        "segment_id": "left_020",
+        "side": "left",
+        "offset_m": 0.2,
+        "geometry": "left_curve",
+        "mean_base_curvature_inv_m": 0.15286331709979398,
+        "start_point_id": 27,
+        "end_point_id": 33,
+        "base_start_s_m": 79.88994279228969,
+        "base_end_s_m": 95.88994279228969
+      },
+      "joined_clearance_pass": true
+    },
+    {
+      "side": "right",
+      "offset_m": 0.2,
+      "config": {
+        "approach_length_m": 4.0,
+        "hold_length_m": 6.0,
+        "recovery_length_m": 6.0,
+        "minimum_segment_gap_m": 8.0,
+        "minimum_center_clearance_m": 1.4,
+        "geometry_curvature_threshold_inv_m": 0.015,
+        "preferred_abs_curvature_inv_m": 0.15,
+        "requests": [
+          {
+            "segment_id": "right_020",
+            "side": "right",
+            "offset_m": 0.2,
+            "geometry": "left_curve",
+            "base_start_range_m": [
+              76.0,
+              82.0
+            ]
+          }
+        ],
+        "maximum_abs_base_curvature_inv_m": 0.25
+      },
+      "candidates": [
+        {
+          "start_s_m": 76.8427979666932,
+          "end_s_m": 92.8427979666932,
+          "mean_base_curvature_inv_m": 0.1549380039933419,
+          "base_curvature_pass": true,
+          "left_curve_pass": true,
+          "center_clearance_1p4m_pass": true,
+          "joined_center_clearance_1p4m_pass": true,
+          "failed_dense_points": 0,
+          "first_failed_map_xy_m": []
+        },
+        {
+          "start_s_m": 79.88994279228969,
+          "end_s_m": 95.88994279228969,
+          "mean_base_curvature_inv_m": 0.15286331709979398,
+          "base_curvature_pass": true,
+          "left_curve_pass": true,
+          "center_clearance_1p4m_pass": true,
+          "joined_center_clearance_1p4m_pass": true,
+          "failed_dense_points": 0,
+          "first_failed_map_xy_m": []
+        }
+      ],
+      "generation_pass": true,
+      "selected": {
+        "segment_id": "right_020",
+        "side": "right",
+        "offset_m": 0.2,
+        "geometry": "left_curve",
+        "mean_base_curvature_inv_m": 0.15286331709979398,
+        "start_point_id": 27,
+        "end_point_id": 33,
+        "base_start_s_m": 79.88994279228969,
+        "base_end_s_m": 95.88994279228969
+      },
+      "joined_clearance_pass": true
+    },
+    {
+      "side": "left",
+      "offset_m": 0.3,
+      "config": {
+        "approach_length_m": 4.0,
+        "hold_length_m": 6.0,
+        "recovery_length_m": 6.0,
+        "minimum_segment_gap_m": 8.0,
+        "minimum_center_clearance_m": 1.4,
+        "geometry_curvature_threshold_inv_m": 0.015,
+        "preferred_abs_curvature_inv_m": 0.15,
+        "requests": [
+          {
+            "segment_id": "left_030",
+            "side": "left",
+            "offset_m": 0.3,
+            "geometry": "left_curve",
+            "base_start_range_m": [
+              76.0,
+              82.0
+            ]
+          }
+        ],
+        "maximum_abs_base_curvature_inv_m": 0.25
+      },
+      "candidates": [
+        {
+          "start_s_m": 76.8427979666932,
+          "end_s_m": 92.8427979666932,
+          "mean_base_curvature_inv_m": 0.1549380039933419,
+          "base_curvature_pass": true,
+          "left_curve_pass": true,
+          "center_clearance_1p4m_pass": true,
+          "joined_center_clearance_1p4m_pass": true,
+          "failed_dense_points": 0,
+          "first_failed_map_xy_m": []
+        },
+        {
+          "start_s_m": 79.88994279228969,
+          "end_s_m": 95.88994279228969,
+          "mean_base_curvature_inv_m": 0.15286331709979398,
+          "base_curvature_pass": true,
+          "left_curve_pass": true,
+          "center_clearance_1p4m_pass": true,
+          "joined_center_clearance_1p4m_pass": true,
+          "failed_dense_points": 0,
+          "first_failed_map_xy_m": []
+        }
+      ],
+      "generation_pass": true,
+      "selected": {
+        "segment_id": "left_030",
+        "side": "left",
+        "offset_m": 0.3,
+        "geometry": "left_curve",
+        "mean_base_curvature_inv_m": 0.15286331709979398,
+        "start_point_id": 27,
+        "end_point_id": 33,
+        "base_start_s_m": 79.88994279228969,
+        "base_end_s_m": 95.88994279228969
+      },
+      "joined_clearance_pass": true
+    },
+    {
+      "side": "right",
+      "offset_m": 0.3,
+      "config": {
+        "approach_length_m": 4.0,
+        "hold_length_m": 6.0,
+        "recovery_length_m": 6.0,
+        "minimum_segment_gap_m": 8.0,
+        "minimum_center_clearance_m": 1.4,
+        "geometry_curvature_threshold_inv_m": 0.015,
+        "preferred_abs_curvature_inv_m": 0.15,
+        "requests": [
+          {
+            "segment_id": "right_030",
+            "side": "right",
+            "offset_m": 0.3,
+            "geometry": "left_curve",
+            "base_start_range_m": [
+              76.0,
+              82.0
+            ]
+          }
+        ],
+        "maximum_abs_base_curvature_inv_m": 0.25
+      },
+      "candidates": [
+        {
+          "start_s_m": 76.8427979666932,
+          "end_s_m": 92.8427979666932,
+          "mean_base_curvature_inv_m": 0.1549380039933419,
+          "base_curvature_pass": true,
+          "left_curve_pass": true,
+          "center_clearance_1p4m_pass": true,
+          "joined_center_clearance_1p4m_pass": true,
+          "failed_dense_points": 0,
+          "first_failed_map_xy_m": []
+        },
+        {
+          "start_s_m": 79.88994279228969,
+          "end_s_m": 95.88994279228969,
+          "mean_base_curvature_inv_m": 0.15286331709979398,
+          "base_curvature_pass": true,
+          "left_curve_pass": true,
+          "center_clearance_1p4m_pass": true,
+          "joined_center_clearance_1p4m_pass": true,
+          "failed_dense_points": 0,
+          "first_failed_map_xy_m": []
+        }
+      ],
+      "generation_pass": true,
+      "selected": {
+        "segment_id": "right_030",
+        "side": "right",
+        "offset_m": 0.3,
+        "geometry": "left_curve",
+        "mean_base_curvature_inv_m": 0.15286331709979398,
+        "start_point_id": 27,
+        "end_point_id": 33,
+        "base_start_s_m": 79.88994279228969,
+        "base_end_s_m": 95.88994279228969
+      },
+      "joined_clearance_pass": true
+    },
+    {
+      "side": "left",
+      "offset_m": 0.4,
+      "config": {
+        "approach_length_m": 4.0,
+        "hold_length_m": 6.0,
+        "recovery_length_m": 6.0,
+        "minimum_segment_gap_m": 8.0,
+        "minimum_center_clearance_m": 1.4,
+        "geometry_curvature_threshold_inv_m": 0.015,
+        "preferred_abs_curvature_inv_m": 0.15,
+        "requests": [
+          {
+            "segment_id": "left_040",
+            "side": "left",
+            "offset_m": 0.4,
+            "geometry": "left_curve",
+            "base_start_range_m": [
+              76.0,
+              82.0
+            ]
+          }
+        ],
+        "maximum_abs_base_curvature_inv_m": 0.25
+      },
+      "candidates": [
+        {
+          "start_s_m": 76.8427979666932,
+          "end_s_m": 92.8427979666932,
+          "mean_base_curvature_inv_m": 0.1549380039933419,
+          "base_curvature_pass": true,
+          "left_curve_pass": true,
+          "center_clearance_1p4m_pass": false,
+          "joined_center_clearance_1p4m_pass": false,
+          "failed_dense_points": 10,
+          "first_failed_map_xy_m": [
+            [
+              89641.91726550166,
+              43137.40437821399
+            ],
+            [
+              89643.06973072764,
+              43137.42279173663
+            ],
+            [
+              89643.16259032182,
+              43137.45242644504
+            ]
+          ]
+        },
+        {
+          "start_s_m": 79.88994279228969,
+          "end_s_m": 95.88994279228969,
+          "mean_base_curvature_inv_m": 0.15286331709979398,
+          "base_curvature_pass": true,
+          "left_curve_pass": true,
+          "center_clearance_1p4m_pass": false,
+          "joined_center_clearance_1p4m_pass": false,
+          "failed_dense_points": 9,
+          "first_failed_map_xy_m": [
+            [
+              89643.06973072764,
+              43137.42279173663
+            ],
+            [
+              89643.16259032182,
+              43137.45242644504
+            ],
+            [
+              89643.25544991602,
+              43137.48206115344
+            ]
+          ]
+        }
+      ],
+      "generation_pass": false,
+      "error": "no safe, non-overlapping interval satisfies segment 'left_040'"
+    },
+    {
+      "side": "right",
+      "offset_m": 0.4,
+      "config": {
+        "approach_length_m": 4.0,
+        "hold_length_m": 6.0,
+        "recovery_length_m": 6.0,
+        "minimum_segment_gap_m": 8.0,
+        "minimum_center_clearance_m": 1.4,
+        "geometry_curvature_threshold_inv_m": 0.015,
+        "preferred_abs_curvature_inv_m": 0.15,
+        "requests": [
+          {
+            "segment_id": "right_040",
+            "side": "right",
+            "offset_m": 0.4,
+            "geometry": "left_curve",
+            "base_start_range_m": [
+              76.0,
+              82.0
+            ]
+          }
+        ],
+        "maximum_abs_base_curvature_inv_m": 0.25
+      },
+      "candidates": [
+        {
+          "start_s_m": 76.8427979666932,
+          "end_s_m": 92.8427979666932,
+          "mean_base_curvature_inv_m": 0.1549380039933419,
+          "base_curvature_pass": true,
+          "left_curve_pass": true,
+          "center_clearance_1p4m_pass": true,
+          "joined_center_clearance_1p4m_pass": true,
+          "failed_dense_points": 0,
+          "first_failed_map_xy_m": []
+        },
+        {
+          "start_s_m": 79.88994279228969,
+          "end_s_m": 95.88994279228969,
+          "mean_base_curvature_inv_m": 0.15286331709979398,
+          "base_curvature_pass": true,
+          "left_curve_pass": true,
+          "center_clearance_1p4m_pass": true,
+          "joined_center_clearance_1p4m_pass": true,
+          "failed_dense_points": 0,
+          "first_failed_map_xy_m": []
+        }
+      ],
+      "generation_pass": true,
+      "selected": {
+        "segment_id": "right_040",
+        "side": "right",
+        "offset_m": 0.4,
+        "geometry": "left_curve",
+        "mean_base_curvature_inv_m": 0.15286331709979398,
+        "start_point_id": 27,
+        "end_point_id": 33,
+        "base_start_s_m": 79.88994279228969,
+        "base_end_s_m": 95.88994279228969
+      },
+      "joined_clearance_pass": true
+    }
+  ]
+}

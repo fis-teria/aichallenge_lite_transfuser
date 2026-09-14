@@ -1,0 +1,645 @@
+{
+  "scope": "ACCEPTED_ANCHOR_STATE_COVERAGE_NOT_MODEL_SUCCESS_OR_DATA_SUFFICIENCY",
+  "source_commit": "82d1361d4b18c79fc989655a43265ce177e28e7c",
+  "primary_nominal": "codex-time-recovery-left020-r23",
+  "nominal_source_audits": {
+    "codex-time-recovery-left020-r23": {
+      "input_poses": 2302,
+      "unique_stamps": 2302,
+      "exact_duplicates": 0,
+      "conflicting_stamps": 0,
+      "excluded_segments": 0
+    },
+    "codex-time-recovery-right040-r22": {
+      "input_poses": 2301,
+      "unique_stamps": 2301,
+      "exact_duplicates": 0,
+      "conflicting_stamps": 0,
+      "excluded_segments": 0
+    }
+  },
+  "input_hashes": {
+    "/home/thistle/e2e_autonomous/e2e_lite_transfuser/docs/evidence/time_corner_recovery_20260914/collection_index.json": "fd5fe95034e2894002718cd8f3c52b846682221aea8274a558ffda1409e4840e",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_batches_20260914/codex-time-recovery-left020-r23/bag/bag_0.db3": "c5b168b9389050f7a9c34a1db3feed38b8131767f9cf01f9e85c113448ebb93e",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_batches_20260914/codex-time-recovery-left020-r23/control.jsonl": "2f10a0b146ac25f6b0888ea99941c1bf905145e3d03cc5376b6a29988fd90d80",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_batches_20260914/codex-time-recovery-left020-r23/result.json": "5f0efb050440d0d9215f53aee9a1982c8ae05e3a169034f89bdced14084810da",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_batches_20260914/codex-time-recovery-right040-r22/bag/bag_0.db3": "ac5b79deaf3a0b5ae4a8fd80546c021bb98d0e3dbfd2a6e343ae7431b60ffe55",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_batches_20260914/codex-time-recovery-right040-r22/control.jsonl": "5ab74738b47df9a77f0b7f35fe2c1db7fb5a590c1c688b68655d23a495e260ac",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_batches_20260914/codex-time-recovery-right040-r22/result.json": "8adbcf8285a5f733b5c0f84d18552f1c0451ab9db99fff048c85c1d4a75a7847",
+    "/home/thistle/e2e_autonomous/raw/time_corner_recovery_20260914/codex-time-recovery-cornerleft020-r29/bag/bag_0.db3": "a9caedaed090ae90d66ad10b6303feb72392116b135fafbf8435171aa97b868a",
+    "/home/thistle/e2e_autonomous/raw/time_corner_recovery_20260914/codex-time-recovery-cornerleft020-r29/control.jsonl": "2f0d2399ad3935e6204426fae606b1b3f6c45edaf6effad78282b88480c53532",
+    "/home/thistle/e2e_autonomous/raw/time_corner_recovery_20260914/codex-time-recovery-cornerleft020-r29/result.json": "d0350f3c1518e75f1b980c3f43b0e9e065035592879ec5d07cbb6be95419c137",
+    "/home/thistle/e2e_autonomous/raw/time_corner_recovery_20260914/codex-time-recovery-cornerleft020-r29/reference.json": "81858a8f7c2b9ad9974a1055f52076988ba6922eafe03bbf49c0920e24e0460b",
+    "/home/thistle/e2e_autonomous/e2e_lite_transfuser/docs/evidence/time_corner_recovery_20260914/codex-time-recovery-cornerleft020-r29_causal_probe.json": "d0b404bf29730e70440eea9e65a46746862362e82d866c58d91d88c40bff17cf",
+    "/home/thistle/e2e_autonomous/raw/time_corner_recovery_20260914/codex-time-recovery-cornerright020-r28/bag/bag_0.db3": "e310e744c25c12f3c782988cc7a0f00539c43b37d6bf5f35f7f5b57ee3b8c093",
+    "/home/thistle/e2e_autonomous/raw/time_corner_recovery_20260914/codex-time-recovery-cornerright020-r28/control.jsonl": "18c5bb52f53d5fb353e8fac89994e0f164178def137dac8ed1b34cbf909c19e5",
+    "/home/thistle/e2e_autonomous/raw/time_corner_recovery_20260914/codex-time-recovery-cornerright020-r28/result.json": "225212e80bceacdb4011b0fba49029210f13adc61fb73f5951df584b321a3ddc",
+    "/home/thistle/e2e_autonomous/raw/time_corner_recovery_20260914/codex-time-recovery-cornerright020-r28/reference.json": "beb42e8b5ab816ed17a78ee151eeab50c48be8243fe60583855d93c631403f0d",
+    "/home/thistle/e2e_autonomous/e2e_lite_transfuser/docs/evidence/time_corner_recovery_20260914/codex-time-recovery-cornerright020-r28_causal_probe.json": "16869272e51dc904e6b26c1b44bbb6532d6beee4e2a04809b3845f6428be02a0",
+    "/home/thistle/e2e_autonomous/runs/time_segment_awsim_evidence_20260914/codex-time-segment01/control.jsonl": "0c01dd5abee6570e02b1dd4ecfa4d9e9fa816f9939f31cf846ad99b51feab2ff"
+  },
+  "independent_recovery_episodes": 2,
+  "accepted": {
+    "left_m": {
+      "count": 118,
+      "min": -0.1634550247539472,
+      "median": -0.009056108134586193,
+      "p95": 0.15565936436508093,
+      "max": 0.16499983927384804,
+      "mean": -0.0028356773423751525
+    },
+    "heading_error_rad": {
+      "count": 118,
+      "min": -0.040345857696377774,
+      "median": 0.011272216782447275,
+      "p95": 0.03857317790383299,
+      "max": 0.04015275824138009,
+      "mean": 0.00012882574156035078
+    },
+    "speed_mps": {
+      "count": 118,
+      "min": 0.9187058806419373,
+      "median": 0.9390384980612042,
+      "p95": 0.9436179893355404,
+      "max": 0.9492960572242737,
+      "mean": 0.936520369736719
+    },
+    "base_s_m": {
+      "count": 118,
+      "min": 90.09957314323799,
+      "median": 92.85702525317673,
+      "p95": 95.59802570370182,
+      "max": 95.88131540681701,
+      "mean": 92.90447377142677
+    },
+    "heading_error_deg": {
+      "count": 118,
+      "min": -2.3116473668378563,
+      "median": 0.6458504473907654,
+      "p95": 2.210080296296914,
+      "max": 2.300583583040213,
+      "mean": 0.007381171284051166
+    },
+    "speed_kmh": {
+      "count": 118,
+      "min": 3.3073411703109743,
+      "median": 3.380538593020335,
+      "p95": 3.397024761607945,
+      "max": 3.4174658060073853,
+      "mean": 3.3714733310521883
+    },
+    "count": 118,
+    "independent_run_ids": [
+      "codex-time-recovery-cornerleft020-r29",
+      "codex-time-recovery-cornerright020-r28"
+    ],
+    "absolute_lateral_bins_m": {
+      "[0.0,0.05)": 25,
+      "[0.05,0.1)": 27,
+      "[0.1,0.2)": 66,
+      "[0.2,0.4)": 0,
+      "[0.4,0.8)": 0,
+      "[0.8,2.0)": 0
+    },
+    "absolute_heading_bins_deg": {
+      "[0.0,1.0)": 33,
+      "[1.0,3.0)": 85,
+      "[3.0,6.0)": 0,
+      "[6.0,15.0)": 0
+    },
+    "heading_quadrants_at_abs_offset_ge_5cm_and_abs_heading_ge_1deg": {
+      "toward_nominal": 60,
+      "away_from_nominal": 0,
+      "excluded_small_offset_or_heading": 58
+    }
+  },
+  "by_run": {
+    "codex-time-recovery-cornerleft020-r29": {
+      "left_m": {
+        "count": 58,
+        "min": 0.006116284007115394,
+        "median": 0.10897720354242232,
+        "p95": 0.1603425094943563,
+        "max": 0.16499983927384804,
+        "mean": 0.09830163708953107
+      },
+      "heading_error_rad": {
+        "count": 58,
+        "min": -0.040345857696377774,
+        "median": -0.027658605041831485,
+        "p95": -0.012802465213229742,
+        "max": -0.0125424422085314,
+        "mean": -0.02667698579546544
+      },
+      "speed_mps": {
+        "count": 58,
+        "min": 0.9187058806419373,
+        "median": 0.93867129513223,
+        "p95": 0.9418028354646268,
+        "max": 0.9428152186500661,
+        "mean": 0.9351239942855069
+      },
+      "base_s_m": {
+        "count": 58,
+        "min": 90.09957314323799,
+        "median": 92.85035624747198,
+        "p95": 95.60278171662011,
+        "max": 95.88131540681701,
+        "mean": 92.91412154965553
+      },
+      "heading_error_deg": {
+        "count": 58,
+        "min": -2.3116473668378563,
+        "median": -1.5847213361162038,
+        "p95": -0.7335272240811177,
+        "max": -0.7186290033355923,
+        "mean": -1.5284786962106167
+      },
+      "speed_kmh": {
+        "count": 58,
+        "min": 3.3073411703109743,
+        "median": 3.3792166624760283,
+        "p95": 3.3904902076726566,
+        "max": 3.394134787140238,
+        "mean": 3.3664463794278245
+      },
+      "count": 58,
+      "independent_run_ids": [
+        "codex-time-recovery-cornerleft020-r29"
+      ],
+      "absolute_lateral_bins_m": {
+        "[0.0,0.05)": 13,
+        "[0.05,0.1)": 13,
+        "[0.1,0.2)": 32,
+        "[0.2,0.4)": 0,
+        "[0.4,0.8)": 0,
+        "[0.8,2.0)": 0
+      },
+      "absolute_heading_bins_deg": {
+        "[0.0,1.0)": 15,
+        "[1.0,3.0)": 43,
+        "[3.0,6.0)": 0,
+        "[6.0,15.0)": 0
+      },
+      "heading_quadrants_at_abs_offset_ge_5cm_and_abs_heading_ge_1deg": {
+        "toward_nominal": 30,
+        "away_from_nominal": 0,
+        "excluded_small_offset_or_heading": 28
+      }
+    },
+    "codex-time-recovery-cornerright020-r28": {
+      "left_m": {
+        "count": 60,
+        "min": -0.1634550247539472,
+        "median": -0.11062802078428663,
+        "p95": -0.01653500306145195,
+        "max": -0.007563502835752984,
+        "mean": -0.1006017479598845
+      },
+      "heading_error_rad": {
+        "count": 60,
+        "min": 0.011246360290987356,
+        "median": 0.027982920684914588,
+        "p95": 0.03948421752750303,
+        "max": 0.04015275824138009,
+        "mean": 0.02604111022735195
+      },
+      "speed_mps": {
+        "count": 60,
+        "min": 0.925580876215363,
+        "median": 0.939643246786952,
+        "p95": 0.9466853124744146,
+        "max": 0.9492960572242737,
+        "mean": 0.9378701993395573
+      },
+      "base_s_m": {
+        "count": 60,
+        "min": 90.10005451152462,
+        "median": 92.85702525317673,
+        "p95": 95.56481839070892,
+        "max": 95.85216584926562,
+        "mean": 92.89514758580562
+      },
+      "heading_error_deg": {
+        "count": 60,
+        "min": 0.6443689795570959,
+        "median": 1.6033032536949368,
+        "p95": 2.2622790217023936,
+        "max": 2.300583583040213,
+        "mean": 1.4920457098622306
+      },
+      "speed_kmh": {
+        "count": 60,
+        "min": 3.332091154375307,
+        "median": 3.382715688433027,
+        "p95": 3.408067124907892,
+        "max": 3.4174658060073853,
+        "mean": 3.376332717622406
+      },
+      "count": 60,
+      "independent_run_ids": [
+        "codex-time-recovery-cornerright020-r28"
+      ],
+      "absolute_lateral_bins_m": {
+        "[0.0,0.05)": 12,
+        "[0.05,0.1)": 14,
+        "[0.1,0.2)": 34,
+        "[0.2,0.4)": 0,
+        "[0.4,0.8)": 0,
+        "[0.8,2.0)": 0
+      },
+      "absolute_heading_bins_deg": {
+        "[0.0,1.0)": 18,
+        "[1.0,3.0)": 42,
+        "[3.0,6.0)": 0,
+        "[6.0,15.0)": 0
+      },
+      "heading_quadrants_at_abs_offset_ge_5cm_and_abs_heading_ge_1deg": {
+        "toward_nominal": 30,
+        "away_from_nominal": 0,
+        "excluded_small_offset_or_heading": 30
+      }
+    }
+  },
+  "secondary_nominal": {
+    "left_m": {
+      "count": 118,
+      "min": -0.1635007164810404,
+      "median": -0.006914471797290982,
+      "p95": 0.15555608415342867,
+      "max": 0.1648941343423452,
+      "mean": -0.0024134667349538135
+    },
+    "heading_error_rad": {
+      "count": 118,
+      "min": -0.039848438559840105,
+      "median": 0.010897778471920638,
+      "p95": 0.039402680052347525,
+      "max": 0.04016350862678176,
+      "mean": 0.00037324459088623773
+    },
+    "speed_mps": {
+      "count": 118,
+      "min": 0.9187058806419373,
+      "median": 0.9390384980612042,
+      "p95": 0.9436179893355404,
+      "max": 0.9492960572242737,
+      "mean": 0.936520369736719
+    },
+    "base_s_m": {
+      "count": 118,
+      "min": 90.09957314323799,
+      "median": 92.85702525317673,
+      "p95": 95.59802570370182,
+      "max": 95.88131540681701,
+      "mean": 92.90447377142677
+    },
+    "heading_error_deg": {
+      "count": 118,
+      "min": -2.283147349665206,
+      "median": 0.6243967125095802,
+      "p95": 2.257607268503831,
+      "max": 2.3011995347518672,
+      "mean": 0.021385339783868553
+    },
+    "speed_kmh": {
+      "count": 118,
+      "min": 3.3073411703109743,
+      "median": 3.380538593020335,
+      "p95": 3.397024761607945,
+      "max": 3.4174658060073853,
+      "mean": 3.3714733310521883
+    },
+    "count": 118,
+    "independent_run_ids": [
+      "codex-time-recovery-cornerleft020-r29",
+      "codex-time-recovery-cornerright020-r28"
+    ],
+    "absolute_lateral_bins_m": {
+      "[0.0,0.05)": 25,
+      "[0.05,0.1)": 27,
+      "[0.1,0.2)": 66,
+      "[0.2,0.4)": 0,
+      "[0.4,0.8)": 0,
+      "[0.8,2.0)": 0
+    },
+    "absolute_heading_bins_deg": {
+      "[0.0,1.0)": 33,
+      "[1.0,3.0)": 85,
+      "[3.0,6.0)": 0,
+      "[6.0,15.0)": 0
+    },
+    "heading_quadrants_at_abs_offset_ge_5cm_and_abs_heading_ge_1deg": {
+      "toward_nominal": 60,
+      "away_from_nominal": 0,
+      "excluded_small_offset_or_heading": 58
+    }
+  },
+  "failure": {
+    "last10s": {
+      "summary": {
+        "left_m": {
+          "count": 201,
+          "min": -1.119880421382251,
+          "median": -0.347120287180451,
+          "p95": 0.1299903007622055,
+          "max": 0.16878142620763956,
+          "mean": -0.3992426354511067
+        },
+        "heading_error_rad": {
+          "count": 201,
+          "min": -0.13846321968840972,
+          "median": -0.11321335524391296,
+          "p95": -0.0441552150701531,
+          "max": -0.04050976644635859,
+          "mean": -0.0989950053735936
+        },
+        "speed_mps": {
+          "count": 201,
+          "min": 1.2498010396957397,
+          "median": 1.2717410326004028,
+          "p95": 1.2819894552230835,
+          "max": 1.2844362258911133,
+          "mean": 1.2723384941395242
+        },
+        "base_s_m": {
+          "count": 201,
+          "min": 81.94110355782138,
+          "median": 88.01697773067544,
+          "p95": 92.93481093398375,
+          "max": 93.57092578152393,
+          "mean": 87.88733187031107
+        },
+        "heading_error_deg": {
+          "count": 201,
+          "min": -7.933358105938602,
+          "median": -6.4866474399915,
+          "p95": -2.529907467012222,
+          "max": -2.3210386464370223,
+          "mean": -5.671996000781819
+        },
+        "speed_kmh": {
+          "count": 201,
+          "min": 4.499283742904663,
+          "median": 4.5782677173614506,
+          "p95": 4.615162038803101,
+          "max": 4.623970413208008,
+          "mean": 4.580418578902287
+        },
+        "count": 201,
+        "independent_run_ids": [
+          "codex-time-segment01"
+        ],
+        "absolute_lateral_bins_m": {
+          "[0.0,0.05)": 23,
+          "[0.05,0.1)": 25,
+          "[0.1,0.2)": 34,
+          "[0.2,0.4)": 25,
+          "[0.4,0.8)": 48,
+          "[0.8,2.0)": 46
+        },
+        "absolute_heading_bins_deg": {
+          "[0.0,1.0)": 0,
+          "[1.0,3.0)": 24,
+          "[3.0,6.0)": 65,
+          "[6.0,15.0)": 112
+        },
+        "heading_quadrants_at_abs_offset_ge_5cm_and_abs_heading_ge_1deg": {
+          "toward_nominal": 34,
+          "away_from_nominal": 144,
+          "excluded_small_offset_or_heading": 23
+        }
+      },
+      "relative_to_anchor_envelope": {
+        "method": "axis_bounding_box_is_only_a_necessary_condition_not_joint_coverage",
+        "bounds": {
+          "left_m": [
+            -0.1634550247539472,
+            0.16499983927384804
+          ],
+          "heading_error_rad": [
+            -0.040345857696377774,
+            0.04015275824138009
+          ],
+          "speed_mps": [
+            0.9187058806419373,
+            0.9492960572242737
+          ]
+        },
+        "count": 201,
+        "outside_counts": {
+          "left_m": 126,
+          "heading_error_rad": 201,
+          "speed_mps": 201
+        },
+        "outside_any_count": 201
+      }
+    },
+    "last5s": {
+      "summary": {
+        "left_m": {
+          "count": 101,
+          "min": -1.119880421382251,
+          "median": -0.7639256672639987,
+          "p95": -0.3846871202966361,
+          "max": -0.347120287180451,
+          "mean": -0.7542873220992238
+        },
+        "heading_error_rad": {
+          "count": 101,
+          "min": -0.13846321968840972,
+          "median": -0.12627231000481198,
+          "p95": -0.07722525546910176,
+          "max": -0.05550383020437444,
+          "mean": -0.11997605200143768
+        },
+        "speed_mps": {
+          "count": 101,
+          "min": 1.2656440734863281,
+          "median": 1.27145254611969,
+          "p95": 1.2742060422897339,
+          "max": 1.2748035192489624,
+          "mean": 1.271033995222337
+        },
+        "base_s_m": {
+          "count": 101,
+          "min": 88.01697773067544,
+          "median": 90.81500270439113,
+          "p95": 93.26571902748464,
+          "max": 93.57092578152393,
+          "mean": 90.74127218775217
+        },
+        "heading_error_deg": {
+          "count": 101,
+          "min": -7.933358105938602,
+          "median": -7.234870432643286,
+          "p95": -4.424681210199109,
+          "max": -3.180135217521397,
+          "mean": -6.874121422324472
+        },
+        "speed_kmh": {
+          "count": 101,
+          "min": 4.556318664550782,
+          "median": 4.577229166030884,
+          "p95": 4.587141752243042,
+          "max": 4.589292669296265,
+          "mean": 4.575722382800414
+        },
+        "count": 101,
+        "independent_run_ids": [
+          "codex-time-segment01"
+        ],
+        "absolute_lateral_bins_m": {
+          "[0.0,0.05)": 0,
+          "[0.05,0.1)": 0,
+          "[0.1,0.2)": 0,
+          "[0.2,0.4)": 7,
+          "[0.4,0.8)": 48,
+          "[0.8,2.0)": 46
+        },
+        "absolute_heading_bins_deg": {
+          "[0.0,1.0)": 0,
+          "[1.0,3.0)": 0,
+          "[3.0,6.0)": 15,
+          "[6.0,15.0)": 86
+        },
+        "heading_quadrants_at_abs_offset_ge_5cm_and_abs_heading_ge_1deg": {
+          "toward_nominal": 0,
+          "away_from_nominal": 101,
+          "excluded_small_offset_or_heading": 0
+        }
+      },
+      "relative_to_anchor_envelope": {
+        "method": "axis_bounding_box_is_only_a_necessary_condition_not_joint_coverage",
+        "bounds": {
+          "left_m": [
+            -0.1634550247539472,
+            0.16499983927384804
+          ],
+          "heading_error_rad": [
+            -0.040345857696377774,
+            0.04015275824138009
+          ],
+          "speed_mps": [
+            0.9187058806419373,
+            0.9492960572242737
+          ]
+        },
+        "count": 101,
+        "outside_counts": {
+          "left_m": 101,
+          "heading_error_rad": 101,
+          "speed_mps": 101
+        },
+        "outside_any_count": 101
+      }
+    },
+    "same_anchor_course_range": {
+      "summary": {
+        "left_m": {
+          "count": 62,
+          "min": -1.119880421382251,
+          "median": -0.9183641401322408,
+          "p95": -0.6990988770741373,
+          "max": -0.6722767399607357,
+          "mean": -0.9123035855369843
+        },
+        "heading_error_rad": {
+          "count": 62,
+          "min": -0.12900019602144086,
+          "median": -0.12105643611058559,
+          "p95": -0.06915007821307488,
+          "max": -0.05550383020437444,
+          "mean": -0.11245407240797094
+        },
+        "speed_mps": {
+          "count": 62,
+          "min": 1.2662347555160522,
+          "median": 1.271516501903534,
+          "p95": 1.2742030918598175,
+          "max": 1.2743613719940186,
+          "mean": 1.2715051193391123
+        },
+        "base_s_m": {
+          "count": 62,
+          "min": 90.10960018364096,
+          "median": 91.63924417366589,
+          "p95": 93.36363772787266,
+          "max": 93.57092578152393,
+          "mean": 91.79899860549037
+        },
+        "heading_error_deg": {
+          "count": 62,
+          "min": -7.391166788388875,
+          "median": -6.936022872031649,
+          "p95": -3.9620076346087365,
+          "max": -3.180135217521397,
+          "mean": -6.443143738035298
+        },
+        "speed_kmh": {
+          "count": 62,
+          "min": 4.558445119857788,
+          "median": 4.577459406852722,
+          "p95": 4.587131130695343,
+          "max": 4.587700939178467,
+          "mean": 4.577418429620805
+        },
+        "count": 62,
+        "independent_run_ids": [
+          "codex-time-segment01"
+        ],
+        "absolute_lateral_bins_m": {
+          "[0.0,0.05)": 0,
+          "[0.05,0.1)": 0,
+          "[0.1,0.2)": 0,
+          "[0.2,0.4)": 0,
+          "[0.4,0.8)": 16,
+          "[0.8,2.0)": 46
+        },
+        "absolute_heading_bins_deg": {
+          "[0.0,1.0)": 0,
+          "[1.0,3.0)": 0,
+          "[3.0,6.0)": 15,
+          "[6.0,15.0)": 47
+        },
+        "heading_quadrants_at_abs_offset_ge_5cm_and_abs_heading_ge_1deg": {
+          "toward_nominal": 0,
+          "away_from_nominal": 62,
+          "excluded_small_offset_or_heading": 0
+        }
+      },
+      "relative_to_anchor_envelope": {
+        "method": "axis_bounding_box_is_only_a_necessary_condition_not_joint_coverage",
+        "bounds": {
+          "left_m": [
+            -0.1634550247539472,
+            0.16499983927384804
+          ],
+          "heading_error_rad": [
+            -0.040345857696377774,
+            0.04015275824138009
+          ],
+          "speed_mps": [
+            0.9187058806419373,
+            0.9492960572242737
+          ]
+        },
+        "count": 62,
+        "outside_counts": {
+          "left_m": 62,
+          "heading_error_rad": 62,
+          "speed_mps": 62
+        },
+        "outside_any_count": 62
+      }
+    }
+  },
+  "shared_course_range_m": [
+    90.09957314323799,
+    95.88131540681701
+  ],
+  "trained_with_new_anchors": false,
+  "split_assigned": false,
+  "heading_quadrant_note": "Body yaw versus nominal body yaw is a state descriptor, not measured lateral-error derivative",
+  "sufficiency": "Not established: overlapping frames, two episodes, no independent evaluation of these new anchors"
+}

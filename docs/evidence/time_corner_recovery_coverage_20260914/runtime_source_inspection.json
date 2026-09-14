@@ -1,0 +1,137 @@
+{
+  "cpp_source/simple_pure_pursuit/src/simple_pure_pursuit.cpp": {
+    "sha256": "466c5972012147bc784794cf352a5728aede8fef8bc104d467fe2dd57cf41d0a",
+    "excerpts": [
+      {
+        "start_line": 648,
+        "text": "      lookahead_gain_(declare_parameter<float>(\"lookahead_gain\", 1.0)),\n      lookahead_min_distance_(\n          declare_parameter<float>(\"lookahead_min_distance\", 1.0)),\n      speed_proportional_gain_(\n          declare_parameter<float>(\"speed_proportional_gain\", 1.0)),\n      use_external_target_vel_(\n          declare_parameter<bool>(\"use_external_target_vel\", false)),\n      external_target_vel_(\n          declare_parameter<float>(\"external_target_vel\", 0.0)),\n      steering_tire_angle_gain_(\n          declare_parameter<float>(\"steering_tire_angle_gain\", 1.0)),\n      debug_publish_period_sec_("
+      },
+      {
+        "start_line": 649,
+        "text": "      lookahead_min_distance_(\n          declare_parameter<float>(\"lookahead_min_distance\", 1.0)),\n      speed_proportional_gain_(\n          declare_parameter<float>(\"speed_proportional_gain\", 1.0)),\n      use_external_target_vel_(\n          declare_parameter<bool>(\"use_external_target_vel\", false)),\n      external_target_vel_(\n          declare_parameter<float>(\"external_target_vel\", 0.0)),\n      steering_tire_angle_gain_(\n          declare_parameter<float>(\"steering_tire_angle_gain\", 1.0)),\n      debug_publish_period_sec_(\n          declare_parameter<float>(\"debug_publish_period_sec\", 0.25)),"
+      },
+      {
+        "start_line": 773,
+        "text": "        odometry_ = msg;\n        last_odometry_receive_sec_ = steadyNowSec();\n      });\n  sub_trajectory_ = create_subscription<Trajectory>(\n      \"input/trajectory\", bv_qos, [this](const Trajectory::SharedPtr msg) {\n        PP_DIAGNOSTIC_SCOPE(timing_diagnostic::CallbackKind::kTrajectory);\n        trajectory_ = msg;\n        if (++reference_source_generation_ == 0U) {\n          ++reference_source_generation_;\n        }\n        updateFreeRunSourceKey(*msg);\n        if (free_run_source_key_valid_ && pub_free_run_source_key_) {"
+      },
+      {
+        "start_line": 942,
+        "text": "      aw2ControllerAdapterImplementationDigestV1();\n  c002ay0_controller_config_digest_ = aw2ControllerAdapterConfigDigestV1(\n      {wheel_base_, lookahead_gain_, lookahead_min_distance_,\n       speed_proportional_gain_, steering_tire_angle_gain_,\n       pp_control_delay_sec_, pp_prediction_dt_sec_,\n       steering_time_constant_sec_, horizon_curvature_feedforward_gain_,\n       horizon_curvature_feedforward_max_rad_,\n       free_run_live_exact_hard_steering_limit_rad_,\n       free_run_live_exact_hard_steering_rate_limit_radps_,\n       steering_command_nominal_dt_sec_},\n      {use_external_target_vel_, use_mpc_predicted_horizon_,\n       use_overtake_reference_override_,"
+      },
+      {
+        "start_line": 1488,
+        "text": "      context.trajectory->points.at(context.nearest_index);\n\n  // 4. \u901f\u5ea6\u3068\u6a2a\u5236\u5fa1\u3092\u5225\u3005\u306b\u8a08\u7b97\u3057\u3001\u6700\u5f8c\u306bAckermann command\u3078\u8a70\u3081\u308b\u3002\n  const auto longitudinal = computeLongitudinalCommand(context, now_sec);\n  cmd.longitudinal.speed = longitudinal.target_speed_mps;\n  cmd.longitudinal.acceleration = longitudinal.acceleration_mps2;\n\n  const auto lateral =\n      computeLateralCommand(context, control_pose, longitudinal);\n  publishLookaheadPoint(lateral.lookahead_point_x, lateral.lookahead_point_y,\n                        nearest_traj_point.pose.position.z);\n  cmd.lateral.steering_tire_angle = lateral.steering_tire_angle_rad;"
+      },
+      {
+        "start_line": 1954,
+        "text": "}\n\nSimplePurePursuit::LongitudinalCommand\nSimplePurePursuit::computeLongitudinalCommand(\n    const ControlTrajectoryContext &context, double now_sec) const {\n  LongitudinalCommand result;\n  const auto &nearest = context.trajectory->points.at(context.nearest_index);\n\n  result.target_speed_mps = use_external_target_vel_\n                                ? external_target_vel_\n                                : nearest.longitudinal_velocity_mps;\n  // The reference trajectory is the execution profile authority.  An"
+      },
+      {
+        "start_line": 2001,
+        "text": "        applyOvertakeSpeedCap(result.target_speed_mps, overtake_speed_cap);\n  }\n\n  result.acceleration_mps2 = proportionalLongitudinalAcceleration(\n      result.target_speed_mps, result.current_speed_mps,\n      speed_proportional_gain_);\n  return result;\n}\n\nSimplePurePursuit::LateralCommand SimplePurePursuit::computeLateralCommand(\n    const ControlTrajectoryContext &context,\n    const ControlPosePrediction &control_pose,"
+      },
+      {
+        "start_line": 2003,
+        "text": "\n  result.acceleration_mps2 = proportionalLongitudinalAcceleration(\n      result.target_speed_mps, result.current_speed_mps,\n      speed_proportional_gain_);\n  return result;\n}\n\nSimplePurePursuit::LateralCommand SimplePurePursuit::computeLateralCommand(\n    const ControlTrajectoryContext &context,\n    const ControlPosePrediction &control_pose,\n    const LongitudinalCommand &longitudinal) {\n  LateralCommand result;"
+      }
+    ]
+  },
+  "cpp_source/simple_trajectory_generator/src/simple_trajectory_generator.cpp": {
+    "sha256": "6448211e308a8b2714a532baf30eea1a6d72e86a100e0bab0bb6281ed99d5167",
+    "excerpts": [
+      {
+        "start_line": 35,
+        "text": "        rclcpp::QoS(rclcpp::KeepLast(1)).durability_volatile().best_effort();\n    pub_ = this->create_publisher<Trajectory>(\"trajectory\", rb_qos);\n\n    declare_parameter(\"csv_path\", \"\");\n    z_ = declare_parameter<float>(\"z\");\n    execution_profile_config_.max_speed_mps =\n        declare_parameter<double>(\"execution_profile.max_speed_mps\", 10.0);\n    execution_profile_config_.max_arc_spacing_m =\n        declare_parameter<double>(\"execution_profile.max_arc_spacing_m\", 0.25);\n    execution_profile_config_.max_yaw_step_rad =\n        declare_parameter<double>(\"execution_profile.max_yaw_step_rad\", 0.05);\n    std::string csv_path = get_parameter(\"csv_path\").as_string();"
+      },
+      {
+        "start_line": 43,
+        "text": "        declare_parameter<double>(\"execution_profile.max_arc_spacing_m\", 0.25);\n    execution_profile_config_.max_yaw_step_rad =\n        declare_parameter<double>(\"execution_profile.max_yaw_step_rad\", 0.05);\n    std::string csv_path = get_parameter(\"csv_path\").as_string();\n\n    if (csv_path.empty()) {\n      RCLCPP_ERROR(get_logger(), \"CSV path is not specified\");\n      return;\n    }\n\n    if (!loadCSVTrajectory(csv_path)) {\n      RCLCPP_ERROR(get_logger(), \"Failed to load CSV file: %s\","
+      },
+      {
+        "start_line": 45,
+        "text": "        declare_parameter<double>(\"execution_profile.max_yaw_step_rad\", 0.05);\n    std::string csv_path = get_parameter(\"csv_path\").as_string();\n\n    if (csv_path.empty()) {\n      RCLCPP_ERROR(get_logger(), \"CSV path is not specified\");\n      return;\n    }\n\n    if (!loadCSVTrajectory(csv_path)) {\n      RCLCPP_ERROR(get_logger(), \"Failed to load CSV file: %s\",\n                   csv_path.c_str());\n      return;"
+      },
+      {
+        "start_line": 50,
+        "text": "      return;\n    }\n\n    if (!loadCSVTrajectory(csv_path)) {\n      RCLCPP_ERROR(get_logger(), \"Failed to load CSV file: %s\",\n                   csv_path.c_str());\n      return;\n    }\n    current_csv_path_ = csv_path;\n\n    RCLCPP_INFO(get_logger(), \"Loaded trajectory from CSV with %zu points\",\n                csv_trajectory_.points.size());"
+      },
+      {
+        "start_line": 52,
+        "text": "\n    if (!loadCSVTrajectory(csv_path)) {\n      RCLCPP_ERROR(get_logger(), \"Failed to load CSV file: %s\",\n                   csv_path.c_str());\n      return;\n    }\n    current_csv_path_ = csv_path;\n\n    RCLCPP_INFO(get_logger(), \"Loaded trajectory from CSV with %zu points\",\n                csv_trajectory_.points.size());\n\n    timer_ = rclcpp::create_timer("
+      },
+      {
+        "start_line": 55,
+        "text": "                   csv_path.c_str());\n      return;\n    }\n    current_csv_path_ = csv_path;\n\n    RCLCPP_INFO(get_logger(), \"Loaded trajectory from CSV with %zu points\",\n                csv_trajectory_.points.size());\n\n    timer_ = rclcpp::create_timer(\n        this, get_clock(), std::chrono::seconds(1),\n        std::bind(&CSVToTrajectory::publish_trajectory, this));\n    // Launch overrides are startup configuration. Register the immutability"
+      },
+      {
+        "start_line": 122,
+        "text": "    return CSVFormat::kPoseWithQuaternion;\n  }\n\n  bool loadCSVTrajectory(const std::string &csv_path) {\n    std::ifstream file(csv_path);\n    if (!file.is_open()) {\n      return false;\n    }\n\n    std::string line;\n    std::getline(file, line);\n    const CSVFormat csv_format = detectCSVFormat(line);"
+      },
+      {
+        "start_line": 123,
+        "text": "  }\n\n  bool loadCSVTrajectory(const std::string &csv_path) {\n    std::ifstream file(csv_path);\n    if (!file.is_open()) {\n      return false;\n    }\n\n    std::string line;\n    std::getline(file, line);\n    const CSVFormat csv_format = detectCSVFormat(line);\n"
+      },
+      {
+        "start_line": 213,
+        "text": "    }\n\n    csv_trajectory_.header.stamp = this->now();\n    pub_->publish(csv_trajectory_);\n    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 60000 /*ms*/,\n                         \"Published trajectory with %zu points\",\n                         csv_trajectory_.points.size());\n  }\n\n  rcl_interfaces::msg::SetParametersResult\n  on_parameter_event(const std::vector<rclcpp::Parameter> &parameters) {\n    rcl_interfaces::msg::SetParametersResult result;"
+      },
+      {
+        "start_line": 226,
+        "text": "    result.reason = \"\";\n\n    for (const auto &param : parameters) {\n      if (param.get_name() == \"csv_path\") {\n        if (param.get_type() == rclcpp::ParameterType::PARAMETER_STRING) {\n          std::string new_csv_path = param.as_string();\n          // new_csv_path\u304cFileSystem\u306e\u30d1\u30b9\u3067\u3042\u308b\u3053\u3068\u3092\u78ba\u8a8d\n          if (!std::filesystem::exists(new_csv_path)) {\n            RCLCPP_ERROR(get_logger(), \"File does not exist: '%s'\",\n                         new_csv_path.c_str());\n            result.successful = false;\n            result.reason = \"File does not exist.\";"
+      },
+      {
+        "start_line": 228,
+        "text": "    for (const auto &param : parameters) {\n      if (param.get_name() == \"csv_path\") {\n        if (param.get_type() == rclcpp::ParameterType::PARAMETER_STRING) {\n          std::string new_csv_path = param.as_string();\n          // new_csv_path\u304cFileSystem\u306e\u30d1\u30b9\u3067\u3042\u308b\u3053\u3068\u3092\u78ba\u8a8d\n          if (!std::filesystem::exists(new_csv_path)) {\n            RCLCPP_ERROR(get_logger(), \"File does not exist: '%s'\",\n                         new_csv_path.c_str());\n            result.successful = false;\n            result.reason = \"File does not exist.\";\n            continue;\n          }"
+      },
+      {
+        "start_line": 229,
+        "text": "      if (param.get_name() == \"csv_path\") {\n        if (param.get_type() == rclcpp::ParameterType::PARAMETER_STRING) {\n          std::string new_csv_path = param.as_string();\n          // new_csv_path\u304cFileSystem\u306e\u30d1\u30b9\u3067\u3042\u308b\u3053\u3068\u3092\u78ba\u8a8d\n          if (!std::filesystem::exists(new_csv_path)) {\n            RCLCPP_ERROR(get_logger(), \"File does not exist: '%s'\",\n                         new_csv_path.c_str());\n            result.successful = false;\n            result.reason = \"File does not exist.\";\n            continue;\n          }\n"
+      },
+      {
+        "start_line": 230,
+        "text": "        if (param.get_type() == rclcpp::ParameterType::PARAMETER_STRING) {\n          std::string new_csv_path = param.as_string();\n          // new_csv_path\u304cFileSystem\u306e\u30d1\u30b9\u3067\u3042\u308b\u3053\u3068\u3092\u78ba\u8a8d\n          if (!std::filesystem::exists(new_csv_path)) {\n            RCLCPP_ERROR(get_logger(), \"File does not exist: '%s'\",\n                         new_csv_path.c_str());\n            result.successful = false;\n            result.reason = \"File does not exist.\";\n            continue;\n          }\n\n          if (new_csv_path != current_csv_path_) {"
+      },
+      {
+        "start_line": 232,
+        "text": "          // new_csv_path\u304cFileSystem\u306e\u30d1\u30b9\u3067\u3042\u308b\u3053\u3068\u3092\u78ba\u8a8d\n          if (!std::filesystem::exists(new_csv_path)) {\n            RCLCPP_ERROR(get_logger(), \"File does not exist: '%s'\",\n                         new_csv_path.c_str());\n            result.successful = false;\n            result.reason = \"File does not exist.\";\n            continue;\n          }\n\n          if (new_csv_path != current_csv_path_) {\n            RCLCPP_INFO(get_logger(),\n                        \"csv_path parameter changed from '%s' to '%s'\","
+      },
+      {
+        "start_line": 238,
+        "text": "            continue;\n          }\n\n          if (new_csv_path != current_csv_path_) {\n            RCLCPP_INFO(get_logger(),\n                        \"csv_path parameter changed from '%s' to '%s'\",\n                        current_csv_path_.c_str(), new_csv_path.c_str());\n\n            // \u65b0\u3057\u3044CSV\u30d5\u30a1\u30a4\u30eb\u306e\u8aad\u307f\u8fbc\u307f\u3092\u8a66\u307f\u308b\n            if (loadCSVTrajectory(new_csv_path)) {\n              current_csv_path_ = new_csv_path;\n              RCLCPP_INFO(get_logger(),"
+      },
+      {
+        "start_line": 240,
+        "text": "\n          if (new_csv_path != current_csv_path_) {\n            RCLCPP_INFO(get_logger(),\n                        \"csv_path parameter changed from '%s' to '%s'\",\n                        current_csv_path_.c_str(), new_csv_path.c_str());\n\n            // \u65b0\u3057\u3044CSV\u30d5\u30a1\u30a4\u30eb\u306e\u8aad\u307f\u8fbc\u307f\u3092\u8a66\u307f\u308b\n            if (loadCSVTrajectory(new_csv_path)) {\n              current_csv_path_ = new_csv_path;\n              RCLCPP_INFO(get_logger(),\n                          \"Successfully loaded new trajectory from CSV: %s \"\n                          \"with %zu points\","
+      },
+      {
+        "start_line": 241,
+        "text": "          if (new_csv_path != current_csv_path_) {\n            RCLCPP_INFO(get_logger(),\n                        \"csv_path parameter changed from '%s' to '%s'\",\n                        current_csv_path_.c_str(), new_csv_path.c_str());\n\n            // \u65b0\u3057\u3044CSV\u30d5\u30a1\u30a4\u30eb\u306e\u8aad\u307f\u8fbc\u307f\u3092\u8a66\u307f\u308b\n            if (loadCSVTrajectory(new_csv_path)) {\n              current_csv_path_ = new_csv_path;\n              RCLCPP_INFO(get_logger(),\n                          \"Successfully loaded new trajectory from CSV: %s \"\n                          \"with %zu points\",\n                          current_csv_path_.c_str(),"
+      },
+      {
+        "start_line": 244,
+        "text": "                        current_csv_path_.c_str(), new_csv_path.c_str());\n\n            // \u65b0\u3057\u3044CSV\u30d5\u30a1\u30a4\u30eb\u306e\u8aad\u307f\u8fbc\u307f\u3092\u8a66\u307f\u308b\n            if (loadCSVTrajectory(new_csv_path)) {\n              current_csv_path_ = new_csv_path;\n              RCLCPP_INFO(get_logger(),\n                          \"Successfully loaded new trajectory from CSV: %s \"\n                          \"with %zu points\",\n                          current_csv_path_.c_str(),\n                          csv_trajectory_.points.size());\n            } else {\n              RCLCPP_ERROR("
+      },
+      {
+        "start_line": 245,
+        "text": "\n            // \u65b0\u3057\u3044CSV\u30d5\u30a1\u30a4\u30eb\u306e\u8aad\u307f\u8fbc\u307f\u3092\u8a66\u307f\u308b\n            if (loadCSVTrajectory(new_csv_path)) {\n              current_csv_path_ = new_csv_path;\n              RCLCPP_INFO(get_logger(),\n                          \"Successfully loaded new trajectory from CSV: %s \"\n                          \"with %zu points\",\n                          current_csv_path_.c_str(),\n                          csv_trajectory_.points.size());\n            } else {\n              RCLCPP_ERROR(\n                  get_logger(),"
+      },
+      {
+        "start_line": 249,
+        "text": "              RCLCPP_INFO(get_logger(),\n                          \"Successfully loaded new trajectory from CSV: %s \"\n                          \"with %zu points\",\n                          current_csv_path_.c_str(),\n                          csv_trajectory_.points.size());\n            } else {\n              RCLCPP_ERROR(\n                  get_logger(),\n                  \"Failed to load new CSV file: %s. Keeping old trajectory.\",\n                  new_csv_path.c_str());\n              result.successful = false;\n              result.reason = \"Failed to load new CSV file.\";"
+      }
+    ]
+  },
+  "inputs/pure_pursuit.launch.xml": {
+    "sha256": "d3e481bb949da5c23d7403ad315640a985c468c58f431f8d3daf422227612693",
+    "excerpts": [
+      {
+        "start_line": 88,
+        "text": "  <arg name=\"min_velocity_for_delay_compensation_mps\" default=\"0.20\"/>\n  <arg name=\"horizon_curvature_feedforward_gain\" default=\"0.0\"/>\n  <arg name=\"horizon_curvature_feedforward_max_rad\" default=\"0.08\"/>\n  <arg name=\"speed_proportional_gain\" default=\"1.0\"/>\n\n  <let name=\"steering_tire_angle_gain_var\" value=\"1.54\" if=\"$(var simulation)\"/>\n  <let name=\"steering_tire_angle_gain_var\" value=\"1.54\" unless=\"$(var simulation)\"/>\n\n  <node pkg=\"simple_pure_pursuit\" exec=\"simple_pure_pursuit\" name=\"$(var node_name)\" output=\"screen\">\n    <param name=\"use_sim_time\" value=\"$(var use_sim_time)\"/>\n    <param name=\"use_external_target_vel\" value=\"$(var use_external_target_vel)\"/>\n    <param name=\"external_target_vel\" value=\"$(var external_target_vel)\"/>"
+      },
+      {
+        "start_line": 160,
+        "text": "    <param name=\"min_velocity_for_delay_compensation_mps\" value=\"$(var min_velocity_for_delay_compensation_mps)\"/>\n    <param name=\"horizon_curvature_feedforward_gain\" value=\"$(var horizon_curvature_feedforward_gain)\"/>\n    <param name=\"horizon_curvature_feedforward_max_rad\" value=\"$(var horizon_curvature_feedforward_max_rad)\"/>\n    <param name=\"speed_proportional_gain\" value=\"$(var speed_proportional_gain)\"/>\n    <param name=\"steering_tire_angle_gain\" value=\"$(var steering_tire_angle_gain_var)\"/>\n\n    <remap from=\"input/kinematics\" to=\"$(var input_kinematics)\"/>\n    <remap from=\"input/trajectory\" to=\"$(var input_trajectory)\"/>\n    <remap from=\"input/mpc_predicted_horizon\" to=\"$(var input_mpc_predicted_horizon)\"/>\n    <remap from=\"input/mpc_predicted_horizon_contract\" to=\"$(var input_mpc_predicted_horizon_contract)\"/>\n    <remap from=\"input/mpc_health\" to=\"$(var input_mpc_health)\"/>\n    <remap from=\"input/steering_status\" to=\"$(var input_steering_status)\"/>"
+      }
+    ]
+  }
+}

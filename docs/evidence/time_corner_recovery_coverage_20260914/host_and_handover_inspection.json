@@ -1,0 +1,51 @@
+{
+  "runtime_source_verified": true,
+  "runtime_source_file_count": 400,
+  "input_cpp_verified": true,
+  "input_cpp_file_count": 49,
+  "file_evidence": {
+    "/home/graneple/e2e_autonomous/time_recovery_collection_20260913/cpp_source/simple_pure_pursuit/include/simple_pure_pursuit/safety.hpp": {
+      "sha256": "97cecaa43967d95ba0fce5c3ae79bd4a18404a9a1ce3503c4a43db8d65323a98",
+      "excerpts": [
+        {
+          "start_line": 143,
+          "text": "inline double proportionalLongitudinalAcceleration(double target_speed_mps,\n                                                   double current_speed_mps,\n                                                   double gain) {\n  return gain * (target_speed_mps - current_speed_mps);\n}"
+        }
+      ]
+    },
+    "/home/graneple/e2e_autonomous/time_recovery_collection_20260913/cpp_source/simple_trajectory_generator/src/simple_trajectory_generator.cpp": {
+      "sha256": "6448211e308a8b2714a532baf30eea1a6d72e86a100e0bab0bb6281ed99d5167",
+      "excerpts": [
+        {
+          "start_line": 63,
+          "text": "    timer_ = rclcpp::create_timer(\n        this, get_clock(), std::chrono::seconds(1),\n        std::bind(&CSVToTrajectory::publish_trajectory, this));\n    // Launch overrides are startup configuration. Register the immutability\n    // guard only after they have been declared, validated, and loaded.\n    set_parameter_callback_handle_ =\n        this->add_on_set_parameters_callback(std::bind(\n            &CSVToTrajectory::on_parameter_event, this, std::placeholders::_1));"
+        },
+        {
+          "start_line": 210,
+          "text": "    if (csv_trajectory_.points.empty()) {\n      RCLCPP_WARN(get_logger(), \"No trajectory points to publish\");\n      return;\n    }\n\n    csv_trajectory_.header.stamp = this->now();\n    pub_->publish(csv_trajectory_);\n    RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 60000 /*ms*/,\n                         \"Published trajectory with %zu points\",\n                         csv_trajectory_.points.size());"
+        },
+        {
+          "start_line": 228,
+          "text": "    for (const auto &param : parameters) {\n      if (param.get_name() == \"csv_path\") {\n        if (param.get_type() == rclcpp::ParameterType::PARAMETER_STRING) {\n          std::string new_csv_path = param.as_string();\n          // new_csv_pathがFileSystemのパスであることを確認\n          if (!std::filesystem::exists(new_csv_path)) {\n            RCLCPP_ERROR(get_logger(), \"File does not exist: '%s'\",\n                         new_csv_path.c_str());\n            result.successful = false;\n            result.reason = \"File does not exist.\";\n            continue;\n          }\n\n          if (new_csv_path != current_csv_path_) {\n            RCLCPP_INFO(get_logger(),\n                        \"csv_path parameter changed from '%s' to '%s'\",\n                        current_csv_path_.c_str(), new_csv_path.c_str());\n\n            // 新しいCSVファイルの読み込みを試みる\n            if (loadCSVTrajectory(new_csv_path)) {\n              current_csv_path_ = new_csv_path;\n              RCLCPP_INFO(get_logger(),\n                          \"Successfully loaded new trajectory from CSV: %s \"\n                          \"with %zu points\",\n                          current_csv_path_.c_str(),\n                          csv_trajectory_.points.size());\n            } else {\n              RCLCPP_ERROR(\n                  get_logger(),\n                  \"Failed to load new CSV file: %s. Keeping old trajectory.\",\n                  new_csv_path.c_str());\n              result.successful = false;\n              result.reason = \"Failed to load new CSV file.\";\n            }"
+        }
+      ]
+    },
+    "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge/simulator/AWSIM/AWSIM_Data/StreamingAssets/Vehicle/vehicle.yaml": {
+      "sha256": "5b66e58691091c82d5511535ca458d4c89e85f3b59fa0d0c4a2c7eee47887244",
+      "excerpts": [
+        {
+          "start_line": 16,
+          "text": "# not here. physics.maxAcceleration sets the base drive-side accel cap used by every kart\n# regardless of --handicap; the handicap does not touch acceleration or rollingResistance at"
+        },
+        {
+          "start_line": 30,
+          "text": "  maxSteerAngle: 30         # steer input clamp (deg)\n  rollingResistance: 0.37   # constant rolling-resistance decel (m/s^2)\n  maxSpeed: 36.0            # drive-fade shaping speed (km/h); 0 disables the fade. With p=40 the analytic equilibrium is 35.7 km/h\n  driveFadeExponent: 40.0   # fade sharpness; 40 keeps the cap near full until ~34 km/h (effect saturates past ~40; p=20 was the real-kart-telemetry fit)\n  skiddingCancelRate: 0.236 # lateral anti-skid coefficient (0.05..1)\n  steerDelayTime: 0.07      # steer command dead time (s); real kart cmd->status dead time 0.06-0.07 s\n  steerTimeConstant: 0.02   # steer first-order lag (s); smaller = snappier\n  maxSteerRate: 60          # steer slew rate (deg/s); real kart sustained hard-limit is 22.8 but 60 chosen as interim (2026-08-03)"
+        }
+      ]
+    }
+  },
+  "free_bytes": 22274560000,
+  "active_containers": [],
+  "remote_head": "4af395eee10f928c7fc7225760adfa04c4c07ff4",
+  "remote_status_sha256": "5326f4a978c2de102d1f67ebb6c29e4ad4f245a4d19787ee20e5d459199d548f"
+}
