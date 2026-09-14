@@ -235,3 +235,60 @@ def test_motion_recording_flag_is_diagnostic_and_explicit_boolean():
     for bad in ("true", 1, None):
         with pytest.raises(ValueError, match="MOTION_RECORDING_FLAG"):
             validate_trial_config({**recording, "record_vehicle_motion": bad})
+
+
+def test_recorded_normal_startup_extends_search_on_unchanged_timed_reference():
+    fixture = json.loads((Path(__file__).parent/"fixtures/time_path/expanded_startup_band.json").read_text())
+    xy = np.asarray(fixture["raw_xy_m"], dtype=float)
+    p = TimePlan(fixture["source_plan_id"], TimedBodyPose(**fixture["observation_pose"]), xy)
+    current = TimedBodyPose(**fixture["current_pose"])
+    options = dict(speed_mps=fixture["speed_mps"], rear_axle_offset_m=(.0010000169277191162, 0.),
+                   speed_policy="fixed_5kmh", vehicle_model_policy="awsim_understeer_v1")
+    with pytest.raises(ValueError, match="STEERING_FEASIBLE_LOOKAHEAD_MISSING"):
+        time_trial_control(p, current, **options, lookahead_policy="stopping_preview_segment_v1")
+    result = time_trial_control(p, current, **options, lookahead_policy="stopping_preview_extended_v1")
+    selection = result["lookahead_selection"]
+    assert selection["extended_search"] and selection["search_band_m"] == [1., 2.]
+    assert 1.5 < result["selected_lookahead_distance_m"] <= 2.
+    assert abs(result["steer_rad"]) <= .3
+    assert result["target_speed_mps"] == 5./3.6 and result["acceleration_mps2"] == 1.
+    assert selection["observation_horizon_s"] == pytest.approx(selection["remaining_s"]+result["plan_age_sec"])
+    assert 0 < selection["observation_horizon_s"] <= 3.
+    reference = prepare_time_reference(p, current, rear_axle_offset_m=options["rear_axle_offset_m"])
+    np.testing.assert_array_equal(result["reference_xy_rear_m"], reference.xy_current_m)
+    np.testing.assert_array_equal(p.xy_m, xy)
+
+
+@pytest.mark.parametrize("speed", [0., .5, 1.3, 6./3.6])
+@pytest.mark.parametrize("curvature", [0., -.08, .08])
+def test_extended_policy_preserves_previously_accepted_control(speed, curvature):
+    s = np.arange(1, 31)*.15
+    xy = (np.column_stack((s, np.zeros(30))) if curvature == 0 else
+          np.column_stack((np.sin(curvature*s)/curvature, (1-np.cos(curvature*s))/curvature)))
+    p = TimePlan("accepted", pose(), xy)
+    options = dict(speed_mps=speed, rear_axle_offset_m=(.001, 0.), speed_policy="fixed_5kmh",
+                   vehicle_model_policy="awsim_understeer_v1")
+    old = time_trial_control(p, pose(), **options, lookahead_policy="stopping_preview_segment_v1")
+    new = time_trial_control(p, pose(), **options, lookahead_policy="stopping_preview_extended_v1")
+    assert new["lookahead_selection"].pop("extended_search") is False
+    assert new["lookahead_selection"].pop("search_band_m") == [old["minimum_preview_distance_m"], old["minimum_preview_distance_m"]+.5]
+    new["lookahead_policy"] = old["lookahead_policy"]
+    assert new == old
+
+
+@pytest.mark.parametrize("curvature", [-.4, .4])
+def test_extended_policy_keeps_physical_limit_and_never_extrapolates(curvature):
+    s = np.arange(1, 31)*.08
+    xy = np.column_stack((np.sin(curvature*s)/curvature, (1-np.cos(curvature*s))/curvature))
+    for p in (TimePlan("unreachable", pose(), xy), plan(.25)):
+        with pytest.raises(ValueError, match="STEERING_FEASIBLE_LOOKAHEAD_MISSING"):
+            time_trial_control(p, pose(), speed_mps=0., rear_axle_offset_m=(.001, 0.),
+                               speed_policy="fixed_5kmh", lookahead_policy="stopping_preview_extended_v1")
+
+
+def test_extended_normal_lap_configuration_changes_only_search_policy():
+    root = Path(__file__).parents[1]/"configs/control"
+    old = json.loads((root/"time_path_expanded_5kmh_20260914.json").read_text())
+    new = json.loads((root/"time_path_lap_candidate_20260914.json").read_text())
+    assert new == {**old, "lookahead_policy": "stopping_preview_extended_v1"}
+    assert validate_trial_config(new) == "fixed_5kmh"
