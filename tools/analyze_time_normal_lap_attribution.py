@@ -193,7 +193,7 @@ def plots(out: Path, reference: RecordedLine, commands: list[dict], plans: list[
     axes[0].plot([r["time_s"] for r in cs], [r["left_m"] for r in cs], c="black", label="Measured vehicle vs normal line")
     for h, color in ((1, "#237cb8"), (3, "#ce318b")):
         axes[0].plot([r["time_s"] for r in ps], [r["horizons"][str(h)]["left_m"] for r in ps],
-                     color=color, label=f"Model {h}s point vs normal line (issued now)", alpha=.8)
+                     color=color, label=f"Model {h}s point vs normal line", alpha=.8)
     axes[0].set_ylabel("Left offset [m]")
     for key, label, color in (("prediction_left_m", "Prediction component at common progress", "#ce318b"),
                                ("following_left_m", "Following/replanning residual at 1s", "#237cb8")):

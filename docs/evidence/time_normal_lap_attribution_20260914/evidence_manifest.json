@@ -1,0 +1,83 @@
+{
+  "scope": "RECORDED_NORMAL_LAP_ATTRIBUTION_NOT_CAUSAL_PERCENTAGES_OR_NEW_DRIVE_TEST",
+  "analysis_source_commit": "d0284b896e3920d9621d0f2059e06aa1d0ed0686",
+  "plot_source_commit": "425ff10d7e4d03438fa70de9e357d343cc72a217",
+  "native_wsl_repository": "/home/thistle/e2e_autonomous/e2e_lite_transfuser",
+  "native_output": "/home/thistle/e2e_autonomous/runs/time_normal_lap_attribution_20260914",
+  "observed_exit_codes": {
+    "full_suite": 0,
+    "focused_suite": 0,
+    "comparison": 0,
+    "saved_plot_render": 0
+  },
+  "validation": {
+    "full_suite": "2384 passed, 4 skipped, 64 warnings in 102.93s",
+    "focused_suite": "14 passed in 0.23s",
+    "saved_plot_render": "completed on 425ff10 without metric recomputation"
+  },
+  "runtime_changes": false,
+  "awsim_new_drive": false,
+  "new_inference": false,
+  "new_training": false,
+  "files": {
+    "analysis.log": {
+      "bytes": 351,
+      "sha256": "8286a68c18a246ed615bf34129c6c91a32ae73e218fdb7b0956ace5d74f4671f"
+    },
+    "attribution_paths.png": {
+      "bytes": 123968,
+      "sha256": "a5e61de9ed949641cdfc213c28484ec826be52dd89788f8d5cee286062df927c"
+    },
+    "attribution_timeline.png": {
+      "bytes": 328000,
+      "sha256": "728fba479c5c827e349cafb65289d91193d877fb28d967295b31e4e3421e1e58"
+    },
+    "comparison_metrics.json": {
+      "bytes": 12301,
+      "sha256": "f036bfc5b9c7939874b6378182db1125cc73c54b76b1376b318c43497534987d"
+    },
+    "plot_receipt.json": {
+      "bytes": 1082,
+      "sha256": "1e71cbd6da921b5d46cb76ea8145b674d1814dff1e3cc634c506d543e0fd1ec9"
+    },
+    "pytest.log": {
+      "bytes": 4769,
+      "sha256": "604c0a43d5807662b9aba5aced08b4aacd2f086923613470f4f94f90ac64b80c"
+    },
+    "pytest_focused.log": {
+      "bytes": 99,
+      "sha256": "e4765994e99dd2ca83f2e149132a0dbcdd16854f0ac3f6b132f5437e55ea7570"
+    },
+    "summary.json": {
+      "bytes": 102306,
+      "sha256": "3d2ca6d9afe563df144780b10657d4bacc0de6dacdb3a87c1b62272094ab7d29"
+    },
+    "population_audit.json": {
+      "bytes": 2477,
+      "sha256": "faf86b668d398365b83a230822d72cbbe25fd8533dd3597831025f0a34364d06"
+    }
+  },
+  "large_native_detail_files": {
+    "codex-time-recovery-speedbase-r30_commands.json": {
+      "bytes": 2628150,
+      "sha256": "8d65fe798dd4b43a660b9c351be7267d040e0971e0449575a77e8d17b64618c3"
+    },
+    "codex-time-recovery-speedbase-r31_commands.json": {
+      "bytes": 2945379,
+      "sha256": "164e4bb941c809f41e1b2db5353586a54892c29c82243a0792fe27a00f888909"
+    },
+    "codex-time-recovery-speedbase-r30_plans.json": {
+      "bytes": 1847004,
+      "sha256": "ec495a899ce6fb87c6ebc98ee71c2e6ca31a6c17177a8b03134b2238cbbf230b"
+    },
+    "codex-time-recovery-speedbase-r31_plans.json": {
+      "bytes": 1849736,
+      "sha256": "f7ae4f71e2e629f496871a3942971fcc1e314f9c23b8246c4d09696189a6e0b8"
+    }
+  },
+  "reproduction_commands": {
+    "full_suite": "tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 .venv/bin/python -m pytest -q",
+    "focused_suite": "tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -m pytest -q tests/test_time_path_attribution_v1.py",
+    "comparison": "tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 .venv/bin/python tools/analyze_time_normal_lap_attribution.py --trial /home/thistle/e2e_autonomous/runs/time_normal_lap_20260914/raw/codex-time-lap-candidate01 --reference-runs /home/thistle/e2e_autonomous/raw/time_recovery_speed_20260914/codex-time-recovery-speedbase-r30 /home/thistle/e2e_autonomous/raw/time_recovery_speed_20260914/codex-time-recovery-speedbase-r31 --output /home/thistle/e2e_autonomous/runs/time_normal_lap_attribution_20260914"
+  }
+}

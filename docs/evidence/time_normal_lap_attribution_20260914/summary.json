@@ -1,0 +1,3293 @@
+{
+  "source_commit": "d0284b896e3920d9621d0f2059e06aa1d0ed0686",
+  "scope": "RECORDED_NORMAL_LAP_ATTRIBUTION_NOT_CAUSAL_PERCENTAGES_OR_NEW_DRIVE_TEST",
+  "runtime_modified": false,
+  "new_inference": false,
+  "reserved_recovery_test_read": false,
+  "trial": "codex-time-lap-candidate01",
+  "trial_hashes": {
+    "control.jsonl": "8343df44249a86636cb975f0c8a4f4104853de4dba58b1f22f0d68cfc86f456a",
+    "inference.jsonl": "2392a3c90660dadb561c2aacbca5ff808383a2b143a092755692eea55ef5832a",
+    "vehicle_observations.jsonl": "c47690c7d418df31c208f63660d662746eb94ea756e32c9a420e8d910d08b606",
+    "trial_config.json": "4d07c8c3f49d931bd086f19facdbfc31c8f154d19911b730ead5ebc61c4268e0",
+    "host_result.json": "23bc37cf455e24b1be5dc7c2bf7ddafa228f4771a196aa42342e55d01000aa0b"
+  },
+  "references": {
+    "codex-time-recovery-speedbase-r30": {
+      "run": "codex-time-recovery-speedbase-r30",
+      "hashes": {
+        "control.jsonl": "54e127461c0a41a4f189acbee09316c37fb2a10cb664eb8e324b693c76f7c142",
+        "result.json": "a6a266af8fb3e1b892c4ae86f098546376b3f5144268088eecbaaabdb4ca2826",
+        "bag/bag_0.db3": "0bad183ede831f66c14049262ed5e8816c6ae4ff73119ee32ea58bc29e6b2cf7"
+      },
+      "pose_audit": {
+        "input_poses": 3442,
+        "unique_stamps": 3435,
+        "exact_duplicates": 0,
+        "conflicting_stamps": 7,
+        "excluded_segments": 14
+      },
+      "selected_capture_ns": [
+        76439998291,
+        145244996753
+      ],
+      "control_pose_difference_m": {
+        "count": 138,
+        "min": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "max": 0.0,
+        "mean": 0.0
+      },
+      "control_pose_check_exclusions": {},
+      "median_speed_mps": 1.278796672821045,
+      "lap_status": "COMPLETE_LAP",
+      "assets_verified": true,
+      "command_status_counts": {
+        "EVALUATED": 907
+      },
+      "plan_status_counts": {
+        "EVALUATED": 411
+      },
+      "groups": {
+        "entry": {
+          "time_interval_s": [
+            55.0,
+            65.0
+          ],
+          "commands": 200,
+          "plans": 90,
+          "actual_left_m": {
+            "count": 200,
+            "min": -0.24529203876821898,
+            "median": -0.11539710600335612,
+            "p95": 0.10974270966531961,
+            "max": 0.17398762802842022,
+            "mean": -0.10472832260145787
+          },
+          "tire_error_abs_rad": {
+            "count": 200,
+            "min": 4.9159110353916985e-05,
+            "median": 0.0014942547680380103,
+            "p95": 0.0053302259880610835,
+            "max": 0.006882737265131722,
+            "mean": 0.0020477634242957034
+          },
+          "max_required_tire_abs_rad": 0.0720369941189484,
+          "rate_limited_commands": 0,
+          "geometry_sensitivity_status": {
+            "EVALUATED": 144,
+            "AMBIGUOUS_POSE_STAMP": 56
+          },
+          "prediction_return_diagnostic": {
+            "1": {
+              "count": 19,
+              "abs_offset_reduced_count": 14
+            },
+            "2": {
+              "count": 19,
+              "abs_offset_reduced_count": 17
+            },
+            "3": {
+              "count": 19,
+              "abs_offset_reduced_count": 19
+            }
+          },
+          "common_progress_decomposition": {
+            "1": {
+              "status_counts": {
+                "EVALUATED": 87,
+                "AMBIGUOUS_POSE_STAMP": 3
+              },
+              "actual_left_m": {
+                "count": 87,
+                "min": 0.0046254449835608415,
+                "median": 0.13433913018025187,
+                "p95": 0.24650922274421178,
+                "max": 0.28416318985272515,
+                "mean": 0.14389014048179624
+              },
+              "prediction_left_m": {
+                "count": 87,
+                "min": 0.004448696327896937,
+                "median": 0.13393315754086685,
+                "p95": 0.24353258711834824,
+                "max": 0.2786361495621442,
+                "mean": 0.1394478033773863
+              },
+              "following_left_m": {
+                "count": 87,
+                "min": 0.00046480382495330376,
+                "median": 0.006273285463164802,
+                "p95": 0.01701857871093634,
+                "max": 0.019114170957481386,
+                "mean": 0.007266690827783553
+              },
+              "sum_error_m": {
+                "count": 87,
+                "min": 0.0,
+                "median": 6.938893903907228e-18,
+                "p95": 2.8969882048812683e-17,
+                "max": 3.599551212651875e-17,
+                "mean": 9.31790763640703e-18
+              },
+              "following_abs_greater_than_prediction_count": 2
+            },
+            "2": {
+              "status_counts": {
+                "EVALUATED": 86,
+                "AMBIGUOUS_POSE_STAMP": 4
+              },
+              "actual_left_m": {
+                "count": 86,
+                "min": 0.0016432143363534922,
+                "median": 0.16621813155897447,
+                "p95": 0.3099828962380754,
+                "max": 0.31530951573493704,
+                "mean": 0.16112976789638672
+              },
+              "prediction_left_m": {
+                "count": 86,
+                "min": 0.002192026125413198,
+                "median": 0.16465592934584353,
+                "p95": 0.3224973730085123,
+                "max": 0.3370796879161755,
+                "mean": 0.15842486583969992
+              },
+              "following_left_m": {
+                "count": 86,
+                "min": 1.8473769207329638e-05,
+                "median": 0.012126959013645331,
+                "p95": 0.037275115785553044,
+                "max": 0.045478468969763375,
+                "mean": 0.014615667259076988
+              },
+              "sum_error_m": {
+                "count": 86,
+                "min": 0.0,
+                "median": 6.938893903907228e-18,
+                "p95": 4.119968255444917e-17,
+                "max": 6.591949208711867e-17,
+                "mean": 1.1875795889317968e-17
+              },
+              "following_abs_greater_than_prediction_count": 8
+            },
+            "3": {
+              "status_counts": {
+                "FUTURE_OUTSIDE_PREDICTED_PROGRESS": 89,
+                "AMBIGUOUS_POSE_STAMP": 1
+              },
+              "actual_left_m": {
+                "count": 0
+              },
+              "prediction_left_m": {
+                "count": 0
+              },
+              "following_left_m": {
+                "count": 0
+              },
+              "sum_error_m": {
+                "count": 0
+              },
+              "following_abs_greater_than_prediction_count": 0
+            }
+          }
+        },
+        "corner": {
+          "time_interval_s": [
+            65.0,
+            80.0
+          ],
+          "commands": 300,
+          "plans": 135,
+          "actual_left_m": {
+            "count": 300,
+            "min": -0.7736519734862517,
+            "median": 0.007907773460079941,
+            "p95": 0.3118057475337079,
+            "max": 0.3152713710882798,
+            "mean": -0.11729405226273333
+          },
+          "tire_error_abs_rad": {
+            "count": 300,
+            "min": 1.2022424866309223e-05,
+            "median": 0.0030479781932154643,
+            "p95": 0.00880438904169277,
+            "max": 0.01830282525439353,
+            "mean": 0.0037133972598965012
+          },
+          "max_required_tire_abs_rad": 0.21630427466489688,
+          "rate_limited_commands": 0,
+          "geometry_sensitivity_status": {
+            "AMBIGUOUS_POSE_STAMP": 74,
+            "EVALUATED": 160,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 66
+          },
+          "prediction_return_diagnostic": {
+            "1": {
+              "count": 90,
+              "abs_offset_reduced_count": 35
+            },
+            "2": {
+              "count": 90,
+              "abs_offset_reduced_count": 41
+            },
+            "3": {
+              "count": 90,
+              "abs_offset_reduced_count": 49
+            }
+          },
+          "common_progress_decomposition": {
+            "1": {
+              "status_counts": {
+                "AMBIGUOUS_POSE_STAMP": 5,
+                "EVALUATED": 130
+              },
+              "actual_left_m": {
+                "count": 130,
+                "min": 0.0007011098647612765,
+                "median": 0.29646407769592464,
+                "p95": 0.7641663246443704,
+                "max": 0.7732952867983804,
+                "mean": 0.3468932621369632
+              },
+              "prediction_left_m": {
+                "count": 130,
+                "min": 0.0019065484843667822,
+                "median": 0.29602794228382856,
+                "p95": 0.7600498266796837,
+                "max": 0.7732074893447858,
+                "mean": 0.34483016688358553
+              },
+              "following_left_m": {
+                "count": 130,
+                "min": 3.9504251978143314e-05,
+                "median": 0.0036595990506365092,
+                "p95": 0.016733314007659705,
+                "max": 0.02134938475298337,
+                "mean": 0.004752244645165429
+              },
+              "sum_error_m": {
+                "count": 130,
+                "min": 0.0,
+                "median": 1.3660947373317356e-17,
+                "p95": 9.957312752106869e-17,
+                "max": 1.9727058528373753e-16,
+                "mean": 2.7043129688055267e-17
+              },
+              "following_abs_greater_than_prediction_count": 0
+            },
+            "2": {
+              "status_counts": {
+                "EVALUATED": 130,
+                "AMBIGUOUS_POSE_STAMP": 5
+              },
+              "actual_left_m": {
+                "count": 130,
+                "min": 0.004095210555528081,
+                "median": 0.295665480374121,
+                "p95": 0.7650054349069919,
+                "max": 0.7734637028154895,
+                "mean": 0.3620632286704075
+              },
+              "prediction_left_m": {
+                "count": 130,
+                "min": 0.0011083612211501197,
+                "median": 0.3036995242070096,
+                "p95": 0.7512313218438144,
+                "max": 0.7703707893933714,
+                "mean": 0.36197952862547755
+              },
+              "following_left_m": {
+                "count": 130,
+                "min": 0.00021686546550287686,
+                "median": 0.02243663515616992,
+                "p95": 0.05221553066273011,
+                "max": 0.05575486511027388,
+                "mean": 0.023530081107058863
+              },
+              "sum_error_m": {
+                "count": 130,
+                "min": 0.0,
+                "median": 1.5612511283791264e-17,
+                "p95": 1.0000680839006291e-16,
+                "max": 1.5135462327897642e-16,
+                "mean": 2.959788530718313e-17
+              },
+              "following_abs_greater_than_prediction_count": 8
+            },
+            "3": {
+              "status_counts": {
+                "FUTURE_OUTSIDE_PREDICTED_PROGRESS": 88,
+                "EVALUATED": 45,
+                "AMBIGUOUS_POSE_STAMP": 2
+              },
+              "actual_left_m": {
+                "count": 45,
+                "min": 0.0003533820716504947,
+                "median": 0.6282092678553874,
+                "p95": 0.7719783136294321,
+                "max": 0.7732704942172279,
+                "mean": 0.5352241980792112
+              },
+              "prediction_left_m": {
+                "count": 45,
+                "min": 0.02876426911423871,
+                "median": 0.6456656184986067,
+                "p95": 0.779895437849993,
+                "max": 0.7890049038725369,
+                "mean": 0.5140842050808369
+              },
+              "following_left_m": {
+                "count": 45,
+                "min": 0.00509116053624768,
+                "median": 0.031079759545906832,
+                "p95": 0.10637120718581189,
+                "max": 0.10678324540709247,
+                "mean": 0.04072498155600956
+              },
+              "sum_error_m": {
+                "count": 45,
+                "min": 0.0,
+                "median": 2.7755575615628914e-17,
+                "p95": 1.0685896612017126e-16,
+                "max": 1.734723475976807e-16,
+                "mean": 3.843376234553059e-17
+              },
+              "following_abs_greater_than_prediction_count": 1
+            }
+          }
+        },
+        "return": {
+          "time_interval_s": [
+            80.0,
+            90.0
+          ],
+          "commands": 200,
+          "plans": 91,
+          "actual_left_m": {
+            "count": 200,
+            "min": -0.7570433353520475,
+            "median": -0.43897104136887233,
+            "p95": 0.2303843554404069,
+            "max": 0.2911278994634098,
+            "mean": -0.3208113028187309
+          },
+          "tire_error_abs_rad": {
+            "count": 200,
+            "min": 6.0922982526023794e-06,
+            "median": 0.002834452174024664,
+            "p95": 0.010658110961361471,
+            "max": 0.017292437991902707,
+            "mean": 0.003868369976003199
+          },
+          "max_required_tire_abs_rad": 0.17336418090386316,
+          "rate_limited_commands": 0,
+          "geometry_sensitivity_status": {
+            "EVALUATED": 122,
+            "AMBIGUOUS_POSE_STAMP": 78
+          },
+          "prediction_return_diagnostic": {
+            "1": {
+              "count": 70,
+              "abs_offset_reduced_count": 59
+            },
+            "2": {
+              "count": 70,
+              "abs_offset_reduced_count": 53
+            },
+            "3": {
+              "count": 70,
+              "abs_offset_reduced_count": 55
+            }
+          },
+          "common_progress_decomposition": {
+            "1": {
+              "status_counts": {
+                "EVALUATED": 88,
+                "AMBIGUOUS_POSE_STAMP": 3
+              },
+              "actual_left_m": {
+                "count": 88,
+                "min": 0.000517450584742236,
+                "median": 0.3515248467101104,
+                "p95": 0.5813232125064862,
+                "max": 0.6423912173310555,
+                "mean": 0.3459137582756106
+              },
+              "prediction_left_m": {
+                "count": 88,
+                "min": 0.0025145007370685956,
+                "median": 0.35761084781042474,
+                "p95": 0.5641497645246615,
+                "max": 0.6292236187349497,
+                "mean": 0.34703605318657693
+              },
+              "following_left_m": {
+                "count": 88,
+                "min": 1.8304609790811937e-05,
+                "median": 0.006472558453542858,
+                "p95": 0.01692157220982952,
+                "max": 0.01986808623544829,
+                "mean": 0.006908088313106358
+              },
+              "sum_error_m": {
+                "count": 88,
+                "min": 0.0,
+                "median": 1.951563910473908e-17,
+                "p95": 8.144526719711105e-17,
+                "max": 9.71445146547012e-17,
+                "mean": 2.5098009743618546e-17
+              },
+              "following_abs_greater_than_prediction_count": 1
+            },
+            "2": {
+              "status_counts": {
+                "EVALUATED": 86,
+                "AMBIGUOUS_POSE_STAMP": 5
+              },
+              "actual_left_m": {
+                "count": 86,
+                "min": 0.008266575016090159,
+                "median": 0.33804108651178305,
+                "p95": 0.4928503007634703,
+                "max": 0.5234126763022835,
+                "mean": 0.31889793126004967
+              },
+              "prediction_left_m": {
+                "count": 86,
+                "min": 0.0024817975711151014,
+                "median": 0.3593962118679896,
+                "p95": 0.5216528424902732,
+                "max": 0.5261824424020874,
+                "mean": 0.34100691200391153
+              },
+              "following_left_m": {
+                "count": 86,
+                "min": 0.0005664030998506447,
+                "median": 0.026094914491720987,
+                "p95": 0.05833457092286888,
+                "max": 0.060438249140813444,
+                "mean": 0.030257483518627486
+              },
+              "sum_error_m": {
+                "count": 86,
+                "min": 0.0,
+                "median": 2.0816681711721685e-17,
+                "p95": 6.375108774214766e-17,
+                "max": 1.3877787807814457e-16,
+                "mean": 2.6279295680767837e-17
+              },
+              "following_abs_greater_than_prediction_count": 2
+            },
+            "3": {
+              "status_counts": {
+                "FUTURE_OUTSIDE_PREDICTED_PROGRESS": 61,
+                "EVALUATED": 28,
+                "AMBIGUOUS_POSE_STAMP": 2
+              },
+              "actual_left_m": {
+                "count": 28,
+                "min": 0.10100084961828111,
+                "median": 0.32510412600780547,
+                "p95": 0.4718860565744223,
+                "max": 0.4753118282631344,
+                "mean": 0.31468009823960513
+              },
+              "prediction_left_m": {
+                "count": 28,
+                "min": 0.21978487188895088,
+                "median": 0.39738636430176316,
+                "p95": 0.5145081127222471,
+                "max": 0.5356994173611337,
+                "mean": 0.3927369172602404
+              },
+              "following_left_m": {
+                "count": 28,
+                "min": 0.025851401008858216,
+                "median": 0.10974081257556206,
+                "p95": 0.14441599672831376,
+                "max": 0.16257601681814185,
+                "mean": 0.1042309182301571
+              },
+              "sum_error_m": {
+                "count": 28,
+                "min": 0.0,
+                "median": 2.7755575615628914e-17,
+                "p95": 5.065392549852275e-17,
+                "max": 9.71445146547012e-17,
+                "mean": 2.6268669779077364e-17
+              },
+              "following_abs_greater_than_prediction_count": 0
+            }
+          }
+        },
+        "late": {
+          "time_interval_s": [
+            90.0,
+            101.0
+          ],
+          "commands": 207,
+          "plans": 93,
+          "actual_left_m": {
+            "count": 207,
+            "min": 0.18011300068621125,
+            "median": 0.336116139227025,
+            "p95": 0.6734435136845572,
+            "max": 0.6783982812954982,
+            "mean": 0.38546558592692576
+          },
+          "tire_error_abs_rad": {
+            "count": 207,
+            "min": 3.251809094106939e-06,
+            "median": 0.0018289317796756667,
+            "p95": 0.005548782355240238,
+            "max": 0.009263302409920331,
+            "mean": 0.0022626413205891083
+          },
+          "max_required_tire_abs_rad": 0.034764465256861034,
+          "rate_limited_commands": 0,
+          "geometry_sensitivity_status": {
+            "EVALUATED": 195,
+            "AMBIGUOUS_POSE_STAMP": 12
+          },
+          "prediction_return_diagnostic": {
+            "1": {
+              "count": 80,
+              "abs_offset_reduced_count": 28
+            },
+            "2": {
+              "count": 80,
+              "abs_offset_reduced_count": 35
+            },
+            "3": {
+              "count": 80,
+              "abs_offset_reduced_count": 36
+            }
+          },
+          "common_progress_decomposition": {
+            "1": {
+              "status_counts": {
+                "EVALUATED": 84,
+                "AMBIGUOUS_POSE_STAMP": 1,
+                "FUTURE_AFTER_FIRST_FAULT": 8
+              },
+              "actual_left_m": {
+                "count": 84,
+                "min": 0.18046604421586332,
+                "median": 0.3415517258975422,
+                "p95": 0.6746015670860099,
+                "max": 0.6785748827287155,
+                "mean": 0.3979832311343743
+              },
+              "prediction_left_m": {
+                "count": 84,
+                "min": 0.17391933847314206,
+                "median": 0.3387671969609374,
+                "p95": 0.6762592807903226,
+                "max": 0.6792869151115413,
+                "mean": 0.39782370981355325
+              },
+              "following_left_m": {
+                "count": 84,
+                "min": 9.333781625281076e-05,
+                "median": 0.0031907003789170873,
+                "p95": 0.006892943454440618,
+                "max": 0.0083933794935371,
+                "mean": 0.003279974174835358
+              },
+              "sum_error_m": {
+                "count": 84,
+                "min": 0.0,
+                "median": 2.1358782797964437e-17,
+                "p95": 7.370406368556457e-17,
+                "max": 1.0538445116559103e-16,
+                "mean": 2.936025936675106e-17
+              },
+              "following_abs_greater_than_prediction_count": 0
+            },
+            "2": {
+              "status_counts": {
+                "EVALUATED": 75,
+                "FUTURE_AFTER_FIRST_FAULT": 18
+              },
+              "actual_left_m": {
+                "count": 75,
+                "min": 0.18032835956592813,
+                "median": 0.3634054341353619,
+                "p95": 0.6746573779144156,
+                "max": 0.678503560621864,
+                "mean": 0.4023707983451033
+              },
+              "prediction_left_m": {
+                "count": 75,
+                "min": 0.1256400037523476,
+                "median": 0.35233628879659623,
+                "p95": 0.6720422447970166,
+                "max": 0.6809569677795284,
+                "mean": 0.3849061250422521
+              },
+              "following_left_m": {
+                "count": 75,
+                "min": 0.0002859008496205605,
+                "median": 0.011180357245494668,
+                "p95": 0.049326684912648446,
+                "max": 0.054688355813580516,
+                "mean": 0.018116331706557975
+              },
+              "sum_error_m": {
+                "count": 75,
+                "min": 0.0,
+                "median": 1.6479873021779667e-17,
+                "p95": 9.90527104782756e-17,
+                "max": 1.6653345369377348e-16,
+                "mean": 2.945632742353451e-17
+              },
+              "following_abs_greater_than_prediction_count": 0
+            },
+            "3": {
+              "status_counts": {
+                "AMBIGUOUS_POSE_STAMP": 1,
+                "FUTURE_OUTSIDE_PREDICTED_PROGRESS": 32,
+                "EVALUATED": 34,
+                "FUTURE_AFTER_FIRST_FAULT": 26
+              },
+              "actual_left_m": {
+                "count": 34,
+                "min": 0.35561862215665746,
+                "median": 0.5624936589322269,
+                "p95": 0.6655966856116229,
+                "max": 0.6784959932553679,
+                "mean": 0.544678535228952
+              },
+              "prediction_left_m": {
+                "count": 34,
+                "min": 0.29565058166646363,
+                "median": 0.5450198293839983,
+                "p95": 0.6530305811098546,
+                "max": 0.6980054924988908,
+                "mean": 0.522515908126037
+              },
+              "following_left_m": {
+                "count": 34,
+                "min": 0.006133877888285784,
+                "median": 0.02245719782405705,
+                "p95": 0.056133416956195524,
+                "max": 0.059968040490193816,
+                "mean": 0.02369443088950131
+              },
+              "sum_error_m": {
+                "count": 34,
+                "min": 4.336808689942018e-18,
+                "median": 4.163336342344337e-17,
+                "p95": 9.159339953157539e-17,
+                "max": 1.734723475976807e-16,
+                "mean": 4.507729973604438e-17
+              },
+              "following_abs_greater_than_prediction_count": 0
+            }
+          }
+        }
+      },
+      "snapshots": [
+        {
+          "time_s": 64.999998547,
+          "status": "EVALUATED",
+          "plan_id": "codex-time-lap-candidate01:0:84729998106:7319",
+          "left_m": 0.17398762802842022,
+          "heading_error_rad": 0.10217926639244988,
+          "required_tire_rad": 0.0720369941189484,
+          "measured_tire_rad": 0.07158271223306656,
+          "tire_error_rad": -0.00045428188588184093,
+          "rate_limited": false,
+          "world_xy_m": [
+            89635.72158623494,
+            43141.23216647394
+          ],
+          "speed_mps": 1.287721872329712,
+          "plan_age_s": 0.199999995,
+          "guard_margin_m": 1.3147298308175017,
+          "normal_line_pp": {
+            "status": "AMBIGUOUS_POSE_STAMP"
+          }
+        },
+        {
+          "time_s": 70.004998435,
+          "status": "EVALUATED",
+          "plan_id": "codex-time-lap-candidate01:0:89664997995:7747",
+          "left_m": 0.16068085362607523,
+          "heading_error_rad": -0.044315580643548846,
+          "required_tire_rad": 0.1754855963189792,
+          "measured_tire_rad": 0.17268212139606476,
+          "tire_error_rad": -0.0028034749229144396,
+          "rate_limited": false,
+          "world_xy_m": [
+            89640.6152036483,
+            43137.24530010558
+          ],
+          "speed_mps": 1.281659722328186,
+          "plan_age_s": 0.274999994,
+          "guard_margin_m": 1.5892075112989523,
+          "normal_line_pp": {
+            "status": "EVALUATED",
+            "scope": "GEOMETRIC_NORMAL_LINE_SENSITIVITY_NOT_TIMEPLAN_OR_DRIVE_ADMISSION",
+            "required_tire_rad": 0.10687940708137036,
+            "selection": {
+              "kind": "vertex",
+              "reference_indices": [
+                17,
+                17
+              ],
+              "fraction": 0.0,
+              "fraction_interval": [
+                0.0,
+                0.0
+              ],
+              "xy_m": [
+                1.9306747913360596,
+                0.1736348569393158
+              ],
+              "remaining_s": 1.5441666700666667,
+              "reference_interval_s": [
+                1.5441666700666667,
+                1.5441666700666667
+              ],
+              "distance_m": 1.9384669750720216,
+              "required_tire_rad": 0.10687940708137036,
+              "steering_margin_rad": 0.19312059291862962,
+              "distance_margin_m": 0.0763112919887472
+            },
+            "search_band_m": [
+              1.8621556830832744,
+              2.3621556830832744
+            ],
+            "world_xy_m": [
+              [
+                89640.5650258866,
+                43137.09265499772
+              ],
+              [
+                89640.68222589955,
+                43137.05673162275
+              ],
+              [
+                89640.78365306665,
+                43137.02709297467
+              ],
+              [
+                89640.89305689739,
+                43136.99700812459
+              ],
+              [
+                89641.0046403238,
+                43136.968376278324
+              ],
+              [
+                89641.1226439758,
+                43136.94001148294
+              ],
+              [
+                89641.23836606217,
+                43136.91417585561
+              ],
+              [
+                89641.35444300965,
+                43136.88994599985
+              ],
+              [
+                89641.47023165697,
+                43136.86769030575
+              ],
+              [
+                89641.5852146343,
+                43136.8476392221
+              ],
+              [
+                89641.69310122471,
+                43136.83011866132
+              ],
+              [
+                89641.8033391712,
+                43136.814680815936
+              ],
+              [
+                89641.92283415892,
+                43136.79990890565
+              ],
+              [
+                89642.02629283218,
+                43136.78879878864
+              ],
+              [
+                89642.15665714907,
+                43136.777882022536
+              ],
+              [
+                89642.26878566552,
+                43136.77107150742
+              ],
+              [
+                89642.38431035448,
+                43136.76656613675
+              ],
+              [
+                89642.49410027737,
+                43136.76440076135
+              ],
+              [
+                89642.61444231417,
+                43136.76470843795
+              ],
+              [
+                89642.72312682241,
+                43136.76715031586
+              ],
+              [
+                89642.82806946556,
+                43136.77168960717
+              ],
+              [
+                89642.95818554728,
+                43136.78038146455
+              ],
+              [
+                89643.07309308977,
+                43136.79103520366
+              ],
+              [
+                89643.18725014734,
+                43136.804402180416
+              ],
+              [
+                89643.2950382568,
+                43136.81896503356
+              ],
+              [
+                89643.40963387035,
+                43136.83701637176
+              ],
+              [
+                89643.5197079533,
+                43136.85718367019
+              ],
+              [
+                89643.63721156595,
+                43136.88118570217
+              ],
+              [
+                89643.74219017389,
+                43136.90449730999
+              ],
+              [
+                89643.86377367166,
+                43136.93442539954
+              ],
+              [
+                89643.97137009312,
+                43136.9632674425
+              ]
+            ]
+          }
+        },
+        {
+          "time_s": 75.004998323,
+          "status": "EVALUATED",
+          "plan_id": "codex-time-lap-candidate01:0:94704997883:8182",
+          "left_m": -0.28880517547588996,
+          "heading_error_rad": -0.10490554296199206,
+          "required_tire_rad": 0.19645699858213608,
+          "measured_tire_rad": 0.1919347047805786,
+          "tire_error_rad": -0.00452229380155747,
+          "rate_limited": false,
+          "world_xy_m": [
+            89646.59569976869,
+            43138.25901661214
+          ],
+          "speed_mps": 1.2682404518127441,
+          "plan_age_s": 0.24499999400000003,
+          "guard_margin_m": 2.377662455386454,
+          "normal_line_pp": {
+            "status": "STEERING_FEASIBLE_LOOKAHEAD_MISSING"
+          }
+        },
+        {
+          "time_s": 79.999998212,
+          "status": "EVALUATED",
+          "plan_id": "codex-time-lap-candidate01:0:99639997772:8607",
+          "left_m": -0.7595684116962095,
+          "heading_error_rad": 0.06628553433735562,
+          "required_tire_rad": 0.17004621607907758,
+          "measured_tire_rad": 0.1711890548467636,
+          "tire_error_rad": 0.001142838767686033,
+          "rate_limited": false,
+          "world_xy_m": [
+            89648.58149262707,
+            43143.99970664479
+          ],
+          "speed_mps": 1.2706975936889648,
+          "plan_age_s": 0.304999994,
+          "guard_margin_m": 0.7721707190141651,
+          "normal_line_pp": {
+            "status": "EVALUATED",
+            "scope": "GEOMETRIC_NORMAL_LINE_SENSITIVITY_NOT_TIMEPLAN_OR_DRIVE_ADMISSION",
+            "required_tire_rad": 0.286092470763848,
+            "selection": {
+              "kind": "vertex",
+              "reference_indices": [
+                23,
+                23
+              ],
+              "fraction": 0.0,
+              "fraction_interval": [
+                0.0,
+                0.0
+              ],
+              "xy_m": [
+                2.6382579803466797,
+                1.0129284858703613
+              ],
+              "remaining_s": 2.0661666712666666,
+              "reference_interval_s": [
+                2.0661666712666666,
+                2.0661666712666666
+              ],
+              "distance_m": 2.826027120950994,
+              "required_tire_rad": 0.286092470763848,
+              "steering_margin_rad": 0.013907529236152016,
+              "distance_margin_m": 0.016657863196951173
+            },
+            "search_band_m": [
+              1.8426849841479451,
+              2.842684984147945
+            ],
+            "world_xy_m": [
+              [
+                89647.82689793535,
+                43143.908196637734
+              ],
+              [
+                89647.81487911301,
+                43144.021635715195
+              ],
+              [
+                89647.80099816888,
+                43144.14441360183
+              ],
+              [
+                89647.78775410725,
+                43144.25417464902
+              ],
+              [
+                89647.77306431638,
+                43144.36840616612
+              ],
+              [
+                89647.75660800985,
+                43144.483676129734
+              ],
+              [
+                89647.73838322054,
+                43144.598698497786
+              ],
+              [
+                89647.71878866856,
+                43144.713060224
+              ],
+              [
+                89647.69937329236,
+                43144.821446930226
+              ],
+              [
+                89647.67703931374,
+                43144.930422291654
+              ],
+              [
+                89647.65413062423,
+                43145.039352370295
+              ],
+              [
+                89647.6284214695,
+                43145.14998174496
+              ],
+              [
+                89647.5971961904,
+                43145.27652266613
+              ],
+              [
+                89647.570649732,
+                43145.37809199662
+              ],
+              [
+                89647.54084815286,
+                43145.48583303036
+              ],
+              [
+                89647.50636825734,
+                43145.60168938025
+              ],
+              [
+                89647.47348388872,
+                43145.70586449373
+              ],
+              [
+                89647.43373317244,
+                43145.82547237844
+              ],
+              [
+                89647.39612485457,
+                43145.93370209407
+              ],
+              [
+                89647.35883183924,
+                43146.0345180594
+              ],
+              [
+                89647.31669229073,
+                43146.14521412704
+              ],
+              [
+                89647.27328978977,
+                43146.254201181655
+              ],
+              [
+                89647.23338843943,
+                43146.350333228496
+              ],
+              [
+                89647.18666772284,
+                43146.45860286978
+              ],
+              [
+                89647.13715923908,
+                43146.56934354154
+              ],
+              [
+                89647.08990705706,
+                43146.67126695469
+              ],
+              [
+                89647.0399829808,
+                43146.775555403976
+              ],
+              [
+                89646.99067415981,
+                43146.87565213944
+              ],
+              [
+                89646.93955760823,
+                43146.97674956213
+              ],
+              [
+                89646.88350293961,
+                43147.085018703845
+              ],
+              [
+                89646.82718520003,
+                43147.19092513088
+              ]
+            ]
+          }
+        },
+        {
+          "time_s": 85.0049981,
+          "status": "EVALUATED",
+          "plan_id": "codex-time-lap-candidate01:0:104679997660:9044",
+          "left_m": -0.44032272040356035,
+          "heading_error_rad": 0.048900887778164925,
+          "required_tire_rad": 0.030422644676495254,
+          "measured_tire_rad": 0.03242246061563492,
+          "tire_error_rad": 0.001999815939139664,
+          "rate_limited": false,
+          "world_xy_m": [
+            89645.7906086502,
+            43149.72605988789
+          ],
+          "speed_mps": 1.2887860536575317,
+          "plan_age_s": 0.269999994,
+          "guard_margin_m": 0.7587915561499157,
+          "normal_line_pp": {
+            "status": "EVALUATED",
+            "scope": "GEOMETRIC_NORMAL_LINE_SENSITIVITY_NOT_TIMEPLAN_OR_DRIVE_ADMISSION",
+            "required_tire_rad": 0.23502677321208218,
+            "selection": {
+              "kind": "vertex",
+              "reference_indices": [
+                16,
+                16
+              ],
+              "fraction": 0.0,
+              "fraction_interval": [
+                0.0,
+                0.0
+              ],
+              "xy_m": [
+                1.8811947107315063,
+                0.37955495715141296
+              ],
+              "remaining_s": 1.4560000032,
+              "reference_interval_s": [
+                1.4560000032,
+                1.4560000032
+              ],
+              "distance_m": 1.9191027865079053,
+              "required_tire_rad": 0.23502677321208218,
+              "steering_margin_rad": 0.06497322678791781,
+              "distance_margin_m": 0.044225013628062415
+            },
+            "search_band_m": [
+              1.874877772879843,
+              2.374877772879843
+            ],
+            "world_xy_m": [
+              [
+                89645.41322133166,
+                43149.499205507476
+              ],
+              [
+                89645.35592533305,
+                43149.58986984954
+              ],
+              [
+                89645.29636962726,
+                43149.68502676679
+              ],
+              [
+                89645.2253202038,
+                43149.79838370059
+              ],
+              [
+                89645.16339678246,
+                43149.89844036121
+              ],
+              [
+                89645.10154776614,
+                43149.99835028034
+              ],
+              [
+                89645.04608653129,
+                43150.08665494626
+              ],
+              [
+                89644.9805633957,
+                43150.1917068286
+              ],
+              [
+                89644.9187576336,
+                43150.2907153372
+              ],
+              [
+                89644.85676414071,
+                43150.38997067918
+              ],
+              [
+                89644.79730737371,
+                43150.48647679156
+              ],
+              [
+                89644.7375430792,
+                43150.582470469824
+              ],
+              [
+                89644.67497391092,
+                43150.682796707595
+              ],
+              [
+                89644.61022217998,
+                43150.78632441051
+              ],
+              [
+                89644.54605611404,
+                43150.8893488998
+              ],
+              [
+                89644.48699806238,
+                43150.98444913304
+              ],
+              [
+                89644.42802135635,
+                43151.07886254401
+              ],
+              [
+                89644.36229668432,
+                43151.18371095897
+              ],
+              [
+                89644.30399883105,
+                43151.27624383061
+              ],
+              [
+                89644.24354210198,
+                43151.37165302327
+              ],
+              [
+                89644.18173891821,
+                43151.46970070706
+              ],
+              [
+                89644.1181511341,
+                43151.5707115174
+              ],
+              [
+                89644.05441364311,
+                43151.67182928912
+              ],
+              [
+                89643.99221917508,
+                43151.76962181218
+              ],
+              [
+                89643.93285034229,
+                43151.86251936282
+              ],
+              [
+                89643.8695667154,
+                43151.962315713165
+              ],
+              [
+                89643.80430430468,
+                43152.064649089436
+              ],
+              [
+                89643.739112132,
+                43152.16635385825
+              ],
+              [
+                89643.67555354835,
+                43152.26477297205
+              ],
+              [
+                89643.6113895225,
+                43152.36327747646
+              ],
+              [
+                89643.54868820554,
+                43152.45908567448
+              ]
+            ]
+          }
+        },
+        {
+          "time_s": 89.989997988,
+          "status": "EVALUATED",
+          "plan_id": "codex-time-lap-candidate01:0:109719997547:9480",
+          "left_m": 0.2911278994634098,
+          "heading_error_rad": 0.07406934203182523,
+          "required_tire_rad": -0.004524386596792319,
+          "measured_tire_rad": 0.00026126447482965887,
+          "tire_error_rad": 0.004785651071621978,
+          "rate_limited": false,
+          "world_xy_m": [
+            89641.6155531496,
+            43154.54435868532
+          ],
+          "speed_mps": 1.2330576181411743,
+          "plan_age_s": 0.20999999500000002,
+          "guard_margin_m": 2.0128823680098127,
+          "normal_line_pp": {
+            "status": "EVALUATED",
+            "scope": "GEOMETRIC_NORMAL_LINE_SENSITIVITY_NOT_TIMEPLAN_OR_DRIVE_ADMISSION",
+            "required_tire_rad": -0.23873542859137337,
+            "selection": {
+              "kind": "vertex",
+              "reference_indices": [
+                16,
+                16
+              ],
+              "fraction": 0.0,
+              "fraction_interval": [
+                0.0,
+                0.0
+              ],
+              "xy_m": [
+                1.774870753288269,
+                -0.344256192445755
+              ],
+              "remaining_s": 1.4880000026666667,
+              "reference_interval_s": [
+                1.4880000026666667,
+                1.4880000026666667
+              ],
+              "distance_m": 1.8079487041714752,
+              "required_tire_rad": -0.23873542859137337,
+              "steering_margin_rad": 0.06126457140862662,
+              "distance_margin_m": 0.031204350272895143
+            },
+            "search_band_m": [
+              1.77674435389858,
+              2.27674435389858
+            ],
+            "world_xy_m": [
+              [
+                89641.83290514533,
+                43154.73804287105
+              ],
+              [
+                89641.74920702481,
+                43154.83262857152
+              ],
+              [
+                89641.67549154122,
+                43154.9146786232
+              ],
+              [
+                89641.60038570644,
+                43154.99754603201
+              ],
+              [
+                89641.52367906031,
+                43155.08075063864
+              ],
+              [
+                89641.45001776141,
+                43155.159413919275
+              ],
+              [
+                89641.37678882854,
+                43155.23730574068
+              ],
+              [
+                89641.2957445953,
+                43155.321829691326
+              ],
+              [
+                89641.21776965624,
+                43155.40178290294
+              ],
+              [
+                89641.14323301916,
+                43155.47735317184
+              ],
+              [
+                89641.05901564551,
+                43155.56181350269
+              ],
+              [
+                89640.98078328714,
+                43155.63916909024
+              ],
+              [
+                89640.90139443765,
+                43155.71676906479
+              ],
+              [
+                89640.82273913878,
+                43155.79258967905
+              ],
+              [
+                89640.73501198312,
+                43155.87618027717
+              ],
+              [
+                89640.65790460272,
+                43155.948705119336
+              ],
+              [
+                89640.57611068785,
+                43156.02482769271
+              ],
+              [
+                89640.50063470755,
+                43156.09445080281
+              ],
+              [
+                89640.40784927532,
+                43156.17928539238
+              ],
+              [
+                89640.33327824372,
+                43156.2470420944
+              ],
+              [
+                89640.24108094264,
+                43156.330014740204
+              ],
+              [
+                89640.15788932152,
+                43156.404951728844
+              ],
+              [
+                89640.0816388243,
+                43156.47328252066
+              ],
+              [
+                89639.9893934044,
+                43156.55589726657
+              ],
+              [
+                89639.90524680744,
+                43156.63119177396
+              ],
+              [
+                89639.82967295579,
+                43156.69915547767
+              ],
+              [
+                89639.73816471295,
+                43156.78161681688
+              ],
+              [
+                89639.65433497119,
+                43156.857168039096
+              ],
+              [
+                89639.57534576542,
+                43156.92893364833
+              ],
+              [
+                89639.49238120628,
+                43157.00490291137
+              ],
+              [
+                89639.41180794121,
+                43157.07883587677
+              ]
+            ]
+          }
+        },
+        {
+          "time_s": 95.009997876,
+          "status": "EVALUATED",
+          "plan_id": "codex-time-lap-candidate01:0:114759997434:9915",
+          "left_m": 0.22226901857689915,
+          "heading_error_rad": 0.07727736742713986,
+          "required_tire_rad": -0.001913291882686064,
+          "measured_tire_rad": -0.0007332864915952086,
+          "tire_error_rad": 0.0011800053910908553,
+          "rate_limited": false,
+          "world_xy_m": [
+            89637.33966916015,
+            43158.97587851003
+          ],
+          "speed_mps": 1.2589895725250244,
+          "plan_age_s": 0.194999996,
+          "guard_margin_m": 1.3788750330599338,
+          "normal_line_pp": {
+            "status": "EVALUATED",
+            "scope": "GEOMETRIC_NORMAL_LINE_SENSITIVITY_NOT_TIMEPLAN_OR_DRIVE_ADMISSION",
+            "required_tire_rad": -0.24259432997642794,
+            "selection": {
+              "kind": "vertex",
+              "reference_indices": [
+                16,
+                16
+              ],
+              "fraction": 0.0,
+              "fraction_interval": [
+                0.0,
+                0.0
+              ],
+              "xy_m": [
+                1.8516913652420044,
+                -0.38183948397636414
+              ],
+              "remaining_s": 1.4960000021333333,
+              "reference_interval_s": [
+                1.4960000021333333,
+                1.4960000021333333
+              ],
+              "distance_m": 1.8906512908612032,
+              "required_tire_rad": -0.24259432997642794,
+              "steering_margin_rad": 0.05740567002357205,
+              "distance_margin_m": 0.06862913273531923
+            },
+            "search_band_m": [
+              1.822022158125884,
+              2.322022158125884
+            ],
+            "world_xy_m": [
+              [
+                89637.50826990185,
+                43159.12071395638
+              ],
+              [
+                89637.43485366444,
+                43159.21246735688
+              ],
+              [
+                89637.36688497502,
+                43159.29839109106
+              ],
+              [
+                89637.2966845828,
+                43159.38749509384
+              ],
+              [
+                89637.22709840153,
+                43159.47624358736
+              ],
+              [
+                89637.1538260592,
+                43159.57093772595
+              ],
+              [
+                89637.08147913782,
+                43159.66519257364
+              ],
+              [
+                89637.00345777252,
+                43159.76734278866
+              ],
+              [
+                89636.93178326827,
+                43159.86229101634
+              ],
+              [
+                89636.86053395738,
+                43159.95694182661
+              ],
+              [
+                89636.79099965114,
+                43160.04940322093
+              ],
+              [
+                89636.72212417723,
+                43160.14134750744
+              ],
+              [
+                89636.6537455321,
+                43160.23288449082
+              ],
+              [
+                89636.58128192845,
+                43160.33008904652
+              ],
+              [
+                89636.51351175414,
+                43160.4212661878
+              ],
+              [
+                89636.44569585503,
+                43160.51286671436
+              ],
+              [
+                89636.37781593038,
+                43160.60471396754
+              ],
+              [
+                89636.30307372991,
+                43160.70557037133
+              ],
+              [
+                89636.23158670457,
+                43160.80188258882
+              ],
+              [
+                89636.16170464492,
+                43160.89592978139
+              ],
+              [
+                89636.09603128234,
+                43160.9840240901
+              ],
+              [
+                89636.02809050662,
+                43161.07504513357
+              ],
+              [
+                89635.95719418385,
+                43161.16993579167
+              ],
+              [
+                89635.88604949454,
+                43161.2646364152
+              ],
+              [
+                89635.81333275718,
+                43161.36130333477
+              ],
+              [
+                89635.74373350145,
+                43161.45318264751
+              ],
+              [
+                89635.67451335506,
+                43161.54425030189
+              ],
+              [
+                89635.60444976443,
+                43161.63607724443
+              ],
+              [
+                89635.53368890459,
+                43161.728224483886
+              ],
+              [
+                89635.46389435764,
+                43161.818499644585
+              ],
+              [
+                89635.38211057869,
+                43161.92395262276
+              ]
+            ]
+          }
+        },
+        {
+          "time_s": 100.349997757,
+          "status": "EVALUATED",
+          "plan_id": "codex-time-lap-candidate01:0:120114997315:10379",
+          "left_m": 0.6783982812954982,
+          "heading_error_rad": -0.01009864204997335,
+          "required_tire_rad": -0.018326679840727573,
+          "measured_tire_rad": -0.016482438892126083,
+          "tire_error_rad": 0.0018442409486014895,
+          "rate_limited": false,
+          "world_xy_m": [
+            89632.78404745438,
+            43163.97313804637
+          ],
+          "speed_mps": 1.2601357698440552,
+          "plan_age_s": 0.17499999600000002,
+          "guard_margin_m": null,
+          "normal_line_pp": {
+            "status": "AMBIGUOUS_POSE_STAMP"
+          }
+        }
+      ]
+    },
+    "codex-time-recovery-speedbase-r31": {
+      "run": "codex-time-recovery-speedbase-r31",
+      "hashes": {
+        "control.jsonl": "ac8f6e97b96a2468b03dfd46f09d5e37273546850238d9d9019d02e16330654a",
+        "result.json": "7f611ae19f194453a2f20092b3ed440e33476b3b592de8e7f4ce6ab6e7e37926",
+        "bag/bag_0.db3": "0a098a7e212a2feefa6c96a4ab2b730b499799eed6ab866c046ddea71ae45214"
+      },
+      "pose_audit": {
+        "input_poses": 3441,
+        "unique_stamps": 3436,
+        "exact_duplicates": 0,
+        "conflicting_stamps": 5,
+        "excluded_segments": 10
+      },
+      "selected_capture_ns": [
+        74544998333,
+        143354996795
+      ],
+      "control_pose_difference_m": {
+        "count": 138,
+        "min": 0.0,
+        "median": 0.0,
+        "p95": 0.0,
+        "max": 0.0,
+        "mean": 0.0
+      },
+      "control_pose_check_exclusions": {},
+      "median_speed_mps": 1.2788251638412476,
+      "lap_status": "COMPLETE_LAP",
+      "assets_verified": true,
+      "command_status_counts": {
+        "EVALUATED": 907
+      },
+      "plan_status_counts": {
+        "EVALUATED": 411
+      },
+      "groups": {
+        "entry": {
+          "time_interval_s": [
+            55.0,
+            65.0
+          ],
+          "commands": 200,
+          "plans": 90,
+          "actual_left_m": {
+            "count": 200,
+            "min": -0.24559566472222819,
+            "median": -0.1157659426435667,
+            "p95": 0.10893778188536533,
+            "max": 0.1738846365400037,
+            "mean": -0.1055375173329686
+          },
+          "tire_error_abs_rad": {
+            "count": 200,
+            "min": 4.9159110353916985e-05,
+            "median": 0.0014942547680380103,
+            "p95": 0.0053302259880610835,
+            "max": 0.006882737265131722,
+            "mean": 0.0020477634242957034
+          },
+          "max_required_tire_abs_rad": 0.0720369941189484,
+          "rate_limited_commands": 0,
+          "geometry_sensitivity_status": {
+            "EVALUATED": 200
+          },
+          "prediction_return_diagnostic": {
+            "1": {
+              "count": 19,
+              "abs_offset_reduced_count": 14
+            },
+            "2": {
+              "count": 19,
+              "abs_offset_reduced_count": 17
+            },
+            "3": {
+              "count": 19,
+              "abs_offset_reduced_count": 19
+            }
+          },
+          "common_progress_decomposition": {
+            "1": {
+              "status_counts": {
+                "EVALUATED": 87,
+                "AMBIGUOUS_POSE_STAMP": 3
+              },
+              "actual_left_m": {
+                "count": 87,
+                "min": 0.0031244003979485763,
+                "median": 0.1366095507691269,
+                "p95": 0.24663551580993304,
+                "max": 0.28390598014322743,
+                "mean": 0.14449816850282382
+              },
+              "prediction_left_m": {
+                "count": 87,
+                "min": 0.0027713426345647896,
+                "median": 0.13452304963698536,
+                "p95": 0.2442303279273461,
+                "max": 0.27824681713247523,
+                "mean": 0.14012900877618678
+              },
+              "following_left_m": {
+                "count": 87,
+                "min": 0.0003599186557689983,
+                "median": 0.00626230469827322,
+                "p95": 0.017010767944258622,
+                "max": 0.019078848106144852,
+                "mean": 0.007234007569635829
+              },
+              "sum_error_m": {
+                "count": 87,
+                "min": 0.0,
+                "median": 6.938893903907228e-18,
+                "p95": 2.2551405187698492e-17,
+                "max": 4.336808689942018e-17,
+                "mean": 8.998878031629687e-18
+              },
+              "following_abs_greater_than_prediction_count": 2
+            },
+            "2": {
+              "status_counts": {
+                "EVALUATED": 86,
+                "AMBIGUOUS_POSE_STAMP": 4
+              },
+              "actual_left_m": {
+                "count": 86,
+                "min": 0.0032080490747000636,
+                "median": 0.1673139113767675,
+                "p95": 0.3111754813448372,
+                "max": 0.31518345189769215,
+                "mean": 0.16196502196773752
+              },
+              "prediction_left_m": {
+                "count": 86,
+                "min": 0.0007281066304581979,
+                "median": 0.1653084747143391,
+                "p95": 0.3229566132835874,
+                "max": 0.33689326590971735,
+                "mean": 0.15924811902753122
+              },
+              "following_left_m": {
+                "count": 86,
+                "min": 2.6477526058961235e-05,
+                "median": 0.012333797836993989,
+                "p95": 0.03727344748804303,
+                "max": 0.045471080787871834,
+                "mean": 0.014572384278531532
+              },
+              "sum_error_m": {
+                "count": 86,
+                "min": 0.0,
+                "median": 6.938893903907228e-18,
+                "p95": 3.436920886779049e-17,
+                "max": 5.204170427930421e-17,
+                "mean": 1.0654571363783605e-17
+              },
+              "following_abs_greater_than_prediction_count": 7
+            },
+            "3": {
+              "status_counts": {
+                "FUTURE_OUTSIDE_PREDICTED_PROGRESS": 89,
+                "AMBIGUOUS_POSE_STAMP": 1
+              },
+              "actual_left_m": {
+                "count": 0
+              },
+              "prediction_left_m": {
+                "count": 0
+              },
+              "following_left_m": {
+                "count": 0
+              },
+              "sum_error_m": {
+                "count": 0
+              },
+              "following_abs_greater_than_prediction_count": 0
+            }
+          }
+        },
+        "corner": {
+          "time_interval_s": [
+            65.0,
+            80.0
+          ],
+          "commands": 300,
+          "plans": 135,
+          "actual_left_m": {
+            "count": 300,
+            "min": -0.7709529123000873,
+            "median": 0.00775502158248338,
+            "p95": 0.3120902010081598,
+            "max": 0.31531268118436495,
+            "mean": -0.11768533353584568
+          },
+          "tire_error_abs_rad": {
+            "count": 300,
+            "min": 1.2022424866309223e-05,
+            "median": 0.0030479781932154643,
+            "p95": 0.00880438904169277,
+            "max": 0.01830282525439353,
+            "mean": 0.0037133972598965012
+          },
+          "max_required_tire_abs_rad": 0.21630427466489688,
+          "rate_limited_commands": 0,
+          "geometry_sensitivity_status": {
+            "EVALUATED": 150,
+            "AMBIGUOUS_POSE_STAMP": 79,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 71
+          },
+          "prediction_return_diagnostic": {
+            "1": {
+              "count": 90,
+              "abs_offset_reduced_count": 35
+            },
+            "2": {
+              "count": 90,
+              "abs_offset_reduced_count": 42
+            },
+            "3": {
+              "count": 90,
+              "abs_offset_reduced_count": 49
+            }
+          },
+          "common_progress_decomposition": {
+            "1": {
+              "status_counts": {
+                "AMBIGUOUS_POSE_STAMP": 5,
+                "EVALUATED": 130
+              },
+              "actual_left_m": {
+                "count": 130,
+                "min": 0.0003606850990771973,
+                "median": 0.2970737666097096,
+                "p95": 0.7620789559970518,
+                "max": 0.7709671087685336,
+                "mean": 0.34681332794959563
+              },
+              "prediction_left_m": {
+                "count": 130,
+                "min": 0.0005686766380270771,
+                "median": 0.29583425988237627,
+                "p95": 0.7565557311054776,
+                "max": 0.770766146425004,
+                "mean": 0.34467355021708607
+              },
+              "following_left_m": {
+                "count": 130,
+                "min": 5.0503674044618e-05,
+                "median": 0.0037229992574974776,
+                "p95": 0.016711755574214865,
+                "max": 0.021350056049240392,
+                "mean": 0.004841491710389689
+              },
+              "sum_error_m": {
+                "count": 130,
+                "min": 0.0,
+                "median": 1.7943545954635098e-17,
+                "p95": 1.0148132334464317e-16,
+                "max": 1.6479873021779667e-16,
+                "mean": 2.8383578873999364e-17
+              },
+              "following_abs_greater_than_prediction_count": 0
+            },
+            "2": {
+              "status_counts": {
+                "EVALUATED": 130,
+                "AMBIGUOUS_POSE_STAMP": 5
+              },
+              "actual_left_m": {
+                "count": 130,
+                "min": 0.0034919229306256887,
+                "median": 0.29588676860845164,
+                "p95": 0.7623710666404359,
+                "max": 0.7709432642896521,
+                "mean": 0.3619870359578273
+              },
+              "prediction_left_m": {
+                "count": 130,
+                "min": 0.0004957629658845238,
+                "median": 0.3031164204148482,
+                "p95": 0.7489358053653928,
+                "max": 0.7678188101539094,
+                "mean": 0.36194374198933643
+              },
+              "following_left_m": {
+                "count": 130,
+                "min": 2.3750266991481774e-05,
+                "median": 0.022394348917459596,
+                "p95": 0.05245364471162996,
+                "max": 0.055661153438307,
+                "mean": 0.023717867500017236
+              },
+              "sum_error_m": {
+                "count": 130,
+                "min": 0.0,
+                "median": 1.3877787807814457e-17,
+                "p95": 8.786374405822526e-17,
+                "max": 1.196959198423997e-16,
+                "mean": 2.802162214872343e-17
+              },
+              "following_abs_greater_than_prediction_count": 8
+            },
+            "3": {
+              "status_counts": {
+                "FUTURE_OUTSIDE_PREDICTED_PROGRESS": 86,
+                "EVALUATED": 47,
+                "AMBIGUOUS_POSE_STAMP": 2
+              },
+              "actual_left_m": {
+                "count": 47,
+                "min": 0.000778753567082415,
+                "median": 0.6280444226848779,
+                "p95": 0.7695184848184472,
+                "max": 0.7709529101419718,
+                "mean": 0.5388774722630326
+              },
+              "prediction_left_m": {
+                "count": 47,
+                "min": 0.0275344760516341,
+                "median": 0.6455855859933666,
+                "p95": 0.7777675899767138,
+                "max": 0.787338108678467,
+                "mean": 0.5206122064280929
+              },
+              "following_left_m": {
+                "count": 47,
+                "min": 0.005255604150274063,
+                "median": 0.03153172303228836,
+                "p95": 0.10641077441158121,
+                "max": 0.10827994122594346,
+                "mean": 0.04180014017901881
+              },
+              "sum_error_m": {
+                "count": 47,
+                "min": 0.0,
+                "median": 2.2551405187698492e-17,
+                "p95": 1.0200174038743623e-16,
+                "max": 1.491862189340054e-16,
+                "mean": 3.511892313599855e-17
+              },
+              "following_abs_greater_than_prediction_count": 2
+            }
+          }
+        },
+        "return": {
+          "time_interval_s": [
+            80.0,
+            90.0
+          ],
+          "commands": 200,
+          "plans": 91,
+          "actual_left_m": {
+            "count": 200,
+            "min": -0.7544130548203475,
+            "median": -0.44136853543617527,
+            "p95": 0.23076315682870674,
+            "max": 0.29138299973472476,
+            "mean": -0.3212826561559278
+          },
+          "tire_error_abs_rad": {
+            "count": 200,
+            "min": 6.0922982526023794e-06,
+            "median": 0.002834452174024664,
+            "p95": 0.010658110961361471,
+            "max": 0.017292437991902707,
+            "mean": 0.003868369976003199
+          },
+          "max_required_tire_abs_rad": 0.17336418090386316,
+          "rate_limited_commands": 0,
+          "geometry_sensitivity_status": {
+            "EVALUATED": 200
+          },
+          "prediction_return_diagnostic": {
+            "1": {
+              "count": 70,
+              "abs_offset_reduced_count": 59
+            },
+            "2": {
+              "count": 70,
+              "abs_offset_reduced_count": 52
+            },
+            "3": {
+              "count": 70,
+              "abs_offset_reduced_count": 55
+            }
+          },
+          "common_progress_decomposition": {
+            "1": {
+              "status_counts": {
+                "EVALUATED": 88,
+                "AMBIGUOUS_POSE_STAMP": 3
+              },
+              "actual_left_m": {
+                "count": 88,
+                "min": 0.001711719444330971,
+                "median": 0.3517157420040995,
+                "p95": 0.5825110281679758,
+                "max": 0.6421139715243857,
+                "mean": 0.34682168905173805
+              },
+              "prediction_left_m": {
+                "count": 88,
+                "min": 0.0013276387159332332,
+                "median": 0.35872380757826444,
+                "p95": 0.5654067626238463,
+                "max": 0.6299437982498568,
+                "mean": 0.3479523526456832
+              },
+              "following_left_m": {
+                "count": 88,
+                "min": 5.315196983325725e-05,
+                "median": 0.006406608069743039,
+                "p95": 0.0167908144731267,
+                "max": 0.01960545716307816,
+                "mean": 0.006849296060103177
+              },
+              "sum_error_m": {
+                "count": 88,
+                "min": 0.0,
+                "median": 1.3877787807814457e-17,
+                "p95": 6.071532165918825e-17,
+                "max": 9.367506770274758e-17,
+                "mean": 1.885957358559302e-17
+              },
+              "following_abs_greater_than_prediction_count": 1
+            },
+            "2": {
+              "status_counts": {
+                "EVALUATED": 86,
+                "AMBIGUOUS_POSE_STAMP": 5
+              },
+              "actual_left_m": {
+                "count": 86,
+                "min": 0.007079240518932443,
+                "median": 0.3384818667227406,
+                "p95": 0.49427184750572617,
+                "max": 0.5246979957685883,
+                "mean": 0.3197466012884728
+              },
+              "prediction_left_m": {
+                "count": 86,
+                "min": 0.0038081024405651736,
+                "median": 0.35873564420416004,
+                "p95": 0.5244262351530828,
+                "max": 0.5289681195694023,
+                "mean": 0.34178367776709473
+              },
+              "following_left_m": {
+                "count": 86,
+                "min": 0.0007560834413187878,
+                "median": 0.026126796425735045,
+                "p95": 0.05825668785327554,
+                "max": 0.06070905682103005,
+                "mean": 0.030319236237216145
+              },
+              "sum_error_m": {
+                "count": 86,
+                "min": 0.0,
+                "median": 1.6479873021779667e-17,
+                "p95": 6.505213034913027e-17,
+                "max": 8.673617379884035e-17,
+                "mean": 2.3628043158980608e-17
+              },
+              "following_abs_greater_than_prediction_count": 2
+            },
+            "3": {
+              "status_counts": {
+                "FUTURE_OUTSIDE_PREDICTED_PROGRESS": 58,
+                "EVALUATED": 31,
+                "AMBIGUOUS_POSE_STAMP": 2
+              },
+              "actual_left_m": {
+                "count": 31,
+                "min": 0.037942079299776034,
+                "median": 0.33301530254359346,
+                "p95": 0.47285618015319913,
+                "max": 0.47666860623596496,
+                "mean": 0.31493770206882543
+              },
+              "prediction_left_m": {
+                "count": 31,
+                "min": 0.13558256027039256,
+                "median": 0.4092281375266403,
+                "p95": 0.5372349957826827,
+                "max": 0.5431550671843828,
+                "mean": 0.39444606377272795
+              },
+              "following_left_m": {
+                "count": 31,
+                "min": 0.025503193172218913,
+                "median": 0.10820432756692086,
+                "p95": 0.1396796061967681,
+                "max": 0.16254959269526917,
+                "mean": 0.10312652172788418
+              },
+              "sum_error_m": {
+                "count": 31,
+                "min": 0.0,
+                "median": 1.3877787807814457e-17,
+                "p95": 5.551115123125783e-17,
+                "max": 8.326672684688674e-17,
+                "mean": 1.9473669988384803e-17
+              },
+              "following_abs_greater_than_prediction_count": 0
+            }
+          }
+        },
+        "late": {
+          "time_interval_s": [
+            90.0,
+            101.0
+          ],
+          "commands": 207,
+          "plans": 93,
+          "actual_left_m": {
+            "count": 207,
+            "min": 0.18022873998593042,
+            "median": 0.33571351553265333,
+            "p95": 0.6727459982242984,
+            "max": 0.6775929382111209,
+            "mean": 0.38559378031092734
+          },
+          "tire_error_abs_rad": {
+            "count": 207,
+            "min": 3.251809094106939e-06,
+            "median": 0.0018289317796756667,
+            "p95": 0.005548782355240238,
+            "max": 0.009263302409920331,
+            "mean": 0.0022626413205891083
+          },
+          "max_required_tire_abs_rad": 0.034764465256861034,
+          "rate_limited_commands": 0,
+          "geometry_sensitivity_status": {
+            "EVALUATED": 167,
+            "AMBIGUOUS_POSE_STAMP": 40
+          },
+          "prediction_return_diagnostic": {
+            "1": {
+              "count": 80,
+              "abs_offset_reduced_count": 28
+            },
+            "2": {
+              "count": 80,
+              "abs_offset_reduced_count": 35
+            },
+            "3": {
+              "count": 80,
+              "abs_offset_reduced_count": 36
+            }
+          },
+          "common_progress_decomposition": {
+            "1": {
+              "status_counts": {
+                "EVALUATED": 84,
+                "AMBIGUOUS_POSE_STAMP": 1,
+                "FUTURE_AFTER_FIRST_FAULT": 8
+              },
+              "actual_left_m": {
+                "count": 84,
+                "min": 0.18091028943964216,
+                "median": 0.3419576736371248,
+                "p95": 0.6739453518471773,
+                "max": 0.6774886767331243,
+                "mean": 0.39817575743950523
+              },
+              "prediction_left_m": {
+                "count": 84,
+                "min": 0.17438414365422591,
+                "median": 0.3385670839921028,
+                "p95": 0.675545486192652,
+                "max": 0.6782626793714279,
+                "mean": 0.39808978713330057
+              },
+              "following_left_m": {
+                "count": 84,
+                "min": 0.00012872059745056084,
+                "median": 0.003238152673562644,
+                "p95": 0.006511083266549946,
+                "max": 0.00835753973248497,
+                "mean": 0.0032926942709338805
+              },
+              "sum_error_m": {
+                "count": 84,
+                "min": 4.336808689942018e-19,
+                "median": 1.8865117801247777e-17,
+                "p95": 8.92081547521073e-17,
+                "max": 1.2685165418080402e-16,
+                "mean": 2.8962395890955043e-17
+              },
+              "following_abs_greater_than_prediction_count": 0
+            },
+            "2": {
+              "status_counts": {
+                "EVALUATED": 75,
+                "FUTURE_AFTER_FIRST_FAULT": 18
+              },
+              "actual_left_m": {
+                "count": 75,
+                "min": 0.18051558966516557,
+                "median": 0.3641055813825854,
+                "p95": 0.6738636033671512,
+                "max": 0.6774285841934705,
+                "mean": 0.4026362575348737
+              },
+              "prediction_left_m": {
+                "count": 75,
+                "min": 0.12565446925982973,
+                "median": 0.3537228303617254,
+                "p95": 0.6714332320429502,
+                "max": 0.6802585612961594,
+                "mean": 0.3850989535684846
+              },
+              "following_left_m": {
+                "count": 75,
+                "min": 9.65264163587708e-05,
+                "median": 0.011414796882802268,
+                "p95": 0.04933826683327981,
+                "max": 0.05486112040533582,
+                "mean": 0.018229129410579827
+              },
+              "sum_error_m": {
+                "count": 75,
+                "min": 0.0,
+                "median": 1.3877787807814457e-17,
+                "p95": 6.002143226879752e-17,
+                "max": 1.1796119636642288e-16,
+                "mean": 2.274222477005594e-17
+              },
+              "following_abs_greater_than_prediction_count": 0
+            },
+            "3": {
+              "status_counts": {
+                "AMBIGUOUS_POSE_STAMP": 1,
+                "FUTURE_OUTSIDE_PREDICTED_PROGRESS": 32,
+                "EVALUATED": 34,
+                "FUTURE_AFTER_FIRST_FAULT": 26
+              },
+              "actual_left_m": {
+                "count": 34,
+                "min": 0.3567700443369901,
+                "median": 0.5625884487456168,
+                "p95": 0.6649914968939893,
+                "max": 0.6774092936796043,
+                "mean": 0.5448767258540412
+              },
+              "prediction_left_m": {
+                "count": 34,
+                "min": 0.2962781557545639,
+                "median": 0.5448927253497815,
+                "p95": 0.6522983821070673,
+                "max": 0.6968985180255398,
+                "mean": 0.5226775732142802
+              },
+              "following_left_m": {
+                "count": 34,
+                "min": 0.00622750768763438,
+                "median": 0.022249512724726722,
+                "p95": 0.05494464423227817,
+                "max": 0.06049188858242621,
+                "mean": 0.023724364451803988
+              },
+              "sum_error_m": {
+                "count": 34,
+                "min": 0.0,
+                "median": 3.2959746043559335e-17,
+                "p95": 1.0998146837692955e-16,
+                "max": 1.5959455978986625e-16,
+                "mean": 4.8215108376414195e-17
+              },
+              "following_abs_greater_than_prediction_count": 0
+            }
+          }
+        }
+      },
+      "snapshots": [
+        {
+          "time_s": 64.999998547,
+          "status": "EVALUATED",
+          "plan_id": "codex-time-lap-candidate01:0:84729998106:7319",
+          "left_m": 0.1738846365400037,
+          "heading_error_rad": 0.10277345140809468,
+          "required_tire_rad": 0.0720369941189484,
+          "measured_tire_rad": 0.07158271223306656,
+          "tire_error_rad": -0.00045428188588184093,
+          "rate_limited": false,
+          "world_xy_m": [
+            89635.72158623494,
+            43141.23216647394
+          ],
+          "speed_mps": 1.287721872329712,
+          "plan_age_s": 0.199999995,
+          "guard_margin_m": 1.3147298308175017,
+          "normal_line_pp": {
+            "status": "EVALUATED",
+            "scope": "GEOMETRIC_NORMAL_LINE_SENSITIVITY_NOT_TIMEPLAN_OR_DRIVE_ADMISSION",
+            "required_tire_rad": -0.1307392780410829,
+            "selection": {
+              "kind": "vertex",
+              "reference_indices": [
+                16,
+                16
+              ],
+              "fraction": 0.0,
+              "fraction_interval": [
+                0.0,
+                0.0
+              ],
+              "xy_m": [
+                1.8964226245880127,
+                -0.20594841241836548
+              ],
+              "remaining_s": 1.4933333359999998,
+              "reference_interval_s": [
+                1.4933333359999998,
+                1.4933333359999998
+              ],
+              "distance_m": 1.907572677416756,
+              "required_tire_rad": -0.1307392780410829,
+              "steering_margin_rad": 0.1692607219589171,
+              "distance_margin_m": 0.034597931013730765
+            },
+            "search_band_m": [
+              1.8729747464030253,
+              2.3729747464030253
+            ],
+            "world_xy_m": [
+              [
+                89635.57259204592,
+                43141.14251939667
+              ],
+              [
+                89635.63463525973,
+                43141.038878522
+              ],
+              [
+                89635.69079024346,
+                43140.94712864383
+              ],
+              [
+                89635.76043076749,
+                43140.83497425383
+              ],
+              [
+                89635.82146635832,
+                43140.73941044606
+              ],
+              [
+                89635.88545763929,
+                43140.64116215146
+              ],
+              [
+                89635.9482489241,
+                43140.547066905696
+              ],
+              [
+                89636.02418619428,
+                43140.43635356159
+              ],
+              [
+                89636.0914436018,
+                43140.34136611541
+              ],
+              [
+                89636.15665945884,
+                43140.25139486695
+              ],
+              [
+                89636.22894039612,
+                43140.155296915145
+              ],
+              [
+                89636.31158613095,
+                43140.049558317245
+              ],
+              [
+                89636.38303359243,
+                43139.95964001785
+              ],
+              [
+                89636.45470825325,
+                43139.87170037214
+              ],
+              [
+                89636.5382733157,
+                43139.77306294351
+              ],
+              [
+                89636.61739587247,
+                43139.68192212962
+              ],
+              [
+                89636.69777887294,
+                43139.59214355019
+              ],
+              [
+                89636.77849596136,
+                43139.50501277639
+              ],
+              [
+                89636.85672831503,
+                43139.42305713662
+              ],
+              [
+                89636.93743794612,
+                43139.34003465677
+              ],
+              [
+                89637.02245888954,
+                43139.25465302987
+              ],
+              [
+                89637.10969870532,
+                43139.16927445853
+              ],
+              [
+                89637.19099313373,
+                43139.09146007791
+              ],
+              [
+                89637.28227302943,
+                43139.007128747035
+              ],
+              [
+                89637.36713946532,
+                43138.92923183714
+              ],
+              [
+                89637.45479839493,
+                43138.85176705018
+              ],
+              [
+                89637.54874732552,
+                43138.7707587871
+              ],
+              [
+                89637.63758803124,
+                43138.69658377779
+              ],
+              [
+                89637.72858358886,
+                43138.6223327137
+              ],
+              [
+                89637.81750911246,
+                43138.55153006626
+              ],
+              [
+                89637.91712301088,
+                43138.474753785966
+              ]
+            ]
+          }
+        },
+        {
+          "time_s": 70.004998435,
+          "status": "EVALUATED",
+          "plan_id": "codex-time-lap-candidate01:0:89664997995:7747",
+          "left_m": 0.15971272697014685,
+          "heading_error_rad": -0.04441466088812551,
+          "required_tire_rad": 0.1754855963189792,
+          "measured_tire_rad": 0.17268212139606476,
+          "tire_error_rad": -0.0028034749229144396,
+          "rate_limited": false,
+          "world_xy_m": [
+            89640.6152036483,
+            43137.24530010558
+          ],
+          "speed_mps": 1.281659722328186,
+          "plan_age_s": 0.274999994,
+          "guard_margin_m": 1.5892075112989523,
+          "normal_line_pp": {
+            "status": "AMBIGUOUS_POSE_STAMP"
+          }
+        },
+        {
+          "time_s": 75.004998323,
+          "status": "EVALUATED",
+          "plan_id": "codex-time-lap-candidate01:0:94704997883:8182",
+          "left_m": -0.29138047198245093,
+          "heading_error_rad": -0.10514533826239136,
+          "required_tire_rad": 0.19645699858213608,
+          "measured_tire_rad": 0.1919347047805786,
+          "tire_error_rad": -0.00452229380155747,
+          "rate_limited": false,
+          "world_xy_m": [
+            89646.59569976869,
+            43138.25901661214
+          ],
+          "speed_mps": 1.2682404518127441,
+          "plan_age_s": 0.24499999400000003,
+          "guard_margin_m": 2.377662455386454,
+          "normal_line_pp": {
+            "status": "STEERING_FEASIBLE_LOOKAHEAD_MISSING"
+          }
+        },
+        {
+          "time_s": 79.999998212,
+          "status": "EVALUATED",
+          "plan_id": "codex-time-lap-candidate01:0:99639997772:8607",
+          "left_m": -0.7579900196752335,
+          "heading_error_rad": 0.06256330460256287,
+          "required_tire_rad": 0.17004621607907758,
+          "measured_tire_rad": 0.1711890548467636,
+          "tire_error_rad": 0.001142838767686033,
+          "rate_limited": false,
+          "world_xy_m": [
+            89648.58149262707,
+            43143.99970664479
+          ],
+          "speed_mps": 1.2706975936889648,
+          "plan_age_s": 0.304999994,
+          "guard_margin_m": 0.7721707190141651,
+          "normal_line_pp": {
+            "status": "EVALUATED",
+            "scope": "GEOMETRIC_NORMAL_LINE_SENSITIVITY_NOT_TIMEPLAN_OR_DRIVE_ADMISSION",
+            "required_tire_rad": 0.2978438424919392,
+            "selection": {
+              "kind": "vertex",
+              "reference_indices": [
+                22,
+                22
+              ],
+              "fraction": 0.0,
+              "fraction_interval": [
+                0.0,
+                0.0
+              ],
+              "xy_m": [
+                2.550788640975952,
+                0.9912163019180298
+              ],
+              "remaining_s": 1.9763333377333332,
+              "reference_interval_s": [
+                1.9763333377333332,
+                1.9763333377333332
+              ],
+              "distance_m": 2.7366096630904453,
+              "required_tire_rad": 0.2978438424919392,
+              "steering_margin_rad": 0.0021561575080608075,
+              "distance_margin_m": 0.10607532105749984
+            },
+            "search_band_m": [
+              1.8426849841479451,
+              2.842684984147945
+            ],
+            "world_xy_m": [
+              [
+                89647.82636156025,
+                43143.93393475224
+              ],
+              [
+                89647.81226392639,
+                43144.06594103923
+              ],
+              [
+                89647.79889200043,
+                43144.17842573885
+              ],
+              [
+                89647.78479281455,
+                43144.28802020466
+              ],
+              [
+                89647.77034587148,
+                43144.39688354555
+              ],
+              [
+                89647.75393382405,
+                43144.507348797604
+              ],
+              [
+                89647.73507409476,
+                43144.622961356225
+              ],
+              [
+                89647.71579826834,
+                43144.73356028521
+              ],
+              [
+                89647.69164175614,
+                43144.86014016723
+              ],
+              [
+                89647.67022914095,
+                43144.9665609662
+              ],
+              [
+                89647.64515481632,
+                43145.07879541782
+              ],
+              [
+                89647.61839837485,
+                43145.19046733264
+              ],
+              [
+                89647.59146593683,
+                43145.29705284122
+              ],
+              [
+                89647.561586046,
+                43145.40879190865
+              ],
+              [
+                89647.52930298565,
+                43145.521868871656
+              ],
+              [
+                89647.49434124146,
+                43145.63736222462
+              ],
+              [
+                89647.45926234234,
+                43145.74624515581
+              ],
+              [
+                89647.4234505533,
+                43145.85179490671
+              ],
+              [
+                89647.38525004905,
+                43145.960276567836
+              ],
+              [
+                89647.34579689737,
+                43146.06655647598
+              ],
+              [
+                89647.30610218225,
+                43146.16904772223
+              ],
+              [
+                89647.264900264,
+                43146.27092709317
+              ],
+              [
+                89647.22116893523,
+                43146.37534423063
+              ],
+              [
+                89647.1687737999,
+                43146.49619864321
+              ],
+              [
+                89647.1205313332,
+                43146.601930544864
+              ],
+              [
+                89647.07197251183,
+                43146.70588943115
+              ],
+              [
+                89647.02352246863,
+                43146.80609363296
+              ],
+              [
+                89646.97641609718,
+                43146.90122920946
+              ],
+              [
+                89646.92435745739,
+                43147.00357608722
+              ],
+              [
+                89646.8654068895,
+                43147.11624497567
+              ],
+              [
+                89646.81036610999,
+                43147.21876183713
+              ]
+            ]
+          }
+        },
+        {
+          "time_s": 85.0049981,
+          "status": "EVALUATED",
+          "plan_id": "codex-time-lap-candidate01:0:104679997660:9044",
+          "left_m": -0.4432444243929155,
+          "heading_error_rad": 0.04899077871362189,
+          "required_tire_rad": 0.030422644676495254,
+          "measured_tire_rad": 0.03242246061563492,
+          "tire_error_rad": 0.001999815939139664,
+          "rate_limited": false,
+          "world_xy_m": [
+            89645.7906086502,
+            43149.72605988789
+          ],
+          "speed_mps": 1.2887860536575317,
+          "plan_age_s": 0.269999994,
+          "guard_margin_m": 0.7587915561499157,
+          "normal_line_pp": {
+            "status": "EVALUATED",
+            "scope": "GEOMETRIC_NORMAL_LINE_SENSITIVITY_NOT_TIMEPLAN_OR_DRIVE_ADMISSION",
+            "required_tire_rad": 0.23951896550294507,
+            "selection": {
+              "kind": "vertex",
+              "reference_indices": [
+                16,
+                16
+              ],
+              "fraction": 0.0,
+              "fraction_interval": [
+                0.0,
+                0.0
+              ],
+              "xy_m": [
+                1.8640058040618896,
+                0.38039273023605347
+              ],
+              "remaining_s": 1.4560000032,
+              "reference_interval_s": [
+                1.4560000032,
+                1.4560000032
+              ],
+              "distance_m": 1.9024237873809429,
+              "required_tire_rad": 0.23951896550294507,
+              "steering_margin_rad": 0.060481034497054914,
+              "distance_margin_m": 0.027546014501099947
+            },
+            "search_band_m": [
+              1.874877772879843,
+              2.374877772879843
+            ],
+            "world_xy_m": [
+              [
+                89645.42147244516,
+                43149.48069468686
+              ],
+              [
+                89645.36341322407,
+                43149.57388396525
+              ],
+              [
+                89645.30304904385,
+                43149.66961625802
+              ],
+              [
+                89645.24281079273,
+                43149.76645028776
+              ],
+              [
+                89645.17256195215,
+                43149.879074590586
+              ],
+              [
+                89645.11443465116,
+                43149.973957493945
+              ],
+              [
+                89645.05388332071,
+                43150.07133049039
+              ],
+              [
+                89644.98953829307,
+                43150.174652339825
+              ],
+              [
+                89644.925308388,
+                43150.27798644781
+              ],
+              [
+                89644.86510790244,
+                43150.37458804352
+              ],
+              [
+                89644.80494872975,
+                43150.473349103864
+              ],
+              [
+                89644.74445300283,
+                43150.56959589341
+              ],
+              [
+                89644.68196529784,
+                43150.67056893495
+              ],
+              [
+                89644.61933202691,
+                43150.77105078597
+              ],
+              [
+                89644.5575368855,
+                43150.86977995454
+              ],
+              [
+                89644.49597905671,
+                43150.96855300199
+              ],
+              [
+                89644.43688868727,
+                43151.0641135694
+              ],
+              [
+                89644.37705202197,
+                43151.15960269504
+              ],
+              [
+                89644.31686851685,
+                43151.25523510166
+              ],
+              [
+                89644.24811787407,
+                43151.364699570746
+              ],
+              [
+                89644.19489829185,
+                43151.44870813162
+              ],
+              [
+                89644.13027117403,
+                43151.551671821675
+              ],
+              [
+                89644.06325672203,
+                43151.65880674118
+              ],
+              [
+                89644.00321823773,
+                43151.753385532254
+              ],
+              [
+                89643.94295636863,
+                43151.847888279925
+              ],
+              [
+                89643.88277396312,
+                43151.94243660457
+              ],
+              [
+                89643.81214671557,
+                43152.053081110724
+              ],
+              [
+                89643.75223434967,
+                43152.14700814222
+              ],
+              [
+                89643.68979925121,
+                43152.244200580724
+              ],
+              [
+                89643.62908398223,
+                43152.33757798013
+              ],
+              [
+                89643.56492150859,
+                43152.43642603877
+              ]
+            ]
+          }
+        },
+        {
+          "time_s": 89.989997988,
+          "status": "EVALUATED",
+          "plan_id": "codex-time-lap-candidate01:0:109719997547:9480",
+          "left_m": 0.29138299973472476,
+          "heading_error_rad": 0.07394278242348751,
+          "required_tire_rad": -0.004524386596792319,
+          "measured_tire_rad": 0.00026126447482965887,
+          "tire_error_rad": 0.004785651071621978,
+          "rate_limited": false,
+          "world_xy_m": [
+            89641.6155531496,
+            43154.54435868532
+          ],
+          "speed_mps": 1.2330576181411743,
+          "plan_age_s": 0.20999999500000002,
+          "guard_margin_m": 2.0128823680098127,
+          "normal_line_pp": {
+            "status": "EVALUATED",
+            "scope": "GEOMETRIC_NORMAL_LINE_SENSITIVITY_NOT_TIMEPLAN_OR_DRIVE_ADMISSION",
+            "required_tire_rad": -0.2422490242073685,
+            "selection": {
+              "kind": "vertex",
+              "reference_indices": [
+                16,
+                16
+              ],
+              "fraction": 0.0,
+              "fraction_interval": [
+                0.0,
+                0.0
+              ],
+              "xy_m": [
+                1.7611963748931885,
+                -0.34436237812042236
+              ],
+              "remaining_s": 1.4880000026666667,
+              "reference_interval_s": [
+                1.4880000026666667,
+                1.4880000026666667
+              ],
+              "distance_m": 1.794546772419616,
+              "required_tire_rad": -0.2422490242073685,
+              "steering_margin_rad": 0.0577509757926315,
+              "distance_margin_m": 0.017802418521035923
+            },
+            "search_band_m": [
+              1.77674435389858,
+              2.27674435389858
+            ],
+            "world_xy_m": [
+              [
+                89641.83708513202,
+                43154.733640573795
+              ],
+              [
+                89641.76058942928,
+                43154.820068302484
+              ],
+              [
+                89641.68459516739,
+                43154.90446818817
+              ],
+              [
+                89641.60561272937,
+                43154.99134610217
+              ],
+              [
+                89641.53034896651,
+                43155.07331717389
+              ],
+              [
+                89641.45903922775,
+                43155.14969153571
+              ],
+              [
+                89641.37906070868,
+                43155.23428643112
+              ],
+              [
+                89641.3058792291,
+                43155.31068072276
+              ],
+              [
+                89641.23074017352,
+                43155.38812714086
+              ],
+              [
+                89641.15030445454,
+                43155.469894751506
+              ],
+              [
+                89641.06490949292,
+                43155.55535035163
+              ],
+              [
+                89640.9904665954,
+                43155.62934689019
+              ],
+              [
+                89640.91217267804,
+                43155.70614808065
+              ],
+              [
+                89640.8321411198,
+                43155.78362509283
+              ],
+              [
+                89640.75216922535,
+                43155.859737731516
+              ],
+              [
+                89640.66643381442,
+                43155.9405897684
+              ],
+              [
+                89640.58602810174,
+                43156.015412645465
+              ],
+              [
+                89640.49916262014,
+                43156.095391969284
+              ],
+              [
+                89640.422353863,
+                43156.16575344132
+              ],
+              [
+                89640.33828122352,
+                43156.241897931686
+              ],
+              [
+                89640.25417616374,
+                43156.31806144899
+              ],
+              [
+                89640.17042122678,
+                43156.3931723581
+              ],
+              [
+                89640.0843611104,
+                43156.47019911688
+              ],
+              [
+                89639.99912618315,
+                43156.546726417684
+              ],
+              [
+                89639.91467809223,
+                43156.62262801842
+              ],
+              [
+                89639.83589631031,
+                43156.69341961859
+              ],
+              [
+                89639.75914741121,
+                43156.76240094687
+              ],
+              [
+                89639.66647810001,
+                43156.846257756326
+              ],
+              [
+                89639.58569170184,
+                43156.91958135252
+              ],
+              [
+                89639.50174980387,
+                43156.99631013636
+              ],
+              [
+                89639.41969630955,
+                43157.07200016031
+              ]
+            ]
+          }
+        },
+        {
+          "time_s": 95.009997876,
+          "status": "EVALUATED",
+          "plan_id": "codex-time-lap-candidate01:0:114759997434:9915",
+          "left_m": 0.22324848231096747,
+          "heading_error_rad": 0.0770308378544935,
+          "required_tire_rad": -0.001913291882686064,
+          "measured_tire_rad": -0.0007332864915952086,
+          "tire_error_rad": 0.0011800053910908553,
+          "rate_limited": false,
+          "world_xy_m": [
+            89637.33966916015,
+            43158.97587851003
+          ],
+          "speed_mps": 1.2589895725250244,
+          "plan_age_s": 0.194999996,
+          "guard_margin_m": 1.3788750330599338,
+          "normal_line_pp": {
+            "status": "AMBIGUOUS_POSE_STAMP"
+          }
+        },
+        {
+          "time_s": 100.349997757,
+          "status": "EVALUATED",
+          "plan_id": "codex-time-lap-candidate01:0:120114997315:10379",
+          "left_m": 0.6772997756336775,
+          "heading_error_rad": -0.010158712243262702,
+          "required_tire_rad": -0.018326679840727573,
+          "measured_tire_rad": -0.016482438892126083,
+          "tire_error_rad": 0.0018442409486014895,
+          "rate_limited": false,
+          "world_xy_m": [
+            89632.78404745438,
+            43163.97313804637
+          ],
+          "speed_mps": 1.2601357698440552,
+          "plan_age_s": 0.17499999600000002,
+          "guard_margin_m": null,
+          "normal_line_pp": {
+            "status": "EVALUATED",
+            "scope": "GEOMETRIC_NORMAL_LINE_SENSITIVITY_NOT_TIMEPLAN_OR_DRIVE_ADMISSION",
+            "required_tire_rad": -0.2937647863347927,
+            "selection": {
+              "kind": "vertex",
+              "reference_indices": [
+                18,
+                18
+              ],
+              "fraction": 0.0,
+              "fraction_interval": [
+                0.0,
+                0.0
+              ],
+              "xy_m": [
+                2.1365084648132324,
+                -0.6514095664024353
+              ],
+              "remaining_s": 1.6950000024,
+              "reference_interval_s": [
+                1.6950000024,
+                1.6950000024
+              ],
+              "distance_m": 2.233607584921578,
+              "required_tire_rad": -0.2937647863347927,
+              "steering_margin_rad": 0.006235213665207295,
+              "distance_margin_m": 0.09043137922068434
+            },
+            "search_band_m": [
+              1.8240389641422623,
+              2.3240389641422623
+            ],
+            "world_xy_m": [
+              [
+                89633.29184693602,
+                43164.4213284886
+              ],
+              [
+                89633.2124788865,
+                43164.510118275226
+              ],
+              [
+                89633.1357716937,
+                43164.595874444036
+              ],
+              [
+                89633.06053437018,
+                43164.67964511048
+              ],
+              [
+                89632.98525102958,
+                43164.76313837668
+              ],
+              [
+                89632.89722071063,
+                43164.86035322338
+              ],
+              [
+                89632.8216364609,
+                43164.94400032769
+              ],
+              [
+                89632.74183762475,
+                43165.03178011277
+              ],
+              [
+                89632.66117451791,
+                43165.12036311412
+              ],
+              [
+                89632.58465602007,
+                43165.20433186329
+              ],
+              [
+                89632.49976960564,
+                43165.29753803907
+              ],
+              [
+                89632.42049294857,
+                43165.38462613621
+              ],
+              [
+                89632.33860514678,
+                43165.47459970856
+              ],
+              [
+                89632.25613442941,
+                43165.565298054855
+              ],
+              [
+                89632.17883429982,
+                43165.650443580074
+              ],
+              [
+                89632.09776112478,
+                43165.73955031423
+              ],
+              [
+                89632.01709553256,
+                43165.828375152996
+              ],
+              [
+                89631.93905698704,
+                43165.91456650458
+              ],
+              [
+                89631.85627696691,
+                43166.00599789917
+              ],
+              [
+                89631.77342896635,
+                43166.097963310596
+              ],
+              [
+                89631.69259881959,
+                43166.18796102707
+              ],
+              [
+                89631.61106634435,
+                43166.27890965379
+              ],
+              [
+                89631.53090447948,
+                43166.368738075085
+              ],
+              [
+                89631.44801676837,
+                43166.46179089575
+              ],
+              [
+                89631.36656633987,
+                43166.55351718035
+              ],
+              [
+                89631.28827286392,
+                43166.641992745106
+              ],
+              [
+                89631.21542370209,
+                43166.72451964853
+              ],
+              [
+                89631.13547484383,
+                43166.81524705599
+              ],
+              [
+                89631.05212006814,
+                43166.9104044134
+              ],
+              [
+                89630.97210618609,
+                43167.00202300111
+              ],
+              [
+                89630.890595784,
+                43167.095532673964
+              ]
+            ]
+          }
+        }
+      ],
+      "normal_line_repeat_difference_m": {
+        "count": 164,
+        "min": 1.0401376923410644e-05,
+        "median": 0.0008465373076895494,
+        "p95": 0.0022558415369441915,
+        "max": 0.0030128594278127758,
+        "mean": 0.0010022435143019353
+      }
+    }
+  },
+  "first_fault_after_arm_s": 100.349997757,
+  "runtime_pose_ambiguities": 56,
+  "first_scan_replay": {
+    "reason": "STOPPING_SWEEP_OCCUPIED",
+    "minimum_ray_margin_m": -0.0007875956845411203
+  }
+}
