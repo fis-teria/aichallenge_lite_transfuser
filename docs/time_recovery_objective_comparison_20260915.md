@@ -49,7 +49,7 @@ Windowsでcommitし、`tools/sync_to_wsl.ps1 -CheckOnly`、`tools/sync_to_wsl.ps
 WSL native repo `/home/thistle/e2e_autonomous/e2e_lite_transfuser` で以下を実施する。
 
 ```bash
-tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 .venv/bin/pytest -q
+tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 .venv/bin/python -m pytest -q
 tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 .venv/bin/python tools/compare_time_recovery_objectives.py prepare --plan configs/time_path_p1/recovery_objective_comparison_20260915.json
 # ARMを balanced_l1 / uniform_geometry / balanced_geometry として各1回実行
 tools/with_wsl_training_lock.sh timeout --signal=TERM --kill-after=20s 7200s env PYTHONPATH=src OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 .venv/bin/python tools/compare_time_recovery_objectives.py train --plan configs/time_path_p1/recovery_objective_comparison_20260915.json --arm "$ARM"

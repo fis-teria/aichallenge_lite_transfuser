@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass
 import math
 from typing import Any, Sequence
 
+import numpy as np
 import torch
 
 from ..data.time_dataset_v1 import TimeSample
@@ -95,6 +96,17 @@ class RecoveryGeometryObjective:
             split_manifest_sha256=split_manifest['manifest_sha256'],
             normalization='sum_auxiliary_over_recovery_divide_all_supported_batch_anchors',
             runtime_target_selection_in_loss=False)
+
+    def validate_samples(self, samples: Sequence[TimeSample]) -> None:
+        """Check before the runner's empty-input/zero-support early returns."""
+        for sample in samples:
+            row = self.rows.get(sample.anchor_id)
+            if sample.run.startswith('codex-time-recovery-') or row is not None:
+                if row is None or row['run_id'] != sample.run:
+                    raise ValueError("recovery anchor missing or mismatched in frozen auxiliary targets")
+                if (sample.inputs is None or sample.teacher is None
+                        or not sample.teacher.xy_mask.all() or not np.isfinite(sample.teacher.xy_m).all()):
+                    raise ValueError("recovery auxiliary requires complete input and teacher support")
 
     def __call__(self, prediction: torch.Tensor, target: torch.Tensor,
                  support: torch.Tensor, samples: Sequence[TimeSample]) -> torch.Tensor:

@@ -86,6 +86,7 @@ inputs still count as presented anchors, and zero support does not update Adam.
               "supported": 0, "loss_sum_m": 0.0, "updated": False, "grad_norm": None}
     if recovery_objective is not None:
         result["auxiliary_loss_sum_m"] = 0.0
+        recovery_objective.validate_samples(samples)
     optimizer.zero_grad(set_to_none=True)
     if not eligible:
         return result

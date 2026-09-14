@@ -38,7 +38,7 @@ def default_runner_parity(old: str, current: str) -> None:
     tree = ast.parse(current)
     counts: Counter[str] = Counter()
     guarded = [ast.dump(ast.parse(s).body[0]) for s in (
-        'if recovery_objective is not None:\n result["auxiliary_loss_sum_m"] = 0.0',
+        'if recovery_objective is not None:\n result["auxiliary_loss_sum_m"] = 0.0\n recovery_objective.validate_samples(samples)',
         'if recovery_objective is not None:\n auxiliary = recovery_objective(prediction.float(), batch.targets.trajectory_xy_m, batch.targets.trajectory_mask, eligible)\n result["auxiliary_loss_sum_m"] = float(auxiliary.detach().cpu())\n objective_sum = objective_sum + auxiliary',
         'if recovery_objective is not None:\n frozen_plan["recovery_objective"] = recovery_objective.identity',
         'if recovery_objective is not None:\n state["epoch_totals"]["auxiliary_loss_sum_m"] = 0.0',

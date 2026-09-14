@@ -112,6 +112,21 @@ def test_missing_or_partial_recovery_teacher_is_not_silently_dropped():
         objective(prediction[:, :29], prediction, support, [sample])
 
 
+def test_zero_support_nominal_does_not_update_but_missing_recovery_fails_before_early_return():
+    sample, objective, _ = objective_context()
+    model = _Model()
+    optimizer = torch.optim.AdamW(model.parameters(), lr=.01)
+    for broken in (replace(sample, inputs=None), replace(sample, teacher=None)):
+        with pytest.raises(ValueError, match='complete input and teacher support'):
+            train_corpus_batch(model, [broken], optimizer, precision='float32',
+                               max_grad_norm=1., recovery_objective=objective)
+    nominal = replace(_sample('nominal', teacher=False), anchor_id='nominal')
+    result = train_corpus_batch(model, [nominal], optimizer, precision='float32',
+                               max_grad_norm=1., recovery_objective=objective)
+    assert result['auxiliary_loss_sum_m'] == 0 and not result['updated']
+    assert optimizer.state == {} and model.anchor.item() == .5
+
+
 @pytest.mark.parametrize('split', ['validation', 'test'])
 def test_auxiliary_targets_cannot_use_validation_or_sealed_test(split):
     _, _, manifest = objective_context()
