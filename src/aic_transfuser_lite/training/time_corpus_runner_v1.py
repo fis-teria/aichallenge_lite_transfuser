@@ -24,6 +24,7 @@ from .time_objective_v1 import time_loss_sum_and_count
 from .time_checkpoint_v1 import (TimeCheckpointIdentity, inspect_time_checkpoint,
                                   load_time_checkpoint, save_time_checkpoint)
 from .time_config_v1 import TimeModelConfig, build_time_model
+from .time_recovery_geometry_v1 import RecoveryGeometryObjective
 
 
 @dataclass(frozen=True)
@@ -67,7 +68,8 @@ def collate_samples(samples: list[TimeSample]) -> list[TimeSample]:
 
 def train_corpus_batch(model: torch.nn.Module, samples: Sequence[TimeSample],
                        optimizer: torch.optim.Optimizer, *, precision: str,
-                       max_grad_norm: float, scheduler: Any = None) -> dict[str, Any]:
+                       max_grad_norm: float, scheduler: Any = None,
+                       recovery_objective: RecoveryGeometryObjective | None = None) -> dict[str, Any]:
     """One optimizer window, per-supported-anchor L1, FP32 loss and parameters.
 
 BF16 applies only to model forward; no loss scaler is used or needed. Missing
@@ -82,6 +84,8 @@ inputs still count as presented anchors, and zero support does not update Adam.
     result = {"visited": len(samples), "input_invalid": len(samples) - len(eligible),
               "teacher_unsupported": sum(s.teacher is None or not s.teacher.xy_mask.any() for s in eligible),
               "supported": 0, "loss_sum_m": 0.0, "updated": False, "grad_norm": None}
+    if recovery_objective is not None:
+        result["auxiliary_loss_sum_m"] = 0.0
     optimizer.zero_grad(set_to_none=True)
     if not eligible:
         return result
@@ -97,7 +101,13 @@ inputs still count as presented anchors, and zero support does not update Adam.
                                                      batch.targets.trajectory_mask)
         if supported != count:
             raise RuntimeError("support changed during forward")
-        (summed / count).backward()
+        objective_sum = summed
+        if recovery_objective is not None:
+            auxiliary = recovery_objective(prediction.float(), batch.targets.trajectory_xy_m,
+                                           batch.targets.trajectory_mask, eligible)
+            result["auxiliary_loss_sum_m"] = float(auxiliary.detach().cpu())
+            objective_sum = objective_sum + auxiliary
+        (objective_sum / count).backward()
         grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm, error_if_nonfinite=True)
         optimizer.step()
         if scheduler is not None:
@@ -135,7 +145,8 @@ def run_training_arm(train: Dataset[TimeSample], validation: Dataset[TimeSample]
                      resume: bool = False, initialization: Path | None = None,
                      initialization_sha256: str | None = None,
                      initialization_identity: TimeCheckpointIdentity | None = None,
-                     retain_epoch_checkpoints: bool = False) -> dict[str, Any]:
+                     retain_epoch_checkpoints: bool = False,
+                     recovery_objective: RecoveryGeometryObjective | None = None) -> dict[str, Any]:
     """Complete a finite arm, select on validation run-macro 3s error, reload best."""
     plan.validate(); config.validate(); identity.validate()
     if type(retain_epoch_checkpoints) is not bool:
@@ -189,12 +200,16 @@ def run_training_arm(train: Dataset[TimeSample], validation: Dataset[TimeSample]
         "device_type": device, "torch_version": torch.__version__}
     if retain_epoch_checkpoints:
         frozen_plan["retain_epoch_checkpoints"] = True
+    if recovery_objective is not None:
+        frozen_plan["recovery_objective"] = recovery_objective.identity
     if initial_source is not None:
         frozen_plan["initialization"] = initial_source
     state: dict[str, Any] = {"plan": frozen_plan, "history": [], "best_score_m": None,
         "best_epoch": None, "initial_weights_sha256": initial_sha, "total_anchors_visited": 0,
         "epoch_totals": {"visited": 0, "input_invalid": 0, "teacher_unsupported": 0,
                          "supported": 0, "loss_sum_m": 0.0}, "elapsed_seconds": 0.0}
+    if recovery_objective is not None:
+        state["epoch_totals"]["auxiliary_loss_sum_m"] = 0.0
     epoch = cursor = global_step = 0
     if resume:
         info = inspect_time_checkpoint(output / "last.pt", config=config, identity=identity)
@@ -249,7 +264,8 @@ def run_training_arm(train: Dataset[TimeSample], validation: Dataset[TimeSample]
         emit("TRAINING")
         for batch_number, samples in enumerate(loader, 1):
             result = train_corpus_batch(model, samples, optimizer, precision=plan.precision,
-                                       max_grad_norm=plan.max_grad_norm, scheduler=scheduler)
+                                       max_grad_norm=plan.max_grad_norm, scheduler=scheduler,
+                                       recovery_objective=recovery_objective)
             cursor += len(samples)
             state["total_anchors_visited"] += len(samples)
             for key in totals:
@@ -283,7 +299,7 @@ def run_training_arm(train: Dataset[TimeSample], validation: Dataset[TimeSample]
         improved = state["best_score_m"] is None or score < state["best_score_m"]
         if improved:
             state["best_score_m"], state["best_epoch"] = score, epoch + 1
-        state["epoch_totals"] = {key: 0.0 if key == "loss_sum_m" else 0 for key in totals}
+        state["epoch_totals"] = {key: 0.0 if key in ("loss_sum_m", "auxiliary_loss_sum_m") else 0 for key in totals}
         cursor = 0
         if improved:
             save(output / "best.pt", epoch + 1, 0)

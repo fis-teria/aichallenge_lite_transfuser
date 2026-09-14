@@ -1,0 +1,31 @@
+{
+  "experiment": "recovery_sampling_geometry_2x2_20260915",
+  "output": "runs/time_recovery_objective_comparison_20260915",
+  "data_plan": "configs/time_path_p1/recovery_random_update_20260915.json",
+  "cache_sha256": "cb52a01fae1a492b5d06f1473c6ed773410934fe39a019e91c33097db340c895",
+  "baseline_source_commit": "249cf9841edb6db01aadb031567602572675726b",
+  "baseline_checkpoint_sha256": "53e1962b97cfaa47acae3e2ad4687fac96c80672905406fdbe1514abd9563da2",
+  "outward_fraction_within_recovery": 0.25,
+  "expected_outward_train_anchors": 35,
+  "expected_outward_train_runs": 11,
+  "expected_outward_presentations": 2230,
+  "geometry": {
+    "near_weight_m_per_rad": 1.0,
+    "far_weight": 0.5,
+    "far_start_s": 2.0,
+    "rear_axle_offset_m": [0.0010000169277191162, 0.0]
+  },
+  "arms": {
+    "uniform_l1": {"sampling": "uniform", "objective": "l1", "reuse_baseline": true},
+    "balanced_l1": {"sampling": "balanced", "objective": "l1", "reuse_baseline": false},
+    "uniform_geometry": {"sampling": "uniform", "objective": "geometry", "reuse_baseline": false},
+    "balanced_geometry": {"sampling": "balanced", "objective": "geometry", "reuse_baseline": false}
+  },
+  "selection": "unchanged_original_six_run_macro_3s_error",
+  "test_usage": "sealed",
+  "comparison_validation_usage": "post_selection_diagnostic_only_no_weight_or_epoch_tuning",
+  "seed_count": 1,
+  "new_data": false,
+  "new_awsim_trials": 0,
+  "outer_training_timeout_s_per_arm": 7200
+}
