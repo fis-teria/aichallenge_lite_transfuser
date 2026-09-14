@@ -294,26 +294,26 @@ def ship_pair(plan: dict[str, Any], pair: int) -> None:
     names = [r['run_id'] for r in assigned]
     root = remote_root(plan, assigned[0]['phase'])
     prefix = f'pair{pair:02d}_20260914'
-    bootstrap = "from pathlib import Path\nimport importlib.util\ns=importlib.util.spec_from_file_location('m'," + repr(str(root / 'move_pair.py')) + ")\nm=importlib.util.module_from_spec(s);s.loader.exec_module(m)\n"
-    packed = remote_python(host, bootstrap + f"m.REMOTE=Path({str(root)!r})\nm.pack(m.REMOTE,{prefix!r},{names!r})\n")
+    bootstrap = "from pathlib import Path\nimport importlib.util\ns=importlib.util.spec_from_file_location('m'," + repr((root / 'move_pair.py').as_posix()) + ")\nm=importlib.util.module_from_spec(s);s.loader.exec_module(m)\n"
+    packed = remote_python(host, bootstrap + f"m.REMOTE=Path({root.as_posix()!r})\nm.pack(m.REMOTE,{prefix!r},{names!r})\n")
     receipt = json.loads(packed)
     print('PAIR_PACKED', pair, receipt['archive_bytes'], flush=True)
     files = [prefix + '.tar.gz', prefix + '_snapshot.json', prefix + '_shipping.json']
-    subprocess.run(['scp', '-3', *[host + ':' + str(root / f) for f in files], 'codex-wsl:' + str(out) + '/'], check=True, timeout=1200)
+    subprocess.run(['scp', '-3', *[host + ':' + (root / f).as_posix() for f in files], 'codex-wsl:' + out.as_posix() + '/'], check=True, timeout=1200)
     checked = remote_python('codex-wsl', f"""
 from pathlib import Path
 import importlib.util
 s=importlib.util.spec_from_file_location('m','docs/evidence/time_recovery_batches_20260914/move_pair.py')
 m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
-m.ANALYSIS=Path({str(out)!r});m.RAW=Path({str(raw)!r})
+m.ANALYSIS=Path({out.as_posix()!r});m.RAW=Path({raw.as_posix()!r})
 m.verify(m.ANALYSIS,{prefix!r},{names!r},{receipt['snapshot_sha256']!r})
 """, lock=True)
     print('PAIR_HASH_AND_SQLITE_VERIFIED', pair, checked.strip(), flush=True)
-    subprocess.run(['scp', '-3', 'codex-wsl:' + str(out / (prefix + '_verified.json')), host + ':' + str(root) + '/'], check=True, timeout=60)
+    subprocess.run(['scp', '-3', 'codex-wsl:' + (out / (prefix + '_verified.json')).as_posix(), host + ':' + root.as_posix() + '/'], check=True, timeout=60)
     cleanup_code = rf"""
 from pathlib import Path
 import json,subprocess,shutil
-root=Path({str(root)!r});raw=Path({str(raw)!r});prefix={prefix!r};names={names!r};snapshot={receipt['snapshot_sha256']!r}
+root=Path({root.as_posix()!r});raw=Path({raw.as_posix()!r});prefix={prefix!r};names={names!r};snapshot={receipt['snapshot_sha256']!r}
 assert root.resolve()==root and root.parent==Path('/home/graneple/e2e_autonomous')
 assert not subprocess.check_output(['docker','ps','-q'],text=True).strip()
 v=json.loads((root/(prefix+'_verified.json')).read_bytes())
@@ -336,7 +336,7 @@ ledger['sealed']=len(ledger['attempts'])==ledger['maximum_attempts'] and all(r['
 print('PAIR_MOVED',names)
 """
     print(remote_python(host, cleanup_code), flush=True)
-    subprocess.run(['scp', '-3', host + ':' + str(root / (prefix + '_cleanup.json')), 'codex-wsl:' + str(out) + '/'], check=True, timeout=60)
+    subprocess.run(['scp', '-3', host + ':' + (root / (prefix + '_cleanup.json')).as_posix(), 'codex-wsl:' + out.as_posix() + '/'], check=True, timeout=60)
 
 
 def collect_pair(plan: dict[str, Any], pair: int) -> None:
@@ -344,8 +344,8 @@ def collect_pair(plan: dict[str, Any], pair: int) -> None:
     hub = Path(plan['remote_hub']); host = 'graneple@192.168.3.10'
     assigned = [r for r in plan['runs'] if r['pair'] == pair]
     for row in assigned:
-        command = ['ssh', host, 'python3', str(hub / 'collect_time_recovery_phases.py'), 'start',
-                   '--plan', str(hub / 'collection_plan.json'), '--run-id', row['run_id']]
+        command = ['ssh', host, 'python3', (hub / 'collect_time_recovery_phases.py').as_posix(), 'start',
+                   '--plan', (hub / 'collection_plan.json').as_posix(), '--run-id', row['run_id']]
         subprocess.run(command, check=True, timeout=60)
         run = remote_root(plan, row['phase']) / row['run_id']
         deadline = time.monotonic() + 2030
@@ -353,7 +353,7 @@ def collect_pair(plan: dict[str, Any], pair: int) -> None:
             code = f"""
 import json
 from pathlib import Path
-p=Path({str(run)!r});r=p/'result.json';c=p/'control_heartbeat.json';g=p/'progress.json'
+p=Path({run.as_posix()!r});r=p/'result.json';c=p/'control_heartbeat.json';g=p/'progress.json'
 if r.exists() and (p/'transfer_manifest.json').exists():
  print(json.dumps(dict(complete=True,result=json.loads(r.read_bytes()))))
 else:
@@ -376,10 +376,10 @@ else:
             raise TimeoutError('OUTER_COLLECTION_DEADLINE: ' + str(run))
     ship_pair(plan, pair)
     repo = Path('/home/thistle/e2e_autonomous/e2e_lite_transfuser')
-    command = f'cd {repo} && tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -u tools/collect_time_recovery_phases.py audit --plan configs/time_path_p1/recovery_phases_20260914.json --pair {pair}'
+    command = f'cd {repo.as_posix()} && tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -u tools/collect_time_recovery_phases.py audit --plan configs/time_path_p1/recovery_phases_20260914.json --pair {pair}'
     subprocess.run(['ssh', 'codex-wsl', command], check=True, timeout=2400)
     out, _ = paths(plan)
-    subprocess.run(['scp', '-3', 'codex-wsl:' + str(out / f'pair{pair:02d}_20260914_prepared.json'), host + ':' + str(hub) + '/'], check=True, timeout=60)
+    subprocess.run(['scp', '-3', 'codex-wsl:' + (out / f'pair{pair:02d}_20260914_prepared.json').as_posix(), host + ':' + hub.as_posix() + '/'], check=True, timeout=60)
     print('COLLECTION_PAIR_COMPLETE', pair, flush=True)
 
 

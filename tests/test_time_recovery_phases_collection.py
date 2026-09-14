@@ -5,7 +5,7 @@ import ast
 import copy
 import importlib.util
 import json
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 import pytest
 
@@ -72,8 +72,11 @@ def test_consumed_campaign_prevents_dispatch(tmp_path: Path, monkeypatch: pytest
     with pytest.raises(AssertionError): M.start(p, path, p['runs'][0]['run_id'])
 
 
-def test_shipping_generated_python_is_parseable_and_exactly_scoped(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize('path_class', (Path, PureWindowsPath))
+def test_shipping_generated_python_is_parseable_and_exactly_scoped(monkeypatch: pytest.MonkeyPatch, path_class: type) -> None:
     scripts = []
+    commands = []
+    monkeypatch.setattr(M, 'Path', path_class)
     def fake_remote(host: str, code: str, *, lock: bool = False) -> str:
         ast.parse(code)
         scripts.append((host, code, lock))
@@ -81,13 +84,33 @@ def test_shipping_generated_python_is_parseable_and_exactly_scoped(monkeypatch: 
             return json.dumps({'archive_bytes': 123, 'snapshot_sha256': 'a' * 64})
         return '{}'
     monkeypatch.setattr(M, 'remote_python', fake_remote)
-    monkeypatch.setattr(M.subprocess, 'run', lambda *a, **k: None)
+    monkeypatch.setattr(M.subprocess, 'run', lambda command, **k: commands.append(command))
     M.ship_pair(plan(), 1)
     assert len(scripts) == 3 and scripts[1][2]
     cleanup = scripts[-1][1]
     assert 'codex-time-recovery-earlyleft-r50' in cleanup and 'codex-time-recovery-earlyright-r51' in cleanup
     assert 'codex-time-recovery-lateleft-r52' not in cleanup
     assert 'all_files_and_directory_structure_identical' in cleanup and 'all_sqlite_quick_checks_passed' in cleanup
+    assert all('\\' not in arg for command in commands for arg in command)
+    assert all("Path('/home/" in code for _, code, _ in scripts)
+
+
+@pytest.mark.parametrize('path_class', (Path, PureWindowsPath))
+def test_dispatch_and_status_keep_remote_posix_paths(monkeypatch: pytest.MonkeyPatch, path_class: type) -> None:
+    commands = []
+    scripts = []
+    monkeypatch.setattr(M, 'Path', path_class)
+    monkeypatch.setattr(M.subprocess, 'run', lambda command, **k: commands.append(command))
+    monkeypatch.setattr(M, 'ship_pair', lambda *a: None)
+    def complete(host: str, code: str, *, lock: bool = False) -> str:
+        ast.parse(code)
+        scripts.append(code)
+        return json.dumps({'complete': True, 'result': {'status': 'COMPLETE_LAP',
+            'nodes': {'closed_bag': True}, 'cleanup_errors': [], 'last_control': {'stop_confirmed': True, 'fault': None}}})
+    monkeypatch.setattr(M, 'remote_python', complete)
+    M.collect_pair(plan(), 1)
+    assert len(scripts) == 2 and all("p=Path('/home/graneple/" in code for code in scripts)
+    assert all('\\' not in arg for command in commands for arg in command)
 
 
 def test_finalizer_refuses_uncollected_runs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
