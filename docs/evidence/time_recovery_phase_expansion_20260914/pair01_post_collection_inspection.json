@@ -1,0 +1,111 @@
+{
+  "scope": "POST_COLLECTION_DATA_AND_SHUTDOWN_INSPECTION; NO_MODEL_EVALUATION",
+  "runs": [
+    {
+      "run_id": "codex-time-recovery-earlyleft-r50",
+      "anchors": 92,
+      "input_valid": 92,
+      "split": "train",
+      "prepared_hash_mismatches": [],
+      "saved_stop_sim_ns": 329674992631,
+      "first_zero_publication_ns": 93694997905,
+      "recovery_nontracking_rows": 0,
+      "fixed_speed_mismatch_rows": 6,
+      "first_fixed_speed_mismatch": {
+        "sim_ns": 329799992628,
+        "phase": "invalid",
+        "reason": "NOMINAL_FIXED_SPEED_MISMATCH",
+        "speed_mps": 0.0,
+        "target_speed_mps": 0.0,
+        "nominal_target_mps": null,
+        "publication": {
+          "sim_ns": 329799992628,
+          "monotonic_ns": 129106511975614,
+          "sequence": 6809
+        }
+      },
+      "all_fixed_speed_mismatches_after_saved_stop": true,
+      "final_row": {
+        "sim_ns": 329799992628,
+        "phase": "invalid",
+        "reason": "CLOCK_STALE",
+        "speed_mps": 0.0,
+        "target_speed_mps": 0.0,
+        "nominal_target_mps": null,
+        "publication": {
+          "sim_ns": 329799992628,
+          "monotonic_ns": 129109962509012,
+          "sequence": 6878
+        }
+      },
+      "lap_seconds": 278.99,
+      "all_control_reason_counts": {
+        "AWSIM_COMMAND_SUBSCRIBER_MISSING": 238,
+        "'pose'": 16,
+        "CLOCK_STALE": 260,
+        "'trajectory'": 17,
+        "COURSE_TOO_FAR": 20,
+        "READY": 525,
+        "RECOVERY_TEACHER_TRACKING": 5945,
+        "REQUESTED_BRAKE": 89,
+        "NOMINAL_FIXED_SPEED_MISMATCH": 6
+      }
+    },
+    {
+      "run_id": "codex-time-recovery-earlyright-r51",
+      "anchors": 93,
+      "input_valid": 93,
+      "split": "train",
+      "prepared_hash_mismatches": [],
+      "saved_stop_sim_ns": 330424992614,
+      "first_zero_publication_ns": 94229997893,
+      "recovery_nontracking_rows": 0,
+      "fixed_speed_mismatch_rows": 6,
+      "first_fixed_speed_mismatch": {
+        "sim_ns": 330619992610,
+        "phase": "invalid",
+        "reason": "NOMINAL_FIXED_SPEED_MISMATCH",
+        "speed_mps": 0.0,
+        "target_speed_mps": 0.0,
+        "nominal_target_mps": null,
+        "publication": {
+          "sim_ns": 330619992610,
+          "monotonic_ns": 129503557901025,
+          "sequence": 6833
+        }
+      },
+      "all_fixed_speed_mismatches_after_saved_stop": true,
+      "final_row": {
+        "sim_ns": 330619992610,
+        "phase": "invalid",
+        "reason": "CLOCK_STALE",
+        "speed_mps": 0.0,
+        "target_speed_mps": 0.0,
+        "nominal_target_mps": null,
+        "publication": {
+          "sim_ns": 330619992610,
+          "monotonic_ns": 129507208571464,
+          "sequence": 6906
+        }
+      },
+      "lap_seconds": 279.02,
+      "all_control_reason_counts": {
+        "AWSIM_COMMAND_SUBSCRIBER_MISSING": 241,
+        "CLOCK_STALE": 271,
+        "'pose'": 18,
+        "'trajectory'": 18,
+        "COURSE_TOO_FAR": 18,
+        "FRESH_ALIGNED_SCAN_MISSING": 1,
+        "READY": 537,
+        "RECOVERY_TEACHER_TRACKING": 5948,
+        "REQUESTED_BRAKE": 90,
+        "NOMINAL_FIXED_SPEED_MISMATCH": 6
+      }
+    }
+  ],
+  "total_anchors": 185,
+  "total_targets_agreeing_with_both_nominals": 5,
+  "plan_sha256": "b2d1ef68d39001d8677814f45703f247b836ef5846044700ffe3577711e21c27",
+  "model_trained": false,
+  "model_evaluated": false
+}

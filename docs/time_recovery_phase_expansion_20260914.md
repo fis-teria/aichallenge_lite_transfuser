@@ -2,9 +2,33 @@
 
 ## 現在の状態
 
-事前計画・実行準備中。学習方法比較では既存データの再配分に効果があったが、外向き6件の3秒先精度は悪化した。既存復帰はコース進行88m付近・横ずれ約10〜12cmへ偏るため、今回は実際の観測状態の種類を増やす。元の最終目標は通常E2E完走であり、この収集の成否をモデルの完走性能とは扱わない。
+pair1の左右2runを完走・WSL移動・監査・教師生成まで完了。185件の復帰教師を用意した。ユーザーから反復ランダム外乱方式の提案があり、次の収集方式を検討中。固定12run計画の残り10runは未実施。学習方法比較では既存データの再配分に効果があったが、外向き6件の3秒先精度は悪化した。既存復帰はコース進行88m付近・横ずれ約10〜12cmへ偏るため、今回は実際の観測状態の種類を増やす。元の最終目標は通常E2E完走であり、この収集の成否をモデルの完走性能とは扱わない。
 
-実行の正本はこの文書と[固定計画](../configs/time_path_p1/recovery_phases_20260914.json)。次の遷移はWindows commit→WSL同期→全pytest・参照生成→`.10`の新しい専用rootで収集、となる。完了済みの旧キャンペーンと評価予約は再利用しない。
+実行の正本はこの文書と[固定計画](../configs/time_path_p1/recovery_phases_20260914.json)。完了済みの旧キャンペーンと評価予約は再利用しない。
+
+- 固定計画SHA256: `b2d1ef68d39001d8677814f45703f247b836ef5846044700ffe3577711e21c27`。
+- `2ba8685`のWSL全テストは2420 passed / 4 skipped、88.25秒。参照4種類の生成と実データのguide範囲チェック、旧source554ファイルの照合・専用root複製は成功。
+- 最初のWindows側起動でLinuxパスがbackslashへ変わり、remote Pythonがファイルを開く前に失敗した。`tmp/time_recovery_phase_pair01_20260914.log`を保全。両台帳はattempts空、r50出力も未作成で、走行は消費していない。
+- `b09b7ae`でSSH・SCP・状況確認へ渡すpathを明示的にPOSIX化した。PureWindowsPathを使う回帰テストを追加し、WSL全テストは2423 passed / 4 skipped / 65 warnings、86.92秒、exit0。収集source554ファイルは変更していない。
+- 進入側pair1は`COLLECTION_PAIR_COMPLETE 1`、Windows側処理exit0。進行ログは`tmp/time_recovery_phase_pair01_run_20260914.log`。左右の入力・教師185件はnative WSLで全hash再照合済み。
+- 収集中にユーザーから「一定時間ごとのランダム外乱と復帰区間の抽出」を提案された。[検討案](time_random_recovery_collection_proposal_20260914.md)を整理した。以後を条件付きランダム方式の少数run試験へ移すか固定計画を続けるか選択を待っている。pair2はまだ開始しない。全12run用の`finalize`は未実行。
+
+## pair1の実測結果
+
+| run | 事前split | 周回時間 | 有効復帰教師 | 両正常実走基準の外向き対象 | 最大横ずれ絶対値 | 解除後の復帰確認時刻 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| earlyleft-r50 | train | 278.99s | 92 | 2 | 10.38cm | 4.430s |
+| earlyright-r51 | train | 279.02s | 93 | 3 | 10.75cm | 4.465s |
+
+run IDの接頭辞は`codex-time-recovery-`。復帰確認時刻は、既存の位置・向き条件を1秒維持できた時点。最大横ずれは外乱解除後1.095s／1.280sに発生しており、解除直後だけ、または横ずれが単調減少する区間だけへ絞ると復帰初期の実観測を落とす。
+
+185件は独立185走行ではなく、独立2run内のCamera anchor。うち厳しい「横ずれ5〜25cmかつ向き2〜4度が外向きで、正常2runの双方で一致」の対象は5件。追加のvalidationはまだ0run。収集回数と状態の多様性を分けて評価する必要がある。
+
+全runで正常停止・bag終了・因果再生・センサ入力・30点の実測将来教師を確認した。生成後の16ファイルのhash再照合も一致。監査の詳細は[集計](evidence/time_recovery_phase_expansion_20260914/pair01_20260914_summary.json)、[準備ゲート](evidence/time_recovery_phase_expansion_20260914/pair01_20260914_prepared.json)、[終了後確認](evidence/time_recovery_phase_expansion_20260914/pair01_post_collection_inspection.json)。旧集計の`calibration_gate_pass`は3件以上を要求するためr50ではfalseだが、今回開始前に固定した本収集ゲートは1件以上であり、2runともPASS。事後の基準変更ではない。
+
+監視ログに出た`NOMINAL_FIXED_SPEED_MISMATCH`は左右各6行で、すべて停止確認を保存した後の終了処理中。最初の該当行はr50で停止確認保存から0.125s後、r51で0.195s後。該当行の実速度・発行目標速度はともに0m/s、phaseはinvalid。解除後10秒の復帰区間には非教師追従行が0行で、これらの終了行は今回の教師へ入っていない。終了順序に伴う診断表示は記録したまま保全し、このタスクでは監視を変更していない。
+
+原本2,364,540,283 bytesと圧縮1,043,394,650 bytesをWSLに保存。archive SHA256は`c411b14347348a66e959f32a240b2dd5d52d6f06110b1ed1b0683c5b46cb8e79`。全ファイル・ディレクトリ・SQLiteの[照合](evidence/time_recovery_phase_expansion_20260914/pair01_20260914_verified.json)後、対象2runだけを既承認の移動運用で整理した。.10の空きは21,168,037,888 bytes（約19.7GiB）。元checkoutのHEAD・dirty状態、既存container IDと停止状態は一致、稼働containerは0。専用rootのsource554ファイルも両rootで一致している。[ホスト確認](evidence/time_recovery_phase_expansion_20260914/pair01_post_collection_host.json)。
 
 ## 変更の必要性と範囲
 

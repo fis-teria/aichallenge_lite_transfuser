@@ -1,0 +1,126 @@
+{
+  "run_id": "codex-time-recovery-earlyleft-r50",
+  "status": "COMPLETE_LAP",
+  "verified_files": 60,
+  "sqlite_quick_check": "ok",
+  "source_sha": "a1c9e5ad0a5c274826601338355b75d34b268186",
+  "reference_sha256": "514ca492970fc158c3d4238e18c5488b25e661954a69cb18075e281e6913f88e",
+  "counts": {
+    "/control/command/control_cmd": 6855,
+    "/recovery_teacher/baseline_path": 664,
+    "/recovery_teacher/observed_path": 664,
+    "/recovery_teacher/phase": 7092,
+    "/recovery_teacher/reference_path": 664,
+    "/recovery_teacher/trajectory": 329,
+    "/recovery_teacher/nominal_control_cmd": 35442,
+    "/recovery_teacher/raw_control_cmd": 35443,
+    "/awsim/state": 5,
+    "/awsim/status": 3297,
+    "/clock": 65960,
+    "/sensing/lidar/scan": 6595,
+    "/sensing/camera/camera_info": 3087,
+    "/sensing/gnss/nav_sat_fix": 6589,
+    "/vehicle/status/steering_status": 9417,
+    "/sensing/camera/image_raw": 3037,
+    "/sensing/imu/imu_raw": 6595,
+    "/vehicle/status/velocity_status": 9417,
+    "/tf": 16474,
+    "/localization/kinematic_state": 16478,
+    "/localization/pose": 16478,
+    "/tf_static": 2
+  },
+  "sensors": {
+    "camera": {
+      "count": 3037,
+      "shapes": [
+        {
+          "shape": [
+            256,
+            384,
+            "bgr8"
+          ],
+          "count": 3037
+        }
+      ],
+      "backward_headers": 0,
+      "maximum_capture_gap_s": 0.314999993,
+      "invalid_messages": 0
+    },
+    "lidar": {
+      "count": 6595,
+      "shapes": [
+        {
+          "shape": [
+            750,
+            "lidar"
+          ],
+          "count": 6595
+        }
+      ],
+      "backward_headers": 0,
+      "maximum_capture_gap_s": 0.100000001,
+      "invalid_messages": 0
+    }
+  },
+  "stop_confirmed": true,
+  "fault": null,
+  "lap_confirmed": true,
+  "lap_records": [
+    {
+      "lap_seconds": 278.99,
+      "laps": 1,
+      "line": "Lap completed: 278.99s, total laps: 1",
+      "run_id": "codex-time-recovery-earlyleft-r50",
+      "epoch": 0,
+      "byte_offset": 103121,
+      "lap_increment_valid": true,
+      "ordered_section_evidence": true
+    }
+  ],
+  "phase_metrics": {
+    "baseline": {
+      "pose_count": 14253,
+      "median_signed_offset_m": 0.01876464917181087,
+      "max_absolute_offset_m": 0.6642640680264501
+    },
+    "approach": {
+      "pose_count": 0
+    },
+    "hold": {
+      "pose_count": 93,
+      "median_signed_offset_m": -0.09141967764160404,
+      "max_absolute_offset_m": 0.15836159971129446
+    },
+    "recovery": {
+      "pose_count": 499,
+      "median_signed_offset_m": -0.22339082328271004,
+      "max_absolute_offset_m": 0.3607239143064334
+    },
+    "after_recovery": {
+      "pose_count": 251,
+      "median_signed_offset_m": -0.18327551064718414,
+      "max_absolute_offset_m": 0.2793279612683846
+    }
+  },
+  "pose_projection_rejections": {},
+  "pose_metrics_scope": "ACTIVE_TRACKING_ONLY_EXCLUDES_BRAKING_INVALID_UNCOVERED",
+  "excluded_pose_control_phases": {
+    "invalid": 17,
+    "braking": 206
+  },
+  "fully_traversed_recovery_intervals": 1,
+  "moving_speed_median_kmh": 4.623641896247864,
+  "max_measured_speed_kmh": 5.173612117767334,
+  "tracking_target_kmh": [
+    5.0
+  ],
+  "phase_only_three_second_camera_candidates": {
+    "baseline": 2528,
+    "recovery": 93
+  },
+  "absolute_offset_reduction_m": -0.0918558330055801,
+  "recovery_interval_reached": true,
+  "training_materialized": false,
+  "full_body_collision_free_verified": false,
+  "note": "Phase candidates still require time-corpus sensor/history/observed-future validation; no training performed."
+}

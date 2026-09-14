@@ -1,0 +1,87 @@
+{
+  "head": "4af395eee10f928c7fc7225760adfa04c4c07ff4",
+  "git_status_sha256": "5326f4a978c2de102d1f67ebb6c29e4ad4f245a4d19787ee20e5d459199d548f",
+  "original_checkout_unchanged": true,
+  "active_containers": [],
+  "historical_container_ids_preserved": true,
+  "historical_container_states_preserved": true,
+  "extra_container_ids": [],
+  "free_bytes": 21168037888,
+  "phases": [
+    {
+      "phase": "early",
+      "source_files": 554,
+      "source_mismatches": [],
+      "attempts": [
+        {
+          "run_id": "codex-time-recovery-earlyleft-r50",
+          "phase": "early",
+          "side": "left",
+          "split": "train",
+          "pair": 1,
+          "state": "WSL_MOVED",
+          "started_unix_s": 1789390506.1674056,
+          "command": [
+            "timeout",
+            "--signal=TERM",
+            "--kill-after=20s",
+            "1980s",
+            "python3",
+            "/home/graneple/e2e_autonomous/time_recovery_phase_early_20260914/source/tools/run_time_recovery_awsim.py",
+            "--campaign-root",
+            "/home/graneple/e2e_autonomous/time_recovery_phase_early_20260914",
+            "--run-id",
+            "codex-time-recovery-earlyleft-r50",
+            "--side",
+            "left",
+            "--speed-policy",
+            "aligned_gain4_v1",
+            "--separate-cpus"
+          ],
+          "reference_sha256": "05ac2b76c0fcce85382e76606b43a7498b24b1315701810a3efc48de64852d28",
+          "pid": 1369412,
+          "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_phase_expansion_20260914/codex-time-recovery-earlyleft-r50",
+          "result_status": "COMPLETE_LAP"
+        },
+        {
+          "run_id": "codex-time-recovery-earlyright-r51",
+          "phase": "early",
+          "side": "right",
+          "split": "train",
+          "pair": 1,
+          "state": "WSL_MOVED",
+          "started_unix_s": 1789390901.8453283,
+          "command": [
+            "timeout",
+            "--signal=TERM",
+            "--kill-after=20s",
+            "1980s",
+            "python3",
+            "/home/graneple/e2e_autonomous/time_recovery_phase_early_20260914/source/tools/run_time_recovery_awsim.py",
+            "--campaign-root",
+            "/home/graneple/e2e_autonomous/time_recovery_phase_early_20260914",
+            "--run-id",
+            "codex-time-recovery-earlyright-r51",
+            "--side",
+            "right",
+            "--speed-policy",
+            "aligned_gain4_v1",
+            "--separate-cpus"
+          ],
+          "reference_sha256": "00118d878e131371f851c1a7f04867e3895299c4b969938ba5d1878cb3815fc6",
+          "pid": 1375892,
+          "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_phase_expansion_20260914/codex-time-recovery-earlyright-r51",
+          "result_status": "COMPLETE_LAP"
+        }
+      ],
+      "sealed": false
+    },
+    {
+      "phase": "late",
+      "source_files": 554,
+      "source_mismatches": [],
+      "attempts": [],
+      "sealed": false
+    }
+  ]
+}
