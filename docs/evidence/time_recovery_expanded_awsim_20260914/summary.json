@@ -1,0 +1,602 @@
+{
+  "source_commit": "4ac4dd21746400114b1d80dd6f454cf071c36bcc",
+  "scope": "ONE_PAIRED_TRIAL_PER_SIDE_MEASURED_SIM_RECOVERY_NOT_GENERALIZATION",
+  "teacher_bootstrap_excluded": true,
+  "raw_predictions_modified": false,
+  "runs": [
+    {
+      "run_id": "codex-time-expanded-base-left01",
+      "side": "left",
+      "checkpoint_sha256": "c2fdb6fd1daf525524fe44d3f793d84b482760aa1f9f1fa84d5315222ab9fbe0",
+      "host_status": "FAILED",
+      "host_error": "RuntimeError: CONTROL_STOPPING_SWEEP_OCCUPIED",
+      "judge_lap_confirmed": false,
+      "judge_sections": [
+        0,
+        1,
+        2
+      ],
+      "rviz_path_subscribers": [
+        "rviz2"
+      ],
+      "cleanup_errors": [],
+      "requested_stop_reason": null,
+      "takeover_count": 1,
+      "all_command_reasons": {
+        "RECOVERY_TEACHER_BOOTSTRAP": 1435,
+        "STALE_scan": 5,
+        "STALE_trajectory": 4,
+        "OBSERVATION_POSE_MISSING": 17,
+        "STALE_nominal": 1,
+        "FRESH_ALIGNED_SCAN_MISSING": 1,
+        "POSE_VELOCITY_SKEW": 2,
+        "TIME_PATH_TRACKING": 457,
+        "STALE_velocity": 1,
+        "STOPPING_SWEEP_OCCUPIED": 62
+      },
+      "source_sha256": {
+        "host_result.json": "a1b9c18298c41d515c3aa5a626af57a17a74f9e6a52c1afdf19a558da4d5c03c",
+        "control.jsonl": "1ccb0d2ad368dd02de4bd145f176ed9ad0a9d27233bb935d2934c427414d4d0f",
+        "inference.jsonl": "6ff17b4cb2603c4f1b3240999bcf558f9a3bcd6e5e5511f7632ef835e557747b",
+        "trial_config.json": "4d3fb45bed1e98e49bfda011d924c338e7b665daf5707f2322109ff3f5c2a517"
+      },
+      "status": "RECOVERY_NOT_CONFIRMED",
+      "takeover": {
+        "projection": {
+          "s_m": 90.90658456742922,
+          "offset_m": -0.18471883543586665,
+          "distance_m": 0.18471883543586665,
+          "segment_index": 31,
+          "heading_error_rad": 0.13993102431834714
+        },
+        "lateral_error_m": 0.0930088091921884,
+        "heading_error_rad": 0.03921821063912545,
+        "perturbation_rad": 0.0,
+        "observation_ns": 100374997756,
+        "current_pose": {
+          "stamp_ns": 100549997752,
+          "clock": "sim",
+          "epoch": "0",
+          "world_frame": "map",
+          "body_frame": "base_link",
+          "x_m": 89647.57350672077,
+          "y_m": 43140.68551736551,
+          "yaw_rad": 1.3142919122271657
+        },
+        "diagnostic_error": null
+      },
+      "takeover_sim_ns": 100564997752,
+      "published_zero_sim_ns": 100164997761,
+      "takeover_after_zero_s": 0.399999991,
+      "pulse_release_reason": "STATE_GOAL",
+      "initial_outward": true,
+      "metrics": {
+        "samples": 191,
+        "first_sample_s": 0.0,
+        "final_sample_s": 9.999999777,
+        "initial_outside_return_tolerance": true,
+        "initial_lateral_m": 0.0930088091921884,
+        "initial_heading_deg": 2.247037949676951,
+        "initial_speed_mps": 1.2759259939193726,
+        "max_abs_lateral_m": 0.2614947157043211,
+        "max_abs_heading_deg": 6.3251769466992736,
+        "final_lateral_m": 0.2614947157043211,
+        "final_heading_deg": 6.3251769466992736,
+        "first_sustained_return_s": null,
+        "ten_second_window_covered": true,
+        "moving_within_tolerance_at_window_end": false,
+        "recovered_in_ten_second_window": false,
+        "tolerance": {
+          "lateral_m": 0.05,
+          "heading_deg": 2.0,
+          "sustained_s": 1.0,
+          "minimum_speed_mps": 0.5,
+          "maximum_gap_s": 0.25
+        }
+      },
+      "control_replay": {
+        "status": "PASS",
+        "matched_commands": 458,
+        "unavailable_commands": 67,
+        "maximum_absolute_error": 4.440892098500626e-16,
+        "tolerance": 1e-09,
+        "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+        "post_control_rejections": {
+          "STOPPING_SWEEP_OCCUPIED": 1
+        },
+        "actuator_mapping_matched": 458,
+        "steering_response_matched": 458,
+        "vehicle_motion_matched": 458,
+        "scan_guard_decisions_replayed": false
+      },
+      "e2e_command_count": 525,
+      "e2e_command_reasons": {
+        "TIME_PATH_TRACKING": 457,
+        "STALE_velocity": 1,
+        "POSE_VELOCITY_SKEW": 1,
+        "STALE_scan": 2,
+        "OBSERVATION_POSE_MISSING": 2,
+        "STOPPING_SWEEP_OCCUPIED": 62
+      },
+      "e2e_duration_sim_s": 24.244999458,
+      "no_teacher_fallback_verified": true,
+      "median_moving_speed_kmh": 4.57618932723999,
+      "first_scan_rejection": {
+        "after_takeover_s": 23.949999464,
+        "reason": "STOPPING_SWEEP_OCCUPIED",
+        "minimum_ray_margin_m": -0.006104542234988575
+      },
+      "initial_predicted_lateral": [
+        {
+          "horizon_s": 0.5,
+          "lateral_to_nominal_m": 0.11097956899651142,
+          "progress_m": 91.31043962969947
+        },
+        {
+          "horizon_s": 1.0,
+          "lateral_to_nominal_m": 0.12285572015456736,
+          "progress_m": 91.91279964042674
+        },
+        {
+          "horizon_s": 1.5,
+          "lateral_to_nominal_m": 0.11571194894899811,
+          "progress_m": 92.54878148975432
+        },
+        {
+          "horizon_s": 2.0,
+          "lateral_to_nominal_m": 0.10328536868565222,
+          "progress_m": 93.18844877573292
+        },
+        {
+          "horizon_s": 3.0,
+          "lateral_to_nominal_m": 0.18024958592911933,
+          "progress_m": 94.46105540737473
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-expanded-candidate-left01",
+      "side": "left",
+      "checkpoint_sha256": "7ec445b6ab955e76d0d71efbd8f2f1dd3066ebe365516df38df8cf18adb56f44",
+      "host_status": "FAILED",
+      "host_error": "RuntimeError: CONTROL_STOPPING_SWEEP_OCCUPIED",
+      "judge_lap_confirmed": false,
+      "judge_sections": [
+        0,
+        1,
+        2
+      ],
+      "rviz_path_subscribers": [
+        "rviz2"
+      ],
+      "cleanup_errors": [],
+      "requested_stop_reason": null,
+      "takeover_count": 1,
+      "all_command_reasons": {
+        "RECOVERY_TEACHER_BOOTSTRAP": 1438,
+        "STALE_trajectory": 8,
+        "OBSERVATION_POSE_MISSING": 20,
+        "PLAN_STALE": 1,
+        "STALE_velocity": 1,
+        "STALE_scan": 4,
+        "MOTION_YAW_RATE_INVALID": 1,
+        "TIME_PATH_TRACKING": 442,
+        "FRESH_ALIGNED_SCAN_MISSING": 2,
+        "STOPPING_SWEEP_OCCUPIED": 60
+      },
+      "source_sha256": {
+        "host_result.json": "1620f47cef9c78b3ab6dabd0d3dbd6bb78fccd7610012885c7094ea378e0198f",
+        "control.jsonl": "524a374e1269c3bccea2f4b2ea715f137ec5a7f916ec9f980c68688f2e0baeb1",
+        "inference.jsonl": "406174f15ed1d62f4efbe0642ec52f71dbb3db5092345727303ee687b33cc70f",
+        "trial_config.json": "202f99d277cc41a915e76896bbea014a14cb3c66d3504241d7a68f206e1d937e"
+      },
+      "status": "RECOVERY_NOT_CONFIRMED",
+      "takeover": {
+        "projection": {
+          "s_m": 90.80306041940658,
+          "offset_m": -0.19809047633185306,
+          "distance_m": 0.19809047633185306,
+          "segment_index": 31,
+          "heading_error_rad": 0.12252451494278138
+        },
+        "lateral_error_m": 0.08886094988658244,
+        "heading_error_rad": 0.04109490665122362,
+        "perturbation_rad": 0.0,
+        "observation_ns": 100269997758,
+        "current_pose": {
+          "stamp_ns": 100504997753,
+          "clock": "sim",
+          "epoch": "0",
+          "world_frame": "map",
+          "body_frame": "base_link",
+          "x_m": 89647.54586724211,
+          "y_m": 43140.58485898671,
+          "yaw_rad": 1.2968854028516
+        },
+        "diagnostic_error": null
+      },
+      "takeover_sim_ns": 100519997753,
+      "published_zero_sim_ns": 100094997762,
+      "takeover_after_zero_s": 0.424999991,
+      "pulse_release_reason": "STATE_GOAL",
+      "initial_outward": true,
+      "metrics": {
+        "samples": 187,
+        "first_sample_s": 0.0,
+        "final_sample_s": 9.959999777,
+        "initial_outside_return_tolerance": true,
+        "initial_lateral_m": 0.08886094988658244,
+        "initial_heading_deg": 2.3545647105992087,
+        "initial_speed_mps": 1.2766000032424927,
+        "max_abs_lateral_m": 0.38978476659406724,
+        "max_abs_heading_deg": 5.493916120606459,
+        "final_lateral_m": 0.38978476659406724,
+        "final_heading_deg": 5.493916120606459,
+        "first_sustained_return_s": null,
+        "ten_second_window_covered": false,
+        "moving_within_tolerance_at_window_end": false,
+        "recovered_in_ten_second_window": false,
+        "tolerance": {
+          "lateral_m": 0.05,
+          "heading_deg": 2.0,
+          "sustained_s": 1.0,
+          "minimum_speed_mps": 0.5,
+          "maximum_gap_s": 0.25
+        }
+      },
+      "control_replay": {
+        "status": "PASS",
+        "matched_commands": 445,
+        "unavailable_commands": 64,
+        "maximum_absolute_error": 4.440892098500626e-16,
+        "tolerance": 1e-09,
+        "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+        "post_control_rejections": {
+          "FRESH_ALIGNED_SCAN_MISSING": 2,
+          "STOPPING_SWEEP_OCCUPIED": 1
+        },
+        "actuator_mapping_matched": 445,
+        "steering_response_matched": 445,
+        "vehicle_motion_matched": 445,
+        "scan_guard_decisions_replayed": false
+      },
+      "e2e_command_count": 509,
+      "e2e_command_reasons": {
+        "TIME_PATH_TRACKING": 442,
+        "STALE_scan": 1,
+        "OBSERVATION_POSE_MISSING": 4,
+        "FRESH_ALIGNED_SCAN_MISSING": 2,
+        "STOPPING_SWEEP_OCCUPIED": 60
+      },
+      "e2e_duration_sim_s": 23.554999473,
+      "no_teacher_fallback_verified": true,
+      "median_moving_speed_kmh": 4.570673847198487,
+      "first_scan_rejection": {
+        "after_takeover_s": 23.25499948,
+        "reason": "STOPPING_SWEEP_OCCUPIED",
+        "minimum_ray_margin_m": -0.0010616325602437193
+      },
+      "initial_predicted_lateral": [
+        {
+          "horizon_s": 0.5,
+          "lateral_to_nominal_m": 0.10703079276665578,
+          "progress_m": 91.1251293419079
+        },
+        {
+          "horizon_s": 1.0,
+          "lateral_to_nominal_m": 0.12873082559135693,
+          "progress_m": 91.72418266535463
+        },
+        {
+          "horizon_s": 1.5,
+          "lateral_to_nominal_m": 0.12668233077673077,
+          "progress_m": 92.35561031294894
+        },
+        {
+          "horizon_s": 2.0,
+          "lateral_to_nominal_m": 0.11214485367911009,
+          "progress_m": 92.99073193513848
+        },
+        {
+          "horizon_s": 3.0,
+          "lateral_to_nominal_m": 0.16043630484488172,
+          "progress_m": 94.25783336985437
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-expanded-base-right01",
+      "side": "right",
+      "checkpoint_sha256": "c2fdb6fd1daf525524fe44d3f793d84b482760aa1f9f1fa84d5315222ab9fbe0",
+      "host_status": "FAILED",
+      "host_error": "RuntimeError: CONTROL_STOPPING_SWEEP_OCCUPIED",
+      "judge_lap_confirmed": false,
+      "judge_sections": [
+        0,
+        1,
+        2
+      ],
+      "rviz_path_subscribers": [
+        "rviz2"
+      ],
+      "cleanup_errors": [],
+      "requested_stop_reason": null,
+      "takeover_count": 1,
+      "all_command_reasons": {
+        "RECOVERY_TEACHER_BOOTSTRAP": 1451,
+        "STALE_velocity": 1,
+        "POSE_VELOCITY_SKEW": 2,
+        "OBSERVATION_POSE_MISSING": 18,
+        "PLAN_STALE": 1,
+        "FRESH_ALIGNED_SCAN_MISSING": 1,
+        "TIME_PATH_TRACKING": 460,
+        "STOPPING_SWEEP_OCCUPIED": 58
+      },
+      "source_sha256": {
+        "host_result.json": "60a2bc78224d9055f473b686dd92b26efcfdacbb0d0e5d916e8d926710108b2d",
+        "control.jsonl": "b8fb48a8c61c2bb9834ebf38093c3d0f5000331ce4a982a72ad3c506879649dc",
+        "inference.jsonl": "0d07fba2c66fdc8dcdfb544f3747e45f5891eb61d6c9c37a1c86ebe01a1f7035",
+        "trial_config.json": "4d3fb45bed1e98e49bfda011d924c338e7b665daf5707f2322109ff3f5c2a517"
+      },
+      "status": "RECOVERY_NOT_CONFIRMED",
+      "takeover": {
+        "projection": {
+          "s_m": 90.90216080671105,
+          "offset_m": -0.3728241375582878,
+          "distance_m": 0.3728241375582878,
+          "segment_index": 31,
+          "heading_error_rad": 0.06097330392872391
+        },
+        "lateral_error_m": -0.094652241600441,
+        "heading_error_rad": -0.038907594371098586,
+        "perturbation_rad": 0.0,
+        "observation_ns": 99324997779,
+        "current_pose": {
+          "stamp_ns": 99574997774,
+          "clock": "sim",
+          "epoch": "0",
+          "world_frame": "map",
+          "body_frame": "base_link",
+          "x_m": 89647.74531502741,
+          "y_m": 43140.60880308968,
+          "yaw_rad": 1.2353341918375425
+        },
+        "diagnostic_error": null
+      },
+      "takeover_sim_ns": 99574997774,
+      "published_zero_sim_ns": 99124997784,
+      "takeover_after_zero_s": 0.44999999,
+      "pulse_release_reason": "STATE_GOAL",
+      "initial_outward": true,
+      "metrics": {
+        "samples": 193,
+        "first_sample_s": 0.0,
+        "final_sample_s": 9.974999777,
+        "initial_outside_return_tolerance": true,
+        "initial_lateral_m": -0.094652241600441,
+        "initial_heading_deg": -2.2292409484709075,
+        "initial_speed_mps": 1.2609844207763672,
+        "max_abs_lateral_m": 0.19224441198095332,
+        "max_abs_heading_deg": 7.301827585304885,
+        "final_lateral_m": 0.11648967476610003,
+        "final_heading_deg": 7.301827585304885,
+        "first_sustained_return_s": null,
+        "ten_second_window_covered": false,
+        "moving_within_tolerance_at_window_end": false,
+        "recovered_in_ten_second_window": false,
+        "tolerance": {
+          "lateral_m": 0.05,
+          "heading_deg": 2.0,
+          "sustained_s": 1.0,
+          "minimum_speed_mps": 0.5,
+          "maximum_gap_s": 0.25
+        }
+      },
+      "control_replay": {
+        "status": "PASS",
+        "matched_commands": 461,
+        "unavailable_commands": 64,
+        "maximum_absolute_error": 4.440892098500626e-16,
+        "tolerance": 1e-09,
+        "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+        "post_control_rejections": {
+          "STOPPING_SWEEP_OCCUPIED": 1
+        },
+        "actuator_mapping_matched": 461,
+        "steering_response_matched": 461,
+        "vehicle_motion_matched": 461,
+        "scan_guard_decisions_replayed": false
+      },
+      "e2e_command_count": 525,
+      "e2e_command_reasons": {
+        "TIME_PATH_TRACKING": 460,
+        "OBSERVATION_POSE_MISSING": 7,
+        "STOPPING_SWEEP_OCCUPIED": 58
+      },
+      "e2e_duration_sim_s": 24.229999458,
+      "no_teacher_fallback_verified": true,
+      "median_moving_speed_kmh": 4.581455898284912,
+      "first_scan_rejection": {
+        "after_takeover_s": 24.054999462,
+        "reason": "STOPPING_SWEEP_OCCUPIED",
+        "minimum_ray_margin_m": -0.0030387906830875444
+      },
+      "initial_predicted_lateral": [
+        {
+          "horizon_s": 0.5,
+          "lateral_to_nominal_m": -0.11083075692332311,
+          "progress_m": 91.22921581819038
+        },
+        {
+          "horizon_s": 1.0,
+          "lateral_to_nominal_m": -0.13032990771741082,
+          "progress_m": 91.73823676276547
+        },
+        {
+          "horizon_s": 1.5,
+          "lateral_to_nominal_m": -0.1516638664661638,
+          "progress_m": 92.36659409678
+        },
+        {
+          "horizon_s": 2.0,
+          "lateral_to_nominal_m": -0.17065574520037252,
+          "progress_m": 93.00122981040275
+        },
+        {
+          "horizon_s": 3.0,
+          "lateral_to_nominal_m": -0.07611860108713642,
+          "progress_m": 94.27671859165095
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-expanded-candidate-right01",
+      "side": "right",
+      "checkpoint_sha256": "7ec445b6ab955e76d0d71efbd8f2f1dd3066ebe365516df38df8cf18adb56f44",
+      "host_status": "FAILED",
+      "host_error": "RuntimeError: CONTROL_STOPPING_SWEEP_OCCUPIED",
+      "judge_lap_confirmed": false,
+      "judge_sections": [
+        0,
+        1,
+        2
+      ],
+      "rviz_path_subscribers": [
+        "rviz2"
+      ],
+      "cleanup_errors": [],
+      "requested_stop_reason": null,
+      "takeover_count": 1,
+      "all_command_reasons": {
+        "RECOVERY_TEACHER_BOOTSTRAP": 1443,
+        "OBSERVATION_POSE_MISSING": 16,
+        "STALE_pose": 3,
+        "STALE_trajectory": 4,
+        "FRESH_ALIGNED_SCAN_MISSING": 1,
+        "STALE_scan": 4,
+        "STALE_velocity": 1,
+        "TIME_PATH_TRACKING": 450,
+        "POSE_VELOCITY_SKEW": 1,
+        "STOPPING_SWEEP_OCCUPIED": 61
+      },
+      "source_sha256": {
+        "host_result.json": "32c8c2e72ba4f6e0faef2f42d284de2bece9c30360b08514ab3a0867dfbfca2d",
+        "control.jsonl": "17f006d98750fe0222684782eb8e8f45448cacdc6b8c135b7bfdc16554efa0a8",
+        "inference.jsonl": "af70c1c0029cd1068f5e0cb989dfe40eafa6ef9f5ec00a04c8e4298fa37e50eb",
+        "trial_config.json": "202f99d277cc41a915e76896bbea014a14cb3c66d3504241d7a68f206e1d937e"
+      },
+      "status": "RECOVERY_NOT_CONFIRMED",
+      "takeover": {
+        "projection": {
+          "s_m": 90.92548224063543,
+          "offset_m": -0.36958990331822905,
+          "distance_m": 0.36958990331822905,
+          "segment_index": 31,
+          "heading_error_rad": 0.06501217454782116
+        },
+        "lateral_error_m": -0.09376003684470885,
+        "heading_error_rad": -0.03925446267129895,
+        "perturbation_rad": 0.0,
+        "observation_ns": 100374997756,
+        "current_pose": {
+          "stamp_ns": 100564997752,
+          "clock": "sim",
+          "epoch": "0",
+          "world_frame": "map",
+          "body_frame": "base_link",
+          "x_m": 89647.75133679806,
+          "y_m": 43140.63156463246,
+          "yaw_rad": 1.2393730624566397
+        },
+        "diagnostic_error": null
+      },
+      "takeover_sim_ns": 100574997751,
+      "published_zero_sim_ns": 100119997762,
+      "takeover_after_zero_s": 0.454999989,
+      "pulse_release_reason": "STATE_GOAL",
+      "initial_outward": true,
+      "metrics": {
+        "samples": 191,
+        "first_sample_s": 0.0,
+        "final_sample_s": 9.959999777,
+        "initial_outside_return_tolerance": true,
+        "initial_lateral_m": -0.09376003684470885,
+        "initial_heading_deg": -2.2491150381192653,
+        "initial_speed_mps": 1.2587225437164307,
+        "max_abs_lateral_m": 0.2799012705300665,
+        "max_abs_heading_deg": 5.865649807153572,
+        "final_lateral_m": 0.2799012705300665,
+        "final_heading_deg": 5.843982590219388,
+        "first_sustained_return_s": null,
+        "ten_second_window_covered": true,
+        "moving_within_tolerance_at_window_end": false,
+        "recovered_in_ten_second_window": false,
+        "tolerance": {
+          "lateral_m": 0.05,
+          "heading_deg": 2.0,
+          "sustained_s": 1.0,
+          "minimum_speed_mps": 0.5,
+          "maximum_gap_s": 0.25
+        }
+      },
+      "control_replay": {
+        "status": "PASS",
+        "matched_commands": 451,
+        "unavailable_commands": 65,
+        "maximum_absolute_error": 4.440892098500626e-16,
+        "tolerance": 1e-09,
+        "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+        "post_control_rejections": {
+          "STOPPING_SWEEP_OCCUPIED": 1
+        },
+        "actuator_mapping_matched": 451,
+        "steering_response_matched": 451,
+        "vehicle_motion_matched": 451,
+        "scan_guard_decisions_replayed": false
+      },
+      "e2e_command_count": 516,
+      "e2e_command_reasons": {
+        "TIME_PATH_TRACKING": 450,
+        "POSE_VELOCITY_SKEW": 1,
+        "OBSERVATION_POSE_MISSING": 2,
+        "STALE_pose": 2,
+        "STOPPING_SWEEP_OCCUPIED": 61
+      },
+      "e2e_duration_sim_s": 23.474999476,
+      "no_teacher_fallback_verified": true,
+      "median_moving_speed_kmh": 4.57836685180664,
+      "first_scan_rejection": {
+        "after_takeover_s": 23.254999481,
+        "reason": "STOPPING_SWEEP_OCCUPIED",
+        "minimum_ray_margin_m": -0.006466107560747947
+      },
+      "initial_predicted_lateral": [
+        {
+          "horizon_s": 0.5,
+          "lateral_to_nominal_m": -0.10856957286888236,
+          "progress_m": 91.3122238083231
+        },
+        {
+          "horizon_s": 1.0,
+          "lateral_to_nominal_m": -0.11200885006361169,
+          "progress_m": 91.82750920680877
+        },
+        {
+          "horizon_s": 1.5,
+          "lateral_to_nominal_m": -0.11657189804364732,
+          "progress_m": 92.45878526351883
+        },
+        {
+          "horizon_s": 2.0,
+          "lateral_to_nominal_m": -0.11842026944975992,
+          "progress_m": 93.09314460626825
+        },
+        {
+          "horizon_s": 3.0,
+          "lateral_to_nominal_m": 0.008497290246823844,
+          "progress_m": 94.35838777880711
+        }
+      ]
+    }
+  ]
+}
