@@ -1,0 +1,74 @@
+{
+  "maximum_attempts": 3,
+  "maximum_bag_bytes": 6442450944,
+  "attempts": [
+    {
+      "run_id": "codex-time-recovery-cornerleft020-r27",
+      "side": "left",
+      "reference_sha256": "37b7bfda765915b4289d46806695c6eb89c92f05de02bd76494bdab7e9469ea0",
+      "source_sha": "0484dc369f66282e05faa61dc98c80d687a9c6c4",
+      "check_passed": true,
+      "state": "WSL_MOVED",
+      "started_unix": 1789344450.6063554,
+      "pid": 857627,
+      "status": "STOPPED_FAILED",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_corner_recovery_20260914/codex-time-recovery-cornerleft020-r27",
+      "category": "NO_CORNER_DIAGNOSTIC"
+    },
+    {
+      "run_id": "codex-time-recovery-cornerleft020-r29",
+      "side": "left",
+      "reference_sha256": "37b7bfda765915b4289d46806695c6eb89c92f05de02bd76494bdab7e9469ea0",
+      "source_sha": "0484dc369f66282e05faa61dc98c80d687a9c6c4",
+      "check_passed": true,
+      "separate_cpus": true,
+      "state": "WSL_MOVED",
+      "started_unix": 1789344704.0321968,
+      "pid": 862737,
+      "cpu_assignment": {
+        "codex-time-recovery-cornerleft020-r29-nodes": {
+          "cpus": "2-5",
+          "container_id": "c86f8b8e7916d55ca884f6d9f22e63d314f6210152e1e5c9af8046e8d80e3f54"
+        },
+        "codex-time-recovery-cornerleft020-r29-simulator-1": {
+          "cpus": "0-1,6-19",
+          "container_id": "8f1651ec4486aefe352e97edbd462e76b8373f91bde2d0b24518e327d52bb75f"
+        },
+        "codex-time-recovery-cornerleft020-r29-autoware-1": {
+          "cpus": "0-1,6-19",
+          "container_id": "69d9a6d58318dc090976a35f69d5e2e6beabae0276b0414d8ca3440dfcb295f3"
+        }
+      },
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_corner_recovery_20260914/codex-time-recovery-cornerleft020-r29",
+      "category": "LOCAL_RECOVERY_PILOT_58_VALID_ANCHORS"
+    },
+    {
+      "run_id": "codex-time-recovery-cornerright020-r28",
+      "side": "right",
+      "reference_sha256": "ae3a0a47173ad96121fd8af20ba03cf0fb9e7fc50170030ec9e289400e774eae",
+      "source_sha": "0484dc369f66282e05faa61dc98c80d687a9c6c4",
+      "check_passed": true,
+      "separate_cpus": true,
+      "state": "WSL_MOVED",
+      "started_unix": 1789345468.030781,
+      "pid": 874564,
+      "cpu_assignment": {
+        "codex-time-recovery-cornerright020-r28-nodes": {
+          "cpus": "2-5",
+          "container_id": "7247418c6cf7505bcb128e51ebf7f76e25ced4c19f68452e7b16300c4f0d9f1f"
+        },
+        "codex-time-recovery-cornerright020-r28-simulator-1": {
+          "cpus": "0-1,6-19",
+          "container_id": "566c8e5b04279e8b09cdebda1f3dc925b019208b2dd9f4febf8b38acd64eae58"
+        },
+        "codex-time-recovery-cornerright020-r28-autoware-1": {
+          "cpus": "0-1,6-19",
+          "container_id": "a6e31118cdc9b2542d6cf35bb6e2cf234a28032ce096f1cd28102448dfe2956f"
+        }
+      },
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_corner_recovery_20260914/codex-time-recovery-cornerright020-r28",
+      "category": "LOCAL_RECOVERY_PILOT_60_VALID_ANCHORS"
+    }
+  ],
+  "started_unix": 1789344450.587807
+}

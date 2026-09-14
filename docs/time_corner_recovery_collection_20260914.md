@@ -3,6 +3,40 @@
 2026-09-14: ユーザーの収集指示に基づく小規模pilot。実行先は
 `graneple@192.168.3.10`、参照生成・データ検証はnative WSL。
 
+## 完了結果
+
+問題のコーナーで左右20cmの収集を各1周実施し、両方とも正常停止・bag close・WSL転送・
+全ファイル照合・元センサからの教師再現まで完了した。通常RVizで基準/収集参照/実走Pathを表示。
+最初の計算期限超過1試行は復帰場所に未到達の診断記録として保存し、学習候補へ含めない。
+
+数値は**同ホストの通常実走教師r23**に対し、同じ元コース進捗で比較したもの。
+固定CSVからの誤差や物理的な位置精度とは区別する。
+
+| 条件 / run | 保持区間の実測横ずれ中央値 | 復帰後5mの最大差 | 有効な入力と3秒未来 | 1周 |
+|---|---:|---:|---:|---:|
+| 左20cm / cornerleft020-r29 | 左21.01cm | 2.22cm | 58 / 60候補 | 373.40s |
+| 右20cm / cornerright020-r28 | 右21.44cm | 2.87cm | 60 / 60候補 | 374.16s |
+
+両runともr22での比較でも事前の局所復帰条件を満たした。実測線への直接投影では、
+右側のhold中央値は右21.18cm、復帰後最大2.86cmとなり、元コース進捗での比較と整合した。
+目標5km/h、実測移動速度中央値は左右とも約3.52km/h。独立した復帰事例は**2走行**であり、
+118候補は重複する時間窓。120候補すべてを監査し、左の2候補を現在センサ欠損で除外した。
+代表計6候補は元画像/LiDARからtensorと30点の教師XYを再現した。
+
+3記録の182ファイル・リンク、3,279,305,309 bytes（約3.05GiB）をWSLで保全。
+圧縮バックアップは1,447,428,562 bytes（約1.35GiB）。全件SHA-256/サイズ/dir構造とSQLiteを確認後、
+AWSIM側は該当3runを移動済み案内へ置換した。最後の空き約20.75GiB、稼働container/収集processは0。
+既存114停止containerとリモートrepoのHEAD/既存変更のdigestは維持した。
+
+[採用候補IDと原本一覧](evidence/time_corner_recovery_20260914/collection_index.json) に
+有効118anchorのID・原本manifest SHA・比較条件・監査ファイルを記録した。
+[右の比較](evidence/time_corner_recovery_20260914/right_comparison.json) と
+[右の重ね図](evidence/time_corner_recovery_20260914/right_comparison.png) も保存済み。
+
+未実施: 学習コーパスへのmaterialize、run単位splitの割当、再学習、モデルのAWSIM性能比較。
+より大きな横ずれ、独立した向きずれ、実測5km/hでの復帰はこのpilotの成立範囲に含まれない。
+次はこの角のずれ量・向きの組合せを段階的に増やし、モデルの復帰性能で十分性を判定する。
+
 ## 目的と事前条件
 
 `codex-time-segment01` の停止監視地点はmap
@@ -91,3 +125,75 @@ CPU0-1,6-19へ割り当てる。全containerの設定を公式Start前に確認�
 入力期限・100ms判断期限・retry回数・速度・操舵・安全監視は変更しない。
 追加診断枠の1本を`cornerleft020-r29`に使用し、同じ失敗が再発したらそこで中断する。
 成功時の右`cornerright020-r28`も同じCPU割当を使用する。総試行上限は3本/6GiB。
+
+## 検証済みの左側結果
+
+`cornerleft020-r29` は公式Judgeで1周373.40秒、1周後4秒の追加記録、
+3秒の静止確認、bag closeが成立した。最終`result.json`は`COMPLETE_LAP`、faultなし。
+終了処理でAWSIMを凍結した後のheartbeatには速度不一致・CLOCK_STALEが残るが、
+これは最終結果に採用された停止確認より後の記録。走行中の失敗と混同しない。
+
+事前指定の通常教師r23に対し、同じ元コース進捗でのhold中央値は左21.01cm、
+復帰後5mの最大差は2.22cm。実測線への直接投影ではそれぞれ20.81cm、2.22cm。
+r22でも21.09cm、2.24cmで、両基準とも事前の局所判定を通過した。
+固定CSVからのholdは右7.35cm、復帰後最大21.10cmであり、旧CSV基準には通過していない。
+向きの差はholdで最大約2.4度、recoveryで最大約2.3度。独立した3度/6度yaw介入の検証ではない。
+
+60復帰候補を全件監査し、58候補が因果的入力と未来0.1〜3.0秒の30点を満たした。
+2候補は`CURRENT_SENSOR_MISSING`で除外。代表3候補の画像/LiDAR入力tensorと教師XYを完全再現。
+単一epoch、camera 3,996件、LiDAR 8,561件、不正センサメッセージとcapture逆行0。
+目標5km/h、実測移動速度中央値3.5207km/h。実測速度は目標値と区別する。
+
+最初のr27（復帰場所に未到達）とr29の計121ファイル・リンク、1,745,621,055 bytesを
+WSLへ転送し、SHA-256・サイズ・dir構造・SQLiteを照合した。元データを再照合後、
+AWSIM側のこの2runだけを移動済み案内へ置換し、空きは約20.63GiBへ回復。
+原本と圧縮版はWSLに保全している。
+
+保存先:
+- 原本: `/home/thistle/e2e_autonomous/raw/time_corner_recovery_20260914/`
+- 圧縮・監査: `/home/thistle/e2e_autonomous/runs/time_corner_recovery_20260914/`
+- [左の比較](evidence/time_corner_recovery_20260914/left_comparison_r2.json)
+- [左の重ね図](evidence/time_corner_recovery_20260914/left_comparison_r2.png)
+
+集計helperの初回実行はNumPy boolのJSON出力で失敗した。boolを通常のPython値に直し、
+初回ログを保全して`left_comparison_r2`で再実行・JSON出力・描画を確認した。
+収集runtimeや教師の値は変更していない。
+
+## 実際の起動・検証コマンド
+
+以下は使用済みrun IDの実行記録。同じIDで再起動・上書きはしない。
+AWSIMホストで、WSL生成参照の配置とSHA照合後に実行した。
+
+```bash
+python3 /home/graneple/e2e_autonomous/time_recovery_collection_20260913/start_corner_pilot_20260914.py \
+  --run-id codex-time-recovery-cornerleft020-r29 \
+  --reference-sha256 37b7bfda765915b4289d46806695c6eb89c92f05de02bd76494bdab7e9469ea0 --separate-cpus
+python3 /home/graneple/e2e_autonomous/time_recovery_collection_20260913/start_corner_pilot_20260914.py \
+  --run-id codex-time-recovery-cornerright020-r28 \
+  --reference-sha256 ae3a0a47173ad96121fd8af20ba03cf0fb9e7fc50170030ec9e289400e774eae --separate-cpus
+```
+
+WSL checkout内で、各閉じたrunの転送検証後に実行した（下は右側の例）。
+
+```bash
+tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python tools/audit_time_recovery_collection.py \
+  --run /home/thistle/e2e_autonomous/raw/time_corner_recovery_20260914/codex-time-recovery-cornerright020-r28 \
+  --types /home/thistle/e2e_autonomous/runs/time_recovery_collection_20260913/types \
+  --output /home/thistle/e2e_autonomous/runs/time_corner_recovery_20260914/codex-time-recovery-cornerright020-r28_audit.json
+tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
+  docs/evidence/time_recovery_collection_20260913/causal_replay_probe.py \
+  --run /home/thistle/e2e_autonomous/raw/time_corner_recovery_20260914/codex-time-recovery-cornerright020-r28 \
+  --types /home/thistle/e2e_autonomous/runs/time_recovery_collection_20260913/types \
+  --output /home/thistle/e2e_autonomous/runs/time_corner_recovery_20260914/codex-time-recovery-cornerright020-r28_causal_probe.json
+tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
+  docs/evidence/time_corner_recovery_20260914/compare_local.py --root /home/thistle/e2e_autonomous \
+  --runs codex-time-recovery-cornerright020-r28 \
+  --output /home/thistle/e2e_autonomous/runs/time_corner_recovery_20260914/right_comparison.json
+```
+
+転送処理は [ship_pilots.py](evidence/time_corner_recovery_20260914/ship_pilots.py)。
+既存の構造照合・限定cleanupを再利用し、`cornerpair01_20260914`はr27/r29、
+`cornerpair02_20260914`はr28のみを対象とした。snapshot SHAはそれぞれ
+`1715990e27c924c94444ee1f9f6a84844e658e4a8f247146e16572cfd61c57f4`、
+`316723184b44ee027ef4d65a1fee911a1b3a31aa09a242422184197e2fc7bd1f`。
+Windowsの`scp -3`でAWSIMからnative WSLへ転送し、Windowsへ原bagを置いていない。
