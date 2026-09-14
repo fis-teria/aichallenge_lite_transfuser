@@ -4,7 +4,7 @@ import math
 import numpy as np
 import pytest
 
-from aic_transfuser_lite.data.time_steering_pulse_v1 import SteeringPulseConfig
+from aic_transfuser_lite.data.time_steering_pulse_v1 import SteeringPulseConfig, SteeringPulseState
 from aic_transfuser_lite.data.time_random_steering_pulse_v1 import (
     SCHEMA, RandomPulseConfig, RandomPulseState, propose_random_pulse, random_schedule,
     random_pulse_events, event_at, validate_random_guide,
@@ -21,12 +21,15 @@ def tick(config, state, t, **overrides):
     return propose_random_pulse(config, TEMPLATE, state, **{**values, **overrides})
 
 
-def recorded_run(*, recover=True, seed=915062):
+def recorded_run(*, recover=True, seed=915062, late_gap=False):
     config = RandomPulseConfig(seed)
     state = RandomPulseState(); rows = []
     schedule = random_schedule(config)
     for step in range(1501):
         t = step*.05; lateral = 0.; heading = 0.
+        if (late_gap and state.event_id == 1 and state.pulse.zero_ns is not None
+                and 9. < (round(t*1e9)-state.pulse.zero_ns)/1e9 < 9.25):
+            continue
         if state.stage == 'pulse':
             sign = schedule[state.event_id-1][0]
             age = (round(t*1e9)-state.pulse.start_ns)/1e9
@@ -37,7 +40,7 @@ def recorded_run(*, recover=True, seed=915062):
         decision = tick(config, state, t, lateral_m=lateral, heading_rad=heading)
         state = decision.state
         rows.append(dict(annotation_schema=SCHEMA, sim_ns=round(t*1e9), phase=decision.phase,
-            publication=dict(sim_ns=round(t*1e9)+5_000_000, monotonic_ns=round((t+10)*1e9), sequence=step+1),
+            publication=dict(sim_ns=round(t*1e9)+5_000_000, monotonic_ns=round((t+10)*1e9), sequence=len(rows)+1),
             target_speed_mps=5/3.6, speed_mps=1.27,
             pulse=dict(applied=True, state=asdict(state.pulse), requested_rad=decision.perturbation_rad,
                        effective_rad=decision.perturbation_rad, lateral_error_m=lateral, heading_error_rad=heading),
@@ -98,6 +101,29 @@ def test_unconfirmed_recovery_stops_repetition_and_is_not_teacher():
     windows = collection_phase_windows(rows)
     assert not any(w.phase == 'recovery' for w in windows)
     assert not recovery_teacher_mask(events[0]['zero_publication_ns']+200_000_000, windows).any()
+
+
+def test_later_gap_preserves_observed_recovery_but_still_excludes_gap_teachers():
+    rows, state = recorded_run(late_gap=True)
+    events = random_pulse_events(rows)
+    assert state.completed_events == 3 and all(e['recovery_confirmed'] for e in events)
+    first = events[0]
+    assert first['confirmation_publication_ns'] < first['zero_publication_ns']+9_000_000_000
+    windows = collection_phase_windows(rows)
+    assert recovery_teacher_mask(first['zero_publication_ns']+200_000_000, windows).all()
+    assert not recovery_teacher_mask(first['zero_publication_ns']+8_000_000_000, windows).all()
+    assert events[1]['start_publication_ns'] >= first['end_publication_ns']+3_000_000_000
+    # Historical success alone cannot authorize an unsettled next entry.
+    config = RandomPulseConfig(915062)
+    cooldown_row = next(r for r in rows if r['random_pulse']['state']['stage']=='cooldown')
+    st = RandomPulseState(**{**cooldown_row['random_pulse']['state'],
+        'pulse': SteeringPulseState(**cooldown_row['pulse']['state'])})
+    assert st.confirmed_ns is not None
+    t = st.last_sim_ns/1e9
+    for i in range(1,121):
+        d = tick(config,st,t+i*.05,lateral_m=.06,s_m=90.)
+        st = d.state
+        assert st.event_id == 1 and d.perturbation_rad == 0.
 
 
 def test_rejected_proposals_do_not_consume_rng_or_events():

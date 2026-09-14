@@ -23,15 +23,20 @@ RUNTIME_FILES = (
 
 
 def validate_plan(plan: dict[str, Any]) -> None:
-    expected = [dict(run_id='codex-time-recovery-random-r62', side='left', seed=915062, split='train', pair=1),
-                dict(run_id='codex-time-recovery-random-r63', side='right', seed=915063, split='validation', pair=1)]
+    revision = plan.get('revision', 'initial_v1')
+    if revision not in ('initial_v1', 'confirmation_history_v2'):
+        raise ValueError('FROZEN_RANDOM_REVISION')
+    first = 62 if revision == 'initial_v1' else 64
+    name = 'time_recovery_random_20260915' if revision == 'initial_v1' else 'time_recovery_random_confirmed_20260915'
+    expected = [dict(run_id=f'codex-time-recovery-random-r{first}', side='left', seed=915062, split='train', pair=1),
+                dict(run_id=f'codex-time-recovery-random-r{first+1}', side='right', seed=915063, split='validation', pair=1)]
     if (plan['schema'] != 'measured_random_recovery_collection_v1' or plan['maximum_attempts'] != 2
             or plan['batch_size'] != 2 or plan['runs'] != expected or plan['target_speed_mps'] != 5/3.6
             or plan['minimum_events_per_run'] != 2 or plan['minimum_valid_anchors_per_event'] != 60
             or plan['minimum_dual_nominal_targets_per_run'] != 1
             or plan['native_root'] != '/home/thistle/e2e_autonomous'
-            or plan['analysis_name'] != 'time_recovery_random_20260915'
-            or plan['remote_root'] != '/home/graneple/e2e_autonomous/time_recovery_random_20260915'
+            or plan['analysis_name'] != name
+            or plan['remote_root'] != '/home/graneple/e2e_autonomous/'+name
             or plan['base_source_campaign'] != '/home/graneple/e2e_autonomous/time_recovery_outward_20260914'
             or plan['base_source_commit'] != 'a1c9e5ad0a5c274826601338355b75d34b268186'
             or plan['previous_reserved_test_usage'] != 'sealed' or plan['model_training'] or plan['model_evaluation']):
@@ -181,8 +186,10 @@ else:
         else:
             raise TimeoutError('RANDOM_OUTER_DEADLINE')
     ship_pair(plan,1,root=root,prefix=PREFIX)
+    filename = ('random_recovery_confirmed_20260915.json' if plan.get('revision') == 'confirmation_history_v2'
+                else 'random_recovery_20260915.json')
     command=('cd /home/thistle/e2e_autonomous/e2e_lite_transfuser && tools/with_wsl_training_lock.sh env PYTHONPATH=src '
-             '.venv/bin/python -u tools/collect_time_random_recovery.py audit --plan configs/time_path_p1/random_recovery_20260915.json')
+             '.venv/bin/python -u tools/collect_time_random_recovery.py audit --plan configs/time_path_p1/'+filename)
     subprocess.run(['ssh','codex-wsl',command],check=True,timeout=2400)
     print('RANDOM_COLLECTION_AND_AUDIT_COMPLETE',flush=True)
 

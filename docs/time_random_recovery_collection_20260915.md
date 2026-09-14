@@ -2,6 +2,14 @@
 
 ## 現在の状態
 
+初回r62は279.04sで1周し正常停止・bag終了したが、反復収集ゲートは不成立。実測では解除後4.34sから復帰確認が97行あった。9秒台の0.205sの発行間隔で、過去に成立した1s確認まで消したのが原因。現在の安定区間を欠損でリセットしつつ、既に観測した復帰確認は保持する修正を行う。次の外乱には独立した新しい1s安定確認と3s余白が必要で、欠損をまたぐ教師も従来どおり除外する。閾値・速度・停止監視は変更しない。
+
+初回pipelineはr63を開始する前にexit1で終了し、r62を診断資料として保全した。修正確認は別root `time_recovery_random_confirmed_20260915`、新規r64(train)/r65(validation)、各最大3外乱・1周・最大2runの新しい有限計画とする。seed・split・外乱・監視・教師品質ゲートを保ち、初回IDを再実行しない。固定計画は`configs/time_path_p1/random_recovery_confirmed_20260915.json`。r62は修正後の学習・検証件数へ混入させない。
+
+`c7e3c5aa6b5467689d4692522026f11973e2d0f8`で全pytest2461 passed / 4 skipped / 65 warnings、92.65s、exit0。native WSL準備も成功。固定計画SHA256は`ae3e5bdded5b4890d736d9e31cb9e0ff794213513a383b7ad7c3d408b60b078b`、overlay archiveは`976c7903835d2876e55fd6189af3f00930f497618f54bda8ea5521d879f30d04`。使用gateは`/home/thistle/e2e_autonomous/runs/time_random_recovery_20260915_test_gate_c7e3c5a.json`。次は専用root配置・公式イメージsmoke・r62/r63の実走。
+
+専用root配置は555ファイルのmanifestで完了。公式Dockerイメージ内で変更3ファイルの構文・import・有限3イベントの数学smokeがPASS、exit0。実走の検証とは区別する。`tmp/time_random_recovery_20260915_deploy.log`とremote `official_image_smoke.json`へ保存した。次はr62/r63を順番に収集する。
+
 ユーザーが2026-09-15に[提案方針](time_random_recovery_collection_proposal_20260914.md)による収集から検証までを承認した。未使用の固定位置r52〜r61は実行せず、新しい計画とrootで進める。最終目標は通常E2E完走。そのための追加教師を増やす作業であり、本タスクではモデル学習やモデルの完走性能を主張しない。
 
 実装commit`9e80849`のnative WSL重点テストは58 passed / 1 warning、6.66s。運用追加`886e1ff`の全pytestは2460 passed / 4 skipped / 65 warnings、92.70s、exit0。ただしその後の実データ準備で、正常guideの先頭が60.051293691840584mで、開始65mに対する5m余白を満たさず停止した。走行はまだ未実施。空の準備出力とログを保全して、開始下限を66mへ移す。検証を弱めず、runtimeと準備で共通のguide範囲検証と端数境界の回帰テストを追加した。次は同修正の全pytest・再準備・専用rootでの実走確認。
@@ -15,6 +23,8 @@
 変更所有者は主agentのみ。ROSの座標系・topic・メッセージ・QoS・クロック・唯一の制御発行元を維持する。操舵はROS入力rad、速度はm/s、基準横ずれは左正m、姿勢差はrad。センサ期限、actuator clamp、停止領域監視、overspeedを変更しない。提案が後段監視や発行時確認に失敗したら状態を進めない。
 
 ## 固定した初回計画
+
+以下は初回の設定記録。実行済みはr62だけで、r63は未使用。修正確認ではrun IDをr64/r65、remote/WSL root名を`time_recovery_random_confirmed_20260915`へ変更する。同じseed915062/915063で前回との条件差を確認する。
 
 - 実行先 `graneple@192.168.3.10`。root `/home/graneple/e2e_autonomous/time_recovery_random_20260915`。
 - 最大2run、各1周＋将来末尾＋停止、各最大3イベント。runごとのseedとsplitを走行前に固定する。
@@ -66,7 +76,7 @@ python3 /home/graneple/e2e_autonomous/time_recovery_random_20260915/collect_time
 Windowsで次のコマンドを一度実行する。各runの完走・停止・複数復帰の確認後に次runへ進み、2runの転送照合・既承認の整理・native WSL監査と教師生成を行う。失敗時は原本と結果を保全して分類し、無条件再実行しない。
 
 ```powershell
-python -X utf8 -u tools/collect_time_random_recovery.py collect --plan configs/time_path_p1/random_recovery_20260915.json
+python -X utf8 -u tools/collect_time_random_recovery.py collect --plan configs/time_path_p1/random_recovery_confirmed_20260915.json
 ```
 
 WSL監査を独立に実行する場合は同ツールの`audit`をworktree lock下で使う。既存出力があれば上書きを拒否する。本収集ゲートは各run2イベント以上、全投入イベント復帰確認、各イベント有効教師60件以上、両正常実走と一致する外向き状態が各run1件以上。これはモデルの走行成績ではない。現在、新形式の実走・収集結果は未確定。

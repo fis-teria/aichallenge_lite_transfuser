@@ -59,7 +59,9 @@ def pack(root: Path, prefix: str, names: list[str]) -> None:
     assert root == REMOTE and not subprocess.check_output(['docker', 'ps', '-q'], text=True).strip()
     ledger = json.loads((root/'campaign_20260914.json').read_text())
     resident = [p['run_id'] for p in ledger['attempts'] if p['state'] != 'WSL_MOVED']
-    assert sorted(resident) == sorted(names) and len(names) == ledger['batch_size'] == 2
+    # Preserve a classified partial batch as well as a complete pair. Every
+    # resident attempt must still be included; all inventory/hash gates stay.
+    assert sorted(resident) == sorted(names) and 1 <= len(names) <= ledger['batch_size'] == 2
     rows = []
     for name in names:
         run = root/name

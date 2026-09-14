@@ -104,8 +104,7 @@ def propose_random_pulse(config: RandomPulseConfig, template: SteeringPulseConfi
     gap = state.last_sim_ns is None or sim_ns-state.last_sim_ns > 150_000_000
     st = replace(state, last_sim_ns=sim_ns, last_wall_ns=wall_ns,
                  stable_since_ns=None if gap else state.stable_since_ns,
-                 recovery_since_ns=None if gap else state.recovery_since_ns,
-                 confirmed_ns=None if gap else state.confirmed_ns)
+                 recovery_since_ns=None if gap else state.recovery_since_ns)
     schedule = random_schedule(config)
     if st.stage in ('complete', 'aborted'):
         return RandomPulseDecision(st, 0., 'baseline')
@@ -136,7 +135,12 @@ def propose_random_pulse(config: RandomPulseConfig, template: SteeringPulseConfi
         settled = (abs(lateral_m) <= .05 and abs(heading_rad) <= math.radians(2.)
                    and template.min_speed_mps <= speed_mps <= template.max_speed_mps)
         since = (st.recovery_since_ns if st.recovery_since_ns is not None else sim_ns) if settled else None
-        confirmed = sim_ns if since is not None and sim_ns-since >= round(config.stable_hold_s*1e9) else None
+        # Keep the evidence of a completed continuous hold. A later telemetry
+        # gap resets the CURRENT hold; it cannot erase an already observed
+        # recovery. A separate fresh entry hold still gates every reinjection.
+        confirmed = st.confirmed_ns
+        if confirmed is None and since is not None and sim_ns-since >= round(config.stable_hold_s*1e9):
+            confirmed = sim_ns
         st = replace(st, recovery_since_ns=since, confirmed_ns=confirmed)
         if proposal.state.stage == 'complete':
             if confirmed is None:
@@ -195,9 +199,10 @@ def random_pulse_events(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any
             valid = (p['requested_rad'] == p['effective_rad'] == 0. and abs(values[0]) <= .05
                      and abs(values[1]) <= math.radians(2.) and 1.15 <= values[2] <= 1.4)
             if prior is None or not 0 <= t-prior <= 150_000_000:
-                since = None; confirmed = None
+                since = None
             since = (t if since is None else since) if valid else None
-            confirmed = t if since is not None and t-since >= 1_000_000_000 else None
+            if confirmed is None and since is not None and t-since >= 1_000_000_000:
+                confirmed = t
             prior = t
         success = bool(end is not None and zero is not None and confirmed is not None
                        and prior is not None and 0 <= end-prior <= 150_000_000
