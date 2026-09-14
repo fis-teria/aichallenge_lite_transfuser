@@ -85,7 +85,10 @@ def materialize_recovery_run(run: Path, destination: Path, *, split: str, types:
     if len(index.epochs) != 1:
         raise ValueError('one clock epoch required')
     bounds = (index.epochs[0].first_sim_stamp_ns, index.epochs[0].last_sim_stamp_ns)
-    phases = phase_windows([json.loads(line) for line in (run/'control.jsonl').read_text().splitlines()])
+    controls = [json.loads(line) for line in (run/'control.jsonl').read_text().splitlines()]
+    phases = phase_windows(controls)
+    from .time_random_steering_pulse_v1 import SCHEMA, random_pulse_events, event_at
+    random_events = random_pulse_events(controls) if controls[0].get('annotation_schema') == SCHEMA else None
     cameras = {}
     for event in sorted(index.events, key=lambda e:(e.available_ns, e.sequence)):
         if event.role == 'camera':
@@ -112,6 +115,11 @@ def materialize_recovery_run(run: Path, destination: Path, *, split: str, types:
         audited.append(dict(row))
         if row['usable_full'] and row['phase_and_xy_full']:
             row.update(label_index=len(accepted), run_id=run.name, split=split)
+            if random_events is not None:
+                event = event_at(anchor.capture_ns, random_events)
+                if event is None:
+                    raise ValueError('RANDOM_TEACHER_EVENT_MISSING')
+                row['recovery_event_id'] = event['event_id']
             accepted.append(row)
             labels.append(teacher)
     expected = [r['anchor_id'] for r in prior['anchors'] if r['usable_full'] and r.get('phase_and_xy_full')]

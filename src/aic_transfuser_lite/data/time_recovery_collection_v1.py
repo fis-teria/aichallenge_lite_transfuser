@@ -272,9 +272,12 @@ Pulse recovery requires an emitted zero-perturbation teacher command. Missing
 telemetry, conflicting same-stamp phases and later perturbations block labels.
 """
     schemas = {row.get('annotation_schema') for row in rows}
-    versioned = 'measured_steering_pulse_v1' in schemas
-    if schemas - {None, 'measured_steering_pulse_v1'} or (versioned and None in schemas):
+    from .time_random_steering_pulse_v1 import SCHEMA, random_pulse_events
+    versioned = bool(schemas & {'measured_steering_pulse_v1', SCHEMA})
+    if schemas - {None, 'measured_steering_pulse_v1', SCHEMA} or (versioned and len(schemas) != 1):
         raise ValueError('PHASE_ANNOTATION_SCHEMA')
+    confirmed = ({e['event_id'] for e in random_pulse_events(rows) if e['recovery_confirmed']}
+                 if SCHEMA in schemas else None)
     phases: dict[int, str] = {}
     sequence = 0; previous_stamp = -1; previous_wall = -1
     for row in rows:
@@ -304,6 +307,9 @@ telemetry, conflicting same-stamp phases and later perturbations block labels.
                     or type(target) not in (float, int) or not math.isfinite(target)
                     or not math.isclose(target, TARGET_MPS, abs_tol=1e-5)):
                 raise ValueError('PHASE_PERTURBATION_IN_TEACHER')
+        if (confirmed is not None and phase == 'recovery'
+                and row['random_pulse']['state']['event_id'] not in confirmed):
+            phase = 'invalid'
         if t in phases and phases[t] != phase:
             phases[t] = 'invalid'
         else:

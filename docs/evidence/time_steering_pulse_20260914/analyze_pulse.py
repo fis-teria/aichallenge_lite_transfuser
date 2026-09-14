@@ -21,6 +21,7 @@ from aic_transfuser_lite.data.time_dataset_v1 import TimeDatasetConfig, _eligibl
 from aic_transfuser_lite.data.time_recovery_collection_v1 import collection_phase_windows, project_course, recovery_teacher_mask
 from aic_transfuser_lite.data.time_sqlite_reader_v1 import read_time_sqlite_run
 from aic_transfuser_lite.data.time_steering_pulse_v1 import nominal_recovery_errors
+from aic_transfuser_lite.data.time_random_steering_pulse_v1 import SCHEMA, random_pulse_events, event_at
 
 
 def bins(rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -66,6 +67,7 @@ def main() -> None:
     guide=np.asarray(pulse['nominal_guide'],dtype=float); base=np.asarray(ref['baseline_xy_m'],dtype=float)
     controls=[json.loads(s) for s in (run/'control.jsonl').read_text().splitlines()]
     phases=collection_phase_windows(controls)
+    random_events=random_pulse_events(controls) if pulse['schema']==SCHEMA else None
     recovery=[w for w in phases if w.phase=='recovery']; assert recovery
     zero=min(w.start_ns for w in recovery)
     view=args.probe.parent/(run.name+'_causal_view_recovery_freeze50000000')
@@ -90,9 +92,15 @@ def main() -> None:
         full_phase=bool(recovery_teacher_mask(anchor.capture_ns,phases).all())
         margin=anchor.capture_ns>=phase.start_ns+150_000_000
         full=bool(row['usable_full'] and teacher is not None and teacher.xy_mask.all() and full_phase)
-        row.update(seconds_after_release=(anchor.capture_ns-zero)/1e9, phase_margin_pass=margin,
+        event=event_at(anchor.capture_ns,random_events) if random_events is not None else None
+        if random_events is not None and event is None:
+            raise ValueError('RANDOM_ANALYSIS_EVENT_MISSING')
+        event_zero=event['zero_publication_ns'] if event is not None else zero
+        row.update(seconds_after_release=(anchor.capture_ns-event_zero)/1e9, phase_margin_pass=margin,
             full_phase_pass=full_phase, usable_before_margin=full, accepted=bool(full and margin),
             invalid_raw_heading_history_row_ids=bad)
+        if event is not None:
+            row.update(recovery_event_id=event['event_id'],event_zero_publication_ns=event_zero)
         eligible=_eligible(events,anchor,cfg,freeze,bounds)
         try:
             pose_event,provenance=_pose_anchor(eligible,anchor,cfg); pose=pose_event.payload
@@ -115,12 +123,17 @@ def main() -> None:
     for row in controls:
         p=row.get('pulse',{}); publication=row.get('publication')
         if publication and p.get('applied') and p.get('lateral_error_m') is not None:
-            relative=(publication['sim_ns']-zero)/1e9
+            event=(next((e for e in random_events if e['zero_publication_ns'] is not None
+                and -3_000_000_000 <= publication['sim_ns']-e['zero_publication_ns'] <= 10_000_000_000),None)
+                if random_events is not None else None)
+            if random_events is not None and event is None: continue
+            relative=(publication['sim_ns']-(event['zero_publication_ns'] if event else zero))/1e9
             if -3.<=relative<=10.:
                 control_states.append(dict(seconds_after_release=relative,phase=row['phase'],
                     left_m=p['lateral_error_m'],heading_rad=p['heading_error_rad'],
                     requested_rad=p['requested_rad'],effective_rad=p['effective_rad'],
-                    issued_angle_rad=row['issued_angle_rad'],speed_mps=row['speed_mps']))
+                    issued_angle_rad=row['issued_angle_rad'],speed_mps=row['speed_mps'],
+                    recovery_event_id=event['event_id'] if event else None))
     report=dict(run_id=run.name,raw_status=result['status'],fault=result.get('last_control',{}).get('fault'),
         nominal_run_id=pulse['nominal_run_id'],nominal_control_sha256=pulse['nominal_control_sha256'],
         config=pulse['config'],first_zero_publication_ns=zero,
@@ -131,7 +144,7 @@ def main() -> None:
         first_015s_otherwise_usable=bins([r for r in first if not r['phase_margin_pass'] and r['usable_before_margin']]),
         input_reasons=dict(Counter(r['input_invalid_reason'] or 'OK' for r in records)),
         replay_accepted_ids_match=True,independent_runs=1,split_assigned=False,training_materialized=False,
-        records=records,control_states=control_states)
+        records=records,control_states=control_states,random_events=random_events)
     args.output.write_text(json.dumps(report,indent=2,allow_nan=False)+'\n')
     print(json.dumps({k:v for k,v in report.items() if k not in ('records','control_states')},indent=2))
 

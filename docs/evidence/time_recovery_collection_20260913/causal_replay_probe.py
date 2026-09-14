@@ -26,6 +26,7 @@ def main() -> None:
     parser.add_argument('--types', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--phase', choices=('baseline', 'recovery'), default='recovery')
+    parser.add_argument('--all-candidates', action='store_true', help='Audit every candidate, bounded at 1024 per run')
     parser.add_argument('--runtime-config', type=Path,
                         default=Path('configs/control/time_path_vehicle_model_5kmh_20260913.json'))
     args = parser.parse_args()
@@ -79,6 +80,10 @@ def main() -> None:
             if candidate is not None:
                 targeted.append(candidate)
     chosen = sorted({a.sequence:a for a in (*chosen,*targeted[:8])}.values(),key=lambda a:a.capture_ns)
+    if args.all_candidates:
+        if len(candidates) > 1024:
+            raise ValueError('FULL_RECOVERY_AUDIT_BUDGET_EXCEEDED')
+        chosen = candidates
     config = TimeDatasetConfig()
     records = []
     full = []
@@ -122,7 +127,8 @@ def main() -> None:
         availability='bag_receipt_proxy_not_measured_preprocessing_completion', freeze_delay_ns=freeze_delay,
         runtime_config_sha256=hashlib.sha256(runtime_bytes).hexdigest(), runtime_config=str(args.runtime_config),
         phase_candidates_with_150ms_start_margin=len(candidates), audited_anchors=len(records),
-        selection_policy='All candidates up to 256, otherwise uniform, plus up to 8 targeted at invalid raw heading histories',
+        selection_policy=('All candidates, bounded at 1024' if args.all_candidates else
+            'All candidates up to 256, otherwise uniform, plus up to 8 targeted at invalid raw heading histories'),
         all_phase_candidates_audited=len(records)==len(candidates),
         audited_input_eligible=sum(r['input_eligible'] for r in records),
         audited_full_observed_future=sum(r['usable_full'] and r.get('phase_and_xy_full',False) for r in records),
