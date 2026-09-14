@@ -74,3 +74,20 @@ r22でも整合を確認する。同じ元コース進捗で対応づけて、�
 主要2試行のみを許可し、追加診断2枠は自動使用しない。
 専用runtimeのsrc/tools/configs 400ファイルが既存の実走commit `0484dc3` と一致した。
 実行時にも全件と基準CSV/地図/C++入力のhashを再確認する。
+
+## 最初の試行と限定した環境調整
+
+`cornerleft020-r27` はs=17.35m、復帰場所に到着する前に
+`COLLECTION_COMPUTATION_TIMEOUT`。最初のscanが古く再選択に入り、
+判断全体108.01msで100ms期限を超過。最後の計算はwall28.24ms/thread CPU19.79ms、
+GC pauseなし。正常停止の3秒確認は成立せず、監督がAWSIMを停止した。bag closeは成立。
+この記録は復帰教師ではない。
+
+実行ホストはP/E混在20 logical CPUs。他のdesktop処理にも負荷があるため、
+次の1回は専用nodes containerをP coresのlogical CPU2-5へ、今回所有するAWSIM/Autowareを
+CPU0-1,6-19へ割り当てる。全containerの設定を公式Start前に確認する。
+他のアプリの停止やCPU設定変更は行わない。これはCPU競合を減らす試験であり、
+スケジューリングが全遅延の原因と確定したわけではない。
+入力期限・100ms判断期限・retry回数・速度・操舵・安全監視は変更しない。
+追加診断枠の1本を`cornerleft020-r29`に使用し、同じ失敗が再発したらそこで中断する。
+成功時の右`cornerright020-r28`も同じCPU割当を使用する。総試行上限は3本/6GiB。

@@ -11,13 +11,15 @@ import json
 import os
 from pathlib import Path
 import shutil
+import signal
 import subprocess
 import time
 
 
 ROOT = Path('/home/graneple/e2e_autonomous/time_recovery_collection_20260913')
 PLANNED = {'codex-time-recovery-cornerleft020-r27': 'left',
-           'codex-time-recovery-cornerright020-r28': 'right'}
+           'codex-time-recovery-cornerright020-r28': 'right',
+           'codex-time-recovery-cornerleft020-r29': 'left'}
 SOURCE_SHA = '0484dc369f66282e05faa61dc98c80d687a9c6c4'
 
 
@@ -30,6 +32,8 @@ def main() -> None:
     parser.add_argument('--run-id', choices=tuple(PLANNED), required=True)
     parser.add_argument('--reference-sha256', required=True)
     parser.add_argument('--check-only', action='store_true')
+    parser.add_argument('--separate-cpus', action='store_true',
+                        help='Put collection nodes on P cores 2-5; simulator and Autoware on 0-1,6-19 before Start')
     args = parser.parse_args()
     assert ROOT.resolve() == ROOT and not (ROOT/args.run_id).exists()
     assert not subprocess.check_output(['docker', 'ps', '-q'], text=True).strip()
@@ -53,7 +57,13 @@ def main() -> None:
     campaign_path = ROOT/'corner_campaign_20260914.json'
     ledger = json.loads(campaign_path.read_text()) if campaign_path.exists() else dict(
         maximum_attempts=2, maximum_bag_bytes=4*2**30, attempts=[], started_unix=time.time())
-    assert len(ledger['attempts']) < ledger['maximum_attempts'] == 2
+    # One diagnosed infrastructure retry, within the predeclared four-attempt bound.
+    if args.run_id == 'codex-time-recovery-cornerleft020-r29':
+        failed = read_result = json.loads((ROOT/'codex-time-recovery-cornerleft020-r27/result.json').read_text())
+        assert failed['last_control']['fault'] == 'COLLECTION_COMPUTATION_TIMEOUT'
+        assert args.separate_cpus
+        ledger.update(maximum_attempts=3, maximum_bag_bytes=6*2**30)
+    assert len(ledger['attempts']) < ledger['maximum_attempts'] <= 3
     assert time.time()+1980 < ledger['started_unix']+4*3600
     for previous in ledger['attempts']:
         result = json.loads((ROOT/previous['run_id']/'result.json').read_text())
@@ -62,7 +72,7 @@ def main() -> None:
     backup = ROOT/('references_before_'+args.run_id)
     assert not backup.exists() and (ROOT/'references').resolve().parent == ROOT
     report = dict(run_id=args.run_id, side=side, reference_sha256=args.reference_sha256,
-                  source_sha=SOURCE_SHA, check_passed=True)
+                  source_sha=SOURCE_SHA, check_passed=True, separate_cpus=args.separate_cpus)
     if args.check_only:
         print(json.dumps(report))
         return
@@ -80,6 +90,30 @@ def main() -> None:
                                  start_new_session=True)
     report.update(state='STARTED', pid=child.pid)
     campaign_path.write_text(json.dumps(ledger, indent=2)+'\n')
+    if args.separate_cpus:
+        requested = {args.run_id+'-nodes':'2-5', args.run_id+'-simulator-1':'0-1,6-19',
+                     args.run_id+'-autoware-1':'0-1,6-19'}
+        applied = {}
+        deadline = time.monotonic()+60.
+        try:
+            while set(applied) != set(requested):
+                assert child.poll() is None and time.monotonic() < deadline
+                assert not (ROOT/args.run_id/'drive_authorized.json').exists(), 'CPU_SETUP_AFTER_DRIVE_AUTHORITY'
+                active = set(subprocess.check_output(['docker','ps','--format','{{.Names}}'],text=True).splitlines())
+                for name in requested.keys()-applied.keys():
+                    if name not in active:
+                        continue
+                    subprocess.run(['docker','update','--cpuset-cpus',requested[name],name],check=True,capture_output=True)
+                    state = json.loads(subprocess.check_output(['docker','inspect',name],text=True))[0]
+                    assert state['HostConfig']['CpusetCpus'] == requested[name]
+                    applied[name] = dict(cpus=requested[name],container_id=state['Id'])
+                time.sleep(.1)
+            (ROOT/args.run_id/'cpu_assignment.json').write_text(json.dumps(applied,indent=2)+'\n')
+        except BaseException:
+            os.killpg(child.pid,signal.SIGTERM)
+            raise
+        report['cpu_assignment'] = applied
+        campaign_path.write_text(json.dumps(ledger,indent=2)+'\n')
     print(json.dumps(report))
 
 
