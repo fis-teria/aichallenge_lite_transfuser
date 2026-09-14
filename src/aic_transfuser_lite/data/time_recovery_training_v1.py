@@ -21,7 +21,7 @@ from aic_transfuser_lite.control.vehicle_motion_v1 import MAX_CURVATURE_PER_M
 from .time_archive_v1 import _rename_without_replace
 from .time_corpus_v1 import EventWindows, audit_anchor
 from .time_dataset_v1 import TimeDatasetConfig, TimeSample
-from .time_recovery_collection_v1 import PhaseWindow, recovery_teacher_mask
+from .time_recovery_collection_v1 import PhaseWindow, recovery_teacher_mask, collection_phase_windows
 from .time_split_v1 import content_sha256, validate_time_split
 from .time_sqlite_reader_v1 import read_time_sqlite_run
 from .time_training_cache_v1 import (_json, _prepare_run, _sha, _write_json,
@@ -30,16 +30,7 @@ from .time_training_cache_v1 import (_json, _prepare_run, _sha, _write_json,
 
 def phase_windows(rows: Sequence[dict[str, Any]]) -> tuple[PhaseWindow, ...]:
     """Sim-ns intervals; telemetry gaps over 150 ms cannot support teachers."""
-    phases = {r['sim_ns']: r['phase'] for r in rows if r['sim_ns'] is not None}
-    windows: list[PhaseWindow] = []
-    ordered = sorted(phases)
-    for a, b in zip(ordered, ordered[1:]):
-        phase = phases[a] if b-a <= 150_000_000 else 'invalid'
-        if windows and windows[-1].phase == phase and windows[-1].end_ns == a:
-            windows[-1] = PhaseWindow(windows[-1].start_ns, b, phase)
-        else:
-            windows.append(PhaseWindow(a, b, phase))
-    return tuple(windows)
+    return collection_phase_windows(rows)
 
 
 def invalid_yaw_history(row: dict[str, Any], invalid_ids: set[int]) -> list[int]:

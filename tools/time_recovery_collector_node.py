@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 from collections import deque
+from dataclasses import asdict
 import gc
 import json
 import math
@@ -27,6 +28,9 @@ from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     check_collection_decision_age, collection_snapshot_retry_allowed,
     collection_snapshot_retry_wait_ns,
     validate_collection_imu_axes, collection_imu_yaw_rate,
+)
+from aic_transfuser_lite.data.time_steering_pulse_v1 import (
+    SteeringPulseConfig, SteeringPulseState, nominal_recovery_errors, propose_steering_pulse,
 )
 
 
@@ -49,6 +53,19 @@ def main() -> None:
             ('OPENBLAS_NUM_THREADS','OMP_NUM_THREADS','MKL_NUM_THREADS')}), indent=2))
     reference = json.loads(args.reference.read_text())
     baseline = np.asarray(reference['baseline_xy_m'])
+    pulse_spec = reference.get('steering_pulse')
+    pulse_config = None; pulse_guide = None; pulse_state = SteeringPulseState()
+    if pulse_spec is not None:
+        if (pulse_spec['schema'] != 'measured_steering_pulse_v1' or reference['intervals']
+                or reference['signed_offset_m'] != 0.
+                or reference['reference_xy_m'] != reference['baseline_xy_m']):
+            raise ValueError('PULSE_REQUIRES_UNPERTURBED_REFERENCE')
+        pulse_config = SteeringPulseConfig(**pulse_spec['config'])
+        pulse_guide = np.asarray(pulse_spec['nominal_guide'], dtype=float)
+        nominal_recovery_errors(pulse_guide, s_m=pulse_config.start_s_m, offset_m=0., yaw_rad=0.)
+        if (pulse_guide[0, 0] > pulse_config.start_s_m-5.
+                or pulse_guide[-1, 0] < pulse_config.start_s_m+pulse_config.start_window_m+3.+1.7*pulse_config.recovery_s):
+            raise ValueError('PULSE_GUIDE_RECOVERY_COVERAGE')
     import rclpy
     from rclpy.node import Node
     from rclpy.executors import SingleThreadedExecutor
@@ -171,7 +188,7 @@ def main() -> None:
                     {r:tuple(h) for r,h in histories.items()}, tuple(poses), tuple(scans), dict(sensor_counts), dict(imu_transforms))
 
     def tick(attempt: int = 0, started_ns: int | None = None, retry_reasons: tuple[str, ...] = ()) -> None:
-        nonlocal publisher, last_gc_wall
+        nonlocal publisher, last_gc_wall, pulse_state
         if started_ns is None:
             started_ns = time.monotonic_ns()
         stage_started = time.monotonic_ns(); thread_started = time.thread_time_ns(); stages = {}
@@ -186,6 +203,7 @@ def main() -> None:
         speed = None; fresh_velocity = False; details = {}; reason = 'STARTUP'; projection = None; current = None
         guard_yaw_rate = None
         inputs = dict(cache); motion_selected = None; input_times = {}
+        pulse_decision = None; pulse_errors = None; nominal_bounded_angle = None
         if clock_ns is not None:
             for role, history in histories.items():
                 input_times[role] = [(stamp(m.stamp if role in ('nominal','steering') else m.header.stamp), receipt)
@@ -277,7 +295,21 @@ def main() -> None:
                 raise ValueError('COLLECTION_DURATION_LIMIT')
             if state['stop_reason']:
                 raise ValueError('REQUESTED_BRAKE')
-            angle, bounded_accel = bounded_collection_command(float(nominal.lateral.steering_tire_angle),
+            requested_angle = float(nominal.lateral.steering_tire_angle)
+            if pulse_config is not None and state['armed_ns'] is not None:
+                if pulse_guide[0, 0] <= projection['s_m'] <= pulse_guide[-1, 0]:
+                    pulse_errors = nominal_recovery_errors(pulse_guide, s_m=projection['s_m'],
+                        offset_m=projection['offset_m'], yaw_rad=current.yaw_rad)
+                elif pulse_state.stage in ('active', 'releasing', 'recovery'):
+                    raise ValueError('PULSE_LEFT_GUIDE_SUPPORT')
+                pulse_decision = propose_steering_pulse(pulse_config, pulse_state, sim_ns=clock_ns,
+                    wall_ns=now, s_m=projection['s_m'], speed_mps=speed,
+                    lateral_m=pulse_errors[0] if pulse_errors else 0.,
+                    heading_rad=pulse_errors[1] if pulse_errors else 0.)
+                nominal_bounded_angle, _ = bounded_collection_command(requested_angle,
+                    float(nominal.longitudinal.acceleration), previous[0], dt)
+                requested_angle += pulse_decision.perturbation_rad
+            angle, bounded_accel = bounded_collection_command(requested_angle,
                 float(nominal.longitudinal.acceleration), previous[0], dt)
             stage('motion_reference')
             selected, captured = select_aligned_scan([(stamp(m.header.stamp), t) for m, t in scans],
@@ -317,7 +349,8 @@ def main() -> None:
         else:
             state['stop_since_ns'] = None; state['stop_confirmed'] = False
         phase = ('invalid' if state['fault'] or state['armed_ns'] is None else
-                 'braking' if state['stop_reason'] else phase_at_s(projection['s_m'], reference['intervals']) if projection else 'invalid')
+                 'braking' if state['stop_reason'] else pulse_decision.phase if pulse_decision is not None
+                 else phase_at_s(projection['s_m'], reference['intervals']) if projection else 'invalid')
         state['phase'] = phase
         retry_after_snapshot = None
         publication = None
@@ -359,6 +392,9 @@ def main() -> None:
                     publisher.publish(command); state['commands'] += 1
                     publication = dict(sim_ns=command_stamp, monotonic_ns=emitted_wall,
                                        sequence=state['commands'])
+                    if pulse_decision is not None and target > 0 and not state['fault']:
+                        # No state change survives a rejected/unpublished proposal.
+                        pulse_state = pulse_decision.state
         elif actual and actual != ['/time_recovery_collector']:
             state['fault'] = 'COMPETING_CONTROLLER'
         if retry_after_snapshot is not None:
@@ -375,6 +411,15 @@ def main() -> None:
                        if 'nominal' in inputs and math.isfinite(inputs['nominal'][0].lateral.steering_tire_angle) else None,
                    nominal_stamp_ns=stamp(inputs['nominal'][0].stamp) if 'nominal' in inputs else None)
         row['publication'] = publication  # ROS publication boundary, not simulator application time.
+        if pulse_config is not None:
+            applied = publication is not None and target > 0 and not state['fault'] and pulse_decision is not None
+            row['annotation_schema'] = 'measured_steering_pulse_v1'
+            row['pulse'] = dict(state=asdict(pulse_state), applied=bool(applied),
+                requested_rad=pulse_decision.perturbation_rad if pulse_decision else 0.,
+                effective_rad=angle-nominal_bounded_angle if applied and nominal_bounded_angle is not None else 0.,
+                lateral_error_m=pulse_errors[0] if pulse_errors else None,
+                heading_error_rad=pulse_errors[1] if pulse_errors else None)
+            state['pulse'] = row['pulse']
         row['nominal_acceleration_mps2'] = (float(inputs['nominal'][0].longitudinal.acceleration)
             if 'nominal' in inputs and math.isfinite(inputs['nominal'][0].longitudinal.acceleration) else None)
         row['odometry_speed_mps'] = (float(inputs['pose'][0].twist.twist.linear.x)

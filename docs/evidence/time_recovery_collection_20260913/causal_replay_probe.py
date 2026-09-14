@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 from aic_transfuser_lite.data.time_corpus_v1 import EventWindows, audit_anchor
 from aic_transfuser_lite.data.time_dataset_v1 import TimeDatasetConfig, assemble_time_sample
-from aic_transfuser_lite.data.time_recovery_collection_v1 import PhaseWindow, recovery_teacher_mask
+from aic_transfuser_lite.data.time_recovery_collection_v1 import collection_phase_windows, recovery_teacher_mask
 from aic_transfuser_lite.data.time_sqlite_reader_v1 import read_time_sqlite_run, load_event
 from aic_transfuser_lite.control.vehicle_motion_v1 import MAX_CURVATURE_PER_M
 
@@ -54,15 +54,7 @@ def main() -> None:
     epoch = index.epochs[0]
     bounds = (epoch.first_sim_stamp_ns, epoch.last_sim_stamp_ns)
     controls = [json.loads(line) for line in (run/'control.jsonl').read_text().splitlines()]
-    phases = {r['sim_ns']: r['phase'] for r in controls if r['sim_ns'] is not None}
-    windows = []
-    ordered = sorted(phases)
-    for a, b in zip(ordered, ordered[1:]):
-        phase = phases[a] if b-a <= 150_000_000 else 'invalid'
-        if windows and windows[-1].phase == phase and windows[-1].end_ns == a:
-            windows[-1] = PhaseWindow(windows[-1].start_ns, b, phase)
-        else:
-            windows.append(PhaseWindow(a, b, phase))
+    windows = collection_phase_windows(controls)
     cameras = {}
     for e in sorted(index.events, key=lambda e:(e.available_ns, e.sequence)):
         if e.role == 'camera':

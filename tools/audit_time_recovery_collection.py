@@ -13,7 +13,7 @@ import numpy as np
 from rosbags.typesys import Stores, get_typestore, get_types_from_idl
 
 from aic_transfuser_lite.data.time_recovery_collection_v1 import (
-    PhaseWindow, phase_at_s, project_course, recovery_teacher_mask,
+    collection_phase_windows, phase_at_s, project_course, recovery_teacher_mask,
 )
 
 
@@ -83,16 +83,7 @@ def main() -> None:
     control=[json.loads(line) for line in (run/'control.jsonl').read_text().splitlines()]
     track=[r for r in control if r['reason']=='RECOVERY_TEACHER_TRACKING']
     final=result.get('last_control',{}); armed=final.get('armed_ns'); end=final.get('sim_ns')
-    # Duplicate frozen-clock ticks overwrite at the same original sim timestamp.
-    phases={r['sim_ns']:r['phase'] for r in control if r['sim_ns'] is not None}
-    windows=[]
-    ordered=sorted(phases)
-    for a,b in zip(ordered,ordered[1:]):
-        phase=phases[a] if b-a<=150_000_000 else 'invalid'
-        if windows and windows[-1].phase==phase and windows[-1].end_ns==a:
-            windows[-1]=PhaseWindow(windows[-1].start_ns,b,phase)
-        else:
-            windows.append(PhaseWindow(a,b,phase))
+    windows=collection_phase_windows(control)
     pose_rows=[]; rejections=Counter(); excluded_pose_phases=Counter()
     for _,m in messages('/localization/kinematic_state'):
         t=stamp(m.header.stamp)
@@ -109,11 +100,15 @@ def main() -> None:
         except ValueError as exc:
             rejections[str(exc)]+=1
     by_phase={phase:[] for phase in ('baseline','approach','hold','recovery','after_recovery')}
-    recover_end=reference['intervals'][-1]['end_s_m']
+    recover_end=reference['intervals'][-1]['end_s_m'] if reference['intervals'] else None
+    temporal_recovery_ends=[w.end_ns for w in windows if w.phase=='recovery']
     for row in pose_rows:
-        phase=phase_at_s(row['s_m'],reference['intervals'])
+        phase=(phase_at_s(row['s_m'],reference['intervals']) if recover_end is not None else
+               next((w.phase for w in windows if w.start_ns<=row['stamp_ns']<w.end_ns),'invalid'))
         by_phase[phase].append(row['offset_m'])
-        if recover_end <= row['s_m'] < recover_end+5.:
+        if ((recover_end is not None and recover_end <= row['s_m'] < recover_end+5.) or
+                (recover_end is None and temporal_recovery_ends and
+                 temporal_recovery_ends[-1] <= row['stamp_ns'] < temporal_recovery_ends[-1]+5_000_000_000)):
             by_phase['after_recovery'].append(row['offset_m'])
     metrics={phase:dict(pose_count=len(values),median_signed_offset_m=float(np.median(values)),
                         max_absolute_offset_m=float(np.max(np.abs(values)))) if values else dict(pose_count=0)

@@ -265,6 +265,60 @@ class PhaseWindow:
             raise ValueError("PHASE_WINDOW_INVALID")
 
 
+def collection_phase_windows(rows: Sequence[Mapping[str, object]]) -> tuple[PhaseWindow, ...]:
+    """Legacy decision stamps or versioned pulse publication stamps, never mixed.
+
+Pulse recovery requires an emitted zero-perturbation teacher command. Missing
+telemetry, conflicting same-stamp phases and later perturbations block labels.
+"""
+    schemas = {row.get('annotation_schema') for row in rows}
+    versioned = 'measured_steering_pulse_v1' in schemas
+    if schemas - {None, 'measured_steering_pulse_v1'} or (versioned and None in schemas):
+        raise ValueError('PHASE_ANNOTATION_SCHEMA')
+    phases: dict[int, str] = {}
+    sequence = 0; previous_stamp = -1; previous_wall = -1
+    for row in rows:
+        if not versioned:
+            if row['sim_ns'] is not None:
+                phases[row['sim_ns']] = row['phase']
+            continue
+        emitted = row.get('publication')
+        if emitted is None:
+            if row['phase'] not in ('invalid', 'braking'):
+                raise ValueError('PHASE_UNPUBLISHED_TEACHER')
+            continue
+        t, wall, seq = emitted['sim_ns'], emitted['monotonic_ns'], emitted['sequence']
+        if (any(type(v) is not int or v < 0 for v in (t, wall, seq)) or seq != sequence+1
+                or t < previous_stamp or wall <= previous_wall):
+            raise ValueError('PHASE_PUBLICATION_ORDER')
+        sequence = seq; previous_stamp = t; previous_wall = wall
+        phase = row['phase']
+        if phase not in PHASES:
+            raise ValueError('PHASE_PUBLICATION_VALUE')
+        if phase in ELIGIBLE_PHASES:
+            pulse = row['pulse']
+            allowed_stage = {'recovery'} if phase == 'recovery' else {'waiting', 'skipped', 'complete'}
+            target = row['target_speed_mps']
+            if (pulse['applied'] is not True or pulse['state']['stage'] not in allowed_stage
+                    or pulse['requested_rad'] != 0. or pulse['effective_rad'] != 0.
+                    or type(target) not in (float, int) or not math.isfinite(target)
+                    or not math.isclose(target, TARGET_MPS, abs_tol=1e-5)):
+                raise ValueError('PHASE_PERTURBATION_IN_TEACHER')
+        if t in phases and phases[t] != phase:
+            phases[t] = 'invalid'
+        else:
+            phases[t] = phase
+    windows: list[PhaseWindow] = []
+    ordered = sorted(phases)
+    for a, b in zip(ordered, ordered[1:]):
+        phase = phases[a] if b-a <= 150_000_000 else 'invalid'
+        if windows and windows[-1].phase == phase and windows[-1].end_ns == a:
+            windows[-1] = PhaseWindow(windows[-1].start_ns, b, phase)
+        else:
+            windows.append(PhaseWindow(a, b, phase))
+    return tuple(windows)
+
+
 def recovery_teacher_mask(observation_ns: int, windows: Sequence[PhaseWindow]) -> np.ndarray:
     """Return bool [30]: whole future interval must stay in eligible phases.
 

@@ -49,6 +49,44 @@ def test_invalid_yaw_checks_all_interpolated_history_endpoints():
     assert invalid_yaw_history(row,{9})==[]
 
 
+def pulse_rows():
+    return [dict(sim_ns=i*100_000_000, phase='recovery', target_speed_mps=5/3.6,
+        annotation_schema='measured_steering_pulse_v1',
+        publication=dict(sim_ns=i*100_000_000+50_000_000, monotonic_ns=1_000_000_000+i*100_000_000, sequence=i+1),
+        pulse=dict(applied=True, state={'stage':'recovery'},requested_rad=0.,effective_rad=0.)) for i in range(42)]
+
+
+def test_pulse_teachers_start_at_publication_and_stop_before_next_perturbation():
+    rows=pulse_rows(); windows=phase_windows(rows)
+    assert windows[0].start_ns==50_000_000
+    assert not recovery_teacher_mask(0,windows).any()
+    assert recovery_teacher_mask(50_000_000,windows).all()
+    rows[10]['phase']='hold';rows[10]['pulse'].update(requested_rad=.03,state={'stage':'active'})
+    assert not recovery_teacher_mask(50_000_000,phase_windows(rows))[9:].any()
+
+
+@pytest.mark.parametrize('mutation', ['sequence','reverse_stamp','unpublished','nonzero','mixed_schema'])
+def test_pulse_teacher_boundaries_fail_closed(mutation):
+    rows=pulse_rows()
+    if mutation=='sequence':rows[2]['publication']['sequence']=2
+    if mutation=='reverse_stamp':rows[2]['publication']['sim_ns']=0
+    if mutation=='unpublished':rows[2]['publication']=None
+    if mutation=='nonzero':rows[2]['pulse']['effective_rad']=.001
+    if mutation=='mixed_schema':rows[2].pop('annotation_schema')
+    with pytest.raises(ValueError,match='PHASE_'):
+        phase_windows(rows)
+
+
+def test_pulse_duplicate_stamp_conflict_and_long_gap_exclude_early_future():
+    rows=pulse_rows()
+    rows[1]['publication']['sim_ns']=rows[0]['publication']['sim_ns']
+    rows[0]['phase']='hold';rows[0]['pulse'].update(state={'stage':'active'},requested_rad=.01)
+    assert phase_windows(rows)[0].phase=='invalid'
+    rows=pulse_rows()
+    rows[1]['publication']['sim_ns']=rows[0]['publication']['sim_ns']
+    assert phase_windows(rows)[0].phase=='invalid'  # next support is 200 ms away
+
+
 def test_repetition_is_train_only_and_does_not_multiply_validation():
     manifest=extension()
     nominal=next(r['run_id'] for r in manifest['base_manifest']['runs'] if r['split']=='train')
