@@ -67,3 +67,30 @@ timeout --signal=TERM --kill-after=10s 710s python3 \
 どちらも発進時の`STEERING_FEASIBLE_LOOKAHEAD_MISSING`で進捗停止し、完走は0/2。
 この条件ではコーナー復帰性能を測れていないため、別途予定した教師準備後の引継ぎ試験を行う。
 両方で通常`rviz2`のraw Path購読を確認した。無条件に再試行はしない。
+
+## 保存記録の評価方法
+
+Windows commit `39f3aa1`をnative WSLに同期し、`pytest -q --disable-warnings`は
+2,349 passed / 4 skipped（87.94s）。同sourceを両方の復帰試験deploymentに配置し、
+source/install一致と実モデルによる隔離ROS smokeが両方PASS。
+
+復帰の判定は、教師PPの実測nominal guideに対する横ずれ5cm以内・向きずれ2度以内を
+速度0.5m/s以上で1秒間維持すること。250ms以上の観測欠損で連続性を切る。
+さらに10秒区間を観測でき、区間末尾もこの条件内にある場合に`RECOVERED_10S`とする。
+最初から許容内、停止して位置だけ戻った、途中で記録が切れた場合は成功に数えない。
+これは道路端までの安全距離や一般的な成功率を表す指標ではない。
+
+```bash
+tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
+  tools/evaluate_time_recovery_takeover.py \
+  --run ../runs/time_recovery_expanded_awsim_20260914/raw/codex-time-expanded-base-left01 \
+  --run ../runs/time_recovery_expanded_awsim_20260914/raw/codex-time-expanded-candidate-left01 \
+  --run ../runs/time_recovery_expanded_awsim_20260914/raw/codex-time-expanded-base-right01 \
+  --run ../runs/time_recovery_expanded_awsim_20260914/raw/codex-time-expanded-candidate-right01 \
+  --reference-root ../runs/time_recovery_expanded_awsim_20260914/references \
+  --output ../runs/time_recovery_expanded_awsim_20260914/evaluation
+```
+
+引継ぎ後の記録だけで既存PP・操舵応答・マッピングを再計算し、拒否を含めて照合する。
+最初の停止領域拒否は実際のscan・発行操舵・実測運動を用いて再評価する。
+rawモデル軌道・同じguideに対する初回予測の向きも診断し、教師区間をモデルの成績へ含めない。
