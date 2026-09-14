@@ -286,14 +286,14 @@ def remote_python(host: str, code: str, *, lock: bool = False) -> str:
     return result.stdout
 
 
-def ship_pair(plan: dict[str, Any], pair: int) -> None:
+def ship_pair(plan: dict[str, Any], pair: int, *, root: Path | None = None, prefix: str | None = None) -> None:
     """Windows: existing exact inventory/SQLite verification precedes reclamation."""
     host = 'graneple@192.168.3.10'
     out, raw = paths(plan)
     assigned = [r for r in plan['runs'] if r['pair'] == pair]
     names = [r['run_id'] for r in assigned]
-    root = remote_root(plan, assigned[0]['phase'])
-    prefix = f'pair{pair:02d}_20260914'
+    root = root if root is not None else remote_root(plan, assigned[0]['phase'])
+    prefix = prefix if prefix is not None else f'pair{pair:02d}_20260914'
     bootstrap = "from pathlib import Path\nimport importlib.util\ns=importlib.util.spec_from_file_location('m'," + repr((root / 'move_pair.py').as_posix()) + ")\nm=importlib.util.module_from_spec(s);s.loader.exec_module(m)\n"
     packed = remote_python(host, bootstrap + f"m.REMOTE=Path({root.as_posix()!r})\nm.pack(m.REMOTE,{prefix!r},{names!r})\n")
     receipt = json.loads(packed)

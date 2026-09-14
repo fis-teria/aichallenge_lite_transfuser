@@ -4,7 +4,7 @@
 
 ユーザーが2026-09-15に[提案方針](time_random_recovery_collection_proposal_20260914.md)による収集から検証までを承認した。未使用の固定位置r52〜r61は実行せず、新しい計画とrootで進める。最終目標は通常E2E完走。そのための追加教師を増やす作業であり、本タスクではモデル学習やモデルの完走性能を主張しない。
 
-現在の未達条件は、1周最大3回の条件付きランダム外乱とイベント単位抽出の実装・テスト・実走確認。単発pulseを包むスケジューラを追加し、発行成功時だけ状態を確定する。次はWindows commit→WSL同期→全pytestと、専用rootの準備を行う。
+実装commit`9e80849`のnative WSL重点テストは58 passed / 1 warning、6.66s、exit0。ログは`/home/thistle/e2e_autonomous/runs/time_random_recovery_20260915_focused_9e80849.log`。現在の未達条件は運用ツールを含む全pytestと専用rootでの実走確認。単発pulseを包むスケジューラを追加し、発行成功時だけ状態を確定する。次は運用ツール・固定計画をWindows commit→WSL同期→全pytestと、専用rootの準備を行う。
 
 ## 変更の根拠・範囲
 
@@ -46,4 +46,25 @@ tools/sync_to_wsl.ps1
 tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -m pytest -q
 ```
 
-収集・転送・監査コマンドは実行用ツール完成時にこの文書へ追加する。現在は実装中であり、新形式の実走・収集結果は未確定。
+全pytestのexit0・実行commit・ログhashを持つ`test_gate.json`を生成した後、native WSLで準備する。実行済みrootやrun IDを再使用しない。
+
+```bash
+tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python tools/collect_time_random_recovery.py prepare \
+  --plan configs/time_path_p1/random_recovery_20260915.json \
+  --test-gate /home/thistle/e2e_autonomous/runs/time_random_recovery_20260915_test_gate.json
+```
+
+新規remote rootへ固定計画、準備archive/manifest、test gate、運用script2本と既存`move_pair.py`を転送する。`setup`は既存sourceを照合・複製し、変更runtime3ファイルだけ適用して新manifestを生成する。
+
+```bash
+python3 /home/graneple/e2e_autonomous/time_recovery_random_20260915/collect_time_random_recovery.py setup \
+  --plan /home/graneple/e2e_autonomous/time_recovery_random_20260915/collection_plan.json
+```
+
+Windowsで次のコマンドを一度実行する。各runの完走・停止・複数復帰の確認後に次runへ進み、2runの転送照合・既承認の整理・native WSL監査と教師生成を行う。失敗時は原本と結果を保全して分類し、無条件再実行しない。
+
+```powershell
+python -X utf8 -u tools/collect_time_random_recovery.py collect --plan configs/time_path_p1/random_recovery_20260915.json
+```
+
+WSL監査を独立に実行する場合は同ツールの`audit`をworktree lock下で使う。既存出力があれば上書きを拒否する。本収集ゲートは各run2イベント以上、全投入イベント復帰確認、各イベント有効教師60件以上、両正常実走と一致する外向き状態が各run1件以上。これはモデルの走行成績ではない。現在、新形式の実走・収集結果は未確定。
