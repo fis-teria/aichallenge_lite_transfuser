@@ -119,6 +119,15 @@ def main() -> None:
     trained = read(args.training/'result.json')
     if trained['status'] != 'COMPLETE' or not trained['reload_predictions_exact']:
         raise ValueError('training incomplete')
+    old_history = json.loads((root/plan['reference_training']/'history.json').read_text())
+    new_history = json.loads((args.training/'history.json').read_text())
+    if len(old_history) != len(new_history) or len(new_history) != plan['training']['epochs']:
+        raise ValueError('completed epoch counts differ')
+    for before, after in zip(old_history, new_history):
+        if (before['optimizer_steps'] != after['optimizer_steps']
+                or any(before['train_counts'][k] != after['train_counts'][k]
+                       for k in ('visited', 'input_invalid', 'teacher_unsupported', 'supported'))):
+            raise ValueError('actual training presentation/support/update counts differ')
     torch.set_num_threads(4)
     soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
     resource.setrlimit(resource.RLIMIT_NOFILE, (max(soft, min(hard, 8192)), hard))
@@ -149,6 +158,7 @@ def main() -> None:
         'evaluation_reserved_opened': False, 'calibration_used': False, 'cache_sha256': cache['manifest_sha256'],
         'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=repo, text=True).strip(),
         'training_commit': read(args.training/'plan.json')['identity']['source_git_commit'],
+        'all_epoch_presentation_support_and_update_counts_match_control': True,
         'new_validation_used_for_checkpoint_selection': False, 'historical_control_proof': proof,
         'models': {}, 'controller_config_sha256': _sha(repo/plan['offline_controller_config'])}
     predictions = {}
