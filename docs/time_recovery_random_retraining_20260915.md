@@ -46,6 +46,9 @@ tools/with_wsl_training_lock.sh timeout --signal=TERM --kill-after=20s 7200s \
   env PYTHONPATH=src OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 .venv/bin/python -u \
   tools/train_time_recovery_update.py train \
   --plan configs/time_path_p1/recovery_random_update_20260915.json --root ..
+tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -u \
+  tools/compare_time_recovery_update.py \
+  --plan configs/time_path_p1/recovery_random_update_20260915.json --root ..
 ```
 
 正常終了した同じ出力への再実行や再 prepare は行わない。中断時は plan/source 同一を確認して `train --resume`。原データ、旧 cache、旧重みを上書き・削除しない。
@@ -55,3 +58,5 @@ tools/with_wsl_training_lock.sh timeout --signal=TERM --kill-after=20s 7200s \
 追加済み教師・センサ cache を再ハッシュし、split と shape を検査して新 cache に追記する処理と、その学習ドライバを追加。raw と準備済み教師の対応、イベント ID、全30点教師、入力参照の範囲を検査する。モデルや既存教師生成処理には変更を加えていない。
 
 学習後は旧モデルと新モデルを同じ通常走行・旧復帰・追加復帰・ランダム復帰 validation に通し、時間ごとの XY 誤差と PP の操舵計算を比較する予定。結果判明前の性能向上は主張しない。AWSIM 完走・実際の復帰性能は今回の offline 数値からは確定できない。
+
+WSL 全体テスト（source `f560a9561a643d7dd6f3aae92a79b8d2d2388a08`）: 2,488 passed / 4 skipped / 65 warnings、93.70 s。追加の split・event・教師 shape・入力参照の回帰テスト24件を含む。スキップは既存の任意依存関係に由来する。
