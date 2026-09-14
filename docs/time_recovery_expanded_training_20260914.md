@@ -41,6 +41,12 @@
 新復帰では両正常基準に対する外向き目標アンカー6件も別集計する。
 PPの点選択は現行segment方針・目標5km/h・同じ車両設定で確認する。
 保存した教師状態での制御計算と、モデル自身が状態を変える閉ループ走行は区別する。
+観測時点のPP成立率は全validationで集計するが、実測速度が固定5km/h試験の運用範囲を
+外れるアンカーは非該当として分母を別記する。新復帰2runでは、原本Odometry・velocityを
+使って0/100/200ms経過後の姿勢・速度を与え、同じ予測の経過時間に対する感度を調べる。
+この経過時間は仮定した条件であり、推論遅延の実測値ではない。
+未来の状態は評価器だけに渡し、モデルの入力は元のfreeze以前のまま保持する。
+全群の誤差・左右差・PP成立率を報告し、平均誤差だけを根拠に走行用へ昇格させない。
 
 ## 再現コマンド
 
@@ -60,6 +66,13 @@ tools/with_wsl_training_lock.sh timeout --signal=TERM --kill-after=20s 7200s \
   --plan configs/time_path_p1/recovery_expanded_20260914.json \
   --cache ../datasets/cache/time_recovery_expanded_20260914 \
   --output ../runs/time_recovery_expanded_training_20260914
+tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 \
+  .venv/bin/python -u tools/compare_time_recovery_expansion.py \
+  --plan configs/time_path_p1/recovery_expanded_20260914.json \
+  --cache ../datasets/cache/time_recovery_expanded_20260914 \
+  --training ../runs/time_recovery_expanded_training_20260914 \
+  --output ../runs/time_recovery_expanded_training_evidence_20260914/comparison
 ```
 
-結果と未解決事項は、実行後に本書へ追記する。
+学習準備source `f7743b1`のWSL全体テストは2,331 passed / 4 skipped（100.68s）。
+新しい比較処理のテスト・結果と未解決事項は、実行後に本書へ追記する。
