@@ -1,0 +1,97 @@
+{
+  "schema": "outward_recovery_collection_plan_v1",
+  "frozen_before_production_unix": 1789358088.5135717,
+  "source_commit": "a1c9e5ad0a5c274826601338355b75d34b268186",
+  "calibration_summary_sha256": "5b4f4d4e4390ada8a888baa90e51e2d77f5d22cd1c04befed8d48183b9cb907b",
+  "maximum_attempts": 12,
+  "batch_size": 2,
+  "runs": [
+    {
+      "run_id": "codex-time-recovery-pulseleft-r38",
+      "side": "left",
+      "split": "train",
+      "reference_sha256": "0a6fc9fe5cf5ef50d3d578ff66af4c2e15b23778120deae2e640be55ab10bd86"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r39",
+      "side": "right",
+      "split": "train",
+      "reference_sha256": "021be33cd82336eef82bb069d298be4738c7cfc98d308165e070aa0f7375e318"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseleft-r40",
+      "side": "left",
+      "split": "train",
+      "reference_sha256": "0a6fc9fe5cf5ef50d3d578ff66af4c2e15b23778120deae2e640be55ab10bd86"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r41",
+      "side": "right",
+      "split": "train",
+      "reference_sha256": "021be33cd82336eef82bb069d298be4738c7cfc98d308165e070aa0f7375e318"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseleft-r42",
+      "side": "left",
+      "split": "train",
+      "reference_sha256": "0a6fc9fe5cf5ef50d3d578ff66af4c2e15b23778120deae2e640be55ab10bd86"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r43",
+      "side": "right",
+      "split": "train",
+      "reference_sha256": "021be33cd82336eef82bb069d298be4738c7cfc98d308165e070aa0f7375e318"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseleft-r44",
+      "side": "left",
+      "split": "train",
+      "reference_sha256": "0a6fc9fe5cf5ef50d3d578ff66af4c2e15b23778120deae2e640be55ab10bd86"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r45",
+      "side": "right",
+      "split": "train",
+      "reference_sha256": "021be33cd82336eef82bb069d298be4738c7cfc98d308165e070aa0f7375e318"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseleft-r46",
+      "side": "left",
+      "split": "validation",
+      "reference_sha256": "0a6fc9fe5cf5ef50d3d578ff66af4c2e15b23778120deae2e640be55ab10bd86"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r47",
+      "side": "right",
+      "split": "validation",
+      "reference_sha256": "021be33cd82336eef82bb069d298be4738c7cfc98d308165e070aa0f7375e318"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseleft-r48",
+      "side": "left",
+      "split": "evaluation_reserved",
+      "reference_sha256": "0a6fc9fe5cf5ef50d3d578ff66af4c2e15b23778120deae2e640be55ab10bd86"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r49",
+      "side": "right",
+      "split": "evaluation_reserved",
+      "reference_sha256": "021be33cd82336eef82bb069d298be4738c7cfc98d308165e070aa0f7375e318"
+    }
+  ],
+  "target_speed_mps": 1.3888888888888888,
+  "scope": "SAME_COURSE_SAME_CORNER_MEASURED_RECOVERY_RUN_HOLDOUT",
+  "calibration_run_ids": [
+    "codex-time-recovery-pulseleft-r36",
+    "codex-time-recovery-pulseright-r37"
+  ],
+  "calibration_minimum_dual_nominal_targets_per_run": 3,
+  "production_stop_if_zero_dual_nominal_targets": true,
+  "model_training": false,
+  "model_evaluation": false,
+  "materialize_splits": [
+    "train",
+    "validation"
+  ],
+  "evaluation_reserved_excluded_from_training": true
+}
