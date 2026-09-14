@@ -1,0 +1,132 @@
+{
+  "status": "PASS",
+  "collection_index_sha256": "971e7eaee60d8170f800703b84ec46bbf776a1fa7ed10ecdaa7a3bee87139545",
+  "scope": "NATIVE_WSL_REHASH_SHAPE_INPUT_AND_REPRESENTATIVE_VISUAL_AUDIT",
+  "teacher_shape_per_anchor": [
+    30,
+    2
+  ],
+  "xy_unit": "m",
+  "interval_s": 0.1,
+  "full_future_s": 3.0,
+  "all_prepared_files_rehashed_equal": true,
+  "all_inputs_valid": true,
+  "all_xy_finite_and_full": true,
+  "all_lidar_and_ego_command_dt_finite": true,
+  "all_sensor_references_in_bounds": true,
+  "representative_real_input_replays": [
+    {
+      "run_id": "codex-time-recovery-random-r64",
+      "event_id": 1,
+      "anchor_id": "codex-time-recovery-random-r64:epoch0000:87144998052",
+      "all_tensor_fields_equal": true
+    },
+    {
+      "run_id": "codex-time-recovery-random-r64",
+      "event_id": 2,
+      "anchor_id": "codex-time-recovery-random-r64:epoch0000:103314997690",
+      "all_tensor_fields_equal": true
+    },
+    {
+      "run_id": "codex-time-recovery-random-r64",
+      "event_id": 3,
+      "anchor_id": "codex-time-recovery-random-r64:epoch0000:119484997329",
+      "all_tensor_fields_equal": true
+    },
+    {
+      "run_id": "codex-time-recovery-random-r65",
+      "event_id": 1,
+      "anchor_id": "codex-time-recovery-random-r65:epoch0000:88089998031",
+      "all_tensor_fields_equal": true
+    },
+    {
+      "run_id": "codex-time-recovery-random-r65",
+      "event_id": 2,
+      "anchor_id": "codex-time-recovery-random-r65:epoch0000:103944997676",
+      "all_tensor_fields_equal": true
+    },
+    {
+      "run_id": "codex-time-recovery-random-r65",
+      "event_id": 3,
+      "anchor_id": "codex-time-recovery-random-r65:epoch0000:119904997319",
+      "all_tensor_fields_equal": true
+    }
+  ],
+  "shutdown_diagnostics": [
+    {
+      "run_id": "codex-time-recovery-random-r64",
+      "after_stop_mismatch_rows": 6,
+      "all_at_zero_speed_and_after_saved_stop": true
+    },
+    {
+      "run_id": "codex-time-recovery-random-r65",
+      "after_stop_mismatch_rows": 5,
+      "all_at_zero_speed_and_after_saved_stop": true
+    }
+  ],
+  "independent_runs": 2,
+  "total_events": 6,
+  "total_anchors": 516,
+  "events": [
+    {
+      "run_id": "codex-time-recovery-random-r64",
+      "event_id": 1,
+      "accepted": 89,
+      "peak_abs_lateral_m": 0.10480995074671502,
+      "peak_seconds_after_release": 0.949999979,
+      "representative_anchor_id": "codex-time-recovery-random-r64:epoch0000:87144998052",
+      "representative_camera_ref": 3
+    },
+    {
+      "run_id": "codex-time-recovery-random-r64",
+      "event_id": 2,
+      "accepted": 92,
+      "peak_abs_lateral_m": 0.11521040179790959,
+      "peak_seconds_after_release": 1.289999971,
+      "representative_anchor_id": "codex-time-recovery-random-r64:epoch0000:103314997690",
+      "representative_camera_ref": 97
+    },
+    {
+      "run_id": "codex-time-recovery-random-r64",
+      "event_id": 3,
+      "accepted": 92,
+      "peak_abs_lateral_m": 0.10864411787972107,
+      "peak_seconds_after_release": 1.209999973,
+      "representative_anchor_id": "codex-time-recovery-random-r64:epoch0000:119484997329",
+      "representative_camera_ref": 192
+    },
+    {
+      "run_id": "codex-time-recovery-random-r65",
+      "event_id": 1,
+      "accepted": 61,
+      "peak_abs_lateral_m": 0.10459470493283617,
+      "peak_seconds_after_release": 0.994999978,
+      "representative_anchor_id": "codex-time-recovery-random-r65:epoch0000:88089998031",
+      "representative_camera_ref": 3
+    },
+    {
+      "run_id": "codex-time-recovery-random-r65",
+      "event_id": 2,
+      "accepted": 93,
+      "peak_abs_lateral_m": 0.10329726508355938,
+      "peak_seconds_after_release": 1.089999975,
+      "representative_anchor_id": "codex-time-recovery-random-r65:epoch0000:103944997676",
+      "representative_camera_ref": 71
+    },
+    {
+      "run_id": "codex-time-recovery-random-r65",
+      "event_id": 3,
+      "accepted": 89,
+      "peak_abs_lateral_m": 0.10319914853738105,
+      "peak_seconds_after_release": 1.074999976,
+      "representative_anchor_id": "codex-time-recovery-random-r65:epoch0000:119904997319",
+      "representative_camera_ref": 167
+    }
+  ],
+  "figures": {
+    "recovery_events.png": "44a757582c84a9df6478b18812658eb7c7264cf34f6674021db9d585320401fb",
+    "representative_inputs_and_teachers.png": "27bc0b37cfa1977b2dd873dc81b1ef796b59c1e5d2f99dcdc63ef6fd3efa3da7"
+  },
+  "model_trained": false,
+  "model_evaluated": false
+}

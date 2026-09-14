@@ -1,0 +1,22 @@
+{
+  "schema": "measured_random_recovery_collection_v1",
+  "revision": "confirmation_history_v2",
+  "maximum_attempts": 2,
+  "batch_size": 2,
+  "target_speed_mps": 1.3888888888888888,
+  "minimum_events_per_run": 2,
+  "minimum_valid_anchors_per_event": 60,
+  "minimum_dual_nominal_targets_per_run": 1,
+  "native_root": "/home/thistle/e2e_autonomous",
+  "analysis_name": "time_recovery_random_confirmed_20260915",
+  "remote_root": "/home/graneple/e2e_autonomous/time_recovery_random_confirmed_20260915",
+  "base_source_campaign": "/home/graneple/e2e_autonomous/time_recovery_outward_20260914",
+  "base_source_commit": "a1c9e5ad0a5c274826601338355b75d34b268186",
+  "previous_reserved_test_usage": "sealed",
+  "model_training": false,
+  "model_evaluation": false,
+  "runs": [
+    {"run_id": "codex-time-recovery-random-r64", "side": "left", "seed": 915062, "split": "train", "pair": 1},
+    {"run_id": "codex-time-recovery-random-r65", "side": "right", "seed": 915063, "split": "validation", "pair": 1}
+  ]
+}

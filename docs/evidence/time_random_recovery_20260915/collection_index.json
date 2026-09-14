@@ -1,0 +1,346 @@
+{
+  "status": "PASS",
+  "scope": "RECOVERY_TEACHER_DATA_QUALITY_NOT_MODEL_EVALUATION",
+  "plan_sha256": "ef66b8a103a8aa31f66817d47cb02634a5f9f92dd31da2bbccbb56563ce48eb5",
+  "runs": [
+    {
+      "run_id": "codex-time-recovery-random-r64",
+      "split": "train",
+      "seed": 915062,
+      "events": [
+        {
+          "event_id": 1,
+          "seed": 915062,
+          "start_publication_ns": 85099998097,
+          "zero_publication_ns": 86954998056,
+          "end_publication_ns": 96954997832,
+          "recovery_confirmed": true,
+          "confirmation_publication_ns": 91294997959,
+          "start_s_m": 67.25043831025366,
+          "sign": 1,
+          "accepted": {
+            "count": 89,
+            "located": 89,
+            "outward_5cm_1deg": 5,
+            "toward_5cm_1deg": 12,
+            "goal_5to25cm_2to4deg": 2,
+            "lateral_range_m": [
+              -0.02926420148714884,
+              0.10412900958047548
+            ],
+            "heading_range_deg": [
+              -2.3764148871031603,
+              2.8153624323728312
+            ]
+          },
+          "alternate": {
+            "count": 89,
+            "located": 89,
+            "outward_5cm_1deg": 5,
+            "toward_5cm_1deg": 12,
+            "goal_5to25cm_2to4deg": 3,
+            "lateral_range_m": [
+              -0.02835991281785063,
+              0.10454042421036079
+            ],
+            "heading_range_deg": [
+              -2.3612028617748155,
+              2.864509877598411
+            ]
+          },
+          "target_anchor_ids": [
+            "codex-time-recovery-random-r64:epoch0000:87144998052",
+            "codex-time-recovery-random-r64:epoch0000:87249998049"
+          ]
+        },
+        {
+          "event_id": 2,
+          "seed": 915062,
+          "start_publication_ns": 101144997739,
+          "zero_publication_ns": 103064997696,
+          "end_publication_ns": 113099997472,
+          "recovery_confirmed": true,
+          "confirmation_publication_ns": 107554997595,
+          "start_s_m": 87.52584771281462,
+          "sign": -1,
+          "accepted": {
+            "count": 92,
+            "located": 92,
+            "outward_5cm_1deg": 5,
+            "toward_5cm_1deg": 14,
+            "goal_5to25cm_2to4deg": 2,
+            "lateral_range_m": [
+              -0.11328861263635104,
+              0.02662557315509617
+            ],
+            "heading_range_deg": [
+              -2.5630838655332977,
+              2.344018646974621
+            ]
+          },
+          "alternate": {
+            "count": 92,
+            "located": 92,
+            "outward_5cm_1deg": 4,
+            "toward_5cm_1deg": 13,
+            "goal_5to25cm_2to4deg": 2,
+            "lateral_range_m": [
+              -0.11210297629105526,
+              0.025399044536679544
+            ],
+            "heading_range_deg": [
+              -2.5082183342908495,
+              2.374110553719059
+            ]
+          },
+          "target_anchor_ids": [
+            "codex-time-recovery-random-r64:epoch0000:103314997690",
+            "codex-time-recovery-random-r64:epoch0000:103419997688"
+          ]
+        },
+        {
+          "event_id": 3,
+          "seed": 915062,
+          "start_publication_ns": 117369997376,
+          "zero_publication_ns": 119244997334,
+          "end_publication_ns": 129299997109,
+          "recovery_confirmed": true,
+          "confirmation_publication_ns": 123954997229,
+          "start_s_m": 107.86218886063152,
+          "sign": 1,
+          "accepted": {
+            "count": 92,
+            "located": 92,
+            "outward_5cm_1deg": 6,
+            "toward_5cm_1deg": 15,
+            "goal_5to25cm_2to4deg": 3,
+            "lateral_range_m": [
+              -0.02982479477125772,
+              0.10864411787972107
+            ],
+            "heading_range_deg": [
+              -2.3257711905267295,
+              2.896658027091114
+            ]
+          },
+          "alternate": {
+            "count": 92,
+            "located": 92,
+            "outward_5cm_1deg": 6,
+            "toward_5cm_1deg": 15,
+            "goal_5to25cm_2to4deg": 3,
+            "lateral_range_m": [
+              -0.029925846815073646,
+              0.10888965340309886
+            ],
+            "heading_range_deg": [
+              -2.3676762203827475,
+              2.885087339486312
+            ]
+          },
+          "target_anchor_ids": [
+            "codex-time-recovery-random-r64:epoch0000:119484997329",
+            "codex-time-recovery-random-r64:epoch0000:119589997326",
+            "codex-time-recovery-random-r64:epoch0000:119694997324"
+          ]
+        }
+      ],
+      "lap_seconds": 279.08,
+      "accepted": 273,
+      "targets": 7,
+      "prepared": {
+        "run_id": "codex-time-recovery-random-r64",
+        "anchors": 273,
+        "input_valid": 273,
+        "real_input_replay_equal": [
+          "codex-time-recovery-random-r64:epoch0000:87144998052",
+          "codex-time-recovery-random-r64:epoch0000:108354997578"
+        ],
+        "input_reason_refinements": []
+      },
+      "files": {
+        "materialized/codex-time-recovery-random-r64/anchors.jsonl": "e6daf50a21de22a6d16463bf020bc17191e980fb4e18ebfc19f0e480a955cd39",
+        "materialized/codex-time-recovery-random-r64/audit.json": "a12fdf912cb4147b6221e46e7273b70b7b75ad384d44b0b287ec985617bc908e",
+        "materialized/codex-time-recovery-random-r64/teachers.npz": "618a43d107806ea0ba4c1dde06374fd7d41847db808c176055f0fd8160e82eae",
+        "prepared/train/codex-time-recovery-random-r64/anchors.jsonl": "fe88436fe162240aa610eba0a3dd92a251353448e485939de7c46c3a6e22d178",
+        "prepared/train/codex-time-recovery-random-r64/camera_rgb.npy": "07b9061e9ffd3dabbd7e3d48267f460ca9e732ab9750331b8cded79230e2726c",
+        "prepared/train/codex-time-recovery-random-r64/inputs.npz": "698543c856b97f3dfcc0595056cc5f43ccc53d7327dc2c795192fbe17f56a503",
+        "prepared/train/codex-time-recovery-random-r64/labels.npz": "618a43d107806ea0ba4c1dde06374fd7d41847db808c176055f0fd8160e82eae",
+        "prepared/train/codex-time-recovery-random-r64/lidar.npy": "31e7f1a28db17f031489e5e1b314c6d66e66be653047ffa5699b0bc188c9cd6f"
+      }
+    },
+    {
+      "run_id": "codex-time-recovery-random-r65",
+      "split": "validation",
+      "seed": 915063,
+      "events": [
+        {
+          "event_id": 1,
+          "seed": 915063,
+          "start_publication_ns": 85994998077,
+          "zero_publication_ns": 87849998036,
+          "end_publication_ns": 97919997811,
+          "recovery_confirmed": true,
+          "confirmation_publication_ns": 93209997916,
+          "start_s_m": 67.56999558892973,
+          "sign": 1,
+          "accepted": {
+            "count": 61,
+            "located": 61,
+            "outward_5cm_1deg": 4,
+            "toward_5cm_1deg": 0,
+            "goal_5to25cm_2to4deg": 2,
+            "lateral_range_m": [
+              -0.028595311139696544,
+              0.10459470493283617
+            ],
+            "heading_range_deg": [
+              -0.7595516527114692,
+              2.577447313131612
+            ]
+          },
+          "alternate": {
+            "count": 61,
+            "located": 61,
+            "outward_5cm_1deg": 4,
+            "toward_5cm_1deg": 0,
+            "goal_5to25cm_2to4deg": 2,
+            "lateral_range_m": [
+              -0.02796461001479615,
+              0.10445853617676032
+            ],
+            "heading_range_deg": [
+              -0.7164695170158558,
+              2.61723667618767
+            ]
+          },
+          "target_anchor_ids": [
+            "codex-time-recovery-random-r65:epoch0000:88089998031",
+            "codex-time-recovery-random-r65:epoch0000:88194998028"
+          ]
+        },
+        {
+          "event_id": 2,
+          "seed": 915063,
+          "start_publication_ns": 101839997723,
+          "zero_publication_ns": 103699997682,
+          "end_publication_ns": 113744997457,
+          "recovery_confirmed": true,
+          "confirmation_publication_ns": 107979997586,
+          "start_s_m": 87.58608679099898,
+          "sign": 1,
+          "accepted": {
+            "count": 93,
+            "located": 93,
+            "outward_5cm_1deg": 4,
+            "toward_5cm_1deg": 13,
+            "goal_5to25cm_2to4deg": 2,
+            "lateral_range_m": [
+              -0.028552547027850705,
+              0.10320857125100294
+            ],
+            "heading_range_deg": [
+              -2.2340086971925195,
+              2.773110761815631
+            ]
+          },
+          "alternate": {
+            "count": 93,
+            "located": 93,
+            "outward_5cm_1deg": 4,
+            "toward_5cm_1deg": 14,
+            "goal_5to25cm_2to4deg": 3,
+            "lateral_range_m": [
+              -0.030068977162321986,
+              0.10354063973705267
+            ],
+            "heading_range_deg": [
+              -2.2082519093496233,
+              2.831235992135294
+            ]
+          },
+          "target_anchor_ids": [
+            "codex-time-recovery-random-r65:epoch0000:103944997676",
+            "codex-time-recovery-random-r65:epoch0000:104049997674"
+          ]
+        },
+        {
+          "event_id": 3,
+          "seed": 915063,
+          "start_publication_ns": 117694997369,
+          "zero_publication_ns": 119654997325,
+          "end_publication_ns": 129694997101,
+          "recovery_confirmed": true,
+          "confirmation_publication_ns": 124089997226,
+          "start_s_m": 107.60172976228444,
+          "sign": -1,
+          "accepted": {
+            "count": 89,
+            "located": 89,
+            "outward_5cm_1deg": 5,
+            "toward_5cm_1deg": 13,
+            "goal_5to25cm_2to4deg": 2,
+            "lateral_range_m": [
+              -0.10361281377257342,
+              0.028390221721930058
+            ],
+            "heading_range_deg": [
+              -2.570097415395779,
+              2.2423727247777303
+            ]
+          },
+          "alternate": {
+            "count": 89,
+            "located": 89,
+            "outward_5cm_1deg": 5,
+            "toward_5cm_1deg": 12,
+            "goal_5to25cm_2to4deg": 2,
+            "lateral_range_m": [
+              -0.10418425344011387,
+              0.02840067900892973
+            ],
+            "heading_range_deg": [
+              -2.588638291121081,
+              2.220071821853971
+            ]
+          },
+          "target_anchor_ids": [
+            "codex-time-recovery-random-r65:epoch0000:119904997319",
+            "codex-time-recovery-random-r65:epoch0000:120009997317"
+          ]
+        }
+      ],
+      "lap_seconds": 278.98,
+      "accepted": 243,
+      "targets": 6,
+      "prepared": {
+        "run_id": "codex-time-recovery-random-r65",
+        "anchors": 243,
+        "input_valid": 243,
+        "real_input_replay_equal": [
+          "codex-time-recovery-random-r65:epoch0000:88089998031",
+          "codex-time-recovery-random-r65:epoch0000:110349997533"
+        ],
+        "input_reason_refinements": []
+      },
+      "files": {
+        "materialized/codex-time-recovery-random-r65/anchors.jsonl": "6831f0ea5bed4c977eee6671da4c54eae44c023d5537aee58091ce59ffbbbb64",
+        "materialized/codex-time-recovery-random-r65/audit.json": "833a67a607487f914c1be515a4214f0cb3e3a53b92f287d3ae1c189abdc1001b",
+        "materialized/codex-time-recovery-random-r65/teachers.npz": "184c61f8fa2a6c55ce245be8927b4ae0ca9fe6fdad8f2f08c73570770854dfbc",
+        "prepared/validation/codex-time-recovery-random-r65/anchors.jsonl": "e08c95e58ad7da8dcdc081fde9ea6217b8ae363e2607454d8ef754ff3af31970",
+        "prepared/validation/codex-time-recovery-random-r65/camera_rgb.npy": "5cec518986d43c104067a2b1e003cddf53388cc3f27063948c9da3adf4fa55cc",
+        "prepared/validation/codex-time-recovery-random-r65/inputs.npz": "32505a7459210016713963a3421064a3a4cc45429d4f607f9d33de0ad09a0b83",
+        "prepared/validation/codex-time-recovery-random-r65/labels.npz": "184c61f8fa2a6c55ce245be8927b4ae0ca9fe6fdad8f2f08c73570770854dfbc",
+        "prepared/validation/codex-time-recovery-random-r65/lidar.npy": "07d3f0dba4472229003fb60017c3a9d5474937169452c077a73630b4803cce1a"
+      }
+    }
+  ],
+  "independent_runs": 2,
+  "total_events": 6,
+  "total_anchors": 516,
+  "total_targets": 13,
+  "model_trained": false,
+  "model_evaluated": false,
+  "previous_reserved_test_read": false,
+  "alternate_guide_sha256": "129c59b63d105189bc0eb32ce97fec647b4747f845cc4fde2cbf5b22a74420ae"
+}
