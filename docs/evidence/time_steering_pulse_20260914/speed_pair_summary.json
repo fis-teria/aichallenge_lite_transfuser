@@ -1,0 +1,55 @@
+{
+  "scope": "TWO_NOMINAL_LAPS_NOT_E2E_RECOVERY_VALIDATION",
+  "runs": {
+    "r30": {
+      "lap_seconds": 279.02,
+      "corner_count": 56,
+      "corner_speed_mps": 1.273923099040985,
+      "maximum_lateral_difference_from_r30_m": 0.010445225263159968,
+      "maximum_heading_difference_from_r30_deg": 0.5163655622344588
+    },
+    "r31": {
+      "lap_seconds": 279.0,
+      "corner_count": 57,
+      "corner_speed_mps": 1.273888111114502,
+      "maximum_lateral_difference_from_r30_m": 0.01459293581848653,
+      "maximum_heading_difference_from_r30_deg": 0.5164248355290757
+    }
+  },
+  "first_order_response_scale": {
+    "speed_mps": 1.273923099040985,
+    "response_length_m": 1.1600296028021584,
+    "ignores_pp_feedback_and_actuator_lag": true,
+    "candidates": [
+      {
+        "amplitude_rad": 0.05,
+        "duration_s": 1.0,
+        "uncontrolled_heading_scale_deg": 0.9438175132293143,
+        "uncontrolled_lateral_scale_m": 0.010492491258520286
+      },
+      {
+        "amplitude_rad": 0.08,
+        "duration_s": 2.0,
+        "uncontrolled_heading_scale_deg": 3.020216042333806,
+        "uncontrolled_lateral_scale_m": 0.06715194405452983
+      },
+      {
+        "amplitude_rad": 0.1,
+        "duration_s": 2.0,
+        "uncontrolled_heading_scale_deg": 3.775270052917257,
+        "uncontrolled_lateral_scale_m": 0.08393993006816229
+      }
+    ]
+  },
+  "speed_gate": {
+    "reference_run_id": "codex-time-segment01",
+    "reference_median_speed_mps": 1.271516501903534,
+    "threshold_mps": 0.05,
+    "comparison": "same_anchor_course_range",
+    "differences_mps": {
+      "r30": 0.002406597137451172,
+      "r31": 0.0023716092109680176
+    },
+    "all_within_005_mps": true
+  }
+}

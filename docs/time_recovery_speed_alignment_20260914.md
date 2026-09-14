@@ -46,4 +46,37 @@ Windowsでcommitし、`tools/sync_to_wsl.ps1 -CheckOnly`→通常sync後にnativ
 tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -m pytest -q tests/test_time_recovery_collection_v1.py tests/test_time_trial_v1.py
 ```
 
-現段階は実装済み・WSLとAWSIMでの確認前。結果は本書へ追記する。
+実装commit `fc271e2b00caec1bf141bacd2cc48362c9535cb5`をnative WSLで確認。
+対象52 passed、全体2289 passed / 4 skipped。既知のoptional依存skipは変更していない。
+
+## 実測結果
+
+`.10`で通常参照・目標5km/hの2本が完走した。1周後の未来4秒と停止3秒も記録し、
+faultなし、bag close済み。通常RVizの購読を走行許可前に確認した。
+
+| run | 周回時間 | 対象区間の実速度中央値 | 既存E2Eとの速度差 |
+|---|---:|---:|---:|
+| `codex-time-recovery-speedbase-r30` | 279.02s | 1.273923m/s（4.5861km/h） | +0.002407m/s |
+| `codex-time-recovery-speedbase-r31` | 279.00s | 1.273888m/s（4.5860km/h） | +0.002372m/s |
+
+既存E2E `codex-time-segment01`の同一区間は中央値1.271517m/s。
+差0.05m/s以内という暫定条件を両方満たした。これは教師PPでの完走であり、E2Eの完走ではない。
+最終加速度と`clip(nominal_acceleration,-1,1)`の差はr30の全5945 tracking行で0。
+同区間の選択odometryとVelocityReportの速度差中央値は約-0.000208m/sだった。
+
+実測r30の進捗・横位置・yawから次段階の正常基準を作成した。
+86–94mで同基準に対する最大差は、r30自身で1.05cm / 0.516度、r31で1.46cm / 0.516度。
+同じ進捗に複数観測があるため、最後の観測を残す基準補間でも差が0にはならない。
+この範囲ではパルス開始条件5cm / 1度以内に収まる。位置情報の精度向上を示すものではない。
+
+2本の原本計2,393,138,355 bytesと圧縮コピーをnative WSLへ保存し、122 entriesの
+hash・サイズ・構造と両SQLiteのquick_checkを照合した。確認後に`.10`の当該2本だけを
+移動済み案内へ置き換え、転送用圧縮ファイルを削除。空きは22,246,535,168 bytesへ回復した。
+WSLのbag監査では画像/LiDARの不正メッセージとheader逆行は0。画像最大間隔0.315秒は
+run全域での値であり、全アンカーの学習採用を保証しない。
+
+原本: `/home/thistle/e2e_autonomous/raw/time_recovery_speed_20260914/`。
+結果: [速度比較](evidence/time_steering_pulse_20260914/speed_pair_summary.json)、
+[転送検証](evidence/time_steering_pulse_20260914/speedpair01_20260914_verified.json)、
+[r30 bag監査](evidence/time_steering_pulse_20260914/r30_bag_audit.json)、
+[r31 bag監査](evidence/time_steering_pulse_20260914/r31_bag_audit.json)。
