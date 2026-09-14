@@ -134,9 +134,12 @@ def run_training_arm(train: Dataset[TimeSample], validation: Dataset[TimeSample]
                      plan: CorpusTrainingPlan, output: Path, device: str = "cuda",
                      resume: bool = False, initialization: Path | None = None,
                      initialization_sha256: str | None = None,
-                     initialization_identity: TimeCheckpointIdentity | None = None) -> dict[str, Any]:
+                     initialization_identity: TimeCheckpointIdentity | None = None,
+                     retain_epoch_checkpoints: bool = False) -> dict[str, Any]:
     """Complete a finite arm, select on validation run-macro 3s error, reload best."""
     plan.validate(); config.validate(); identity.validate()
+    if type(retain_epoch_checkpoints) is not bool:
+        raise ValueError("retain_epoch_checkpoints must be bool")
     if len(train_run_ids) != len(train) or len(validation_run_ids) != len(validation):
         raise ValueError("one run identity per anchor required")
     assert_split_membership(split_manifest, train_run_ids, split="train")
@@ -184,6 +187,8 @@ def run_training_arm(train: Dataset[TimeSample], validation: Dataset[TimeSample]
         "selection": "minimum_validation_run_macro_3s_error_m", "allow_tf32": False,
         "cudnn_benchmark": False, "cudnn_deterministic": True, "loss_scaler": None,
         "device_type": device, "torch_version": torch.__version__}
+    if retain_epoch_checkpoints:
+        frozen_plan["retain_epoch_checkpoints"] = True
     if initial_source is not None:
         frozen_plan["initialization"] = initial_source
     state: dict[str, Any] = {"plan": frozen_plan, "history": [], "best_score_m": None,
@@ -283,6 +288,8 @@ def run_training_arm(train: Dataset[TimeSample], validation: Dataset[TimeSample]
         if improved:
             save(output / "best.pt", epoch + 1, 0)
         save(output / "last.pt", epoch + 1, 0)
+        if retain_epoch_checkpoints:
+            save(output / f"epoch_{epoch + 1:02d}.pt", epoch + 1, 0)
         _json(output / "history.json", state["history"])
         emit("EPOCH_COMPLETE", **row, best_epoch=state["best_epoch"])
     emit("RELOADING_BEST", best_epoch=state["best_epoch"])
