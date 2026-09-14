@@ -80,7 +80,7 @@ r22でも整合を確認する。同じ元コース進捗で対応づけて、�
 `cornerleft020-r27` はs=17.35m、復帰場所に到着する前に
 `COLLECTION_COMPUTATION_TIMEOUT`。最初のscanが古く再選択に入り、
 判断全体108.01msで100ms期限を超過。最後の計算はwall28.24ms/thread CPU19.79ms、
-GC pauseなし。正常停止の3秒確認は成立せず、監督がAWSIMを停止した。bag closeは成立。
+GC pauseなし。最終resultでは異常停止時の3秒の静止確認とbag closeが成立。
 この記録は復帰教師ではない。
 
 実行ホストはP/E混在20 logical CPUs。他のdesktop処理にも負荷があるため、

@@ -59,16 +59,19 @@ def main() -> None:
         maximum_attempts=2, maximum_bag_bytes=4*2**30, attempts=[], started_unix=time.time())
     # One diagnosed infrastructure retry, within the predeclared four-attempt bound.
     if args.run_id == 'codex-time-recovery-cornerleft020-r29':
-        failed = read_result = json.loads((ROOT/'codex-time-recovery-cornerleft020-r27/result.json').read_text())
+        failed = json.loads((ROOT/'codex-time-recovery-cornerleft020-r27/result.json').read_text())
         assert failed['last_control']['fault'] == 'COLLECTION_COMPUTATION_TIMEOUT'
         assert args.separate_cpus
         ledger.update(maximum_attempts=3, maximum_bag_bytes=6*2**30)
     assert len(ledger['attempts']) < ledger['maximum_attempts'] <= 3
     assert time.time()+1980 < ledger['started_unix']+4*3600
     for previous in ledger['attempts']:
+        if previous['state'] == 'WSL_MOVED':
+            continue
         result = json.loads((ROOT/previous['run_id']/'result.json').read_text())
         assert result['nodes']['closed_bag'] and not result.get('cleanup_errors')
         previous.update(status=result['status'], state='RECORDED')
+    assert sum(r['state'] != 'WSL_MOVED' for r in ledger['attempts']) < 2
     backup = ROOT/('references_before_'+args.run_id)
     assert not backup.exists() and (ROOT/'references').resolve().parent == ROOT
     report = dict(run_id=args.run_id, side=side, reference_sha256=args.reference_sha256,
