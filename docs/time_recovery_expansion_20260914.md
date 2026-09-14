@@ -41,4 +41,41 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
 原本は2本単位で梱包し、native WSLでSHA・サイズ・構造・SQLiteを照合した後に、AWSIM側の
 対応原本だけを移動済み案内へ置換する。大きなデータをGitに含めない。
 
-実行結果・データ件数・採否は収集と監査が完了してから追記する。
+## 校正結果と本収集の固定計画
+
+| 校正run | 1周 | 有効アンカー | 両正常基準で外向き目標を満たす数 | 復帰の1秒維持確認 |
+|---|---:|---:|---:|---:|
+| r36・左 | 278.97s | 94 | 3 | 解除後4.145s |
+| r37・右 | 279.06s | 92 | 3 | 解除後4.550s |
+
+両runで校正の採用条件を通過した。原本2,378,280,298 bytesと圧縮1,049,140,225 bytesを
+native WSLで照合し、AWSIM側の原本を移動済み案内へ置換した。
+校正の186件は本収集のtrain/validation/評価予約へ混ぜない。
+[校正集計](evidence/time_recovery_expansion_20260914/calibration_summary.json)、
+[保全確認](evidence/time_recovery_expansion_20260914/pair01_20260914_verified.json)。
+
+![校正前後のカメラ観測状態](evidence/time_recovery_expansion_20260914/calibration_comparison.png)
+
+緑は表示範囲内の目標状態、丸は採用cameraアンカー、×は最初の150msによる除外。
+右側は横ずれと向きの符号を反転して比較しやすく表示した。
+
+本収集は新しい`time_recovery_outward_20260914`内で最大12回、左右各6本とする。
+`r38`〜`r45`の8本をtrain、`r46`〜`r47`をvalidation、`r48`〜`r49`を評価予約とし、
+最初の本収集前に[固定計画](evidence/time_recovery_expansion_20260914/production_plan.json)を保存した。
+計画ファイルのLFでのSHA256は`04d757dde75e6b42062a6966d5f9d05bdad1649c7e4d51980f47ded5f68bb462`。
+校正summary・計画・source・参照経路のhashを各run前に検証する。
+本収集で目標アンカーが0件となった場合や復帰・完走に失敗した場合は追加反復を止める。
+収集後の件数に応じてsplitを付け替えない。
+
+同じコースの同じコーナーにおける小ずれ復帰を反復収集するため、別コース・大きな横ずれへの
+一般化を示すデータではない。独立runであっても状態の類似性と時間相関は残る。
+モデルによる走行、学習、モデル性能評価はこの収集に含めない。
+
+train/validationの採用runでは既存の`materialize_recovery_run`で全教師を再生成し、
+`_prepare_run`で全参照画像・LiDARを読み出して入力を準備する。
+アンカーID・全入力の有効性・未来30点のmaskを照合し、評価予約は学習用生成から除外する。
+単独runの準備成果物であり、既存コーパスとの統合manifestと再学習は別途実施する。
+
+追加した集計のsmokeと前回r34/r35の実データ回帰は通過した。
+native WSLの全体pytestは`bb2a2da`で2321 passed / 4 skipped（85.89s）。
+制御sourceは校正・本収集とも`a1c9e5a`を固定する。
