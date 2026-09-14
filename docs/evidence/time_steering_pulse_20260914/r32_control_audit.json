@@ -1,0 +1,94 @@
+{
+  "run_id": "codex-time-recovery-pulseleft-r32",
+  "scope": "CONTROL_DECISION_STATES_NOT_CAMERA_ANCHOR_ACCEPTANCE",
+  "manifest_sha256": "33264575ceadbbeca381ea01d113209f619d51ce91ac889057b5be4b3d3a67f9",
+  "first_recovery": {
+    "sim_ns": 103559997685,
+    "publication": {
+      "sim_ns": 103579997684,
+      "monotonic_ns": 91670547571008,
+      "sequence": 2274
+    },
+    "projection": {
+      "s_m": 90.53305264480926,
+      "offset_m": -0.2647061648808483,
+      "distance_m": 0.2647061648808483,
+      "segment_index": 31,
+      "heading_error_rad": 0.058649035877225586
+    },
+    "pulse": {
+      "state": {
+        "stage": "recovery",
+        "approach_seen": true,
+        "start_ns": 101524997730,
+        "start_wall_ns": 91668489753015,
+        "release_ns": null,
+        "release_value_rad": 0.0,
+        "zero_ns": 103559997685,
+        "reason": "DURATION_LIMIT",
+        "last_sim_ns": 103559997685,
+        "last_wall_ns": 91670539756360
+      },
+      "applied": true,
+      "requested_rad": 0.0,
+      "effective_rad": 0.0,
+      "lateral_error_m": 0.036911356724503075,
+      "heading_error_rad": 0.026589900283690904
+    },
+    "speed_mps": 1.2704931497573853,
+    "guard": {
+      "policy": "CURVATURE_INTERVAL_SUPPORT_V2",
+      "support_directions": 64,
+      "sweep_samples": 370,
+      "integration_step_m": 0.004992745248425239,
+      "maximum_position_integration_error_m": 0.000778779692850409,
+      "maximum_discretization_padding_m": 0.08047724451159541,
+      "stopping_travel_m": 1.8423229966689134,
+      "whole_sweep_convex_enclosure": true,
+      "vehicle_motion": {
+        "policy": "awsim_understeer_v1",
+        "static_wheelbase_m": 1.087,
+        "nominal_response_length_m": 1.15963687796112,
+        "lateral_displacement_bound_m": 0.05311479449272156,
+        "scope": "EMPIRICAL_AWSIM_ONLY_CONDITIONAL_BRAKING_BOUNDS",
+        "gradient_interval_s2_per_m": [
+          0.0,
+          0.2
+        ],
+        "braking_speed_interval_mps": [
+          0.0,
+          1.2704931497573853
+        ],
+        "heading_rate_radps": 0.19891957938671112,
+        "reported_lateral_mps": 0.031002670526504517,
+        "rear_lateral_mps": -0.003808258237476103,
+        "measured_curvature_per_m": 0.15656879332619544,
+        "low_speed_full_curvature_interval": false,
+        "curvature_interval_per_m": [
+          0.12820348469168077,
+          0.16933215441912644
+        ]
+      },
+      "scope": "FORWARD_SCAN_PROXIMITY_NOT_ALL_AROUND_FREE_SPACE",
+      "minimum_ray_margin_m": 2.3246168404979706,
+      "checked_rays": 750,
+      "measured_steer_rad": 0.18202663958072662,
+      "issued_steer_rad": 0.17881464958190918,
+      "previous_steer_rad": 0.18062810885924652,
+      "full_body_free_space_verified": false
+    }
+  },
+  "recovery_count": 200,
+  "recovery_lateral_range_m": [
+    -0.011791511831720752,
+    0.0515816477292492
+  ],
+  "recovery_heading_range_deg": [
+    -1.1572250848882397,
+    1.5234890639291991
+  ],
+  "requested_peak_rad": 0.07995559486824813,
+  "effective_peak_rad": 0.044556680419557015,
+  "goal_control_count": 0,
+  "phase_window_count": 8
+}
