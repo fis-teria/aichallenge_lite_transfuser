@@ -59,7 +59,7 @@ def validate_prepared(path: Path, *, run_id: str, split: str, count: int,
     with np.load(path/'inputs.npz', allow_pickle=False) as inputs:
         if inputs['input_valid'].shape != (count,) or not inputs['input_valid'].all():
             raise ValueError('all additional inputs must be valid')
-        for key, shape in (('ego', (count, 10, 4)), ('command', (count, 10, 3)), ('dt', (count, 4, 2)):
+        for key, shape in (('ego', (count, 10, 4)), ('command', (count, 10, 3)), ('dt', (count, 4, 2))):
             if inputs[key].shape != shape or not np.isfinite(inputs[key]).all():
                 raise ValueError('input shape or finite values changed: '+key)
         for key, file in (('camera_refs', 'camera_rgb.npy'), ('lidar_refs', 'lidar.npy')):
