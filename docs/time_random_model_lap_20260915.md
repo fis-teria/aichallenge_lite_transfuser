@@ -1,6 +1,7 @@
 # 再学習モデルの通常AWSIM完走試験（2026-09-15）
 
-状態: 実行準備中。ユーザーが再学習後のAWSIM走行試験を依頼し、合格ラインを通常完走と指定した。
+状態: **WSL検証・配布準備完了、実行先の接続復旧待ち。AWSIM走行は未実施（0回）**。
+ユーザーが再学習後のAWSIM走行試験を依頼し、合格ラインを通常完走と指定した。
 今回の実行は新しい依頼に基づく。前タスクの学習・offline比較限定という範囲とは別の試験である。
 
 ## 条件と変更の必要性
@@ -39,4 +40,19 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
   --output ../runs/time_random_model_lap_20260915/evaluation
 ```
 
-結果・未確認事項は実行後に追記する。重み・raw・ROS build出力はGitへ追加しない。
+## 現在までの確認
+
+- 設定・試験計画source `69acd5340278ff8e484c118b88b3077534aa22ec` をWindowsでcommitし、WSLへ同一SHAを同期済み。
+- native WSLの共有lock下で全pytestを実施: **2,488 passed / 4 skipped / 65 warnings、84.76 s**。新設定を既存validatorへ通し、旧設定からの差分がcheckpoint SHAのみであることも確認した。
+- 新checkpointのSHA256をWSLで再照合。現在のcontrol/runtime、推論node、制御node、AWSIM runnerは前回通常走行source `edb00cf682641c28d7fd7b5766d64fe47ee8d2d2` と同一。
+- commit由来の569ファイル、4,587,520 bytesのsource archiveとGit blob manifestを準備済み。
+- 最初の`.10`確認はGPU正常（RTX 4060 Laptop / driver 595.91.07）、動作中containerなし、空き約18 GiB、通常desktop `:1`、新deploymentなし。
+- その後SSH・pingが応答しなくなり、Windows側のARPもIncomplete。現地のスリープ・電源・ネットワーク確認をユーザーへ依頼中。原因はまだ確定していない。
+- **`.10`への新規配置・ビルド・ROS smoke・走行開始はまだ行っていない**。今回のremoteデータ削除や既存環境の変更はない。合否は未判定。
+
+小さい証跡は [evidence](evidence/time_random_model_lap_20260915) に保存。native WSLの検証出力は `/home/thistle/e2e_autonomous/runs/time_random_model_lap_20260915`。重み・raw・ROS build出力はGitへ追加しない。
+
+接続復旧後は本書と実行先の稼働状況を再確認し、準備済みsourceを新deploymentへ配置して既存のbuild・隔離ROS smokeを通す。
+Windowsのtask driver `tmp/time_random_model_lap_20260915/manage.py` の `test` と `package` は実行済みで、再実行しない。
+`prepare` は新deploymentが存在しないことを確認してから実施し、成功後に `start` を1回だけ実施、`status` で監視する。
+以前のモデル・設定・実験記録は保全し、今回の新しい試行だけを評価する。
