@@ -1,0 +1,43 @@
+{
+  "hits_inside_monitored_envelope": 1,
+  "inside_points_rear_xy_m": [
+    [
+      3.8450823644863927,
+      0.8641385295196505
+    ]
+  ],
+  "envelope_metadata": {
+    "policy": "CURVATURE_INTERVAL_SUPPORT_V2",
+    "support_directions": 64,
+    "sweep_samples": 366,
+    "integration_step_m": 0.004997367025047294,
+    "maximum_position_integration_error_m": 7.975698774550344e-05,
+    "maximum_discretization_padding_m": 0.0790835333351602,
+    "stopping_travel_m": 1.8240389641422623,
+    "whole_sweep_convex_enclosure": true
+  },
+  "motion": {
+    "policy": "awsim_understeer_v1",
+    "static_wheelbase_m": 1.087,
+    "nominal_response_length_m": 1.158457397129821,
+    "lateral_displacement_bound_m": 0.05280407309532165,
+    "scope": "EMPIRICAL_AWSIM_ONLY_CONDITIONAL_BRAKING_BOUNDS",
+    "gradient_interval_s2_per_m": [
+      0.0,
+      0.2
+    ],
+    "braking_speed_interval_mps": [
+      0.0,
+      1.2601357698440552
+    ],
+    "heading_rate_radps": -0.01848233863711357,
+    "reported_lateral_mps": 0.0055190324783325195,
+    "rear_lateral_mps": 0.00875344196015404,
+    "measured_curvature_per_m": -0.01466694230844729,
+    "low_speed_full_curvature_interval": false,
+    "curvature_interval_per_m": [
+      -0.017499408965023562,
+      -0.011735773470386707
+    ]
+  }
+}

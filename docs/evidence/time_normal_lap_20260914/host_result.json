@@ -1,0 +1,168 @@
+{
+  "status": "FAILED",
+  "run_id": "codex-time-lap-candidate01",
+  "start_time_utc": 1789375812.2825348,
+  "scope": "ONE_LAP_MODEL_TRIAL",
+  "official_start_requested": true,
+  "execution_profile": "one_lap",
+  "speed_policy": "fixed_5kmh",
+  "trial_config_sha256": "4d07c8c3f49d931bd086f19facdbfc31c8f154d19911b730ead5ebc61c4268e0",
+  "gpu": {
+    "returncode": 0,
+    "stdout": "NVIDIA GeForce RTX 4060 Laptop GPU, 595.91.07\n",
+    "stderr": ""
+  },
+  "steering_asset_sha256": {
+    "AWSIM_Data/StreamingAssets/Vehicle/vehicle.yaml": "5b66e58691091c82d5511535ca458d4c89e85f3b59fa0d0c4a2c7eee47887244",
+    "AWSIM_Data/Managed/Assembly-CSharp.dll": "859e5560dbffd7d0833cd1fe5eb1f36b87fa8d22f6e45eb0e1203d04a1ea6d13"
+  },
+  "rviz_config": "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz",
+  "rviz_sha256": "981c28955e9bceedb8845ec8d59e57c4f47805040cd84c5e09f2f1430c7bb3f1",
+  "commands": [
+    [
+      "docker",
+      "run",
+      "--rm",
+      "--name",
+      "codex-time-lap-candidate01-nodes",
+      "--gpus",
+      "all",
+      "--network",
+      "host",
+      "-e",
+      "ROS_DOMAIN_ID=1",
+      "-e",
+      "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_normal_lap_20260914/codex-time-lap-candidate01/cyclonedds.xml:/opt/autoware/cyclonedds.xml:ro",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_normal_lap_20260914:/time",
+      "-v",
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro",
+      "--entrypoint",
+      "bash",
+      "codex-cartographer-v4-build:20260910",
+      "-lc",
+      "source /aichallenge/workspace/install/setup.bash && source /time/install/setup.bash && exec python3 /time/source_edb00cf/tools/run_time_path_trial_nodes.py --output /time/codex-time-lap-candidate01 --run-id codex-time-lap-candidate01 --checkpoint /time/command_off_best.pt --config /time/source_edb00cf/configs/control/time_path_lap_candidate_20260914.json"
+    ],
+    [
+      "make",
+      "dev",
+      "DEV_AUTO_START=false",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=1",
+      "RUN_ID=codex-time-lap-candidate01",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_normal_lap_20260914/codex-time-lap-candidate01",
+      "AWSIM_TIMEOUT=660",
+      "AWSIM_EXTRA_ARGS=-logFile /output/codex-time-lap-candidate01/awsim_unity.log"
+    ],
+    [
+      "make",
+      "awsim-request-start",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=1",
+      "RUN_ID=codex-time-lap-candidate01",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_normal_lap_20260914/codex-time-lap-candidate01",
+      "AWSIM_TIMEOUT=660",
+      "AWSIM_EXTRA_ARGS=-logFile /output/codex-time-lap-candidate01/awsim_unity.log"
+    ]
+  ],
+  "last_control": {
+    "fault": "STOPPING_SWEEP_OCCUPIED",
+    "armed_ns": 19944999554,
+    "armed_wall": 114102.375553982,
+    "stop_since_ns": null,
+    "stop_confirmed": false,
+    "positive_count": 2007,
+    "commands": 2612,
+    "max_speed_mps": 1.303635597229004,
+    "requested_stop_reason": null,
+    "speed_mps": 1.2601357698440552,
+    "current_pose": {
+      "stamp_ns": 120289997311,
+      "clock": "sim",
+      "epoch": "0",
+      "world_frame": "map",
+      "body_frame": "base_link",
+      "x_m": 89632.78404745438,
+      "y_m": 43163.97313804637,
+      "yaw_rad": 2.2947593481200226
+    },
+    "scan_rejection_recorded": true,
+    "reason": "STOPPING_SWEEP_OCCUPIED",
+    "monotonic_ns": 114202775394048,
+    "sim_ns": 120344997310,
+    "topic": "/control/command/control_cmd"
+  },
+  "last_inference": {
+    "plans": 5,
+    "rejected": 2,
+    "fault": null,
+    "sources_ok": true,
+    "sources": {
+      "camera": [
+        "/awsim_d1"
+      ],
+      "lidar": [
+        "/awsim_d1"
+      ],
+      "velocity": [
+        "/awsim_d1"
+      ],
+      "actual_steering": [
+        "/awsim_d1"
+      ]
+    },
+    "path_subscribers": [
+      "rviz2"
+    ],
+    "monotonic_ns": 114083530057606,
+    "sim_ns": 1099999975,
+    "epoch": "0",
+    "dropped_anchors": 1
+  },
+  "rviz_path_subscribers": [
+    "rviz2"
+  ],
+  "rviz_window": "0x4200010 \"/aichallenge/workspace/install/aichallenge_system_launch/share/aichallenge_system_launch/config/autoware.rviz* - RViz\": (\"rviz2\" \"rviz2\")  1850x1136+10+45  +70+64",
+  "error": "RuntimeError: CONTROL_STOPPING_SWEEP_OCCUPIED",
+  "cleanup_errors": [],
+  "end_time_utc": 1789375963.37841,
+  "wall_s": 151.09582191400114,
+  "judge_lap_confirmed": false,
+  "judge_section_events": [
+    {
+      "current": 0,
+      "next": 0,
+      "started": "False",
+      "line": "Section line hit: current=0, next=0, started=False",
+      "run_id": "codex-time-lap-candidate01",
+      "epoch": 0,
+      "byte_offset": 102664
+    },
+    {
+      "current": 0,
+      "next": 1,
+      "started": "True",
+      "line": "Section line hit: current=0, next=1, started=True",
+      "run_id": "codex-time-lap-candidate01",
+      "epoch": 0,
+      "byte_offset": 102715
+    },
+    {
+      "current": 1,
+      "next": 2,
+      "started": "True",
+      "line": "Section line hit: current=1, next=2, started=True",
+      "run_id": "codex-time-lap-candidate01",
+      "epoch": 0,
+      "byte_offset": 102765
+    }
+  ],
+  "judge_laps": [],
+  "judge_order_invalid": false
+}
