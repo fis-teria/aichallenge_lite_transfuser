@@ -51,4 +51,12 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 OPENBLAS_NU
   --output ../runs/time_training_method_comparison_20260914
 ```
 
+保存済み集計の図は、比較終了後に次で再現する。これもnative WSLで実行する。
+
+```bash
+tools/with_wsl_training_lock.sh .venv/bin/python tools/render_time_method_comparison.py \
+  --comparison ../runs/time_training_method_comparison_20260914/comparison/summary.json \
+  --output ../runs/time_training_method_comparison_20260914/figures
+```
+
 重み・cache・全予測配列はWSLに保持し、小さい指標・証跡・図だけをWindowsへ戻す。実測結果は完了後に追記する。
