@@ -1,0 +1,193 @@
+{
+  "source": {
+    "source_commit": "175d9da17042ea8a11139a1208b375478e6072c6",
+    "historical_source": {
+      "historical_source_commit": "f7743b10f594170db2270f369e7911ee1a3b78fc",
+      "only_change": "src/aic_transfuser_lite/training/time_corpus_runner_v1.py",
+      "training_ast_equal_after_removing_epoch_archive": true
+    },
+    "dependency_source_commit": "8a9b4df630e94bea413051fd5449610bcc8a6088",
+    "training_dependencies_unchanged": [
+      "src/aic_transfuser_lite/models",
+      "src/aic_transfuser_lite/training",
+      "src/aic_transfuser_lite/contracts",
+      "src/aic_transfuser_lite/evaluation/time_batched_v1.py",
+      "src/aic_transfuser_lite/evaluation/time_metrics_v1.py",
+      "src/aic_transfuser_lite/data/time_training_cache_v1.py",
+      "src/aic_transfuser_lite/data/time_dataset_v1.py",
+      "src/aic_transfuser_lite/data/time_teacher_v1.py",
+      "src/aic_transfuser_lite/data/image_preprocess.py"
+    ],
+    "sampler_classes_ast_equal": true,
+    "torch_version": "2.7.1+cu128",
+    "historical_control_reused": true
+  },
+  "cache_sha256": "cb52a01fae1a492b5d06f1473c6ed773410934fe39a019e91c33097db340c895",
+  "collection_hashes": {
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/collection_index.json": "9719e98c179dde528d171e9ec7eefd72940c6a25148da40887039598117fd684",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_random_confirmed_20260915/collection_index.json": "971e7eaee60d8170f800703b84ec46bbf776a1fa7ed10ecdaa7a3bee87139545",
+    "/home/thistle/e2e_autonomous/e2e_lite_transfuser/docs/evidence/time_recovery_phase_expansion_20260914/pair01_20260914_summary.json": "d7e96476b3b273905f5293fd044698492c990c4fb9983394b3392a43ff9f2412"
+  },
+  "checkpoints": {
+    "initial": {
+      "path": "/home/thistle/e2e_autonomous/runs/time_p1_20laps_20260913/command_off/best.pt",
+      "sha256": "e857db4b67d3d9f6a77c2865cfc1fa53e9903e7a1d2d8a371407fbe009a1a44f"
+    },
+    "epoch_01": {
+      "path": "/home/thistle/e2e_autonomous/runs/time_recovery_random_update_20260915/epoch_01.pt",
+      "sha256": "89ff641c624e95f095afdd19923fba6888a76ab077949100aac9915a41c9d458"
+    },
+    "epoch_02": {
+      "path": "/home/thistle/e2e_autonomous/runs/time_recovery_random_update_20260915/epoch_02.pt",
+      "sha256": "d49d78308c91cddc1093c197721317953d011188f1da36ffd9379b462495c857"
+    },
+    "selected_epoch_03": {
+      "path": "/home/thistle/e2e_autonomous/runs/time_recovery_random_update_20260915/best.pt",
+      "sha256": "53e1962b97cfaa47acae3e2ad4687fac96c80672905406fdbe1514abd9563da2"
+    }
+  },
+  "data_audit": {
+    "train": {
+      "anchor_count": 1410,
+      "runs": {
+        "codex-time-recovery-right020-r19": 57,
+        "codex-time-recovery-left020-r20": 57,
+        "codex-time-recovery-left040-r21": 58,
+        "codex-time-recovery-left040-r25": 51,
+        "codex-time-recovery-pulseleft-r38": 93,
+        "codex-time-recovery-pulseright-r39": 92,
+        "codex-time-recovery-pulseleft-r40": 91,
+        "codex-time-recovery-pulseright-r41": 87,
+        "codex-time-recovery-pulseleft-r42": 89,
+        "codex-time-recovery-pulseright-r43": 92,
+        "codex-time-recovery-pulseleft-r44": 92,
+        "codex-time-recovery-pulseright-r45": 93,
+        "codex-time-recovery-earlyleft-r50": 92,
+        "codex-time-recovery-earlyright-r51": 93,
+        "codex-time-recovery-random-r64": 273
+      },
+      "group_counts": {
+        "all": 1410,
+        "strict_outward": 35,
+        "original": 223,
+        "pulse": 729,
+        "pulse_outward": 23,
+        "early": 185,
+        "early_outward": 5,
+        "random": 273,
+        "random_outward": 7,
+        "run:codex-time-recovery-earlyleft-r50": 92,
+        "run:codex-time-recovery-earlyright-r51": 93,
+        "run:codex-time-recovery-left020-r20": 57,
+        "run:codex-time-recovery-left040-r21": 58,
+        "run:codex-time-recovery-left040-r25": 51,
+        "run:codex-time-recovery-pulseleft-r38": 93,
+        "run:codex-time-recovery-pulseleft-r40": 91,
+        "run:codex-time-recovery-pulseleft-r42": 89,
+        "run:codex-time-recovery-pulseleft-r44": 92,
+        "run:codex-time-recovery-pulseright-r39": 92,
+        "run:codex-time-recovery-pulseright-r41": 87,
+        "run:codex-time-recovery-pulseright-r43": 92,
+        "run:codex-time-recovery-pulseright-r45": 93,
+        "run:codex-time-recovery-random-r64": 273,
+        "run:codex-time-recovery-right020-r19": 57,
+        "event:codex-time-recovery-random-r64:1": 89,
+        "event:codex-time-recovery-random-r64:2": 92,
+        "event:codex-time-recovery-random-r64:3": 92
+      },
+      "anchor_order_sha256": "4143212d51c328c0bf90adffea78567cc22d9e40d1971393d0ad1752e12f88a0",
+      "all_inputs_and_30_point_teachers_supported": true
+    },
+    "validation": {
+      "anchor_count": 538,
+      "runs": {
+        "codex-time-recovery-right040-r22": 57,
+        "codex-time-recovery-left020-r23": 52,
+        "codex-time-recovery-pulseleft-r46": 93,
+        "codex-time-recovery-pulseright-r47": 93,
+        "codex-time-recovery-random-r65": 243
+      },
+      "group_counts": {
+        "all": 538,
+        "strict_outward": 12,
+        "original": 109,
+        "pulse": 186,
+        "pulse_outward": 6,
+        "random": 243,
+        "random_outward": 6,
+        "run:codex-time-recovery-left020-r23": 52,
+        "run:codex-time-recovery-pulseleft-r46": 93,
+        "run:codex-time-recovery-pulseright-r47": 93,
+        "run:codex-time-recovery-random-r65": 243,
+        "run:codex-time-recovery-right040-r22": 57,
+        "event:codex-time-recovery-random-r65:1": 61,
+        "event:codex-time-recovery-random-r65:2": 93,
+        "event:codex-time-recovery-random-r65:3": 89
+      },
+      "anchor_order_sha256": "07aa40b64f0ce0d055dbcc0a1bd35de38a84a9c9bb6776a80a3580a89e8d4218",
+      "all_inputs_and_30_point_teachers_supported": true
+    }
+  },
+  "batch_size": 32,
+  "workers": 4,
+  "precision": "float32",
+  "controller": {
+    "scope": "BOUNDED_AWSIM_TRIAL_ONLY",
+    "record_vehicle_motion": true,
+    "vehicle_model_policy": "awsim_understeer_v1",
+    "host": "graneple@192.168.3.10",
+    "checkpoint_sha256": "7ec445b6ab955e76d0d71efbd8f2f1dd3066ebe365516df38df8cf18adb56f44",
+    "checkpoint_epoch": 3,
+    "command_history": false,
+    "precision": "float32",
+    "camera_receipt_freeze_ns": 50000000,
+    "capture_clock": "sim",
+    "receipt_clock": "monotonic",
+    "geometry": {
+      "scene_file": "AWSIM_Data/level1",
+      "scene_sha256": "9ab2e1e8865c02885594e0bbdde372302530f047b5a2e89c455be6a18f3e090b",
+      "vehicle": "GoKart1",
+      "base_link_transform_path_id": 796,
+      "rear_wheel_transform_path_ids": [
+        568,
+        756
+      ],
+      "base_link_forward_in_root_m": -0.48500001430511475,
+      "rear_axle_forward_in_root_m": -0.48399999737739563,
+      "rear_axle_forward_in_base_link_m": 0.0010000169277191162,
+      "wheelbase_m": 1.087,
+      "scope": "STATIC_SCENE_PLANAR_GEOMETRY_NOT_DYNAMIC_CALIBRATION"
+    },
+    "speed_policy": "fixed_5kmh",
+    "execution_profile": "one_lap",
+    "obstacle_policy": "steering_support_v2",
+    "lookahead_policy": "stopping_preview_extended_v1",
+    "steering_policy": "awsim_grip_0p6_lead_v1",
+    "steering_asset_sha256": {
+      "AWSIM_Data/StreamingAssets/Vehicle/vehicle.yaml": "5b66e58691091c82d5511535ca458d4c89e85f3b59fa0d0c4a2c7eee47887244",
+      "AWSIM_Data/Managed/Assembly-CSharp.dll": "859e5560dbffd7d0833cd1fe5eb1f36b87fa8d22f6e45eb0e1203d04a1ea6d13"
+    },
+    "drive_limit_sim_s": 600.0,
+    "drive_limit_wall_s": 600.0,
+    "outer_limit_wall_s": 720.0,
+    "speed_cap_mps": 1.3888888888888888,
+    "overspeed_limit_mps": 1.6666666666666665,
+    "plan_max_age_s": 0.5,
+    "controller_wall_period_s": 0.05,
+    "stop_confirmation_speed_mps": 0.03,
+    "stop_confirmation_duration_sim_s": 1.0
+  },
+  "controller_age_s": 0.0,
+  "optimizer_updates": 0,
+  "new_awsim_trials": 0,
+  "reserved_test_raw_or_cache_read": false,
+  "selection_validation_runs": [
+    "5kmh_run03",
+    "5kmh_run06",
+    "8kmh_run06",
+    "8kmh_run09",
+    "codex-time-recovery-right040-r22",
+    "codex-time-recovery-left020-r23"
+  ],
+  "validation_used_for_new_selection": false
+}

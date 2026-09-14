@@ -1,0 +1,20 @@
+{
+  "command": [
+    "timeout",
+    "--signal=TERM",
+    "--kill-after=20s",
+    "1200s",
+    ".venv/bin/python",
+    "-u",
+    "tools/analyze_time_recovery_fit.py",
+    "--plan",
+    "configs/time_path_p1/recovery_random_update_20260915.json",
+    "--root",
+    "..",
+    "--output",
+    "../runs/time_recovery_fit_20260915"
+  ],
+  "source": "175d9da17042ea8a11139a1208b375478e6072c6",
+  "exit_code": 0,
+  "wall_seconds": 336.3457491220033
+}
