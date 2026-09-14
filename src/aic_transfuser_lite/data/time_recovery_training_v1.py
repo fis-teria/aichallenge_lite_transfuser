@@ -214,3 +214,59 @@ class RecoveryMixDataset(Dataset[TimeSample]):
 
     def __getitem__(self, index: int) -> TimeSample:
         return self.dataset[self.indices[index]]
+
+
+class MatchedRecoveryMixDataset(Dataset[TimeSample]):
+    """Replace only recovery slots in a reference epoch; keep its finite budget.
+
+    Each unique recovery anchor appears q or q+1 times. Nominal anchor IDs stay
+    in exactly the same positions before the shared per-epoch permutation.
+    Samples retain their original SI units and [30,2] observed XY teachers.
+    """
+
+    def __init__(self, dataset: TimeTrainingCacheDataset, reference: RecoveryMixDataset,
+                 recovery_run_ids: Sequence[str], *, seed: int) -> None:
+        from .time_split_v1 import assert_split_membership
+        if type(seed) is not int or seed < 0:
+            raise ValueError('nonnegative integer seed required')
+        assert_split_membership(dataset.split_manifest, dataset.run_ids, split='train')
+        assert_split_membership(reference.dataset.split_manifest, reference.run_ids, split='train')
+        ids = set(recovery_run_ids)
+        if not ids or not ids <= set(dataset.run_ids):
+            raise ValueError('recovery runs must belong to training')
+        if (len(set(dataset.anchor_ids)) != len(dataset.anchor_ids)
+                or len(set(reference.dataset.anchor_ids)) != len(reference.dataset.anchor_ids)):
+            raise ValueError('unique underlying anchors required')
+        lookup = {aid: i for i, aid in enumerate(dataset.anchor_ids)}
+        if not set(reference.dataset.anchor_ids) <= set(lookup):
+            raise ValueError('original anchors cannot be dropped')
+        for aid, rid in zip(reference.dataset.anchor_ids, reference.dataset.run_ids):
+            if dataset.run_ids[lookup[aid]] != rid:
+                raise ValueError('original anchor run identity changed')
+        nominal = {aid for aid, rid in zip(dataset.anchor_ids, dataset.run_ids) if rid not in ids}
+        old_nominal = {aid for aid, rid in zip(reference.anchor_ids, reference.run_ids) if rid not in ids}
+        if nominal != old_nominal:
+            raise ValueError('nominal population changed')
+        slots = [i for i, rid in enumerate(reference.run_ids) if rid in ids]
+        pool = [i for i, rid in enumerate(dataset.run_ids) if rid in ids]
+        if len(slots) < len(pool):
+            raise ValueError('reference budget cannot cover every recovery anchor')
+        rng = np.random.default_rng(seed)
+        q, remainder = divmod(len(slots), len(pool))
+        chosen = np.tile(np.asarray(pool, dtype=np.int64), q).tolist()
+        chosen.extend(rng.permutation(pool)[:remainder].tolist())
+        rng.shuffle(chosen)
+        slot_values = iter(chosen)
+        self.dataset = dataset
+        self.indices = [next(slot_values) if rid in ids else lookup[aid]
+                        for aid, rid in zip(reference.anchor_ids, reference.run_ids)]
+        self.run_ids = [dataset.run_ids[i] for i in self.indices]
+        self.anchor_ids = [dataset.anchor_ids[i] for i in self.indices]
+        self.recovery_presentations = len(slots)
+        self.unique_recovery_anchors = len(pool)
+
+    def __len__(self) -> int:
+        return len(self.indices)
+
+    def __getitem__(self, index: int) -> TimeSample:
+        return self.dataset[self.indices[index]]

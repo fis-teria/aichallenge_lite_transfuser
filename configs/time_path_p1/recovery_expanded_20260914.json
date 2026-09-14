@@ -1,0 +1,172 @@
+{
+  "experiment": "command_off_outward_recovery_matched_budget_20260914",
+  "base_cache": "datasets/cache/time_training_20260913_v2",
+  "base_cache_sha256": "f8ac104391d7a7c483d53aa06fcf058bc06cc6a5a540c6b940d1b4db821f75f5",
+  "initialization": "runs/time_p1_20laps_20260913/command_off/best.pt",
+  "initialization_sha256": "e857db4b67d3d9f6a77c2865cfc1fa53e9903e7a1d2d8a371407fbe009a1a44f",
+  "raw_roots": {
+    "old": "raw/time_recovery_collection_20260913",
+    "new": "raw/time_recovery_batches_20260914",
+    "expansion": "raw/time_recovery_expansion_20260914"
+  },
+  "types": "runs/time_recovery_collection_20260913/types",
+  "runs": [
+    {
+      "run_id": "codex-time-recovery-right020-r19",
+      "root": "old",
+      "split": "train",
+      "probe": "time_recovery_collection_20260913/codex-time-recovery-right020-r19_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-left020-r20",
+      "root": "old",
+      "split": "train",
+      "probe": "time_recovery_collection_20260913/codex-time-recovery-left020-r20_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-left040-r21",
+      "root": "new",
+      "split": "train",
+      "probe": "time_recovery_batches_20260914/codex-time-recovery-left040-r21_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-right040-r22",
+      "root": "new",
+      "split": "validation",
+      "probe": "time_recovery_batches_20260914/codex-time-recovery-right040-r22_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-left020-r23",
+      "root": "new",
+      "split": "validation",
+      "probe": "time_recovery_batches_20260914/codex-time-recovery-left020-r23_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-left040-r25",
+      "root": "new",
+      "split": "train",
+      "probe": "time_recovery_batches_20260914/codex-time-recovery-left040-r25_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseleft-r38",
+      "root": "expansion",
+      "split": "train",
+      "probe": "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r38_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r39",
+      "root": "expansion",
+      "split": "train",
+      "probe": "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r39_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseleft-r40",
+      "root": "expansion",
+      "split": "train",
+      "probe": "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r40_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r41",
+      "root": "expansion",
+      "split": "train",
+      "probe": "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r41_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseleft-r42",
+      "root": "expansion",
+      "split": "train",
+      "probe": "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r42_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r43",
+      "root": "expansion",
+      "split": "train",
+      "probe": "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r43_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseleft-r44",
+      "root": "expansion",
+      "split": "train",
+      "probe": "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r44_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r45",
+      "root": "expansion",
+      "split": "train",
+      "probe": "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r45_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseleft-r46",
+      "root": "expansion",
+      "split": "validation",
+      "probe": "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r46_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r47",
+      "root": "expansion",
+      "split": "validation",
+      "probe": "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r47_causal_probe.json"
+    }
+  ],
+  "excluded": [
+    "r17/r18 partial laps",
+    "r24/r26 auxiliary",
+    "r01-r16 diagnostic runs",
+    "r27-r37 pilots/calibration/nominal references",
+    "r48/r49 evaluation_reserved",
+    "old V4 spatial corpora without current causal audit"
+  ],
+  "training": {
+    "epochs": 3,
+    "batch_size": 32,
+    "workers": 4,
+    "seed": 42,
+    "learning_rate": 3e-05,
+    "weight_decay": 0.0001,
+    "max_grad_norm": 1.0,
+    "precision": "float32"
+  },
+  "selection": "minimum_original_six_validation_runs_macro_3s_error_m",
+  "test_usage": "sealed",
+  "runtime": "fixed_target_5kmh_existing_vehicle_model_and_safety_normal_rviz",
+  "awsim_budget": {
+    "new_runtime_trials_this_experiment": 0
+  },
+  "reference_recovery_repeats": 40,
+  "reference_cache": "datasets/cache/time_recovery_20260914",
+  "reference_cache_sha256": "917df968ee8fb1951a2d150c2da82165aa351e7597e372054401601d02c09023",
+  "reference_training": "runs/time_recovery_finetune_20260914",
+  "reference_checkpoint_sha256": "c2fdb6fd1daf525524fe44d3f793d84b482760aa1f9f1fa84d5315222ab9fbe0",
+  "reference_source_commit": "17777082d4d9c8cef0b2c7be482352a19fae7fa1",
+  "collection_index": "runs/time_recovery_expansion_20260914/collection_index.json",
+  "collection_index_sha256": "9719e98c179dde528d171e9ec7eefd72940c6a25148da40887039598117fd684",
+  "selection_run_ids": [
+    "5kmh_run03",
+    "5kmh_run06",
+    "8kmh_run06",
+    "8kmh_run09",
+    "codex-time-recovery-right040-r22",
+    "codex-time-recovery-left020-r23"
+  ],
+  "new_validation_usage": "post_selection_diagnostic_only",
+  "expected": {
+    "unique_train": 37678,
+    "unique_recovery_train": 952,
+    "validation_total": 12532,
+    "selection_validation": 12346,
+    "nominal_presentations_per_epoch": 36726,
+    "recovery_presentations_per_epoch": 8920,
+    "presentations_per_epoch": 45646,
+    "optimizer_steps": 4281,
+    "epochs": 3
+  },
+  "comparison": "reuse_verified_old_data_control_same_initialization_budget_selection_and_nominal_slots; one seed; changed recovery pool",
+  "offline_controller_config": "configs/control/time_path_segment_5kmh_20260914.json",
+  "offline_controller_age_s": [
+    0.0,
+    0.1,
+    0.2
+  ],
+  "offline_controller_scope": "recorded_teacher_state_with_observed_motion_age_compensation; no new closed_loop claim",
+  "outer_training_timeout_s": 7200
+}
