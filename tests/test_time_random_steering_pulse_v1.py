@@ -7,7 +7,7 @@ import pytest
 from aic_transfuser_lite.data.time_steering_pulse_v1 import SteeringPulseConfig
 from aic_transfuser_lite.data.time_random_steering_pulse_v1 import (
     SCHEMA, RandomPulseConfig, RandomPulseState, propose_random_pulse, random_schedule,
-    random_pulse_events, event_at,
+    random_pulse_events, event_at, validate_random_guide,
 )
 from aic_transfuser_lite.data.time_recovery_collection_v1 import collection_phase_windows, recovery_teacher_mask
 
@@ -51,6 +51,17 @@ def test_seeded_plan_is_reproducible_bounded_and_contains_both_sides():
     assert a != random_schedule(RandomPulseConfig(915063))
     assert len(a) == 3 and {s for s, _ in a} == {-1, 1}
     assert all(.5 <= delay <= 1.5 for _, delay in a)
+
+
+def test_fractional_measured_guide_endpoints_preserve_full_start_and_future_margins():
+    guide = [[60.051293691840584,0.,0.],[134.9410027178904,0.,0.]]
+    validate_random_guide(RandomPulseConfig(1), TEMPLATE, guide)
+    with pytest.raises(ValueError,match='COVERAGE'):
+        validate_random_guide(RandomPulseConfig(1,start_min_m=65.), TEMPLATE, guide)
+    for invalid in ([[60.,0.],[135.,0.]], [[60.,0.,0.],[132.,0.,0.]],
+                    [[60.,0.,0.],[60.,0.,0.]], [[60.,0.,float('nan')],[135.,0.,0.]]):
+        with pytest.raises(ValueError,match='COVERAGE'):
+            validate_random_guide(RandomPulseConfig(1), TEMPLATE, invalid)
 
 
 @pytest.mark.parametrize('kwargs', [dict(seed=True), dict(seed=-1), dict(max_events=4), dict(start_max_m=135.),

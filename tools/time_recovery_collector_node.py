@@ -33,7 +33,7 @@ from aic_transfuser_lite.data.time_steering_pulse_v1 import (
     SteeringPulseConfig, SteeringPulseState, nominal_recovery_errors, propose_steering_pulse,
 )
 from aic_transfuser_lite.data.time_random_steering_pulse_v1 import (
-    SCHEMA as RANDOM_PULSE_SCHEMA, RandomPulseConfig, RandomPulseState, propose_random_pulse,
+    SCHEMA as RANDOM_PULSE_SCHEMA, RandomPulseConfig, RandomPulseState, propose_random_pulse, validate_random_guide,
 )
 
 
@@ -72,9 +72,8 @@ def main() -> None:
         if (pulse_guide[0, 0] > pulse_config.start_s_m-5.
                 or pulse_guide[-1, 0] < pulse_config.start_s_m+pulse_config.start_window_m+3.+1.7*pulse_config.recovery_s):
             raise ValueError('PULSE_GUIDE_RECOVERY_COVERAGE')
-        if random_config is not None and (pulse_guide[0, 0] > random_config.start_min_m-5.
-                or pulse_guide[-1, 0] < random_config.start_max_m+pulse_config.start_window_m+3.+1.7*pulse_config.recovery_s):
-            raise ValueError('RANDOM_GUIDE_RECOVERY_COVERAGE')
+        if random_config is not None:
+            validate_random_guide(random_config, pulse_config, pulse_guide)
     import rclpy
     from rclpy.node import Node
     from rclpy.executors import SingleThreadedExecutor

@@ -4,7 +4,7 @@
 
 ユーザーが2026-09-15に[提案方針](time_random_recovery_collection_proposal_20260914.md)による収集から検証までを承認した。未使用の固定位置r52〜r61は実行せず、新しい計画とrootで進める。最終目標は通常E2E完走。そのための追加教師を増やす作業であり、本タスクではモデル学習やモデルの完走性能を主張しない。
 
-実装commit`9e80849`のnative WSL重点テストは58 passed / 1 warning、6.66s、exit0。ログは`/home/thistle/e2e_autonomous/runs/time_random_recovery_20260915_focused_9e80849.log`。現在の未達条件は運用ツールを含む全pytestと専用rootでの実走確認。単発pulseを包むスケジューラを追加し、発行成功時だけ状態を確定する。次は運用ツール・固定計画をWindows commit→WSL同期→全pytestと、専用rootの準備を行う。
+実装commit`9e80849`のnative WSL重点テストは58 passed / 1 warning、6.66s。運用追加`886e1ff`の全pytestは2460 passed / 4 skipped / 65 warnings、92.70s、exit0。ただしその後の実データ準備で、正常guideの先頭が60.051293691840584mで、開始65mに対する5m余白を満たさず停止した。走行はまだ未実施。空の準備出力とログを保全して、開始下限を66mへ移す。検証を弱めず、runtimeと準備で共通のguide範囲検証と端数境界の回帰テストを追加した。次は同修正の全pytest・再準備・専用rootでの実走確認。
 
 ## 変更の根拠・範囲
 
@@ -18,7 +18,7 @@
 - 最大2run、各1周＋将来末尾＋停止、各最大3イベント。runごとのseedとsplitを走行前に固定する。
 - `codex-time-recovery-random-r62`: seed915062、train。`codex-time-recovery-random-r63`: seed915063、validation。同一runをframeやeventでsplitしない。
 - 目標5km/h、`aligned_gain4_v1`。外乱±0.10rad、最大2s・plateau1.5s・release0.15s、復帰区間10s。既存横ずれ上限0.25m・向き上限4度を維持。
-- 開始候補は正常guideの検証済み範囲内、コース進行65〜111m。候補の遅延0.5〜1.5sをseedで生成し、左右をshuffleする。有限3回の計画に左右双方を含める。
+- 開始候補は正常guideの検証済み範囲内、コース進行66〜111m。候補の遅延0.5〜1.5sをseedで生成し、左右をshuffleする。有限3回の計画に左右双方を含める。
 - 開始前に位置差5cm・向き差1度以内、速度1.15〜1.4m/sを1s維持。直前150ms以内の正常発行で停止領域余裕0.5m以上、nominal操舵に0.10radのheadroomがあることを要求。実際の外乱候補にも既存の停止領域監視と発行時確認を通す。
 - 復帰は位置差5cm・向き差2度以内、速度1.15〜1.4m/sの1s連続維持を確認。復帰区間10sを終え、さらに将来3s＋候補遅延を待つ。未復帰なら反復を打ち切って記録し、通常PPと監視を維持する。強さ・長さの自動増加や回数予算の延長はしない。
 - 1run最大1800sim秒、外側1980秒＋終了猶予20秒。同時走行1。開始時空き12GiB、実行中10GiB、bag2GiB/runという既存運用。

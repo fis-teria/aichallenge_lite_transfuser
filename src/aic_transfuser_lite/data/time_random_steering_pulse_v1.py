@@ -19,7 +19,7 @@ SCHEMA = 'measured_random_steering_pulse_v1'
 class RandomPulseConfig:
     seed: int
     max_events: int = 3
-    start_min_m: float = 65.
+    start_min_m: float = 66.
     start_max_m: float = 111.
     jitter_min_s: float = .5
     jitter_max_s: float = 1.5
@@ -46,6 +46,17 @@ def random_schedule(config: RandomPulseConfig) -> tuple[tuple[int, float], ...]:
     signs = [-1, 1] + ([rng.choice((-1, 1))] if config.max_events == 3 else [])
     rng.shuffle(signs)
     return tuple((sign, rng.uniform(config.jitter_min_s, config.jitter_max_s)) for sign in signs)
+
+
+def validate_random_guide(config: RandomPulseConfig, template: SteeringPulseConfig, guide: Any) -> None:
+    """Require measured [N,3] (progress m, lateral m, yaw rad) and full margins."""
+    import numpy as np
+    values = np.asarray(guide, dtype=float)
+    if (values.ndim != 2 or values.shape[1] != 3 or len(values) < 2 or not np.isfinite(values).all()
+            or not np.all(np.diff(values[:,0]) > 0)
+            or values[0,0] > config.start_min_m-5.
+            or values[-1,0] < config.start_max_m+template.start_window_m+3.+1.7*template.recovery_s):
+        raise ValueError('RANDOM_GUIDE_RECOVERY_COVERAGE')
 
 
 @dataclass(frozen=True)

@@ -42,7 +42,7 @@ def prepare(plan: dict[str, Any], plan_path: Path, test_gate: Path) -> None:
     """Native WSL only: matched real nominal guides and exact tested overlays."""
     from dataclasses import asdict
     import numpy as np
-    from aic_transfuser_lite.data.time_random_steering_pulse_v1 import SCHEMA, RandomPulseConfig, random_schedule
+    from aic_transfuser_lite.data.time_random_steering_pulse_v1 import SCHEMA, RandomPulseConfig, random_schedule, validate_random_guide
     from aic_transfuser_lite.data.time_steering_pulse_v1 import SteeringPulseConfig
 
     repo = Path.cwd().resolve()
@@ -58,8 +58,7 @@ def prepare(plan: dict[str, Any], plan_path: Path, test_gate: Path) -> None:
         old = Path(plan['native_root'])/f"raw/time_recovery_expansion_20260914/codex-time-recovery-pulse{row['side']}-r{old_num}/reference.json"
         ref = read(old); pulse = ref['steering_pulse']; guide = np.asarray(pulse['nominal_guide'])
         cfg = RandomPulseConfig(row['seed']); template = SteeringPulseConfig(**{**pulse['config'], 'amplitude_rad':.1})
-        assert guide.shape[1] == 3 and np.isfinite(guide).all() and np.all(np.diff(guide[:,0]) > 0)
-        assert guide[0,0] <= cfg.start_min_m-5 and guide[-1,0] >= cfg.start_max_m+template.start_window_m+3+1.7*template.recovery_s
+        validate_random_guide(cfg, template, guide)
         assert ref['intervals'] == [] and ref['signed_offset_m'] == 0 and ref['reference_xy_m'] == ref['baseline_xy_m']
         pulse.update(schema=SCHEMA, config=asdict(template), random_config=asdict(cfg))
         path = out/'references'/(row['side']+'.json'); write(path, ref)
