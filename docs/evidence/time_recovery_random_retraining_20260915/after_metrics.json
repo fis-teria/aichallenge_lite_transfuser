@@ -1,0 +1,2466 @@
+{
+  "epoch": 3,
+  "checkpoint": "/home/thistle/e2e_autonomous/runs/time_recovery_random_update_20260915/best.pt",
+  "sha256": "53e1962b97cfaa47acae3e2ad4687fac96c80672905406fdbe1514abd9563da2",
+  "training_source_commit": "8c3fd83145830f774473680a88c947b1e3c83899",
+  "selected_prediction_replay_exact": true,
+  "groups": {
+    "nominal": {
+      "anchor_count": 12237,
+      "run_count": 4,
+      "xy": {
+        "anchor_count": 12237,
+        "input_invalid_count": 45,
+        "rejected_count": 0,
+        "stale_count": 0,
+        "prediction_invalid_count": 0,
+        "target_invalid_count": 0,
+        "accepted_plan_count": 12192,
+        "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+        "horizons": {
+          "0.5s": {
+            "raw_error_m": 0.0073172226548194885,
+            "raw_count": 11780,
+            "accepted_error_m": 0.0073172226548194885,
+            "accepted_count": 11780,
+            "total_count": 12237,
+            "teacher_support_count": 11822,
+            "coverage": 0.9626542453215657,
+            "accepted_coverage": 0.9626542453215657,
+            "status": "OK"
+          },
+          "1s": {
+            "raw_error_m": 0.009704665280878544,
+            "raw_count": 11780,
+            "accepted_error_m": 0.009704665280878544,
+            "accepted_count": 11780,
+            "total_count": 12237,
+            "teacher_support_count": 11822,
+            "coverage": 0.9626542453215657,
+            "accepted_coverage": 0.9626542453215657,
+            "status": "OK"
+          },
+          "2s": {
+            "raw_error_m": 0.01878931373357773,
+            "raw_count": 11780,
+            "accepted_error_m": 0.01878931373357773,
+            "accepted_count": 11780,
+            "total_count": 12237,
+            "teacher_support_count": 11822,
+            "coverage": 0.9626542453215657,
+            "accepted_coverage": 0.9626542453215657,
+            "status": "OK"
+          },
+          "3s": {
+            "raw_error_m": 0.04662254825234413,
+            "raw_count": 11780,
+            "accepted_error_m": 0.04662254825234413,
+            "accepted_count": 11780,
+            "total_count": 12237,
+            "teacher_support_count": 11822,
+            "coverage": 0.9626542453215657,
+            "accepted_coverage": 0.9626542453215657,
+            "status": "OK"
+          }
+        },
+        "all_point_ade_m": 0.016399789601564407,
+        "all_point_count": 353400,
+        "all_teacher_support_count": 354660,
+        "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+        "all_point_coverage": 0.9626542453215657,
+        "run_macro": {
+          "5kmh_run03": {
+            "anchor_count": 3905,
+            "input_invalid_count": 4,
+            "rejected_count": 0,
+            "stale_count": 0,
+            "prediction_invalid_count": 0,
+            "target_invalid_count": 0,
+            "accepted_plan_count": 3901,
+            "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+            "horizons": {
+              "0.5s": {
+                "raw_error_m": 0.005748257972300053,
+                "raw_count": 3799,
+                "accepted_error_m": 0.005748257972300053,
+                "accepted_count": 3799,
+                "total_count": 3905,
+                "teacher_support_count": 3803,
+                "coverage": 0.9728553137003841,
+                "accepted_coverage": 0.9728553137003841,
+                "status": "OK"
+              },
+              "1s": {
+                "raw_error_m": 0.007855438627302647,
+                "raw_count": 3799,
+                "accepted_error_m": 0.007855438627302647,
+                "accepted_count": 3799,
+                "total_count": 3905,
+                "teacher_support_count": 3803,
+                "coverage": 0.9728553137003841,
+                "accepted_coverage": 0.9728553137003841,
+                "status": "OK"
+              },
+              "2s": {
+                "raw_error_m": 0.012225957587361336,
+                "raw_count": 3799,
+                "accepted_error_m": 0.012225957587361336,
+                "accepted_count": 3799,
+                "total_count": 3905,
+                "teacher_support_count": 3803,
+                "coverage": 0.9728553137003841,
+                "accepted_coverage": 0.9728553137003841,
+                "status": "OK"
+              },
+              "3s": {
+                "raw_error_m": 0.028237080201506615,
+                "raw_count": 3799,
+                "accepted_error_m": 0.028237080201506615,
+                "accepted_count": 3799,
+                "total_count": 3905,
+                "teacher_support_count": 3803,
+                "coverage": 0.9728553137003841,
+                "accepted_coverage": 0.9728553137003841,
+                "status": "OK"
+              }
+            },
+            "all_point_ade_m": 0.011108912527561188,
+            "all_point_count": 113970,
+            "all_teacher_support_count": 114090,
+            "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+            "all_point_coverage": 0.9728553137003841
+          },
+          "5kmh_run06": {
+            "anchor_count": 3906,
+            "input_invalid_count": 11,
+            "rejected_count": 0,
+            "stale_count": 0,
+            "prediction_invalid_count": 0,
+            "target_invalid_count": 0,
+            "accepted_plan_count": 3895,
+            "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+            "horizons": {
+              "0.5s": {
+                "raw_error_m": 0.005687683820724487,
+                "raw_count": 3793,
+                "accepted_error_m": 0.005687683820724487,
+                "accepted_count": 3793,
+                "total_count": 3906,
+                "teacher_support_count": 3803,
+                "coverage": 0.9710701484895033,
+                "accepted_coverage": 0.9710701484895033,
+                "status": "OK"
+              },
+              "1s": {
+                "raw_error_m": 0.007716385647654533,
+                "raw_count": 3793,
+                "accepted_error_m": 0.007716385647654533,
+                "accepted_count": 3793,
+                "total_count": 3906,
+                "teacher_support_count": 3803,
+                "coverage": 0.9710701484895033,
+                "accepted_coverage": 0.9710701484895033,
+                "status": "OK"
+              },
+              "2s": {
+                "raw_error_m": 0.011826368980109692,
+                "raw_count": 3793,
+                "accepted_error_m": 0.011826368980109692,
+                "accepted_count": 3793,
+                "total_count": 3906,
+                "teacher_support_count": 3803,
+                "coverage": 0.9710701484895033,
+                "accepted_coverage": 0.9710701484895033,
+                "status": "OK"
+              },
+              "3s": {
+                "raw_error_m": 0.027317482978105545,
+                "raw_count": 3793,
+                "accepted_error_m": 0.027317482978105545,
+                "accepted_count": 3793,
+                "total_count": 3906,
+                "teacher_support_count": 3803,
+                "coverage": 0.9710701484895033,
+                "accepted_coverage": 0.9710701484895033,
+                "status": "OK"
+              }
+            },
+            "all_point_ade_m": 0.010790630243718624,
+            "all_point_count": 113790,
+            "all_teacher_support_count": 114090,
+            "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+            "all_point_coverage": 0.9710701484895033
+          },
+          "8kmh_run06": {
+            "anchor_count": 2212,
+            "input_invalid_count": 11,
+            "rejected_count": 0,
+            "stale_count": 0,
+            "prediction_invalid_count": 0,
+            "target_invalid_count": 0,
+            "accepted_plan_count": 2201,
+            "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+            "horizons": {
+              "0.5s": {
+                "raw_error_m": 0.010312730446457863,
+                "raw_count": 2098,
+                "accepted_error_m": 0.010312730446457863,
+                "accepted_count": 2098,
+                "total_count": 2212,
+                "teacher_support_count": 2107,
+                "coverage": 0.9484629294755877,
+                "accepted_coverage": 0.9484629294755877,
+                "status": "OK"
+              },
+              "1s": {
+                "raw_error_m": 0.013966461643576622,
+                "raw_count": 2098,
+                "accepted_error_m": 0.013966461643576622,
+                "accepted_count": 2098,
+                "total_count": 2212,
+                "teacher_support_count": 2107,
+                "coverage": 0.9484629294755877,
+                "accepted_coverage": 0.9484629294755877,
+                "status": "OK"
+              },
+              "2s": {
+                "raw_error_m": 0.03391357138752937,
+                "raw_count": 2098,
+                "accepted_error_m": 0.03391357138752937,
+                "accepted_count": 2098,
+                "total_count": 2212,
+                "teacher_support_count": 2107,
+                "coverage": 0.9484629294755877,
+                "accepted_coverage": 0.9484629294755877,
+                "status": "OK"
+              },
+              "3s": {
+                "raw_error_m": 0.0843517929315567,
+                "raw_count": 2098,
+                "accepted_error_m": 0.0843517929315567,
+                "accepted_count": 2098,
+                "total_count": 2212,
+                "teacher_support_count": 2107,
+                "coverage": 0.9484629294755877,
+                "accepted_coverage": 0.9484629294755877,
+                "status": "OK"
+              }
+            },
+            "all_point_ade_m": 0.02837168052792549,
+            "all_point_count": 62940,
+            "all_teacher_support_count": 63210,
+            "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+            "all_point_coverage": 0.9484629294755877
+          },
+          "8kmh_run09": {
+            "anchor_count": 2214,
+            "input_invalid_count": 19,
+            "rejected_count": 0,
+            "stale_count": 0,
+            "prediction_invalid_count": 0,
+            "target_invalid_count": 0,
+            "accepted_plan_count": 2195,
+            "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+            "horizons": {
+              "0.5s": {
+                "raw_error_m": 0.010119499638676643,
+                "raw_count": 2090,
+                "accepted_error_m": 0.010119499638676643,
+                "accepted_count": 2090,
+                "total_count": 2214,
+                "teacher_support_count": 2109,
+                "coverage": 0.9439927732610659,
+                "accepted_coverage": 0.9439927732610659,
+                "status": "OK"
+              },
+              "1s": {
+                "raw_error_m": 0.012396292760968208,
+                "raw_count": 2090,
+                "accepted_error_m": 0.012396292760968208,
+                "accepted_count": 2090,
+                "total_count": 2214,
+                "teacher_support_count": 2109,
+                "coverage": 0.9439927732610659,
+                "accepted_coverage": 0.9439927732610659,
+                "status": "OK"
+              },
+              "2s": {
+                "raw_error_m": 0.02817397750914097,
+                "raw_count": 2090,
+                "accepted_error_m": 0.02817397750914097,
+                "accepted_count": 2090,
+                "total_count": 2214,
+                "teacher_support_count": 2109,
+                "coverage": 0.9439927732610659,
+                "accepted_coverage": 0.9439927732610659,
+                "status": "OK"
+              },
+              "3s": {
+                "raw_error_m": 0.0772036761045456,
+                "raw_count": 2090,
+                "accepted_error_m": 0.0772036761045456,
+                "accepted_count": 2090,
+                "total_count": 2214,
+                "teacher_support_count": 2109,
+                "coverage": 0.9439927732610659,
+                "accepted_coverage": 0.9439927732610659,
+                "status": "OK"
+              }
+            },
+            "all_point_ade_m": 0.024178994819521904,
+            "all_point_count": 62700,
+            "all_teacher_support_count": 63270,
+            "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+            "all_point_coverage": 0.9439927732610659
+          }
+        },
+        "run_macro_mean": {
+          "0.5s": {
+            "raw_error_m": 0.007967042969539762,
+            "accepted_error_m": 0.007967042969539762,
+            "run_count": 4,
+            "raw_supported_runs": 4,
+            "accepted_supported_runs": 4
+          },
+          "1s": {
+            "raw_error_m": 0.010483644669875503,
+            "accepted_error_m": 0.010483644669875503,
+            "run_count": 4,
+            "raw_supported_runs": 4,
+            "accepted_supported_runs": 4
+          },
+          "2s": {
+            "raw_error_m": 0.021534968866035342,
+            "accepted_error_m": 0.021534968866035342,
+            "run_count": 4,
+            "raw_supported_runs": 4,
+            "accepted_supported_runs": 4
+          },
+          "3s": {
+            "raw_error_m": 0.054277508053928614,
+            "accepted_error_m": 0.054277508053928614,
+            "run_count": 4,
+            "raw_supported_runs": 4,
+            "accepted_supported_runs": 4
+          }
+        },
+        "worst_run": {
+          "0.5s": "8kmh_run06",
+          "1s": "8kmh_run06",
+          "2s": "8kmh_run06",
+          "3s": "8kmh_run06"
+        }
+      },
+      "components": {
+        "0.5s": {
+          "forward_mae_m": 0.0068556957999138055,
+          "left_mae_m": 0.0027179345640231806,
+          "left_bias_m": 0.0006984031111078571,
+          "supported_anchors": 11780,
+          "supported_runs": 4,
+          "total_anchors": 12237
+        },
+        "1s": {
+          "forward_mae_m": 0.0077546372705193534,
+          "left_mae_m": 0.005220372301857731,
+          "left_bias_m": -0.00020114848710853846,
+          "supported_anchors": 11780,
+          "supported_runs": 4,
+          "total_anchors": 12237
+        },
+        "2s": {
+          "forward_mae_m": 0.01440229196269929,
+          "left_mae_m": 0.011981303157302912,
+          "left_bias_m": 0.0016439072001653563,
+          "supported_anchors": 11780,
+          "supported_runs": 4,
+          "total_anchors": 12237
+        },
+        "3s": {
+          "forward_mae_m": 0.035569464924344915,
+          "left_mae_m": 0.03102699761532242,
+          "left_bias_m": -0.004359958482297853,
+          "supported_anchors": 11780,
+          "supported_runs": 4,
+          "total_anchors": 12237
+        }
+      },
+      "pp": {
+        "scope": "TEACHER_PP_AGREEMENT_AT_OBSERVATION_NOT_CLOSED_LOOP",
+        "total_anchors": 12237,
+        "teacher_supported": 8226,
+        "supported_runs": 4,
+        "candidate_rejected": 53,
+        "teacher_exclusions": {
+          "TIME_PATH_MOTION_UNRESOLVED": 147,
+          "TIME_PATH_UNRESOLVED_EXCURSION": 4,
+          "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 49,
+          "INPUT_INVALID": 45,
+          "TEACHER_FUTURE_INCOMPLETE": 412,
+          "SPEED_OUTSIDE_FIXED_5KMH_CONTRACT": 3354
+        },
+        "per_run": {
+          "5kmh_run03": {
+            "teacher_supported": 3747,
+            "candidate_rejected": 12,
+            "penalized_mean_rad": 0.006348070020254041,
+            "paired_mean_rad": 0.004440754582568111
+          },
+          "5kmh_run06": {
+            "teacher_supported": 3742,
+            "candidate_rejected": 12,
+            "penalized_mean_rad": 0.0062911795315259995,
+            "paired_mean_rad": 0.0043811243450322486
+          },
+          "8kmh_run06": {
+            "teacher_supported": 368,
+            "candidate_rejected": 14,
+            "penalized_mean_rad": 0.026868241606413525,
+            "paired_mean_rad": 0.004202013873333834
+          },
+          "8kmh_run09": {
+            "teacher_supported": 369,
+            "candidate_rejected": 15,
+            "penalized_mean_rad": 0.028362578564372406,
+            "paired_mean_rad": 0.004140653927269542
+          }
+        },
+        "run_macro_penalized_rad": 0.016967517430641493,
+        "rejection_penalty_rad": 0.6
+      },
+      "pp_applicability": {
+        "attempted": 12237,
+        "applicable": 8780,
+        "accepted": 8256,
+        "accepted_fraction": 0.9403189066059225,
+        "reasons": {
+          "TIME_PATH_UNRESOLVED_EXCURSION": 8,
+          "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 514,
+          "PP_ACCEPTED": 8256,
+          "TIME_PATH_INITIAL_DIRECTION": 2,
+          "INPUT_INVALID": 45,
+          "SPEED_OUTSIDE_FIXED_5KMH_CONTRACT": 3412
+        },
+        "max_absolute_steer_rad": 0.2746294517539453,
+        "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+      }
+    },
+    "old_recovery": {
+      "anchor_count": 109,
+      "run_count": 2,
+      "xy": {
+        "anchor_count": 109,
+        "input_invalid_count": 0,
+        "rejected_count": 0,
+        "stale_count": 0,
+        "prediction_invalid_count": 0,
+        "target_invalid_count": 0,
+        "accepted_plan_count": 109,
+        "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+        "horizons": {
+          "0.5s": {
+            "raw_error_m": 0.005365325137972832,
+            "raw_count": 109,
+            "accepted_error_m": 0.005365325137972832,
+            "accepted_count": 109,
+            "total_count": 109,
+            "teacher_support_count": 109,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "1s": {
+            "raw_error_m": 0.005877482704818249,
+            "raw_count": 109,
+            "accepted_error_m": 0.005877482704818249,
+            "accepted_count": 109,
+            "total_count": 109,
+            "teacher_support_count": 109,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "2s": {
+            "raw_error_m": 0.016021080315113068,
+            "raw_count": 109,
+            "accepted_error_m": 0.016021080315113068,
+            "accepted_count": 109,
+            "total_count": 109,
+            "teacher_support_count": 109,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "3s": {
+            "raw_error_m": 0.03632509708404541,
+            "raw_count": 109,
+            "accepted_error_m": 0.03632509708404541,
+            "accepted_count": 109,
+            "total_count": 109,
+            "teacher_support_count": 109,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          }
+        },
+        "all_point_ade_m": 0.013744119554758072,
+        "all_point_count": 3270,
+        "all_teacher_support_count": 3270,
+        "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+        "all_point_coverage": 1.0,
+        "run_macro": {
+          "codex-time-recovery-right040-r22": {
+            "anchor_count": 57,
+            "input_invalid_count": 0,
+            "rejected_count": 0,
+            "stale_count": 0,
+            "prediction_invalid_count": 0,
+            "target_invalid_count": 0,
+            "accepted_plan_count": 57,
+            "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+            "horizons": {
+              "0.5s": {
+                "raw_error_m": 0.005054537672549486,
+                "raw_count": 57,
+                "accepted_error_m": 0.005054537672549486,
+                "accepted_count": 57,
+                "total_count": 57,
+                "teacher_support_count": 57,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "1s": {
+                "raw_error_m": 0.006269615609198809,
+                "raw_count": 57,
+                "accepted_error_m": 0.006269615609198809,
+                "accepted_count": 57,
+                "total_count": 57,
+                "teacher_support_count": 57,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "2s": {
+                "raw_error_m": 0.018140655010938644,
+                "raw_count": 57,
+                "accepted_error_m": 0.018140655010938644,
+                "accepted_count": 57,
+                "total_count": 57,
+                "teacher_support_count": 57,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "3s": {
+                "raw_error_m": 0.046816736459732056,
+                "raw_count": 57,
+                "accepted_error_m": 0.046816736459732056,
+                "accepted_count": 57,
+                "total_count": 57,
+                "teacher_support_count": 57,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              }
+            },
+            "all_point_ade_m": 0.016252893954515457,
+            "all_point_count": 1710,
+            "all_teacher_support_count": 1710,
+            "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+            "all_point_coverage": 1.0
+          },
+          "codex-time-recovery-left020-r23": {
+            "anchor_count": 52,
+            "input_invalid_count": 0,
+            "rejected_count": 0,
+            "stale_count": 0,
+            "prediction_invalid_count": 0,
+            "target_invalid_count": 0,
+            "accepted_plan_count": 52,
+            "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+            "horizons": {
+              "0.5s": {
+                "raw_error_m": 0.005705996882170439,
+                "raw_count": 52,
+                "accepted_error_m": 0.005705996882170439,
+                "accepted_count": 52,
+                "total_count": 52,
+                "teacher_support_count": 52,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "1s": {
+                "raw_error_m": 0.0054476456716656685,
+                "raw_count": 52,
+                "accepted_error_m": 0.0054476456716656685,
+                "accepted_count": 52,
+                "total_count": 52,
+                "teacher_support_count": 52,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "2s": {
+                "raw_error_m": 0.013697698712348938,
+                "raw_count": 52,
+                "accepted_error_m": 0.013697698712348938,
+                "accepted_count": 52,
+                "total_count": 52,
+                "teacher_support_count": 52,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "3s": {
+                "raw_error_m": 0.024824652820825577,
+                "raw_count": 52,
+                "accepted_error_m": 0.024824652820825577,
+                "accepted_count": 52,
+                "total_count": 52,
+                "teacher_support_count": 52,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              }
+            },
+            "all_point_ade_m": 0.010994118638336658,
+            "all_point_count": 1560,
+            "all_teacher_support_count": 1560,
+            "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+            "all_point_coverage": 1.0
+          }
+        },
+        "run_macro_mean": {
+          "0.5s": {
+            "raw_error_m": 0.0053802672773599625,
+            "accepted_error_m": 0.0053802672773599625,
+            "run_count": 2,
+            "raw_supported_runs": 2,
+            "accepted_supported_runs": 2
+          },
+          "1s": {
+            "raw_error_m": 0.005858630640432239,
+            "accepted_error_m": 0.005858630640432239,
+            "run_count": 2,
+            "raw_supported_runs": 2,
+            "accepted_supported_runs": 2
+          },
+          "2s": {
+            "raw_error_m": 0.01591917686164379,
+            "accepted_error_m": 0.01591917686164379,
+            "run_count": 2,
+            "raw_supported_runs": 2,
+            "accepted_supported_runs": 2
+          },
+          "3s": {
+            "raw_error_m": 0.035820694640278816,
+            "accepted_error_m": 0.035820694640278816,
+            "run_count": 2,
+            "raw_supported_runs": 2,
+            "accepted_supported_runs": 2
+          }
+        },
+        "worst_run": {
+          "0.5s": "codex-time-recovery-left020-r23",
+          "1s": "codex-time-recovery-right040-r22",
+          "2s": "codex-time-recovery-right040-r22",
+          "3s": "codex-time-recovery-right040-r22"
+        }
+      },
+      "components": {
+        "0.5s": {
+          "forward_mae_m": 0.004563083844548456,
+          "left_mae_m": 0.002108177800642235,
+          "left_bias_m": 0.000740759447323034,
+          "supported_anchors": 109,
+          "supported_runs": 2,
+          "total_anchors": 109
+        },
+        "1s": {
+          "forward_mae_m": 0.004748407163118061,
+          "left_mae_m": 0.0027220165020400856,
+          "left_bias_m": -0.001673574931221068,
+          "supported_anchors": 109,
+          "supported_runs": 2,
+          "total_anchors": 109
+        },
+        "2s": {
+          "forward_mae_m": 0.00791430690510553,
+          "left_mae_m": 0.011647349687349103,
+          "left_bias_m": 0.00035907882531255233,
+          "supported_anchors": 109,
+          "supported_runs": 2,
+          "total_anchors": 109
+        },
+        "3s": {
+          "forward_mae_m": 0.01692163437484247,
+          "left_mae_m": 0.028441308019058885,
+          "left_bias_m": 0.004007330447673694,
+          "supported_anchors": 109,
+          "supported_runs": 2,
+          "total_anchors": 109
+        }
+      },
+      "pp": {
+        "scope": "TEACHER_PP_AGREEMENT_AT_OBSERVATION_NOT_CLOSED_LOOP",
+        "total_anchors": 109,
+        "teacher_supported": 109,
+        "supported_runs": 2,
+        "candidate_rejected": 0,
+        "teacher_exclusions": {},
+        "per_run": {
+          "codex-time-recovery-left020-r23": {
+            "teacher_supported": 52,
+            "candidate_rejected": 0,
+            "penalized_mean_rad": 0.0037358989171471357,
+            "paired_mean_rad": 0.0037358989171471357
+          },
+          "codex-time-recovery-right040-r22": {
+            "teacher_supported": 57,
+            "candidate_rejected": 0,
+            "penalized_mean_rad": 0.007764013719985753,
+            "paired_mean_rad": 0.007764013719985753
+          }
+        },
+        "run_macro_penalized_rad": 0.005749956318566445,
+        "rejection_penalty_rad": 0.6
+      },
+      "pp_applicability": {
+        "attempted": 109,
+        "applicable": 109,
+        "accepted": 109,
+        "accepted_fraction": 1.0,
+        "reasons": {
+          "PP_ACCEPTED": 109
+        },
+        "max_absolute_steer_rad": 0.08175303782303339,
+        "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+      }
+    },
+    "expanded_recovery": {
+      "anchor_count": 186,
+      "run_count": 2,
+      "xy": {
+        "anchor_count": 186,
+        "input_invalid_count": 0,
+        "rejected_count": 0,
+        "stale_count": 0,
+        "prediction_invalid_count": 0,
+        "target_invalid_count": 0,
+        "accepted_plan_count": 186,
+        "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+        "horizons": {
+          "0.5s": {
+            "raw_error_m": 0.005401419010013342,
+            "raw_count": 186,
+            "accepted_error_m": 0.005401419010013342,
+            "accepted_count": 186,
+            "total_count": 186,
+            "teacher_support_count": 186,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "1s": {
+            "raw_error_m": 0.007162739988416433,
+            "raw_count": 186,
+            "accepted_error_m": 0.007162739988416433,
+            "accepted_count": 186,
+            "total_count": 186,
+            "teacher_support_count": 186,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "2s": {
+            "raw_error_m": 0.012558062560856342,
+            "raw_count": 186,
+            "accepted_error_m": 0.012558062560856342,
+            "accepted_count": 186,
+            "total_count": 186,
+            "teacher_support_count": 186,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "3s": {
+            "raw_error_m": 0.034405481070280075,
+            "raw_count": 186,
+            "accepted_error_m": 0.034405481070280075,
+            "accepted_count": 186,
+            "total_count": 186,
+            "teacher_support_count": 186,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          }
+        },
+        "all_point_ade_m": 0.010821428149938583,
+        "all_point_count": 5580,
+        "all_teacher_support_count": 5580,
+        "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+        "all_point_coverage": 1.0,
+        "run_macro": {
+          "codex-time-recovery-pulseleft-r46": {
+            "anchor_count": 93,
+            "input_invalid_count": 0,
+            "rejected_count": 0,
+            "stale_count": 0,
+            "prediction_invalid_count": 0,
+            "target_invalid_count": 0,
+            "accepted_plan_count": 93,
+            "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+            "horizons": {
+              "0.5s": {
+                "raw_error_m": 0.0057819378562271595,
+                "raw_count": 93,
+                "accepted_error_m": 0.0057819378562271595,
+                "accepted_count": 93,
+                "total_count": 93,
+                "teacher_support_count": 93,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "1s": {
+                "raw_error_m": 0.00790488813072443,
+                "raw_count": 93,
+                "accepted_error_m": 0.00790488813072443,
+                "accepted_count": 93,
+                "total_count": 93,
+                "teacher_support_count": 93,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "2s": {
+                "raw_error_m": 0.011474000290036201,
+                "raw_count": 93,
+                "accepted_error_m": 0.011474000290036201,
+                "accepted_count": 93,
+                "total_count": 93,
+                "teacher_support_count": 93,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "3s": {
+                "raw_error_m": 0.03519453480839729,
+                "raw_count": 93,
+                "accepted_error_m": 0.03519453480839729,
+                "accepted_count": 93,
+                "total_count": 93,
+                "teacher_support_count": 93,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              }
+            },
+            "all_point_ade_m": 0.010780743323266506,
+            "all_point_count": 2790,
+            "all_teacher_support_count": 2790,
+            "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+            "all_point_coverage": 1.0
+          },
+          "codex-time-recovery-pulseright-r47": {
+            "anchor_count": 93,
+            "input_invalid_count": 0,
+            "rejected_count": 0,
+            "stale_count": 0,
+            "prediction_invalid_count": 0,
+            "target_invalid_count": 0,
+            "accepted_plan_count": 93,
+            "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+            "horizons": {
+              "0.5s": {
+                "raw_error_m": 0.005020901560783386,
+                "raw_count": 93,
+                "accepted_error_m": 0.005020901560783386,
+                "accepted_count": 93,
+                "total_count": 93,
+                "teacher_support_count": 93,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "1s": {
+                "raw_error_m": 0.006420591846108437,
+                "raw_count": 93,
+                "accepted_error_m": 0.006420591846108437,
+                "accepted_count": 93,
+                "total_count": 93,
+                "teacher_support_count": 93,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "2s": {
+                "raw_error_m": 0.013642127625644207,
+                "raw_count": 93,
+                "accepted_error_m": 0.013642127625644207,
+                "accepted_count": 93,
+                "total_count": 93,
+                "teacher_support_count": 93,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "3s": {
+                "raw_error_m": 0.03361642360687256,
+                "raw_count": 93,
+                "accepted_error_m": 0.03361642360687256,
+                "accepted_count": 93,
+                "total_count": 93,
+                "teacher_support_count": 93,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              }
+            },
+            "all_point_ade_m": 0.010862110182642937,
+            "all_point_count": 2790,
+            "all_teacher_support_count": 2790,
+            "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+            "all_point_coverage": 1.0
+          }
+        },
+        "run_macro_mean": {
+          "0.5s": {
+            "raw_error_m": 0.005401419708505273,
+            "accepted_error_m": 0.005401419708505273,
+            "run_count": 2,
+            "raw_supported_runs": 2,
+            "accepted_supported_runs": 2
+          },
+          "1s": {
+            "raw_error_m": 0.007162739988416433,
+            "accepted_error_m": 0.007162739988416433,
+            "run_count": 2,
+            "raw_supported_runs": 2,
+            "accepted_supported_runs": 2
+          },
+          "2s": {
+            "raw_error_m": 0.012558063957840204,
+            "accepted_error_m": 0.012558063957840204,
+            "run_count": 2,
+            "raw_supported_runs": 2,
+            "accepted_supported_runs": 2
+          },
+          "3s": {
+            "raw_error_m": 0.034405479207634926,
+            "accepted_error_m": 0.034405479207634926,
+            "run_count": 2,
+            "raw_supported_runs": 2,
+            "accepted_supported_runs": 2
+          }
+        },
+        "worst_run": {
+          "0.5s": "codex-time-recovery-pulseleft-r46",
+          "1s": "codex-time-recovery-pulseleft-r46",
+          "2s": "codex-time-recovery-pulseright-r47",
+          "3s": "codex-time-recovery-pulseleft-r46"
+        }
+      },
+      "components": {
+        "0.5s": {
+          "forward_mae_m": 0.005012723707383679,
+          "left_mae_m": 0.0012483581229643798,
+          "left_bias_m": 0.0005263832237531422,
+          "supported_anchors": 186,
+          "supported_runs": 2,
+          "total_anchors": 186
+        },
+        "1s": {
+          "forward_mae_m": 0.005444807391012869,
+          "left_mae_m": 0.0035154498132166042,
+          "left_bias_m": 0.0022804736289926755,
+          "supported_anchors": 186,
+          "supported_runs": 2,
+          "total_anchors": 186
+        },
+        "2s": {
+          "forward_mae_m": 0.006815369411181378,
+          "left_mae_m": 0.008751438625196936,
+          "left_bias_m": -0.0045949704093878625,
+          "supported_anchors": 186,
+          "supported_runs": 2,
+          "total_anchors": 186
+        },
+        "3s": {
+          "forward_mae_m": 0.015370070293385496,
+          "left_mae_m": 0.0283950494442095,
+          "left_bias_m": 0.023542176922082263,
+          "supported_anchors": 186,
+          "supported_runs": 2,
+          "total_anchors": 186
+        }
+      },
+      "pp": {
+        "scope": "TEACHER_PP_AGREEMENT_AT_OBSERVATION_NOT_CLOSED_LOOP",
+        "total_anchors": 186,
+        "teacher_supported": 186,
+        "supported_runs": 2,
+        "candidate_rejected": 0,
+        "teacher_exclusions": {},
+        "per_run": {
+          "codex-time-recovery-pulseleft-r46": {
+            "teacher_supported": 93,
+            "candidate_rejected": 0,
+            "penalized_mean_rad": 0.0023278020626409748,
+            "paired_mean_rad": 0.0023278020626409748
+          },
+          "codex-time-recovery-pulseright-r47": {
+            "teacher_supported": 93,
+            "candidate_rejected": 0,
+            "penalized_mean_rad": 0.003593469469459736,
+            "paired_mean_rad": 0.003593469469459736
+          }
+        },
+        "run_macro_penalized_rad": 0.0029606357660503556,
+        "rejection_penalty_rad": 0.6
+      },
+      "pp_applicability": {
+        "attempted": 186,
+        "applicable": 186,
+        "accepted": 186,
+        "accepted_fraction": 1.0,
+        "reasons": {
+          "PP_ACCEPTED": 186
+        },
+        "max_absolute_steer_rad": 0.2346296260769995,
+        "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+      }
+    },
+    "expanded_outward": {
+      "anchor_count": 6,
+      "run_count": 2,
+      "xy": {
+        "anchor_count": 6,
+        "input_invalid_count": 0,
+        "rejected_count": 0,
+        "stale_count": 0,
+        "prediction_invalid_count": 0,
+        "target_invalid_count": 0,
+        "accepted_plan_count": 6,
+        "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+        "horizons": {
+          "0.5s": {
+            "raw_error_m": 0.006854620296508074,
+            "raw_count": 6,
+            "accepted_error_m": 0.006854620296508074,
+            "accepted_count": 6,
+            "total_count": 6,
+            "teacher_support_count": 6,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "1s": {
+            "raw_error_m": 0.011715647764503956,
+            "raw_count": 6,
+            "accepted_error_m": 0.011715647764503956,
+            "accepted_count": 6,
+            "total_count": 6,
+            "teacher_support_count": 6,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "2s": {
+            "raw_error_m": 0.025404242798686028,
+            "raw_count": 6,
+            "accepted_error_m": 0.025404242798686028,
+            "accepted_count": 6,
+            "total_count": 6,
+            "teacher_support_count": 6,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "3s": {
+            "raw_error_m": 0.050827767699956894,
+            "raw_count": 6,
+            "accepted_error_m": 0.050827767699956894,
+            "accepted_count": 6,
+            "total_count": 6,
+            "teacher_support_count": 6,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          }
+        },
+        "all_point_ade_m": 0.017679525539278984,
+        "all_point_count": 180,
+        "all_teacher_support_count": 180,
+        "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+        "all_point_coverage": 1.0,
+        "run_macro": {
+          "codex-time-recovery-pulseleft-r46": {
+            "anchor_count": 3,
+            "input_invalid_count": 0,
+            "rejected_count": 0,
+            "stale_count": 0,
+            "prediction_invalid_count": 0,
+            "target_invalid_count": 0,
+            "accepted_plan_count": 3,
+            "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+            "horizons": {
+              "0.5s": {
+                "raw_error_m": 0.00696107791736722,
+                "raw_count": 3,
+                "accepted_error_m": 0.00696107791736722,
+                "accepted_count": 3,
+                "total_count": 3,
+                "teacher_support_count": 3,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "1s": {
+                "raw_error_m": 0.01313502062112093,
+                "raw_count": 3,
+                "accepted_error_m": 0.01313502062112093,
+                "accepted_count": 3,
+                "total_count": 3,
+                "teacher_support_count": 3,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "2s": {
+                "raw_error_m": 0.010319405235350132,
+                "raw_count": 3,
+                "accepted_error_m": 0.010319405235350132,
+                "accepted_count": 3,
+                "total_count": 3,
+                "teacher_support_count": 3,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "3s": {
+                "raw_error_m": 0.05269983410835266,
+                "raw_count": 3,
+                "accepted_error_m": 0.05269983410835266,
+                "accepted_count": 3,
+                "total_count": 3,
+                "teacher_support_count": 3,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              }
+            },
+            "all_point_ade_m": 0.012975309044122696,
+            "all_point_count": 90,
+            "all_teacher_support_count": 90,
+            "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+            "all_point_coverage": 1.0
+          },
+          "codex-time-recovery-pulseright-r47": {
+            "anchor_count": 3,
+            "input_invalid_count": 0,
+            "rejected_count": 0,
+            "stale_count": 0,
+            "prediction_invalid_count": 0,
+            "target_invalid_count": 0,
+            "accepted_plan_count": 3,
+            "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+            "horizons": {
+              "0.5s": {
+                "raw_error_m": 0.006748161744326353,
+                "raw_count": 3,
+                "accepted_error_m": 0.006748161744326353,
+                "accepted_count": 3,
+                "total_count": 3,
+                "teacher_support_count": 3,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "1s": {
+                "raw_error_m": 0.010296273976564407,
+                "raw_count": 3,
+                "accepted_error_m": 0.010296273976564407,
+                "accepted_count": 3,
+                "total_count": 3,
+                "teacher_support_count": 3,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "2s": {
+                "raw_error_m": 0.0404890812933445,
+                "raw_count": 3,
+                "accepted_error_m": 0.0404890812933445,
+                "accepted_count": 3,
+                "total_count": 3,
+                "teacher_support_count": 3,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "3s": {
+                "raw_error_m": 0.04895569756627083,
+                "raw_count": 3,
+                "accepted_error_m": 0.04895569756627083,
+                "accepted_count": 3,
+                "total_count": 3,
+                "teacher_support_count": 3,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              }
+            },
+            "all_point_ade_m": 0.022383742034435272,
+            "all_point_count": 90,
+            "all_teacher_support_count": 90,
+            "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+            "all_point_coverage": 1.0
+          }
+        },
+        "run_macro_mean": {
+          "0.5s": {
+            "raw_error_m": 0.0068546198308467865,
+            "accepted_error_m": 0.0068546198308467865,
+            "run_count": 2,
+            "raw_supported_runs": 2,
+            "accepted_supported_runs": 2
+          },
+          "1s": {
+            "raw_error_m": 0.011715647298842669,
+            "accepted_error_m": 0.011715647298842669,
+            "run_count": 2,
+            "raw_supported_runs": 2,
+            "accepted_supported_runs": 2
+          },
+          "2s": {
+            "raw_error_m": 0.025404243264347315,
+            "accepted_error_m": 0.025404243264347315,
+            "run_count": 2,
+            "raw_supported_runs": 2,
+            "accepted_supported_runs": 2
+          },
+          "3s": {
+            "raw_error_m": 0.050827765837311745,
+            "accepted_error_m": 0.050827765837311745,
+            "run_count": 2,
+            "raw_supported_runs": 2,
+            "accepted_supported_runs": 2
+          }
+        },
+        "worst_run": {
+          "0.5s": "codex-time-recovery-pulseleft-r46",
+          "1s": "codex-time-recovery-pulseleft-r46",
+          "2s": "codex-time-recovery-pulseright-r47",
+          "3s": "codex-time-recovery-pulseleft-r46"
+        }
+      },
+      "components": {
+        "0.5s": {
+          "forward_mae_m": 0.0052136679490407305,
+          "left_mae_m": 0.003811899262169997,
+          "left_bias_m": 0.0015189892922838528,
+          "supported_anchors": 6,
+          "supported_runs": 2,
+          "total_anchors": 6
+        },
+        "1s": {
+          "forward_mae_m": 0.006129801273345947,
+          "left_mae_m": 0.009038981050252914,
+          "left_bias_m": 0.004233038673798243,
+          "supported_anchors": 6,
+          "supported_runs": 2,
+          "total_anchors": 6
+        },
+        "2s": {
+          "forward_mae_m": 0.006427725156148275,
+          "left_mae_m": 0.023756787180900574,
+          "left_bias_m": -0.022547468543052673,
+          "supported_anchors": 6,
+          "supported_runs": 2,
+          "total_anchors": 6
+        },
+        "3s": {
+          "forward_mae_m": 0.023050824801127117,
+          "left_mae_m": 0.044176747401555375,
+          "left_bias_m": 0.044176747401555375,
+          "supported_anchors": 6,
+          "supported_runs": 2,
+          "total_anchors": 6
+        }
+      },
+      "pp": {
+        "scope": "TEACHER_PP_AGREEMENT_AT_OBSERVATION_NOT_CLOSED_LOOP",
+        "total_anchors": 6,
+        "teacher_supported": 6,
+        "supported_runs": 2,
+        "candidate_rejected": 0,
+        "teacher_exclusions": {},
+        "per_run": {
+          "codex-time-recovery-pulseleft-r46": {
+            "teacher_supported": 3,
+            "candidate_rejected": 0,
+            "penalized_mean_rad": 0.0035286692429102318,
+            "paired_mean_rad": 0.0035286692429102318
+          },
+          "codex-time-recovery-pulseright-r47": {
+            "teacher_supported": 3,
+            "candidate_rejected": 0,
+            "penalized_mean_rad": 0.010768005871342958,
+            "paired_mean_rad": 0.010768005871342958
+          }
+        },
+        "run_macro_penalized_rad": 0.007148337557126595,
+        "rejection_penalty_rad": 0.6
+      },
+      "pp_applicability": {
+        "attempted": 6,
+        "applicable": 6,
+        "accepted": 6,
+        "accepted_fraction": 1.0,
+        "reasons": {
+          "PP_ACCEPTED": 6
+        },
+        "max_absolute_steer_rad": 0.2346296260769995,
+        "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+      }
+    },
+    "random_recovery": {
+      "anchor_count": 243,
+      "run_count": 1,
+      "xy": {
+        "anchor_count": 243,
+        "input_invalid_count": 0,
+        "rejected_count": 0,
+        "stale_count": 0,
+        "prediction_invalid_count": 0,
+        "target_invalid_count": 0,
+        "accepted_plan_count": 243,
+        "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+        "horizons": {
+          "0.5s": {
+            "raw_error_m": 0.006514729931950569,
+            "raw_count": 243,
+            "accepted_error_m": 0.006514729931950569,
+            "accepted_count": 243,
+            "total_count": 243,
+            "teacher_support_count": 243,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "1s": {
+            "raw_error_m": 0.008080977015197277,
+            "raw_count": 243,
+            "accepted_error_m": 0.008080977015197277,
+            "accepted_count": 243,
+            "total_count": 243,
+            "teacher_support_count": 243,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "2s": {
+            "raw_error_m": 0.019662776961922646,
+            "raw_count": 243,
+            "accepted_error_m": 0.019662776961922646,
+            "accepted_count": 243,
+            "total_count": 243,
+            "teacher_support_count": 243,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "3s": {
+            "raw_error_m": 0.0406765341758728,
+            "raw_count": 243,
+            "accepted_error_m": 0.0406765341758728,
+            "accepted_count": 243,
+            "total_count": 243,
+            "teacher_support_count": 243,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          }
+        },
+        "all_point_ade_m": 0.016140352934598923,
+        "all_point_count": 7290,
+        "all_teacher_support_count": 7290,
+        "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+        "all_point_coverage": 1.0,
+        "run_macro": {
+          "codex-time-recovery-random-r65": {
+            "anchor_count": 243,
+            "input_invalid_count": 0,
+            "rejected_count": 0,
+            "stale_count": 0,
+            "prediction_invalid_count": 0,
+            "target_invalid_count": 0,
+            "accepted_plan_count": 243,
+            "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+            "horizons": {
+              "0.5s": {
+                "raw_error_m": 0.006514729931950569,
+                "raw_count": 243,
+                "accepted_error_m": 0.006514729931950569,
+                "accepted_count": 243,
+                "total_count": 243,
+                "teacher_support_count": 243,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "1s": {
+                "raw_error_m": 0.008080977015197277,
+                "raw_count": 243,
+                "accepted_error_m": 0.008080977015197277,
+                "accepted_count": 243,
+                "total_count": 243,
+                "teacher_support_count": 243,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "2s": {
+                "raw_error_m": 0.019662776961922646,
+                "raw_count": 243,
+                "accepted_error_m": 0.019662776961922646,
+                "accepted_count": 243,
+                "total_count": 243,
+                "teacher_support_count": 243,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "3s": {
+                "raw_error_m": 0.0406765341758728,
+                "raw_count": 243,
+                "accepted_error_m": 0.0406765341758728,
+                "accepted_count": 243,
+                "total_count": 243,
+                "teacher_support_count": 243,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              }
+            },
+            "all_point_ade_m": 0.016140352934598923,
+            "all_point_count": 7290,
+            "all_teacher_support_count": 7290,
+            "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+            "all_point_coverage": 1.0
+          }
+        },
+        "run_macro_mean": {
+          "0.5s": {
+            "raw_error_m": 0.006514729931950569,
+            "accepted_error_m": 0.006514729931950569,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          },
+          "1s": {
+            "raw_error_m": 0.008080977015197277,
+            "accepted_error_m": 0.008080977015197277,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          },
+          "2s": {
+            "raw_error_m": 0.019662776961922646,
+            "accepted_error_m": 0.019662776961922646,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          },
+          "3s": {
+            "raw_error_m": 0.0406765341758728,
+            "accepted_error_m": 0.0406765341758728,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          }
+        },
+        "worst_run": {
+          "0.5s": "codex-time-recovery-random-r65",
+          "1s": "codex-time-recovery-random-r65",
+          "2s": "codex-time-recovery-random-r65",
+          "3s": "codex-time-recovery-random-r65"
+        }
+      },
+      "components": {
+        "0.5s": {
+          "forward_mae_m": 0.0061157779929078655,
+          "left_mae_m": 0.0013471911052049647,
+          "left_bias_m": 0.0008644476096006233,
+          "supported_anchors": 243,
+          "supported_runs": 1,
+          "total_anchors": 243
+        },
+        "1s": {
+          "forward_mae_m": 0.006374528869189352,
+          "left_mae_m": 0.003511042380070701,
+          "left_bias_m": 0.0007846603335198513,
+          "supported_anchors": 243,
+          "supported_runs": 1,
+          "total_anchors": 243
+        },
+        "2s": {
+          "forward_mae_m": 0.015783118612972307,
+          "left_mae_m": 0.008582539600607605,
+          "left_bias_m": 0.0009317958599086774,
+          "supported_anchors": 243,
+          "supported_runs": 1,
+          "total_anchors": 243
+        },
+        "3s": {
+          "forward_mae_m": 0.028364372842105818,
+          "left_mae_m": 0.02331734280228431,
+          "left_bias_m": 0.013410846194934576,
+          "supported_anchors": 243,
+          "supported_runs": 1,
+          "total_anchors": 243
+        }
+      },
+      "pp": {
+        "scope": "TEACHER_PP_AGREEMENT_AT_OBSERVATION_NOT_CLOSED_LOOP",
+        "total_anchors": 243,
+        "teacher_supported": 243,
+        "supported_runs": 1,
+        "candidate_rejected": 0,
+        "teacher_exclusions": {},
+        "per_run": {
+          "codex-time-recovery-random-r65": {
+            "teacher_supported": 243,
+            "candidate_rejected": 0,
+            "penalized_mean_rad": 0.0034956509274413168,
+            "paired_mean_rad": 0.0034956509274413168
+          }
+        },
+        "run_macro_penalized_rad": 0.0034956509274413168,
+        "rejection_penalty_rad": 0.6
+      },
+      "pp_applicability": {
+        "attempted": 243,
+        "applicable": 243,
+        "accepted": 243,
+        "accepted_fraction": 1.0,
+        "reasons": {
+          "PP_ACCEPTED": 243
+        },
+        "max_absolute_steer_rad": 0.18048973781846447,
+        "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+      }
+    },
+    "random_outward": {
+      "anchor_count": 6,
+      "run_count": 1,
+      "xy": {
+        "anchor_count": 6,
+        "input_invalid_count": 0,
+        "rejected_count": 0,
+        "stale_count": 0,
+        "prediction_invalid_count": 0,
+        "target_invalid_count": 0,
+        "accepted_plan_count": 6,
+        "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+        "horizons": {
+          "0.5s": {
+            "raw_error_m": 0.010356123559176922,
+            "raw_count": 6,
+            "accepted_error_m": 0.010356123559176922,
+            "accepted_count": 6,
+            "total_count": 6,
+            "teacher_support_count": 6,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "1s": {
+            "raw_error_m": 0.014152267016470432,
+            "raw_count": 6,
+            "accepted_error_m": 0.014152267016470432,
+            "accepted_count": 6,
+            "total_count": 6,
+            "teacher_support_count": 6,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "2s": {
+            "raw_error_m": 0.022287053987383842,
+            "raw_count": 6,
+            "accepted_error_m": 0.022287053987383842,
+            "accepted_count": 6,
+            "total_count": 6,
+            "teacher_support_count": 6,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "3s": {
+            "raw_error_m": 0.06043820083141327,
+            "raw_count": 6,
+            "accepted_error_m": 0.06043820083141327,
+            "accepted_count": 6,
+            "total_count": 6,
+            "teacher_support_count": 6,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          }
+        },
+        "all_point_ade_m": 0.021984625607728958,
+        "all_point_count": 180,
+        "all_teacher_support_count": 180,
+        "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+        "all_point_coverage": 1.0,
+        "run_macro": {
+          "codex-time-recovery-random-r65": {
+            "anchor_count": 6,
+            "input_invalid_count": 0,
+            "rejected_count": 0,
+            "stale_count": 0,
+            "prediction_invalid_count": 0,
+            "target_invalid_count": 0,
+            "accepted_plan_count": 6,
+            "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+            "horizons": {
+              "0.5s": {
+                "raw_error_m": 0.010356123559176922,
+                "raw_count": 6,
+                "accepted_error_m": 0.010356123559176922,
+                "accepted_count": 6,
+                "total_count": 6,
+                "teacher_support_count": 6,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "1s": {
+                "raw_error_m": 0.014152267016470432,
+                "raw_count": 6,
+                "accepted_error_m": 0.014152267016470432,
+                "accepted_count": 6,
+                "total_count": 6,
+                "teacher_support_count": 6,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "2s": {
+                "raw_error_m": 0.022287053987383842,
+                "raw_count": 6,
+                "accepted_error_m": 0.022287053987383842,
+                "accepted_count": 6,
+                "total_count": 6,
+                "teacher_support_count": 6,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "3s": {
+                "raw_error_m": 0.06043820083141327,
+                "raw_count": 6,
+                "accepted_error_m": 0.06043820083141327,
+                "accepted_count": 6,
+                "total_count": 6,
+                "teacher_support_count": 6,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              }
+            },
+            "all_point_ade_m": 0.021984625607728958,
+            "all_point_count": 180,
+            "all_teacher_support_count": 180,
+            "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+            "all_point_coverage": 1.0
+          }
+        },
+        "run_macro_mean": {
+          "0.5s": {
+            "raw_error_m": 0.010356123559176922,
+            "accepted_error_m": 0.010356123559176922,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          },
+          "1s": {
+            "raw_error_m": 0.014152267016470432,
+            "accepted_error_m": 0.014152267016470432,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          },
+          "2s": {
+            "raw_error_m": 0.022287053987383842,
+            "accepted_error_m": 0.022287053987383842,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          },
+          "3s": {
+            "raw_error_m": 0.06043820083141327,
+            "accepted_error_m": 0.06043820083141327,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          }
+        },
+        "worst_run": {
+          "0.5s": "codex-time-recovery-random-r65",
+          "1s": "codex-time-recovery-random-r65",
+          "2s": "codex-time-recovery-random-r65",
+          "3s": "codex-time-recovery-random-r65"
+        }
+      },
+      "components": {
+        "0.5s": {
+          "forward_mae_m": 0.00844453771909078,
+          "left_mae_m": 0.004920691484585404,
+          "left_bias_m": 0.0031509263596187034,
+          "supported_anchors": 6,
+          "supported_runs": 1,
+          "total_anchors": 6
+        },
+        "1s": {
+          "forward_mae_m": 0.008056104183197021,
+          "left_mae_m": 0.00852638688714554,
+          "left_bias_m": 0.006732676605073114,
+          "supported_anchors": 6,
+          "supported_runs": 1,
+          "total_anchors": 6
+        },
+        "2s": {
+          "forward_mae_m": 0.01627663771311442,
+          "left_mae_m": 0.013754383660852909,
+          "left_bias_m": 0.006394668482244015,
+          "supported_anchors": 6,
+          "supported_runs": 1,
+          "total_anchors": 6
+        },
+        "3s": {
+          "forward_mae_m": 0.04230562845865885,
+          "left_mae_m": 0.031014608840147655,
+          "left_bias_m": 0.011007614433765411,
+          "supported_anchors": 6,
+          "supported_runs": 1,
+          "total_anchors": 6
+        }
+      },
+      "pp": {
+        "scope": "TEACHER_PP_AGREEMENT_AT_OBSERVATION_NOT_CLOSED_LOOP",
+        "total_anchors": 6,
+        "teacher_supported": 6,
+        "supported_runs": 1,
+        "candidate_rejected": 0,
+        "teacher_exclusions": {},
+        "per_run": {
+          "codex-time-recovery-random-r65": {
+            "teacher_supported": 6,
+            "candidate_rejected": 0,
+            "penalized_mean_rad": 0.008386834359946667,
+            "paired_mean_rad": 0.008386834359946667
+          }
+        },
+        "run_macro_penalized_rad": 0.008386834359946667,
+        "rejection_penalty_rad": 0.6
+      },
+      "pp_applicability": {
+        "attempted": 6,
+        "applicable": 6,
+        "accepted": 6,
+        "accepted_fraction": 1.0,
+        "reasons": {
+          "PP_ACCEPTED": 6
+        },
+        "max_absolute_steer_rad": 0.1691662927804754,
+        "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+      }
+    },
+    "random_event_1": {
+      "anchor_count": 61,
+      "run_count": 1,
+      "xy": {
+        "anchor_count": 61,
+        "input_invalid_count": 0,
+        "rejected_count": 0,
+        "stale_count": 0,
+        "prediction_invalid_count": 0,
+        "target_invalid_count": 0,
+        "accepted_plan_count": 61,
+        "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+        "horizons": {
+          "0.5s": {
+            "raw_error_m": 0.006309669464826584,
+            "raw_count": 61,
+            "accepted_error_m": 0.006309669464826584,
+            "accepted_count": 61,
+            "total_count": 61,
+            "teacher_support_count": 61,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "1s": {
+            "raw_error_m": 0.007849466986954212,
+            "raw_count": 61,
+            "accepted_error_m": 0.007849466986954212,
+            "accepted_count": 61,
+            "total_count": 61,
+            "teacher_support_count": 61,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "2s": {
+            "raw_error_m": 0.016754424199461937,
+            "raw_count": 61,
+            "accepted_error_m": 0.016754424199461937,
+            "accepted_count": 61,
+            "total_count": 61,
+            "teacher_support_count": 61,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "3s": {
+            "raw_error_m": 0.03490561246871948,
+            "raw_count": 61,
+            "accepted_error_m": 0.03490561246871948,
+            "accepted_count": 61,
+            "total_count": 61,
+            "teacher_support_count": 61,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          }
+        },
+        "all_point_ade_m": 0.01435899268835783,
+        "all_point_count": 1830,
+        "all_teacher_support_count": 1830,
+        "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+        "all_point_coverage": 1.0,
+        "run_macro": {
+          "codex-time-recovery-random-r65": {
+            "anchor_count": 61,
+            "input_invalid_count": 0,
+            "rejected_count": 0,
+            "stale_count": 0,
+            "prediction_invalid_count": 0,
+            "target_invalid_count": 0,
+            "accepted_plan_count": 61,
+            "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+            "horizons": {
+              "0.5s": {
+                "raw_error_m": 0.006309669464826584,
+                "raw_count": 61,
+                "accepted_error_m": 0.006309669464826584,
+                "accepted_count": 61,
+                "total_count": 61,
+                "teacher_support_count": 61,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "1s": {
+                "raw_error_m": 0.007849466986954212,
+                "raw_count": 61,
+                "accepted_error_m": 0.007849466986954212,
+                "accepted_count": 61,
+                "total_count": 61,
+                "teacher_support_count": 61,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "2s": {
+                "raw_error_m": 0.016754424199461937,
+                "raw_count": 61,
+                "accepted_error_m": 0.016754424199461937,
+                "accepted_count": 61,
+                "total_count": 61,
+                "teacher_support_count": 61,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "3s": {
+                "raw_error_m": 0.03490561246871948,
+                "raw_count": 61,
+                "accepted_error_m": 0.03490561246871948,
+                "accepted_count": 61,
+                "total_count": 61,
+                "teacher_support_count": 61,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              }
+            },
+            "all_point_ade_m": 0.01435899268835783,
+            "all_point_count": 1830,
+            "all_teacher_support_count": 1830,
+            "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+            "all_point_coverage": 1.0
+          }
+        },
+        "run_macro_mean": {
+          "0.5s": {
+            "raw_error_m": 0.006309669464826584,
+            "accepted_error_m": 0.006309669464826584,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          },
+          "1s": {
+            "raw_error_m": 0.007849466986954212,
+            "accepted_error_m": 0.007849466986954212,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          },
+          "2s": {
+            "raw_error_m": 0.016754424199461937,
+            "accepted_error_m": 0.016754424199461937,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          },
+          "3s": {
+            "raw_error_m": 0.03490561246871948,
+            "accepted_error_m": 0.03490561246871948,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          }
+        },
+        "worst_run": {
+          "0.5s": "codex-time-recovery-random-r65",
+          "1s": "codex-time-recovery-random-r65",
+          "2s": "codex-time-recovery-random-r65",
+          "3s": "codex-time-recovery-random-r65"
+        }
+      },
+      "components": {
+        "0.5s": {
+          "forward_mae_m": 0.005482167494101602,
+          "left_mae_m": 0.002227332410555272,
+          "left_bias_m": 0.0020241451881001476,
+          "supported_anchors": 61,
+          "supported_runs": 1,
+          "total_anchors": 61
+        },
+        "1s": {
+          "forward_mae_m": 0.005757419789423708,
+          "left_mae_m": 0.003984741744447927,
+          "left_bias_m": -0.0023353477237654514,
+          "supported_anchors": 61,
+          "supported_runs": 1,
+          "total_anchors": 61
+        },
+        "2s": {
+          "forward_mae_m": 0.013548647771116163,
+          "left_mae_m": 0.008159054931802828,
+          "left_bias_m": 0.0035915273684458656,
+          "supported_anchors": 61,
+          "supported_runs": 1,
+          "total_anchors": 61
+        },
+        "3s": {
+          "forward_mae_m": 0.02483658712418353,
+          "left_mae_m": 0.021589702392210725,
+          "left_bias_m": -0.010357504130386915,
+          "supported_anchors": 61,
+          "supported_runs": 1,
+          "total_anchors": 61
+        }
+      },
+      "pp": {
+        "scope": "TEACHER_PP_AGREEMENT_AT_OBSERVATION_NOT_CLOSED_LOOP",
+        "total_anchors": 61,
+        "teacher_supported": 61,
+        "supported_runs": 1,
+        "candidate_rejected": 0,
+        "teacher_exclusions": {},
+        "per_run": {
+          "codex-time-recovery-random-r65": {
+            "teacher_supported": 61,
+            "candidate_rejected": 0,
+            "penalized_mean_rad": 0.00397748254227452,
+            "paired_mean_rad": 0.00397748254227452
+          }
+        },
+        "run_macro_penalized_rad": 0.00397748254227452,
+        "rejection_penalty_rad": 0.6
+      },
+      "pp_applicability": {
+        "attempted": 61,
+        "applicable": 61,
+        "accepted": 61,
+        "accepted_fraction": 1.0,
+        "reasons": {
+          "PP_ACCEPTED": 61
+        },
+        "max_absolute_steer_rad": 0.16429775264450505,
+        "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+      }
+    },
+    "random_event_2": {
+      "anchor_count": 93,
+      "run_count": 1,
+      "xy": {
+        "anchor_count": 93,
+        "input_invalid_count": 0,
+        "rejected_count": 0,
+        "stale_count": 0,
+        "prediction_invalid_count": 0,
+        "target_invalid_count": 0,
+        "accepted_plan_count": 93,
+        "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+        "horizons": {
+          "0.5s": {
+            "raw_error_m": 0.006009028758853674,
+            "raw_count": 93,
+            "accepted_error_m": 0.006009028758853674,
+            "accepted_count": 93,
+            "total_count": 93,
+            "teacher_support_count": 93,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "1s": {
+            "raw_error_m": 0.0068220105022192,
+            "raw_count": 93,
+            "accepted_error_m": 0.0068220105022192,
+            "accepted_count": 93,
+            "total_count": 93,
+            "teacher_support_count": 93,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "2s": {
+            "raw_error_m": 0.014127202332019806,
+            "raw_count": 93,
+            "accepted_error_m": 0.014127202332019806,
+            "accepted_count": 93,
+            "total_count": 93,
+            "teacher_support_count": 93,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "3s": {
+            "raw_error_m": 0.034722477197647095,
+            "raw_count": 93,
+            "accepted_error_m": 0.034722477197647095,
+            "accepted_count": 93,
+            "total_count": 93,
+            "teacher_support_count": 93,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          }
+        },
+        "all_point_ade_m": 0.011523744091391563,
+        "all_point_count": 2790,
+        "all_teacher_support_count": 2790,
+        "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+        "all_point_coverage": 1.0,
+        "run_macro": {
+          "codex-time-recovery-random-r65": {
+            "anchor_count": 93,
+            "input_invalid_count": 0,
+            "rejected_count": 0,
+            "stale_count": 0,
+            "prediction_invalid_count": 0,
+            "target_invalid_count": 0,
+            "accepted_plan_count": 93,
+            "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+            "horizons": {
+              "0.5s": {
+                "raw_error_m": 0.006009028758853674,
+                "raw_count": 93,
+                "accepted_error_m": 0.006009028758853674,
+                "accepted_count": 93,
+                "total_count": 93,
+                "teacher_support_count": 93,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "1s": {
+                "raw_error_m": 0.0068220105022192,
+                "raw_count": 93,
+                "accepted_error_m": 0.0068220105022192,
+                "accepted_count": 93,
+                "total_count": 93,
+                "teacher_support_count": 93,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "2s": {
+                "raw_error_m": 0.014127202332019806,
+                "raw_count": 93,
+                "accepted_error_m": 0.014127202332019806,
+                "accepted_count": 93,
+                "total_count": 93,
+                "teacher_support_count": 93,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "3s": {
+                "raw_error_m": 0.034722477197647095,
+                "raw_count": 93,
+                "accepted_error_m": 0.034722477197647095,
+                "accepted_count": 93,
+                "total_count": 93,
+                "teacher_support_count": 93,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              }
+            },
+            "all_point_ade_m": 0.011523744091391563,
+            "all_point_count": 2790,
+            "all_teacher_support_count": 2790,
+            "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+            "all_point_coverage": 1.0
+          }
+        },
+        "run_macro_mean": {
+          "0.5s": {
+            "raw_error_m": 0.006009028758853674,
+            "accepted_error_m": 0.006009028758853674,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          },
+          "1s": {
+            "raw_error_m": 0.0068220105022192,
+            "accepted_error_m": 0.0068220105022192,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          },
+          "2s": {
+            "raw_error_m": 0.014127202332019806,
+            "accepted_error_m": 0.014127202332019806,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          },
+          "3s": {
+            "raw_error_m": 0.034722477197647095,
+            "accepted_error_m": 0.034722477197647095,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          }
+        },
+        "worst_run": {
+          "0.5s": "codex-time-recovery-random-r65",
+          "1s": "codex-time-recovery-random-r65",
+          "2s": "codex-time-recovery-random-r65",
+          "3s": "codex-time-recovery-random-r65"
+        }
+      },
+      "components": {
+        "0.5s": {
+          "forward_mae_m": 0.005647492024206346,
+          "left_mae_m": 0.0012294091885128328,
+          "left_bias_m": 0.0007735903184580546,
+          "supported_anchors": 93,
+          "supported_runs": 1,
+          "total_anchors": 93
+        },
+        "1s": {
+          "forward_mae_m": 0.004533451090576828,
+          "left_mae_m": 0.004013192940062733,
+          "left_bias_m": 0.0026906646928319365,
+          "supported_anchors": 93,
+          "supported_runs": 1,
+          "total_anchors": 93
+        },
+        "2s": {
+          "forward_mae_m": 0.007670046180807134,
+          "left_mae_m": 0.010026760980166414,
+          "left_bias_m": -0.00410311118329084,
+          "supported_anchors": 93,
+          "supported_runs": 1,
+          "total_anchors": 93
+        },
+        "3s": {
+          "forward_mae_m": 0.016546290407898605,
+          "left_mae_m": 0.02687090338878734,
+          "left_bias_m": 0.021948013294448135,
+          "supported_anchors": 93,
+          "supported_runs": 1,
+          "total_anchors": 93
+        }
+      },
+      "pp": {
+        "scope": "TEACHER_PP_AGREEMENT_AT_OBSERVATION_NOT_CLOSED_LOOP",
+        "total_anchors": 93,
+        "teacher_supported": 93,
+        "supported_runs": 1,
+        "candidate_rejected": 0,
+        "teacher_exclusions": {},
+        "per_run": {
+          "codex-time-recovery-random-r65": {
+            "teacher_supported": 93,
+            "candidate_rejected": 0,
+            "penalized_mean_rad": 0.0036144140219606107,
+            "paired_mean_rad": 0.0036144140219606107
+          }
+        },
+        "run_macro_penalized_rad": 0.0036144140219606107,
+        "rejection_penalty_rad": 0.6
+      },
+      "pp_applicability": {
+        "attempted": 93,
+        "applicable": 93,
+        "accepted": 93,
+        "accepted_fraction": 1.0,
+        "reasons": {
+          "PP_ACCEPTED": 93
+        },
+        "max_absolute_steer_rad": 0.18048973781846447,
+        "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+      }
+    },
+    "random_event_3": {
+      "anchor_count": 89,
+      "run_count": 1,
+      "xy": {
+        "anchor_count": 89,
+        "input_invalid_count": 0,
+        "rejected_count": 0,
+        "stale_count": 0,
+        "prediction_invalid_count": 0,
+        "target_invalid_count": 0,
+        "accepted_plan_count": 89,
+        "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+        "horizons": {
+          "0.5s": {
+            "raw_error_m": 0.007183704990893602,
+            "raw_count": 89,
+            "accepted_error_m": 0.007183704990893602,
+            "accepted_count": 89,
+            "total_count": 89,
+            "teacher_support_count": 89,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "1s": {
+            "raw_error_m": 0.009555202908813953,
+            "raw_count": 89,
+            "accepted_error_m": 0.009555202908813953,
+            "accepted_count": 89,
+            "total_count": 89,
+            "teacher_support_count": 89,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "2s": {
+            "raw_error_m": 0.027440505102276802,
+            "raw_count": 89,
+            "accepted_error_m": 0.027440505102276802,
+            "accepted_count": 89,
+            "total_count": 89,
+            "teacher_support_count": 89,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          },
+          "3s": {
+            "raw_error_m": 0.050853535532951355,
+            "raw_count": 89,
+            "accepted_error_m": 0.050853535532951355,
+            "accepted_count": 89,
+            "total_count": 89,
+            "teacher_support_count": 89,
+            "coverage": 1.0,
+            "accepted_coverage": 1.0,
+            "status": "OK"
+          }
+        },
+        "all_point_ade_m": 0.02218537963926792,
+        "all_point_count": 2670,
+        "all_teacher_support_count": 2670,
+        "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+        "all_point_coverage": 1.0,
+        "run_macro": {
+          "codex-time-recovery-random-r65": {
+            "anchor_count": 89,
+            "input_invalid_count": 0,
+            "rejected_count": 0,
+            "stale_count": 0,
+            "prediction_invalid_count": 0,
+            "target_invalid_count": 0,
+            "accepted_plan_count": 89,
+            "acceptance_scope": "caller_selection_flags_not_runtime_safety_certification",
+            "horizons": {
+              "0.5s": {
+                "raw_error_m": 0.007183704990893602,
+                "raw_count": 89,
+                "accepted_error_m": 0.007183704990893602,
+                "accepted_count": 89,
+                "total_count": 89,
+                "teacher_support_count": 89,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "1s": {
+                "raw_error_m": 0.009555202908813953,
+                "raw_count": 89,
+                "accepted_error_m": 0.009555202908813953,
+                "accepted_count": 89,
+                "total_count": 89,
+                "teacher_support_count": 89,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "2s": {
+                "raw_error_m": 0.027440505102276802,
+                "raw_count": 89,
+                "accepted_error_m": 0.027440505102276802,
+                "accepted_count": 89,
+                "total_count": 89,
+                "teacher_support_count": 89,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              },
+              "3s": {
+                "raw_error_m": 0.050853535532951355,
+                "raw_count": 89,
+                "accepted_error_m": 0.050853535532951355,
+                "accepted_count": 89,
+                "total_count": 89,
+                "teacher_support_count": 89,
+                "coverage": 1.0,
+                "accepted_coverage": 1.0,
+                "status": "OK"
+              }
+            },
+            "all_point_ade_m": 0.02218537963926792,
+            "all_point_count": 2670,
+            "all_teacher_support_count": 2670,
+            "error_definition": "Euclidean position error in metres; horizons are exact endpoints; all_point_ADE is point-weighted",
+            "all_point_coverage": 1.0
+          }
+        },
+        "run_macro_mean": {
+          "0.5s": {
+            "raw_error_m": 0.007183704990893602,
+            "accepted_error_m": 0.007183704990893602,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          },
+          "1s": {
+            "raw_error_m": 0.009555202908813953,
+            "accepted_error_m": 0.009555202908813953,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          },
+          "2s": {
+            "raw_error_m": 0.027440505102276802,
+            "accepted_error_m": 0.027440505102276802,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          },
+          "3s": {
+            "raw_error_m": 0.050853535532951355,
+            "accepted_error_m": 0.050853535532951355,
+            "run_count": 1,
+            "raw_supported_runs": 1,
+            "accepted_supported_runs": 1
+          }
+        },
+        "worst_run": {
+          "0.5s": "codex-time-recovery-random-r65",
+          "1s": "codex-time-recovery-random-r65",
+          "2s": "codex-time-recovery-random-r65",
+          "3s": "codex-time-recovery-random-r65"
+        }
+      },
+      "components": {
+        "0.5s": {
+          "forward_mae_m": 0.007039382886350825,
+          "left_mae_m": 0.0008670236740364202,
+          "left_bias_m": 0.00016453947238475716,
+          "supported_anchors": 89,
+          "supported_runs": 1,
+          "total_anchors": 89
+        },
+        "1s": {
+          "forward_mae_m": 0.008721314119489005,
+          "left_mae_m": 0.002661652904719355,
+          "left_bias_m": 0.0009314253456364752,
+          "supported_anchors": 89,
+          "supported_runs": 1,
+          "total_anchors": 89
+        },
+        "2s": {
+          "forward_mae_m": 0.025792314765158662,
+          "left_mae_m": 0.007363662932047181,
+          "left_bias_m": 0.004370028814928753,
+          "supported_anchors": 89,
+          "supported_runs": 1,
+          "total_anchors": 89
+        },
+        "3s": {
+          "forward_mae_m": 0.043131525596875823,
+          "left_mae_m": 0.02078818471767427,
+          "left_bias_m": 0.020780653268977833,
+          "supported_anchors": 89,
+          "supported_runs": 1,
+          "total_anchors": 89
+        }
+      },
+      "pp": {
+        "scope": "TEACHER_PP_AGREEMENT_AT_OBSERVATION_NOT_CLOSED_LOOP",
+        "total_anchors": 89,
+        "teacher_supported": 89,
+        "supported_runs": 1,
+        "candidate_rejected": 0,
+        "teacher_exclusions": {},
+        "per_run": {
+          "codex-time-recovery-random-r65": {
+            "teacher_supported": 89,
+            "candidate_rejected": 0,
+            "penalized_mean_rad": 0.0030413060252489606,
+            "paired_mean_rad": 0.0030413060252489606
+          }
+        },
+        "run_macro_penalized_rad": 0.0030413060252489606,
+        "rejection_penalty_rad": 0.6
+      },
+      "pp_applicability": {
+        "attempted": 89,
+        "applicable": 89,
+        "accepted": 89,
+        "accepted_fraction": 1.0,
+        "reasons": {
+          "PP_ACCEPTED": 89
+        },
+        "max_absolute_steer_rad": 0.019042157854013322,
+        "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+      }
+    }
+  }
+}
