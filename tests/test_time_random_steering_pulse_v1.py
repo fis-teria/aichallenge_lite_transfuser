@@ -58,7 +58,8 @@ def test_fractional_measured_guide_endpoints_preserve_full_start_and_future_marg
     validate_random_guide(RandomPulseConfig(1), TEMPLATE, guide)
     with pytest.raises(ValueError,match='COVERAGE'):
         validate_random_guide(RandomPulseConfig(1,start_min_m=65.), TEMPLATE, guide)
-    for invalid in ([[60.,0.],[135.,0.]], [[60.,0.,0.],[132.,0.,0.]],
+    validate_random_guide(RandomPulseConfig(1), TEMPLATE, [[60.,0.,0.],[132.,0.,0.]])
+    for invalid in ([[60.,0.],[135.,0.]], [[60.,0.,0.],[131.999,0.,0.]],
                     [[60.,0.,0.],[60.,0.,0.]], [[60.,0.,float('nan')],[135.,0.,0.]]):
         with pytest.raises(ValueError,match='COVERAGE'):
             validate_random_guide(RandomPulseConfig(1), TEMPLATE, invalid)
