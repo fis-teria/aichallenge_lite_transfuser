@@ -1,0 +1,33 @@
+{
+  "schema": "measured_recovery_phase_collection_v1",
+  "runtime_source_commit": "a1c9e5ad0a5c274826601338355b75d34b268186",
+  "source_campaign": "/home/graneple/e2e_autonomous/time_recovery_outward_20260914",
+  "remote_hub": "/home/graneple/e2e_autonomous/time_recovery_phase_expansion_20260914",
+  "native_root": "/home/thistle/e2e_autonomous",
+  "analysis_name": "time_recovery_phase_expansion_20260914",
+  "maximum_attempts": 12,
+  "batch_size": 2,
+  "target_speed_mps": 1.3888888888888888,
+  "pulse_start_s_m": {"early": 76.0, "late": 104.0},
+  "minimum_dual_nominal_targets_per_run": 1,
+  "minimum_valid_anchors_per_run": 60,
+  "stop_on_failed_pair_gate": true,
+  "raw_transfer_before_next_pair": true,
+  "model_training": false,
+  "model_evaluation": false,
+  "previous_reserved_test_usage": "sealed",
+  "runs": [
+    {"run_id": "codex-time-recovery-earlyleft-r50", "phase": "early", "side": "left", "split": "train", "pair": 1},
+    {"run_id": "codex-time-recovery-earlyright-r51", "phase": "early", "side": "right", "split": "train", "pair": 1},
+    {"run_id": "codex-time-recovery-lateleft-r52", "phase": "late", "side": "left", "split": "train", "pair": 2},
+    {"run_id": "codex-time-recovery-lateright-r53", "phase": "late", "side": "right", "split": "train", "pair": 2},
+    {"run_id": "codex-time-recovery-earlyleft-r54", "phase": "early", "side": "left", "split": "train", "pair": 3},
+    {"run_id": "codex-time-recovery-earlyright-r55", "phase": "early", "side": "right", "split": "train", "pair": 3},
+    {"run_id": "codex-time-recovery-lateleft-r56", "phase": "late", "side": "left", "split": "train", "pair": 4},
+    {"run_id": "codex-time-recovery-lateright-r57", "phase": "late", "side": "right", "split": "train", "pair": 4},
+    {"run_id": "codex-time-recovery-earlyleft-r58", "phase": "early", "side": "left", "split": "validation", "pair": 5},
+    {"run_id": "codex-time-recovery-earlyright-r59", "phase": "early", "side": "right", "split": "validation", "pair": 5},
+    {"run_id": "codex-time-recovery-lateleft-r60", "phase": "late", "side": "left", "split": "validation", "pair": 6},
+    {"run_id": "codex-time-recovery-lateright-r61", "phase": "late", "side": "right", "split": "validation", "pair": 6}
+  ]
+}
