@@ -1,0 +1,378 @@
+{
+  "status": "COMPLETE_VERIFIED",
+  "format": "outward_recovery_collection_index_v1",
+  "scope": "SAME_COURSE_SAME_CORNER_SMALL_RECOVERY_RUN_HOLDOUT",
+  "production_plan_sha256": "04d757dde75e6b42062a6966d5f9d05bdad1649c7e4d51980f47ded5f68bb462",
+  "runtime_source_commit": "a1c9e5ad0a5c274826601338355b75d34b268186",
+  "analysis_commit": "cb80153d0867385e1756b316113020246c2b111f",
+  "groups": {
+    "train": {
+      "runs": 8,
+      "accepted_anchors": 729,
+      "target_anchors": 23
+    },
+    "validation": {
+      "runs": 2,
+      "accepted_anchors": 186,
+      "target_anchors": 6
+    },
+    "evaluation_reserved": {
+      "runs": 2,
+      "accepted_anchors": 184,
+      "target_anchors": 5
+    }
+  },
+  "production_runs": [
+    {
+      "run_id": "codex-time-recovery-pulseleft-r38",
+      "side": "left",
+      "split": "train",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseleft-r38",
+      "accepted_anchors": 93,
+      "target_anchors": 3,
+      "target_anchor_ids": [
+        "codex-time-recovery-pulseleft-r38:epoch0000:103839997678",
+        "codex-time-recovery-pulseleft-r38:epoch0000:103944997676",
+        "codex-time-recovery-pulseleft-r38:epoch0000:104049997674"
+      ],
+      "teachers_and_inputs_generated": true,
+      "lap_seconds": 278.98,
+      "recovery": {
+        "confirmed": true,
+        "hold_confirmed_at_s": 4.194999906,
+        "peak_lateral_m": 0.10412368717458864,
+        "peak_at_s": 1.004999978,
+        "lateral_threshold_m": 0.05206184358729432
+      },
+      "minimum_guard_ray_margin_m": 0.7267820498032154
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r39",
+      "side": "right",
+      "split": "train",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseright-r39",
+      "accepted_anchors": 92,
+      "target_anchors": 4,
+      "target_anchor_ids": [
+        "codex-time-recovery-pulseright-r39:epoch0000:103839997678",
+        "codex-time-recovery-pulseright-r39:epoch0000:103944997676",
+        "codex-time-recovery-pulseright-r39:epoch0000:104049997674",
+        "codex-time-recovery-pulseright-r39:epoch0000:104154997671"
+      ],
+      "teachers_and_inputs_generated": true,
+      "lap_seconds": 279.05,
+      "recovery": {
+        "confirmed": true,
+        "hold_confirmed_at_s": 4.559999898,
+        "peak_lateral_m": 0.11993066763737212,
+        "peak_at_s": 1.014999977,
+        "lateral_threshold_m": 0.05996533381868606
+      },
+      "minimum_guard_ray_margin_m": 0.9830076036129386
+    },
+    {
+      "run_id": "codex-time-recovery-pulseleft-r40",
+      "side": "left",
+      "split": "train",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseleft-r40",
+      "accepted_anchors": 91,
+      "target_anchors": 2,
+      "target_anchor_ids": [
+        "codex-time-recovery-pulseleft-r40:epoch0000:104049997674",
+        "codex-time-recovery-pulseleft-r40:epoch0000:104154997671"
+      ],
+      "teachers_and_inputs_generated": true,
+      "lap_seconds": 278.97,
+      "recovery": {
+        "confirmed": true,
+        "hold_confirmed_at_s": 4.079999909,
+        "peak_lateral_m": 0.10055096614805627,
+        "peak_at_s": 1.029999977,
+        "lateral_threshold_m": 0.050275483074028134
+      },
+      "minimum_guard_ray_margin_m": 0.7190995109920468
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r41",
+      "side": "right",
+      "split": "train",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseright-r41",
+      "accepted_anchors": 87,
+      "target_anchors": 3,
+      "target_anchor_ids": [
+        "codex-time-recovery-pulseright-r41:epoch0000:103524997686",
+        "codex-time-recovery-pulseright-r41:epoch0000:103629997683",
+        "codex-time-recovery-pulseright-r41:epoch0000:103734997681"
+      ],
+      "teachers_and_inputs_generated": true,
+      "lap_seconds": 279.07,
+      "recovery": {
+        "confirmed": true,
+        "hold_confirmed_at_s": 4.534999899,
+        "peak_lateral_m": 0.11541533739045812,
+        "peak_at_s": 0.939999979,
+        "lateral_threshold_m": 0.05770766869522906
+      },
+      "minimum_guard_ray_margin_m": 0.9986523861419513
+    },
+    {
+      "run_id": "codex-time-recovery-pulseleft-r42",
+      "side": "left",
+      "split": "train",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseleft-r42",
+      "accepted_anchors": 89,
+      "target_anchors": 3,
+      "target_anchor_ids": [
+        "codex-time-recovery-pulseleft-r42:epoch0000:104049997674",
+        "codex-time-recovery-pulseleft-r42:epoch0000:104154997671",
+        "codex-time-recovery-pulseleft-r42:epoch0000:104259997669"
+      ],
+      "teachers_and_inputs_generated": true,
+      "lap_seconds": 278.97,
+      "recovery": {
+        "confirmed": true,
+        "hold_confirmed_at_s": 4.204999906,
+        "peak_lateral_m": 0.1028148641299843,
+        "peak_at_s": 1.039999977,
+        "lateral_threshold_m": 0.05140743206499215
+      },
+      "minimum_guard_ray_margin_m": 0.6972990598196755
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r43",
+      "side": "right",
+      "split": "train",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseright-r43",
+      "accepted_anchors": 92,
+      "target_anchors": 3,
+      "target_anchor_ids": [
+        "codex-time-recovery-pulseright-r43:epoch0000:103944997676",
+        "codex-time-recovery-pulseright-r43:epoch0000:104049997674",
+        "codex-time-recovery-pulseright-r43:epoch0000:104154997671"
+      ],
+      "teachers_and_inputs_generated": true,
+      "lap_seconds": 279.06,
+      "recovery": {
+        "confirmed": true,
+        "hold_confirmed_at_s": 4.4849999,
+        "peak_lateral_m": 0.11821989743704286,
+        "peak_at_s": 0.88499998,
+        "lateral_threshold_m": 0.05910994871852143
+      },
+      "minimum_guard_ray_margin_m": 0.9860259749826086
+    },
+    {
+      "run_id": "codex-time-recovery-pulseleft-r44",
+      "side": "left",
+      "split": "train",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseleft-r44",
+      "accepted_anchors": 92,
+      "target_anchors": 2,
+      "target_anchor_ids": [
+        "codex-time-recovery-pulseleft-r44:epoch0000:103524997686",
+        "codex-time-recovery-pulseleft-r44:epoch0000:103629997683"
+      ],
+      "teachers_and_inputs_generated": true,
+      "lap_seconds": 278.99,
+      "recovery": {
+        "confirmed": true,
+        "hold_confirmed_at_s": 4.244999905,
+        "peak_lateral_m": 0.10160981576393482,
+        "peak_at_s": 0.959999979,
+        "lateral_threshold_m": 0.05080490788196741
+      },
+      "minimum_guard_ray_margin_m": 0.7030514052415886
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r45",
+      "side": "right",
+      "split": "train",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseright-r45",
+      "accepted_anchors": 93,
+      "target_anchors": 3,
+      "target_anchor_ids": [
+        "codex-time-recovery-pulseright-r45:epoch0000:103944997676",
+        "codex-time-recovery-pulseright-r45:epoch0000:104049997674",
+        "codex-time-recovery-pulseright-r45:epoch0000:104154997671"
+      ],
+      "teachers_and_inputs_generated": true,
+      "lap_seconds": 279.06,
+      "recovery": {
+        "confirmed": true,
+        "hold_confirmed_at_s": 4.549999898,
+        "peak_lateral_m": 0.11141361339919797,
+        "peak_at_s": 0.949999979,
+        "lateral_threshold_m": 0.05570680669959899
+      },
+      "minimum_guard_ray_margin_m": 0.9778589800457427
+    },
+    {
+      "run_id": "codex-time-recovery-pulseleft-r46",
+      "side": "left",
+      "split": "validation",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseleft-r46",
+      "accepted_anchors": 93,
+      "target_anchors": 3,
+      "target_anchor_ids": [
+        "codex-time-recovery-pulseleft-r46:epoch0000:103734997681",
+        "codex-time-recovery-pulseleft-r46:epoch0000:103839997678",
+        "codex-time-recovery-pulseleft-r46:epoch0000:103944997676"
+      ],
+      "teachers_and_inputs_generated": true,
+      "lap_seconds": 278.97,
+      "recovery": {
+        "confirmed": true,
+        "hold_confirmed_at_s": 4.074999909,
+        "peak_lateral_m": 0.10187239226788017,
+        "peak_at_s": 1.059999977,
+        "lateral_threshold_m": 0.050936196133940084
+      },
+      "minimum_guard_ray_margin_m": 0.749532863867628
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r47",
+      "side": "right",
+      "split": "validation",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseright-r47",
+      "accepted_anchors": 93,
+      "target_anchors": 3,
+      "target_anchor_ids": [
+        "codex-time-recovery-pulseright-r47:epoch0000:104154997671",
+        "codex-time-recovery-pulseright-r47:epoch0000:104259997669",
+        "codex-time-recovery-pulseright-r47:epoch0000:104364997667"
+      ],
+      "teachers_and_inputs_generated": true,
+      "lap_seconds": 279.05,
+      "recovery": {
+        "confirmed": true,
+        "hold_confirmed_at_s": 4.544999898,
+        "peak_lateral_m": 0.11481450361515788,
+        "peak_at_s": 0.949999979,
+        "lateral_threshold_m": 0.05740725180757894
+      },
+      "minimum_guard_ray_margin_m": 0.9856828509006255
+    },
+    {
+      "run_id": "codex-time-recovery-pulseleft-r48",
+      "side": "left",
+      "split": "evaluation_reserved",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseleft-r48",
+      "accepted_anchors": 93,
+      "target_anchors": 2,
+      "target_anchor_ids": [
+        "codex-time-recovery-pulseleft-r48:epoch0000:104679997660",
+        "codex-time-recovery-pulseleft-r48:epoch0000:104784997657"
+      ],
+      "teachers_and_inputs_generated": false,
+      "lap_seconds": 278.99,
+      "recovery": {
+        "confirmed": true,
+        "hold_confirmed_at_s": 4.339999903,
+        "peak_lateral_m": 0.10347539887076365,
+        "peak_at_s": 1.079999976,
+        "lateral_threshold_m": 0.051737699435381826
+      },
+      "minimum_guard_ray_margin_m": 0.6744555363269691
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r49",
+      "side": "right",
+      "split": "evaluation_reserved",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseright-r49",
+      "accepted_anchors": 91,
+      "target_anchors": 3,
+      "target_anchor_ids": [
+        "codex-time-recovery-pulseright-r49:epoch0000:103419997688",
+        "codex-time-recovery-pulseright-r49:epoch0000:103524997686",
+        "codex-time-recovery-pulseright-r49:epoch0000:103629997683"
+      ],
+      "teachers_and_inputs_generated": false,
+      "lap_seconds": 279.05,
+      "recovery": {
+        "confirmed": true,
+        "hold_confirmed_at_s": 4.569999898,
+        "peak_lateral_m": 0.11481791007565595,
+        "peak_at_s": 1.014999978,
+        "lateral_threshold_m": 0.057408955037827974
+      },
+      "minimum_guard_ray_margin_m": 0.9650442875884223
+    }
+  ],
+  "calibration_run_ids": [
+    "codex-time-recovery-pulseleft-r36",
+    "codex-time-recovery-pulseright-r37"
+  ],
+  "calibration_accepted_anchors": 186,
+  "calibration_final_test_eligible": false,
+  "total_new_raw_runs": 14,
+  "total_original_regular_file_bytes": 16633558489,
+  "total_archives_bytes": 7340494307,
+  "sources_verified": true,
+  "generated_teacher_frames": 915,
+  "teacher_xy_shape_per_anchor": [
+    30,
+    2
+  ],
+  "teacher_dt_s": 0.1,
+  "teacher_horizon_s": 3.0,
+  "model_trained": false,
+  "model_performance_evaluated": false,
+  "combined_training_identity_created": false,
+  "prepared_file_hashes_reverified": true,
+  "raw_archive_hashes_verified_at_transfer": true,
+  "raw_archive_hashes_repeated_at_finalization": false,
+  "source_report_hashes": {
+    "/home/thistle/e2e_autonomous/e2e_lite_transfuser/docs/evidence/time_recovery_expansion_20260914/production_plan.json": "04d757dde75e6b42062a6966d5f9d05bdad1649c7e4d51980f47ded5f68bb462",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/calibration_summary.json": "5b4f4d4e4390ada8a888baa90e51e2d77f5d22cd1c04befed8d48183b9cb907b",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair01_20260914_verified.json": "ac0cf87e1ba138c6361b78eab55107e68ca990ba4095a2e488b1eac977511fb5",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair01_20260914_shipping.json": "517d37287e9f378e03b0e5cd125790ccad8202ab34cf8379f9ae89a5954ec519",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair02_20260914_verified.json": "dac4efacff27afa5d30c992d00530174e0cbe476caf680a8566975d568eef93d",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair02_20260914_shipping.json": "d0e69462b655557dc62d7a13b49d7c54be8772b1583ad17d18cbe6b1246702aa",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair03_20260914_verified.json": "90ea8b51a13840e7d3fcba438ffc9301cc2032fb91eb90e8ba31b05c17101b51",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair03_20260914_shipping.json": "2702e588b33bf3d3b4c43419330f9e5bff56d8bad27405b4b55e88794e2972ef",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair04_20260914_verified.json": "259d5440b20b3547ffa0903ca5c1540c8b58f0c5a95784701348c397e63789ab",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair04_20260914_shipping.json": "db42927c6e786bd2dc76566820ba6ac2562b63d91a7642886f2104ccabfd1475",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair05_20260914_verified.json": "4fbd2eeb830ad54a7bdbde4fef091bf2436e2f263a33b40a343b63693d3ae11b",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair05_20260914_shipping.json": "7745d9cdb3e51f153630f0716ea956ad62c25dbb1674b2288091cfd28a9e669d",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair06_20260914_verified.json": "663be07fc1796b0a42a31b19caa4f4a000b03be10f65e8f6b1239289d01ef5ba",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair06_20260914_shipping.json": "df2c765514a1f0e9b673283319023961697029c1a6c240e6329ca20a726b3aed",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair07_20260914_verified.json": "a2083cf7b729e9e845e8c79cc452677f90029e91da9516b0351e775a7abd2137",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair07_20260914_shipping.json": "254c9402cec9be290c8085f984767f038bbcb39a2ac0d79a64e59663fd3165ad",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair02_20260914_summary.json": "452e9b018cf50155478d935b538c122350aca6cba12944e70de6735d2635a000",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair02_20260914_prepared.json": "db5df27cd75ce5c1b898ee475c5a3edd120108195846b9b7f392415da7884f37",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseleft-r38/result.json": "5b7d14ca70d7a447e609fecd3cc449cca1d04eaa8c2b2e5510892b40a7fbac42",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r38_causal_probe.json": "9b961800eedf3e76b4291a5aebf89199752a6fa44657f3736aa616a867e40cc5",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseright-r39/result.json": "addad5054f1722785fc5eaa2ee88601d876977ed751fa822e293f16a2d9723de",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r39_causal_probe.json": "cb8e109d940eaf85a701fd1c16215eed5b5222959f0b1742e5bca2fdfeb2704b",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair03_20260914_summary.json": "062ee94179e55961f046606b9d1ed3e49cd2512144f1ecf22f4e6174d1298829",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair03_20260914_prepared.json": "6229e37e705eea7346737fe94ce1f96dd2c849dd7a717a3af246a9ee79386719",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseleft-r40/result.json": "af7b24c9c321f714a33a45c74be47f7b01fef38657ca7f61266c97fd9ea724a6",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r40_causal_probe.json": "318474e6c5b2354d21903b4b8656f2ee63b7aadb204af2a21cd3e5c678b5c038",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseright-r41/result.json": "41024d44049c1ef5cc68b70937ea259c161166416cf2aa3ed9ee200d12c90cd9",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r41_causal_probe.json": "ff1df5c13801ee8ab17d436192c026d03f76d962a09f6fe01bab7191ff0ad5b8",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair04_20260914_summary.json": "4c780ccf0c5ba9e43ed225267afe2e00c5124fcb2f5d5fcb07b8e480b9c1c04c",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair04_20260914_prepared.json": "9bf06d45658062218d675992b54211bc9289c6c4924b075530ed36da387aacc0",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseleft-r42/result.json": "998b102691d08ea566af7be64d97043944864bbed352ab53eaec73beb42ed476",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r42_causal_probe.json": "31a286ce1d864c56e53ed740c2ed8d1e82d45b12f0bd5c363385cd4d46a2bfc6",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseright-r43/result.json": "8b48c108223b5c188d8078b385d40b1fba5b37b19d025f905d7e75ff14e4dd57",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r43_causal_probe.json": "5731cc2137bbf98de02e93350e91d485f1e62845be71c6434d021dcd250e8511",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair05_20260914_summary.json": "a0ee8d52aa1272e45048ef8ab65c7796a3baf05bd2c363e2077487bfa3d82ffa",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair05_20260914_prepared.json": "6695f9f185b537218195effb010cdd9a4ba3b635aabec8e9bc7597317c263504",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseleft-r44/result.json": "e3ff2ca584fa52dc0ec63b51f30ae2055ad84a87a44603ed43d0ea5958cf6711",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r44_causal_probe.json": "146eb45e1ad590db805e05a011541c405780e72fda52168668a22246d7d58946",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseright-r45/result.json": "4ec893206d2ee895f1b832faefa533a94af0cf88b3ae7fed91ce22dab60e6b1e",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r45_causal_probe.json": "c9f852dd3e56b9d0f483df3caba0eeb3fa99bc1be8efd5f65585817e9481367e",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair06_20260914_summary.json": "a3360de9de30d4699874de81614a4369cd1dfe88caf62123f5b36792117cf11e",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair06_20260914_prepared.json": "59e9783fdadf44daaa1ac5ecccb578d833c5cee82e0379cad767ee484a95cbad",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseleft-r46/result.json": "aa0d010f42a2f9d9a7899514864f5260f4910fdb5a5031632cf7097406e5bc37",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r46_causal_probe.json": "c41db8ec000140eb21c90c50fd72ff480cec9fbc99ddeb77624648b526a8d813",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseright-r47/result.json": "79f627c86c6a42e51ab88a06a8c3efe025076567b55a69fe877f4120719fdafb",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r47_causal_probe.json": "680a09d8d9bebf3a73db60c2aa323161c000da18f894f2281d39ee5621c7748a",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair07_20260914_summary.json": "f03d397ae4d097903f87325b60b2875924188e70239c24740a0660d4cfa9b2a1",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/pair07_20260914_prepared.json": "f6cb1bebb370679f047d475b67505e1c61833fe821d463344ff210a821574bef",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseleft-r48/result.json": "fbfbd8ad86e5c6beaae50214f79bb4b23108e71cd37f3fcdd46293a8d1da43fa",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r48_causal_probe.json": "1b1a6bab3ae105a799f150b4d405cc3ade1f73c4639c0b1764ecb99e54778f1b",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/codex-time-recovery-pulseright-r49/result.json": "9c289dcc3db1dd7af53819e9cc4bd1e927ae458055b438c7ed08b14e6922c432",
+    "/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914/r49_causal_probe.json": "95674cc6d1f24b9a7ee0b0f76e189c6e2b2ebd8aea2d0a5688a37bceeb11e208"
+  }
+}
