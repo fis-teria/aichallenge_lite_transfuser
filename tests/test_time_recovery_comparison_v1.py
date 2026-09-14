@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
-from aic_transfuser_lite.evaluation.time_recovery_comparison_v1 import pp_probe, summarize_pp
+from aic_transfuser_lite.evaluation.time_recovery_comparison_v1 import pp_probe, summarize_pp, component_errors
 
 
 def config():
@@ -32,3 +32,18 @@ def test_nonfinite_prediction_and_speed_ineligibility_keep_distinct_denominators
     assert (summary['attempted'], summary['applicable'], summary['accepted']) == (2, 1, 0)
     assert summary['accepted_fraction'] == 0.
     assert summarize_pp([fast])['accepted_fraction'] is None
+
+
+def test_component_errors_use_run_weights_and_explicit_support():
+    predicted = np.tile(np.array([[1., 2.], [1., 2.], [1., 2.], [3., -4.]])[:, None], (1, 30, 1))
+    mask = np.ones((4, 30), bool)
+    result = component_errors(predicted, np.zeros_like(predicted), mask, np.array([True, True, False, True]), ['a', 'a', 'a', 'b'])
+    assert result['3s'] == {'forward_mae_m': 2., 'left_mae_m': 3., 'left_bias_m': -1.,
+                            'supported_anchors': 3, 'supported_runs': 2, 'total_anchors': 4}
+    mask[:] = False
+    assert component_errors(predicted, np.zeros_like(predicted), mask, np.ones(4, bool), ['a']*4)['3s']['left_mae_m'] is None
+
+
+def test_component_errors_reject_shape_mismatch():
+    with pytest.raises(ValueError, match='N,30,2'):
+        component_errors(np.zeros((2, 6, 2)), np.zeros((2, 6, 2)), np.ones((2, 6)), np.ones(2), ['a', 'b'])

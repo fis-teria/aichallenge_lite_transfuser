@@ -22,7 +22,7 @@ from aic_transfuser_lite.evaluation.time_batched_v1 import evaluate_time_batched
 from aic_transfuser_lite.evaluation.time_clearance_v1 import PoseIndex
 from aic_transfuser_lite.evaluation.time_corner_comparison_v1 import replay_observation_pose, world_points
 from aic_transfuser_lite.evaluation.time_metrics_v1 import time_horizon_metrics
-from aic_transfuser_lite.evaluation.time_recovery_comparison_v1 import pp_probe, summarize_pp
+from aic_transfuser_lite.evaluation.time_recovery_comparison_v1 import pp_probe, summarize_pp, component_errors
 from aic_transfuser_lite.training.time_checkpoint_v1 import TimeCheckpointIdentity, load_time_checkpoint
 from aic_transfuser_lite.training.time_config_v1 import TimeModelConfig, build_time_model
 from train_time_recovery_expansion import check_reference, read
@@ -176,6 +176,9 @@ def main() -> None:
             arm['groups'][group] = time_horizon_metrics(data[indices], torch.from_numpy(dataset.targets[indices].copy()),
                 torch.from_numpy(dataset.xy_mask[indices].copy()), input_valid=torch.from_numpy(dataset.input_valid[indices].copy()),
                 run_ids=[dataset.run_ids[i] for i in indices])
+            arm['groups'][group]['component_error_run_macro'] = component_errors(data[indices].numpy(),
+                dataset.targets[indices], dataset.xy_mask[indices], dataset.input_valid[indices],
+                [dataset.run_ids[i] for i in indices])
         report['models'][name] = arm; predictions[name] = data.numpy()
         np.save(out/(name+'_predictions.npy'), data.numpy(), allow_pickle=False)
         del model, payload; torch.cuda.empty_cache()

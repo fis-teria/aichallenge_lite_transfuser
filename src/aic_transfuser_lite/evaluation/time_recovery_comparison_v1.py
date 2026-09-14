@@ -44,3 +44,30 @@ def summarize_pp(rows: Sequence[dict[str, Any]]) -> dict[str, Any]:
         'reasons': dict(Counter(r['reason'] for r in rows)),
         'max_absolute_steer_rad': max(steering) if steering else None,
         'scope': 'PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP'}
+
+
+def component_errors(prediction: np.ndarray, target: np.ndarray, mask: np.ndarray,
+                     input_valid: np.ndarray, run_ids: Sequence[str]) -> dict[str, Any]:
+    """Run-equal forward/left errors in observation-body metres, with support."""
+    prediction, target = np.asarray(prediction), np.asarray(target)
+    mask, input_valid = np.asarray(mask, bool), np.asarray(input_valid, bool)
+    if (prediction.ndim != 3 or prediction.shape[1:] != (30, 2) or target.shape != prediction.shape
+            or mask.shape != prediction.shape[:2] or input_valid.shape != (len(prediction),)
+            or len(run_ids) != len(prediction)):
+        raise ValueError('expected [N,30,2] XY, [N,30] mask and one run/input flag per anchor')
+    ids = np.asarray(run_ids)
+    result = {}
+    for seconds in (.5, 1., 2., 3.):
+        index = int(seconds*10)-1
+        valid = input_valid & mask[:, index] & np.isfinite(prediction[:, index]).all(axis=1) & np.isfinite(target[:, index]).all(axis=1)
+        error = prediction[:, index].astype(float)-target[:, index].astype(float)
+        per_run = []
+        for run in sorted(set(run_ids)):
+            values = error[valid & (ids == run)]
+            if len(values):
+                per_run.append((float(np.abs(values[:, 0]).mean()), float(np.abs(values[:, 1]).mean()), float(values[:, 1].mean())))
+        average = np.mean(per_run, axis=0).tolist() if per_run else [None, None, None]
+        result[f'{seconds:g}s'] = {'forward_mae_m': average[0], 'left_mae_m': average[1],
+            'left_bias_m': average[2], 'supported_anchors': int(valid.sum()), 'supported_runs': len(per_run),
+            'total_anchors': len(prediction)}
+    return result
