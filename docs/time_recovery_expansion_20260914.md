@@ -79,3 +79,22 @@ train/validationの採用runでは既存の`materialize_recovery_run`で全教�
 追加した集計のsmokeと前回r34/r35の実データ回帰は通過した。
 native WSLの全体pytestは`bb2a2da`で2321 passed / 4 skipped（85.89s）。
 制御sourceは校正・本収集とも`a1c9e5a`を固定する。
+
+## 本収集の転送・生成コマンド
+
+各pairが正常停止し、`move_pair.pack`で閉じた2本を梱包してから実行する。
+pair番号2〜7は固定計画の順序に対応する。既存出力を上書きする再実行は拒否する。
+
+```powershell
+# Windowsの正本repo。WSLの照合完了後、対応するAWSIM側の原本だけを移動済み案内へ置換する。
+python -X utf8 docs/evidence/time_recovery_expansion_20260914/ship_closed_pair.py --pair 2
+```
+
+```bash
+# native WSLのrepo root。全候補の監査とtrain/validationの教師・入力生成を行う。
+tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
+  docs/evidence/time_recovery_expansion_20260914/audit_new_pair.py --pair 2
+```
+
+生成先は`/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914`内の
+`materialized/<run_id>`と`prepared/<split>/<run_id>`。原本は同名の`raw`配下に保持する。

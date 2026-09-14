@@ -1,0 +1,57 @@
+{
+  "status": "PASS",
+  "production_plan_sha256": "04d757dde75e6b42062a6966d5f9d05bdad1649c7e4d51980f47ded5f68bb462",
+  "runs": [
+    {
+      "run_id": "codex-time-recovery-pulseleft-r42",
+      "anchors": 89,
+      "input_valid": 89,
+      "real_input_replay_equal": [
+        "codex-time-recovery-pulseleft-r42:epoch0000:104049997674",
+        "codex-time-recovery-pulseleft-r42:epoch0000:108984997563"
+      ],
+      "input_reason_refinements": [],
+      "split": "train",
+      "files": {
+        "prepared/train/codex-time-recovery-pulseleft-r42/anchors.jsonl": "c5ae08a15bb1a4fb2e704932bd7ecef16a41f25e561b1c1a1edf687eccdb450f",
+        "prepared/train/codex-time-recovery-pulseleft-r42/camera_rgb.npy": "ae579698ddf2b1fde35cf0ec4e62eef82ecbd9b7736cddbe748f0c723ecc0850",
+        "prepared/train/codex-time-recovery-pulseleft-r42/inputs.npz": "5658da91aa8c5cae63cfb8e49e9d816e5e0f6bb5a61d0406ab6fd3074b2c0b76",
+        "prepared/train/codex-time-recovery-pulseleft-r42/labels.npz": "7b0239312723be79642e951e9ac27ce14f376e9458850320a3ca883c5fc90e33",
+        "prepared/train/codex-time-recovery-pulseleft-r42/lidar.npy": "885542e811c213ea3c0f3ca69dbf40db814214dc964d301dff5240bc89cd2a4a",
+        "materialized/codex-time-recovery-pulseleft-r42/anchors.jsonl": "3acc9a5ae7457fe63a8ff799c3e4e952577a8293e3174c8bdfee5cfa4f50824b",
+        "materialized/codex-time-recovery-pulseleft-r42/audit.json": "5982a30b9fc1f7b49caa4e812fe4daa704e8a0a49198447c40a86ea145fb8617",
+        "materialized/codex-time-recovery-pulseleft-r42/teachers.npz": "7b0239312723be79642e951e9ac27ce14f376e9458850320a3ca883c5fc90e33"
+      }
+    },
+    {
+      "run_id": "codex-time-recovery-pulseright-r43",
+      "anchors": 92,
+      "input_valid": 92,
+      "real_input_replay_equal": [
+        "codex-time-recovery-pulseright-r43:epoch0000:103944997676",
+        "codex-time-recovery-pulseright-r43:epoch0000:108774997568"
+      ],
+      "input_reason_refinements": [],
+      "split": "train",
+      "files": {
+        "prepared/train/codex-time-recovery-pulseright-r43/anchors.jsonl": "659af863283e10ecab94ab7bc1902fd1017d0253a1e1ed4bdbe4e13842d9c36d",
+        "prepared/train/codex-time-recovery-pulseright-r43/camera_rgb.npy": "814c60c3fec1908977f6f193116555b975f25a57865d023277e3b38ab431d931",
+        "prepared/train/codex-time-recovery-pulseright-r43/inputs.npz": "98be704ac7610a3912889cc100590cd55a46d098810eb3609ee5e07b982cd3c8",
+        "prepared/train/codex-time-recovery-pulseright-r43/labels.npz": "acb0ee2e5ce9086037c85b28ef3b5c8ef8bd3a46974bdad9903fbc171b395619",
+        "prepared/train/codex-time-recovery-pulseright-r43/lidar.npy": "7ff5919f7bf8cd398cf6f8d191149b24600dba8f380aa78476a5354180f6e7ea",
+        "materialized/codex-time-recovery-pulseright-r43/anchors.jsonl": "a454a9b9426af342c53bb3caef44be7cbec29d69448912fbe178a1bfd3318967",
+        "materialized/codex-time-recovery-pulseright-r43/audit.json": "82524636915acb318bfa3d5290e798d596dcd839be40f0e7298a7a178a348e90",
+        "materialized/codex-time-recovery-pulseright-r43/teachers.npz": "acb0ee2e5ce9086037c85b28ef3b5c8ef8bd3a46974bdad9903fbc171b395619"
+      }
+    }
+  ],
+  "independently_collected_run_ids": [
+    "codex-time-recovery-pulseleft-r42",
+    "codex-time-recovery-pulseright-r43"
+  ],
+  "evaluated_model": false,
+  "trained_model": false,
+  "combined_training_identity_created": false,
+  "total_accepted": 181,
+  "total_targets_agreeing_with_both_nominals": 6
+}
