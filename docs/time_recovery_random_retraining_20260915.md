@@ -1,6 +1,6 @@
 # 復帰データ追加後の再学習（2026-09-15）
 
-状態: 実行準備。学習・比較結果は完了後に追記する。
+状態: native WSL で再学習・重み再読込検証が正常完了。場面別の旧新モデル比較を実行する。
 
 既存の expanded uniform モデルに未使用だった r50/r51 と、確認済みランダム外乱収集 r64/r65 を統合する。学習は Windows の確定コミットを同期した native WSL で実行する。
 
@@ -48,6 +48,10 @@ tools/with_wsl_training_lock.sh timeout --signal=TERM --kill-after=20s 7200s \
   --plan configs/time_path_p1/recovery_random_update_20260915.json --root ..
 tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -u \
   tools/compare_time_recovery_update.py \
+  --plan configs/time_path_p1/recovery_random_update_20260915.json --root .. \
+  --lookahead-policy stopping_preview_extended_v1
+tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -u \
+  tools/plot_time_recovery_update.py \
   --plan configs/time_path_p1/recovery_random_update_20260915.json --root ..
 ```
 
@@ -60,3 +64,33 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -u \
 学習後は旧モデルと新モデルを同じ通常走行・旧復帰・追加復帰・ランダム復帰 validation に通し、時間ごとの XY 誤差と PP の操舵計算を比較する予定。結果判明前の性能向上は主張しない。AWSIM 完走・実際の復帰性能は今回の offline 数値からは確定できない。
 
 WSL 全体テスト（source `f560a9561a643d7dd6f3aae92a79b8d2d2388a08`）: 2,488 passed / 4 skipped / 65 warnings、93.70 s。追加の split・event・教師 shape・入力参照の回帰テスト24件を含む。スキップは既存の任意依存関係に由来する。
+
+比較の PP は直近の学習方法比較と同じ `stopping_preview_extended_v1`、age 0 s を明示する。参照する既存車両 config は segment policy を既定値として含むため、比較 CLI で先読み方式を明示する。これは学習結果が出る前に固定した比較条件であり、学習・cache plan・選択基準には影響しない。
+以前の r46/r47 の厳格な外向き逸脱6 anchors、新規 r65 の同6 anchors は、それぞれ既存収集監査の確定 ID を用いて補助集計する。全体の誤差で苦手場面の悪化が隠れないようにするためであり、checkpoint 選択には使わない。
+
+## 完了済みの事前照合
+
+- 学習 source: `8c3fd83145830f774473680a88c947b1e3c83899`、PyTorch `2.7.1+cu128`、WSL RTX 4080。
+- 追加4走行について原データ、閉じた bag、因果監査、materialized 教師、prepared センサを再ハッシュ・照合し、全件 PASS。
+- 新 cache identity: `cb52a01fae1a492b5d06f1473c6ed773410934fe39a019e91c33097db340c895`。identity.json ファイルの SHA256 は `7500d36e570d7091d745a5c7158379165001093bfbe9e63fd125812dfadc2cfa`（JSON 内容の identity hash とファイル bytes hash は別）。
+- 既存160 cache files の bytes、以前の学習提示順の再現、通常36,726枠の位置と順序は一致。
+- 新復帰1,410 unique anchors は、950件を6回、460件を7回提示し、8,920枠を保持。
+- 元の初期重みによる同じ6 validation runs の評価結果は以前の JSON と厳密一致し、学習開始 gate を通過。
+
+事前照合の cache identity と実行 log は `docs/evidence/time_recovery_random_retraining_20260915/`。重み・予測 tensor・学習 cache は native WSL に保持する。
+
+## 学習完了
+
+- 3 epochs、4,281 updates、136,938 presentations を完了。各 epoch の有効44,280・入力除外158・教師未支持1,208件は以前と同数。
+- 学習時間は3,019.09 s（約50.3分）。best は epoch3。
+- 初期重みの内部 hash と初期検証が一致し、best 重みを再読込した予測 tensor も厳密一致。`matched_budget_verification.json` は PASS。
+- 新重み: `/home/thistle/e2e_autonomous/runs/time_recovery_random_update_20260915/best.pt`
+- 新重み SHA256: `53e1962b97cfaa47acae3e2ad4687fac96c80672905406fdbe1514abd9563da2`
+
+| Epoch | 前回6-run macro 3 s [cm] | 今回6-run macro 3 s [cm] |
+|---|---:|---:|
+| 1 | 5.4564 | 5.1652 |
+| 2 | 5.1364 | 4.9209 |
+| 3 (best) | 4.7960 | 4.8125 |
+
+既存6走行の最終3 s誤差は+0.34%でほぼ同等。全支持点を重みとする ADE は1.6658 cm →1.6375 cm。これは旧選択用 validation の結果であり、新規復帰 validation での改善は以下の比較で別に確認する。

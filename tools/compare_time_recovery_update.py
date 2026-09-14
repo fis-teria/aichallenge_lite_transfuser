@@ -14,6 +14,7 @@ from torch.utils.data import Subset
 
 from compare_time_training_methods import pp_rows
 from train_time_recovery_update import read_json, write, reference_proof
+from aic_transfuser_lite.data.time_split_v1 import content_sha256
 from aic_transfuser_lite.data.time_training_cache_v1 import TimeTrainingCacheDataset, verify_time_training_cache, _sha
 from aic_transfuser_lite.evaluation.time_batched_v1 import evaluate_time_batched
 from aic_transfuser_lite.evaluation.time_method_selection_v1 import pp_agreement_score
@@ -27,6 +28,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--plan', type=Path, required=True)
     parser.add_argument('--root', type=Path, default=Path('..'))
+    parser.add_argument('--lookahead-policy', required=True,
+                        choices=('stopping_preview_segment_v1', 'stopping_preview_extended_v1'))
     args = parser.parse_args()
     root, repo, plan = args.root.resolve(), Path(__file__).resolve().parents[1], read_json(args.plan)
     torch.set_num_threads(4)
@@ -61,18 +64,30 @@ def main() -> None:
             or sorted(i for part in partitions for i in part) != list(range(len(ds)))):
         raise ValueError('comparison membership or historical batch shapes changed')
     old_recovery = {rid for rid in original_ids if rid.startswith('codex-time-recovery-')}
+    parent = read_json(root/plan['parent_cache']/'identity.json')
+    if content_sha256({k: v for k, v in parent.items() if k != 'manifest_sha256'}) != plan['parent_cache_sha256']:
+        raise ValueError('parent metadata identity changed')
+    prior_collection = root/parent['plan']['collection_index']
+    if _sha(prior_collection) != parent['plan']['collection_index_sha256']:
+        raise ValueError('previous outward diagnostic assignment changed')
+    old_targets = {a for r in read_json(prior_collection)['production_runs']
+                   if r['run_id'] in expanded_ids for a in r['target_anchor_ids']}
     groups = dict(nominal=[i for i in partitions[0] if ds.run_ids[i] not in old_recovery],
                   old_recovery=[i for i in partitions[0] if ds.run_ids[i] in old_recovery],
-                  expanded_recovery=partitions[1], random_recovery=partitions[2],
+                  expanded_recovery=partitions[1],
+                  expanded_outward=[i for i in partitions[1] if ds.anchor_ids[i] in old_targets],
+                  random_recovery=partitions[2],
                   random_outward=[i for i in partitions[2] if ds.anchor_ids[i] in targets])
     if len(groups['random_outward']) != 6 or len(targets) != 6:
         raise ValueError('strict outward diagnostic population changed')
+    if len(groups['expanded_outward']) != 6 or len(old_targets) != 6:
+        raise ValueError('previous outward diagnostic population changed')
     for event in collection['events']:
         indices = [i for i in partitions[2] if ds._anchors[i]['recovery_event_id'] == event['event_id']]
         if len(indices) != event['accepted']['count']:
             raise ValueError('event population differs from collection audit')
         groups['random_event_'+str(event['event_id'])] = indices
-    controller = read_json(repo/plan['offline_controller_config'])
+    controller = {**read_json(repo/plan['offline_controller_config']), 'lookahead_policy': args.lookahead_policy}
     if plan['offline_controller_age_s'] != 0.0:
         raise ValueError('only frozen observed-state PP is budgeted')
     all_indices = list(range(len(ds)))
@@ -129,7 +144,7 @@ def main() -> None:
         training_support_and_update_budget_equal=True, selection_run_ids=plan['selection_run_ids'],
         held_out_random_run=random_id, held_out_random_events=3,
         event_anchor_counts=Counter(str(ds._anchors[i]['recovery_event_id']) for i in partitions[2]),
-        random_validation_used_for_selection=False, comparison_runs_not_independent_events=True,
+        random_validation_used_for_selection=False, random_events_are_correlated_within_one_run=True,
         reserved_test_read=False, new_awsim_trials=0, controller=controller,
         controller_config_sha256=_sha(repo/plan['offline_controller_config']))
     write(out/'summary.json', summary)
