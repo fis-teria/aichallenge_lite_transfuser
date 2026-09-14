@@ -25,11 +25,14 @@ def main() -> None:
     ap.add_argument('--geometry', choices=('mixed', 'left_curve', 'right_curve'), default='mixed')
     ap.add_argument('--maximum-base-curvature-inv-m', type=float, default=.01)
     ap.add_argument('--preferred-base-curvature-inv-m', type=float, default=.015)
+    ap.add_argument('--base-start-range-m', type=float, nargs=2, metavar=('MIN', 'MAX'),
+                    help='Inclusive original-course progress bounds for the approach start [m]; no fallback outside them')
     args = ap.parse_args()
     configs = {side: RecoveryReferenceConfigV3(4., 6., 6., 8., 1.4, .015,
                     args.preferred_base_curvature_inv_m,
                     (RecoverySegmentRequestV3(f'{side}_{round(args.offset_m*100):03d}',
-                                             side, args.offset_m, args.geometry),),
+                                             side, args.offset_m, args.geometry,
+                                             tuple(args.base_start_range_m) if args.base_start_range_m is not None else None),),
                     maximum_abs_base_curvature_inv_m=args.maximum_base_curvature_inv_m)
                for side in ('left', 'right')}
     for config in configs.values():

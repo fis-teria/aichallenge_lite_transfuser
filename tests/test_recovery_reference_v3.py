@@ -140,6 +140,43 @@ def test_generated_offset_reaches_requested_hold_and_returns_smoothly() -> None:
     assert all(generated.points[i + 1].s_m > generated.points[i].s_m for i in range(159))
 
 
+def test_targeted_recovery_stays_at_requested_original_course_location() -> None:
+    base = _circle_points()
+    target = base[70].s_m
+    request = replace(_config().requests[0], base_start_range_m=(target, target))
+    config = replace(_config(), requests=(request,))
+    generated = generate_recovery_reference_v3(base, _map(), config)
+    assert generated.selected_segments[0]['base_start_s_m'] == target
+    assert generated.selected_segments[0]['start_point_id'] == 70
+    assert len(generated.points) == len(base)
+    assert all((a.x_m, a.y_m) == (b.x_m, b.y_m)
+               for a, b in zip(base[:70], generated.points[:70]))
+    # A safe interval elsewhere must never replace the requested location.
+    unavailable = replace(request, base_start_range_m=(base[-1].s_m, base[-1].s_m + 1.))
+    with pytest.raises(ValueError, match='no safe, non-overlapping interval'):
+        generate_recovery_reference_v3(base, _map(), replace(config, requests=(unavailable,)))
+    blocked = replace(_map(), free=np.zeros_like(_map().free))
+    with pytest.raises(ValueError, match='no safe, non-overlapping interval'):
+        generate_recovery_reference_v3(base, blocked, config)
+
+
+@pytest.mark.parametrize('bounds', [(-1., 2.), (3., 2.), (0., float('nan')),
+                                   (0., float('inf')), (), (1.,)])
+def test_targeted_recovery_rejects_invalid_progress_bounds(bounds: tuple[float, ...]) -> None:
+    with pytest.raises(ValueError, match='base_start_range_m'):
+        replace(_config().requests[0], base_start_range_m=bounds).validate()
+
+
+def test_targeted_recovery_bounds_load_from_yaml(tmp_path: Path) -> None:
+    raw = yaml.safe_load((ROOT / 'configs/data/recovery_reference_generator_v3.yaml').read_text())
+    raw['segments'][0]['base_start_range_m'] = [30., 35.]
+    path = tmp_path / 'targeted.yaml'
+    path.write_text(yaml.safe_dump(raw))
+    config = load_recovery_reference_config_v3(path)
+    assert config.requests[0].base_start_range_m == (30., 35.)
+    assert config.requests[1].base_start_range_m is None
+
+
 def test_occupied_footprint_fails_closed() -> None:
     blocked = OccupancyMapV3(
         free=np.zeros((700, 700), dtype=np.bool_),

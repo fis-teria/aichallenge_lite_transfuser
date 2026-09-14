@@ -37,6 +37,9 @@ class RecoverySegmentRequestV3:
     side: str
     offset_m: float
     geometry: str
+    # Inclusive bounds on ORIGINAL course progress, before the offset is made.
+    # None preserves automatic whole-course selection.
+    base_start_range_m: tuple[float, float] | None = None
 
     @property
     def signed_offset_m(self) -> float:
@@ -51,6 +54,11 @@ class RecoverySegmentRequestV3:
             raise ValueError(f"unsupported recovery geometry: {self.geometry!r}")
         if not math.isfinite(self.offset_m) or self.offset_m <= 0.0:
             raise ValueError("offset_m must be finite and positive")
+        if self.base_start_range_m is not None:
+            bounds = self.base_start_range_m
+            if (len(bounds) != 2 or not all(math.isfinite(v) for v in bounds)
+                    or not 0.0 <= bounds[0] <= bounds[1]):
+                raise ValueError("base_start_range_m requires finite ordered nonnegative bounds in meters")
 
 
 @dataclass(frozen=True)
@@ -194,6 +202,8 @@ def load_recovery_reference_config_v3(path: str | Path) -> RecoveryReferenceConf
                 side=str(item["side"]),
                 offset_m=float(item["offset_m"]),
                 geometry=str(item["geometry"]),
+                base_start_range_m=(tuple(float(v) for v in item["base_start_range_m"])
+                                    if item.get("base_start_range_m") is not None else None),
             )
             for item in requests
         ),
@@ -340,6 +350,10 @@ def generate_recovery_reference_v3(
     for request in config.requests:
         candidates: list[tuple[float, int, int, float]] = []
         for start_index, start_s in enumerate(s):
+            if request.base_start_range_m is not None:
+                lower, upper = request.base_start_range_m
+                if not lower <= start_s <= upper:
+                    continue
             end_s = start_s + config.segment_length_m
             if end_s > s[-1]:
                 break
