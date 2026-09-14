@@ -1,0 +1,20 @@
+{
+  "scope": "SAVED_METRIC_RENDER_ONLY",
+  "source": "/home/thistle/e2e_autonomous/runs/time_training_method_comparison_20260914/comparison/summary.json",
+  "source_sha256": "bc799635a71c84de4f94a86183c4a29d9637b9c111994398cefa59c765138c48",
+  "source_commit": "9b3c8ded1bccda56800b34270bf4b1a0a1f5aa3d",
+  "argv": [
+    "tools/render_time_method_comparison.py",
+    "--comparison",
+    "../runs/time_training_method_comparison_20260914/comparison/summary.json",
+    "--output",
+    "../runs/time_training_method_comparison_20260914/figures"
+  ],
+  "image_sha256": "4c3632c1f4c0727ac4e8d4a1b21499e949f25a16c31c02fd0f317e05a7aa2628",
+  "cells": {
+    "uniform/endpoint_3s": "uniform_epoch3",
+    "uniform/teacher_pp": "uniform_epoch3",
+    "balanced/endpoint_3s": "balanced_epoch3",
+    "balanced/teacher_pp": "balanced_epoch3"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "experiment": "fixed_data_outward_balance_and_pp_selection_20260914",
+  "cache": "datasets/cache/time_recovery_expanded_20260914",
+  "cache_sha256": "198b05946c678c78d14692988797284d6d084122f3826f6be715993134b2b690",
+  "historical_training": "runs/time_recovery_expanded_training_20260914",
+  "historical_checkpoint_sha256": "7ec445b6ab955e76d0d71efbd8f2f1dd3066ebe365516df38df8cf18adb56f44",
+  "historical_source_commit": "f7743b10f594170db2270f369e7911ee1a3b78fc",
+  "controller": "configs/control/time_path_expanded_5kmh_20260914.json",
+  "lookahead_policy": "stopping_preview_extended_v1",
+  "outward_fraction_within_recovery": 0.25,
+  "expected_outward_train_anchors": 23,
+  "expected_outward_train_runs": 8,
+  "expected_outward_presentations": 2230,
+  "selection_run_ids": [
+    "5kmh_run03",
+    "5kmh_run06",
+    "8kmh_run06",
+    "8kmh_run09",
+    "codex-time-recovery-right040-r22",
+    "codex-time-recovery-left020-r23"
+  ],
+  "comparison_only_run_ids": [
+    "codex-time-recovery-pulseleft-r46",
+    "codex-time-recovery-pulseright-r47"
+  ],
+  "selection_policies": [
+    "endpoint_3s",
+    "teacher_pp"
+  ],
+  "pp_rejection_penalty_rad": 0.6,
+  "pp_selection_age_s": 0.0,
+  "training": {
+    "epochs": 3,
+    "batch_size": 32,
+    "workers": 4,
+    "seed": 42,
+    "learning_rate": 3e-05,
+    "weight_decay": 0.0001,
+    "max_grad_norm": 1.0,
+    "precision": "float32"
+  },
+  "expected_presentations_per_epoch": 45646,
+  "expected_optimizer_steps": 4281,
+  "maximum_new_training_arms": 2,
+  "training_wall_timeout_s_per_arm": 7200,
+  "uniform_retraining": "only_if_a_selected_historical_epoch_checkpoint_is_missing",
+  "scope": "FIXED_DATA_ONE_SEED_OFFLINE_FACTORIAL_COMPARISON_NOT_CLOSED_LOOP",
+  "data_changes": false,
+  "loss_changes": false,
+  "reserved_test_usage": "sealed",
+  "new_awsim_trials": 0
+}
