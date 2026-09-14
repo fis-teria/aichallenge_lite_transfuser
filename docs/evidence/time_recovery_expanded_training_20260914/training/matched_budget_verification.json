@@ -1,0 +1,40 @@
+{
+  "collection_sha256": "9719e98c179dde528d171e9ec7eefd72940c6a25148da40887039598117fd684",
+  "excluded_run_ids": [
+    "codex-time-recovery-pulseleft-r36",
+    "codex-time-recovery-pulseleft-r48",
+    "codex-time-recovery-pulseright-r37",
+    "codex-time-recovery-pulseright-r49"
+  ],
+  "historical_control_reused": true,
+  "reference_checkpoint_sha256": "c2fdb6fd1daf525524fe44d3f793d84b482760aa1f9f1fa84d5315222ab9fbe0",
+  "unchanged_training_dependency_paths": [
+    "src/aic_transfuser_lite/models",
+    "src/aic_transfuser_lite/training",
+    "src/aic_transfuser_lite/contracts",
+    "src/aic_transfuser_lite/evaluation/time_batched_v1.py",
+    "src/aic_transfuser_lite/evaluation/time_metrics_v1.py",
+    "src/aic_transfuser_lite/data/time_training_cache_v1.py",
+    "src/aic_transfuser_lite/data/time_dataset_v1.py",
+    "src/aic_transfuser_lite/data/time_teacher_v1.py",
+    "src/aic_transfuser_lite/data/image_preprocess.py"
+  ],
+  "torch_version": "2.7.1+cu128",
+  "initial_validation_exact": true,
+  "original_cache_files_byte_identical": 110,
+  "nominal_slots_preserved": true,
+  "optimizer_steps": 4281,
+  "initial_weights_match": true,
+  "best_checkpoint_sha256": "7ec445b6ab955e76d0d71efbd8f2f1dd3066ebe365516df38df8cf18adb56f44",
+  "expected": {
+    "unique_train": 37678,
+    "unique_recovery_train": 952,
+    "validation_total": 12532,
+    "selection_validation": 12346,
+    "nominal_presentations_per_epoch": 36726,
+    "recovery_presentations_per_epoch": 8920,
+    "presentations_per_epoch": 45646,
+    "optimizer_steps": 4281,
+    "epochs": 3
+  }
+}

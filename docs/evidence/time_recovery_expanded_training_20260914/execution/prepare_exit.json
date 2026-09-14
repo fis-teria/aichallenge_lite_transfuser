@@ -1,0 +1,21 @@
+{
+  "stage": "prepare",
+  "command": [
+    "tools/with_wsl_training_lock.sh",
+    "env",
+    "PYTHONPATH=src",
+    "OMP_NUM_THREADS=4",
+    "MKL_NUM_THREADS=4",
+    ".venv/bin/python",
+    "-u",
+    "tools/train_time_recovery_expansion.py",
+    "prepare",
+    "--plan",
+    "configs/time_path_p1/recovery_expanded_20260914.json",
+    "--cache",
+    "../datasets/cache/time_recovery_expanded_20260914"
+  ],
+  "exit_code": 0,
+  "elapsed_s": 524.0235310449934,
+  "source_commit": "f7743b10f594170db2270f369e7911ee1a3b78fc"
+}

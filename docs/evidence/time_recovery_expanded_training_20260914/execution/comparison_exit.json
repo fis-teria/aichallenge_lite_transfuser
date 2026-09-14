@@ -1,0 +1,24 @@
+{
+  "stage": "comparison",
+  "command": [
+    "tools/with_wsl_training_lock.sh",
+    "env",
+    "PYTHONPATH=src",
+    "OMP_NUM_THREADS=4",
+    "MKL_NUM_THREADS=4",
+    ".venv/bin/python",
+    "-u",
+    "tools/compare_time_recovery_expansion.py",
+    "--plan",
+    "configs/time_path_p1/recovery_expanded_20260914.json",
+    "--cache",
+    "../datasets/cache/time_recovery_expanded_20260914",
+    "--training",
+    "../runs/time_recovery_expanded_training_20260914",
+    "--output",
+    "../runs/time_recovery_expanded_training_evidence_20260914/comparison"
+  ],
+  "exit_code": 1,
+  "elapsed_s": 362.6881090999959,
+  "source_commit": "79ee3b2274eff95bd85fd0209ee8a6b0014781bf"
+}

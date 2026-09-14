@@ -1,0 +1,19 @@
+{
+  "stage": "comparison_focused_tests",
+  "command": [
+    "tools/with_wsl_training_lock.sh",
+    "env",
+    "PYTHONPATH=src",
+    "OMP_NUM_THREADS=4",
+    "MKL_NUM_THREADS=4",
+    ".venv/bin/python",
+    "-u",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/test_time_recovery_comparison_v1.py"
+  ],
+  "exit_code": 0,
+  "elapsed_s": 0.3489309020078508,
+  "source_commit": "79ee3b2274eff95bd85fd0209ee8a6b0014781bf"
+}

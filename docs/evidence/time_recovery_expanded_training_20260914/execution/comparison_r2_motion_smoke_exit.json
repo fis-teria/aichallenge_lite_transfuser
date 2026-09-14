@@ -1,0 +1,17 @@
+{
+  "stage": "comparison_r2_motion_smoke",
+  "command": [
+    "tools/with_wsl_training_lock.sh",
+    "env",
+    "PYTHONPATH=src",
+    "OMP_NUM_THREADS=4",
+    "MKL_NUM_THREADS=4",
+    ".venv/bin/python",
+    "-u",
+    "-c",
+    "\nimport sys,json,numpy as np\nfrom pathlib import Path\nfrom collections import Counter\nsys.path.insert(0,'tools')\nfrom compare_time_recovery_expansion import motion,speed_at\nfrom aic_transfuser_lite.data.time_training_cache_v1 import TimeTrainingCacheDataset\nfrom aic_transfuser_lite.evaluation.time_corner_comparison_v1 import replay_observation_pose,world_points\nfrom aic_transfuser_lite.evaluation.time_recovery_comparison_v1 import recorded_pose_for_pp\ncache=Path('../datasets/cache/time_recovery_expanded_20260914')\nd=TimeTrainingCacheDataset(cache,'validation',verify_hashes=False)\ncounts=Counter();errors=[];unsupported=[]\nfor rid in ('codex-time-recovery-pulseleft-r46','codex-time-recovery-pulseright-r47'):\n index,poses,stamps,speeds=motion(cache/'materialized'/rid/'raw')\n for i,row in enumerate(d._anchors):\n  if row['run_id']!=rid: continue\n  assert d.input_valid[i] and d.xy_mask[i].all()\n  obs=replay_observation_pose([poses[k] for k in row['observation_pose_row_ids']],observation_ns=row['observation_ns'],freeze_receipt_ns=row['freeze_ns'])\n  for age in (0.,.1,.2):\n   current,reason=recorded_pose_for_pp(index,obs,age)\n   counts[f'{age}:{reason}']+=1\n   if current is None:\n    unsupported.append({'anchor_id':row['anchor_id'],'age_s':age,'reason':reason});continue\n   speed=speed_at(stamps,speeds,current.stamp_ns)\n   assert np.isfinite(speed)\n   if age:\n    teacher=world_points(d.targets[i],obs)[int(round(age*10))-1]\n    delta=float(np.linalg.norm(teacher-[current.x_m,current.y_m]))\n    assert delta<1e-5,delta\n    errors.append(delta)\nresult={'counts':dict(counts),'unsupported':unsupported,'teacher_pose_checks':len(errors),'max_teacher_pose_difference_m':max(errors),'new_input_and_all_teacher_points_valid':True}\npath=Path('../runs/time_recovery_expanded_training_evidence_20260914/comparison_r2_motion_smoke.json')\nwith path.open('x') as f:json.dump(result,f,indent=2)\nprint(json.dumps(result,indent=2))\n"
+  ],
+  "exit_code": 0,
+  "elapsed_s": 4.82734451298893,
+  "source_commit": "1feef2cf1055612c41cf85dd87541f2a39a510b9"
+}

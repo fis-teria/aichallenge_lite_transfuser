@@ -1,0 +1,18 @@
+{
+  "stage": "full_tests",
+  "command": [
+    "tools/with_wsl_training_lock.sh",
+    "env",
+    "PYTHONPATH=src",
+    "OMP_NUM_THREADS=4",
+    "MKL_NUM_THREADS=4",
+    ".venv/bin/python",
+    "-u",
+    "-m",
+    "pytest",
+    "-q"
+  ],
+  "exit_code": 0,
+  "elapsed_s": 102.58563511099783,
+  "source_commit": "f7743b10f594170db2270f369e7911ee1a3b78fc"
+}

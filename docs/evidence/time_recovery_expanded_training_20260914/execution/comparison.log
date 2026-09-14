@@ -1,0 +1,13 @@
+/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/lib/python3.10/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+MODEL_EVALUATED before
+MODEL_EVALUATED after
+PP_AT_OBSERVATION_COMPLETE
+Traceback (most recent call last):
+  File "/home/thistle/e2e_autonomous/e2e_lite_transfuser/tools/compare_time_recovery_expansion.py", line 247, in <module>
+    main()
+  File "/home/thistle/e2e_autonomous/e2e_lite_transfuser/tools/compare_time_recovery_expansion.py", line 220, in main
+    current = pose_index.at(obs.stamp_ns+int(round(age*1e9)))
+  File "/home/thistle/e2e_autonomous/e2e_lite_transfuser/src/aic_transfuser_lite/evaluation/time_clearance_v1.py", line 35, in at
+    raise ValueError("AMBIGUOUS_POSE_STAMP")
+ValueError: AMBIGUOUS_POSE_STAMP

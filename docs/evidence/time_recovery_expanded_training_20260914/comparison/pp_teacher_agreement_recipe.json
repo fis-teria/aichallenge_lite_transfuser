@@ -1,0 +1,11 @@
+{
+  "command": [
+    "tools/with_wsl_training_lock.sh",
+    ".venv/bin/python",
+    "-c",
+    "\nimport pathlib,json,statistics,hashlib\np=pathlib.Path('../runs/time_recovery_expanded_training_evidence_20260914/comparison_r2')\nsource=p/'pp_details.json'\nr=json.loads(source.read_text()); c=json.loads((p/'comparison.json').read_text())\noutput={'scope':'STEERING_AGREEMENT_TO_PP_ON_OBSERVED_TEACHER_PATH_NOT_CLOSED_LOOP','pp_details_sha256':hashlib.sha256(source.read_bytes()).hexdigest(),'groups':{}}\nfor group in ('all_new','outward_target','outward_r46','outward_r47'):\n output['groups'][group]={}\n for age in (0.,.1,.2):\n  rows=[r for r in r['delayed_new_recovery'] if r['age_s']==age and (group=='all_new' or r['outward_target']) and (not group.startswith('outward_r') or r['run_id'].endswith(group[-3:]))]\n  paired=[row for row in rows if all(row['models'][n]['accepted'] for n in ('before','after','teacher'))]\n  detail={'attempted':len(rows),'jointly_accepted':len(paired),'run_counts':{rid:sum(row['run_id']==rid for row in paired) for rid in sorted({row['run_id'] for row in rows})},'models':{}}\n  for name in ('before','after'):\n   per_run={}\n   for rid in detail['run_counts']:\n    chosen=[row for row in paired if row['run_id']==rid]\n    if chosen: per_run[rid]=statistics.mean(abs(row['models'][name]['steer_rad']-row['models']['teacher']['steer_rad']) for row in chosen)\n   detail['models'][name]={'run_macro_absolute_steer_error_rad':statistics.mean(per_run.values()) if per_run else None,'per_run_absolute_steer_error_rad':per_run,'observation_horizon_range_s':[min(row['models'][name]['observation_horizon_s'] for row in paired),max(row['models'][name]['observation_horizon_s'] for row in paired)] if paired else None}\n  output['groups'][group][str(age)]=detail\noutput['outward_per_run_horizon_xy_error_m']={n:{rid:{h:x['raw_error_m'] for h,x in run['horizons'].items()} for rid,run in a['groups']['new_outward_target']['run_macro'].items()} for n,a in c['models'].items()}\nwith (p/'pp_teacher_agreement.json').open('x') as f: json.dump(output,f,indent=2)\nprint(json.dumps(output,indent=2))\n"
+  ],
+  "source_commit": "1feef2cf1055612c41cf85dd87541f2a39a510b9",
+  "exit_code": 0,
+  "elapsed_s": 0.14533450099406764
+}
