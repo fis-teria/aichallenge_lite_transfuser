@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 from collections import deque
+from dataclasses import asdict
 import hashlib
 import json
 import math
@@ -23,6 +24,13 @@ from aic_transfuser_lite.control.time_trial_v1 import (
     SPEED_POLICIES, interpolate_body_pose, time_trial_control, trial_speed_limits, validate_trial_config,
 )
 from aic_transfuser_lite.runtime.awsim_trial_session import requested_stop, trial_duration_limits, trial_brake_reason, encode_scan_values
+from aic_transfuser_lite.runtime.time_recovery_takeover_v1 import (
+    RecoveryTakeoverState, propose_recovery_takeover, validate_recovery_reference,
+)
+from aic_transfuser_lite.data.time_recovery_collection_v1 import (
+    TARGET_MPS, bounded_collection_command, check_collection_input_time, project_course, validate_nominal,
+)
+from aic_transfuser_lite.data.time_steering_pulse_v1 import nominal_recovery_errors
 
 
 def main() -> None:
@@ -35,6 +43,8 @@ def main() -> None:
     parser.add_argument("--sensor-source", default="/awsim_d1")
     parser.add_argument("--authorize-awsim-only", action="store_true")
     parser.add_argument("--synthetic-shadow-fixture", action="store_true")
+    parser.add_argument("--recovery-reference", type=Path,
+                        help="Optional teacher bootstrap and finite pulse before one-way E2E takeover")
     settings = parser.add_mutually_exclusive_group()
     settings.add_argument("--trial-config", type=Path)
     settings.add_argument("--speed-policy", choices=SPEED_POLICIES)
@@ -67,6 +77,16 @@ def main() -> None:
     live = args.authorize_awsim_only
     if live and args.synthetic_shadow_fixture:
         raise ValueError("SYNTHETIC_FIXTURE_CANNOT_ACTUATE")
+    recovery_state = RecoveryTakeoverState()
+    recovery_config = recovery_baseline = recovery_guide = None
+    if args.recovery_reference is not None:
+        if (not live or speed_policy != 'fixed_5kmh' or execution_profile != 'one_lap'
+                or lookahead_policy != 'stopping_preview_segment_v1'
+                or steering_policy != 'awsim_grip_0p6_lead_v1' or vehicle_model_policy != AWSIM_POLICY
+                or obstacle_policy != 'steering_support_v2'):
+            raise ValueError('RECOVERY_TRIAL_POLICIES_REQUIRED')
+        recovery_config, recovery_baseline, recovery_guide = validate_recovery_reference(
+            json.loads(args.recovery_reference.read_text()))
     if not math.isfinite(args.rear_axle_forward_m) or abs(args.rear_axle_forward_m) > .002:
         raise ValueError("UNSUPPORTED_BODY_POINT_CALIBRATION")
     if live and (os.environ.get("ROS_DOMAIN_ID") != "1" or args.sensor_source != "/awsim_d1"
@@ -84,6 +104,7 @@ def main() -> None:
     from rosgraph_msgs.msg import Clock
     from autoware_auto_vehicle_msgs.msg import VelocityReport, SteeringReport
     from autoware_auto_control_msgs.msg import AckermannControlCommand
+    from autoware_auto_planning_msgs.msg import Trajectory
 
     rclpy.init(args=ros_args)
     node = Node("time_path_controller", enable_rosout=False, start_parameter_services=False)
@@ -150,6 +171,10 @@ def main() -> None:
               "velocity": ("/vehicle/status/velocity_status", VelocityReport, args.sensor_source),
               "steering": ("/vehicle/status/steering_status", SteeringReport, args.sensor_source),
               "scan": ("/sensing/lidar/scan", LaserScan, args.sensor_source)}
+    if recovery_config is not None:
+        topics.update(nominal=("/recovery_teacher/nominal_control_cmd", AckermannControlCommand,
+                               "/recovery_teacher_pure_pursuit"),
+                      trajectory=("/recovery_teacher/trajectory", Trajectory, "/recovery_teacher_trajectory"))
 
     def receive(role, message) -> None:
         cache[role] = (message, time.monotonic_ns())
@@ -181,7 +206,7 @@ def main() -> None:
         node.create_timer(1., record_motion_sources)
 
     def tick() -> None:
-        nonlocal publisher, response_state
+        nonlocal publisher, response_state, recovery_state
         wall = time.monotonic(); now = time.monotonic_ns()
         actual = names(topic)
         if publisher is None:
@@ -208,6 +233,9 @@ def main() -> None:
         motion_observation = None
         heading_rate = reported_lateral = None
         candidate_response_state = None
+        proposed_recovery = None
+        recovery_trace = None
+        control_owner = 'E2E' if recovery_config is None or recovery_state.takeover_ns is not None else 'TEACHER_BOOTSTRAP'
         checking_scan = False
         scan_alignment = None
         dt = min(.1, max(0., wall - previous[1]))
@@ -254,6 +282,26 @@ def main() -> None:
             state["max_speed_mps"] = max(state["max_speed_mps"], abs(speed))
             if not -.03 <= speed <= overspeed_limit_mps:
                 state["fault"] = "OVERSPEED_OR_REVERSE"; raise ValueError(state["fault"])
+            if recovery_config is not None and recovery_state.takeover_ns is None:
+                # Readiness is checked before authorization. These topics never
+                # enter inference, and cannot gate/fallback after model takeover.
+                for role in ('nominal', 'trajectory'):
+                    m, received = cache[role]
+                    if names(topics[role][0]) != [topics[role][2]]:
+                        raise ValueError('SOURCE_' + role)
+                    check_collection_input_time(role,
+                        capture_ns=stamp(m.stamp if role == 'nominal' else m.header.stamp),
+                        receipt_ns=received, now_sim_ns=clock_ns, now_wall_ns=now)
+                nominal, received = cache['nominal']
+                validate_nominal(stamp_ns=stamp(nominal.stamp), now_ns=clock_ns, received_ns=received,
+                    now_wall_ns=now, target_mps=float(nominal.longitudinal.speed),
+                    acceleration_mps2=float(nominal.longitudinal.acceleration),
+                    steering_input_rad=float(nominal.lateral.steering_tire_angle), measured_speed_mps=speed)
+                trajectory = cache['trajectory'][0]
+                if (trajectory.header.frame_id != 'map' or len(trajectory.points) < 20
+                        or any(not math.isclose(p.longitudinal_velocity_mps, TARGET_MPS, abs_tol=1e-5)
+                               for p in trajectory.points)):
+                    raise ValueError('REFERENCE_SPEED_OR_FRAME')
             auth = args.output / "drive_authorized.json"
             if live and auth.exists() and state["armed_ns"] is None:
                 value = json.loads(auth.read_text())
@@ -302,18 +350,61 @@ def main() -> None:
             plan_id = plan.plan_id
             details = {"clearance_m": clearance, "current_pose": current.__dict__,
                        "observation_pose": observed.__dict__}
-            details.update(time_trial_control(plan, current, speed_mps=speed,
-                                              speed_policy=speed_policy,
-                                              lookahead_policy=lookahead_policy,
-                                              vehicle_model_policy=vehicle_model_policy,
-                                              rear_axle_offset_m=(args.rear_axle_forward_m, 0.)))
-            steer = details["steer_rad"]; accel = details["acceleration_mps2"]; target = details["target_speed_mps"]
-            response_target, candidate_response_state, response = compensate_steering_response(
-                steer, clock_ns, response_state, policy=steering_policy)
-            details["steering_response"] = response
-            mapping = command_steering(response_target, previous[0], dt, policy=steering_policy)
-            details["steering_actuator"] = mapping
-            steer = mapping["issued_input_rad"]
+            if recovery_config is not None:
+                projection = None
+                errors = None
+                diagnostic_error = None
+                try:
+                    projection = project_course(recovery_baseline, [current.x_m, current.y_m], current.yaw_rad)
+                    if recovery_guide[0, 0] <= projection['s_m'] <= recovery_guide[-1, 0]:
+                        errors = nominal_recovery_errors(recovery_guide, s_m=projection['s_m'],
+                            offset_m=projection['offset_m'], yaw_rad=current.yaw_rad)
+                    elif recovery_state.takeover_ns is None and recovery_state.pulse.stage in ('active', 'releasing', 'recovery'):
+                        raise ValueError('RECOVERY_GUIDE_SUPPORT_LOST')
+                except ValueError as exc:
+                    if recovery_state.takeover_ns is None:
+                        raise
+                    diagnostic_error = str(exc)  # Debug geometry never gates E2E.
+                perturbation = 0.
+                if recovery_state.takeover_ns is None:
+                    proposed_recovery, perturbation, control_owner = propose_recovery_takeover(
+                        recovery_config, recovery_state, sim_ns=clock_ns, wall_ns=now, observation_ns=obs_ns,
+                        s_m=projection['s_m'], speed_mps=speed,
+                        lateral_m=errors[0] if errors else 0., heading_rad=errors[1] if errors else 0.)
+                recovery_trace = dict(projection=projection, lateral_error_m=errors[0] if errors else None,
+                    heading_error_rad=errors[1] if errors else None, perturbation_rad=perturbation,
+                    observation_ns=obs_ns, current_pose=current.__dict__, diagnostic_error=diagnostic_error)
+                if control_owner == 'E2E' and recovery_state.takeover_ns is None:
+                    # Commit ownership BEFORE PP admission; no quality-based
+                    # selection and no teacher fallback on a rejected model plan.
+                    recovery_state = proposed_recovery
+                    response_state = None
+                    record(dict(event='RECOVERY_E2E_TAKEOVER', plan_id=plan_id,
+                                recovery=recovery_trace, recovery_state=asdict(recovery_state)))
+            if control_owner == 'TEACHER_BOOTSTRAP':
+                steer, accel = bounded_collection_command(
+                    float(nominal.lateral.steering_tire_angle) + perturbation,
+                    float(nominal.longitudinal.acceleration), previous[0], dt)
+                target = TARGET_MPS
+                mapping = dict(issued_input_rad=steer, issued_tire_target_rad=steering_gain*steer,
+                               previous_tire_target_rad=steering_gain*previous[0])
+                details['teacher_nominal'] = dict(stamp_ns=stamp(nominal.stamp),
+                    steering_input_rad=float(nominal.lateral.steering_tire_angle),
+                    acceleration_mps2=float(nominal.longitudinal.acceleration))
+                details['steering_actuator'] = mapping
+            else:
+                details.update(time_trial_control(plan, current, speed_mps=speed,
+                                                  speed_policy=speed_policy,
+                                                  lookahead_policy=lookahead_policy,
+                                                  vehicle_model_policy=vehicle_model_policy,
+                                                  rear_axle_offset_m=(args.rear_axle_forward_m, 0.)))
+                steer = details["steer_rad"]; accel = details["acceleration_mps2"]; target = details["target_speed_mps"]
+                response_target, candidate_response_state, response = compensate_steering_response(
+                    steer, clock_ns, response_state, policy=steering_policy)
+                details["steering_response"] = response
+                mapping = command_steering(response_target, previous[0], dt, policy=steering_policy)
+                details["steering_actuator"] = mapping
+                steer = mapping["issued_input_rad"]
             if obstacle_policy in ("steering_sweep_v1", "steering_support_v2"):
                 checking_scan = True
                 selected, captured = select_aligned_scan([(stamp(m.header.stamp), receipt) for m, receipt in scans],
@@ -334,7 +425,9 @@ def main() -> None:
                 details["scan_stamp_ns"] = captured.stamp_ns
                 details["clearance_m"] = guard["minimum_ray_margin_m"]
                 checking_scan = False
-            plan_id = plan.plan_id; reason = "TIME_PATH_TRACKING" if live else "SHADOW_CONTROL"
+            plan_id = plan.plan_id
+            reason = ('RECOVERY_TEACHER_BOOTSTRAP' if control_owner == 'TEACHER_BOOTSTRAP'
+                      else "TIME_PATH_TRACKING" if live else "SHADOW_CONTROL")
         except (ValueError, KeyError, TypeError) as exc:
             if checking_scan and str(exc) in ("STOPPING_CORRIDOR_OCCUPIED", "STOPPING_SWEEP_OCCUPIED") and not state["scan_rejection_recorded"]:
                 scalar_names = ("angle_min", "angle_increment", "range_min", "range_max")
@@ -357,6 +450,8 @@ def main() -> None:
             response_state = candidate_response_state = None
             if reason in ("STOPPING_CORRIDOR_OCCUPIED", "STOPPING_SWEEP_OCCUPIED") and state["positive_count"]:
                 state["fault"] = reason
+            if reason.startswith('RECOVERY_'):
+                state['fault'] = reason
         if reason in ("SCHEDULED_BRAKE", "REQUESTED_BRAKE") and velocity_fresh and speed is not None and abs(speed) < .03:
             if state["stop_since_ns"] is None:
                 state["stop_since_ns"] = clock_ns
@@ -374,18 +469,25 @@ def main() -> None:
             command.longitudinal.acceleration = float(accel); command.longitudinal.speed = float(target)
             publisher.publish(command); state["commands"] += 1
             response_state = candidate_response_state
+            if proposed_recovery is not None and control_owner == 'TEACHER_BOOTSTRAP' and target > 0:
+                recovery_state = proposed_recovery
             if accel > 0:
                 state["positive_count"] += 1
             record({"event": "COMMAND_SENT", "reason": reason, "plan_id": plan_id,
                     "steer_rad": steer, "acceleration_mps2": accel, "target_speed_mps": target,
                     "speed_mps": speed, "measured_steer_rad": measured_steer,
                     "steering_observation": steering_observation,
-                    "motion_observation": motion_observation, "details": details})
+                    "motion_observation": motion_observation, "details": details,
+                    **({'control_owner': control_owner, 'recovery': recovery_trace,
+                        'recovery_state': asdict(recovery_state)} if recovery_config is not None else {})})
         else:
             response_state = None
             if actual and actual != ["/time_path_controller"]:
                 state["fault"] = "COMPETING_CONTROLLER"
         temporary = args.output / "control_heartbeat.pending"
+        if recovery_config is not None:
+            state['recovery_state'] = asdict(recovery_state)
+            state['control_owner'] = control_owner
         temporary.write_text(json.dumps({**state, "reason": reason, "monotonic_ns": now,
                                          "sim_ns": clock_ns, "topic": topic}, allow_nan=False))
         temporary.replace(args.output / "control_heartbeat.json")

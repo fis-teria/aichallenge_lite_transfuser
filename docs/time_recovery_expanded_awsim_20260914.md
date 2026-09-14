@@ -32,3 +32,38 @@ AWSIM実行は指定された`.10`で行い、既存のdirty checkoutと過去�
 新しい専用deploymentを使い、今回のowned process/containerだけを終了する。
 
 実行コマンド・実測結果・未解決事項は以下に追記する。
+
+## 復帰試験の引継ぎ実装
+
+`run_time_path_awsim_trial.py --recovery-side left|right`を追加する。
+実行先の`references/{side}.json/.csv`は今回収集に用いた同じ有限パルス参照を使用する。
+`recovery_assets.json`で教師PP install・launch・参照のhashを固定し、実際にロードした
+PPの上限速度5km/h・速度ゲイン4を公式start前に検証する。
+
+最終command publisherは常に`/time_path_controller`の1つ。
+教師PP入力も既存0.5rad・0.8rad/s・停止領域監視を通す。公開したパルス0の境界から
+150ms以降を観測した最初のモデル出力でE2Eへ切り替える。品質による選別をしない。
+引継ぎをPP計算の前にラッチするため、モデル軌道が不適切でも教師へ戻さない。
+0境界から1s以内に引き継げなければ停止し、パルスや教師運転を延長しない。
+参照投影は引継ぎ後には診断専用で、範囲外などの診断失敗がE2E制御を止めることもない。
+生のモデル軌道は準備中も通常RVizへ表示する。
+
+```bash
+# native WSL: Windowsでcommit/sync後
+tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q
+
+# .10: 検証済みの新規deploymentごとに、固有run IDで実行
+timeout --signal=TERM --kill-after=10s 710s python3 \
+  "$deployment/$source/tools/run_time_path_awsim_trial.py" \
+  --deployment "$deployment" --run-id "$run_id" --display :1 \
+  --config configs/control/time_path_expanded_5kmh_20260914.json --recovery-side left
+```
+
+## 通常走行の暫定観測
+
+`source_50d6b22`・それぞれのepoch3で各1回を実施。
+旧モデル`codex-time-expanded-base-normal01`は最大0.107m/s、追加後
+`codex-time-expanded-candidate-normal01`は正加速度commandなし。
+どちらも発進時の`STEERING_FEASIBLE_LOOKAHEAD_MISSING`で進捗停止し、完走は0/2。
+この条件ではコーナー復帰性能を測れていないため、別途予定した教師準備後の引継ぎ試験を行う。
+両方で通常`rviz2`のraw Path購読を確認した。無条件に再試行はしない。

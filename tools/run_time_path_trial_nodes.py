@@ -17,6 +17,7 @@ def main() -> None:
     ap.add_argument("--run-id", required=True)
     ap.add_argument("--checkpoint", type=Path, required=True)
     ap.add_argument("--config", type=Path, required=True)
+    ap.add_argument("--recovery-reference", type=Path)
     args = ap.parse_args()
     config = json.loads(args.config.read_text())
     # Use the installed, source-matched standard-library schedule helper.
@@ -34,12 +35,30 @@ def main() -> None:
          "--rear-axle-forward-m", str(config["geometry"]["rear_axle_forward_in_base_link_m"]),
          "--pose-source", "/localization/ekf_localizer", "--authorize-awsim-only"],
     ]
+    names = ['inference', 'controller']
+    if args.recovery_reference is not None:
+        commands[1] += ['--recovery-reference', str(args.recovery_reference)]
+        commands += [
+            ['ros2', 'run', 'simple_trajectory_generator', 'simple_trajectory_generator_node', '--ros-args',
+             '-r', '__node:=recovery_teacher_trajectory', '-r', 'trajectory:=/recovery_teacher/trajectory',
+             '-p', 'use_sim_time:=true', '-p', 'z:=0.0',
+             '-p', 'csv_path:='+str(args.recovery_reference.with_suffix('.csv'))],
+            ['ros2', 'launch', '/time/inputs/pure_pursuit.launch.xml',
+             'node_name:=recovery_teacher_pure_pursuit', 'use_sim_time:=true',
+             'input_kinematics:=/localization/kinematic_state', 'input_trajectory:=/recovery_teacher/trajectory',
+             'output_control_cmd:=/recovery_teacher/nominal_control_cmd',
+             'output_raw_control_cmd:=/recovery_teacher/raw_control_cmd',
+             'use_external_target_vel:=true', 'external_target_vel:=1.3888888888888888',
+             'speed_proportional_gain:=4.0', 'use_overtake_reference_override:=false'],
+        ]
+        names += ['teacher_generator', 'teacher_pure_pursuit']
+    (args.output/'node_commands.json').write_text(json.dumps(dict(zip(names, commands)), indent=2))
     children = []; streams = []
     def terminate(signum, frame):
         raise KeyboardInterrupt
     signal.signal(signal.SIGTERM, terminate)
     try:
-        for name, command in zip(("inference", "controller"), commands):
+        for name, command in zip(names, commands):
             stream = (args.output / (name + ".log")).open("x"); streams.append(stream)
             children.append(subprocess.Popen(command, stdout=stream, stderr=subprocess.STDOUT, start_new_session=True))
         start = time.monotonic()

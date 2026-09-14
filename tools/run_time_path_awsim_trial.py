@@ -40,6 +40,8 @@ def main() -> None:
     ap.add_argument("--display", required=True, help="Verified active desktop, e.g. :0 or :1")
     ap.add_argument("--config", type=Path, default=Path("configs/control/time_path_awsim_trial_20260913.json"),
                     help="Trial configuration relative to this source tree")
+    ap.add_argument('--recovery-side', choices=('left', 'right'),
+                    help='Teacher bootstrap, finite pulse, then one-way E2E takeover')
     args = ap.parse_args()
     if not re.fullmatch(r"codex-time-[a-z0-9-]+", args.run_id):
         raise ValueError("INVALID_OWNED_RUN_ID")
@@ -64,6 +66,8 @@ def main() -> None:
               "official_start_requested": False, "execution_profile": execution_profile,
               "speed_policy": config.get("speed_policy", "source_capped_0p25"),
               "trial_config_sha256": sha(config_path)}
+    if args.recovery_side is not None:
+        result.update(scope='ONE_LAP_AFTER_TEACHER_BOOTSTRAP', recovery_side=args.recovery_side)
     streams = []; processes = []; compose = None; owned = False
     started = time.monotonic()
     judge = JudgeLog(args.run_id); judge_offset = 0; judge_pending = b""
@@ -112,6 +116,22 @@ def main() -> None:
             raise RuntimeError("CHECKPOINT_IDENTITY_CHANGED")
         if not (deployment / "install/setup.bash").is_file():
             raise RuntimeError("ROS_INSTALL_MISSING")
+        if args.recovery_side is not None:
+            from aic_transfuser_lite.runtime.time_recovery_takeover_v1 import validate_recovery_reference
+            if execution_profile != 'one_lap':
+                raise ValueError('RECOVERY_ONE_LAP_PROFILE_REQUIRED')
+            assets = json.loads((deployment/'recovery_assets.json').read_text())
+            for entry in assets['files']:
+                asset = (deployment/entry['path']).resolve()
+                if deployment not in asset.parents or sha(asset) != entry['sha256']:
+                    raise ValueError('RECOVERY_ASSET_IDENTITY')
+            reference_path = deployment/'references'/(args.recovery_side+'.json')
+            reference = json.loads(reference_path.read_text())
+            validate_recovery_reference(reference)
+            if sha(reference_path.with_suffix('.csv')) != reference['reference_sha256']:
+                raise ValueError('RECOVERY_REFERENCE_CSV_IDENTITY')
+            result['recovery_assets_sha256'] = sha(deployment/'recovery_assets.json')
+            result['recovery_reference_sha256'] = sha(reference_path)
         auth = list(Path("/run/user/1000").glob(".mutter-Xwaylandauth.*"))
         # A reboot can select an Xorg desktop instead of Xwayland. Both are
         # normal user-session authentication paths; never copy/read the secret.
@@ -156,7 +176,11 @@ def main() -> None:
         node_command = ["python3", str(source_in_container / "tools/run_time_path_trial_nodes.py"),
                         "--output", str(inside), "--run-id", args.run_id, "--checkpoint", "/time/command_off_best.pt",
                         "--config", str(source_in_container / config_path.relative_to(source))]
-        shell = "source /aichallenge/workspace/install/setup.bash && source /time/install/setup.bash && exec " + shlex.join(node_command)
+        if args.recovery_side is not None:
+            node_command += ['--recovery-reference', '/time/references/'+args.recovery_side+'.json']
+        shell = ("source /aichallenge/workspace/install/setup.bash && "
+                 + ('source /time/cpp_install/setup.bash && ' if args.recovery_side is not None else '')
+                 + "source /time/install/setup.bash && exec " + shlex.join(node_command))
         probe_command = ["docker", "run", "--rm", "--name", sidecar, "--gpus", "all", "--network", "host",
             "-e", "ROS_DOMAIN_ID=1", "-e", "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
             "-v", str(runtime_dds)+":/opt/autoware/cyclonedds.xml:ro", "-v", str(deployment)+":/time",
@@ -198,6 +222,10 @@ def main() -> None:
                     raise RuntimeError("CONTROLLER_WATCHDOG")
                 if control["stop_confirmed"]:
                     result["status"] = ("COMPLETE_LAP" if judge.completed else "STOPPED_NO_LAP") if execution_profile == "one_lap" else "COMPLETE_BOUNDED_TRIAL"
+                    if result['status'] == 'COMPLETE_LAP' and args.recovery_side is not None:
+                        if control.get('recovery_state', {}).get('takeover_ns') is None:
+                            raise RuntimeError('RECOVERY_TAKEOVER_MISSING')
+                        result['status'] = 'COMPLETE_LAP_AFTER_TEACHER_BOOTSTRAP'
                     break
                 if execution_profile == "one_lap" and control["armed_ns"] is not None:
                     elapsed_sim_s = (control["sim_ns"] - control["armed_ns"]) / 1e9
@@ -244,6 +272,16 @@ def main() -> None:
                         result["rviz_capture_error"] = str(exc)
                     if rviz_window is None:
                         raise RuntimeError("NORMAL_RVIZ_WINDOW_MISSING")
+                    if args.recovery_side is not None:
+                        from aic_transfuser_lite.data.time_recovery_collection_v1 import validate_collection_speed_parameters
+                        import yaml
+                        params = run(['docker', 'exec', sidecar, 'bash', '-lc',
+                            'source /aichallenge/workspace/install/setup.bash && source /time/cpp_install/setup.bash && ros2 param dump /recovery_teacher_pure_pursuit'], timeout=15)
+                        (output/'pure_pursuit_loaded.yaml').write_text(params.stdout)
+                        loaded = yaml.safe_load(params.stdout)
+                        if not isinstance(loaded, dict) or len(loaded) != 1:
+                            raise RuntimeError('PP_PARAMETER_DUMP_SHAPE')
+                        validate_collection_speed_parameters('aligned_gain4_v1', next(iter(loaded.values()))['ros__parameters'])
                     start_cmd = ["make", "awsim-request-start", *make_args]
                     result["commands"].append(start_cmd)
                     official = launch(start_cmd, "official_start")
@@ -301,7 +339,7 @@ def main() -> None:
         (output/"containers_after.jsonl").write_text(run(["docker", "ps", "-a", "--format", "{{json .}}"], check=False).stdout)
         (output/"compose_after.json").write_text(run(["docker", "compose", "ls", "--all", "--format", "json"], check=False).stdout)
         print(json.dumps(result, allow_nan=False))
-    if result["status"] not in ("COMPLETE_BOUNDED_TRIAL", "COMPLETE_LAP"):
+    if result["status"] not in ("COMPLETE_BOUNDED_TRIAL", "COMPLETE_LAP", "COMPLETE_LAP_AFTER_TEACHER_BOOTSTRAP"):
         raise SystemExit(1)
 
 
