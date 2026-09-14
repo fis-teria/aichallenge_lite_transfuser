@@ -47,6 +47,9 @@ PPの点選択は現行segment方針・目標5km/h・同じ車両設定で確認
 使って0/100/200ms経過後の姿勢・速度を与え、同じ予測の経過時間に対する感度を調べる。
 この経過時間は仮定した条件であり、推論遅延の実測値ではない。
 未来の状態は評価器だけに渡し、モデルの入力は元のfreeze以前のまま保持する。
+観測時点はcacheに記録されたsource IDから再現する。未来姿勢の補間端点に同一時刻の
+複数poseがある場合は、片方を選ばず、そのPP評価の状態を非支持として分母と理由を残す。
+これはモデルの経路棄却とは別に集計し、教師の重複時刻選択方針や学習済み重みを変更しない。
 全群の誤差・左右差・PP成立率を報告し、平均誤差だけを根拠に走行用へ昇格させない。
 
 ## 再現コマンド
@@ -72,8 +75,35 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 MKL_NUM_THR
   --plan configs/time_path_p1/recovery_expanded_20260914.json \
   --cache ../datasets/cache/time_recovery_expanded_20260914 \
   --training ../runs/time_recovery_expanded_training_20260914 \
-  --output ../runs/time_recovery_expanded_training_evidence_20260914/comparison
+  --output ../runs/time_recovery_expanded_training_evidence_20260914/comparison_r2
 ```
 
+## 統合・再学習の完了
+
+学習sourceは`f7743b10f594170db2270f369e7911ee1a3b78fc`。
+準備は524.02sで完了し、旧cacheで消費する110ファイルの全byte一致を確認した。
+統合cacheのidentityは`198b05946c678c78d14692988797284d6d084122f3826f6be715993134b2b690`。
+同じ初期重みを使った旧validationの結果も対照と完全一致した。
+
+3epoch・136,938提示・4,281更新を完了し、epoch3が選定された。
+各epochの提示45,646件のうち入力不成立158件、教師非支持1,208件、支持44,280件で、
+対照と全epochの提示・支持件数・optimizer更新回数が一致する。
+再読み込みしたbest checkpointの予測は保存済み予測と完全一致した。
+学習処理本体は2,978.84s、事前照合を含むtrainコマンド全体は3,219.38sでexit 0。
+
+| 選定用validation 6runの3秒XY誤差・run等重み | 追加前 [m] | 追加後 [m] |
+|---|---:|---:|
+| epoch1 | 0.05057221 | 0.05456406 |
+| epoch2 | 0.04962126 | 0.05136352 |
+| epoch3・両モデルの選定epoch | 0.04777034 | 0.04796020 |
+
+この選定指標は約0.19mm増加（約0.4%）した。新しい復帰検証2runの成績ではない。
+追加後のcheckpointはnative WSLの
+`/home/thistle/e2e_autonomous/runs/time_recovery_expanded_training_20260914/best.pt`、SHA256は
+`7ec445b6ab955e76d0d71efbd8f2f1dd3066ebe365516df38df8cf18adb56f44`。
+旧checkpointとデータを保全し、大型の教師・予測配列・重みはGitへ追加していない。
+
 学習準備source `f7743b1`のWSL全体テストは2,331 passed / 4 skipped（100.68s）。
-新しい比較処理のテスト・結果と未解決事項は、実行後に本書へ追記する。
+比較source `79ee3b2274eff95bd85fd0209ee8a6b0014781bf`の追加4テストもWSLで通過し、
+全体テストは2,335 passed / 4 skipped（84.32s）。4件のskipはOSQP・JSON Schema関連・
+任意の公式packageが既存環境にないためで、この作業で依存環境を追加変更していない。

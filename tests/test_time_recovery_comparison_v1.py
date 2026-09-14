@@ -5,7 +5,8 @@ import numpy as np
 import pytest
 
 from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
-from aic_transfuser_lite.evaluation.time_recovery_comparison_v1 import pp_probe, summarize_pp, component_errors
+from aic_transfuser_lite.evaluation.time_recovery_comparison_v1 import pp_probe, summarize_pp, component_errors, recorded_pose_for_pp
+from aic_transfuser_lite.evaluation.time_clearance_v1 import PoseIndex
 
 
 def config():
@@ -47,3 +48,26 @@ def test_component_errors_use_run_weights_and_explicit_support():
 def test_component_errors_reject_shape_mismatch():
     with pytest.raises(ValueError, match='N,30,2'):
         component_errors(np.zeros((2, 6, 2)), np.zeros((2, 6, 2)), np.ones((2, 6)), np.ones(2), ['a', 'b'])
+
+
+def test_recorded_pp_state_preserves_frozen_observation_and_excludes_ambiguous_future():
+    from dataclasses import replace
+    obs = TimedBodyPose(1_000_000_000, 'sim', '0', 'map', 'base_link', 10., 20., 0.)
+    future = replace(obs, stamp_ns=1_100_000_000, x_m=10.125)
+    index = PoseIndex([obs, replace(obs, x_m=10.02), future, replace(future, x_m=10.15)])
+    current, reason = recorded_pose_for_pp(index, obs, 0.)
+    assert current is obs and reason == 'FROZEN_OBSERVATION_POSE'
+    current, reason = recorded_pose_for_pp(index, obs, .1)
+    assert current is None and reason == 'RECORDED_STATE_AMBIGUOUS_POSE_STAMP'
+    summary = summarize_pp([{'applicable': False, 'accepted': False, 'reason': reason}])
+    assert summary['attempted'] == 1 and summary['applicable'] == 0
+    assert summary['accepted_fraction'] is None
+
+
+def test_recorded_pp_state_does_not_hide_unsupported_age_or_other_pose_errors():
+    obs = TimedBodyPose(1_000_000_000, 'sim', '0', 'map', 'base_link', 0., 0., 0.)
+    index = PoseIndex([obs])
+    with pytest.raises(ValueError, match='expected recorded PP age'):
+        recorded_pose_for_pp(index, obs, .3)
+    with pytest.raises(ValueError):
+        recorded_pose_for_pp(index, obs, .2)

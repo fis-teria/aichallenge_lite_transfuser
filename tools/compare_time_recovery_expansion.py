@@ -22,7 +22,7 @@ from aic_transfuser_lite.evaluation.time_batched_v1 import evaluate_time_batched
 from aic_transfuser_lite.evaluation.time_clearance_v1 import PoseIndex
 from aic_transfuser_lite.evaluation.time_corner_comparison_v1 import replay_observation_pose, world_points
 from aic_transfuser_lite.evaluation.time_metrics_v1 import time_horizon_metrics
-from aic_transfuser_lite.evaluation.time_recovery_comparison_v1 import pp_probe, summarize_pp, component_errors
+from aic_transfuser_lite.evaluation.time_recovery_comparison_v1 import pp_probe, summarize_pp, component_errors, recorded_pose_for_pp
 from aic_transfuser_lite.training.time_checkpoint_v1 import TimeCheckpointIdentity, load_time_checkpoint
 from aic_transfuser_lite.training.time_config_v1 import TimeModelConfig, build_time_model
 from train_time_recovery_expansion import check_reference, read
@@ -210,14 +210,23 @@ def main() -> None:
     report['pp_at_observation'] = {name: {g: summarize_pp([rows[i] for i in ix]) for g, ix in groups.items()} for name, rows in pp.items()}
     print('PP_AT_OBSERVATION_COMPLETE', flush=True)
     delayed, correspondence_errors = [], []
+    report['recorded_pose_audit'] = {}
     for rid in sorted(new_ids):
         pose_index, pose_rows, stamps, speeds = motion(args.cache/'materialized'/rid/'raw')
+        report['recorded_pose_audit'][rid] = {'input_pose_rows': len(pose_rows),
+            'ambiguous_capture_stamps': len(pose_index.ambiguous)}
         for i in [j for j in groups['new_recovery'] if dataset.run_ids[j] == rid]:
             row = dataset._anchors[i]
             obs = replay_observation_pose([pose_rows[k] for k in row['observation_pose_row_ids']],
                 observation_ns=row['observation_ns'], freeze_receipt_ns=row['freeze_ns'])
             for age in plan['offline_controller_age_s']:
-                current = pose_index.at(obs.stamp_ns+int(round(age*1e9)))
+                current, state_reason = recorded_pose_for_pp(pose_index, obs, age)
+                if current is None:
+                    delayed.append({'anchor_id': row['anchor_id'], 'run_id': rid, 'age_s': age,
+                        'speed_mps': None, 'outward_target': row['anchor_id'] in target_ids,
+                        'observation': asdict(obs), 'current': None, 'state_reason': state_reason,
+                        'models': {name: {'applicable': False, 'accepted': False, 'reason': state_reason} for name in pp}})
+                    continue
                 speed = speed_at(stamps, speeds, current.stamp_ns)
                 if age:
                     teacher_world = world_points(dataset.targets[i], obs)[int(round(age*10))-1]
@@ -226,7 +235,8 @@ def main() -> None:
                     if error > 1e-5:
                         raise ValueError('observed motion does not match teacher coordinates')
                 entry = {'anchor_id': row['anchor_id'], 'run_id': rid, 'age_s': age, 'speed_mps': speed,
-                    'outward_target': row['anchor_id'] in target_ids, 'observation': asdict(obs), 'current': asdict(current), 'models': {}}
+                    'outward_target': row['anchor_id'] in target_ids, 'observation': asdict(obs),
+                    'current': asdict(current), 'state_reason': state_reason, 'models': {}}
                 for name in pp:
                     entry['models'][name] = pp_probe(dataset.targets[i] if name == 'teacher' else predictions[name][i], obs, current, speed, controller)
                 delayed.append(entry)
@@ -234,6 +244,7 @@ def main() -> None:
         if r['age_s'] == age and (group == 'all_new' or r['outward_target'])])
         for group in ('all_new', 'outward_target')} for name in pp} for age in plan['offline_controller_age_s']}
     report['observed_pose_teacher_max_difference_m'] = max(correspondence_errors)
+    report['observed_pose_teacher_correspondence_checks'] = len(correspondence_errors)
     report['controller_scope'] = 'RECORDED_TEACHER_STATES_0_100_200MS_AGE_SENSITIVITY_NO_SCAN_GUARD_OR_ACTUATOR_ROLLOUT'
     report['age_grid_scope'] = 'ASSUMED_PLAN_AGE_GRID_NOT_MEASURED_INFERENCE_LATENCY'
     write(out/'pp_details.json', {'at_observation': pp, 'delayed_new_recovery': delayed})

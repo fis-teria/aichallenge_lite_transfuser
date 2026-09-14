@@ -8,6 +8,26 @@ import numpy as np
 
 from ..control.time_reference_v1 import TimePlan, TimedBodyPose
 from ..control.time_trial_v1 import time_trial_control
+from .time_clearance_v1 import PoseIndex
+
+
+def recorded_pose_for_pp(index: PoseIndex, observation: TimedBodyPose,
+                         age_s: float) -> tuple[TimedBodyPose | None, str]:
+    """Use the frozen source pose at age zero; never choose a duplicate future.
+
+    Future ambiguity is explicit missing evaluator support, not a path rejection.
+    Other malformed pose/gap errors still fail the evaluation.
+    """
+    if age_s not in (0., .1, .2):
+        raise ValueError('expected recorded PP age 0, 0.1 or 0.2 seconds')
+    if age_s == 0:
+        return observation, 'FROZEN_OBSERVATION_POSE'
+    try:
+        return index.at(observation.stamp_ns+int(round(age_s*1e9))), 'RECORDED_FUTURE_POSE'
+    except ValueError as exc:
+        if str(exc) != 'AMBIGUOUS_POSE_STAMP':
+            raise
+        return None, 'RECORDED_STATE_AMBIGUOUS_POSE_STAMP'
 
 
 def pp_probe(xy_m: np.ndarray, observation: TimedBodyPose, current: TimedBodyPose,
