@@ -1,0 +1,110 @@
+{
+  "run_id": "codex-time-recovery-pulseleft-r34",
+  "phase": "recovery",
+  "status": "PASS",
+  "raw_status": "COMPLETE_LAP",
+  "source_sha": "a1c9e5ad0a5c274826601338355b75d34b268186",
+  "raw_manifest_sha256": "bfeaa63ed1dac84d523987f25ee15c32ddae5db14642ee22c4147850f1b2afaf",
+  "availability": "bag_receipt_proxy_not_measured_preprocessing_completion",
+  "freeze_delay_ns": 50000000,
+  "runtime_config_sha256": "d1b0a0e24836af77924dd6f9119124cb02681e9d850a75d2690da22101a9d54c",
+  "runtime_config": "configs/control/time_path_vehicle_model_5kmh_20260913.json",
+  "phase_candidates_with_150ms_start_margin": 92,
+  "audited_anchors": 92,
+  "selection_policy": "All candidates up to 256, otherwise uniform, plus up to 8 targeted at invalid raw heading histories",
+  "all_phase_candidates_audited": true,
+  "audited_input_eligible": 91,
+  "audited_full_observed_future": 91,
+  "input_reasons": {
+    "OK": 91,
+    "CURRENT_SENSOR_MISSING": 1
+  },
+  "teacher_reasons": {
+    "OK": 92
+  },
+  "fallback_counts": {},
+  "epochs": 1,
+  "replay_smoke": [
+    {
+      "anchor_id": "codex-time-recovery-pulseleft-r34:epoch0000:104049997674",
+      "status": "PASS",
+      "image_shape": [
+        1,
+        4,
+        3,
+        224,
+        384
+      ],
+      "lidar_shape": [
+        1,
+        4,
+        2,
+        750
+      ],
+      "xy_shape": [
+        30,
+        2
+      ],
+      "final_xy_m": [
+        3.692791223526001,
+        0.8626302480697632
+      ]
+    },
+    {
+      "anchor_id": "codex-time-recovery-pulseleft-r34:epoch0000:108879997566",
+      "status": "PASS",
+      "image_shape": [
+        1,
+        4,
+        3,
+        224,
+        384
+      ],
+      "lidar_shape": [
+        1,
+        4,
+        2,
+        750
+      ],
+      "xy_shape": [
+        30,
+        2
+      ],
+      "final_xy_m": [
+        3.836013078689575,
+        0.4658285677433014
+      ]
+    },
+    {
+      "anchor_id": "codex-time-recovery-pulseleft-r34:epoch0000:113709997458",
+      "status": "PASS",
+      "image_shape": [
+        1,
+        4,
+        3,
+        224,
+        384
+      ],
+      "lidar_shape": [
+        1,
+        4,
+        2,
+        750
+      ],
+      "xy_shape": [
+        30,
+        2
+      ],
+      "final_xy_m": [
+        3.804105520248413,
+        0.3223325312137604
+      ]
+    }
+  ],
+  "invalid_raw_heading_message_count": 1,
+  "training_materialized": false,
+  "split_assigned": false,
+  "scope": "Representative input/future replay only; no full-corpus acceptance or model evaluation",
+  "full_report_path": "/home/thistle/e2e_autonomous/runs/time_steering_pulse_20260914/r34_causal_probe.json",
+  "full_report_sha256": "ac551f32c3bfeb2868eb6498e93102708dda4391bd3210a8373902c5ed57b77d"
+}
