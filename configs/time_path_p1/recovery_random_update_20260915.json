@@ -1,0 +1,75 @@
+{
+  "experiment": "command_off_random_recovery_update_matched_budget_20260915",
+  "parent_cache": "datasets/cache/time_recovery_expanded_20260914",
+  "parent_cache_sha256": "198b05946c678c78d14692988797284d6d084122f3826f6be715993134b2b690",
+  "cache": "datasets/cache/time_recovery_random_update_20260915",
+  "output": "runs/time_recovery_random_update_20260915",
+  "initialization": "runs/time_p1_20laps_20260913/command_off/best.pt",
+  "initialization_sha256": "e857db4b67d3d9f6a77c2865cfc1fa53e9903e7a1d2d8a371407fbe009a1a44f",
+  "reference_cache": "datasets/cache/time_recovery_20260914",
+  "reference_cache_sha256": "917df968ee8fb1951a2d150c2da82165aa351e7597e372054401601d02c09023",
+  "reference_training": "runs/time_recovery_expanded_training_20260914",
+  "reference_checkpoint_sha256": "7ec445b6ab955e76d0d71efbd8f2f1dd3066ebe365516df38df8cf18adb56f44",
+  "reference_recovery_repeats": 40,
+  "dependency_source_commit": "8a9b4df630e94bea413051fd5449610bcc8a6088",
+  "historical_source_commit": "f7743b10f594170db2270f369e7911ee1a3b78fc",
+  "historical_source_proof": "runs/time_training_method_comparison_20260914/data_and_budget_verification.json",
+  "historical_source_proof_sha256": "9331863bc5b7f0fcffb26114baf22f9ece0f6b3281b80c2bce3a9f491f0ec862",
+  "reference_presentation_order_sha256": "ffa5a2d8e343ff6db1023c00c6b08c9945eda4d878dcf30262b5166121ce8430",
+  "additions": [
+    {
+      "run_id": "codex-time-recovery-earlyleft-r50", "split": "train", "anchors": 92, "event_ids": [],
+      "raw": "raw/time_recovery_phase_expansion_20260914",
+      "analysis": "runs/time_recovery_phase_expansion_20260914",
+      "proof": "pair01_20260914_prepared.json",
+      "proof_sha256": "43e185a55678f9f2ee10957ab4d39c383c8e480911da4324e945a20e78e18e4b",
+      "probe": "r50_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-earlyright-r51", "split": "train", "anchors": 93, "event_ids": [],
+      "raw": "raw/time_recovery_phase_expansion_20260914",
+      "analysis": "runs/time_recovery_phase_expansion_20260914",
+      "proof": "pair01_20260914_prepared.json",
+      "proof_sha256": "43e185a55678f9f2ee10957ab4d39c383c8e480911da4324e945a20e78e18e4b",
+      "probe": "r51_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-random-r64", "split": "train", "anchors": 273, "event_ids": [1, 2, 3],
+      "raw": "raw/time_recovery_random_confirmed_20260915",
+      "analysis": "runs/time_recovery_random_confirmed_20260915",
+      "proof": "collection_index.json",
+      "proof_sha256": "971e7eaee60d8170f800703b84ec46bbf776a1fa7ed10ecdaa7a3bee87139545",
+      "probe": "r64_causal_probe.json"
+    },
+    {
+      "run_id": "codex-time-recovery-random-r65", "split": "validation", "anchors": 243, "event_ids": [1, 2, 3],
+      "raw": "raw/time_recovery_random_confirmed_20260915",
+      "analysis": "runs/time_recovery_random_confirmed_20260915",
+      "proof": "collection_index.json",
+      "proof_sha256": "971e7eaee60d8170f800703b84ec46bbf776a1fa7ed10ecdaa7a3bee87139545",
+      "probe": "r65_causal_probe.json"
+    }
+  ],
+  "training": {
+    "epochs": 3, "batch_size": 32, "workers": 4, "seed": 42,
+    "learning_rate": 0.00003, "weight_decay": 0.0001, "max_grad_norm": 1.0, "precision": "float32"
+  },
+  "expected": {
+    "unique_train": 38136, "unique_recovery_train": 1410, "validation_total": 12775,
+    "selection_validation": 12346, "nominal_presentations_per_epoch": 36726,
+    "recovery_presentations_per_epoch": 8920, "presentations_per_epoch": 45646,
+    "optimizer_steps": 4281, "epochs": 3
+  },
+  "selection_run_ids": [
+    "5kmh_run03", "5kmh_run06", "8kmh_run06", "8kmh_run09",
+    "codex-time-recovery-right040-r22", "codex-time-recovery-left020-r23"
+  ],
+  "selection": "minimum_original_six_validation_runs_macro_3s_error_m",
+  "new_validation_usage": "post_selection_diagnostic_only",
+  "test_usage": "sealed",
+  "offline_controller_config": "configs/control/time_path_expanded_5kmh_20260914.json",
+  "offline_controller_age_s": 0.0,
+  "new_awsim_trials": 0,
+  "outer_training_timeout_s": 7200,
+  "comparison": "same_initialization_model_loss_optimizer_budget_nominal_order_and_selection; changed_recovery_pool; one_seed"
+}
