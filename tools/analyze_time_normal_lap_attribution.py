@@ -193,17 +193,19 @@ def plots(out: Path, reference: RecordedLine, commands: list[dict], plans: list[
     axes[0].plot([r["time_s"] for r in cs], [r["left_m"] for r in cs], c="black", label="Measured vehicle vs normal line")
     for h, color in ((1, "#237cb8"), (3, "#ce318b")):
         axes[0].plot([r["time_s"] for r in ps], [r["horizons"][str(h)]["left_m"] for r in ps],
-                     color=color, label=f"Model {h}s point vs normal line", alpha=.8)
+                     color=color, label=f"Model {h}s point vs normal line (issued now)", alpha=.8)
     axes[0].set_ylabel("Left offset [m]")
-    valid = [r for r in ps if r["following"]["1"]["status"] == "EVALUATED"]
     for key, label, color in (("prediction_left_m", "Prediction component at common progress", "#ce318b"),
                                ("following_left_m", "Following/replanning residual at 1s", "#237cb8")):
-        axes[1].plot([r["time_s"] for r in valid], [r["following"]["1"][key] for r in valid], label=label, color=color)
+        values = [r["following"]["1"][key] if r["following"]["1"]["status"] == "EVALUATED"
+                  else np.nan for r in ps]
+        axes[1].plot([r["time_s"] for r in ps], values, label=label, color=color)
     axes[1].set_ylabel("Lateral components [m]")
     for key, label in (("required_tire_rad", "Recorded PP request"), ("measured_tire_rad", "Measured tire")):
         axes[2].plot([r["time_s"] for r in cs], [r[key] for r in cs], label=label)
-    ns = [r for r in cs if r["normal_line_pp"]["status"] == "EVALUATED"]
-    axes[2].plot([r["time_s"] for r in ns], [r["normal_line_pp"]["required_tire_rad"] for r in ns],
+    normal_tire = [r["normal_line_pp"]["required_tire_rad"] if r["normal_line_pp"]["status"] == "EVALUATED"
+                   else np.nan for r in cs]
+    axes[2].plot([r["time_s"] for r in cs], normal_tire,
                  label="Same PP geometry aimed at normal line (offline)", alpha=.6)
     axes[2].set_ylabel("Physical tire [rad]")
     axes[3].plot([r["time_s"] for r in cs], [r["guard_margin_m"] for r in cs], label="Recorded stopping-ray margin")
