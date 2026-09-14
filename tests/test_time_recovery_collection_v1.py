@@ -8,7 +8,32 @@ from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     select_collection_motion,
     check_collection_decision_age, collection_snapshot_retry_allowed,
     validate_collection_imu_axes, collection_imu_yaw_rate,
+    collection_speed_gain, validate_collection_speed_parameters,
 )
+
+
+@pytest.mark.parametrize('policy,gain', [('legacy_gain1_v1', 1.), ('aligned_gain4_v1', 4.)])
+def test_collection_loaded_speed_contract_before_authority(policy, gain):
+    params = dict(use_external_target_vel=True, external_target_vel=5/3.6, speed_proportional_gain=gain)
+    validate_collection_speed_parameters(policy, params)
+    assert collection_speed_gain(policy) == gain
+    for field, value in [('use_external_target_vel', False), ('external_target_vel', 5.),
+                         ('external_target_vel', float('nan')), ('speed_proportional_gain', 2.),
+                         ('speed_proportional_gain', True), ('speed_proportional_gain', None)]:
+        with pytest.raises(ValueError, match='COLLECTION_'):
+            validate_collection_speed_parameters(policy, {**params, field: value})
+    with pytest.raises(ValueError, match='SPEED_POLICY'):
+        collection_speed_gain('unbounded')
+
+
+def test_aligned_collection_and_e2e_longitudinal_command_use_same_si_limits():
+    from aic_transfuser_lite.control.waypoint_controller import ControllerConfig, control_from_waypoints
+    # The same measured speed isolates the gain/units/clamp from sensor timing.
+    for speed in (0., .5, 1., 1.27, TARGET_MPS, 1.5):
+        _, actual = bounded_collection_command(.1, collection_speed_gain('aligned_gain4_v1')*(TARGET_MPS-speed), 0., .05)
+        expected = control_from_waypoints(np.array([[1., 0.], [2., 0.]]), TARGET_MPS, speed,
+            ControllerConfig(speed_kp=4., min_accel_mps2=-1., max_accel_mps2=1.))
+        assert actual == pytest.approx(expected.acceleration_mps2)
 
 
 def test_phase_mask_excludes_hold_and_preserves_future_barrier():

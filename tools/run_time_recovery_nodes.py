@@ -8,6 +8,10 @@ import signal
 import subprocess
 import time
 
+from aic_transfuser_lite.data.time_recovery_collection_v1 import (
+    COLLECTION_SPEED_POLICIES, collection_speed_gain,
+)
+
 TOPICS = ['/clock', '/sensing/camera/image_raw', '/sensing/camera/camera_info',
     '/sensing/lidar/scan', '/sensing/gnss/nav_sat_fix', '/sensing/imu/imu_raw',
     '/vehicle/status/velocity_status', '/vehicle/status/steering_status',
@@ -23,6 +27,7 @@ def main() -> None:
     ap.add_argument('--reference-root', type=Path, required=True)
     ap.add_argument('--side', choices=['left', 'right'], required=True)
     ap.add_argument('--run-id', required=True)
+    ap.add_argument('--speed-policy', choices=COLLECTION_SPEED_POLICIES, default='legacy_gain1_v1')
     args = ap.parse_args()
     commands = {
         'generator': ['ros2', 'run', 'simple_trajectory_generator', 'simple_trajectory_generator_node', '--ros-args',
@@ -34,6 +39,7 @@ def main() -> None:
             'output_control_cmd:=/recovery_teacher/nominal_control_cmd',
             'output_raw_control_cmd:=/recovery_teacher/raw_control_cmd',
             'use_external_target_vel:=true', 'external_target_vel:=1.3888888888888888',
+            'speed_proportional_gain:='+str(collection_speed_gain(args.speed_policy)),
             'use_overtake_reference_override:=false'],
         # Preserve independent wall-clock bag receipt and original sim capture.
         # --use-sim-time collapses multiple receipts onto the same /clock value,

@@ -19,6 +19,26 @@ TARGET_MPS = 5.0 / 3.6
 OVERSPEED_MPS = 6.0 / 3.6
 PHASES = {"baseline", "approach", "hold", "recovery", "braking", "invalid"}
 ELIGIBLE_PHASES = {"baseline", "recovery"}
+COLLECTION_SPEED_POLICIES = ("legacy_gain1_v1", "aligned_gain4_v1")
+
+
+def collection_speed_gain(policy: str) -> float:
+    """PP longitudinal gain [1/s]; both policies retain target 5/3.6 m/s."""
+    if policy not in COLLECTION_SPEED_POLICIES:
+        raise ValueError('COLLECTION_SPEED_POLICY')
+    return 4.0 if policy == 'aligned_gain4_v1' else 1.0
+
+
+def validate_collection_speed_parameters(policy: str, parameters: Mapping[str, object]) -> None:
+    """Check the actually loaded PP parameters before granting drive authority."""
+    gain = collection_speed_gain(policy)
+    if parameters.get('use_external_target_vel') is not True:
+        raise ValueError('COLLECTION_EXTERNAL_SPEED_DISABLED')
+    for key, expected in (('external_target_vel', TARGET_MPS), ('speed_proportional_gain', gain)):
+        value = parameters.get(key)
+        if (type(value) not in (float, int) or not math.isfinite(value)
+                or not math.isclose(value, expected, rel_tol=0., abs_tol=1e-6)):
+            raise ValueError('COLLECTION_LOADED_SPEED_MISMATCH:' + key)
 
 
 def collection_snapshot_retry_allowed(reason: str, *, attempt: int, elapsed_ns: int) -> bool:

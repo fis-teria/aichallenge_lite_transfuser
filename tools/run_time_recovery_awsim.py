@@ -13,6 +13,9 @@ import subprocess
 import time
 
 from aic_transfuser_lite.runtime.awsim_trial_session import JudgeLog
+from aic_transfuser_lite.data.time_recovery_collection_v1 import (
+    COLLECTION_SPEED_POLICIES, validate_collection_speed_parameters,
+)
 from integrate_normal_rviz_v4 import DISPLAY, follow_ego_view
 
 ROOT = Path('/home/graneple/e2e_autonomous/time_recovery_collection_20260913')
@@ -28,11 +31,19 @@ def sha(path: Path) -> str:
 
 
 def main() -> None:
+    global ROOT
     ap = argparse.ArgumentParser()
     ap.add_argument('--run-id', required=True)
     ap.add_argument('--side', choices=['left', 'right'], required=True)
     ap.add_argument('--preflight-only', action='store_true')
+    ap.add_argument('--speed-policy', choices=COLLECTION_SPEED_POLICIES, default='legacy_gain1_v1')
+    ap.add_argument('--campaign-root', type=Path, default=ROOT)
+    ap.add_argument('--separate-cpus', action='store_true')
     args = ap.parse_args()
+    ROOT = args.campaign_root
+    if (ROOT.resolve() != ROOT or ROOT.parent != Path('/home/graneple/e2e_autonomous')
+            or not re.fullmatch(r'time_recovery_[a-z0-9_]+', ROOT.name)):
+        raise ValueError('DEDICATED_CAMPAIGN_ROOT_REQUIRED')
     if not re.fullmatch(r'codex-time-recovery-[a-z0-9-]+', args.run_id):
         raise ValueError('OWNED_RUN_ID_REQUIRED')
     source = Path(__file__).resolve().parents[1]
@@ -43,6 +54,7 @@ def main() -> None:
     result = dict(status='FAILED', run_id=args.run_id, side=args.side, official_start_requested=False,
                   started_unix_s=time.time(), scope='MEASURED_RECOVERY_AWSIM', fixed_target_mps=5/3.6,
                   source_sha=(ROOT/'deployed_commit.txt').read_text().strip(),
+                  speed_policy=args.speed_policy, separate_cpus=args.separate_cpus,
                   sim_limit_s=1800, wall_limit_s=1860, outer_limit_s=1980,
                   run_byte_limit=2*1024**3, task_bag_byte_limit=12*1024**3, required_free_bytes=10*1024**3)
     started = time.monotonic(); judge = JudgeLog(args.run_id); read_offset=0; pending=b''
@@ -108,7 +120,11 @@ def main() -> None:
         rviz_copy = output/'autoware.rviz'; rviz_copy.write_text(follow_ego_view(original.replace(anchor,anchor+blocks,1)))
         mounts = [str(runtime_dds)+':/opt/autoware/cyclonedds.xml:ro', str(rviz_copy)+':/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz:ro']
         override = output/'compose.json'
-        override.write_text(json.dumps({'services': {s:{'volumes':mounts} for s in ('simulator','autoware','autoware-command')}}))
+        services = {s: {'volumes': mounts} for s in ('simulator', 'autoware', 'autoware-command')}
+        if args.separate_cpus:
+            for service in ('simulator', 'autoware'):
+                services[service]['cpuset'] = '0-1,6-19'
+        override.write_text(json.dumps({'services': services}))
         auth = Path('/run/user/1000/gdm/Xauthority')
         if not auth.is_file():
             raise RuntimeError('DISPLAY_AUTH_MISSING')
@@ -119,11 +135,14 @@ def main() -> None:
         inside = '/capture/'+args.run_id
         shell = ('source /aichallenge/workspace/install/setup.bash && source /capture/cpp_install/setup.bash && '
             'export PYTHONPATH=/capture/source/src:${PYTHONPATH:-} && exec '+shlex.join(['python3','/capture/source/tools/run_time_recovery_nodes.py',
-            '--output',inside,'--reference-root','/capture/references','--side',args.side,'--run-id',args.run_id]))
+            '--output',inside,'--reference-root','/capture/references','--side',args.side,'--run-id',args.run_id,
+            '--speed-policy',args.speed_policy]))
         probe_cmd = ['docker','run','--rm','--name',args.run_id+'-nodes','--network','host','-e','ROS_DOMAIN_ID=1',
             '-e','CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml','-v',str(runtime_dds)+':/opt/autoware/cyclonedds.xml:ro',
             '-v',str(ROOT)+':/capture','-v',str(REPO/'aichallenge')+':/aichallenge:ro','--entrypoint','bash',
             'codex-cartographer-v4-build:20260910','-lc',shell]
+        if args.separate_cpus:
+            probe_cmd[2:2] = ['--cpuset-cpus', '2-5']
         # Allow the simulator to keep producing observed future after lap 1.
         # Collection stops at first verified lap +4 s, before another full lap.
         make_args = ['CONTROL_METHOD=v4_20_external','CAPTURE=false','ROSBAG=false','AWSIM_LAPS=2','AWSIM_VEHICLES=1',
@@ -196,6 +215,8 @@ def main() -> None:
                     info=json.loads(run(['docker','inspect',cid]).stdout)[0]
                     if info['Config']['Labels'].get('com.docker.compose.project') != args.run_id:
                         raise RuntimeError('COMPOSE_OWNER_MISMATCH')
+                    if args.separate_cpus and info['HostConfig']['CpusetCpus'] != '0-1,6-19':
+                        raise RuntimeError('SIMULATION_CPU_ASSIGNMENT_MISMATCH')
                     if any(m['Destination'] in ('/dev/vcu','/dev/gnss','/dev/ttyUSB0') for m in info['Mounts']):
                         raise RuntimeError('PHYSICAL_DEVICE_MOUNT')
                     inspections.append(info)
@@ -211,13 +232,26 @@ def main() -> None:
                 params=run(['docker','exec',args.run_id+'-nodes','bash','-lc',
                     'source /aichallenge/workspace/install/setup.bash && source /capture/cpp_install/setup.bash && ros2 param dump /recovery_teacher_pure_pursuit'],timeout=15)
                 (output/'pure_pursuit_loaded.yaml').write_text(params.stdout)
+                import yaml
+                loaded = yaml.safe_load(params.stdout)
+                if not isinstance(loaded, dict) or len(loaded) != 1:
+                    raise RuntimeError('PP_PARAMETER_DUMP_SHAPE')
+                validate_collection_speed_parameters(args.speed_policy, next(iter(loaded.values()))['ros__parameters'])
+                if args.separate_cpus:
+                    node_info = json.loads(run(['docker', 'inspect', args.run_id+'-nodes']).stdout)[0]
+                    if node_info['HostConfig']['CpusetCpus'] != '2-5':
+                        raise RuntimeError('COLLECTION_CPU_ASSIGNMENT_MISMATCH')
+                    (output/'cpu_assignment.json').write_text(json.dumps({
+                        'nodes': node_info['HostConfig']['CpusetCpus'],
+                        'simulation': [i['HostConfig']['CpusetCpus'] for i in inspections]}, indent=2))
                 official=launch(['make','awsim-request-start',*make_args],'official_start')
                 if official.wait(timeout=20):
                     raise RuntimeError('OFFICIAL_START_FAILED')
                 result['official_start_requested']=True
                 authorization = output/'drive_authorized.pending'
                 authorization.write_text(json.dumps({'run_id':args.run_id,'scope':'MEASURED_RECOVERY_AWSIM',
-                    'expires_monotonic_s':time.monotonic()+20,'source':'USER_REQUEST_20260913'}))
+                    'expires_monotonic_s':time.monotonic()+20,'source':'USER_AUTHORIZED_RECOVERY_COLLECTION',
+                    'speed_policy':args.speed_policy}))
                 authorization.replace(output/'drive_authorized.json')
             if time.monotonic()-started > 120 and not result['official_start_requested']:
                 raise RuntimeError('STOPPED_PREFLIGHT_TIMEOUT:'+str(control.get('reason')))

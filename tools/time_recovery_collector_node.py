@@ -320,6 +320,7 @@ def main() -> None:
                  'braking' if state['stop_reason'] else phase_at_s(projection['s_m'], reference['intervals']) if projection else 'invalid')
         state['phase'] = phase
         retry_after_snapshot = None
+        publication = None
         if publisher is not None and names(final_topic) == ['/time_recovery_collector'] and clock_ns is not None:
             # Recheck the *same* selected samples before publishing. A clock
             # reset, bad pose or processing delay must not publish an old go
@@ -354,7 +355,10 @@ def main() -> None:
                     command.lateral.stamp = command.stamp; command.longitudinal.stamp = command.stamp
                     command.lateral.steering_tire_angle = angle
                     command.longitudinal.speed = target; command.longitudinal.acceleration = accel
+                    emitted_wall = time.monotonic_ns()
                     publisher.publish(command); state['commands'] += 1
+                    publication = dict(sim_ns=command_stamp, monotonic_ns=emitted_wall,
+                                       sequence=state['commands'])
         elif actual and actual != ['/time_recovery_collector']:
             state['fault'] = 'COMPETING_CONTROLLER'
         if retry_after_snapshot is not None:
@@ -370,6 +374,13 @@ def main() -> None:
                    nominal_angle_rad=float(inputs['nominal'][0].lateral.steering_tire_angle)
                        if 'nominal' in inputs and math.isfinite(inputs['nominal'][0].lateral.steering_tire_angle) else None,
                    nominal_stamp_ns=stamp(inputs['nominal'][0].stamp) if 'nominal' in inputs else None)
+        row['publication'] = publication  # ROS publication boundary, not simulator application time.
+        row['nominal_acceleration_mps2'] = (float(inputs['nominal'][0].longitudinal.acceleration)
+            if 'nominal' in inputs and math.isfinite(inputs['nominal'][0].longitudinal.acceleration) else None)
+        row['odometry_speed_mps'] = (float(inputs['pose'][0].twist.twist.linear.x)
+            if 'pose' in inputs and math.isfinite(inputs['pose'][0].twist.twist.linear.x) else None)
+        row['measured_steering_rad'] = (float(inputs['steering'][0].steering_tire_angle)
+            if 'steering' in inputs and math.isfinite(inputs['steering'][0].steering_tire_angle) else None)
         row['input_timing_ns'] = {role: dict(capture_ns=stamp(m.stamp if role in ('nominal','steering') else m.header.stamp),
             receipt_monotonic_ns=receipt, receipt_age_ns=now-receipt) for role,(m,receipt) in inputs.items()}
         row['latest_received_capture_ns'] = {role:stamp(m.stamp if role in ('nominal','steering') else m.header.stamp)
