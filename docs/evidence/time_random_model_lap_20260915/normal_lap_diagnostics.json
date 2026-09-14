@@ -1,0 +1,185 @@
+{
+  "scope": "Two single normal laps; logged stopping-monitor events, not physical collisions or success-rate estimates",
+  "new": {
+    "run": "codex-time-random-lap01",
+    "control_sha256": "07c76dcfa27e1ff04b3309e604a435746407ed85f16a30138623f6a041677b82",
+    "first_guard_after_arm_s": 99.989997765,
+    "first_guard_pose": {
+      "stamp_ns": 118389997353,
+      "clock": "sim",
+      "epoch": "0",
+      "world_frame": "map",
+      "body_frame": "base_link",
+      "x_m": 89632.82178457227,
+      "y_m": 43163.79246502326,
+      "yaw_rad": 2.2867528378260804
+    },
+    "first_guard_replay": {
+      "reason": "STOPPING_SWEEP_OCCUPIED",
+      "minimum_ray_margin_m": -0.011193445615335307
+    },
+    "first_guard_speed_kmh": 4.536879301071167,
+    "first_guard_required_tire_rad": -0.01859876537362823,
+    "first_guard_measured_tire_rad": -0.01915988139808178,
+    "first_guard_issued_tire_rad": -0.018752563318682944,
+    "first_guard_plan_age_s": 0.164999996,
+    "first_guard_selected_target": {
+      "kind": "vertex",
+      "reference_indices": [
+        16,
+        16
+      ],
+      "fraction": 0.0,
+      "fraction_interval": [
+        0.0,
+        0.0
+      ],
+      "xy_m": [
+        1.9392973184585571,
+        -0.03020046465098858
+      ],
+      "remaining_s": 1.535000004,
+      "reference_interval_s": [
+        1.535000004,
+        1.535000004
+      ],
+      "distance_m": 1.9395324584666496,
+      "required_tire_rad": -0.018598765373628232,
+      "steering_margin_rad": 0.28140123462637173,
+      "distance_margin_m": 0.11530254811386409,
+      "search_band_m": [
+        1.8242299103527855,
+        2.3242299103527855
+      ],
+      "extended_search": false,
+      "observation_horizon_s": 1.7,
+      "source_interval_s": [
+        1.7,
+        1.7
+      ]
+    },
+    "tracking_commands": 2000,
+    "extended_tracking_commands": 1,
+    "median_moving_speed_kmh": 4.616760635375977,
+    "maximum_tracking_command_gap_s": 0.079999999,
+    "active_reasons": {
+      "TIME_PATH_TRACKING": 2000,
+      "STOPPING_SWEEP_OCCUPIED": 59
+    }
+  },
+  "previous": {
+    "run": "codex-time-lap-candidate01",
+    "control_sha256": "8343df44249a86636cb975f0c8a4f4104853de4dba58b1f22f0d68cfc86f456a",
+    "first_guard_after_arm_s": 100.349997757,
+    "first_guard_pose": {
+      "stamp_ns": 120289997311,
+      "clock": "sim",
+      "epoch": "0",
+      "world_frame": "map",
+      "body_frame": "base_link",
+      "x_m": 89632.78404745438,
+      "y_m": 43163.97313804637,
+      "yaw_rad": 2.2947593481200226
+    },
+    "first_guard_replay": {
+      "reason": "STOPPING_SWEEP_OCCUPIED",
+      "minimum_ray_margin_m": -0.0007875956845411203
+    },
+    "first_guard_speed_kmh": 4.536488771438599,
+    "first_guard_required_tire_rad": -0.018326679840727573,
+    "first_guard_measured_tire_rad": -0.016482438892126083,
+    "first_guard_issued_tire_rad": -0.019019563809938935,
+    "first_guard_plan_age_s": 0.17499999600000002,
+    "first_guard_selected_target": {
+      "kind": "vertex",
+      "reference_indices": [
+        16,
+        16
+      ],
+      "fraction": 0.0,
+      "fraction_interval": [
+        0.0,
+        0.0
+      ],
+      "xy_m": [
+        1.9102509021759033,
+        -0.02887369692325592
+      ],
+      "remaining_s": 1.525000004,
+      "reference_interval_s": [
+        1.525000004,
+        1.525000004
+      ],
+      "distance_m": 1.9104691046017646,
+      "required_tire_rad": -0.018326679840727573,
+      "steering_margin_rad": 0.28167332015927243,
+      "distance_margin_m": 0.08643014045950226,
+      "search_band_m": [
+        1.8240389641422623,
+        2.3240389641422623
+      ],
+      "extended_search": false,
+      "observation_horizon_s": 1.7,
+      "source_interval_s": [
+        1.7,
+        1.7
+      ]
+    },
+    "tracking_commands": 2007,
+    "extended_tracking_commands": 8,
+    "median_moving_speed_kmh": 4.615958118438721,
+    "maximum_tracking_command_gap_s": 0.074999999,
+    "active_reasons": {
+      "TIME_PATH_TRACKING": 2007,
+      "STOPPING_SWEEP_OCCUPIED": 61
+    }
+  },
+  "first_guard_positions_apart_m": 0.18457202211277288,
+  "scan_geometry": {
+    "hits_inside_envelope": 2,
+    "inside_points_current_rear_m": [
+      [
+        3.8521399119521957,
+        0.8550124251682919
+      ],
+      [
+        3.746084554431804,
+        0.8668891615641796
+      ]
+    ],
+    "envelope": {
+      "policy": "CURVATURE_INTERVAL_SUPPORT_V2",
+      "support_directions": 64,
+      "sweep_samples": 366,
+      "integration_step_m": 0.004997890165350097,
+      "maximum_position_integration_error_m": 8.438846924580776e-05,
+      "maximum_discretization_padding_m": 0.07911409436989168,
+      "stopping_travel_m": 1.8242299103527855,
+      "whole_sweep_convex_enclosure": true
+    },
+    "motion": {
+      "policy": "awsim_understeer_v1",
+      "static_wheelbase_m": 1.087,
+      "nominal_response_length_m": 1.158469700668361,
+      "lateral_displacement_bound_m": 0.05280732750892639,
+      "scope": "EMPIRICAL_AWSIM_ONLY_CONDITIONAL_BRAKING_BOUNDS",
+      "gradient_interval_s2_per_m": [
+        0.0,
+        0.2
+      ],
+      "braking_speed_interval_mps": [
+        0.0,
+        1.2602442502975464
+      ],
+      "heading_rate_radps": -0.023329291492700577,
+      "reported_lateral_mps": 0.006491899490356445,
+      "rear_lateral_mps": 0.010574525779685873,
+      "measured_curvature_per_m": -0.01851172222146023,
+      "low_speed_full_curvature_interval": false,
+      "curvature_interval_per_m": [
+        -0.01851172222146023,
+        -0.012345862786850023
+      ]
+    }
+  }
+}
