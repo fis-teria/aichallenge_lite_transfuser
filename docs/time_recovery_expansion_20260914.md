@@ -97,4 +97,14 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
 ```
 
 生成先は`/home/thistle/e2e_autonomous/runs/time_recovery_expansion_20260914`内の
-`materialized/<run_id>`と`prepared/<split>/<run_id>`。原本は同名の`raw`配下に保持する。
+`materialized/<run_id>`と`prepared/<split>/<run_id>`。
+原本は`/home/thistle/e2e_autonomous/raw/time_recovery_expansion_20260914/<run_id>`に保持する。
+
+全pairの監査後に、以下で最終一覧を生成する。全12本の割り当て、原本の照合記録、
+生成ファイルのhash・アンカーID・教師shape/maskと評価予約の除外を再確認する。
+成果物は同じanalysisディレクトリの`collection_index.json`。
+
+```bash
+tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
+  docs/evidence/time_recovery_expansion_20260914/finalize_collection.py
+```
