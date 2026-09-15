@@ -13,6 +13,7 @@ from .awsim_steering import CALIBRATED_POLICIES, steering_asset_contract
 from .vehicle_motion_v1 import IDEAL_POLICY, WHEELBASE_M, effective_response_length, validate_vehicle_model_config
 from .waypoint_controller import ControllerConfig, select_lookahead, control_from_waypoints
 from .polyline_lookahead_v1 import select_polyline_lookahead
+from .curvature_support_v2 import STANDARD_CLEARANCE, NEAR_LIMIT_CLEARANCE, clearance_dimensions
 from ..runtime.awsim_trial_session import trial_duration_limits
 
 
@@ -46,6 +47,16 @@ def validate_trial_config(config: dict[str, Any]) -> str:
         raise ValueError("TRIAL_LOOKAHEAD_REQUIRES_CALIBRATION")
     if config.get("obstacle_policy", "straight_v1") not in ("straight_v1", "steering_sweep_v1", "steering_support_v2"):
         raise ValueError("TRIAL_OBSTACLE_POLICY")
+    clearance_profile = config.get('diagnostic_clearance_profile', STANDARD_CLEARANCE)
+    clearance_dimensions(clearance_profile)
+    if clearance_profile == NEAR_LIMIT_CLEARANCE and (
+            config.get('diagnostic_only') is not True or type(config.get('maximum_diagnostic_trials')) is not int
+            or config.get('maximum_diagnostic_trials') != 1
+            or config.get('host') != 'graneple@192.168.3.10'
+            or config.get('execution_profile') != 'one_lap'
+            or config.get('obstacle_policy') != 'steering_support_v2'
+            or config.get('vehicle_model_policy') != 'awsim_understeer_v1'):
+        raise ValueError('NEAR_LIMIT_DIAGNOSTIC_SCOPE_REQUIRED')
     ceiling, overspeed = trial_speed_limits(policy)
     drive_sim_s, drive_wall_s, outer_wall_s = trial_duration_limits(config.get("execution_profile", "bounded_10s"))
     expected = {"speed_cap_mps": ceiling, "overspeed_limit_mps": overspeed,
