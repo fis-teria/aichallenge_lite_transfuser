@@ -102,6 +102,17 @@ def prepare(root: Path, repo: Path, plan: dict[str, Any]) -> None:
         target_anchors=len(c['proof']['target_anchor_ids']), expected=plan['expected'])), flush=True)
 
 
+def training_teacher_manifest(*, plan: dict[str, Any], cache: dict[str, Any],
+                              auxiliary_identity: dict[str, Any], preparation_sha256: str,
+                              source: str) -> dict[str, Any]:
+    """Retain the verified 30 x 2, 0.1 s observation-frame runtime contract."""
+    teacher = dict(format='observed_multiscale_recovery_training_v1', plan=plan,
+        cache_sha256=cache['manifest_sha256'], contract=deepcopy(cache['contract']),
+        auxiliary_identity=auxiliary_identity, preparation_sha256=preparation_sha256, source=source)
+    teacher['manifest_sha256'] = content_sha256(teacher)
+    return teacher
+
+
 def train(root: Path, repo: Path, plan: dict[str, Any], *, resume: bool) -> None:
     if not torch.cuda.is_available():
         raise RuntimeError('native WSL CUDA required')
@@ -131,10 +142,8 @@ def train(root: Path, repo: Path, plan: dict[str, Any], *, resume: bool) -> None
     del baseline, payload
     torch.cuda.empty_cache()
     head = subprocess.check_output(['git','rev-parse','HEAD'],cwd=repo,text=True).strip()
-    teacher = dict(format='observed_multiscale_recovery_training_v1', plan=plan,
-        cache_sha256=c['cache']['manifest_sha256'], auxiliary_identity=objective.identity,
+    teacher = training_teacher_manifest(plan=plan, cache=c['cache'], auxiliary_identity=objective.identity,
         preparation_sha256=_sha(out/'data_and_budget_verification.json'), source=head)
-    teacher['manifest_sha256'] = content_sha256(teacher)
     identity = TimeCheckpointIdentity(split['manifest_sha256'], teacher['manifest_sha256'],
         content_sha256([r for r in split['runs'] if r['split']=='train']), 'multiscale_balanced_geometry', head)
     print('INITIAL_VALIDATION_EXACT_TRAINING_START', flush=True)

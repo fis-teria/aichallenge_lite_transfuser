@@ -35,7 +35,8 @@ def export_runtime_checkpoint(source: Path, *, expected_sha256: str,
     identity = TimeCheckpointIdentity(**payload['identity'])
     inspect_time_checkpoint(source, config=config, identity=identity)
     teacher = payload['teacher_manifest']
-    if teacher.get('format') != 'recovery_sampling_geometry_comparison_v1' or 'contract' in teacher:
+    supported = {'recovery_sampling_geometry_comparison_v1', 'observed_multiscale_recovery_training_v1'}
+    if teacher.get('format') not in supported or 'contract' in teacher:
         raise ValueError('MISSING_COMPARISON_CONTRACT_REQUIRED')
     digest = content_sha256({k: v for k, v in cache.items() if k != 'manifest_sha256'})
     if (cache.get('format') != 'time_training_cache_v1' or cache.get('manifest_sha256') != digest
