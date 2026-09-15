@@ -67,6 +67,25 @@ def excursion_profile(progress: np.ndarray, release_m: float, offset_m: float) -
     return offset_m*smooth_approach*(1.-smooth_recovery)
 
 
+def densify_with_progress(progress: np.ndarray, x: np.ndarray, y: np.ndarray,
+                          maximum_step_m: float) -> np.ndarray:
+    """Preserve each source segment and return dense [N,3] progress/x/y [m]."""
+    values = np.column_stack((progress, x, y))
+    if (values.ndim != 2 or values.shape[1] != 3 or len(values) < 2
+            or not np.isfinite(values).all() or np.any(np.diff(progress) <= 0.)
+            or not math.isfinite(maximum_step_m) or maximum_step_m <= 0.):
+        raise ValueError('DENSE_EXCURSION_CONTRACT')
+    blocks = []
+    for a,b in zip(values[:-1],values[1:]):
+        parts = max(1,math.ceil(float(np.linalg.norm(b[1:]-a[1:]))/maximum_step_m))
+        fraction = np.arange(parts,dtype=float)/parts
+        blocks.append(a[None,:]+fraction[:,None]*(b-a)[None,:])
+    result = np.concatenate([*blocks,values[-1:]],axis=0)
+    assert np.all(np.diff(result[:,0]) > 0.)
+    assert np.linalg.norm(np.diff(result[:,1:],axis=0),axis=1).max() <= maximum_step_m+1e-9
+    return result
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--output', type=Path, required=True)
@@ -96,6 +115,8 @@ def main() -> None:
         assert str(exc) == 'EXCURSION_FINITE_SHAPE'
     else:
         raise AssertionError('INVALID_SHAPE_NOT_REJECTED')
+    dense_smoke=densify_with_progress(np.array([0.,1.,2.]),np.array([0.,.2,.2]),np.array([0.,0.,.2]),.05)
+    np.testing.assert_allclose(dense_smoke[[0,4,8]],[[0.,0.,0.],[1.,.2,0.],[2.,.2,.2]],rtol=0.,atol=1e-12)
     # Confirm the actual deadline, without changing the runtime policy.
     check_collection_decision_age(started_ns=0, now_ns=100_000_000)
     try:
@@ -118,6 +139,8 @@ def main() -> None:
                 lateral = excursion_profile(sample, release, offset)
                 xx = x-np.sin(yaw)*lateral; yy = y+np.cos(yaw)*lateral
                 assert np.isfinite(xx).all() and np.isfinite(yy).all()
+                dense = densify_with_progress(sample,xx,yy,min(.05,occupancy.resolution_m_per_px))
+                sample,xx,yy = dense.T
                 gaps = np.hypot(np.diff(xx), np.diff(yy))
                 # Spatial sampling is no coarser than one occupancy-map cell.
                 assert gaps.max() <= occupancy.resolution_m_per_px
@@ -145,11 +168,12 @@ def main() -> None:
         normal_source_hashes=plan['source_hashes'],normal_runs=plan['normal_runs'],
         shifted_direction='normal_to_measured_body_yaw_not_exact_road_centerline',
         offset_metric='commanded_planning_displacement_not_observed_recovery_anchor_offset',
-        map_radius_m=1.4,spatial_progress_step_m=.05,approach_length_m=8.,hold_length_m=2.,return_length_m=10.,
+        map_radius_m=1.4,initial_progress_step_m=.05,maximum_physical_sample_step_m=.05,
+        approach_length_m=8.,hold_length_m=2.,return_length_m=10.,
         existing_runtime_changes=False,new_awsim_run=False,new_teacher_samples=0,
         full_body_collision_or_dynamic_feasibility_proven=False,
         deadline_ms=100,retry_start_deadline_ms=80,deadline_changed=False,
-        actual_coordinate_smoke='PASS',shape_exception_smoke='PASS',rows=rows)
+        actual_coordinate_smoke='PASS',shape_exception_smoke='PASS',dense_corner_smoke='PASS',rows=rows)
     args.output.parent.mkdir(parents=True,exist_ok=False)
     with args.output.open('x') as f:json.dump(report,f,indent=2,allow_nan=False)
     summary={str(v):[r['release_progress_m'] for r in rows if r['offset_m']==v and r['both_normal_whole_path_pass']]
