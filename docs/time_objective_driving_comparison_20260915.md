@@ -51,3 +51,22 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
 ## 結果
 
 準備中。走行結果・読み込んだ重みの検証・環境復元・不足データ案は実測後に追記する。
+
+## 走行前に検出・修正した保存メタデータ不具合
+
+初回source `fa426a3` のROS smokeでDが `TEACHER_RUNTIME_CONTRACT_MISMATCH` を報告し、AWSIM開始前に停止した。
+比較学習の保存処理で `teacher_manifest.contract` の転記が欠けていた。元キャッシュには正しい30点・0.1秒・観測時base_link・50ms確定の契約があり、保存処理へ転記を追加した。
+runtime側の拒否条件、モデル構造、推論処理、PP・安全監視は変更していない。
+
+既存B/Dは元ファイルを保全し、`tools/export_time_recovery_runtime_checkpoint.py` で元キャッシュhash・split・入力設定と結び付けた別ファイルへexportした。
+学習キャッシュ13,637,154,115 bytesを全hash照合し、全215 model state entryの一致と、各モデル12個の既存検証入力（正常11・復帰1）でCUDA推論の完全一致（最大差0m）を確認した。再学習は行っていない。
+元の学習checkpoint SHAとexport SHAは比較計画内に両方残す。新規export回帰テストを含む重点テスト16件が成功した。
+初回のROS失敗記録とテストのimport修正履歴は保全し、初回deploymentを上書きせず `_r2` の専用環境へ配置する。走行の順序・回数は変更しない。
+
+```bash
+tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
+  tools/export_time_recovery_runtime_checkpoint.py \
+  --checkpoint <original_best.pt> --checkpoint-sha256 <original_sha256> \
+  --cache /home/thistle/e2e_autonomous/datasets/cache/time_recovery_random_update_20260915 \
+  --output <fresh_runtime.pt>
+```

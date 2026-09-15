@@ -1,7 +1,7 @@
 {
   "schema": "time_objective_driving_comparison_v1",
   "host": "graneple@192.168.3.10",
-  "native_root": "/home/thistle/e2e_autonomous/runs/time_objective_driving_comparison_20260915",
+  "native_root": "/home/thistle/e2e_autonomous/runs/time_objective_driving_comparison_20260915_r2",
   "display": ":0",
   "maximum_trials": 6,
   "maximum_wall_s_per_trial": 720,
@@ -15,21 +15,25 @@
       "checkpoint": "/home/thistle/e2e_autonomous/runs/time_recovery_random_update_20260915/best.pt",
       "sha256": "53e1962b97cfaa47acae3e2ad4687fac96c80672905406fdbe1514abd9563da2",
       "config": "configs/control/time_path_random_lap_20260915.json",
-      "deployment": "/home/graneple/e2e_autonomous/time_objective_lap_a_20260915"
+      "deployment": "/home/graneple/e2e_autonomous/time_objective_lap_a_20260915_r2"
     },
     "B": {
       "name": "balanced_l1",
-      "checkpoint": "/home/thistle/e2e_autonomous/runs/time_recovery_objective_comparison_20260915/balanced_l1/best.pt",
-      "sha256": "b790087969a4309dcf1fa61e9ad5f6fbe0e5f9faf0b41c3b251111c9143f6514",
+      "checkpoint": "/home/thistle/e2e_autonomous/runs/time_objective_driving_comparison_20260915/runtime_exports_r2/balanced_l1_runtime.pt",
+      "sha256": "f6168cedc52e596238ec7db362b0b23abdb93137928a0123f48d0a23ec8c87e0",
       "config": "configs/control/time_path_balanced_l1_lap_20260915.json",
-      "deployment": "/home/graneple/e2e_autonomous/time_objective_lap_b_20260915"
+      "deployment": "/home/graneple/e2e_autonomous/time_objective_lap_b_20260915_r2",
+      "training_checkpoint": "/home/thistle/e2e_autonomous/runs/time_recovery_objective_comparison_20260915/balanced_l1/best.pt",
+      "training_checkpoint_sha256": "b790087969a4309dcf1fa61e9ad5f6fbe0e5f9faf0b41c3b251111c9143f6514"
     },
     "D": {
       "name": "balanced_geometry",
-      "checkpoint": "/home/thistle/e2e_autonomous/runs/time_recovery_objective_comparison_20260915/balanced_geometry/best.pt",
-      "sha256": "bfa2cd54bed61491928a409167a02a8014fd46f22f689729d93498859936da3e",
+      "checkpoint": "/home/thistle/e2e_autonomous/runs/time_objective_driving_comparison_20260915/runtime_exports_r2/balanced_geometry_runtime.pt",
+      "sha256": "957f48d55752bdc900c713ef76774288520501df27fba924646c2f2c3fe701cf",
       "config": "configs/control/time_path_balanced_geometry_lap_20260915.json",
-      "deployment": "/home/graneple/e2e_autonomous/time_objective_lap_d_20260915"
+      "deployment": "/home/graneple/e2e_autonomous/time_objective_lap_d_20260915_r2",
+      "training_checkpoint": "/home/thistle/e2e_autonomous/runs/time_recovery_objective_comparison_20260915/balanced_geometry/best.pt",
+      "training_checkpoint_sha256": "bfa2cd54bed61491928a409167a02a8014fd46f22f689729d93498859936da3e"
     }
   },
   "trials": [
@@ -71,5 +75,6 @@
     }
   ],
   "collect_new_teacher_data": false,
-  "sealed_test_usage": "sealed"
+  "sealed_test_usage": "sealed",
+  "runtime_export_scope": "Metadata completion only; all 215 model state entries and 12 recorded input predictions exact per model"
 }
