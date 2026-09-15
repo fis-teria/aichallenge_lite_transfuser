@@ -229,6 +229,7 @@ def train(root: Path, repo: Path, plan: dict[str, Any], arm: str, *, resume: boo
         raise ValueError('input/model contract changed')
     teacher = dict(format='recovery_sampling_geometry_comparison_v1', experiment=plan, arm=arm,
         cache_sha256=plan['cache_sha256'], source=c['proof']['source_commit'],
+        contract=c['cache']['contract'],
         train_anchor_order_sha256=content_sha256(sampler.anchor_ids),
         selection_anchor_order_sha256=content_sha256([val.anchor_ids[i] for i in selected]),
         auxiliary_identity=objective.identity if objective else None,
