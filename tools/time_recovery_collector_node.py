@@ -42,6 +42,7 @@ from aic_transfuser_lite.data.time_large_recovery_v1 import (
     SCHEMA as LARGE_SCHEMA, LargeRecoveryState, propose_large_recovery, commit_large_recovery,
 )
 from aic_transfuser_lite.data.time_large_recovery_reference_v1 import validate_large_reference
+from aic_transfuser_lite.runtime.recovery_trajectory_wire import decode_trajectory_summary
 
 
 def main() -> None:
@@ -186,6 +187,23 @@ def main() -> None:
                                           p.position.x, p.position.y, yaw))
 
     sensor_counts = {'nominal': 0, 'trajectory': 0}
+    def receive_trajectory(role: str, blob: bytes) -> None:
+        # Raw CDR reception avoids constructing/deleting thousands of nested
+        # point objects while the same Python receiver must service /clock.
+        began = time.monotonic_ns()
+        try:
+            summary = decode_trajectory_summary(blob)
+        except ValueError as exc:
+            with sensor_lock:
+                sensor_fault[0] = str(exc)
+            return
+        duration_ms = (time.monotonic_ns()-began)/1e6
+        with sensor_lock:
+            sensor_counts[role+'_decode_max_ms'] = max(sensor_counts.get(role+'_decode_max_ms', 0.), duration_ms)
+            sensor_counts[role+'_points'] = summary.point_count
+            sensor_counts[role+'_bytes'] = len(blob)
+        receive(role, summary)
+
     def receive_static(m) -> None:
         with sensor_lock:
             for transform in m.transforms:
@@ -210,7 +228,10 @@ def main() -> None:
             # cannot match it. Keep only its latest static trajectory; the
             # dedicated campaign supplies buffer space for both large samples.
             qos = QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
-        receiver.create_subscription(kind, topic, lambda m, role=role: receive(role, m), qos)
+        if large_config is not None and role in ('trajectory', 'preparation_trajectory'):
+            receiver.create_subscription(kind, topic, lambda blob, role=role: receive_trajectory(role, blob), qos, raw=True)
+        else:
+            receiver.create_subscription(kind, topic, lambda m, role=role: receive(role, m), qos)
 
     def snapshot():
         # ROS messages are immutable after receipt; copy only bounded references.
@@ -319,8 +340,12 @@ def main() -> None:
                 acceleration_mps2=float(nominal.longitudinal.acceleration),
                 steering_input_rad=float(nominal.lateral.steering_tire_angle), measured_speed_mps=speed)
             trajectory = inputs['trajectory'][0]
-            if (trajectory.header.frame_id != 'map' or len(trajectory.points) < 20
-                    or any(not math.isclose(p.longitudinal_velocity_mps, TARGET_MPS, abs_tol=1e-5) for p in trajectory.points)):
+            if large_config is not None:
+                trajectory_invalid = trajectory.point_count < 20 or not trajectory.target_speed_valid
+            else:
+                trajectory_invalid = len(trajectory.points) < 20 or any(
+                    not math.isclose(p.longitudinal_velocity_mps, TARGET_MPS, abs_tol=1e-5) for p in trajectory.points)
+            if trajectory.header.frame_id != 'map' or trajectory_invalid:
                 raise ValueError('REFERENCE_SPEED_OR_FRAME')
             projection = project_course(baseline, [current.x_m, current.y_m], current.yaw_rad)
             state['max_speed_mps'] = max(state['max_speed_mps'], abs(speed))
@@ -332,9 +357,8 @@ def main() -> None:
             if large_config is not None:
                 preparation, preparation_received = inputs['preparation_nominal']
                 preparation_trajectory = inputs['preparation_trajectory'][0]
-                if (preparation_trajectory.header.frame_id != 'map' or len(preparation_trajectory.points) < 20
-                        or any(not math.isclose(p.longitudinal_velocity_mps, TARGET_MPS, abs_tol=1e-5)
-                               for p in preparation_trajectory.points)):
+                if (preparation_trajectory.header.frame_id != 'map' or preparation_trajectory.point_count < 20
+                        or not preparation_trajectory.target_speed_valid):
                     raise ValueError('PREPARATION_REFERENCE_SPEED_OR_FRAME')
                 if large_guide[0, 0] <= projection['s_m'] <= large_guide[-1, 0]:
                     large_errors = nominal_recovery_errors(large_guide, s_m=projection['s_m'],
@@ -535,6 +559,8 @@ def main() -> None:
             receipt_monotonic_ns=receipt, receipt_age_ns=now-receipt) for role,(m,receipt) in inputs.items()}
         row['latest_received_capture_ns'] = {role:stamp(m.stamp if role in ('nominal','preparation_nominal','steering') else m.header.stamp)
                                             for role,(m,receipt) in cache.items()}
+        row['trajectory_receive_stats'] = {key:value for key,value in counts.items()
+            if key.startswith(('trajectory_', 'preparation_trajectory_'))}
         row['guard_heading_rate_radps'] = guard_yaw_rate
         row['raw_velocity_heading_rate_radps'] = (float(inputs['velocity'][0].heading_rate)
             if 'velocity' in inputs and math.isfinite(inputs['velocity'][0].heading_rate) else None)
