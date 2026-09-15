@@ -122,7 +122,7 @@ def main() -> None:
             pose.pose.pose.position.x=x;pose.pose.pose.position.y=y
             pose.pose.pose.orientation.z=math.sin(yaw/2);pose.pose.pose.orientation.w=math.cos(yaw/2)
             pose.twist.twist.linear.x=speed;pose_pub.publish(pose)
-            velocity=VelocityReport();velocity.header=pose.header;velocity.header.frame_id='base_link';velocity.longitudinal_velocity=speed
+            velocity=VelocityReport();velocity.header.stamp=stamp.clock;velocity.header.frame_id='base_link';velocity.longitudinal_velocity=speed
             pubs['velocity'].publish(velocity)
             steering=SteeringReport();steering.stamp=stamp.clock;pubs['steering'].publish(steering)
             imu=Imu();imu.header.stamp=stamp.clock;imu.header.frame_id='imu_link';pubs['imu'].publish(imu)

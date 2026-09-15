@@ -168,7 +168,7 @@ def main() -> None:
         receipt = time.monotonic_ns()
         with sensor_lock:
             cache[role] = (m, receipt)
-            histories.setdefault(role, deque(maxlen=4 if role in ('camera','scan','trajectory') else 32)).append(cache[role])
+            histories.setdefault(role, deque(maxlen=4 if role in ('camera','scan','trajectory','preparation_trajectory') else 32)).append(cache[role])
             if role == 'scan':
                 scans.append(cache[role])
             if role == 'nominal':
@@ -205,6 +205,11 @@ def main() -> None:
         # needs both measured interpolation endpoints, not just the latest pose.
         qos = (QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
                if role in ('velocity', 'steering', 'imu', 'nominal', 'preparation_nominal') else qos_profile_sensor_data)
+        if large_config is not None and role in ('trajectory', 'preparation_trajectory'):
+            # Two static trajectories are large fragmented messages at 1 Hz.
+            # Match the generators' reliable QoS; losing one best-effort sample
+            # otherwise exhausts the unchanged 1.5 s freshness budget.
+            qos = QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE)
         receiver.create_subscription(kind, topic, lambda m, role=role: receive(role, m), qos)
 
     def snapshot():

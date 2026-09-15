@@ -95,22 +95,29 @@ def preparation_course(base: Sequence[MpcReferencePointV3], normal: np.ndarray,
     bx = np.array([p.x_m for p in base]); by = np.array([p.y_m for p in base])
     # Keep the closing segment out of this open interpolation. Existing CSV
     # wrap export restores the periodic boundary and supplies the PP tail.
-    s = np.unique(np.r_[bs, np.arange(bs[0], bs[-1], .1)])
+    # The official generator already densifies ordinary segments. Densify only
+    # changed patches here; a whole-course 0.1 m grid triples the ROS payload.
+    patches = [np.arange(site.start_s_m-4., site.release_s_m+22.+.05, .1) for site in config.sites]
+    s = np.unique(np.concatenate([bs, *patches]))
     s = s[np.r_[True, np.diff(s) > 1e-5]]
     x = np.interp(s, bs, bx); y = np.interp(s, bs, by)
     evidence = []
     for site in config.sites:
-        lo, hi = site.start_s_m-4., site.release_s_m+20.
+        lo, hi = site.start_s_m-4., site.release_s_m+22.
         if not normal[0, 0] <= lo < hi <= normal[-1, 0] or hi > bs[-1]:
             raise ValueError('LARGE_TRACE_PATCH_COVERAGE')
         mask = (s >= lo) & (s <= hi)
         progress = s[mask]
         nx, ny = [np.interp(progress, normal[:, 0], normal[:, k]) for k in (1, 2)]
         yaw = np.interp(progress, normal[:, 0], np.unwrap(normal[:, 3]))
-        envelope = _smooth((progress-lo)/4.)*(1.-_smooth((progress-(site.release_s_m+12.))/8.))
+        envelope = _smooth((progress-lo)/4.)*(1.-_smooth((progress-(site.release_s_m+14.))/8.))
         lateral = site.target_offset_m*_smooth((progress-site.start_s_m)/8.)
         x[mask] += envelope*(nx-x[mask]-np.sin(yaw)*lateral)
         y[mask] += envelope*(ny-y[mask]+np.cos(yaw)*lateral)
+        preview = (s >= site.release_s_m+2.) & (s <= site.release_s_m+14.)
+        preview_arc_m = float(np.hypot(np.diff(x[preview]), np.diff(y[preview])).sum())
+        if preview_arc_m < 10.:
+            raise ValueError('LARGE_PREPARATION_PREVIEW_TOO_SHORT')
         active = (s >= site.start_s_m-1.) & (s <= site.release_s_m+2.)
         preparation_pass = _map_free(occupancy, np.column_stack((x[active], y[active])))
         # Screen a candidate measured-normal return separately; the actual
@@ -123,6 +130,7 @@ def preparation_course(base: Sequence[MpcReferencePointV3], normal: np.ndarray,
         return_pass = _map_free(occupancy, np.column_stack((rx-np.sin(ryaw)*shift, ry+np.cos(ryaw)*shift)))
         evidence.append(dict(site_id=site.site_id, preparation_map_pass=preparation_pass,
                              candidate_return_map_pass=return_pass, map_radius_m=1.4,
+                             hidden_return_preview_arc_m=preview_arc_m,
                              physical_dynamic_recovery_proven=False))
         if not preparation_pass or not return_pass:
             raise ValueError('LARGE_SITE_MAP_REJECTED:'+site.site_id)

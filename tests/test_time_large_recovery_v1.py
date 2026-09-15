@@ -128,6 +128,9 @@ def test_clock_gaps_reset_entry_and_goal_holds_and_regression_fails():
         proposal(st, s_m=43.)
     with pytest.raises(ValueError, match='CLOCK_OR_OBSERVATION'):
         proposal(st, sim_ns=0)
+    preparing = replace(st, stage='preparing', event_id=1, start_ns=0,
+                        start_wall_ns=0, target_since_ns=1, last_progress_m=60.)
+    assert proposal(preparing, s_m=60., lateral_m=.6).state.stage == 'preparing'
 
 
 def test_random_plan_is_reproducible_and_retains_required_stop_site():

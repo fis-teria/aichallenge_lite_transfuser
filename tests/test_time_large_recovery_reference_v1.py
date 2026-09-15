@@ -55,6 +55,8 @@ def test_preparation_holds_offset_beyond_handover_without_previewing_return():
         nearest=bottom[np.argmin(abs(bottom[:,0]-x))]
         assert nearest == pytest.approx([x,.6],abs=1e-6)
     assert all(r['preparation_map_pass'] and r['candidate_return_map_pass'] for r in evidence)
+    assert all(r['hidden_return_preview_arc_m'] >= 10. for r in evidence)
+    assert len(points) < len(base)+500  # Only the changed patch is densified.
     assert all(p.vx_mps == 5/3.6 for p in points)
 
 
