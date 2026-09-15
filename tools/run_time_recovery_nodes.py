@@ -41,8 +41,13 @@ def preparation_commands(reference_root: Path, side: str, commands: dict[str, li
         'output_control_cmd:=/recovery_teacher/nominal_control_cmd': 'output_control_cmd:=/recovery_teacher/preparation_control_cmd',
         'output_raw_control_cmd:=/recovery_teacher/raw_control_cmd': 'output_raw_control_cmd:=/recovery_teacher/preparation_raw_control_cmd',
     }
-    return {'preparation_'+name: [replacements.get(part, part) for part in commands[name]]
-            for name in ('generator', 'pure_pursuit')}
+    result = {'preparation_'+name: [replacements.get(part, part) for part in commands[name]]
+              for name in ('generator', 'pure_pursuit')}
+    # Keep the second PP's diagnostics/envelopes separate as well as its command.
+    for name in ('recovery_control_cmd', 'debug', 'controller_tracking_status', 'controller_command_envelope',
+                 'controller_execution_envelope', 'free_run_execution_ack', 'free_run_source_key', 'lookahead_point'):
+        result['preparation_pure_pursuit'].append('output_'+name+':=/recovery_teacher/preparation/'+name)
+    return result
 
 
 def main() -> None:
