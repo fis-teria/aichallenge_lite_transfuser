@@ -79,6 +79,19 @@ def test_failed_target_prevents_later_injection_and_labels():
     assert not any(w.phase == 'recovery' for w in collection_phase_windows(rows))
 
 
+def test_longer_settling_moves_preparation_earlier_without_releasing_early():
+    cfg=LargeRecoveryConfig((LargeRecoverySite('P00',60.,.2,settle_distance_m=4.),))
+    assert cfg.sites[0].start_s_m==48.
+    state,rows=synthetic_run(cfg)
+    event,=large_recovery_events(rows)
+    request=next(r for r in rows if r['publication']['sim_ns']==event['request_ns'])
+    assert state.completed_events==1 and event['recovery_confirmed']
+    assert 60.<=request['projection']['s_m']<=61.
+    assert any(r['phase']=='hold' and r['projection']['s_m']<58. for r in rows)
+    with pytest.raises(ValueError,match='LARGE_SITE_CONTRACT'):
+        LargeRecoverySite('P00',60.,.2,settle_distance_m=6.)
+
+
 def test_rejected_proposal_never_consumes_event_or_release():
     prior = LargeRecoveryState(approach_seen=True, stable_since_ns=0,
         last_sim_ns=950_000_000, last_wall_ns=10_950_000_000)

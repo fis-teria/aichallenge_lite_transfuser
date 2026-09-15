@@ -67,6 +67,17 @@ def test_actual_map_obstacle_blocks_preparation_generation():
         preparation_course(base,normal,cfg,occupancy)
 
 
+def test_four_metre_settling_patch_holds_before_the_same_release_location():
+    from dataclasses import replace
+    base,normal,occupancy,cfg=fixture()
+    cfg=replace(cfg,sites=(replace(cfg.sites[0],settle_distance_m=4.),))
+    points,evidence=preparation_course(base,normal,cfg,occupancy)
+    xy=np.asarray([[p.x_m,p.y_m] for p in points]);bottom=xy[xy[:,1]<1.]
+    for s in (56.,58.,60.,62.,70.):
+        np.testing.assert_allclose(bottom[np.argmin(abs(bottom[:,0]-s))],[s,.6],atol=1e-6,rtol=0.)
+    assert all(e['preparation_map_pass'] and e['candidate_return_map_pass'] for e in evidence)
+
+
 def test_shape_and_missing_measured_support_are_explicit():
     base,normal,occupancy,cfg=fixture()
     with pytest.raises(ValueError,match='TRACE_SHAPE'):

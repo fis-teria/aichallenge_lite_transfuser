@@ -23,19 +23,20 @@ class LargeRecoverySite:
     release_s_m: float
     target_offset_m: float
     return_length_m: float = 6.
+    settle_distance_m: float = 2.
 
     def __post_init__(self) -> None:
         if (not isinstance(self.site_id, str) or not re.fullmatch(r'[A-Z][A-Z0-9_]{0,23}', self.site_id)
                 or any(type(v) not in (int, float) or not math.isfinite(v)
-                       for v in (self.release_s_m, self.target_offset_m, self.return_length_m))
+                       for v in (self.release_s_m, self.target_offset_m, self.return_length_m, self.settle_distance_m))
                 or not 25. <= self.release_s_m <= 300.
                 or abs(self.target_offset_m) not in (.2, .4, .6)
-                or self.return_length_m not in (4., 6., 10.)):
+                or self.return_length_m not in (4., 6., 10.) or self.settle_distance_m not in (2., 4.)):
             raise ValueError('LARGE_SITE_CONTRACT')
 
     @property
     def start_s_m(self) -> float:
-        return self.release_s_m - 10.
+        return self.release_s_m - 8. - self.settle_distance_m
 
 
 @dataclass(frozen=True)
@@ -130,7 +131,7 @@ def propose_large_recovery(config: LargeRecoveryConfig, state: LargeRecoveryStat
                            nominal_stamp_ns: int, entry_clear: bool) -> LargeRecoveryDecision:
     """One immutable selection; the caller validates both PP sources and guards.
 
-    Preparation: 8 m lateral move + 2 m settling, target +/-5 cm and +/-2 deg
+    Preparation: 8 m lateral move + 2 or 4 m settling, target +/-5 cm and +/-2 deg
     continuously for 0.25 s. Request inside [release, release+1] m only.
     Recovery: nominal PP, settle within 10 s, then reserve >=3 s future tail.
     A missed/failed event never increases amplitude, event count or deadlines.
@@ -196,7 +197,7 @@ def propose_large_recovery(config: LargeRecoveryConfig, state: LargeRecoveryStat
             return LargeRecoveryDecision(replace(st, stage='aborted', reason='TARGET_NOT_REACHED'), 'nominal', 'invalid')
         if s_m >= site.release_s_m and since is not None and sim_ns-since >= 250_000_000:
             return LargeRecoveryDecision(replace(st, stage='handover', goal_reached=True), 'preparation', 'hold', 'request')
-        return LargeRecoveryDecision(st, 'preparation', 'approach' if s_m < site.release_s_m-2. else 'hold')
+        return LargeRecoveryDecision(st, 'preparation', 'approach' if s_m < site.release_s_m-site.settle_distance_m else 'hold')
     if st.stage == 'handover':
         if st.request_ns is None:
             raise ValueError('LARGE_UNPUBLISHED_REQUEST')

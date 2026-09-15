@@ -107,7 +107,7 @@ def main() -> None:
             st=control.get('large_recovery',{}).get('state',{})
             deviation=0.
             if st.get('stage') in ('preparing','handover'):
-                fraction=float(np.clip((current_s-(site['release_s_m']-10.))/8.,0.,1.))
+                fraction=float(np.clip((current_s-(site['release_s_m']-8.-site.get('settle_distance_m',2.)))/8.,0.,1.))
                 deviation=site['target_offset_m']*fraction*fraction*(3.-2.*fraction)
             elif st.get('stage')=='recovery':
                 deviation=site['target_offset_m']*max(0.,1.-(ns-st['release_ns'])/4e9)
