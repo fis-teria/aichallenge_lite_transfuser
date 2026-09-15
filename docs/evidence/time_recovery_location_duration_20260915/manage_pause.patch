@@ -1,0 +1,10 @@
+--- a/manage.py
++++ b/manage.py
+@@ -116,6 +116,7 @@
+ from pathlib import Path
+ import hashlib,json,os,shutil,subprocess,time
+ root=Path({ROOT!r});run_id={run_id!r}
++if (root/'collection_pause.json').exists():raise RuntimeError('COLLECTION_PAUSED_FOR_LOCATION_DURATION_REVIEW')
+ ledger=json.loads((root/'campaign_20260914.json').read_text())
+ assert not ledger['sealed'] and len(ledger['attempts'])<ledger['maximum_attempts']==10
+ row=ledger['planned_runs'][len(ledger['attempts'])];assert row['run_id']==run_id
