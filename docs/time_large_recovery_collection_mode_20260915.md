@@ -49,7 +49,9 @@ PPが復帰を先読みし、目標へ達する前に戻り始めることを防
 実走で切替時の向きが振れるS00には、`preparation_origin=nominal_path`を追加した。
 横移動の指令経路は元の教師経路をずらし、通常PPの実走誤差を再び指令へ含めない。
 目標横ずれと向きの判定、候補復帰経路の地図検査は、引き続き通常完走の実測線に対して行う。
-P00/P02は成立済みの条件を維持し、教師には全地点とも実測未来だけを用いる。
+P00は成立済みの条件を維持し、P02も元の教師指令経路を基準にする。
+P02は速度上昇区間を避けて準備開始235m・復帰位置245mへ移した。
+教師には全地点とも実測未来だけを用いる。
 
 ## 複数イベントとデータの扱い
 
@@ -91,7 +93,7 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
 tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q
 ```
 
-同梱planは左20cmを60m・停止地点手前118m・235mの3回。`candidates`は`site_id`、`release_s_m`、`target_offset_m`、
+同梱planは左20cmを60m・停止地点手前118m・245mの3回。`candidates`は`site_id`、`release_s_m`、`target_offset_m`、
 `return_length_m`からなる。左右にはtargetの符号を使い、`--side`は出力スロット名とする。
 出力は通常CSV、準備CSV、両方のSHAとguideを持つJSONの3点。
 plan/source/mapのSHA確認、実測guideの範囲・shape確認、準備経路と候補復帰経路の地図検査を
