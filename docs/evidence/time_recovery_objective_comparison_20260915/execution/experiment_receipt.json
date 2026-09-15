@@ -1,0 +1,107 @@
+{
+  "source_commit": "d8ed290ebb47d3336161614c25a0aac7c243c66c",
+  "status": "COMPLETE",
+  "stages": [
+    {
+      "name": "prepare",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "900s",
+        "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+        "tools/compare_time_recovery_objectives.py",
+        "prepare",
+        "--plan",
+        "configs/time_path_p1/recovery_objective_comparison_20260915.json"
+      ],
+      "wall_limit_s": 900,
+      "status": "COMPLETE",
+      "pid": 530915,
+      "exit_code": 0,
+      "elapsed_s": 288.03145356598543
+    },
+    {
+      "name": "balanced_l1",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "7200s",
+        "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+        "tools/compare_time_recovery_objectives.py",
+        "train",
+        "--plan",
+        "configs/time_path_p1/recovery_objective_comparison_20260915.json",
+        "--arm",
+        "balanced_l1"
+      ],
+      "wall_limit_s": 7200,
+      "status": "COMPLETE",
+      "pid": 531093,
+      "exit_code": 0,
+      "elapsed_s": 3868.179156180995
+    },
+    {
+      "name": "uniform_geometry",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "7200s",
+        "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+        "tools/compare_time_recovery_objectives.py",
+        "train",
+        "--plan",
+        "configs/time_path_p1/recovery_objective_comparison_20260915.json",
+        "--arm",
+        "uniform_geometry"
+      ],
+      "wall_limit_s": 7200,
+      "status": "COMPLETE",
+      "pid": 531733,
+      "exit_code": 0,
+      "elapsed_s": 3686.009295204014
+    },
+    {
+      "name": "balanced_geometry",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "7200s",
+        "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+        "tools/compare_time_recovery_objectives.py",
+        "train",
+        "--plan",
+        "configs/time_path_p1/recovery_objective_comparison_20260915.json",
+        "--arm",
+        "balanced_geometry"
+      ],
+      "wall_limit_s": 7200,
+      "status": "COMPLETE",
+      "pid": 532265,
+      "exit_code": 0,
+      "elapsed_s": 3027.9911238639907
+    },
+    {
+      "name": "compare",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "1800s",
+        "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+        "tools/compare_time_recovery_objectives.py",
+        "compare",
+        "--plan",
+        "configs/time_path_p1/recovery_objective_comparison_20260915.json"
+      ],
+      "wall_limit_s": 1800,
+      "status": "COMPLETE",
+      "pid": 532634,
+      "exit_code": 0,
+      "elapsed_s": 316.0451497269969
+    }
+  ]
+}
