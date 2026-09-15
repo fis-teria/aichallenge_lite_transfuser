@@ -1,0 +1,140 @@
+{
+  "run_id": "codex-time-recovery-40cm-d40-g03-right-r02",
+  "split": "validation",
+  "result_status": "COMPLETE_LAP",
+  "fault": null,
+  "stop_confirmed": true,
+  "closed_bag": true,
+  "planned": [
+    {
+      "site_id": "P00",
+      "release_s_m": 60.0,
+      "target_offset_m": -0.4,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "measured_normal"
+    },
+    {
+      "site_id": "P03",
+      "release_s_m": 160.0,
+      "target_offset_m": -0.4,
+      "return_length_m": 6.0,
+      "settle_distance_m": 2.0,
+      "preparation_origin": "nominal_path"
+    },
+    {
+      "site_id": "P02",
+      "release_s_m": 243.0,
+      "target_offset_m": -0.4,
+      "return_length_m": 6.0,
+      "settle_distance_m": 2.0,
+      "preparation_origin": "nominal_path"
+    }
+  ],
+  "event_cap": 3,
+  "events": [
+    {
+      "event_id": 1,
+      "site_id": "P00",
+      "target_offset_m": -0.4,
+      "preparation_start_ns": 70194998431,
+      "request_ns": 79484998223,
+      "release_ns": 79549998221,
+      "end_publication_ns": 89599997997,
+      "publication_switch_verified": true,
+      "recovery_confirmed": true,
+      "stable_at_end": true,
+      "completed": true,
+      "recovery_sample_count": 201,
+      "peak_observed_lateral_m": 0.4739035183418541,
+      "target_band_recovery_samples": 22,
+      "target_band_observed": true,
+      "causal_camera_candidates": 94,
+      "accepted_camera_anchors": 94,
+      "target_band_camera_anchors": 4,
+      "peak_abs_anchor_lateral_m": 0.3730248670851888
+    },
+    {
+      "event_id": 2,
+      "site_id": "P03",
+      "target_offset_m": -0.4,
+      "preparation_start_ns": 151104996622,
+      "request_ns": null,
+      "release_ns": null,
+      "end_publication_ns": null,
+      "publication_switch_verified": false,
+      "recovery_confirmed": false,
+      "stable_at_end": false,
+      "completed": false,
+      "recovery_sample_count": 0,
+      "peak_observed_lateral_m": 0.4597491080702777,
+      "target_band_recovery_samples": 0,
+      "target_band_observed": false,
+      "causal_camera_candidates": 0,
+      "accepted_camera_anchors": 0,
+      "target_band_camera_anchors": 0,
+      "peak_abs_anchor_lateral_m": null
+    }
+  ],
+  "accepted": 94,
+  "target_band_anchors": 4,
+  "marker_locations": {
+    "frame_id": "map",
+    "location_basis": "pose_at_first_preparation_selection_not_proven_displacement",
+    "topic": "/recovery_teacher/disturbance_markers",
+    "events": [
+      {
+        "event_id": 1,
+        "site_id": "P00",
+        "sign": -1,
+        "planned_s_m": 48.0,
+        "actual_s_m": 48.013550424780945,
+        "x_m": 89622.17607570661,
+        "y_m": 43165.357439177205,
+        "yaw_rad": -0.6551248559889338,
+        "pose_stamp_ns": 70164998431,
+        "publication_sim_ns": 70194998431,
+        "publication_sequence": 1589,
+        "effective_rad": 0.0,
+        "target_offset_m": -0.4,
+        "label": "P00 RIGHT PREP 40cm"
+      },
+      {
+        "event_id": 2,
+        "site_id": "P03",
+        "sign": -1,
+        "planned_s_m": 150.0,
+        "actual_s_m": 150.0920609447374,
+        "x_m": 89625.02870220038,
+        "y_m": 43188.00365485639,
+        "yaw_rad": 0.27275089661494206,
+        "pose_stamp_ns": 151089996622,
+        "publication_sim_ns": 151104996622,
+        "publication_sequence": 3207,
+        "effective_rad": 0.0,
+        "target_offset_m": -0.4,
+        "label": "P03 RIGHT PREP 40cm"
+      }
+    ]
+  },
+  "training_started": false,
+  "causal_candidates": 94,
+  "input_reasons": {
+    "OK": 94
+  },
+  "teacher_reasons": {
+    "OK": 94
+  },
+  "prepared": {
+    "run_id": "codex-time-recovery-40cm-d40-g03-right-r02",
+    "anchors": 94,
+    "input_valid": 94,
+    "real_input_replay_equal": [
+      "codex-time-recovery-40cm-d40-g03-right-r02:epoch0000:79794998216",
+      "codex-time-recovery-40cm-d40-g03-right-r02:epoch0000:84729998106"
+    ],
+    "input_reason_refinements": []
+  },
+  "all_planned_recovered": false,
+  "increase_eligible": false
+}
