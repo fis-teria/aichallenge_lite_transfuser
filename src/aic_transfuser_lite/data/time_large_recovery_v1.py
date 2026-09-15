@@ -219,6 +219,8 @@ def propose_large_recovery(config: LargeRecoveryConfig, state: LargeRecoveryStat
     if sim_ns-st.release_ns >= 10_000_000_000:
         if st.confirmed_ns is None or st.confirmed_ns-st.release_ns > 10_000_000_000:
             return LargeRecoveryDecision(replace(st, stage='aborted', reason='RECOVERY_NOT_CONFIRMED'), 'nominal', 'invalid')
+        if since is None or sim_ns-since < 1_000_000_000:
+            return LargeRecoveryDecision(replace(st, stage='aborted', reason='RECOVERY_NOT_STABLE_AT_END'), 'nominal', 'invalid')
         cursor = st.site_cursor+1
         st = replace(st, site_cursor=cursor, completed_events=st.completed_events+1,
                      stage='complete' if cursor == len(config.sites) else 'cooldown',
@@ -301,11 +303,18 @@ def large_recovery_events(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, A
             previous = t; previous_wall = pub['monotonic_ns']
         completions = [r for r in group if r['large_recovery']['state']['completed_events'] >= event_id]
         completed = bool(completions)
+        stable_end = False
+        if completed and since is not None and previous is not None:
+            end = completions[0]; data = end['large_recovery']; t = end['publication']['sim_ns']
+            stable_end = (0 <= t-previous <= 150_000_000 and t-since >= 1_000_000_000
+                          and abs(data['lateral_error_m']) <= .1 and abs(data['heading_error_rad']) <= math.radians(2.)
+                          and 1.15 <= end['speed_mps'] <= 1.4)
         target_samples = sum(abs(r['large_recovery']['lateral_error_m']-site.target_offset_m) <= .1 for r in recoveries)
         result.append(dict(event_id=event_id, site_id=site.site_id, target_offset_m=site.target_offset_m,
             preparation_start_ns=preparations[0]['publication']['sim_ns'], request_ns=request, release_ns=release,
             end_publication_ns=completions[0]['publication']['sim_ns'] if completions else None,
-            publication_switch_verified=boundary, recovery_confirmed=bool(boundary and confirmed and completed),
+            publication_switch_verified=boundary, recovery_confirmed=bool(boundary and confirmed and completed and stable_end),
+            stable_at_end=stable_end,
             completed=completed, recovery_sample_count=len(recoveries),
             peak_observed_lateral_m=max(abs(r['large_recovery']['lateral_error_m']) for r in group
                                         if r['large_recovery']['lateral_error_m'] is not None),

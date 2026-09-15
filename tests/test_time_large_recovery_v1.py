@@ -120,6 +120,25 @@ def test_missing_recovery_blocks_next_event_even_when_a_later_site_is_available(
     assert decision.state.stage == 'aborted' and decision.state.reason == 'RECOVERY_NOT_CONFIRMED'
 
 
+def test_transient_return_followed_by_drift_cannot_advance_the_event_count():
+    st=LargeRecoveryState(stage='recovery',event_id=1,start_ns=0,start_wall_ns=0,
+        request_ns=1,release_ns=2,confirmed_ns=5_000_000_002,
+        last_sim_ns=9_950_000_002,last_wall_ns=10_950_000_002)
+    decision=proposal(st,config(2),sim_ns=10_000_000_002,wall_ns=11_000_000_002,s_m=74.,lateral_m=.3)
+    assert decision.state.stage=='aborted' and decision.state.reason=='RECOVERY_NOT_STABLE_AT_END'
+    assert decision.state.completed_events==0
+
+
+def test_six_event_budget_is_finite_and_all_events_are_separated():
+    cfg=LargeRecoveryConfig(tuple(LargeRecoverySite('P'+str(i),40.+50*i,.2*(-1)**i) for i in range(6)),event_cap=6)
+    state,rows=synthetic_run(cfg)
+    events=large_recovery_events(rows)
+    assert state.completed_events==6 and state.event_id==6 and state.stage=='complete'
+    assert len(events)==6 and all(e['recovery_confirmed'] for e in events)
+    assert all(b['preparation_start_ns']>=a['end_publication_ns']+3_000_000_000 for a,b in zip(events,events[1:]))
+    with pytest.raises(ValueError):LargeRecoveryConfig(cfg.sites,event_cap=7)
+
+
 def test_clock_gaps_reset_entry_and_goal_holds_and_regression_fails():
     st = LargeRecoveryState(approach_seen=True, stable_since_ns=0,
                            last_sim_ns=1, last_wall_ns=1, last_progress_m=49.)
