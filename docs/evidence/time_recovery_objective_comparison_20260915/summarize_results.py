@@ -21,7 +21,7 @@ def group_metrics(group: dict[str, Any]) -> dict[str, Any]:
     return {
         "anchors": group["anchor_count"], "runs": group["run_count"],
         "xy_cm": {t: row["raw_error_m"] * 100 for t, row in group["xy"]["run_macro_mean"].items()},
-        "components_3s_cm": {k: group["components"]["3s"][k] * 100
+        "components_3s_cm": {k.removesuffix("_m") + "_cm": group["components"]["3s"][k] * 100
                              for k in ("forward_mae_m", "left_mae_m", "left_bias_m")},
         "pp_rad": group["pp"]["run_macro_penalized_rad"],
         "pp_rejected": group["pp"]["candidate_rejected"],

@@ -19,7 +19,7 @@ def main(root: Path) -> None:
     assert receipt["status"] == "COMPLETE"
     assert all(stage["exit_code"] == 0 for stage in receipt["stages"])
     assert read(run / "comparison/summary.json")["status"] == "COMPLETE"
-    assert read(execution / "post_analysis/paired_analysis.json")["status"] == "COMPLETE"
+    assert read(execution / "post_analysis_final/paired_analysis.json")["status"] == "COMPLETE"
     files: dict[str, Path] = {}
     for name in ("data_and_budget_verification.json", "geometry_identity.json", "recovery_geometry_targets.json"):
         files[name] = run / name
@@ -33,7 +33,7 @@ def main(root: Path) -> None:
             files[f"{arm}/comparison_verification.json"] = directory / "comparison_verification.json"
     for name in ("recovery_objective_comparison.png", "artifact_manifest.json"):
         files[f"comparison/{name}"] = run / "comparison" / name
-    files["comparison/paired_analysis.json"] = execution / "post_analysis/paired_analysis.json"
+    files["comparison/paired_analysis.json"] = execution / "post_analysis_final/paired_analysis.json"
     for path in sorted(execution.iterdir()):
         if path.is_file() and (path.suffix == ".log" or path.name.endswith("receipt.json")):
             files[f"execution/{path.name}"] = path

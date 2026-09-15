@@ -78,7 +78,7 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 OPENBLAS_NU
 地点別結果から再計算した外向きsubsetのrun等重み位置誤差・PP誤差が元の集計と一致することを要求する。
 
 ```bash
-tools/with_wsl_training_lock.sh .venv/bin/python docs/evidence/time_recovery_objective_comparison_20260915/summarize_results.py ../runs/time_recovery_objective_comparison_20260915 ../runs/time_recovery_objective_comparison_20260915_execution/post_analysis
+tools/with_wsl_training_lock.sh .venv/bin/python docs/evidence/time_recovery_objective_comparison_20260915/summarize_results.py ../runs/time_recovery_objective_comparison_20260915 ../runs/time_recovery_objective_comparison_20260915_execution/post_analysis_final
 tools/with_wsl_training_lock.sh .venv/bin/python docs/evidence/time_recovery_objective_comparison_20260915/export_evidence.py ..
 ```
 
