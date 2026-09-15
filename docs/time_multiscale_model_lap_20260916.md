@@ -49,3 +49,10 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
 ```
 
 走行結果と証拠は完了後に追記する。
+
+## 配置前の確認結果
+
+source `def95a93cb406688b2af737aa75f38c4701c6bb1` のnative WSL全pytestは **2,706 passed / 4 skipped**、102.39秒。
+元cacheの全hashを照合し、215個のモデルstateは完全一致。既存validationから選んだ12入力についてCUDA・float32予測も完全一致した。
+実行用checkpointは `runs/time_multiscale_model_lap_20260916/multiscale_runtime.pt`、SHA256 `1d36d36d02116a332489dab72e8d2c655b1daf24e34bb1ec5cd33347bb3b61a0`。
+設定の差分は従来通常走行設定に対してこのcheckpoint SHAのみ。元の学習済み重みは変更していない。
