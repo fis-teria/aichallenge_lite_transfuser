@@ -55,13 +55,15 @@ def normal_trace(raw: Path, expected_hashes: dict[str, str]) -> np.ndarray:
     return values
 
 
-def excursion_profile(progress: np.ndarray, release_m: float, offset_m: float) -> np.ndarray:
-    """Planning displacement [N] m: 8 m approach, 2 m hold, 10 m return."""
+def excursion_profile(progress: np.ndarray, release_m: float, offset_m: float,
+                      return_length_m: float = 10.) -> np.ndarray:
+    """Planning displacement [N] m: 8 m approach, 2 m hold, explicit return."""
     if (progress.ndim != 1 or not np.isfinite(progress).all()
-            or not math.isfinite(release_m) or not math.isfinite(offset_m)):
+            or not math.isfinite(release_m) or not math.isfinite(offset_m)
+            or return_length_m not in (4.,6.,10.)):
         raise ValueError('EXCURSION_FINITE_SHAPE')
     approach = np.clip((progress-(release_m-10.))/8., 0., 1.)
-    recovery = np.clip((progress-release_m)/10., 0., 1.)
+    recovery = np.clip((progress-release_m)/return_length_m, 0., 1.)
     smooth_approach = approach**2*(3.-2.*approach)
     smooth_recovery = recovery**2*(3.-2.*recovery)
     return offset_m*smooth_approach*(1.-smooth_recovery)
@@ -89,6 +91,7 @@ def densify_with_progress(progress: np.ndarray, x: np.ndarray, y: np.ndarray,
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument('--output', type=Path, required=True)
+    ap.add_argument('--return-length-m', type=float, choices=(4.,6.,10.), default=10.)
     args = ap.parse_args()
     assert not args.output.exists()
     inputs = Path('/home/thistle/e2e_autonomous/runs/time_recovery_collection_20260913/inputs')
@@ -133,10 +136,11 @@ def main() -> None:
         for offset in (.0, .2, -.2, .4, -.4, .6, -.6):
             per_normal = []
             for name, trace in traces.items():
-                sample = np.linspace(release-11., release+11., 441)
+                sample = np.linspace(release-11., release+args.return_length_m+1.,
+                                     round((12.+args.return_length_m)/.05)+1)
                 assert trace[0, 0] <= sample[0] <= sample[-1] <= trace[-1, 0]
                 x, y, yaw = [np.interp(sample, trace[:, 0], trace[:, k]) for k in (1, 2, 3)]
-                lateral = excursion_profile(sample, release, offset)
+                lateral = excursion_profile(sample, release, offset, args.return_length_m)
                 xx = x-np.sin(yaw)*lateral; yy = y+np.cos(yaw)*lateral
                 assert np.isfinite(xx).all() and np.isfinite(yy).all()
                 dense = densify_with_progress(sample,xx,yy,min(.05,occupancy.resolution_m_per_px))
@@ -158,7 +162,7 @@ def main() -> None:
                     release_map_xy_m=[float(np.interp(release,sample,xx)),float(np.interp(release,sample,yy))]))
             rows.append(dict(release_progress_m=release,offset_m=offset,
                 side='baseline' if offset == 0. else 'left' if offset > 0. else 'right',
-                start_progress_m=release-10.,return_end_progress_m=release+10.,
+                start_progress_m=release-10.,return_end_progress_m=release+args.return_length_m,
                 both_normal_whole_path_pass=all(r['whole_excursion_map_pass'] for r in per_normal),
                 both_normal_release_neighborhood_pass=all(r['release_neighborhood_map_pass'] for r in per_normal),
                 per_normal=per_normal))
@@ -169,7 +173,7 @@ def main() -> None:
         shifted_direction='normal_to_measured_body_yaw_not_exact_road_centerline',
         offset_metric='commanded_planning_displacement_not_observed_recovery_anchor_offset',
         map_radius_m=1.4,initial_progress_step_m=.05,maximum_physical_sample_step_m=.05,
-        approach_length_m=8.,hold_length_m=2.,return_length_m=10.,
+        approach_length_m=8.,hold_length_m=2.,return_length_m=args.return_length_m,
         existing_runtime_changes=False,new_awsim_run=False,new_teacher_samples=0,
         full_body_collision_or_dynamic_feasibility_proven=False,
         deadline_ms=100,retry_start_deadline_ms=80,deadline_changed=False,
