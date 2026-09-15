@@ -121,3 +121,14 @@ def test_separated_template_requires_explicit_named_policy():
                              speed_mps=1.27, lateral_m=0., heading_rad=0., entry_clear=True)
     with pytest.raises(ValueError, match='CONTROL_POLICY'):
         replace(cfg, control_policy=POLICY)
+
+
+def test_official_pp_input_contract_survives_unperturbed_sharp_corner():
+    from aic_transfuser_lite.data.time_recovery_collection_v1 import bounded_collection_command
+    for phase in ('baseline', 'recovery'):
+        command = guide_control(pp_rad=.64, guide_rad=.64, pulse_rad=0., amplitude_rad=.1, phase=phase)
+        assert command['requested_angle_rad'] == .64 and command['guide_weight'] == 0.
+        angle, _ = bounded_collection_command(command['requested_angle_rad'], 0., .5, .05)
+        assert angle == .5
+    with pytest.raises(ValueError, match='GUIDE_CONTROL_INPUT'):
+        guide_control(pp_rad=.641, guide_rad=0., pulse_rad=0., amplitude_rad=.1, phase='baseline')

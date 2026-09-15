@@ -43,7 +43,8 @@ def guide_control(*, pp_rad: float, guide_rad: float, pulse_rad: float,
     throughout. The return ramp is still hold and is excluded from teachers.
     """
     if (not all(math.isfinite(v) for v in (pp_rad, guide_rad, pulse_rad, amplitude_rad))
-            or max(abs(pp_rad), abs(guide_rad)) > .5 or not 0. < abs(amplitude_rad) <= .1
+            or abs(pp_rad) > .640001 or abs(guide_rad) > (.5 if phase == 'hold' else .640001)
+            or not 0. < abs(amplitude_rad) <= .1
             or abs(pulse_rad) > abs(amplitude_rad)+1e-12
             or phase not in ('baseline', 'hold', 'recovery') or phase != 'hold' and pulse_rad != 0.):
         raise ValueError('GUIDE_CONTROL_INPUT')
