@@ -22,6 +22,17 @@ ROOT = Path('/home/graneple/e2e_autonomous/time_recovery_collection_20260913')
 REPO = Path('/home/graneple/git/autononous_ai/aichallenge-racingkart')
 
 
+def collection_display_environment(environment: dict[str, str]) -> dict[str, str]:
+    """Use the explicitly supplied local X11/Xwayland display and auth file."""
+    display = environment.get('DISPLAY', ':1')
+    auth = Path(environment.get('XAUTHORITY', '/run/user/1000/gdm/Xauthority'))
+    if not re.fullmatch(r':[0-9]+(?:\.[0-9]+)?', display):
+        raise ValueError('LOCAL_DISPLAY_REQUIRED')
+    if not auth.is_absolute() or not auth.is_file():
+        raise RuntimeError('DISPLAY_AUTH_MISSING')
+    return dict(DISPLAY=display, XAUTHORITY=str(auth))
+
+
 def sha(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open('rb') as stream:
@@ -125,10 +136,7 @@ def main() -> None:
             for service in ('simulator', 'autoware'):
                 services[service]['cpuset'] = '0-1,6-19'
         override.write_text(json.dumps({'services': services}))
-        auth = Path('/run/user/1000/gdm/Xauthority')
-        if not auth.is_file():
-            raise RuntimeError('DISPLAY_AUTH_MISSING')
-        env.update(DISPLAY=':1', XAUTHORITY=str(auth), COMPOSE_PROJECT_NAME=args.run_id,
+        env.update(**collection_display_environment(env), COMPOSE_PROJECT_NAME=args.run_id,
             COMPOSE_FILE=':'.join(map(str,(REPO/'docker-compose.yml',REPO/'docker-compose.gpu.yml',override))),
             CONTROL_METHOD='v4_20_external',V4_SHADOW_ENABLED='false',AWSIM_VEHICLES='1')
         compose = ['docker','compose','-p',args.run_id]
