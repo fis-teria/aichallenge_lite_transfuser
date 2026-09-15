@@ -57,3 +57,51 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 OPENBLAS_NU
 ```
 
 重み・全予測・実行logはWSLの`runs/time_recovery_objective_comparison_20260915`へ保存し、Gitには含めない。
+
+## 実行条件の照合
+
+- 学習・評価source: `d8ed290ebb47d3336161614c25a0aac7c243c66c`。Windowsから同一commitをnative WSLへ同期し、worktree lock下で実行した。
+- 同一sourceの全pytest: **2,517 passed / 4 skipped / 66 warnings、119.34 s、exit0**。追加損失のshape・単位・勾配、教師のdetach、通常走行への非適用、未支持復帰教師の明示エラー、再開時の条件不一致、既定runnerのAST一致を含む。
+- データ・更新予算の事前照合SHA256: `213fd49dc4cf420c86ead674818cfe5e906f6e3aa4417b0dc11e5459bfb6657e`。
+- 初期checkpoint SHA256: `e857db4b67d3d9f6a77c2865cfc1fa53e9903e7a1d2d8a371407fbe009a1a44f`。通常走行で学習済みの重みであり、ランダム初期化ではない。
+- 初期6 run平均3 s誤差は`0.05945738963782787 m`。保存済みの初期検証を厳密に再現した。
+- 復帰教師1,410地点すべてで実際のPPが成立。教師固定時刻の微分可能な式と実PPの角度差は最大`7.350016567597706e-09 rad`。
+- 新規学習の各epochでは45,646提示中、入力無効158・教師未支持1,208・支持44,280。復帰の比較対象は入力と30点すべての教師支持を要求し、欠損による対象の選別を行わない。
+
+比較の位置誤差は、観測から3 s後の予測XYと実測教師XYの距離をrun内で平均し、run間を等重みにする。
+操舵誤差は、予測経路・教師経路をそれぞれ実際のPP計算に通した物理タイヤ角の絶対差を同じ方法で集計する。
+教師PPが成立する母数を固定し、予測拒否は0.6 radのペナルティとして分母に残す。
+横方向の符号は観測時車体座標の左が正。横バイアスと横方向MAEを分けて記録する。
+
+完了後のJSON集計・小規模な根拠ファイルの出力も、Windowsで確定したスクリプトを同期してWSLで行う。
+この集計はモデルやdatasetを読み直さず、上記比較で保存した指標・地点別JSONを使用する。
+地点別結果から再計算した外向きsubsetのrun等重み位置誤差・PP誤差が元の集計と一致することを要求する。
+
+```bash
+tools/with_wsl_training_lock.sh .venv/bin/python docs/evidence/time_recovery_objective_comparison_20260915/summarize_results.py ../runs/time_recovery_objective_comparison_20260915 ../runs/time_recovery_objective_comparison_20260915_execution/post_analysis
+tools/with_wsl_training_lock.sh .venv/bin/python docs/evidence/time_recovery_objective_comparison_20260915/export_evidence.py ..
+```
+
+元の詳細`comparison/summary.json`と全予測配列はWSLに保持する。Windowsには各群の指標・外向き47地点の対応結果をまとめた
+`comparison/paired_analysis.json`、学習の結果・検証記録・図をコピーし、転送元と転送先のサイズ・SHA256を照合する。
+
+封印testとAWSIM走行はこの比較の対象外。検証用の復帰538地点のうち、r22/r23の109地点は従来のepoch選択にも使い、
+r46/r47/r65の429地点は選択後の比較だけに使う。外向き検証12地点は3 runに限られるため、多様な逸脱への復帰保証とはしない。
+
+## バッチ拡大による速度の質問への観測
+
+実行中にユーザーからGPU使用率とバッチ拡大の質問があったため、学習設定を変えずに読み取りのみの観測を行った。
+`balanced_l1`のepoch3で、4 s間隔・24 s・7点のGPU全体使用率は18〜94%、使用VRAMは約10,220 / 16,376 MiBだった。
+Windows側プロセスと予約領域を含むGPU全体の値であり、当該学習だけの割当量ではない。
+直近の50更新の所要時間は31.54〜33.41 s、1更新あたり約0.65 sだった。
+後続条件では同じbatch32でも約0.53〜0.54 sの区間があり、実行中の所要時間には変動がある。
+
+[以前の計算部分だけの測定](time_path_p1_training_20260913.md)では、合成入力・FP32・batch32のforward/backwardが約0.25 sだった。
+この異なる測定の値を仮に組み合わせ、計算部分の0.25 sだけが半減して他の時間が一定と置くと、
+`0.65 / (0.65 - 0.25 + 0.25 / 2) = 1.238`倍、60分が約48分になる。
+これは条件付きの概算であり、batch48/64を実測した高速化率ではない。使用率だけから2倍などの高速化は推定できない。
+
+現行のCPUでのtensor結合・GPU転送・入力待ちも調査候補になる。
+固定メモリと非同期転送は[PyTorch公式の性能改善ガイド](https://docs.pytorch.org/tutorials/recipes/recipes/tuning_guide.html)に記載されるが、
+今回の実装での効果は未測定。バッチ変更は同じ提示数でのoptimizer更新回数と学習挙動も変えるため、
+この4条件比較ではbatch32・FP32を維持した。大きいバッチや混合精度の速度・精度比較は本実験には含めない。

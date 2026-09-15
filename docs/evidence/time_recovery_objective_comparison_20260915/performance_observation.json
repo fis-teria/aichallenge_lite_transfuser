@@ -1,0 +1,21 @@
+{
+  "scope": "read_only_observation_during_balanced_l1_training_not_a_batch_size_benchmark",
+  "source_commit": "d8ed290ebb47d3336161614c25a0aac7c243c66c",
+  "phase": "balanced_l1_epoch_3",
+  "batch_size": 32,
+  "sample_period_s": 4,
+  "sample_duration_s": 24,
+  "gpu_metrics_scope": "whole_RTX_4080_including_Windows_processes",
+  "gpu_utilization_percent": [18,54,31,66,73,72,94],
+  "gpu_memory_utilization_percent": [1,26,1,20,29,34,43],
+  "gpu_memory_used_mib": [10236,10220,10224,10222,10221,10220,10218],
+  "gpu_memory_total_mib": 16376,
+  "gpu_power_w": [127.88,157.82,146.75,152.78,158.24,169.28,171.60],
+  "recent_50_update_windows_s": [31.54,33.41,31.77,32.27,32.69],
+  "historical_compute_only_seconds": 0.25,
+  "historical_compute_source": "docs/time_path_p1_training_20260913.md:139",
+  "conditional_estimate": "If compute-only time were halved and all other time stayed constant: .65/(.65-.25+.25/2)=1.238x; NOT measured large-batch speedup",
+  "batch_48_or_64_tested": false,
+  "current_experiment_conditions_changed": false,
+  "official_reference": "https://docs.pytorch.org/tutorials/recipes/recipes/tuning_guide.html"
+}
