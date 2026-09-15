@@ -1,0 +1,24 @@
+{
+  "schema": "awsim_recovery_parallel_v1",
+  "scope": "time_recovery_parallel_20260916",
+  "instances": [
+    {
+      "run_id": "codex-time-recovery-parallel-d1-left-r02",
+      "side": "left",
+      "ros_domain_id": 1,
+      "network_container": "codex-time-recovery-parallel-d1-left-r02-net",
+      "node_cpus": "0-3",
+      "simulation_cpus": "8-9,12-15",
+      "event_cap": 3
+    },
+    {
+      "run_id": "codex-time-recovery-parallel-d2-right-r02",
+      "side": "right",
+      "ros_domain_id": 2,
+      "network_container": "codex-time-recovery-parallel-d2-right-r02-net",
+      "node_cpus": "4-7",
+      "simulation_cpus": "10-11,16-19",
+      "event_cap": 3
+    }
+  ]
+}

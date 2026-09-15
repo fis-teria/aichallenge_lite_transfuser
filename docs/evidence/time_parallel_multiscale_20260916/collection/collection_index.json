@@ -1,0 +1,70 @@
+{
+  "schema": "parallel_recovery_collection_audit_v1",
+  "runs": [
+    {
+      "run_id": "codex-time-recovery-parallel-d1-left-r01",
+      "split": "train",
+      "target_abs_lateral_m": 0.6,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "accepted": 262,
+      "target_band_anchors": 20,
+      "three_event_qualified": true,
+      "accepted_events": 3,
+      "summary_sha256": "52c53881948b10a706067ac205ec25d74ad09557d4ca79bb728e008909903072",
+      "raw_bytes": 1370060836,
+      "clock_sha256": "979b2e548d2e479fae295adda2fa9c146dfadf3def556fe93f46dc4e89471705"
+    },
+    {
+      "run_id": "codex-time-recovery-parallel-d2-right-r01",
+      "split": "excluded",
+      "target_abs_lateral_m": 0.6,
+      "status": "FAILED",
+      "fault": null,
+      "accepted": 0,
+      "target_band_anchors": 0,
+      "three_event_qualified": false,
+      "accepted_events": 0,
+      "summary_sha256": "24ca90426574a6ab1a7103a7bf2026fd6006eeab6d64b8896dd8d4f4e345fe50",
+      "raw_bytes": 361725521,
+      "clock_sha256": "f5322114bb0937f5b7f93e31b5e1681e9039769f0cccd97bcd2350685002be9a"
+    },
+    {
+      "run_id": "codex-time-recovery-parallel-d1-left-r02",
+      "split": "validation",
+      "target_abs_lateral_m": 0.6,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "accepted": 242,
+      "target_band_anchors": 21,
+      "three_event_qualified": true,
+      "accepted_events": 3,
+      "summary_sha256": "48d0640154c28217358a5b92a2ea2ac2ad88151d46f43217f9315890da6fe4ac",
+      "raw_bytes": 1396064975,
+      "clock_sha256": "3334f60ba7e297cc0abd6883519c1dd17c82fe3e8140b99b0d51ef83d6bbd0a6"
+    },
+    {
+      "run_id": "codex-time-recovery-parallel-d2-right-r02",
+      "split": "validation",
+      "target_abs_lateral_m": 0.6,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "accepted": 242,
+      "target_band_anchors": 7,
+      "three_event_qualified": true,
+      "accepted_events": 3,
+      "summary_sha256": "13a11cd1badf6f5b6d5d31c3ce70c91ebab376773426fcaea2de6f0ff41b525d",
+      "raw_bytes": 1380893972,
+      "clock_sha256": "f6cbb10bc78fe174ee5fb8a304c185ff8911bd06bea9ec665e7e1ed7357c3ee7"
+    }
+  ],
+  "source_commit": "5e4cea7f030994c2ee4f58fb6fd5af4b170bb1e5",
+  "reused_auditor_sha256": "e966ab6dc06a69c7545b41b5230bd7280da2765f6734b7b0c566f3106168e574",
+  "reused_clock_auditor_sha256": "2420f3c605682bb58590150a8f2a8847a3d1ce6587030b28afae8dc6022be13d",
+  "all_raw_hashes_and_sqlite_checks_passed": true,
+  "new_data_added_to_active_training": false,
+  "parallel_pair_qualified": true,
+  "parallel_pair_accepted": 484,
+  "parallel_pair_target_band_anchors": 28,
+  "split_policy": "Whole runs; initial left calibration train, both simultaneous laps reserved validation; failed preflight excluded. Same sites, not held-out-site generalization."
+}
