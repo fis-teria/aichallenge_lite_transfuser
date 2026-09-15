@@ -1,0 +1,198 @@
+{
+  "run_id": "codex-time-recovery-sites-g01-right",
+  "split": "train",
+  "status": "COMPLETE_LAP",
+  "bag_verified": true,
+  "normal_stop_confirmed": true,
+  "fault": null,
+  "accepted": 167,
+  "marker_audit": {
+    "first_published_location_matches_control_trace": true,
+    "ordinary_rviz_display_configured": true,
+    "subscribers_at_shutdown": [],
+    "recorded_marker_array_matches": true,
+    "locations": [
+      {
+        "event_id": 1,
+        "site_id": "S00",
+        "sign": -1,
+        "planned_s_m": 116.0,
+        "actual_s_m": 116.04251361932593,
+        "x_m": 89635.53118714108,
+        "y_m": 43161.73145570345,
+        "yaw_rad": 2.2281136277604925,
+        "pose_stamp_ns": 123989997228,
+        "publication_sim_ns": 124084997226,
+        "publication_sequence": 2695,
+        "effective_rad": -0.003511175705587427,
+        "label": "S00 RIGHT"
+      },
+      {
+        "event_id": 2,
+        "site_id": "R07",
+        "sign": -1,
+        "planned_s_m": 233.0,
+        "actual_s_m": 233.08230754406586,
+        "x_m": 89651.54052151869,
+        "y_m": 43160.96853670761,
+        "yaw_rad": -0.3928571403160138,
+        "pose_stamp_ns": 216924995151,
+        "publication_sim_ns": 216949995150,
+        "publication_sequence": 4552,
+        "effective_rad": -0.00954914991193627,
+        "label": "R07 RIGHT"
+      }
+    ]
+  },
+  "events": [
+    {
+      "event_id": 1,
+      "seed": 915113,
+      "start_publication_ns": 123999997228,
+      "zero_publication_ns": 125854997186,
+      "end_publication_ns": 135899996962,
+      "recovery_confirmed": true,
+      "confirmation_publication_ns": 130109997091,
+      "start_s_m": 116.01719594732724,
+      "sign": -1,
+      "site_id": "S00",
+      "planned_start_s_m": 116.0,
+      "accepted": {
+        "count": 77,
+        "located": 77,
+        "outward_5cm_1deg": 0,
+        "toward_5cm_1deg": 11,
+        "goal_5to25cm_2to4deg": 0,
+        "lateral_range_m": [
+          -0.09613378509305015,
+          0.02688136841206331
+        ],
+        "heading_range_deg": [
+          -0.6398003389507037,
+          2.196340704665652
+        ]
+      },
+      "alternate": {
+        "count": 77,
+        "located": 77,
+        "outward_5cm_1deg": 0,
+        "toward_5cm_1deg": 12,
+        "goal_5to25cm_2to4deg": 0,
+        "lateral_range_m": [
+          -0.09785512886210496,
+          0.027549046650502555
+        ],
+        "heading_range_deg": [
+          -0.6609142339185102,
+          2.243101196353488
+        ]
+      },
+      "outward_anchor_ids": [],
+      "stop_region_anchors": 0
+    },
+    {
+      "event_id": 2,
+      "seed": 915113,
+      "start_publication_ns": 216899995151,
+      "zero_publication_ns": 218749995110,
+      "end_publication_ns": 228799994885,
+      "recovery_confirmed": true,
+      "confirmation_publication_ns": 223194995011,
+      "start_s_m": 233.02959072516452,
+      "sign": -1,
+      "site_id": "R07",
+      "planned_start_s_m": 233.0,
+      "accepted": {
+        "count": 90,
+        "located": 90,
+        "outward_5cm_1deg": 5,
+        "toward_5cm_1deg": 13,
+        "goal_5to25cm_2to4deg": 3,
+        "lateral_range_m": [
+          -0.10651866279411377,
+          0.029267320075666015
+        ],
+        "heading_range_deg": [
+          -2.997503130537283,
+          2.2783904418071987
+        ]
+      },
+      "alternate": {
+        "count": 90,
+        "located": 90,
+        "outward_5cm_1deg": 5,
+        "toward_5cm_1deg": 13,
+        "goal_5to25cm_2to4deg": 3,
+        "lateral_range_m": [
+          -0.10563787680472808,
+          0.02814625320856473
+        ],
+        "heading_range_deg": [
+          -3.0208369348044988,
+          2.296602142023718
+        ]
+      },
+      "outward_anchor_ids": [
+        "codex-time-recovery-sites-g01-right:epoch0000:218919995106",
+        "codex-time-recovery-sites-g01-right:epoch0000:219024995104",
+        "codex-time-recovery-sites-g01-right:epoch0000:219129995102"
+      ],
+      "stop_region_anchors": 0
+    }
+  ],
+  "planned_sites": [
+    {
+      "site_id": "S00",
+      "start_s_m": 116.0,
+      "sign": -1
+    },
+    {
+      "site_id": "R07",
+      "start_s_m": 233.0,
+      "sign": -1
+    }
+  ],
+  "skipped_sites": [],
+  "final_pulse_state": {
+    "stage": "complete",
+    "event_id": 2,
+    "completed_events": 2,
+    "pulse": {
+      "stage": "complete",
+      "approach_seen": true,
+      "start_ns": 216884995152,
+      "start_wall_ns": 32679283251127,
+      "release_ns": 218534995115,
+      "release_value_rad": -0.1,
+      "zero_ns": 218734995110,
+      "reason": "STATE_GOAL",
+      "last_sim_ns": 228784994886,
+      "last_wall_ns": 32691183437039
+    },
+    "start_s_m": 233.02959072516452,
+    "candidate_ns": 231784994886,
+    "stable_since_ns": null,
+    "recovery_since_ns": 222139995034,
+    "confirmed_ns": 223144995012,
+    "last_sim_ns": 325784992718,
+    "last_wall_ns": 32788183265826,
+    "approach_seen": true,
+    "reason": "SITE_EVENT_COMPLETE",
+    "site_cursor": 2,
+    "active_site_index": 1,
+    "skipped_sites": [],
+    "last_progress_m": 18.78667239802147
+  },
+  "success_events": 2,
+  "prepared": {
+    "run_id": "codex-time-recovery-sites-g01-right",
+    "anchors": 167,
+    "input_valid": 167,
+    "real_input_replay_equal": [
+      "codex-time-recovery-sites-g01-right:epoch0000:127359997153",
+      "codex-time-recovery-sites-g01-right:epoch0000:219549995092"
+    ],
+    "input_reason_refinements": []
+  },
+  "all_sites_have_at_least_60_anchors": true
+}
