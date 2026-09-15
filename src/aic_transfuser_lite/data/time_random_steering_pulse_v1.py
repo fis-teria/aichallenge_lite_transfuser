@@ -43,6 +43,7 @@ class RandomPulseConfig:
     future_tail_s: float = 3.
     clearance_margin_m: float = .5
     sites: tuple[PulseSite, ...] = ()
+    control_policy: str = 'pp_additive_v1'
 
     def __post_init__(self) -> None:
         if not isinstance(self.sites, (list, tuple)):
@@ -51,10 +52,13 @@ class RandomPulseConfig:
         if any(not isinstance(s, PulseSite) for s in sites):
             raise ValueError('PULSE_SITES_SEQUENCE')
         object.__setattr__(self, 'sites', sites)
+        if (self.control_policy not in ('pp_additive_v1', 'nominal_guide_then_pp_v1')
+                or self.control_policy == 'nominal_guide_then_pp_v1' and not sites):
+            raise ValueError('RANDOM_CONTROL_POLICY')
         if (type(self.seed) is not int or not 0 <= self.seed <= 2**32-1
                 or type(self.max_events) is not int or not (1 if sites else 2) <= self.max_events <= 3):
             raise ValueError('RANDOM_SEED_OR_EVENT_LIMIT')
-        values = [v for k, v in self.__dict__.items() if k not in ('seed', 'max_events', 'sites')]
+        values = [v for k, v in self.__dict__.items() if k not in ('seed', 'max_events', 'sites', 'control_policy')]
         spatial_bounds = (len(sites) == self.max_events and len({s.site_id for s in sites}) == len(sites)
                           and all(b.start_s_m-a.start_s_m >= 28. for a, b in zip(sites, sites[1:]))
                           and self.start_min_m == sites[0].start_s_m and self.start_max_m == sites[-1].start_s_m) if sites else False
@@ -132,7 +136,9 @@ def propose_random_pulse(config: RandomPulseConfig, template: SteeringPulseConfi
     if (state.stage not in ('waiting', 'pulse', 'cooldown', 'complete', 'aborted')
             or not 0 <= state.completed_events <= state.event_id <= config.max_events):
         raise ValueError('RANDOM_STAGE_OR_EVENT_ORDER')
-    if (template.duration_s != 2. or template.plateau_s != 1.5 or abs(template.amplitude_rad) != .1
+    profile = (template.duration_s, template.plateau_s, template.goal_min_elapsed_s)
+    expected = (1.5, 1., 1.25) if config.control_policy == 'nominal_guide_then_pp_v1' else (2., 1.5, 0.)
+    if (profile != expected or abs(template.amplitude_rad) != .1
             or template.recovery_s != 10. or template.max_lateral_m != .25
             or template.max_heading_rad != math.radians(4.)):
         raise ValueError('RANDOM_PRESERVES_PROVEN_PULSE')
@@ -282,6 +288,9 @@ def random_pulse_events(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any
             fixed_config = config
         if config != fixed_config:
             raise ValueError('RANDOM_CONFIG_CHANGED')
+        if config.control_policy == 'nominal_guide_then_pp_v1':
+            from .time_nominal_steering_guide_v1 import validate_guide_control_row
+            validate_guide_control_row(row)
         st = meta['state']; event_id = st['event_id']
         if type(event_id) is not int or not previous <= event_id <= min(previous+1, limit):
             raise ValueError('RANDOM_EVENT_ORDER')

@@ -28,6 +28,7 @@ class SteeringPulseConfig:
     min_speed_mps: float = 1.15
     max_speed_mps: float = 1.4
     plateau_s: float = 0.0
+    goal_min_elapsed_s: float = 0.0
 
     def __post_init__(self) -> None:
         if not all(type(v) in (float, int) and math.isfinite(v) for v in self.__dict__.values()):
@@ -35,6 +36,7 @@ class SteeringPulseConfig:
         if (not 10. <= self.start_s_m <= 300. or not 0. < abs(self.amplitude_rad) <= .1
                 or not .25 <= self.duration_s <= 2. or not .25 <= self.start_window_m <= 2.
                 or not 0. <= self.plateau_s <= max(0., self.duration_s-.5)
+                or not 0. <= self.goal_min_elapsed_s <= self.duration_s
                 or not .05 <= self.release_ramp_s <= min(.25, self.duration_s/2.)
                 or not 4. <= self.recovery_s <= 15.
                 or not 0. < self.goal_lateral_m < self.max_lateral_m <= .3
@@ -128,11 +130,13 @@ failure to reach the requested state never extends or amplifies it.
                 ramp_fraction = min(1., elapsed/ramp_s, (config.duration_s-elapsed)/ramp_s)
                 value = config.amplitude_rad*.5*(1.-math.cos(math.pi*ramp_fraction))
             sign = math.copysign(1., config.amplitude_rad)
-            reason = ('STATE_GOAL' if sign*lateral_m >= config.goal_lateral_m and sign*heading_rad >= config.goal_heading_rad
-                else 'LATERAL_LIMIT' if abs(lateral_m) >= config.max_lateral_m
+            # The minimum hold delays only the collection goal, never a bound.
+            reason = ('LATERAL_LIMIT' if abs(lateral_m) >= config.max_lateral_m
                 else 'HEADING_LIMIT' if abs(heading_rad) >= config.max_heading_rad
                 else 'PROGRESS_LIMIT' if s_m >= config.start_s_m+config.start_window_m+3.
-                else 'SPEED_LIMIT' if not config.min_speed_mps <= speed_mps <= config.max_speed_mps else None)
+                else 'SPEED_LIMIT' if not config.min_speed_mps <= speed_mps <= config.max_speed_mps
+                else 'STATE_GOAL' if elapsed >= config.goal_min_elapsed_s
+                    and sign*lateral_m >= config.goal_lateral_m and sign*heading_rad >= config.goal_heading_rad else None)
             if reason:
                 next_state = replace(next_state, stage='releasing', release_ns=sim_ns,
                                      release_value_rad=value, reason=reason)

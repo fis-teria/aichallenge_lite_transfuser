@@ -35,6 +35,9 @@ from aic_transfuser_lite.data.time_steering_pulse_v1 import (
 from aic_transfuser_lite.data.time_random_steering_pulse_v1 import (
     SCHEMA as RANDOM_PULSE_SCHEMA, RandomPulseConfig, RandomPulseState, propose_random_pulse, validate_random_guide,
 )
+from aic_transfuser_lite.data.time_nominal_steering_guide_v1 import (
+    POLICY as GUIDE_POLICY, NominalSteeringGuide, guide_control,
+)
 
 
 def main() -> None:
@@ -59,6 +62,7 @@ def main() -> None:
     pulse_spec = reference.get('steering_pulse')
     pulse_config = None; pulse_guide = None; pulse_state = SteeringPulseState()
     random_config = None; random_state = RandomPulseState(); last_guard_clearance = None
+    steering_guide = None
     if pulse_spec is not None:
         if (pulse_spec['schema'] not in ('measured_steering_pulse_v1', RANDOM_PULSE_SCHEMA) or reference['intervals']
                 or reference['signed_offset_m'] != 0.
@@ -74,6 +78,10 @@ def main() -> None:
             raise ValueError('PULSE_GUIDE_RECOVERY_COVERAGE')
         if random_config is not None:
             validate_random_guide(random_config, pulse_config, pulse_guide)
+            if random_config.control_policy == GUIDE_POLICY:
+                steering_guide = NominalSteeringGuide(pulse_spec['steering_guide'])
+                steering_guide.at(random_config.start_min_m-5.)
+                steering_guide.at(random_config.start_max_m+5.)
     import rclpy
     from rclpy.node import Node
     from rclpy.executors import SingleThreadedExecutor
@@ -211,7 +219,7 @@ def main() -> None:
         speed = None; fresh_velocity = False; details = {}; reason = 'STARTUP'; projection = None; current = None
         guard_yaw_rate = None
         inputs = dict(cache); motion_selected = None; input_times = {}
-        pulse_decision = None; pulse_errors = None; nominal_bounded_angle = None
+        pulse_decision = None; pulse_errors = None; nominal_bounded_angle = None; guide_command = None
         if clock_ns is not None:
             for role, history in histories.items():
                 input_times[role] = [(stamp(m.stamp if role in ('nominal','steering') else m.header.stamp), receipt)
@@ -323,7 +331,17 @@ def main() -> None:
                         **pulse_inputs, entry_clear=entry_clear)
                 nominal_bounded_angle, _ = bounded_collection_command(requested_angle,
                     float(nominal.longitudinal.acceleration), previous[0], dt)
-                requested_angle += pulse_decision.perturbation_rad
+                if steering_guide is None:
+                    requested_angle += pulse_decision.perturbation_rad
+                else:
+                    # Outside a disturbance, PP owns the command even at the
+                    # lap seam, where an open nominal guide has no support.
+                    guide_angle = (steering_guide.at(projection['s_m'])
+                        if pulse_decision.phase == 'hold' else requested_angle)
+                    guide_command = guide_control(pp_rad=requested_angle, guide_rad=guide_angle,
+                        pulse_rad=pulse_decision.perturbation_rad,
+                        amplitude_rad=pulse_config.amplitude_rad, phase=pulse_decision.phase)
+                    requested_angle = guide_command['requested_angle_rad']
             angle, bounded_accel = bounded_collection_command(requested_angle,
                 float(nominal.longitudinal.acceleration), previous[0], dt)
             stage('motion_reference')
@@ -432,6 +450,8 @@ def main() -> None:
                        if 'nominal' in inputs and math.isfinite(inputs['nominal'][0].lateral.steering_tire_angle) else None,
                    nominal_stamp_ns=stamp(inputs['nominal'][0].stamp) if 'nominal' in inputs else None)
         row['publication'] = publication  # ROS publication boundary, not simulator application time.
+        if steering_guide is not None:
+            row['guide_control'] = guide_command
         if pulse_config is not None:
             applied = publication is not None and target > 0 and not state['fault'] and pulse_decision is not None
             row['annotation_schema'] = 'measured_steering_pulse_v1'
