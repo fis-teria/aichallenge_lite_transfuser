@@ -206,10 +206,10 @@ def main() -> None:
         qos = (QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
                if role in ('velocity', 'steering', 'imu', 'nominal', 'preparation_nominal') else qos_profile_sensor_data)
         if large_config is not None and role in ('trajectory', 'preparation_trajectory'):
-            # Two static trajectories are large fragmented messages at 1 Hz.
-            # Match the generators' reliable QoS; losing one best-effort sample
-            # otherwise exhausts the unchanged 1.5 s freshness budget.
-            qos = QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE)
+            # The official generator offers best effort. A reliable reader
+            # cannot match it. Keep only its latest static trajectory; the
+            # dedicated campaign supplies buffer space for both large samples.
+            qos = QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
         receiver.create_subscription(kind, topic, lambda m, role=role: receive(role, m), qos)
 
     def snapshot():

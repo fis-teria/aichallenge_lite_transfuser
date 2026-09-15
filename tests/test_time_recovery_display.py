@@ -4,7 +4,16 @@ import sys
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from run_time_recovery_awsim import collection_display_environment
+from run_time_recovery_awsim import collection_display_environment, collection_dds_profile
+
+
+def test_dual_trajectory_buffer_is_confined_to_the_owned_large_mode_profile():
+    raw='<Domain><NetworkInterface name="lo"/><SocketReceiveBufferSize min="10MB"/><AllowMulticast>default</AllowMulticast></Domain>'
+    assert 'min="128kB"' in collection_dds_profile(raw)
+    large=collection_dds_profile(raw,large_mode=True)
+    assert 'min="1MB"' in large and '<AllowMulticast>false' in large and '127.0.0.1' in large
+    with pytest.raises(RuntimeError,match='DDS_PROFILE_CHANGED'):
+        collection_dds_profile(raw.replace('name="lo"','name="eth0"'),large_mode=True)
 
 
 def test_explicit_xwayland_display_and_auth_are_preserved(tmp_path):

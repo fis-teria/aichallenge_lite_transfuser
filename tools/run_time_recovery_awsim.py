@@ -43,6 +43,20 @@ def sha(path: Path) -> str:
     return digest.hexdigest()
 
 
+def collection_dds_profile(original: str, *, large_mode: bool = False) -> str:
+    """Owned loopback DDS; dual static references need room for both UDP bursts.
+
+    No host sysctl is modified. Sensor/decision deadlines are independent of
+    socket capacity. Legacy collection retains its existing 128 kB minimum.
+    """
+    if 'name="lo"' not in original or original.count('<SocketReceiveBufferSize min="10MB"/>') != 1:
+        raise RuntimeError('DDS_PROFILE_CHANGED')
+    requested = '1MB' if large_mode else '128kB'
+    result = original.replace('<SocketReceiveBufferSize min="10MB"/>', '<SocketReceiveBufferSize min="'+requested+'"/>')
+    result = result.replace('<AllowMulticast>default</AllowMulticast>', '<AllowMulticast>false</AllowMulticast>')
+    return result.replace('</Domain>', '<Discovery><ParticipantIndex>auto</ParticipantIndex><MaxAutoParticipantIndex>120</MaxAutoParticipantIndex><Peers><Peer Address="127.0.0.1"/></Peers></Discovery></Domain>')
+
+
 def main() -> None:
     global ROOT
     ap = argparse.ArgumentParser()
@@ -118,12 +132,7 @@ def main() -> None:
         (output/'reference.json').write_bytes(ref.read_bytes())
         if not (ROOT/'cpp_install/setup.bash').is_file():
             raise RuntimeError('ISOLATED_CPP_INSTALL_MISSING')
-        dds = (REPO/'vehicle/cyclonedds.xml').read_text()
-        if 'name="lo"' not in dds or '<SocketReceiveBufferSize min="10MB"/>' not in dds:
-            raise RuntimeError('DDS_PROFILE_CHANGED')
-        dds = dds.replace('<SocketReceiveBufferSize min="10MB"/>','<SocketReceiveBufferSize min="128kB"/>')
-        dds = dds.replace('<AllowMulticast>default</AllowMulticast>','<AllowMulticast>false</AllowMulticast>')
-        dds = dds.replace('</Domain>', '<Discovery><ParticipantIndex>auto</ParticipantIndex><MaxAutoParticipantIndex>120</MaxAutoParticipantIndex><Peers><Peer Address="127.0.0.1"/></Peers></Discovery></Domain>')
+        dds = collection_dds_profile((REPO/'vehicle/cyclonedds.xml').read_text(), large_mode=reference.get('large_recovery') is not None)
         runtime_dds = output/'cyclonedds.xml'; runtime_dds.write_text(dds)
         rviz = REPO/'aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz'
         original = rviz.read_text(); (output/'autoware.rviz.before').write_text(original)
