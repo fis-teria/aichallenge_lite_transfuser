@@ -1,0 +1,75 @@
+{
+  "schema": "time_objective_driving_comparison_v1",
+  "host": "graneple@192.168.3.10",
+  "native_root": "/home/thistle/e2e_autonomous/runs/time_objective_driving_comparison_20260915",
+  "display": ":0",
+  "maximum_trials": 6,
+  "maximum_wall_s_per_trial": 720,
+  "success": "official_judge_one_lap_and_stop_confirmation",
+  "control_difference_keys": [
+    "checkpoint_sha256"
+  ],
+  "models": {
+    "A": {
+      "name": "uniform_l1",
+      "checkpoint": "/home/thistle/e2e_autonomous/runs/time_recovery_random_update_20260915/best.pt",
+      "sha256": "53e1962b97cfaa47acae3e2ad4687fac96c80672905406fdbe1514abd9563da2",
+      "config": "configs/control/time_path_random_lap_20260915.json",
+      "deployment": "/home/graneple/e2e_autonomous/time_objective_lap_a_20260915"
+    },
+    "B": {
+      "name": "balanced_l1",
+      "checkpoint": "/home/thistle/e2e_autonomous/runs/time_recovery_objective_comparison_20260915/balanced_l1/best.pt",
+      "sha256": "b790087969a4309dcf1fa61e9ad5f6fbe0e5f9faf0b41c3b251111c9143f6514",
+      "config": "configs/control/time_path_balanced_l1_lap_20260915.json",
+      "deployment": "/home/graneple/e2e_autonomous/time_objective_lap_b_20260915"
+    },
+    "D": {
+      "name": "balanced_geometry",
+      "checkpoint": "/home/thistle/e2e_autonomous/runs/time_recovery_objective_comparison_20260915/balanced_geometry/best.pt",
+      "sha256": "bfa2cd54bed61491928a409167a02a8014fd46f22f689729d93498859936da3e",
+      "config": "configs/control/time_path_balanced_geometry_lap_20260915.json",
+      "deployment": "/home/graneple/e2e_autonomous/time_objective_lap_d_20260915"
+    }
+  },
+  "trials": [
+    {
+      "index": 1,
+      "arm": "A",
+      "run_id": "codex-time-obj-a-01",
+      "split": "closed_loop_evaluation"
+    },
+    {
+      "index": 2,
+      "arm": "D",
+      "run_id": "codex-time-obj-d-02",
+      "split": "closed_loop_evaluation"
+    },
+    {
+      "index": 3,
+      "arm": "B",
+      "run_id": "codex-time-obj-b-03",
+      "split": "closed_loop_evaluation"
+    },
+    {
+      "index": 4,
+      "arm": "B",
+      "run_id": "codex-time-obj-b-04",
+      "split": "closed_loop_evaluation"
+    },
+    {
+      "index": 5,
+      "arm": "D",
+      "run_id": "codex-time-obj-d-05",
+      "split": "closed_loop_evaluation"
+    },
+    {
+      "index": 6,
+      "arm": "A",
+      "run_id": "codex-time-obj-a-06",
+      "split": "closed_loop_evaluation"
+    }
+  ],
+  "collect_new_teacher_data": false,
+  "sealed_test_usage": "sealed"
+}
