@@ -18,6 +18,7 @@ from aic_transfuser_lite.data.time_recovery_collection_v1 import (
 )
 from integrate_normal_rviz_v4 import DISPLAY, follow_ego_view
 from aic_transfuser_lite.runtime.recovery_disturbance_markers import RVIZ_MARKER_DISPLAY
+from aic_transfuser_lite.data.time_large_recovery_reference_v1 import validate_large_reference
 
 ROOT = Path('/home/graneple/e2e_autonomous/time_recovery_collection_20260913')
 REPO = Path('/home/graneple/git/autononous_ai/aichallenge-racingkart')
@@ -111,6 +112,9 @@ def main() -> None:
         if sha(ref.with_suffix('.csv')) != reference['reference_sha256']:
             raise RuntimeError('REFERENCE_SHA_MISMATCH')
         result['reference_sha256'] = reference['reference_sha256']
+        if reference.get('large_recovery') is not None:
+            validate_large_reference(reference, ref.parent)
+            result['preparation_reference_sha256'] = reference['large_recovery']['preparation_sha256']
         (output/'reference.json').write_bytes(ref.read_bytes())
         if not (ROOT/'cpp_install/setup.bash').is_file():
             raise RuntimeError('ISOLATED_CPP_INSTALL_MISSING')
@@ -127,7 +131,10 @@ def main() -> None:
         if original.count(anchor) != 1:
             raise RuntimeError('RVIZ_LAYOUT_CHANGED')
         blocks = RVIZ_MARKER_DISPLAY
-        for name,color in [('baseline','220; 220; 220'),('reference','255; 130; 30'),('observed','0; 220; 255')]:
+        paths = [('baseline','220; 220; 220'),('reference','255; 130; 30'),('observed','0; 220; 255')]
+        if reference.get('large_recovery') is not None:
+            paths.append(('preparation', '180; 100; 255'))
+        for name,color in paths:
             blocks += DISPLAY.replace('V4-20 raw prediction','Recovery teacher '+name).replace('/visualization/v4_20/raw_path','/recovery_teacher/'+name+'_path').replace('255; 60; 180',color)
         rviz_copy = output/'autoware.rviz'; rviz_copy.write_text(follow_ego_view(original.replace(anchor,anchor+blocks,1)))
         mounts = [str(runtime_dds)+':/opt/autoware/cyclonedds.xml:ro', str(rviz_copy)+':/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz:ro']
@@ -246,6 +253,14 @@ def main() -> None:
                 if not isinstance(loaded, dict) or len(loaded) != 1:
                     raise RuntimeError('PP_PARAMETER_DUMP_SHAPE')
                 validate_collection_speed_parameters(args.speed_policy, next(iter(loaded.values()))['ros__parameters'])
+                if reference.get('large_recovery') is not None:
+                    params = run(['docker', 'exec', args.run_id+'-nodes', 'bash', '-lc',
+                        'source /aichallenge/workspace/install/setup.bash && source /capture/cpp_install/setup.bash && ros2 param dump /recovery_preparation_pure_pursuit'], timeout=15)
+                    (output/'preparation_pure_pursuit_loaded.yaml').write_text(params.stdout)
+                    loaded = yaml.safe_load(params.stdout)
+                    if not isinstance(loaded, dict) or len(loaded) != 1:
+                        raise RuntimeError('PREPARATION_PP_PARAMETER_DUMP_SHAPE')
+                    validate_collection_speed_parameters(args.speed_policy, next(iter(loaded.values()))['ros__parameters'])
                 if args.separate_cpus:
                     node_info = json.loads(run(['docker', 'inspect', args.run_id+'-nodes']).stdout)[0]
                     if node_info['HostConfig']['CpusetCpus'] != '2-5':

@@ -81,6 +81,8 @@ def check_collection_input_time(role: str, *, capture_ns: int, receipt_ns: int,
     """
     limits = {'camera': (500_000_000, 500_000_000), 'trajectory': (1_500_000_000, 2_000_000_000),
               **{r: (150_000_000, 300_000_000) for r in ('pose', 'velocity', 'steering', 'imu', 'scan', 'nominal')}}
+    limits['preparation_nominal'] = limits['nominal']
+    limits['preparation_trajectory'] = limits['trajectory']
     if role not in limits or any(type(t) is not int or t < 0 for t in (capture_ns, receipt_ns, now_sim_ns, now_wall_ns)):
         raise ValueError('INPUT_TIME_CONTRACT')
     capture_limit, receipt_limit = limits[role]
@@ -273,11 +275,14 @@ telemetry, conflicting same-stamp phases and later perturbations block labels.
 """
     schemas = {row.get('annotation_schema') for row in rows}
     from .time_random_steering_pulse_v1 import SCHEMA, random_pulse_events
-    versioned = bool(schemas & {'measured_steering_pulse_v1', SCHEMA})
-    if schemas - {None, 'measured_steering_pulse_v1', SCHEMA} or (versioned and len(schemas) != 1):
+    from .time_large_recovery_v1 import SCHEMA as LARGE_SCHEMA, large_recovery_events
+    versioned = bool(schemas & {'measured_steering_pulse_v1', SCHEMA, LARGE_SCHEMA})
+    if schemas - {None, 'measured_steering_pulse_v1', SCHEMA, LARGE_SCHEMA} or (versioned and len(schemas) != 1):
         raise ValueError('PHASE_ANNOTATION_SCHEMA')
     confirmed = ({e['event_id'] for e in random_pulse_events(rows) if e['recovery_confirmed']}
                  if SCHEMA in schemas else None)
+    large_confirmed = ({e['event_id'] for e in large_recovery_events(rows) if e['recovery_confirmed']}
+                       if LARGE_SCHEMA in schemas else None)
     phases: dict[int, str] = {}
     sequence = 0; previous_stamp = -1; previous_wall = -1
     for row in rows:
@@ -298,7 +303,16 @@ telemetry, conflicting same-stamp phases and later perturbations block labels.
         phase = row['phase']
         if phase not in PHASES:
             raise ValueError('PHASE_PUBLICATION_VALUE')
-        if phase in ELIGIBLE_PHASES:
+        if phase in ELIGIBLE_PHASES and LARGE_SCHEMA in schemas:
+            data = row['large_recovery']
+            allowed = {'recovery'} if phase == 'recovery' else {'waiting', 'cooldown', 'complete'}
+            if (data['applied'] is not True or data['command_source'] != 'nominal'
+                    or data['state']['stage'] not in allowed
+                    or not math.isclose(row['target_speed_mps'], TARGET_MPS, abs_tol=1e-5)):
+                raise ValueError('PHASE_PREPARATION_IN_TEACHER')
+            if phase == 'recovery' and data['state']['event_id'] not in large_confirmed:
+                phase = 'invalid'
+        elif phase in ELIGIBLE_PHASES:
             pulse = row['pulse']
             allowed_stage = {'recovery'} if phase == 'recovery' else {'waiting', 'skipped', 'complete'}
             target = row['target_speed_mps']

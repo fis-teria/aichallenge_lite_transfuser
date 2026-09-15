@@ -9,6 +9,7 @@ import time
 
 from aic_transfuser_lite.runtime.path_trace_v1 import ObservedPathTrace
 from aic_transfuser_lite.runtime.recovery_disturbance_markers import DisturbanceLocations, MARKER_TOPIC
+from aic_transfuser_lite.data.time_large_recovery_reference_v1 import validate_large_reference
 
 
 def main() -> None:
@@ -18,6 +19,9 @@ def main() -> None:
     args = parser.parse_args()
     reference = json.loads(args.reference.read_text())
     fixed = {'baseline': reference['baseline_xy_m'], 'reference': reference['reference_xy_m']}
+    if reference.get('large_recovery') is not None:
+        validate_large_reference(reference, args.reference.parent)
+        fixed['preparation'] = reference['large_recovery']['preparation_xy_m']
     for points in fixed.values():
         if len(points) < 20 or any(len(p) != 2 or not all(math.isfinite(v) for v in p) for p in points):
             raise ValueError('DISPLAY_REFERENCE_SHAPE_FINITE')

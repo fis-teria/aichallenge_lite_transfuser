@@ -11,6 +11,7 @@ import math
 from typing import Any, Mapping
 
 from aic_transfuser_lite.data.time_random_steering_pulse_v1 import PulseSite, SCHEMA
+from aic_transfuser_lite.data.time_large_recovery_v1 import SCHEMA as LARGE_SCHEMA, LargeRecoveryConfig
 
 MARKER_TOPIC = '/recovery_teacher/disturbance_markers'
 RVIZ_MARKER_DISPLAY = f'''    - Class: rviz_default_plugins/MarkerArray
@@ -41,10 +42,12 @@ class DisturbanceLocation:
     publication_sim_ns: int
     publication_sequence: int
     effective_rad: float
+    target_offset_m: float | None = None
 
     @property
     def label(self) -> str:
-        return self.site_id + (' LEFT' if self.sign == 1 else ' RIGHT')
+        label = self.site_id + (' LEFT' if self.sign == 1 else ' RIGHT')
+        return label if self.target_offset_m is None else label+f' PREP {abs(self.target_offset_m)*100:.0f}cm'
 
 
 class DisturbanceLocations:
@@ -55,6 +58,8 @@ class DisturbanceLocations:
 
     def add(self, row: Mapping[str, Any]) -> bool:
         """Consume a CONTROL_AND_PHASE row; return whether a location was added."""
+        if row.get('annotation_schema') == LARGE_SCHEMA:
+            return self._add_large(row)
         if row.get('annotation_schema') != SCHEMA or row.get('phase') != 'hold':
             return False
         pulse = row.get('pulse') or {}
@@ -92,7 +97,35 @@ class DisturbanceLocations:
             *map(float, values[:3]), *stamps, float(effective))
         return True
 
+    def _add_large(self, row: Mapping[str, Any]) -> bool:
+        """Mark first preparation-command selection, not proven lateral motion."""
+        data = row.get('large_recovery') or {}; pub = row.get('publication')
+        if data.get('applied') is not True or data.get('command_source') != 'preparation' or not pub:
+            return False
+        config = LargeRecoveryConfig(**data['config']); state = data['state']
+        event_id, index = state['event_id'], state['site_cursor']
+        if (type(event_id) is not int or not 1 <= event_id <= config.event_cap
+                or type(index) is not int or not 0 <= index < len(config.sites)):
+            raise ValueError('LARGE_MARKER_EVENT_INDEX')
+        site = config.sites[index]
+        if event_id in self.events:
+            if self.events[event_id].site_id != site.site_id:
+                raise ValueError('DISTURBANCE_EVENT_ID_REUSED')
+            return False
+        pose = row['current_pose']; s = row['projection']['s_m']
+        if not all(type(v) in (int, float) and math.isfinite(v) for v in (s, pose['x_m'], pose['y_m'], pose['yaw_rad'])):
+            raise ValueError('DISTURBANCE_MAP_POSE_FINITE')
+        stamps = (pose['stamp_ns'], pub['sim_ns'], pub['sequence'])
+        if not all(type(v) is int and v > 0 for v in stamps):
+            raise ValueError('DISTURBANCE_PUBLICATION_STAMPS')
+        self.events[event_id] = DisturbanceLocation(event_id, site.site_id, 1 if site.target_offset_m > 0 else -1,
+            site.start_s_m, s, pose['x_m'], pose['y_m'], pose['yaw_rad'], *stamps, 0., site.target_offset_m)
+        return True
+
     def report(self) -> dict[str, Any]:
-        return dict(frame_id='map', location_basis='pose_at_first_nonzero_command_publication',
+        return dict(frame_id='map', location_basis=(
+                    'pose_at_first_preparation_selection_not_proven_displacement'
+                    if any(e.target_offset_m is not None for e in self.events.values())
+                    else 'pose_at_first_nonzero_command_publication'),
                     topic=MARKER_TOPIC, events=[dict(asdict(event), label=event.label)
                     for event in self.events.values()])

@@ -38,6 +38,10 @@ from aic_transfuser_lite.data.time_random_steering_pulse_v1 import (
 from aic_transfuser_lite.data.time_nominal_steering_guide_v1 import (
     POLICY as GUIDE_POLICY, NominalSteeringGuide, guide_control,
 )
+from aic_transfuser_lite.data.time_large_recovery_v1 import (
+    SCHEMA as LARGE_SCHEMA, LargeRecoveryState, propose_large_recovery, commit_large_recovery,
+)
+from aic_transfuser_lite.data.time_large_recovery_reference_v1 import validate_large_reference
 
 
 def main() -> None:
@@ -63,6 +67,9 @@ def main() -> None:
     pulse_config = None; pulse_guide = None; pulse_state = SteeringPulseState()
     random_config = None; random_state = RandomPulseState(); last_guard_clearance = None
     steering_guide = None
+    large_config = None; large_guide = None; large_state = LargeRecoveryState()
+    if reference.get('large_recovery') is not None:
+        large_config, large_guide = validate_large_reference(reference, args.reference.parent)
     if pulse_spec is not None:
         if (pulse_spec['schema'] not in ('measured_steering_pulse_v1', RANDOM_PULSE_SCHEMA) or reference['intervals']
                 or reference['signed_offset_m'] != 0.
@@ -152,6 +159,10 @@ def main() -> None:
         'nominal': ('/recovery_teacher/nominal_control_cmd', AckermannControlCommand, '/recovery_teacher_pure_pursuit'),
         'trajectory': ('/recovery_teacher/trajectory', Trajectory, '/recovery_teacher_trajectory'),
     }
+    if large_config is not None:
+        topics.update(
+            preparation_nominal=('/recovery_teacher/preparation_control_cmd', AckermannControlCommand, '/recovery_preparation_pure_pursuit'),
+            preparation_trajectory=('/recovery_teacher/preparation_trajectory', Trajectory, '/recovery_preparation_trajectory'))
 
     def receive(role, m) -> None:
         receipt = time.monotonic_ns()
@@ -193,7 +204,7 @@ def main() -> None:
         # Pose retains the sensor-data queue: the scan's original capture time
         # needs both measured interpolation endpoints, not just the latest pose.
         qos = (QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT)
-               if role in ('velocity', 'steering', 'imu', 'nominal') else qos_profile_sensor_data)
+               if role in ('velocity', 'steering', 'imu', 'nominal', 'preparation_nominal') else qos_profile_sensor_data)
         receiver.create_subscription(kind, topic, lambda m, role=role: receive(role, m), qos)
 
     def snapshot():
@@ -204,7 +215,7 @@ def main() -> None:
                     {r:tuple(h) for r,h in histories.items()}, tuple(poses), tuple(scans), dict(sensor_counts), dict(imu_transforms))
 
     def tick(attempt: int = 0, started_ns: int | None = None, retry_reasons: tuple[str, ...] = ()) -> None:
-        nonlocal publisher, last_gc_wall, pulse_state, random_state, last_guard_clearance
+        nonlocal publisher, last_gc_wall, pulse_state, random_state, last_guard_clearance, large_state
         if started_ns is None:
             started_ns = time.monotonic_ns()
         stage_started = time.monotonic_ns(); thread_started = time.thread_time_ns(); stages = {}
@@ -220,9 +231,10 @@ def main() -> None:
         guard_yaw_rate = None
         inputs = dict(cache); motion_selected = None; input_times = {}
         pulse_decision = None; pulse_errors = None; nominal_bounded_angle = None; guide_command = None
+        large_decision = None; large_errors = None
         if clock_ns is not None:
             for role, history in histories.items():
-                input_times[role] = [(stamp(m.stamp if role in ('nominal','steering') else m.header.stamp), receipt)
+                input_times[role] = [(stamp(m.stamp if role in ('nominal','preparation_nominal','steering') else m.header.stamp), receipt)
                                      for m,receipt in history]
                 selected = select_collection_input(role, input_times[role],
                     now_sim_ns=clock_ns, now_wall_ns=now)
@@ -272,11 +284,11 @@ def main() -> None:
             if clock_ns is None or now-clock_receipt > 500_000_000:
                 raise ValueError('CLOCK_STALE')
             stage('authority_clock')
-            for role in ('pose', 'velocity', 'steering', 'imu', 'scan', 'camera', 'nominal', 'trajectory'):
+            for role in topics:
                 m, receipt = inputs[role]
                 if names(topics[role][0]) != [topics[role][2]]:
                     raise ValueError('SOURCE_'+role)
-                t = stamp(m.stamp if role in ('steering', 'nominal') else m.header.stamp)
+                t = stamp(m.stamp if role in ('steering', 'nominal', 'preparation_nominal') else m.header.stamp)
                 check_collection_input_time(role, capture_ns=t, receipt_ns=receipt, now_sim_ns=clock_ns, now_wall_ns=now)
             stage('source_input_validation')
             if not fresh_velocity:
@@ -312,6 +324,33 @@ def main() -> None:
             if state['stop_reason']:
                 raise ValueError('REQUESTED_BRAKE')
             requested_angle = float(nominal.lateral.steering_tire_angle)
+            if large_config is not None:
+                preparation, preparation_received = inputs['preparation_nominal']
+                preparation_trajectory = inputs['preparation_trajectory'][0]
+                if (preparation_trajectory.header.frame_id != 'map' or len(preparation_trajectory.points) < 20
+                        or any(not math.isclose(p.longitudinal_velocity_mps, TARGET_MPS, abs_tol=1e-5)
+                               for p in preparation_trajectory.points)):
+                    raise ValueError('PREPARATION_REFERENCE_SPEED_OR_FRAME')
+                if large_guide[0, 0] <= projection['s_m'] <= large_guide[-1, 0]:
+                    large_errors = nominal_recovery_errors(large_guide, s_m=projection['s_m'],
+                        offset_m=projection['offset_m'], yaw_rad=current.yaw_rad)
+                elif large_state.stage in ('preparing', 'handover', 'recovery'):
+                    raise ValueError('LARGE_LEFT_GUIDE_SUPPORT')
+                if state['armed_ns'] is not None:
+                    entry_clear = (large_errors is not None and last_guard_clearance is not None
+                        and 0 <= clock_ns-last_guard_clearance[0] <= 150_000_000 and last_guard_clearance[1] >= .4)
+                    large_decision = propose_large_recovery(large_config, large_state,
+                        sim_ns=clock_ns, wall_ns=now, s_m=projection['s_m'], speed_mps=speed,
+                        lateral_m=large_errors[0] if large_errors else 0.,
+                        heading_rad=large_errors[1] if large_errors else 0.,
+                        nominal_stamp_ns=stamp(nominal.stamp), entry_clear=entry_clear)
+                    if large_decision.command_source == 'preparation':
+                        validate_nominal(stamp_ns=stamp(preparation.stamp), now_ns=clock_ns,
+                            received_ns=preparation_received, now_wall_ns=now,
+                            target_mps=float(preparation.longitudinal.speed),
+                            acceleration_mps2=float(preparation.longitudinal.acceleration),
+                            steering_input_rad=float(preparation.lateral.steering_tire_angle), measured_speed_mps=speed)
+                        requested_angle = float(preparation.lateral.steering_tire_angle)
             if pulse_config is not None and state['armed_ns'] is not None:
                 if pulse_guide[0, 0] <= projection['s_m'] <= pulse_guide[-1, 0]:
                     pulse_errors = nominal_recovery_errors(pulse_guide, s_m=projection['s_m'],
@@ -382,7 +421,8 @@ def main() -> None:
         else:
             state['stop_since_ns'] = None; state['stop_confirmed'] = False
         phase = ('invalid' if state['fault'] or state['armed_ns'] is None else
-                 'braking' if state['stop_reason'] else pulse_decision.phase if pulse_decision is not None
+                 'braking' if state['stop_reason'] else large_decision.phase if large_decision is not None
+                 else pulse_decision.phase if pulse_decision is not None
                  else phase_at_s(projection['s_m'], reference['intervals']) if projection else 'invalid')
         state['phase'] = phase
         retry_after_snapshot = None
@@ -403,7 +443,7 @@ def main() -> None:
                         check_collection_decision_age(started_ns=started_ns, now_ns=publish_wall)
                         for role, (m, receipt) in inputs.items():
                             check_collection_input_time(role,
-                                capture_ns=stamp(m.stamp if role in ('nominal','steering') else m.header.stamp),
+                                capture_ns=stamp(m.stamp if role in ('nominal','preparation_nominal','steering') else m.header.stamp),
                                 receipt_ns=receipt, now_sim_ns=publish_sim, now_wall_ns=publish_wall)
                 except ValueError as exc:
                     if not state['fault'] and not sensor_fault[0] and collection_snapshot_retry_allowed(
@@ -425,6 +465,9 @@ def main() -> None:
                     publisher.publish(command); state['commands'] += 1
                     publication = dict(sim_ns=command_stamp, monotonic_ns=emitted_wall,
                                        sequence=state['commands'])
+                    if large_decision is not None and target > 0 and not state['fault']:
+                        large_state = commit_large_recovery(large_decision,
+                            sim_ns=command_stamp, wall_ns=emitted_wall, sequence=state['commands'])
                     if pulse_decision is not None and target > 0 and not state['fault']:
                         # No state change survives a rejected/unpublished proposal.
                         if random_config is None:
@@ -450,6 +493,18 @@ def main() -> None:
                        if 'nominal' in inputs and math.isfinite(inputs['nominal'][0].lateral.steering_tire_angle) else None,
                    nominal_stamp_ns=stamp(inputs['nominal'][0].stamp) if 'nominal' in inputs else None)
         row['publication'] = publication  # ROS publication boundary, not simulator application time.
+        if large_config is not None:
+            applied = publication is not None and target > 0 and not state['fault'] and large_decision is not None
+            row['annotation_schema'] = LARGE_SCHEMA
+            row['large_recovery'] = dict(config=asdict(large_config), state=asdict(large_state), applied=bool(applied),
+                command_source=large_decision.command_source if large_decision else 'nominal',
+                lateral_error_m=large_errors[0] if large_errors else None,
+                heading_error_rad=large_errors[1] if large_errors else None,
+                nominal_stamp_ns=row['nominal_stamp_ns'],
+                preparation_stamp_ns=stamp(inputs['preparation_nominal'][0].stamp) if 'preparation_nominal' in inputs else None,
+                normal_reference_sha256=reference['reference_sha256'],
+                preparation_reference_sha256=reference['large_recovery']['preparation_sha256'])
+            state['large_recovery'] = row['large_recovery']
         if steering_guide is not None:
             row['guide_control'] = guide_command
         if pulse_config is not None:
@@ -471,9 +526,9 @@ def main() -> None:
             if 'pose' in inputs and math.isfinite(inputs['pose'][0].twist.twist.linear.x) else None)
         row['measured_steering_rad'] = (float(inputs['steering'][0].steering_tire_angle)
             if 'steering' in inputs and math.isfinite(inputs['steering'][0].steering_tire_angle) else None)
-        row['input_timing_ns'] = {role: dict(capture_ns=stamp(m.stamp if role in ('nominal','steering') else m.header.stamp),
+        row['input_timing_ns'] = {role: dict(capture_ns=stamp(m.stamp if role in ('nominal','preparation_nominal','steering') else m.header.stamp),
             receipt_monotonic_ns=receipt, receipt_age_ns=now-receipt) for role,(m,receipt) in inputs.items()}
-        row['latest_received_capture_ns'] = {role:stamp(m.stamp if role in ('nominal','steering') else m.header.stamp)
+        row['latest_received_capture_ns'] = {role:stamp(m.stamp if role in ('nominal','preparation_nominal','steering') else m.header.stamp)
                                             for role,(m,receipt) in cache.items()}
         row['guard_heading_rate_radps'] = guard_yaw_rate
         row['raw_velocity_heading_rate_radps'] = (float(inputs['velocity'][0].heading_rate)

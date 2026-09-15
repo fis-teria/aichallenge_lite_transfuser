@@ -12,6 +12,7 @@ from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     COLLECTION_SPEED_POLICIES, collection_speed_gain,
 )
 from aic_transfuser_lite.runtime.recovery_disturbance_markers import MARKER_TOPIC
+from aic_transfuser_lite.data.time_large_recovery_reference_v1 import validate_large_reference
 
 TOPICS = ['/clock', '/sensing/camera/image_raw', '/sensing/camera/camera_info',
     '/sensing/lidar/scan', '/sensing/gnss/nav_sat_fix', '/sensing/imu/imu_raw',
@@ -20,6 +21,28 @@ TOPICS = ['/clock', '/sensing/camera/image_raw', '/sensing/camera/camera_info',
     '/awsim/state', '/awsim/status', '/tf', '/tf_static', '/recovery_teacher/nominal_control_cmd',
     '/recovery_teacher/raw_control_cmd', '/recovery_teacher/trajectory', '/recovery_teacher/phase',
     '/recovery_teacher/baseline_path', '/recovery_teacher/reference_path', '/recovery_teacher/observed_path', MARKER_TOPIC]
+PREPARATION_TOPICS = ['/recovery_teacher/preparation_trajectory', '/recovery_teacher/preparation_control_cmd',
+    '/recovery_teacher/preparation_raw_control_cmd', '/recovery_teacher/preparation_path']
+
+
+def preparation_commands(reference_root: Path, side: str, commands: dict[str, list[str]]) -> dict[str, list[str]]:
+    """Start a second official PP on a static, hash-verified preparation path."""
+    reference = json.loads((reference_root/(side+'.json')).read_text())
+    if reference.get('large_recovery') is None:
+        return {}
+    validate_large_reference(reference, reference_root)
+    replacements = {
+        '__node:=recovery_teacher_trajectory': '__node:=recovery_preparation_trajectory',
+        'trajectory:=/recovery_teacher/trajectory': 'trajectory:=/recovery_teacher/preparation_trajectory',
+        'csv_path:='+str(reference_root/(side+'.csv')):
+            'csv_path:='+str(reference_root/reference['large_recovery']['preparation_csv']),
+        'node_name:=recovery_teacher_pure_pursuit': 'node_name:=recovery_preparation_pure_pursuit',
+        'input_trajectory:=/recovery_teacher/trajectory': 'input_trajectory:=/recovery_teacher/preparation_trajectory',
+        'output_control_cmd:=/recovery_teacher/nominal_control_cmd': 'output_control_cmd:=/recovery_teacher/preparation_control_cmd',
+        'output_raw_control_cmd:=/recovery_teacher/raw_control_cmd': 'output_raw_control_cmd:=/recovery_teacher/preparation_raw_control_cmd',
+    }
+    return {'preparation_'+name: [replacements.get(part, part) for part in commands[name]]
+            for name in ('generator', 'pure_pursuit')}
 
 
 def main() -> None:
@@ -51,6 +74,10 @@ def main() -> None:
         'paths': ['python3', str(Path(__file__).with_name('time_recovery_paths_node.py')),
             '--output', str(args.output), '--reference', str(args.reference_root/(args.side+'.json'))],
     }
+    preparation = preparation_commands(args.reference_root, args.side, commands)
+    if preparation:
+        commands.update(preparation)
+        commands['bag'].extend(PREPARATION_TOPICS)
     (args.output/'node_commands.json').write_text(json.dumps(commands, indent=2))
     # The monitor uses tiny NumPy matrices, not a training workload. Avoid
     # creating 20 BLAS workers alongside AWSIM, RViz and ROS callbacks.
@@ -85,7 +112,7 @@ def main() -> None:
     finally:
         # Host freezes/stops its simulator before requesting child shutdown.
         # SQLite must receive SIGINT and finish before any offline reader opens it.
-        for name in ('bag', 'collector', 'pure_pursuit', 'generator', 'paths'):
+        for name in ('bag', 'collector', 'preparation_pure_pursuit', 'pure_pursuit', 'preparation_generator', 'generator', 'paths'):
             child = children.get(name)
             if child is None:
                 continue

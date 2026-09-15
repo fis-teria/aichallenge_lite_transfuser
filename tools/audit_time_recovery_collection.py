@@ -144,6 +144,17 @@ def main() -> None:
         recovery_interval_reached=bool(by_phase['recovery']),training_materialized=False,
         full_body_collision_free_verified=False,
         note='Phase candidates still require time-corpus sensor/history/observed-future validation; no training performed.')
+    if reference.get('large_recovery') is not None:
+        from aic_transfuser_lite.data.time_large_recovery_v1 import LargeRecoveryConfig, large_recovery_events
+        large_config = LargeRecoveryConfig(**reference['large_recovery']['config'])
+        events = large_recovery_events(control)
+        report['large_recovery_events'] = events
+        report['all_planned_large_events_recovered'] = (
+            len(events) == len(large_config.sites)
+            and all(e['recovery_confirmed'] and e['target_band_observed'] for e in events))
+        report['large_target_band_count_unit'] = 'published_control_observations_not_validated_camera_anchors'
+        report['event_cap'] = large_config.event_cap
+        report['automatic_event_cap_increase'] = False
     args.output.parent.mkdir(parents=True,exist_ok=True)
     args.output.write_text(json.dumps(report,indent=2,allow_nan=False))
     print(json.dumps(report,indent=2,allow_nan=False))

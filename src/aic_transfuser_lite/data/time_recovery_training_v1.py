@@ -89,6 +89,8 @@ def materialize_recovery_run(run: Path, destination: Path, *, split: str, types:
     phases = phase_windows(controls)
     from .time_random_steering_pulse_v1 import SCHEMA, random_pulse_events, event_at
     random_events = random_pulse_events(controls) if controls[0].get('annotation_schema') == SCHEMA else None
+    from .time_large_recovery_v1 import SCHEMA as LARGE_SCHEMA, large_recovery_events, large_event_at
+    large_events = large_recovery_events(controls) if controls[0].get('annotation_schema') == LARGE_SCHEMA else None
     cameras = {}
     for event in sorted(index.events, key=lambda e:(e.available_ns, e.sequence)):
         if event.role == 'camera':
@@ -120,6 +122,12 @@ def materialize_recovery_run(run: Path, destination: Path, *, split: str, types:
                 if event is None:
                     raise ValueError('RANDOM_TEACHER_EVENT_MISSING')
                 row['recovery_event_id'] = event['event_id']
+            if large_events is not None:
+                event = large_event_at(anchor.capture_ns, large_events)
+                if event is None:
+                    raise ValueError('LARGE_TEACHER_EVENT_MISSING')
+                row.update(recovery_event_id=event['event_id'], recovery_site_id=event['site_id'],
+                           requested_recovery_offset_m=event['target_offset_m'])
             accepted.append(row)
             labels.append(teacher)
     expected = [r['anchor_id'] for r in prior['anchors'] if r['usable_full'] and r.get('phase_and_xy_full')]
