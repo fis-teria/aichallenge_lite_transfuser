@@ -1,0 +1,764 @@
+{
+  "maximum_attempts": 11,
+  "maximum_pulse_events": 22,
+  "batch_size": 2,
+  "attempts": [
+    {
+      "run_id": "codex-time-recovery-separated-g01-left",
+      "side": "left",
+      "kind": "recovery",
+      "pair": 1,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915202,
+      "sites": [
+        {
+          "site_id": "S00",
+          "start_s_m": 117.0,
+          "sign": 1
+        }
+      ],
+      "reference": "group01_left.json",
+      "reference_sha256": "3bcfb5fa60256044c477ca06f00dd0278778cf6fe49d9292717859b53c4ca8d3",
+      "state": "WSL_MOVED",
+      "started_unix_s": 1789461831.2042954,
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "1980s",
+        "python3",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915/source/tools/run_time_recovery_awsim.py",
+        "--campaign-root",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915",
+        "--run-id",
+        "codex-time-recovery-separated-g01-left",
+        "--side",
+        "left",
+        "--speed-policy",
+        "aligned_gain4_v1",
+        "--separate-cpus"
+      ],
+      "pid": 387911,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_separated_20260915/codex-time-recovery-separated-g01-left"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g01-right",
+      "side": "right",
+      "kind": "recovery",
+      "pair": 1,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915203,
+      "sites": [
+        {
+          "site_id": "S00",
+          "start_s_m": 117.0,
+          "sign": -1
+        }
+      ],
+      "reference": "group01_right.json",
+      "reference_sha256": "8150e15e9dd252636a59acf69215f2df53c5eae547155893c8df7631b0aa5f06",
+      "state": "WSL_MOVED",
+      "started_unix_s": 1789462226.64837,
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "1980s",
+        "python3",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915/source/tools/run_time_recovery_awsim.py",
+        "--campaign-root",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915",
+        "--run-id",
+        "codex-time-recovery-separated-g01-right",
+        "--side",
+        "right",
+        "--speed-policy",
+        "aligned_gain4_v1",
+        "--separate-cpus"
+      ],
+      "pid": 394849,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_separated_20260915/codex-time-recovery-separated-g01-right"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g02-left",
+      "side": "left",
+      "kind": "recovery",
+      "pair": 2,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915204,
+      "sites": [
+        {
+          "site_id": "R02",
+          "start_s_m": 58.0,
+          "sign": 1
+        },
+        {
+          "site_id": "R05",
+          "start_s_m": 166.0,
+          "sign": 1
+        },
+        {
+          "site_id": "R09",
+          "start_s_m": 282.0,
+          "sign": 1
+        }
+      ],
+      "reference": "group02_left.json",
+      "reference_sha256": "360532fa51f7fa23f18d684aae3656cf679aae3680ba4340f1bf0383ed2e25d5",
+      "state": "WSL_MOVED",
+      "started_unix_s": 1789462807.2361088,
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "1980s",
+        "python3",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915/source/tools/run_time_recovery_awsim.py",
+        "--campaign-root",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915",
+        "--run-id",
+        "codex-time-recovery-separated-g02-left",
+        "--side",
+        "left",
+        "--speed-policy",
+        "aligned_gain4_v1",
+        "--separate-cpus"
+      ],
+      "pid": 403731,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_separated_20260915/codex-time-recovery-separated-g02-left"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g02-right",
+      "side": "right",
+      "kind": "recovery",
+      "pair": 2,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915205,
+      "sites": [
+        {
+          "site_id": "R02",
+          "start_s_m": 58.0,
+          "sign": -1
+        },
+        {
+          "site_id": "R05",
+          "start_s_m": 166.0,
+          "sign": -1
+        },
+        {
+          "site_id": "R09",
+          "start_s_m": 282.0,
+          "sign": -1
+        }
+      ],
+      "reference": "group02_right.json",
+      "reference_sha256": "1479329d35458b1a0e735360d5a2d985113aa3b707b74d05d3b912c23c6c6524",
+      "state": "WSL_MOVED",
+      "started_unix_s": 1789463202.5064065,
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "1980s",
+        "python3",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915/source/tools/run_time_recovery_awsim.py",
+        "--campaign-root",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915",
+        "--run-id",
+        "codex-time-recovery-separated-g02-right",
+        "--side",
+        "right",
+        "--speed-policy",
+        "aligned_gain4_v1",
+        "--separate-cpus"
+      ],
+      "pid": 410251,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_separated_20260915/codex-time-recovery-separated-g02-right"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g03-left",
+      "side": "left",
+      "kind": "recovery",
+      "pair": 3,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915206,
+      "sites": [
+        {
+          "site_id": "R03",
+          "start_s_m": 80.0,
+          "sign": 1
+        },
+        {
+          "site_id": "R06",
+          "start_s_m": 209.0,
+          "sign": 1
+        },
+        {
+          "site_id": "R10",
+          "start_s_m": 308.0,
+          "sign": 1
+        }
+      ],
+      "reference": "group03_left.json",
+      "reference_sha256": "af2a8dfe4907835a927628c27f1be9f37a8fa04b1e2f6a0d03c5b7a60bd28a0a",
+      "state": "WSL_MOVED",
+      "started_unix_s": 1789463778.7597327,
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "1980s",
+        "python3",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915/source/tools/run_time_recovery_awsim.py",
+        "--campaign-root",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915",
+        "--run-id",
+        "codex-time-recovery-separated-g03-left",
+        "--side",
+        "left",
+        "--speed-policy",
+        "aligned_gain4_v1",
+        "--separate-cpus"
+      ],
+      "pid": 419510,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_separated_20260915/codex-time-recovery-separated-g03-left"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g03-right",
+      "side": "right",
+      "kind": "recovery",
+      "pair": 3,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915207,
+      "sites": [
+        {
+          "site_id": "R03",
+          "start_s_m": 80.0,
+          "sign": -1
+        },
+        {
+          "site_id": "R06",
+          "start_s_m": 209.0,
+          "sign": -1
+        },
+        {
+          "site_id": "R10",
+          "start_s_m": 308.0,
+          "sign": -1
+        }
+      ],
+      "reference": "group03_right.json",
+      "reference_sha256": "d1f4c2742755bea33491be94f9927a40e6ae08969ed809d024edfddb7c1c68e1",
+      "state": "WSL_MOVED",
+      "started_unix_s": 1789464145.169807,
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "1980s",
+        "python3",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915/source/tools/run_time_recovery_awsim.py",
+        "--campaign-root",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915",
+        "--run-id",
+        "codex-time-recovery-separated-g03-right",
+        "--side",
+        "right",
+        "--speed-policy",
+        "aligned_gain4_v1",
+        "--separate-cpus"
+      ],
+      "pid": 425507,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_separated_20260915/codex-time-recovery-separated-g03-right"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g04-left",
+      "side": "left",
+      "kind": "recovery",
+      "pair": 4,
+      "split": "validation",
+      "site_selection_seed": 915110,
+      "seed": 915208,
+      "sites": [
+        {
+          "site_id": "R01",
+          "start_s_m": 23.0,
+          "sign": 1
+        },
+        {
+          "site_id": "R04",
+          "start_s_m": 146.0,
+          "sign": 1
+        },
+        {
+          "site_id": "R08",
+          "start_s_m": 261.0,
+          "sign": 1
+        }
+      ],
+      "reference": "group04_left.json",
+      "reference_sha256": "bac14421ef3ad26359ce8e73083d857de57e08dccd0d374be9ac9e2e2a83a593",
+      "state": "WSL_MOVED",
+      "started_unix_s": 1789464738.1741977,
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "1980s",
+        "python3",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915/source/tools/run_time_recovery_awsim.py",
+        "--campaign-root",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915",
+        "--run-id",
+        "codex-time-recovery-separated-g04-left",
+        "--side",
+        "left",
+        "--speed-policy",
+        "aligned_gain4_v1",
+        "--separate-cpus"
+      ],
+      "pid": 434234,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_separated_20260915/codex-time-recovery-separated-g04-left"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g04-right",
+      "side": "right",
+      "kind": "recovery",
+      "pair": 4,
+      "split": "validation",
+      "site_selection_seed": 915110,
+      "seed": 915209,
+      "sites": [
+        {
+          "site_id": "R01",
+          "start_s_m": 23.0,
+          "sign": -1
+        },
+        {
+          "site_id": "R04",
+          "start_s_m": 146.0,
+          "sign": -1
+        },
+        {
+          "site_id": "R08",
+          "start_s_m": 261.0,
+          "sign": -1
+        }
+      ],
+      "reference": "group04_right.json",
+      "reference_sha256": "209dd52760962f6a66ac2a436978a57d4c29df4e11f1bb5c25cfcf9651528b0a",
+      "state": "WSL_MOVED",
+      "started_unix_s": 1789465133.6084049,
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "1980s",
+        "python3",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915/source/tools/run_time_recovery_awsim.py",
+        "--campaign-root",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915",
+        "--run-id",
+        "codex-time-recovery-separated-g04-right",
+        "--side",
+        "right",
+        "--speed-policy",
+        "aligned_gain4_v1",
+        "--separate-cpus"
+      ],
+      "pid": 440676,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_separated_20260915/codex-time-recovery-separated-g04-right"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g05-left",
+      "side": "left",
+      "kind": "recovery",
+      "pair": 5,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915210,
+      "sites": [
+        {
+          "site_id": "R07",
+          "start_s_m": 233.0,
+          "sign": 1
+        }
+      ],
+      "reference": "group05_left.json",
+      "reference_sha256": "21e2adf6fa57e5995cf27510d3fc664aef08a3dcf14bab82efa52fcedc3b9230",
+      "state": "WSL_MOVED",
+      "started_unix_s": 1789465725.385576,
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "1980s",
+        "python3",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915/source/tools/run_time_recovery_awsim.py",
+        "--campaign-root",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915",
+        "--run-id",
+        "codex-time-recovery-separated-g05-left",
+        "--side",
+        "left",
+        "--speed-policy",
+        "aligned_gain4_v1",
+        "--separate-cpus"
+      ],
+      "pid": 449326,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_separated_20260915/codex-time-recovery-separated-g05-left"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g05-left-r1",
+      "side": "left",
+      "kind": "recovery",
+      "pair": 5,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915210,
+      "sites": [
+        {
+          "site_id": "R07",
+          "start_s_m": 233.0,
+          "sign": 1
+        }
+      ],
+      "reference": "group05_left.json",
+      "reference_sha256": "21e2adf6fa57e5995cf27510d3fc664aef08a3dcf14bab82efa52fcedc3b9230",
+      "replacement_for": "codex-time-recovery-separated-g05-left",
+      "state": "WSL_MOVED",
+      "started_unix_s": 1789466527.5304046,
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "1980s",
+        "python3",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915/source/tools/run_time_recovery_awsim.py",
+        "--campaign-root",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915",
+        "--run-id",
+        "codex-time-recovery-separated-g05-left-r1",
+        "--side",
+        "left",
+        "--speed-policy",
+        "aligned_gain4_v1",
+        "--separate-cpus"
+      ],
+      "pid": 460504,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_separated_20260915/codex-time-recovery-separated-g05-left-r1"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g05-right",
+      "side": "right",
+      "kind": "recovery",
+      "pair": 5,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915211,
+      "sites": [
+        {
+          "site_id": "R07",
+          "start_s_m": 233.0,
+          "sign": -1
+        }
+      ],
+      "reference": "group05_right.json",
+      "reference_sha256": "92532f4120d089449956d5dfce568af647c101bafeccd16d99271fab55a0a102",
+      "state": "WSL_MOVED",
+      "started_unix_s": 1789466923.167981,
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=20s",
+        "1980s",
+        "python3",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915/source/tools/run_time_recovery_awsim.py",
+        "--campaign-root",
+        "/home/graneple/e2e_autonomous/time_recovery_separated_20260915",
+        "--run-id",
+        "codex-time-recovery-separated-g05-right",
+        "--side",
+        "right",
+        "--speed-policy",
+        "aligned_gain4_v1",
+        "--separate-cpus"
+      ],
+      "pid": 466893,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_separated_20260915/codex-time-recovery-separated-g05-right"
+    }
+  ],
+  "planned_runs": [
+    {
+      "run_id": "codex-time-recovery-separated-g01-left",
+      "side": "left",
+      "kind": "recovery",
+      "pair": 1,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915202,
+      "sites": [
+        {
+          "site_id": "S00",
+          "start_s_m": 117.0,
+          "sign": 1
+        }
+      ],
+      "reference": "group01_left.json",
+      "reference_sha256": "3bcfb5fa60256044c477ca06f00dd0278778cf6fe49d9292717859b53c4ca8d3"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g01-right",
+      "side": "right",
+      "kind": "recovery",
+      "pair": 1,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915203,
+      "sites": [
+        {
+          "site_id": "S00",
+          "start_s_m": 117.0,
+          "sign": -1
+        }
+      ],
+      "reference": "group01_right.json",
+      "reference_sha256": "8150e15e9dd252636a59acf69215f2df53c5eae547155893c8df7631b0aa5f06"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g02-left",
+      "side": "left",
+      "kind": "recovery",
+      "pair": 2,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915204,
+      "sites": [
+        {
+          "site_id": "R02",
+          "start_s_m": 58.0,
+          "sign": 1
+        },
+        {
+          "site_id": "R05",
+          "start_s_m": 166.0,
+          "sign": 1
+        },
+        {
+          "site_id": "R09",
+          "start_s_m": 282.0,
+          "sign": 1
+        }
+      ],
+      "reference": "group02_left.json",
+      "reference_sha256": "360532fa51f7fa23f18d684aae3656cf679aae3680ba4340f1bf0383ed2e25d5"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g02-right",
+      "side": "right",
+      "kind": "recovery",
+      "pair": 2,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915205,
+      "sites": [
+        {
+          "site_id": "R02",
+          "start_s_m": 58.0,
+          "sign": -1
+        },
+        {
+          "site_id": "R05",
+          "start_s_m": 166.0,
+          "sign": -1
+        },
+        {
+          "site_id": "R09",
+          "start_s_m": 282.0,
+          "sign": -1
+        }
+      ],
+      "reference": "group02_right.json",
+      "reference_sha256": "1479329d35458b1a0e735360d5a2d985113aa3b707b74d05d3b912c23c6c6524"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g03-left",
+      "side": "left",
+      "kind": "recovery",
+      "pair": 3,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915206,
+      "sites": [
+        {
+          "site_id": "R03",
+          "start_s_m": 80.0,
+          "sign": 1
+        },
+        {
+          "site_id": "R06",
+          "start_s_m": 209.0,
+          "sign": 1
+        },
+        {
+          "site_id": "R10",
+          "start_s_m": 308.0,
+          "sign": 1
+        }
+      ],
+      "reference": "group03_left.json",
+      "reference_sha256": "af2a8dfe4907835a927628c27f1be9f37a8fa04b1e2f6a0d03c5b7a60bd28a0a"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g03-right",
+      "side": "right",
+      "kind": "recovery",
+      "pair": 3,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915207,
+      "sites": [
+        {
+          "site_id": "R03",
+          "start_s_m": 80.0,
+          "sign": -1
+        },
+        {
+          "site_id": "R06",
+          "start_s_m": 209.0,
+          "sign": -1
+        },
+        {
+          "site_id": "R10",
+          "start_s_m": 308.0,
+          "sign": -1
+        }
+      ],
+      "reference": "group03_right.json",
+      "reference_sha256": "d1f4c2742755bea33491be94f9927a40e6ae08969ed809d024edfddb7c1c68e1"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g04-left",
+      "side": "left",
+      "kind": "recovery",
+      "pair": 4,
+      "split": "validation",
+      "site_selection_seed": 915110,
+      "seed": 915208,
+      "sites": [
+        {
+          "site_id": "R01",
+          "start_s_m": 23.0,
+          "sign": 1
+        },
+        {
+          "site_id": "R04",
+          "start_s_m": 146.0,
+          "sign": 1
+        },
+        {
+          "site_id": "R08",
+          "start_s_m": 261.0,
+          "sign": 1
+        }
+      ],
+      "reference": "group04_left.json",
+      "reference_sha256": "bac14421ef3ad26359ce8e73083d857de57e08dccd0d374be9ac9e2e2a83a593"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g04-right",
+      "side": "right",
+      "kind": "recovery",
+      "pair": 4,
+      "split": "validation",
+      "site_selection_seed": 915110,
+      "seed": 915209,
+      "sites": [
+        {
+          "site_id": "R01",
+          "start_s_m": 23.0,
+          "sign": -1
+        },
+        {
+          "site_id": "R04",
+          "start_s_m": 146.0,
+          "sign": -1
+        },
+        {
+          "site_id": "R08",
+          "start_s_m": 261.0,
+          "sign": -1
+        }
+      ],
+      "reference": "group04_right.json",
+      "reference_sha256": "209dd52760962f6a66ac2a436978a57d4c29df4e11f1bb5c25cfcf9651528b0a"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g05-left",
+      "side": "left",
+      "kind": "recovery",
+      "pair": 5,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915210,
+      "sites": [
+        {
+          "site_id": "R07",
+          "start_s_m": 233.0,
+          "sign": 1
+        }
+      ],
+      "reference": "group05_left.json",
+      "reference_sha256": "21e2adf6fa57e5995cf27510d3fc664aef08a3dcf14bab82efa52fcedc3b9230"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g05-left-r1",
+      "side": "left",
+      "kind": "recovery",
+      "pair": 5,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915210,
+      "sites": [
+        {
+          "site_id": "R07",
+          "start_s_m": 233.0,
+          "sign": 1
+        }
+      ],
+      "reference": "group05_left.json",
+      "reference_sha256": "21e2adf6fa57e5995cf27510d3fc664aef08a3dcf14bab82efa52fcedc3b9230",
+      "replacement_for": "codex-time-recovery-separated-g05-left"
+    },
+    {
+      "run_id": "codex-time-recovery-separated-g05-right",
+      "side": "right",
+      "kind": "recovery",
+      "pair": 5,
+      "split": "train",
+      "site_selection_seed": 915110,
+      "seed": 915211,
+      "sites": [
+        {
+          "site_id": "R07",
+          "start_s_m": 233.0,
+          "sign": -1
+        }
+      ],
+      "reference": "group05_right.json",
+      "reference_sha256": "92532f4120d089449956d5dfce568af647c101bafeccd16d99271fab55a0a102"
+    }
+  ],
+  "sealed": true,
+  "selection_sha256": "c9e68ddd3354efc41c5b1e17123ebe47cdf35d9295e69106121b01bb6bde895e",
+  "excluded_failed_runs": [
+    "codex-time-recovery-separated-g05-left"
+  ],
+  "replacement_amendment_sha256": "7c2d2ba6154828ffe61d6f8cfb2d31a005f1038d0f37e1e3dfc7b5390a3a242e"
+}

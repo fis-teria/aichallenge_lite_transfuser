@@ -1,0 +1,704 @@
+{
+  "run_id": "codex-time-recovery-separated-g05-left",
+  "result_status": "STOPPED_FAILED",
+  "fault": "COLLECTION_COMPUTATION_TIMEOUT",
+  "observed_events": 0,
+  "training_anchors": 0,
+  "excluded_from_training": true,
+  "first_fault": {
+    "event": "CONTROL_AND_PHASE",
+    "monotonic_ns": 40303047213847,
+    "sim_ns": 146164996732,
+    "reason": "COLLECTION_COMPUTATION_TIMEOUT",
+    "phase": "invalid",
+    "projection": {
+      "s_m": 144.33245723949022,
+      "offset_m": 0.20259538308319175,
+      "distance_m": 0.20259538308319172,
+      "segment_index": 49,
+      "heading_error_rad": -0.07809505726620691
+    },
+    "speed_mps": 1.2304941415786743,
+    "issued_angle_rad": -0.06787271052598953,
+    "target_speed_mps": 0.0,
+    "acceleration_mps2": -1.0,
+    "guard": {
+      "policy": "CURVATURE_INTERVAL_SUPPORT_V2",
+      "support_directions": 64,
+      "sweep_samples": 356,
+      "integration_step_m": 0.004992408414138187,
+      "maximum_position_integration_error_m": 0.00029637690257208337,
+      "maximum_discretization_padding_m": 0.07846801941344972,
+      "stopping_travel_m": 1.7723049870190564,
+      "whole_sweep_convex_enclosure": true,
+      "vehicle_motion": {
+        "policy": "awsim_understeer_v1",
+        "static_wheelbase_m": 1.087,
+        "nominal_response_length_m": 1.1551352124606746,
+        "lateral_displacement_bound_m": 0.05191482424736023,
+        "scope": "EMPIRICAL_AWSIM_ONLY_CONDITIONAL_BRAKING_BOUNDS",
+        "gradient_interval_s2_per_m": [
+          0.0,
+          0.2
+        ],
+        "braking_speed_interval_mps": [
+          0.0,
+          1.2304941415786743
+        ],
+        "heading_rate_radps": -0.04952818900346756,
+        "reported_lateral_mps": -0.0065972208976745605,
+        "rear_lateral_mps": 0.002070212768354285,
+        "measured_curvature_per_m": -0.04025064998678083,
+        "low_speed_full_curvature_interval": false,
+        "curvature_interval_per_m": [
+          -0.06699243824501702,
+          -0.02931750919754848
+        ]
+      },
+      "scope": "FORWARD_SCAN_PROXIMITY_NOT_ALL_AROUND_FREE_SPACE",
+      "minimum_ray_margin_m": 1.9165039263903503,
+      "checked_rays": 750,
+      "measured_steer_rad": -0.04192381352186203,
+      "issued_steer_rad": -0.07269246876239777,
+      "previous_steer_rad": -0.04072362631559372,
+      "full_body_free_space_verified": false
+    },
+    "current_pose": {
+      "stamp_ns": 146149996733,
+      "clock": "sim",
+      "epoch": "0",
+      "world_frame": "map",
+      "body_frame": "base_link",
+      "x_m": 89620.79607765077,
+      "y_m": 43184.219484753165,
+      "yaw_rad": 1.1181651888631086
+    },
+    "nominal_angle_rad": -0.12115411460399628,
+    "nominal_stamp_ns": 146159996733,
+    "publication": {
+      "sim_ns": 146189996732,
+      "monotonic_ns": 40303075693416,
+      "sequence": 3123
+    },
+    "guide_control": {
+      "policy": "nominal_guide_then_pp_v1",
+      "phase": "baseline",
+      "guide_weight": 0.0,
+      "pp_angle_rad": -0.12115411460399628,
+      "guide_angle_rad": -0.12115411460399628,
+      "base_angle_rad": -0.12115411460399628,
+      "pulse_angle_rad": 0.0,
+      "requested_angle_rad": -0.12115411460399628
+    },
+    "annotation_schema": "measured_random_steering_pulse_v1",
+    "pulse": {
+      "state": {
+        "stage": "waiting",
+        "approach_seen": false,
+        "start_ns": null,
+        "start_wall_ns": null,
+        "release_ns": null,
+        "release_value_rad": 0.0,
+        "zero_ns": null,
+        "reason": null,
+        "last_sim_ns": null,
+        "last_wall_ns": null
+      },
+      "applied": false,
+      "requested_rad": 0.0,
+      "effective_rad": 0.0,
+      "lateral_error_m": 0.0017323163044390966,
+      "heading_error_rad": -0.00139317191370103
+    },
+    "random_pulse": {
+      "config": {
+        "seed": 915210,
+        "max_events": 1,
+        "start_min_m": 233.0,
+        "start_max_m": 233.0,
+        "jitter_min_s": 0.5,
+        "jitter_max_s": 1.5,
+        "stable_hold_s": 1.0,
+        "future_tail_s": 3.0,
+        "clearance_margin_m": 0.5,
+        "sites": [
+          {
+            "site_id": "R07",
+            "start_s_m": 233.0,
+            "sign": 1
+          }
+        ],
+        "control_policy": "nominal_guide_then_pp_v1"
+      },
+      "state": {
+        "stage": "waiting",
+        "event_id": 0,
+        "completed_events": 0,
+        "pulse": {
+          "stage": "waiting",
+          "approach_seen": false,
+          "start_ns": null,
+          "start_wall_ns": null,
+          "release_ns": null,
+          "release_value_rad": 0.0,
+          "zero_ns": null,
+          "reason": null,
+          "last_sim_ns": null,
+          "last_wall_ns": null
+        },
+        "start_s_m": null,
+        "candidate_ns": null,
+        "stable_since_ns": 142864996806,
+        "recovery_since_ns": null,
+        "confirmed_ns": null,
+        "last_sim_ns": 145999996736,
+        "last_wall_ns": 40302896583855,
+        "approach_seen": true,
+        "reason": null,
+        "site_cursor": 0,
+        "active_site_index": null,
+        "skipped_sites": [],
+        "last_progress_m": 144.13497406854881
+      }
+    },
+    "nominal_acceleration_mps2": 0.6151362657546997,
+    "odometry_speed_mps": 1.2351047753825748,
+    "measured_steering_rad": -0.04192381352186203,
+    "input_timing_ns": {
+      "nominal": {
+        "capture_ns": 146159996733,
+        "receipt_monotonic_ns": 40303041804438,
+        "receipt_age_ns": 5409409
+      },
+      "steering": {
+        "capture_ns": 146159996733,
+        "receipt_monotonic_ns": 40303036277195,
+        "receipt_age_ns": 10936652
+      },
+      "velocity": {
+        "capture_ns": 146159996733,
+        "receipt_monotonic_ns": 40303036235002,
+        "receipt_age_ns": 10978845
+      },
+      "scan": {
+        "capture_ns": 146143615358,
+        "receipt_monotonic_ns": 40303025781968,
+        "receipt_age_ns": 21431879
+      },
+      "imu": {
+        "capture_ns": 146149996733,
+        "receipt_monotonic_ns": 40303031259085,
+        "receipt_age_ns": 15954762
+      },
+      "camera": {
+        "capture_ns": 146154996733,
+        "receipt_monotonic_ns": 40303035723761,
+        "receipt_age_ns": 11490086
+      },
+      "pose": {
+        "capture_ns": 146149996733,
+        "receipt_monotonic_ns": 40303031606528,
+        "receipt_age_ns": 15607319
+      },
+      "trajectory": {
+        "capture_ns": 146004996736,
+        "receipt_monotonic_ns": 40303023028868,
+        "receipt_age_ns": 24184979
+      }
+    },
+    "latest_received_capture_ns": {
+      "nominal": 146159996733,
+      "steering": 146159996733,
+      "velocity": 146159996733,
+      "scan": 146143615358,
+      "imu": 146149996733,
+      "camera": 146154996733,
+      "pose": 146149996733,
+      "trajectory": 146004996736
+    },
+    "guard_heading_rate_radps": -0.04952818900346756,
+    "raw_velocity_heading_rate_radps": -0.04921521618962288,
+    "guard_heading_rate_source": "/sensing/imu/imu_raw",
+    "processing_ms": 28.809971,
+    "snapshot_retry_reasons": [
+      "STALE_steering"
+    ],
+    "decision_wall_ms": 104.337786,
+    "thread_cpu_ms": 20.088196,
+    "stage_wall_ms": {
+      "snapshot_selection": 0.959123,
+      "authority_clock": 0.746615,
+      "source_input_validation": 1.067654,
+      "motion_reference": 6.358106,
+      "scan_alignment": 0.550597,
+      "scan_guard": 18.530285
+    },
+    "gc_pauses": []
+  },
+  "previous_two_rows": [
+    {
+      "event": "CONTROL_AND_PHASE",
+      "monotonic_ns": 40302846697057,
+      "sim_ns": 145959996737,
+      "reason": "RECOVERY_TEACHER_TRACKING",
+      "phase": "baseline",
+      "projection": {
+        "s_m": 144.0848371906908,
+        "offset_m": 0.22166095246197584,
+        "distance_m": 0.22166095246197587,
+        "segment_index": 49,
+        "heading_error_rad": -0.06587479850161992
+      },
+      "speed_mps": 1.241586685180664,
+      "issued_angle_rad": -0.06957235932350159,
+      "target_speed_mps": 1.3888888888888888,
+      "acceleration_mps2": 0.5678005218505859,
+      "guard": {
+        "policy": "CURVATURE_INTERVAL_SUPPORT_V2",
+        "support_directions": 64,
+        "sweep_samples": 360,
+        "integration_step_m": 0.004990423651808598,
+        "maximum_position_integration_error_m": 0.00025108707212628464,
+        "maximum_discretization_padding_m": 0.07884224791480128,
+        "stopping_travel_m": 1.7915620909992866,
+        "whole_sweep_convex_enclosure": true,
+        "vehicle_motion": {
+          "policy": "awsim_understeer_v1",
+          "static_wheelbase_m": 1.087,
+          "nominal_response_length_m": 1.1563691873568058,
+          "lateral_displacement_bound_m": 0.05224760055541992,
+          "scope": "EMPIRICAL_AWSIM_ONLY_CONDITIONAL_BRAKING_BOUNDS",
+          "gradient_interval_s2_per_m": [
+            0.0,
+            0.2
+          ],
+          "braking_speed_interval_mps": [
+            0.0,
+            1.241586685180664
+          ],
+          "heading_rate_radps": -0.06973681598901749,
+          "reported_lateral_mps": -0.009595990180969238,
+          "rear_lateral_mps": 0.002607953448436451,
+          "measured_curvature_per_m": -0.05616749665680414,
+          "low_speed_full_curvature_interval": false,
+          "curvature_interval_per_m": [
+            -0.05616749665680414,
+            -0.02993438985265724
+          ]
+        },
+        "scope": "FORWARD_SCAN_PROXIMITY_NOT_ALL_AROUND_FREE_SPACE",
+        "minimum_ray_margin_m": 2.0196579317105696,
+        "checked_rays": 750,
+        "measured_steer_rad": -0.05796646699309349,
+        "issued_steer_rad": -0.04174341559410095,
+        "previous_steer_rad": -0.04368748068809509,
+        "full_body_free_space_verified": false
+      },
+      "current_pose": {
+        "stamp_ns": 145944996737,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89620.68774423639,
+        "y_m": 43183.99600532272,
+        "yaw_rad": 1.1303854476276955
+      },
+      "nominal_angle_rad": -0.06957235932350159,
+      "nominal_stamp_ns": 145959996737,
+      "publication": {
+        "sim_ns": 145999996736,
+        "monotonic_ns": 40302877722152,
+        "sequence": 3121
+      },
+      "guide_control": {
+        "policy": "nominal_guide_then_pp_v1",
+        "phase": "baseline",
+        "guide_weight": 0.0,
+        "pp_angle_rad": -0.06957235932350159,
+        "guide_angle_rad": -0.06957235932350159,
+        "base_angle_rad": -0.06957235932350159,
+        "pulse_angle_rad": 0.0,
+        "requested_angle_rad": -0.06957235932350159
+      },
+      "annotation_schema": "measured_random_steering_pulse_v1",
+      "pulse": {
+        "state": {
+          "stage": "waiting",
+          "approach_seen": false,
+          "start_ns": null,
+          "start_wall_ns": null,
+          "release_ns": null,
+          "release_value_rad": 0.0,
+          "zero_ns": null,
+          "reason": null,
+          "last_sim_ns": null,
+          "last_wall_ns": null
+        },
+        "applied": true,
+        "requested_rad": 0.0,
+        "effective_rad": 0.0,
+        "lateral_error_m": 0.0021696131521965756,
+        "heading_error_rad": -0.0014887885726626582
+      },
+      "random_pulse": {
+        "config": {
+          "seed": 915210,
+          "max_events": 1,
+          "start_min_m": 233.0,
+          "start_max_m": 233.0,
+          "jitter_min_s": 0.5,
+          "jitter_max_s": 1.5,
+          "stable_hold_s": 1.0,
+          "future_tail_s": 3.0,
+          "clearance_margin_m": 0.5,
+          "sites": [
+            {
+              "site_id": "R07",
+              "start_s_m": 233.0,
+              "sign": 1
+            }
+          ],
+          "control_policy": "nominal_guide_then_pp_v1"
+        },
+        "state": {
+          "stage": "waiting",
+          "event_id": 0,
+          "completed_events": 0,
+          "pulse": {
+            "stage": "waiting",
+            "approach_seen": false,
+            "start_ns": null,
+            "start_wall_ns": null,
+            "release_ns": null,
+            "release_value_rad": 0.0,
+            "zero_ns": null,
+            "reason": null,
+            "last_sim_ns": null,
+            "last_wall_ns": null
+          },
+          "start_s_m": null,
+          "candidate_ns": null,
+          "stable_since_ns": 142864996806,
+          "recovery_since_ns": null,
+          "confirmed_ns": null,
+          "last_sim_ns": 145959996737,
+          "last_wall_ns": 40302846697057,
+          "approach_seen": true,
+          "reason": null,
+          "site_cursor": 0,
+          "active_site_index": null,
+          "skipped_sites": [],
+          "last_progress_m": 144.0848371906908
+        }
+      },
+      "nominal_acceleration_mps2": 0.5678005218505859,
+      "odometry_speed_mps": 1.2469386988357931,
+      "measured_steering_rad": -0.05796646699309349,
+      "input_timing_ns": {
+        "nominal": {
+          "capture_ns": 145959996737,
+          "receipt_monotonic_ns": 40302841991623,
+          "receipt_age_ns": 4705434
+        },
+        "steering": {
+          "capture_ns": 145949996737,
+          "receipt_monotonic_ns": 40302836704095,
+          "receipt_age_ns": 9992962
+        },
+        "velocity": {
+          "capture_ns": 145949996737,
+          "receipt_monotonic_ns": 40302836571339,
+          "receipt_age_ns": 10125718
+        },
+        "scan": {
+          "capture_ns": 145943529334,
+          "receipt_monotonic_ns": 40302816890108,
+          "receipt_age_ns": 29806949
+        },
+        "imu": {
+          "capture_ns": 145949996737,
+          "receipt_monotonic_ns": 40302836922903,
+          "receipt_age_ns": 9774154
+        },
+        "camera": {
+          "capture_ns": 145944996737,
+          "receipt_monotonic_ns": 40302835672375,
+          "receipt_age_ns": 11024682
+        },
+        "pose": {
+          "capture_ns": 145944996737,
+          "receipt_monotonic_ns": 40302832517536,
+          "receipt_age_ns": 14179521
+        },
+        "trajectory": {
+          "capture_ns": 145004996758,
+          "receipt_monotonic_ns": 40301949236524,
+          "receipt_age_ns": 897460533
+        }
+      },
+      "latest_received_capture_ns": {
+        "nominal": 145959996737,
+        "steering": 145949996737,
+        "velocity": 145949996737,
+        "scan": 145943529334,
+        "imu": 145949996737,
+        "camera": 145944996737,
+        "pose": 145944996737,
+        "trajectory": 145004996758
+      },
+      "guard_heading_rate_radps": -0.06973681598901749,
+      "raw_velocity_heading_rate_radps": -0.07030745595693588,
+      "guard_heading_rate_source": "/sensing/imu/imu_raw",
+      "processing_ms": 31.762072,
+      "snapshot_retry_reasons": [],
+      "decision_wall_ms": 31.859672,
+      "thread_cpu_ms": 21.332093,
+      "stage_wall_ms": {
+        "snapshot_selection": 3.040409,
+        "authority_clock": 0.712369,
+        "source_input_validation": 0.57589,
+        "motion_reference": 7.907542,
+        "scan_alignment": 0.429947,
+        "scan_guard": 17.361012
+      },
+      "gc_pauses": []
+    },
+    {
+      "event": "CONTROL_AND_PHASE",
+      "monotonic_ns": 40302896583855,
+      "sim_ns": 145999996736,
+      "reason": "RECOVERY_TEACHER_TRACKING",
+      "phase": "baseline",
+      "projection": {
+        "s_m": 144.13497406854881,
+        "offset_m": 0.2181336997405178,
+        "distance_m": 0.21813369974051783,
+        "segment_index": 49,
+        "heading_error_rad": -0.06855100656749613
+      },
+      "speed_mps": 1.2394013404846191,
+      "issued_angle_rad": -0.06787271052598953,
+      "target_speed_mps": 1.3888888888888888,
+      "acceleration_mps2": 0.576665461063385,
+      "guard": {
+        "policy": "CURVATURE_INTERVAL_SUPPORT_V2",
+        "support_directions": 64,
+        "sweep_samples": 359,
+        "integration_step_m": 0.004993738859329176,
+        "maximum_position_integration_error_m": 0.000235752342697712,
+        "maximum_discretization_padding_m": 0.07866228942306348,
+        "stopping_travel_m": 1.787758511639845,
+        "whole_sweep_convex_enclosure": true,
+        "vehicle_motion": {
+          "policy": "awsim_understeer_v1",
+          "static_wheelbase_m": 1.087,
+          "nominal_response_length_m": 1.156125205725778,
+          "lateral_displacement_bound_m": 0.05218204021453857,
+          "scope": "EMPIRICAL_AWSIM_ONLY_CONDITIONAL_BRAKING_BOUNDS",
+          "gradient_interval_s2_per_m": [
+            0.0,
+            0.2
+          ],
+          "braking_speed_interval_mps": [
+            0.0,
+            1.2394013404846191
+          ],
+          "heading_rate_radps": -0.06536732614040375,
+          "reported_lateral_mps": -0.009292185306549072,
+          "rear_lateral_mps": 0.0021470975472608345,
+          "measured_curvature_per_m": -0.0527410484442791,
+          "low_speed_full_curvature_interval": false,
+          "curvature_interval_per_m": [
+            -0.052814275981456056,
+            -0.029224987305227653
+          ]
+        },
+        "scope": "FORWARD_SCAN_PROXIMITY_NOT_ALL_AROUND_FREE_SPACE",
+        "minimum_ray_margin_m": 1.9851516067807093,
+        "checked_rays": 750,
+        "measured_steer_rad": -0.057346172630786896,
+        "issued_steer_rad": -0.04072362631559372,
+        "previous_steer_rad": -0.04174341559410095,
+        "full_body_free_space_verified": false
+      },
+      "current_pose": {
+        "stamp_ns": 145984996736,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89620.7093690869,
+        "y_m": 43184.041376171,
+        "yaw_rad": 1.1277092395618193
+      },
+      "nominal_angle_rad": -0.06787271052598953,
+      "nominal_stamp_ns": 145999996736,
+      "publication": {
+        "sim_ns": 146019996736,
+        "monotonic_ns": 40302961321915,
+        "sequence": 3122
+      },
+      "guide_control": {
+        "policy": "nominal_guide_then_pp_v1",
+        "phase": "baseline",
+        "guide_weight": 0.0,
+        "pp_angle_rad": -0.06787271052598953,
+        "guide_angle_rad": -0.06787271052598953,
+        "base_angle_rad": -0.06787271052598953,
+        "pulse_angle_rad": 0.0,
+        "requested_angle_rad": -0.06787271052598953
+      },
+      "annotation_schema": "measured_random_steering_pulse_v1",
+      "pulse": {
+        "state": {
+          "stage": "waiting",
+          "approach_seen": false,
+          "start_ns": null,
+          "start_wall_ns": null,
+          "release_ns": null,
+          "release_value_rad": 0.0,
+          "zero_ns": null,
+          "reason": null,
+          "last_sim_ns": null,
+          "last_wall_ns": null
+        },
+        "applied": true,
+        "requested_rad": 0.0,
+        "effective_rad": 0.0,
+        "lateral_error_m": 0.002286373716236495,
+        "heading_error_rad": -0.0013844261382500722
+      },
+      "random_pulse": {
+        "config": {
+          "seed": 915210,
+          "max_events": 1,
+          "start_min_m": 233.0,
+          "start_max_m": 233.0,
+          "jitter_min_s": 0.5,
+          "jitter_max_s": 1.5,
+          "stable_hold_s": 1.0,
+          "future_tail_s": 3.0,
+          "clearance_margin_m": 0.5,
+          "sites": [
+            {
+              "site_id": "R07",
+              "start_s_m": 233.0,
+              "sign": 1
+            }
+          ],
+          "control_policy": "nominal_guide_then_pp_v1"
+        },
+        "state": {
+          "stage": "waiting",
+          "event_id": 0,
+          "completed_events": 0,
+          "pulse": {
+            "stage": "waiting",
+            "approach_seen": false,
+            "start_ns": null,
+            "start_wall_ns": null,
+            "release_ns": null,
+            "release_value_rad": 0.0,
+            "zero_ns": null,
+            "reason": null,
+            "last_sim_ns": null,
+            "last_wall_ns": null
+          },
+          "start_s_m": null,
+          "candidate_ns": null,
+          "stable_since_ns": 142864996806,
+          "recovery_since_ns": null,
+          "confirmed_ns": null,
+          "last_sim_ns": 145999996736,
+          "last_wall_ns": 40302896583855,
+          "approach_seen": true,
+          "reason": null,
+          "site_cursor": 0,
+          "active_site_index": null,
+          "skipped_sites": [],
+          "last_progress_m": 144.13497406854881
+        }
+      },
+      "nominal_acceleration_mps2": 0.576665461063385,
+      "odometry_speed_mps": 1.2447224764631073,
+      "measured_steering_rad": -0.057346172630786896,
+      "input_timing_ns": {
+        "nominal": {
+          "capture_ns": 145999996736,
+          "receipt_monotonic_ns": 40302892545015,
+          "receipt_age_ns": 4038840
+        },
+        "steering": {
+          "capture_ns": 145984996736,
+          "receipt_monotonic_ns": 40302872683510,
+          "receipt_age_ns": 23900345
+        },
+        "velocity": {
+          "capture_ns": 145984996736,
+          "receipt_monotonic_ns": 40302872287689,
+          "receipt_age_ns": 24296166
+        },
+        "scan": {
+          "capture_ns": 145980725489,
+          "receipt_monotonic_ns": 40302856855711,
+          "receipt_age_ns": 39728144
+        },
+        "imu": {
+          "capture_ns": 145999996736,
+          "receipt_monotonic_ns": 40302877616697,
+          "receipt_age_ns": 18967158
+        },
+        "camera": {
+          "capture_ns": 145944996737,
+          "receipt_monotonic_ns": 40302835672375,
+          "receipt_age_ns": 60911480
+        },
+        "pose": {
+          "capture_ns": 145984996736,
+          "receipt_monotonic_ns": 40302875732906,
+          "receipt_age_ns": 20850949
+        },
+        "trajectory": {
+          "capture_ns": 145004996758,
+          "receipt_monotonic_ns": 40301949236524,
+          "receipt_age_ns": 947347331
+        }
+      },
+      "latest_received_capture_ns": {
+        "nominal": 145999996736,
+        "steering": 145984996736,
+        "velocity": 145984996736,
+        "scan": 145980725489,
+        "imu": 145999996736,
+        "camera": 145944996737,
+        "pose": 145984996736,
+        "trajectory": 145004996758
+      },
+      "guard_heading_rate_radps": -0.06536732614040375,
+      "raw_velocity_heading_rate_radps": -0.06700513511896133,
+      "guard_heading_rate_source": "/sensing/imu/imu_raw",
+      "processing_ms": 66.139533,
+      "snapshot_retry_reasons": [],
+      "decision_wall_ms": 66.195028,
+      "thread_cpu_ms": 28.653293,
+      "stage_wall_ms": {
+        "snapshot_selection": 2.718151,
+        "authority_clock": 2.553968,
+        "source_input_validation": 1.901433,
+        "motion_reference": 14.712012,
+        "scan_alignment": 0.568463,
+        "scan_guard": 41.657712
+      },
+      "gc_pauses": []
+    }
+  ],
+  "control_sha256": "488be8a472635575dce5e2561bd3a00dc201cba42241c8eb6de828d5527b4526",
+  "result_canonical_sha256": "2dcb4ab30e76e0d39f4e11a5dc349b887396973b352b744a53d4825b738cf9aa",
+  "confirmed_stop": true,
+  "closed_bag": true,
+  "cleanup_errors": [],
+  "conclusion": "PRE_EVENT_SNAPSHOT_RETRY_STALE_STEERING_TOTAL_DECISION_104MS_EXCEEDS_UNCHANGED_80MS",
+  "boundary": "Host CPU contention not conclusively attributable; no model or disturbance action at failure",
+  "response": "Preserve complete failed raw; one replacement with unchanged runtime and safety thresholds"
+}
