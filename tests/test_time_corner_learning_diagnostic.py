@@ -2,7 +2,9 @@
 import math
 from pathlib import Path
 import runpy
+from types import SimpleNamespace
 
+import numpy as np
 import pytest
 
 
@@ -57,3 +59,49 @@ def test_validation_is_never_given_training_exposure_and_duplicate_ids_fail():
 def test_nonfinite_state_fails_instead_of_becoming_an_uncovered_state():
     with pytest.raises(ValueError):
         neighborhood([row(left_m=float("nan"))], row(), (3., .15, .09, .25))
+
+
+def test_original_fp32_recipe_disables_convolution_tf32_and_restores_determinism():
+    import torch
+    backends = [(torch.backends.cuda.matmul, "allow_tf32"), (torch.backends.cudnn, "allow_tf32"),
+                (torch.backends.cudnn, "benchmark"), (torch.backends.cudnn, "deterministic")]
+    original = [getattr(obj, key) for obj, key in backends]
+    try:
+        for (obj, key), value in zip(backends, [True, True, True, False]):
+            setattr(obj, key, value)
+        recipe = functions["configure_precision"]()
+        assert [getattr(obj, key) for obj, key in backends] == [False, False, False, True]
+        assert recipe["dtype"] == "float32" and recipe["cudnn_deterministic"]
+    finally:
+        for (obj, key), value in zip(backends, original):
+            setattr(obj, key, value)
+
+
+def test_reused_state_audit_rejects_changed_order_split_and_eligibility():
+    class Dataset(SimpleNamespace):
+        def __len__(self):
+            return len(self._anchors)
+    anchors = [dict(anchor_id=k, run_id="5kmh_run", observation_ns=i) for i, k in enumerate(("a", "b"))]
+    ds = Dataset(_anchors=anchors, input_valid=np.array([True, False]), xy_mask=np.ones((2, 30), bool))
+    rows = [dict(a, index=i, split="train", recovery=False, event_id=None, site_id=None, eligible=i == 0)
+            for i, a in enumerate(anchors)]
+    check = functions["validate_reused_states"]
+    check(rows, ds, "train")
+    for changed, split in [(rows[::-1], "train"), (rows, "validation"), (rows[:1], "train"),
+                           ([dict(rows[0], eligible=False), rows[1]], "train")]:
+        with pytest.raises(ValueError):
+            check(changed, ds, split)
+
+
+def test_reuse_requires_explicit_hashes_and_matching_audit_context(tmp_path):
+    context = dict(source_commit="old", **{k: {} for k in ("cache_sha256", "plan_sha256", "preparation_sha256",
+        "trial_hashes", "reference", "corner_base_progress_m", "neighborhoods_m_rad_mps", "runtime_queries")})
+    for name, value in zip(functions["REUSE_FILES"], [context, [], []]):
+        functions["write"](tmp_path/name, value)
+    hashes = [functions["_sha"](tmp_path/name) for name in functions["REUSE_FILES"]]
+    previous, proof = functions["load_reused_coverage"](tmp_path, hashes, context)
+    assert previous == context and not proof["raw_pose_replay_performed_this_run"]
+    with pytest.raises(ValueError, match="HASH_MISMATCH"):
+        functions["load_reused_coverage"](tmp_path, ["bad", *hashes[1:]], context)
+    with pytest.raises(ValueError, match="CONTEXT_MISMATCH"):
+        functions["load_reused_coverage"](tmp_path, hashes, dict(context, cache_sha256="changed"))

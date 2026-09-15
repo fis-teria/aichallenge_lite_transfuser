@@ -29,6 +29,45 @@ CORNER_M = (165., 210.)
 NEIGHBORHOODS = {"narrow": (3., .15, math.radians(5.), .25),
                  "wide": (5., .25, math.radians(10.), .4)}
 STATE_KEYS = ("base_s_m", "left_m", "heading_rad", "speed_mps")
+REUSE_FILES = ("coverage.json", "train_states.json", "validation_states.json")
+
+
+def configure_precision() -> dict:
+    """Match the original FP32 training/evaluation backend, including convolutions."""
+    import torch
+    torch.backends.cuda.matmul.allow_tf32 = False
+    torch.backends.cudnn.allow_tf32 = False
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+    return dict(dtype="float32", matmul_tf32=False, cudnn_tf32=False,
+                cudnn_benchmark=False, cudnn_deterministic=True)
+
+
+def validate_reused_states(rows: list[dict], ds: TimeTrainingCacheDataset, split: str) -> None:
+    """Reject a cached geometry audit from different anchors, order, or eligibility."""
+    if len(rows) != len(ds):
+        raise ValueError("REUSED_STATE_LENGTH_MISMATCH")
+    for i, (row, anchor) in enumerate(zip(rows, ds._anchors)):
+        expected = dict(index=i, anchor_id=anchor["anchor_id"], run_id=anchor["run_id"], split=split,
+            observation_ns=anchor["observation_ns"], recovery=anchor["run_id"].startswith("codex-time-recovery-"),
+            event_id=anchor.get("recovery_event_id"), site_id=anchor.get("recovery_site_id"),
+            eligible=bool(ds.input_valid[i] and ds.xy_mask[i].all()))
+        if any(row.get(k) != v for k, v in expected.items()):
+            raise ValueError("REUSED_STATE_IDENTITY_MISMATCH:"+str(i))
+
+
+def load_reused_coverage(path: Path, hashes: list[str], current: dict) -> tuple[dict, dict]:
+    """Reuse only explicitly hash-pinned, compatible geometry evidence; no raw replay."""
+    if len(hashes) != len(REUSE_FILES) or any(_sha(path/name) != digest for name, digest in zip(REUSE_FILES, hashes)):
+        raise ValueError("REUSED_COVERAGE_HASH_MISMATCH")
+    previous = read(path/"coverage.json")
+    keys = ("cache_sha256", "plan_sha256", "preparation_sha256", "trial_hashes", "reference",
+            "corner_base_progress_m", "neighborhoods_m_rad_mps", "runtime_queries")
+    for key in keys:
+        if json.dumps(previous[key], sort_keys=True) != json.dumps(current[key], sort_keys=True):
+            raise ValueError("REUSED_COVERAGE_CONTEXT_MISMATCH:"+key)
+    return previous, dict(path=str(path), source_commit=previous["source_commit"],
+        files=dict(zip(REUSE_FILES, hashes)), raw_pose_replay_performed_this_run=False)
 
 
 def read(path: Path) -> Any:
@@ -224,12 +263,17 @@ def main() -> None:
     ap.add_argument("--root", type=Path, default=Path(".."))
     ap.add_argument("--plan", type=Path, default=Path("configs/time_path_p1/recovery_multiscale_20260916.json"))
     ap.add_argument("--output", type=Path, required=True)
+    ap.add_argument("--reuse-coverage", type=Path)
+    ap.add_argument("--reuse-sha256", nargs=3, metavar=("COVERAGE", "TRAIN", "VALIDATION"))
     args = ap.parse_args(); root = args.root.resolve(); out = args.output.resolve()
+    if bool(args.reuse_coverage) != bool(args.reuse_sha256):
+        ap.error("--reuse-coverage and --reuse-sha256 must be supplied together")
     if sys.platform != "linux" or not torch.cuda.is_available():
         raise RuntimeError("NATIVE_WSL_CUDA_REQUIRED")
     if subprocess.check_output(["git", "status", "--porcelain"], text=True).strip():
         raise RuntimeError("CLEAN_COMMITTED_SOURCE_REQUIRED")
     torch.set_num_threads(4)
+    precision_recipe = configure_precision()
     soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
     resource.setrlimit(resource.RLIMIT_NOFILE, (max(soft, min(hard, 8192)), hard))
     started = time.monotonic(); out.mkdir(parents=True, exist_ok=False)
@@ -268,12 +312,22 @@ def main() -> None:
         trial_hashes=trial_hashes, reference=ref_proof, checkpoints={k: dict(path=str(p), sha256=hashes[k]) for k, p in checkpoints.items()},
         corner_base_progress_m=CORNER_M, neighborhoods_m_rad_mps=NEIGHBORHOODS, runtime_queries=queries,
         reserved_test_read=False, optimizer_updates=0, checkpoint_selection_changed=False,
-        new_awsim_trials=0, batch_size=32, workers=4, precision="float32", datasets={}, models={})
+        new_awsim_trials=0, batch_size=32, workers=4, precision="float32", precision_recipe=precision_recipe,
+        datasets={}, models={})
+    previous = None
+    if args.reuse_coverage:
+        previous, summary["reused_coverage"] = load_reused_coverage(args.reuse_coverage.resolve(), args.reuse_sha256, summary)
     write(out/"diagnostic_plan.json", summary)
     data = {}
     for split in ("train", "validation"):
         ds = TimeTrainingCacheDataset(cache_path, split, verify_hashes=False)
-        rows, raw_proof = states(ds, root, reference, base, split, out)
+        if previous is None:
+            rows, raw_proof = states(ds, root, reference, base, split, out)
+        else:
+            rows = read(args.reuse_coverage/(split+"_states.json"))
+            validate_reused_states(rows, ds, split)
+            raw_proof = previous["datasets"][split]["raw_sources"]
+            write(out/(split+"_states.json"), rows)
         ix = fit_indices(rows); selected = [rows[i] for i in ix]; gs = groups(selected)
         presentations = None
         if split == "train":
@@ -284,6 +338,8 @@ def main() -> None:
         report = dict(all_cache_anchors=len(rows), statuses=dict(Counter(r["status"] for r in rows)),
             groups={k: population([selected[i] for i in v], presentations) for k, v in gs.items()},
             neighborhood_counts=neighbors, raw_sources=raw_proof, fit_anchor_order_sha256=content_sha256([r["anchor_id"] for r in selected]))
+        if previous is not None and report != previous["datasets"][split]:
+            raise ValueError("REUSED_COVERAGE_RECOMPUTATION_MISMATCH:"+split)
         summary["datasets"][split] = report
         data[split] = dict(ds=ds, indices=ix, rows=selected, groups=gs,
                           teacher_pp=pp_rows(ds, ix, ds.targets[ix], controller, teacher=True))
