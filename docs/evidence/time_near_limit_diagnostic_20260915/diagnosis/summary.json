@@ -1,0 +1,259 @@
+{
+  "scope": "ONE_AWSIM_NEAR_LIMIT_DIAGNOSTIC_NOT_STANDARD_PASS",
+  "source_hashes": {
+    "control.jsonl": "26a527a0d3aee7fdeb61d5b2f22c82fbe16333fded108f5f78604dad87f61791",
+    "inference.jsonl": "ff90c7872bdda5f0156475c4182a8321088b1393c8e3e425b8fb42567fea1d35",
+    "vehicle_observations.jsonl": "591586c4b49dfeabf32eac4aba9ce00d49e9af03053a14a5990d60465cc46611",
+    "trial_config.json": "44f43ddf0621d52168b35f24b62c024c069fab2b4ffbd6efe82e3df1d366b923",
+    "host_result.json": "89bc152d7102b66fe6cd262b87aa89151949bbaea4d11980015ac3df1bcccfd8"
+  },
+  "status": "LAP_NOT_COMPLETED",
+  "host_error": "RuntimeError: CONTROL_STOPPING_SWEEP_OCCUPIED",
+  "judge_laps": [],
+  "judge_sections": [
+    0,
+    1,
+    2
+  ],
+  "stop_confirmed": false,
+  "time_to_first_guard_or_end_s": 100.804997746,
+  "pose_travel_before_guard_m": 127.11270206282225,
+  "final_pose": {
+    "stamp_ns": 119449997330,
+    "clock": "sim",
+    "epoch": "0",
+    "world_frame": "map",
+    "body_frame": "base_link",
+    "x_m": 89632.2365786401,
+    "y_m": 43164.400293474035,
+    "yaw_rad": 2.2796084005569113
+  },
+  "checkpoint_sha256": [
+    "53e1962b97cfaa47acae3e2ad4687fac96c80672905406fdbe1514abd9563da2"
+  ],
+  "control_replay": {
+    "status": "PASS",
+    "matched_commands": 2017,
+    "unavailable_commands": 56,
+    "maximum_absolute_error": 4.440892098500626e-16,
+    "tolerance": 1e-09,
+    "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+    "post_control_rejections": {
+      "STOPPING_SWEEP_OCCUPIED": 1
+    },
+    "actuator_mapping_matched": 2017,
+    "steering_response_matched": 2017,
+    "vehicle_motion_matched": 2017,
+    "scan_guard_decisions_replayed": false
+  },
+  "measured_speed_kmh": {
+    "count": 1956,
+    "median": 4.617754340171814,
+    "p95": 4.670696425437928,
+    "max": 4.691137218475342,
+    "min": 4.349695873260498
+  },
+  "standard_stop_states": {
+    "codex-time-obj-a-01": {
+      "standard_v1": {
+        "reason": "STOPPING_SWEEP_OCCUPIED",
+        "minimum_ray_margin_m": -0.02906319016212411
+      },
+      "awsim_near_limit_v1": {
+        "reason": "PASS",
+        "minimum_ray_margin_m": 0.30395465600876614
+      }
+    },
+    "codex-time-obj-b-03": {
+      "standard_v1": {
+        "reason": "STOPPING_SWEEP_OCCUPIED",
+        "minimum_ray_margin_m": -0.015238402529157646
+      },
+      "awsim_near_limit_v1": {
+        "reason": "PASS",
+        "minimum_ray_margin_m": 0.3338550611600217
+      }
+    },
+    "codex-time-obj-b-04": {
+      "standard_v1": {
+        "reason": "STOPPING_SWEEP_OCCUPIED",
+        "minimum_ray_margin_m": -0.006344853542764817
+      },
+      "awsim_near_limit_v1": {
+        "reason": "PASS",
+        "minimum_ray_margin_m": 0.3406170717258926
+      }
+    },
+    "codex-time-obj-a-06": {
+      "standard_v1": {
+        "reason": "STOPPING_SWEEP_OCCUPIED",
+        "minimum_ray_margin_m": -0.04654066409897162
+      },
+      "awsim_near_limit_v1": {
+        "reason": "PASS",
+        "minimum_ray_margin_m": 0.2772997016937925
+      }
+    }
+  },
+  "references": {
+    "codex-time-recovery-speedbase-r30": {
+      "scope": "Measured normal guide, progress 55 to 142 m, not road-center truth",
+      "source": {
+        "run": "codex-time-recovery-speedbase-r30",
+        "hashes": {
+          "control.jsonl": "54e127461c0a41a4f189acbee09316c37fb2a10cb664eb8e324b693c76f7c142",
+          "result.json": "a6a266af8fb3e1b892c4ae86f098546376b3f5144268088eecbaaabdb4ca2826",
+          "bag/bag_0.db3": "0bad183ede831f66c14049262ed5e8816c6ae4ff73119ee32ea58bc29e6b2cf7"
+        },
+        "pose_audit": {
+          "input_poses": 3442,
+          "unique_stamps": 3435,
+          "exact_duplicates": 0,
+          "conflicting_stamps": 7,
+          "excluded_segments": 14
+        },
+        "selected_capture_ns": [
+          76439998291,
+          145244996753
+        ],
+        "control_pose_difference_m": {
+          "count": 138,
+          "min": 0.0,
+          "median": 0.0,
+          "p95": 0.0,
+          "max": 0.0,
+          "mean": 0.0
+        },
+        "control_pose_check_exclusions": {},
+        "median_speed_mps": 1.278796672821045,
+        "lap_status": "COMPLETE_LAP",
+        "assets_verified": true
+      },
+      "final_projection": {
+        "status": "EVALUATED",
+        "left_m": 0.7994400535024453,
+        "heading_deg": -1.86998372580985
+      },
+      "plan_status_counts": {
+        "EVALUATED": 428
+      },
+      "last10s_1s_following_abs_lateral_m": {
+        "count": 85,
+        "median": 0.0031049491781284717,
+        "p95": 0.006744681382020118,
+        "max": 0.007721201830549052,
+        "min": 5.065215254364417e-05
+      },
+      "last10s_1s_prediction_abs_lateral_m": {
+        "count": 85,
+        "median": 0.49800051489425085,
+        "p95": 0.8123290861340593,
+        "max": 0.8147565978600206,
+        "min": 0.27981760701104097
+      },
+      "last_prediction": {
+        "time_s": 100.61999775,
+        "anchor_left_m": 0.804791991494017,
+        "horizons": {
+          "1": {
+            "left_m": 0.7629254360116268,
+            "change_from_anchor_m": -0.041866555482390266
+          },
+          "2": {
+            "left_m": 0.6993341784527223,
+            "change_from_anchor_m": -0.10545781304129476
+          },
+          "3": {
+            "left_m": 0.6371582534167083,
+            "change_from_anchor_m": -0.16763373807730875
+          }
+        }
+      }
+    },
+    "codex-time-recovery-speedbase-r31": {
+      "scope": "Measured normal guide, progress 55 to 142 m, not road-center truth",
+      "source": {
+        "run": "codex-time-recovery-speedbase-r31",
+        "hashes": {
+          "control.jsonl": "ac8f6e97b96a2468b03dfd46f09d5e37273546850238d9d9019d02e16330654a",
+          "result.json": "7f611ae19f194453a2f20092b3ed440e33476b3b592de8e7f4ce6ab6e7e37926",
+          "bag/bag_0.db3": "0a098a7e212a2feefa6c96a4ab2b730b499799eed6ab866c046ddea71ae45214"
+        },
+        "pose_audit": {
+          "input_poses": 3441,
+          "unique_stamps": 3436,
+          "exact_duplicates": 0,
+          "conflicting_stamps": 5,
+          "excluded_segments": 10
+        },
+        "selected_capture_ns": [
+          74544998333,
+          143354996795
+        ],
+        "control_pose_difference_m": {
+          "count": 138,
+          "min": 0.0,
+          "median": 0.0,
+          "p95": 0.0,
+          "max": 0.0,
+          "mean": 0.0
+        },
+        "control_pose_check_exclusions": {},
+        "median_speed_mps": 1.2788251638412476,
+        "lap_status": "COMPLETE_LAP",
+        "assets_verified": true
+      },
+      "final_projection": {
+        "status": "EVALUATED",
+        "left_m": 0.7985691539641816,
+        "heading_deg": -1.8418120019570356
+      },
+      "plan_status_counts": {
+        "EVALUATED": 428
+      },
+      "last10s_1s_following_abs_lateral_m": {
+        "count": 85,
+        "median": 0.003301701680260474,
+        "p95": 0.006606577127253262,
+        "max": 0.0074132033543165225,
+        "min": 6.41547180952764e-05
+      },
+      "last10s_1s_prediction_abs_lateral_m": {
+        "count": 85,
+        "median": 0.4989330701707176,
+        "p95": 0.8116735713430352,
+        "max": 0.8138358306506598,
+        "min": 0.2796544450967305
+      },
+      "last_prediction": {
+        "time_s": 100.61999775,
+        "anchor_left_m": 0.8038322705156371,
+        "horizons": {
+          "1": {
+            "left_m": 0.762640830706629,
+            "change_from_anchor_m": -0.04119143980900808
+          },
+          "2": {
+            "left_m": 0.6987369102592671,
+            "change_from_anchor_m": -0.10509536025637001
+          },
+          "3": {
+            "left_m": 0.6361767737536254,
+            "change_from_anchor_m": -0.16765549676201175
+          }
+        }
+      }
+    }
+  },
+  "sealed_test_read": false,
+  "diagnostic_stop_state": {
+    "standard_v1": {
+      "reason": "STOPPING_SWEEP_OCCUPIED",
+      "minimum_ray_margin_m": -0.4181447101097291
+    },
+    "awsim_near_limit_v1": {
+      "reason": "STOPPING_SWEEP_OCCUPIED",
+      "minimum_ray_margin_m": -0.0623261552715344
+    }
+  }
+}

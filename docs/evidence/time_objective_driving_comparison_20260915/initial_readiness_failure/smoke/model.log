@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/time/install/aic_e2e_runtime/lib/python3.10/site-packages/aic_e2e_runtime/time_path_node.py", line 191, in <module>
+    main()
+  File "/time/install/aic_e2e_runtime/lib/python3.10/site-packages/aic_e2e_runtime/time_path_node.py", line 38, in main
+    model = TimeRuntimeModel(args.checkpoint, expected_sha256=args.checkpoint_sha256, device=args.device)
+  File "/time/install/aic_e2e_runtime/share/aic_e2e_runtime/python_src/aic_transfuser_lite/runtime/time_runtime_v1.py", line 144, in __init__
+    raise ValueError("TEACHER_RUNTIME_CONTRACT_MISMATCH")
+ValueError: TEACHER_RUNTIME_CONTRACT_MISMATCH

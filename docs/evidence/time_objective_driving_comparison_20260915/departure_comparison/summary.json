@@ -1,0 +1,333 @@
+{
+  "scope": "Same recorded departure candidates; batched FP32, PP age zero, no scan or closed-loop claim",
+  "models": {
+    "A": {
+      "checkpoint_sha256": "53e1962b97cfaa47acae3e2ad4687fac96c80672905406fdbe1514abd9563da2",
+      "splits": {
+        "train": {
+          "pp": {
+            "attempted": 162,
+            "applicable": 162,
+            "accepted": 10,
+            "accepted_fraction": 0.06172839506172839,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 152,
+              "PP_ACCEPTED": 10
+            },
+            "max_absolute_steer_rad": 0.2995858968739967,
+            "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+          },
+          "errors": {
+            "0.5s": {
+              "forward_mae_m": 0.01739745979411715,
+              "left_mae_m": 0.0013487048872053247,
+              "left_bias_m": 0.0008520526618753702,
+              "supported_anchors": 162,
+              "supported_runs": 12,
+              "total_anchors": 162
+            },
+            "1s": {
+              "forward_mae_m": 0.10908366552608788,
+              "left_mae_m": 0.005264856496634825,
+              "left_bias_m": 0.0021474252437961245,
+              "supported_anchors": 162,
+              "supported_runs": 12,
+              "total_anchors": 162
+            },
+            "2s": {
+              "forward_mae_m": 0.6874992796426845,
+              "left_mae_m": 0.07960494895556218,
+              "left_bias_m": 0.07710777324714906,
+              "supported_anchors": 162,
+              "supported_runs": 12,
+              "total_anchors": 162
+            },
+            "3s": {
+              "forward_mae_m": 1.6341203029888371,
+              "left_mae_m": 0.2769330981394483,
+              "left_bias_m": 0.2687343662501209,
+              "supported_anchors": 162,
+              "supported_runs": 12,
+              "total_anchors": 162
+            }
+          }
+        },
+        "validation": {
+          "pp": {
+            "attempted": 53,
+            "applicable": 53,
+            "accepted": 2,
+            "accepted_fraction": 0.03773584905660377,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 51,
+              "PP_ACCEPTED": 2
+            },
+            "max_absolute_steer_rad": 0.27462961136520575,
+            "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+          },
+          "errors": {
+            "0.5s": {
+              "forward_mae_m": 0.01864132083373161,
+              "left_mae_m": 0.0009787890758823994,
+              "left_bias_m": 0.0009787890758823994,
+              "supported_anchors": 53,
+              "supported_runs": 4,
+              "total_anchors": 53
+            },
+            "1s": {
+              "forward_mae_m": 0.11551511656566275,
+              "left_mae_m": 0.005299901041873089,
+              "left_bias_m": 0.0022179801506599433,
+              "supported_anchors": 53,
+              "supported_runs": 4,
+              "total_anchors": 53
+            },
+            "2s": {
+              "forward_mae_m": 0.7070544519461692,
+              "left_mae_m": 0.08183894152365004,
+              "left_bias_m": 0.07969015123865877,
+              "supported_anchors": 53,
+              "supported_runs": 4,
+              "total_anchors": 53
+            },
+            "3s": {
+              "forward_mae_m": 1.6697016093879937,
+              "left_mae_m": 0.28556209774687885,
+              "left_bias_m": 0.27817836872612434,
+              "supported_anchors": 53,
+              "supported_runs": 4,
+              "total_anchors": 53
+            }
+          }
+        }
+      }
+    },
+    "B": {
+      "checkpoint_sha256": "f6168cedc52e596238ec7db362b0b23abdb93137928a0123f48d0a23ec8c87e0",
+      "splits": {
+        "train": {
+          "pp": {
+            "attempted": 162,
+            "applicable": 162,
+            "accepted": 10,
+            "accepted_fraction": 0.06172839506172839,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 152,
+              "PP_ACCEPTED": 10
+            },
+            "max_absolute_steer_rad": 0.2978391269463608,
+            "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+          },
+          "errors": {
+            "0.5s": {
+              "forward_mae_m": 0.017175476367970115,
+              "left_mae_m": 0.0014182177079303437,
+              "left_bias_m": 0.0006584815436513717,
+              "supported_anchors": 162,
+              "supported_runs": 12,
+              "total_anchors": 162
+            },
+            "1s": {
+              "forward_mae_m": 0.10766552305007225,
+              "left_mae_m": 0.005142184109960408,
+              "left_bias_m": 0.0025891966893850575,
+              "supported_anchors": 162,
+              "supported_runs": 12,
+              "total_anchors": 162
+            },
+            "2s": {
+              "forward_mae_m": 0.6863096514199344,
+              "left_mae_m": 0.0798667640289447,
+              "left_bias_m": 0.07841340079580228,
+              "supported_anchors": 162,
+              "supported_runs": 12,
+              "total_anchors": 162
+            },
+            "3s": {
+              "forward_mae_m": 1.6352663708954223,
+              "left_mae_m": 0.27736258431234295,
+              "left_bias_m": 0.2721069758033587,
+              "supported_anchors": 162,
+              "supported_runs": 12,
+              "total_anchors": 162
+            }
+          }
+        },
+        "validation": {
+          "pp": {
+            "attempted": 53,
+            "applicable": 53,
+            "accepted": 2,
+            "accepted_fraction": 0.03773584905660377,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 51,
+              "PP_ACCEPTED": 2
+            },
+            "max_absolute_steer_rad": 0.2812032064776009,
+            "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+          },
+          "errors": {
+            "0.5s": {
+              "forward_mae_m": 0.018312540859222758,
+              "left_mae_m": 0.0009341006575522181,
+              "left_bias_m": 0.0008567062770075954,
+              "supported_anchors": 53,
+              "supported_runs": 4,
+              "total_anchors": 53
+            },
+            "1s": {
+              "forward_mae_m": 0.11380235242686342,
+              "left_mae_m": 0.0051891612045279105,
+              "left_bias_m": 0.002664421250594578,
+              "supported_anchors": 53,
+              "supported_runs": 4,
+              "total_anchors": 53
+            },
+            "2s": {
+              "forward_mae_m": 0.7040089449712208,
+              "left_mae_m": 0.08161310958287989,
+              "left_bias_m": 0.0807358527672477,
+              "supported_anchors": 53,
+              "supported_runs": 4,
+              "total_anchors": 53
+            },
+            "3s": {
+              "forward_mae_m": 1.6724808698165274,
+              "left_mae_m": 0.28471953966433095,
+              "left_bias_m": 0.2808077874105601,
+              "supported_anchors": 53,
+              "supported_runs": 4,
+              "total_anchors": 53
+            }
+          }
+        }
+      }
+    },
+    "D": {
+      "checkpoint_sha256": "957f48d55752bdc900c713ef76774288520501df27fba924646c2f2c3fe701cf",
+      "splits": {
+        "train": {
+          "pp": {
+            "attempted": 162,
+            "applicable": 162,
+            "accepted": 10,
+            "accepted_fraction": 0.06172839506172839,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 152,
+              "PP_ACCEPTED": 10
+            },
+            "max_absolute_steer_rad": 0.29890979974116144,
+            "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+          },
+          "errors": {
+            "0.5s": {
+              "forward_mae_m": 0.017427133273200664,
+              "left_mae_m": 0.0008469831755938627,
+              "left_bias_m": -0.0004072291244902715,
+              "supported_anchors": 162,
+              "supported_runs": 12,
+              "total_anchors": 162
+            },
+            "1s": {
+              "forward_mae_m": 0.10868436924029634,
+              "left_mae_m": 0.005502641776385649,
+              "left_bias_m": 0.001352291278292286,
+              "supported_anchors": 162,
+              "supported_runs": 12,
+              "total_anchors": 162
+            },
+            "2s": {
+              "forward_mae_m": 0.6862629381008447,
+              "left_mae_m": 0.07840909346511278,
+              "left_bias_m": 0.07723254475729643,
+              "supported_anchors": 162,
+              "supported_runs": 12,
+              "total_anchors": 162
+            },
+            "3s": {
+              "forward_mae_m": 1.6311555087048974,
+              "left_mae_m": 0.27483456350552543,
+              "left_bias_m": 0.2709393167713036,
+              "supported_anchors": 162,
+              "supported_runs": 12,
+              "total_anchors": 162
+            }
+          }
+        },
+        "validation": {
+          "pp": {
+            "attempted": 53,
+            "applicable": 53,
+            "accepted": 2,
+            "accepted_fraction": 0.03773584905660377,
+            "reasons": {
+              "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 51,
+              "PP_ACCEPTED": 2
+            },
+            "max_absolute_steer_rad": 0.28358722821655935,
+            "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+          },
+          "errors": {
+            "0.5s": {
+              "forward_mae_m": 0.018675699316026546,
+              "left_mae_m": 0.00033229630375989093,
+              "left_bias_m": -0.00020312377204523914,
+              "supported_anchors": 53,
+              "supported_runs": 4,
+              "total_anchors": 53
+            },
+            "1s": {
+              "forward_mae_m": 0.11482260675464596,
+              "left_mae_m": 0.00556663607584785,
+              "left_bias_m": 0.0014259260548666049,
+              "supported_anchors": 53,
+              "supported_runs": 4,
+              "total_anchors": 53
+            },
+            "2s": {
+              "forward_mae_m": 0.7036898595635734,
+              "left_mae_m": 0.08002463937348997,
+              "left_bias_m": 0.07944174630489821,
+              "supported_anchors": 53,
+              "supported_runs": 4,
+              "total_anchors": 53
+            },
+            "3s": {
+              "forward_mae_m": 1.669074279300514,
+              "left_mae_m": 0.28155981546179165,
+              "left_bias_m": 0.2791869235091976,
+              "supported_anchors": 53,
+              "supported_runs": 4,
+              "total_anchors": 53
+            }
+          }
+        }
+      }
+    }
+  },
+  "teacher": {
+    "train": {
+      "attempted": 162,
+      "applicable": 162,
+      "accepted": 162,
+      "accepted_fraction": 1.0,
+      "reasons": {
+        "PP_ACCEPTED": 162
+      },
+      "max_absolute_steer_rad": 0.2770223141347138,
+      "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+    },
+    "validation": {
+      "attempted": 53,
+      "applicable": 53,
+      "accepted": 53,
+      "accepted_fraction": 1.0,
+      "reasons": {
+        "PP_ACCEPTED": 53
+      },
+      "max_absolute_steer_rad": 0.2752166415856384,
+      "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP"
+    }
+  },
+  "sealed_test_read": false
+}
