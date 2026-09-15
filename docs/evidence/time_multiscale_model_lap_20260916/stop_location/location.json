@@ -1,0 +1,87 @@
+{
+  "status": "PASS",
+  "source": "Verified recorded control/scan and completed teacher line; no AWSIM execution",
+  "current_pose": {
+    "stamp_ns": 181689995938,
+    "clock": "sim",
+    "epoch": "0",
+    "world_frame": "map",
+    "body_frame": "base_link",
+    "x_m": 89666.43516982585,
+    "y_m": 43181.273615977625,
+    "yaw_rad": -1.5355550425763584
+  },
+  "first_guard_after_arm_s": 164.739996318,
+  "travel_m": 208.6049412536641,
+  "previous_stop_pose": {
+    "stamp_ns": 118389997353,
+    "clock": "sim",
+    "epoch": "0",
+    "world_frame": "map",
+    "body_frame": "base_link",
+    "x_m": 89632.82178457227,
+    "y_m": 43163.79246502326,
+    "yaw_rad": 2.2867528378260804
+  },
+  "turn": "right",
+  "trigger_points_rear_forward_left_m": [
+    [
+      4.0702879809202495,
+      0.2787702424681873
+    ]
+  ],
+  "trigger_points_map_xy_m": [
+    [
+      89666.85721469787,
+      43177.214678070304
+    ]
+  ],
+  "trigger_forward_from_vehicle_front_m": 2.0862879809202495,
+  "current_vehicle_front_from_rear_m": 1.984,
+  "monitor_metadata": {
+    "policy": "CURVATURE_INTERVAL_SUPPORT_V2",
+    "support_directions": 64,
+    "sweep_samples": 384,
+    "integration_step_m": 0.004998387832246012,
+    "maximum_position_integration_error_m": 0.000727430877469557,
+    "maximum_discretization_padding_m": 0.08195176755868311,
+    "stopping_travel_m": 1.9143825397502225,
+    "whole_sweep_convex_enclosure": true
+  },
+  "contact_related_log_lines": [
+    "Applied race settings: boosts=2, sound=False, ranking=True, collisions=True, wallRecovery=True, minimap=True",
+    "Initial ground contact detected - velocity reset to zero"
+  ],
+  "physical_contact_confirmed": false,
+  "source_files": {
+    "/home/thistle/e2e_autonomous/runs/time_multiscale_model_lap_20260916/raw/codex-time-multiscale-lap01/control.jsonl": {
+      "path": "control.jsonl",
+      "bytes": 22530999,
+      "sha256": "274c30904564149af4af4c22a77463ddf430c4d951a8a001f9e74b739b50739d"
+    },
+    "/home/thistle/e2e_autonomous/runs/time_random_model_lap_20260915/raw/codex-time-random-lap01/control.jsonl": {
+      "path": "control.jsonl",
+      "bytes": 13801426,
+      "sha256": "07c76dcfa27e1ff04b3309e604a435746407ed85f16a30138623f6a041677b82"
+    },
+    "/home/thistle/e2e_autonomous/raw/time_recovery_speed_20260914/codex-time-recovery-speedbase-r30/result.json": {
+      "bytes": 6419,
+      "sha256": "a6a266af8fb3e1b892c4ae86f098546376b3f5144268088eecbaaabdb4ca2826"
+    },
+    "/home/thistle/e2e_autonomous/runs/time_multiscale_model_lap_20260916/raw/codex-time-multiscale-lap01/trial_config.json": {
+      "path": "trial_config.json",
+      "bytes": 1779,
+      "sha256": "fd2e5ae7af223c9236ba3ec44b58f9fb9a9797a51ed7bd5a103a121b0536bdae"
+    },
+    "/home/thistle/e2e_autonomous/raw/time_recovery_speed_20260914/codex-time-recovery-speedbase-r30/control.jsonl": {
+      "bytes": 25887417,
+      "sha256": "54e127461c0a41a4f189acbee09316c37fb2a10cb664eb8e324b693c76f7c142"
+    },
+    "/home/thistle/e2e_autonomous/runs/time_multiscale_model_lap_20260916/raw/codex-time-multiscale-lap01/codex-time-multiscale-lap01/awsim_unity.log": {
+      "path": "codex-time-multiscale-lap01/awsim_unity.log",
+      "bytes": 102911,
+      "sha256": "9a683695e40048cf72fd8600ce61d423fdcf68423d815f1a7d3fff91d63abf6f"
+    }
+  },
+  "teacher_reference_scope": "Completed nominal teacher path for location only, not road-center ground truth"
+}
