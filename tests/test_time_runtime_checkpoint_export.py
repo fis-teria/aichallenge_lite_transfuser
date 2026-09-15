@@ -13,7 +13,7 @@ from aic_transfuser_lite.data.time_split_v1 import content_sha256
 from aic_transfuser_lite.runtime.time_runtime_v1 import TimeRuntimeModel
 from aic_transfuser_lite.training.time_checkpoint_v1 import TimeCheckpointIdentity, save_time_checkpoint
 from aic_transfuser_lite.training.time_config_v1 import TimeModelConfig, build_time_model
-from export_time_recovery_runtime_checkpoint import export_runtime_checkpoint
+from tools.export_time_recovery_runtime_checkpoint import export_runtime_checkpoint
 from test_time_batched_evaluation_v1 import _manifest
 
 
