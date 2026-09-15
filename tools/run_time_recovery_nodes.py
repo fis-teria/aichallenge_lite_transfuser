@@ -12,6 +12,7 @@ from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     COLLECTION_SPEED_POLICIES, collection_speed_gain,
 )
 from aic_transfuser_lite.runtime.recovery_disturbance_markers import MARKER_TOPIC
+from aic_transfuser_lite.runtime.recovery_parallel_v1 import validate_domain
 from aic_transfuser_lite.data.time_large_recovery_reference_v1 import validate_large_reference
 
 TOPICS = ['/clock', '/sensing/camera/image_raw', '/sensing/camera/camera_info',
@@ -56,8 +57,10 @@ def main() -> None:
     ap.add_argument('--reference-root', type=Path, required=True)
     ap.add_argument('--side', choices=['left', 'right'], required=True)
     ap.add_argument('--run-id', required=True)
+    ap.add_argument('--ros-domain-id', type=int, default=1)
     ap.add_argument('--speed-policy', choices=COLLECTION_SPEED_POLICIES, default='legacy_gain1_v1')
     args = ap.parse_args()
+    validate_domain(args.ros_domain_id, dict(os.environ))
     commands = {
         'generator': ['ros2', 'run', 'simple_trajectory_generator', 'simple_trajectory_generator_node', '--ros-args',
             '-r', '__node:=recovery_teacher_trajectory', '-r', 'trajectory:=/recovery_teacher/trajectory',
@@ -75,7 +78,8 @@ def main() -> None:
         # which cannot replay the existing causal availability/epoch contract.
         'bag': ['ros2', 'bag', 'record', '--storage', 'sqlite3', '-o', str(args.output/'bag'), *TOPICS],
         'collector': ['python3', str(Path(__file__).with_name('time_recovery_collector_node.py')),
-            '--output', str(args.output), '--reference', str(args.reference_root/(args.side+'.json')), '--run-id', args.run_id],
+            '--output', str(args.output), '--reference', str(args.reference_root/(args.side+'.json')), '--run-id', args.run_id,
+            '--ros-domain-id', str(args.ros_domain_id)],
         'paths': ['python3', str(Path(__file__).with_name('time_recovery_paths_node.py')),
             '--output', str(args.output), '--reference', str(args.reference_root/(args.side+'.json'))],
     }

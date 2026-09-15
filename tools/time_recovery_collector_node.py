@@ -43,6 +43,7 @@ from aic_transfuser_lite.data.time_large_recovery_v1 import (
 )
 from aic_transfuser_lite.data.time_large_recovery_reference_v1 import validate_large_reference
 from aic_transfuser_lite.runtime.recovery_trajectory_wire import decode_trajectory_summary
+from aic_transfuser_lite.runtime.recovery_parallel_v1 import validate_domain
 
 
 def main() -> None:
@@ -50,9 +51,12 @@ def main() -> None:
     ap.add_argument('--output', type=Path, required=True)
     ap.add_argument('--reference', type=Path, required=True)
     ap.add_argument('--run-id', required=True)
+    ap.add_argument('--ros-domain-id', type=int, default=1)
     args, ros_args = ap.parse_known_args()
-    if os.environ.get('ROS_DOMAIN_ID') != '1' or any(Path(p).exists() for p in ('/dev/vcu', '/dev/gnss', '/dev/ttyUSB0')):
+    validate_domain(args.ros_domain_id, dict(os.environ))
+    if any(Path(p).exists() for p in ('/dev/vcu', '/dev/gnss', '/dev/ttyUSB0')):
         raise ValueError('AWSIM_ONLY_REQUIRED')
+    simulator_node = 'awsim_d' + str(args.ros_domain_id)
     # Small NumPy operations release the GIL repeatedly. The default 5 ms
     # Python thread handoff lets ROS reception delay a ~12 ms CPU calculation
     # beyond the sensor deadline. Bound this collector process's handoff only;
@@ -152,11 +156,11 @@ def main() -> None:
         QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT))
     topics = {
         'pose': ('/localization/kinematic_state', Odometry, '/localization/ekf_localizer'),
-        'velocity': ('/vehicle/status/velocity_status', VelocityReport, '/awsim_d1'),
-        'steering': ('/vehicle/status/steering_status', SteeringReport, '/awsim_d1'),
-        'imu': ('/sensing/imu/imu_raw', Imu, '/awsim_d1'),
-        'camera': ('/sensing/camera/image_raw', Image, '/awsim_d1'),
-        'scan': ('/sensing/lidar/scan', LaserScan, '/awsim_d1'),
+        'velocity': ('/vehicle/status/velocity_status', VelocityReport, '/' + simulator_node),
+        'steering': ('/vehicle/status/steering_status', SteeringReport, '/' + simulator_node),
+        'imu': ('/sensing/imu/imu_raw', Imu, '/' + simulator_node),
+        'camera': ('/sensing/camera/image_raw', Image, '/' + simulator_node),
+        'scan': ('/sensing/lidar/scan', LaserScan, '/' + simulator_node),
         'nominal': ('/recovery_teacher/nominal_control_cmd', AckermannControlCommand, '/recovery_teacher_pure_pursuit'),
         'trajectory': ('/recovery_teacher/trajectory', Trajectory, '/recovery_teacher_trajectory'),
     }
@@ -280,7 +284,7 @@ def main() -> None:
             speed = float(v.longitudinal_velocity)
             fresh_velocity = (math.isfinite(speed) and 0 <= now-receipt <= 300_000_000
                               and -20_000_000 <= clock_ns-stamp(v.header.stamp) <= 150_000_000
-                              and names(topics['velocity'][0]) == ['/awsim_d1'])
+                              and names(topics['velocity'][0]) == ['/' + simulator_node])
         state['speed_mps'] = speed if speed is not None and math.isfinite(speed) else None
         try:
             # Authorization and stop intent must be consumed even if a later
@@ -290,6 +294,7 @@ def main() -> None:
             if state['armed_ns'] is None and auth_path.exists() and clock_ns is not None:
                 auth = json.loads(auth_path.read_text())
                 if (auth.get('run_id') != args.run_id or auth.get('scope') != 'MEASURED_RECOVERY_AWSIM'
+                        or auth.get('ros_domain_id', 1) != args.ros_domain_id
                         or wall > auth['expires_monotonic_s']):
                     state['fault'] = 'AUTHORIZATION_INVALID'
                     raise ValueError('AUTHORIZATION_INVALID')
@@ -305,7 +310,7 @@ def main() -> None:
                 raise ValueError(state['fault'])
             if publisher is None or actual not in ([], ['/time_recovery_collector']):
                 raise ValueError('COMMAND_AUTHORITY')
-            if not any(e.node_name == 'awsim_d1' for e in node.get_subscriptions_info_by_topic(final_topic)):
+            if not any(e.node_name == simulator_node for e in node.get_subscriptions_info_by_topic(final_topic)):
                 raise ValueError('AWSIM_COMMAND_SUBSCRIBER_MISSING')
             if clock_ns is None or now-clock_receipt > 500_000_000:
                 raise ValueError('CLOCK_STALE')

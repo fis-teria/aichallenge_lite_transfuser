@@ -19,6 +19,9 @@ from aic_transfuser_lite.data.time_recovery_collection_v1 import (
 from integrate_normal_rviz_v4 import DISPLAY, follow_ego_view
 from aic_transfuser_lite.runtime.recovery_disturbance_markers import RVIZ_MARKER_DISPLAY
 from aic_transfuser_lite.data.time_large_recovery_reference_v1 import validate_large_reference
+from aic_transfuser_lite.runtime.recovery_parallel_v1 import (
+    validate_domain, validate_parallel_plan, validate_parallel_containers, new_rviz_window,
+)
 
 ROOT = Path('/home/graneple/e2e_autonomous/time_recovery_collection_20260913')
 REPO = Path('/home/graneple/git/autononous_ai/aichallenge-racingkart')
@@ -66,7 +69,10 @@ def main() -> None:
     ap.add_argument('--speed-policy', choices=COLLECTION_SPEED_POLICIES, default='legacy_gain1_v1')
     ap.add_argument('--campaign-root', type=Path, default=ROOT)
     ap.add_argument('--separate-cpus', action='store_true')
+    ap.add_argument('--ros-domain-id', type=int, default=1)
+    ap.add_argument('--parallel-plan', type=Path)
     args = ap.parse_args()
+    validate_domain(args.ros_domain_id)
     ROOT = args.campaign_root
     if (ROOT.resolve() != ROOT or ROOT.parent != Path('/home/graneple/e2e_autonomous')
             or not re.fullmatch(r'time_recovery_[a-z0-9_]+', ROOT.name)):
@@ -76,12 +82,25 @@ def main() -> None:
     source = Path(__file__).resolve().parents[1]
     if source != ROOT/'source':
         raise ValueError('DEDICATED_SOURCE_REQUIRED')
+    parallel = None
+    instance = None
+    if args.parallel_plan is not None:
+        if args.parallel_plan.resolve() != ROOT/'parallel_plan.json' or not args.separate_cpus:
+            raise ValueError('OWNED_PARALLEL_PLAN_AND_CPU_ASSIGNMENT_REQUIRED')
+        parallel = json.loads(args.parallel_plan.read_text())
+        instance = validate_parallel_plan(parallel, scope=ROOT.name, run_id=args.run_id)
+        if instance['ros_domain_id'] != args.ros_domain_id:
+            raise ValueError('PARALLEL_DOMAIN_MISMATCH')
+    node_cpus = instance['node_cpus'] if instance else '2-5'
+    simulation_cpus = instance['simulation_cpus'] if instance else '0-1,6-19'
+    network = 'container:'+instance['network_container'] if instance else 'host'
     output = ROOT/args.run_id; output.mkdir(exist_ok=False)
     env = dict(os.environ); streams = []; children = []; owned = False; compose = None
     result = dict(status='FAILED', run_id=args.run_id, side=args.side, official_start_requested=False,
                   started_unix_s=time.time(), scope='MEASURED_RECOVERY_AWSIM', fixed_target_mps=5/3.6,
                   source_sha=(ROOT/'deployed_commit.txt').read_text().strip(),
                   speed_policy=args.speed_policy, separate_cpus=args.separate_cpus,
+                  ros_domain_id=args.ros_domain_id, network_mode=network,
                   sim_limit_s=1800, wall_limit_s=1860, outer_limit_s=1980,
                   run_byte_limit=2*1024**3, task_bag_byte_limit=12*1024**3, required_free_bytes=10*1024**3)
     started = time.monotonic(); judge = JudgeLog(args.run_id); read_offset=0; pending=b''
@@ -106,7 +125,13 @@ def main() -> None:
     try:
         (output/'containers_before.jsonl').write_text(run(['docker','ps','-a','--format','{{json .}}']).stdout)
         (output/'compose_before.json').write_text(run(['docker','compose','ls','--all','--format','json']).stdout)
-        if run(['docker','ps','-q']).stdout.strip():
+        active = run(['docker','ps','-q']).stdout.splitlines()
+        if parallel is not None:
+            inspections = json.loads(run(['docker','inspect',*active]).stdout) if active else []
+            validate_parallel_containers(parallel, inspections)
+            (output/'parallel_admission.json').write_text(json.dumps(dict(plan=parallel,
+                inspections=inspections), indent=2))
+        elif active:
             raise RuntimeError('ACTIVE_CONTAINER_PRESENT')
         if shutil.disk_usage(ROOT).free < 10*1024**3:
             raise RuntimeError('INSUFFICIENT_DISK')
@@ -149,30 +174,39 @@ def main() -> None:
         mounts = [str(runtime_dds)+':/opt/autoware/cyclonedds.xml:ro', str(rviz_copy)+':/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz:ro']
         override = output/'compose.json'
         services = {s: {'volumes': mounts} for s in ('simulator', 'autoware', 'autoware-command')}
+        if instance:
+            for service in services.values():
+                service['network_mode'] = network
         if args.separate_cpus:
             for service in ('simulator', 'autoware'):
-                services[service]['cpuset'] = '0-1,6-19'
+                services[service]['cpuset'] = simulation_cpus
         override.write_text(json.dumps({'services': services}))
         env.update(**collection_display_environment(env), COMPOSE_PROJECT_NAME=args.run_id,
             COMPOSE_FILE=':'.join(map(str,(REPO/'docker-compose.yml',REPO/'docker-compose.gpu.yml',override))),
-            CONTROL_METHOD='v4_20_external',V4_SHADOW_ENABLED='false',AWSIM_VEHICLES='1')
+            CONTROL_METHOD='v4_20_external',V4_SHADOW_ENABLED='false',AWSIM_VEHICLES='1',
+            ROS_DOMAIN_ID=str(args.ros_domain_id))
+        before_rviz = {line.strip().split()[0] for line in run(['xwininfo','-root','-tree']).stdout.splitlines()
+                       if 'autoware.rviz' in line}
         compose = ['docker','compose','-p',args.run_id]
         inside = '/capture/'+args.run_id
         shell = ('source /aichallenge/workspace/install/setup.bash && source /capture/cpp_install/setup.bash && '
             'export PYTHONPATH=/capture/source/src:${PYTHONPATH:-} && exec '+shlex.join(['python3','/capture/source/tools/run_time_recovery_nodes.py',
             '--output',inside,'--reference-root','/capture/references','--side',args.side,'--run-id',args.run_id,
-            '--speed-policy',args.speed_policy]))
-        probe_cmd = ['docker','run','--rm','--name',args.run_id+'-nodes','--network','host','-e','ROS_DOMAIN_ID=1',
+            '--speed-policy',args.speed_policy,'--ros-domain-id',str(args.ros_domain_id)]))
+        probe_cmd = ['docker','run','--rm','--name',args.run_id+'-nodes','--network',network,
+            '--label','aic.recovery.scope='+ROOT.name,'--label','aic.recovery.run_id='+args.run_id,
+            '-e','ROS_DOMAIN_ID='+str(args.ros_domain_id),
             '-e','CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml','-v',str(runtime_dds)+':/opt/autoware/cyclonedds.xml:ro',
             '-v',str(ROOT)+':/capture','-v',str(REPO/'aichallenge')+':/aichallenge:ro','--entrypoint','bash',
             'codex-cartographer-v4-build:20260910','-lc',shell]
         if args.separate_cpus:
-            probe_cmd[2:2] = ['--cpuset-cpus', '2-5']
+            probe_cmd[2:2] = ['--cpuset-cpus', node_cpus]
         # Allow the simulator to keep producing observed future after lap 1.
         # Collection stops at first verified lap +4 s, before another full lap.
         make_args = ['CONTROL_METHOD=v4_20_external','CAPTURE=false','ROSBAG=false','AWSIM_LAPS=2','AWSIM_VEHICLES=1',
+            'ROS_DOMAIN_ID='+str(args.ros_domain_id),'AWSIM_READY_DOMAINS='+str(args.ros_domain_id),
             'RUN_ID='+args.run_id,'OUTPUT_HOST_ROOT='+str(output),'AWSIM_TIMEOUT=1920',
-            'AWSIM_EXTRA_ARGS=-logFile /output/'+args.run_id+'/awsim_unity.log']
+            'AWSIM_EXTRA_ARGS=--ros2-base-domain '+str(args.ros_domain_id)+' -logFile /output/'+args.run_id+'/awsim_unity.log']
         result['commands'] = [probe_cmd,['make','dev','DEV_AUTO_START=false',*make_args]]
         owned = True; probe = launch(probe_cmd,'nodes'); make = launch(result['commands'][1],'make')
         while time.monotonic()-started < 1940:
@@ -240,16 +274,18 @@ def main() -> None:
                     info=json.loads(run(['docker','inspect',cid]).stdout)[0]
                     if info['Config']['Labels'].get('com.docker.compose.project') != args.run_id:
                         raise RuntimeError('COMPOSE_OWNER_MISMATCH')
-                    if args.separate_cpus and info['HostConfig']['CpusetCpus'] != '0-1,6-19':
+                    if args.separate_cpus and info['HostConfig']['CpusetCpus'] != simulation_cpus:
                         raise RuntimeError('SIMULATION_CPU_ASSIGNMENT_MISMATCH')
                     if any(m['Destination'] in ('/dev/vcu','/dev/gnss','/dev/ttyUSB0') for m in info['Mounts']):
                         raise RuntimeError('PHYSICAL_DEVICE_MOUNT')
                     inspections.append(info)
                 (output/'inspect.json').write_text(json.dumps(inspections,indent=2))
-                windows=[line for line in run(['xwininfo','-root','-tree']).stdout.splitlines() if 'autoware.rviz' in line]
-                if len(windows)!=1:
-                    raise RuntimeError('NORMAL_RVIZ_WINDOW_MISSING')
-                rviz_window=windows[0].strip().split()[0]
+                if parallel is not None:
+                    active = run(['docker','ps','-q']).stdout.splitlines()
+                    validate_parallel_containers(parallel, json.loads(run(['docker','inspect',*active]).stdout))
+                rviz_window = new_rviz_window(before_rviz, run(['xwininfo','-root','-tree']).stdout.splitlines())
+                (output/'rviz_window.json').write_text(json.dumps(dict(window=rviz_window,
+                    ros_domain_id=args.ros_domain_id, network_mode=network)))
                 run(['xwd','-silent','-id',rviz_window,'-out',str(output/'normal_rviz.xwd')])
                 if args.preflight_only:
                     result['status']='PREFLIGHT_PASSED'; break
@@ -272,7 +308,7 @@ def main() -> None:
                     validate_collection_speed_parameters(args.speed_policy, next(iter(loaded.values()))['ros__parameters'])
                 if args.separate_cpus:
                     node_info = json.loads(run(['docker', 'inspect', args.run_id+'-nodes']).stdout)[0]
-                    if node_info['HostConfig']['CpusetCpus'] != '2-5':
+                    if node_info['HostConfig']['CpusetCpus'] != node_cpus:
                         raise RuntimeError('COLLECTION_CPU_ASSIGNMENT_MISMATCH')
                     (output/'cpu_assignment.json').write_text(json.dumps({
                         'nodes': node_info['HostConfig']['CpusetCpus'],
@@ -284,7 +320,7 @@ def main() -> None:
                 authorization = output/'drive_authorized.pending'
                 authorization.write_text(json.dumps({'run_id':args.run_id,'scope':'MEASURED_RECOVERY_AWSIM',
                     'expires_monotonic_s':time.monotonic()+20,'source':'USER_AUTHORIZED_RECOVERY_COLLECTION',
-                    'speed_policy':args.speed_policy}))
+                    'speed_policy':args.speed_policy,'ros_domain_id':args.ros_domain_id}))
                 authorization.replace(output/'drive_authorized.json')
             if time.monotonic()-started > 120 and not result['official_start_requested']:
                 raise RuntimeError('STOPPED_PREFLIGHT_TIMEOUT:'+str(control.get('reason')))
