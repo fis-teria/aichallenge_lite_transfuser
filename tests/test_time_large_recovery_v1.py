@@ -29,9 +29,10 @@ def synthetic_run(cfg=None, *, reach=True):
     """Synthetic observed-state replay; not an AWSIM/dynamic vehicle result."""
     cfg = cfg or config(2)
     state = LargeRecoveryState(); rows = []
-    finish = 1+(cfg.sites[-1].release_s_m-47)/1.25+15
+    start_s = cfg.sites[0].start_s_m-3.
+    finish = 1+(cfg.sites[-1].release_s_m-start_s)/1.25+15
     for index in range(round((finish-1)/.05)):
-        t = 1+index*.05; ns = round(t*1e9); s = 47.+(t-1)*1.25
+        t = 1+index*.05; ns = round(t*1e9); s = start_s+(t-1)*1.25
         lat = 0.
         if state.stage in ('preparing', 'handover') and reach:
             site = cfg.sites[state.site_cursor]; f = np.clip((s-site.start_s_m)/8., 0., 1.)
