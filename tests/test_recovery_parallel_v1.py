@@ -4,6 +4,7 @@ import pytest
 
 from aic_transfuser_lite.runtime.recovery_parallel_v1 import (
     cpu_ids, new_rviz_window, validate_domain, validate_parallel_containers, validate_parallel_plan,
+    single_vehicle_node_name,
 )
 
 
@@ -65,6 +66,17 @@ def test_invalid_domains(domain):
 
 def test_domain_environment_mismatch():
     with pytest.raises(ValueError): validate_domain(2, {'ROS_DOMAIN_ID':'1'})
+
+
+def test_vehicle_identity_does_not_follow_dds_domain():
+    # Captured domain-2 graph: control subscriber and sensor publisher awsim_d1.
+    endpoints = {'control_subscribers': ['awsim_d1', 'rosbag2_recorder'],
+                 'velocity_publishers': ['awsim_d1']}
+    for domain in (1, 2):
+        expected = single_vehicle_node_name(domain)
+        assert expected in endpoints['control_subscribers']
+        assert endpoints['velocity_publishers'] == [expected]
+    with pytest.raises(ValueError): single_vehicle_node_name(0)
 
 
 def test_rviz_belongs_to_new_instance():

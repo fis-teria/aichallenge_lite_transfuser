@@ -43,7 +43,7 @@ from aic_transfuser_lite.data.time_large_recovery_v1 import (
 )
 from aic_transfuser_lite.data.time_large_recovery_reference_v1 import validate_large_reference
 from aic_transfuser_lite.runtime.recovery_trajectory_wire import decode_trajectory_summary
-from aic_transfuser_lite.runtime.recovery_parallel_v1 import validate_domain
+from aic_transfuser_lite.runtime.recovery_parallel_v1 import validate_domain, single_vehicle_node_name
 
 
 def main() -> None:
@@ -56,7 +56,7 @@ def main() -> None:
     validate_domain(args.ros_domain_id, dict(os.environ))
     if any(Path(p).exists() for p in ('/dev/vcu', '/dev/gnss', '/dev/ttyUSB0')):
         raise ValueError('AWSIM_ONLY_REQUIRED')
-    simulator_node = 'awsim_d' + str(args.ros_domain_id)
+    simulator_node = single_vehicle_node_name(args.ros_domain_id)
     # Small NumPy operations release the GIL repeatedly. The default 5 ms
     # Python thread handoff lets ROS reception delay a ~12 ms CPU calculation
     # beyond the sensor deadline. Bound this collector process's handoff only;

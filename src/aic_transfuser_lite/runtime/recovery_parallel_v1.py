@@ -16,6 +16,16 @@ def validate_domain(domain: int, environment: dict[str, str] | None = None) -> N
         raise ValueError('ROS_DOMAIN_ID does not match the declared instance')
 
 
+def single_vehicle_node_name(domain: int) -> str:
+    """AWSIM names nodes by vehicle index, independently of the DDS base domain.
+
+    These launchers explicitly set AWSIM_VEHICLES=1. The observed domain-2
+    endpoint and MultiDomainROS2Manager both identify vehicle 1 as awsim_d1.
+    """
+    validate_domain(domain)
+    return 'awsim_d1'
+
+
 def cpu_ids(value: str) -> set[int]:
     if not re.fullmatch(r'\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*', value):
         raise ValueError('explicit CPU list required')
