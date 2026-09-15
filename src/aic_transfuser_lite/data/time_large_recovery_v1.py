@@ -24,6 +24,7 @@ class LargeRecoverySite:
     target_offset_m: float
     return_length_m: float = 6.
     settle_distance_m: float = 2.
+    preparation_origin: str = 'measured_normal'
 
     def __post_init__(self) -> None:
         if (not isinstance(self.site_id, str) or not re.fullmatch(r'[A-Z][A-Z0-9_]{0,23}', self.site_id)
@@ -31,7 +32,8 @@ class LargeRecoverySite:
                        for v in (self.release_s_m, self.target_offset_m, self.return_length_m, self.settle_distance_m))
                 or not 25. <= self.release_s_m <= 300.
                 or abs(self.target_offset_m) not in (.2, .4, .6)
-                or self.return_length_m not in (4., 6., 10.) or self.settle_distance_m not in (2., 4.)):
+                or self.return_length_m not in (4., 6., 10.) or self.settle_distance_m not in (2., 4.)
+                or self.preparation_origin not in ('measured_normal', 'nominal_path')):
             raise ValueError('LARGE_SITE_CONTRACT')
 
     @property

@@ -78,6 +78,22 @@ def test_four_metre_settling_patch_holds_before_the_same_release_location():
     assert all(e['preparation_map_pass'] and e['candidate_return_map_pass'] for e in evidence)
 
 
+@pytest.mark.parametrize('offset', [-.2, .2])
+def test_command_origin_does_not_command_measured_tracking_error_again(offset):
+    from dataclasses import replace
+    base,normal,occupancy,cfg=fixture()
+    normal=normal.copy();normal[:,2]+=.3;normal[:,5]=.3
+    site=replace(cfg.sites[0],target_offset_m=offset,preparation_origin='nominal_path')
+    cfg=replace(cfg,sites=(site,))
+    points,evidence=preparation_course(base,normal,cfg,occupancy)
+    xy=np.asarray([[p.x_m,p.y_m] for p in points]);bottom=xy[xy[:,1]<1.]
+    for s,y in ((site.start_s_m,0.),(58.,offset),(60.,offset),(70.,offset)):
+        np.testing.assert_allclose(bottom[np.argmin(abs(bottom[:,0]-s))],[s,y],atol=1e-6,rtol=0.)
+    assert all(e['preparation_map_pass'] and e['candidate_return_map_pass'] for e in evidence)
+    with pytest.raises(ValueError,match='LARGE_SITE_CONTRACT'):
+        replace(site,preparation_origin='unverified')
+
+
 def test_shape_and_missing_measured_support_are_explicit():
     base,normal,occupancy,cfg=fixture()
     with pytest.raises(ValueError,match='TRACE_SHAPE'):
