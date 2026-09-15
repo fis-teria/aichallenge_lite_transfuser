@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/thistle/e2e_autonomous/e2e_lite_transfuser/tools/generate_time_large_recovery_reference.py", line 98, in <module>
+    main()
+  File "/home/thistle/e2e_autonomous/e2e_lite_transfuser/tools/generate_time_large_recovery_reference.py", line 70, in main
+    prepared, screen = preparation_course(base, normal, config, load_occupancy_map_v3(args.inputs/'occupancy_grid_map.yaml'))
+  File "/home/thistle/e2e_autonomous/e2e_lite_transfuser/src/aic_transfuser_lite/data/time_large_recovery_reference_v1.py", line 141, in preparation_course
+    raise ValueError('LARGE_SITE_MAP_REJECTED:'+site.site_id)
+ValueError: LARGE_SITE_MAP_REJECTED:S00

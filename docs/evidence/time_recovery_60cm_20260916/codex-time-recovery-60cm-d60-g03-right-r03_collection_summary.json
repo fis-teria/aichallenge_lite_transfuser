@@ -1,0 +1,177 @@
+{
+  "run_id": "codex-time-recovery-60cm-d60-g03-right-r03",
+  "split": "validation",
+  "result_status": "COMPLETE_LAP",
+  "fault": null,
+  "stop_confirmed": true,
+  "closed_bag": true,
+  "planned": [
+    {
+      "site_id": "P00",
+      "release_s_m": 60.0,
+      "target_offset_m": -0.6,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "measured_normal"
+    },
+    {
+      "site_id": "P03",
+      "release_s_m": 164.0,
+      "target_offset_m": -0.6,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path"
+    },
+    {
+      "site_id": "P02",
+      "release_s_m": 247.0,
+      "target_offset_m": -0.6,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path"
+    }
+  ],
+  "event_cap": 3,
+  "events": [
+    {
+      "event_id": 1,
+      "site_id": "P00",
+      "target_offset_m": -0.6,
+      "preparation_start_ns": 70964998413,
+      "request_ns": 80864998192,
+      "release_ns": 80914998191,
+      "end_publication_ns": 90969997966,
+      "publication_switch_verified": true,
+      "recovery_confirmed": true,
+      "stable_at_end": true,
+      "completed": true,
+      "recovery_sample_count": 201,
+      "peak_observed_lateral_m": 0.7057752430732243,
+      "target_band_recovery_samples": 19,
+      "target_band_observed": true,
+      "causal_camera_candidates": 94,
+      "accepted_camera_anchors": 94,
+      "target_band_camera_anchors": 1,
+      "peak_abs_anchor_lateral_m": 0.5536004861490685
+    },
+    {
+      "event_id": 2,
+      "site_id": "P03",
+      "target_offset_m": -0.6,
+      "preparation_start_ns": 153474996569,
+      "request_ns": 164049996333,
+      "release_ns": 164114996331,
+      "end_publication_ns": 174164996107,
+      "publication_switch_verified": true,
+      "recovery_confirmed": true,
+      "stable_at_end": true,
+      "completed": true,
+      "recovery_sample_count": 201,
+      "peak_observed_lateral_m": 0.7088681512447941,
+      "target_band_recovery_samples": 24,
+      "target_band_observed": true,
+      "causal_camera_candidates": 94,
+      "accepted_camera_anchors": 94,
+      "target_band_camera_anchors": 6,
+      "peak_abs_anchor_lateral_m": 0.5852149672120126
+    },
+    {
+      "event_id": 3,
+      "site_id": "P02",
+      "target_offset_m": -0.6,
+      "preparation_start_ns": 219364995096,
+      "request_ns": 229514994869,
+      "release_ns": 229549994869,
+      "end_publication_ns": 239604994644,
+      "publication_switch_verified": true,
+      "recovery_confirmed": true,
+      "stable_at_end": true,
+      "completed": true,
+      "recovery_sample_count": 201,
+      "peak_observed_lateral_m": 0.6634291793513283,
+      "target_band_recovery_samples": 21,
+      "target_band_observed": true,
+      "causal_camera_candidates": 94,
+      "accepted_camera_anchors": 94,
+      "target_band_camera_anchors": 3,
+      "peak_abs_anchor_lateral_m": 0.5577479139427785
+    }
+  ],
+  "accepted": 282,
+  "target_band_anchors": 10,
+  "marker_locations": {
+    "frame_id": "map",
+    "location_basis": "pose_at_first_preparation_selection_not_proven_displacement",
+    "topic": "/recovery_teacher/disturbance_markers",
+    "events": [
+      {
+        "event_id": 1,
+        "site_id": "P00",
+        "sign": -1,
+        "planned_s_m": 48.0,
+        "actual_s_m": 48.06369882769577,
+        "x_m": 89622.2138557939,
+        "y_m": 43165.32438693324,
+        "yaw_rad": -0.6613144680470932,
+        "pose_stamp_ns": 70944998414,
+        "publication_sim_ns": 70964998413,
+        "publication_sequence": 1605,
+        "effective_rad": 0.0,
+        "target_offset_m": -0.6,
+        "label": "P00 RIGHT PREP 60cm"
+      },
+      {
+        "event_id": 2,
+        "site_id": "P03",
+        "sign": -1,
+        "planned_s_m": 152.0,
+        "actual_s_m": 152.0231665592409,
+        "x_m": 89627.0018451101,
+        "y_m": 43188.29026830364,
+        "yaw_rad": -0.00491721038754798,
+        "pose_stamp_ns": 153424996570,
+        "publication_sim_ns": 153474996569,
+        "publication_sequence": 3255,
+        "effective_rad": 0.0,
+        "target_offset_m": -0.6,
+        "label": "P03 RIGHT PREP 60cm"
+      },
+      {
+        "event_id": 3,
+        "site_id": "P02",
+        "sign": -1,
+        "planned_s_m": 235.0,
+        "actual_s_m": 235.02315675156908,
+        "x_m": 89653.37898870185,
+        "y_m": 43160.317908351884,
+        "yaw_rad": -0.3206449008168204,
+        "pose_stamp_ns": 219349995097,
+        "publication_sim_ns": 219364995096,
+        "publication_sequence": 4573,
+        "effective_rad": 0.0,
+        "target_offset_m": -0.6,
+        "label": "P02 RIGHT PREP 60cm"
+      }
+    ]
+  },
+  "training_started": false,
+  "causal_candidates": 282,
+  "input_reasons": {
+    "OK": 282
+  },
+  "teacher_reasons": {
+    "OK": 282
+  },
+  "prepared": {
+    "run_id": "codex-time-recovery-60cm-d60-g03-right-r03",
+    "anchors": 282,
+    "input_valid": 282,
+    "real_input_replay_equal": [
+      "codex-time-recovery-60cm-d60-g03-right-r03:epoch0000:81159998185",
+      "codex-time-recovery-60cm-d60-g03-right-r03:epoch0000:169254996216"
+    ],
+    "input_reason_refinements": []
+  },
+  "all_planned_recovered": true,
+  "three_event_qualified": true
+}

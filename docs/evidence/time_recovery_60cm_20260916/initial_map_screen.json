@@ -1,0 +1,69 @@
+[
+  {
+    "tag": "d60_g03_left_initial",
+    "exit": 0,
+    "command": [
+      "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+      "tools/generate_time_large_recovery_reference.py",
+      "--inputs",
+      "/home/thistle/e2e_autonomous/runs/time_recovery_collection_20260913/inputs",
+      "--normal-run",
+      "/home/thistle/e2e_autonomous/raw/time_recovery_sites_20260915/codex-time-recovery-sites-normal-n03",
+      "--normal-proof",
+      "/home/thistle/e2e_autonomous/runs/time_recovery_separated_20260915/selected_site_plan.json",
+      "--plan",
+      "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/d60_g03_left_initial_plan.json",
+      "--side",
+      "left",
+      "--output",
+      "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/d60_g03_left_initial"
+    ],
+    "map_screen": [
+      {
+        "site_id": "P00",
+        "preparation_map_pass": true,
+        "candidate_return_map_pass": true,
+        "map_radius_m": 1.4,
+        "hidden_return_preview_arc_m": 11.824672925875824,
+        "physical_dynamic_recovery_proven": false
+      },
+      {
+        "site_id": "S00",
+        "preparation_map_pass": true,
+        "candidate_return_map_pass": true,
+        "map_radius_m": 1.4,
+        "hidden_return_preview_arc_m": 11.862133161016118,
+        "physical_dynamic_recovery_proven": false
+      },
+      {
+        "site_id": "P02",
+        "preparation_map_pass": true,
+        "candidate_return_map_pass": true,
+        "map_radius_m": 1.4,
+        "hidden_return_preview_arc_m": 12.486810915005943,
+        "physical_dynamic_recovery_proven": false
+      }
+    ]
+  },
+  {
+    "tag": "d60_g03_right_initial",
+    "exit": 1,
+    "command": [
+      "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+      "tools/generate_time_large_recovery_reference.py",
+      "--inputs",
+      "/home/thistle/e2e_autonomous/runs/time_recovery_collection_20260913/inputs",
+      "--normal-run",
+      "/home/thistle/e2e_autonomous/raw/time_recovery_sites_20260915/codex-time-recovery-sites-normal-n03",
+      "--normal-proof",
+      "/home/thistle/e2e_autonomous/runs/time_recovery_separated_20260915/selected_site_plan.json",
+      "--plan",
+      "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/d60_g03_right_initial_plan.json",
+      "--side",
+      "right",
+      "--output",
+      "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/d60_g03_right_initial"
+    ],
+    "error": "Traceback (most recent call last):\n  File \"/home/thistle/e2e_autonomous/e2e_lite_transfuser/tools/generate_time_large_recovery_reference.py\", line 98, in <module>\n    main()\n  File \"/home/thistle/e2e_autonomous/e2e_lite_transfuser/tools/generate_time_large_recovery_reference.py\", line 70, in main\n    prepared, screen = preparation_course(base, normal, config, load_occupancy_map_v3(args.inputs/'occupancy_grid_map.yaml'))\n  File \"/home/thistle/e2e_autonomous/e2e_lite_transfuser/src/aic_transfuser_lite/data/time_large_recovery_reference_v1.py\", line 141, in preparation_course\n    raise ValueError('LARGE_SITE_MAP_REJECTED:'+site.site_id)\nValueError: LARGE_SITE_MAP_REJECTED:P03\n"
+  }
+]

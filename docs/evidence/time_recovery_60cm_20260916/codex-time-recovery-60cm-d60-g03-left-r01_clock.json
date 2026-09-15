@@ -1,0 +1,57 @@
+{
+  "run_id": "codex-time-recovery-60cm-d60-g03-left-r01",
+  "control_sha256": "adda33fdd6a5dbf783809f5d8f3f854b4a67d6e5af9442e4a1f6ef800704173a",
+  "events": [
+    {
+      "site_id": "P00",
+      "release_ns": 80334998204,
+      "end_ns": 93389997979,
+      "recovered": true,
+      "control_sim_gap": {
+        "count": 261,
+        "median_ms": 49.999999,
+        "p95_ms": 69.999998,
+        "max_ms": 69.999999,
+        "over_150ms": 0
+      },
+      "control_wall_gap": {
+        "count": 261,
+        "median_ms": 50.415785,
+        "p95_ms": 63.688397,
+        "max_ms": 71.390077,
+        "over_150ms": 0
+      },
+      "clock_sim_gap": {
+        "count": 2611,
+        "median_ms": 5.0,
+        "p95_ms": 5.0,
+        "max_ms": 5.0,
+        "over_150ms": 0
+      },
+      "large_control_gaps": []
+    }
+  ],
+  "trajectory_receive_stats": {
+    "trajectory_decode_max_ms": 2.246795,
+    "trajectory_points": 1521,
+    "trajectory_bytes": 133876,
+    "preparation_trajectory_decode_max_ms": 0.962232,
+    "preparation_trajectory_points": 2324,
+    "preparation_trajectory_bytes": 204540
+  },
+  "decision_wall": {
+    "count": 1961,
+    "median_ms": 16.276578,
+    "p95_ms": 25.043032,
+    "max_ms": 46.090811,
+    "over_150ms": 0
+  },
+  "processing": {
+    "count": 1961,
+    "median_ms": 16.228364,
+    "p95_ms": 24.993915,
+    "max_ms": 46.003828,
+    "over_150ms": 0
+  },
+  "scope": "Measured publication timestamps and recorded clock; not actuator command delivery latency"
+}

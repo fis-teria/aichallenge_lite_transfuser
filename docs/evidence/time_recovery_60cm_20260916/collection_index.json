@@ -1,0 +1,663 @@
+{
+  "schema": "real_60cm_recovery_collection_v1",
+  "source_commit": "adfc444818a26bae021d463cca5312b5d37a9f9a",
+  "index_source_commit": "e68e4ea2482e3da6e3098fdd8c10c7e872d278a8",
+  "runtime_host": "graneple@192.168.3.10",
+  "native_wsl_raw": "/home/thistle/e2e_autonomous/raw/time_recovery_60cm_20260916",
+  "events_per_lap": 3,
+  "event_increment": 0,
+  "target_band_tolerance_m": 0.05,
+  "maximum_accepted_control_sim_gap_ms": 84.999998,
+  "lateral_basis": "Matched observed normal driving line; not ground-truth road center",
+  "labels": "Measured future trajectory: 30 xy points in meters over 3 seconds",
+  "inputs": "Causal camera, LiDAR and ego history observed at the actual shifted vehicle pose",
+  "split_policy": "Whole runs; no frame-random split; repeated sites are not held-out-site generalization",
+  "training_started": false,
+  "merged_with_existing_dataset": false,
+  "receipts": {
+    "d60_left_r01_verified.json": {
+      "sha256": "1a518ab509e3d19e58b2e611113586c1c3a075e470f243dc1aa80b55c34632af",
+      "archive_sha256": "7db192272b6d6bb40904d3ba813b372734ba87a01996cb8f58c2ad8509b5b837",
+      "snapshot_sha256": "30fbb4ab4a494df4efcf17175baea01cdff4e25632ca56a2f7540925227db713"
+    },
+    "d60_left_r02_verified.json": {
+      "sha256": "4db9037acb0bbecfe070b3f9ea412257ef30b6c5088df85a758217a097cb0bc1",
+      "archive_sha256": "02f8bb3ebe3f313388a69b37649515580770cf0d1a5e9f6c2f9cba89a586a281",
+      "snapshot_sha256": "df2265f04759f952d4939265874d116a310ff15027bac6c65c91dbd7e5dbcb8f"
+    },
+    "d60_left_r03_verified.json": {
+      "sha256": "9ed6be5d406889fa97de334082bc2a894b797c1378cade2cfbaee45b58e0d1c6",
+      "archive_sha256": "18b212a6241682805572b4b6536652e785ca6e66f9e64decaa177ed3972093e0",
+      "snapshot_sha256": "24a1450ee307b2f0676baaf8eec0e6aa4a87a041506ed2273c434d01f575faf8"
+    },
+    "d60_left_r04_verified.json": {
+      "sha256": "45301ba903df7b724d6c877c43d27f4a562e41916480c2a326ede47b304896f4",
+      "archive_sha256": "9c1af1261f9c306eec0e7d7d1c2baf9089976705afc8b836ce0497fb7daf3ea0",
+      "snapshot_sha256": "ce9a44eb92efd6c41f0c90d65de8a19c11c99d746200fadf63e212c6ca93c7f4"
+    },
+    "d60_left_r05_verified.json": {
+      "sha256": "1fc743543795a528737ae4cf2db2d92b915ee5ff407f7065beaa4d3889a23250",
+      "archive_sha256": "480d02f77ff4a65ec880ecc3f0e74b138cba6de008853e35ed22ad4bdf2fb8d5",
+      "snapshot_sha256": "105612ba31a74ae26d17d3ae2467cc46cb3063543d08c2e526b072bb9bb0eaaa"
+    },
+    "d60_right_r01_verified.json": {
+      "sha256": "e00c9dc8d2de57bfb6080153fd777cf90be65a3d45c83400448c1b1e57fc1529",
+      "archive_sha256": "a330883e6a9427739f9e0188dde8cc9eebba773652849898611ff5a1aca2302a",
+      "snapshot_sha256": "f9bdf53fb7f0d72f506446f2a2100ed3f0cfa2faf9aeb5970bbab3f0c965d983"
+    },
+    "d60_right_r02_verified.json": {
+      "sha256": "69c3fa0e7460880494be7473625c3e47ae6ab767d7857483cf272aae99d7e005",
+      "archive_sha256": "59b9da5410ae9eabd30323b070afc0d3c0b712abfbe6d05a7f3333e46a368089",
+      "snapshot_sha256": "8282e7773011ae30fdd4bd35462d76b4c9e55ebb548cc1c4dc47472ba8573096"
+    },
+    "d60_right_r03_verified.json": {
+      "sha256": "e8cc93e751c2d165961d317b0cf7d8c1e4c1982e4de5a3f54707dc49ec633d2f",
+      "archive_sha256": "99b404c2dbb3e633be1d940f0b03c32a5fffb1d30d0c4dbe308523a424bf798e",
+      "snapshot_sha256": "78dad6e259bd3d72a7d66e4a0c87d200f4681ffa3e5ccc4d97a46fc49ca4fc76"
+    }
+  },
+  "splits": {
+    "train": [
+      "codex-time-recovery-60cm-d60-g03-left-r02",
+      "codex-time-recovery-60cm-d60-g03-left-r04",
+      "codex-time-recovery-60cm-d60-g03-right-r02"
+    ],
+    "validation": [
+      "codex-time-recovery-60cm-d60-g03-left-r01",
+      "codex-time-recovery-60cm-d60-g03-left-r03",
+      "codex-time-recovery-60cm-d60-g03-left-r05",
+      "codex-time-recovery-60cm-d60-g03-right-r01",
+      "codex-time-recovery-60cm-d60-g03-right-r03"
+    ]
+  },
+  "split_sides": {
+    "train": [
+      "left",
+      "right"
+    ],
+    "validation": [
+      "left",
+      "right"
+    ]
+  },
+  "totals": {
+    "validation": {
+      "anchors": 1031,
+      "target_band_anchors": 63,
+      "events": 11,
+      "runs": 5
+    },
+    "train": {
+      "anchors": 749,
+      "target_band_anchors": 48,
+      "events": 8,
+      "runs": 3
+    }
+  },
+  "absolute_lateral_bands": {
+    "validation": {
+      "under_5cm": 301,
+      "cm5_to_15": 397,
+      "cm15_to_25": 123,
+      "cm25_to_35": 41,
+      "cm35_to_45": 42,
+      "cm45_to_55": 64,
+      "cm55_to_65": 63,
+      "above_65cm": 0
+    },
+    "train": {
+      "under_5cm": 206,
+      "cm5_to_15": 299,
+      "cm15_to_25": 92,
+      "cm25_to_35": 28,
+      "cm35_to_45": 32,
+      "cm45_to_55": 44,
+      "cm55_to_65": 48,
+      "above_65cm": 0
+    }
+  },
+  "runs": [
+    {
+      "run_id": "codex-time-recovery-60cm-d60-g03-left-r01",
+      "split": "validation",
+      "target_abs_lateral_m": 0.6,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "event_cap": 3,
+      "accepted": 94,
+      "target_band_anchors": 8,
+      "completed_events": 1,
+      "accepted_events": 1,
+      "all_planned_recovered": false,
+      "three_event_qualified": false,
+      "end_reason": "TARGET_NOT_REACHED",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_60cm_20260916/codex-time-recovery-60cm-d60-g03-left-r01",
+      "raw_bytes": 1372183330,
+      "summary_sha256": "e5cddc7978d63e0dd34f9967ef1a3ef7a880d2d4ccec3a8f001c17d8c08da420",
+      "control_sha256": "adda33fdd6a5dbf783809f5d8f3f854b4a67d6e5af9442e4a1f6ef800704173a",
+      "reference_sha256": "d5c7ce5af1e28182310d49be008874631ce56ea32a55de5e132e43af236487da",
+      "clock_audit_sha256": "cb13c6040fa2840451918080e6cf0a042fd063e847af6ebd87c246571cbef370",
+      "sites": [
+        {
+          "site_id": "P00",
+          "release_s_m": 60.0,
+          "target_offset_m": 0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "measured_normal"
+        },
+        {
+          "site_id": "S00",
+          "release_s_m": 118.0,
+          "target_offset_m": 0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path"
+        },
+        {
+          "site_id": "P02",
+          "release_s_m": 243.0,
+          "target_offset_m": 0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path"
+        }
+      ],
+      "teachers_sha256": "ba7ef7f27e2e8a1933da1517dd045d16890b632704b1f60d24abcc9feff91853",
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/materialized/codex-time-recovery-60cm-d60-g03-left-r01",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/prepared/validation/codex-time-recovery-60cm-d60-g03-left-r01",
+      "peak_abs_accepted_lateral_m": 0.6296842694052328,
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "P00",
+          "accepted": 94,
+          "target_band": 8
+        },
+        {
+          "site_id": "S00",
+          "accepted": 0,
+          "target_band": 0
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-60cm-d60-g03-left-r02",
+      "split": "train",
+      "target_abs_lateral_m": 0.6,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "event_cap": 3,
+      "accepted": 188,
+      "target_band_anchors": 15,
+      "completed_events": 2,
+      "accepted_events": 2,
+      "all_planned_recovered": false,
+      "three_event_qualified": false,
+      "end_reason": "RECOVERY_NOT_CONFIRMED",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_60cm_20260916/codex-time-recovery-60cm-d60-g03-left-r02",
+      "raw_bytes": 1369203418,
+      "summary_sha256": "d2e14a8d974b6dba05acfbe7866e70d47e3a660503d0a7b05c8c3e512fa4ff4c",
+      "control_sha256": "690e4a8c10c78891845741cba5a3ef8558f4ede726ca164c15e7927d2a4f1cbf",
+      "reference_sha256": "8a1f2871a937d0fec0b8ba01cb48d080ffd080b2ed327cc9b6daabd03bb3e8e1",
+      "clock_audit_sha256": "6962fe724979825824b38b44033c9132b245941f845ca868c52427c9a0b705ea",
+      "sites": [
+        {
+          "site_id": "P00",
+          "release_s_m": 60.0,
+          "target_offset_m": 0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "measured_normal"
+        },
+        {
+          "site_id": "P03",
+          "release_s_m": 164.0,
+          "target_offset_m": 0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path"
+        },
+        {
+          "site_id": "P02",
+          "release_s_m": 247.0,
+          "target_offset_m": 0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path"
+        }
+      ],
+      "teachers_sha256": "fce6ba5e255bedc0181454f63276049114ca6403353f7354becf204d8ff72151",
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/materialized/codex-time-recovery-60cm-d60-g03-left-r02",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/prepared/train/codex-time-recovery-60cm-d60-g03-left-r02",
+      "peak_abs_accepted_lateral_m": 0.6291466006314623,
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "P00",
+          "accepted": 94,
+          "target_band": 8
+        },
+        {
+          "site_id": "P03",
+          "accepted": 94,
+          "target_band": 7
+        },
+        {
+          "site_id": "P02",
+          "accepted": 0,
+          "target_band": 0
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-60cm-d60-g03-left-r03",
+      "split": "validation",
+      "target_abs_lateral_m": 0.6,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "event_cap": 3,
+      "accepted": 186,
+      "target_band_anchors": 15,
+      "completed_events": 2,
+      "accepted_events": 2,
+      "all_planned_recovered": false,
+      "three_event_qualified": false,
+      "end_reason": "RECOVERY_NOT_CONFIRMED",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_60cm_20260916/codex-time-recovery-60cm-d60-g03-left-r03",
+      "raw_bytes": 1376041617,
+      "summary_sha256": "3e51382b584a7ba6684bb0ad6783bf95fa33e9d4c918647dc70977e70f0d1039",
+      "control_sha256": "c204a2162c8a4ce3cd79d1a00f08cea6d2fbc60fdfc5582b6d70a8791dae0e66",
+      "reference_sha256": "36b17397818f5367ff43c7b2992b8dfcf9f9ebb3378560b0ecfe08f15451bc56",
+      "clock_audit_sha256": "2556abc05bfe455697d44bc97b708acea928f096371ce7c16527cc353d8435c3",
+      "sites": [
+        {
+          "site_id": "P00",
+          "release_s_m": 60.0,
+          "target_offset_m": 0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "measured_normal"
+        },
+        {
+          "site_id": "P03",
+          "release_s_m": 164.0,
+          "target_offset_m": 0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path"
+        },
+        {
+          "site_id": "P04",
+          "release_s_m": 295.0,
+          "target_offset_m": 0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path"
+        }
+      ],
+      "teachers_sha256": "88503a1409f03dad426481d6698a1479475c135331592c634705c0465f287fc1",
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/materialized/codex-time-recovery-60cm-d60-g03-left-r03",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/prepared/validation/codex-time-recovery-60cm-d60-g03-left-r03",
+      "peak_abs_accepted_lateral_m": 0.6272057379679599,
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "P00",
+          "accepted": 94,
+          "target_band": 8
+        },
+        {
+          "site_id": "P03",
+          "accepted": 92,
+          "target_band": 7
+        },
+        {
+          "site_id": "P04",
+          "accepted": 0,
+          "target_band": 0
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-60cm-d60-g03-left-r04",
+      "split": "train",
+      "target_abs_lateral_m": 0.6,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "event_cap": 3,
+      "accepted": 280,
+      "target_band_anchors": 22,
+      "completed_events": 3,
+      "accepted_events": 3,
+      "all_planned_recovered": true,
+      "three_event_qualified": true,
+      "end_reason": "EVENT_COMPLETE",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_60cm_20260916/codex-time-recovery-60cm-d60-g03-left-r04",
+      "raw_bytes": 1374942690,
+      "summary_sha256": "d0bb6f57669c18e973819965f55154c2026ae2dd31946a110faf26fd2e96853d",
+      "control_sha256": "2d0b39b4c2812be3bd1382da20756baa114969d4d19fc703457d2c2e10a6c2a8",
+      "reference_sha256": "8e4f5f07a8316ce689d9ec8215112652fec73b19db27369e2a8bfba7af39b0c0",
+      "clock_audit_sha256": "1497eb3d19a348a64de46fe3205fad18389e8277e75065fcfefe9a89a57c28a6",
+      "sites": [
+        {
+          "site_id": "P00",
+          "release_s_m": 60.0,
+          "target_offset_m": 0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "measured_normal"
+        },
+        {
+          "site_id": "P05",
+          "release_s_m": 108.0,
+          "target_offset_m": 0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path"
+        },
+        {
+          "site_id": "P03",
+          "release_s_m": 164.0,
+          "target_offset_m": 0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path"
+        }
+      ],
+      "teachers_sha256": "2caa81f01915e35b4692a5b543ec4ad195bacc8419db7d8cbf419b0df1199fea",
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/materialized/codex-time-recovery-60cm-d60-g03-left-r04",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/prepared/train/codex-time-recovery-60cm-d60-g03-left-r04",
+      "peak_abs_accepted_lateral_m": 0.6312602860959395,
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "P00",
+          "accepted": 93,
+          "target_band": 8
+        },
+        {
+          "site_id": "P05",
+          "accepted": 93,
+          "target_band": 8
+        },
+        {
+          "site_id": "P03",
+          "accepted": 94,
+          "target_band": 6
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-60cm-d60-g03-left-r05",
+      "split": "validation",
+      "target_abs_lateral_m": 0.6,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "event_cap": 3,
+      "accepted": 283,
+      "target_band_anchors": 22,
+      "completed_events": 3,
+      "accepted_events": 3,
+      "all_planned_recovered": true,
+      "three_event_qualified": true,
+      "end_reason": "EVENT_COMPLETE",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_60cm_20260916/codex-time-recovery-60cm-d60-g03-left-r05",
+      "raw_bytes": 1373974241,
+      "summary_sha256": "5407eb5e3dd2004dd0b878c8d65dcf9fa44155467ee446d03e28d5ecd200bfba",
+      "control_sha256": "5326d04827251ef11a300571caea024f14f11e0e4bf30e15eac4b639b37451a2",
+      "reference_sha256": "8e4f5f07a8316ce689d9ec8215112652fec73b19db27369e2a8bfba7af39b0c0",
+      "clock_audit_sha256": "2904d62bbbb75f8dfe33caba40d100dba84e796668775d138cbd963a6ed7f55c",
+      "sites": [
+        {
+          "site_id": "P00",
+          "release_s_m": 60.0,
+          "target_offset_m": 0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "measured_normal"
+        },
+        {
+          "site_id": "P05",
+          "release_s_m": 108.0,
+          "target_offset_m": 0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path"
+        },
+        {
+          "site_id": "P03",
+          "release_s_m": 164.0,
+          "target_offset_m": 0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path"
+        }
+      ],
+      "teachers_sha256": "038ecc77976453aba7d39924a2d37f67fc5f2d992d702c69b31e9c3370b07e82",
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/materialized/codex-time-recovery-60cm-d60-g03-left-r05",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/prepared/validation/codex-time-recovery-60cm-d60-g03-left-r05",
+      "peak_abs_accepted_lateral_m": 0.6304932564169365,
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "P00",
+          "accepted": 94,
+          "target_band": 8
+        },
+        {
+          "site_id": "P05",
+          "accepted": 94,
+          "target_band": 7
+        },
+        {
+          "site_id": "P03",
+          "accepted": 95,
+          "target_band": 7
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-60cm-d60-g03-right-r01",
+      "split": "validation",
+      "target_abs_lateral_m": 0.6,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "event_cap": 3,
+      "accepted": 186,
+      "target_band_anchors": 8,
+      "completed_events": 2,
+      "accepted_events": 2,
+      "all_planned_recovered": false,
+      "three_event_qualified": false,
+      "end_reason": "TARGET_NOT_REACHED",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_60cm_20260916/codex-time-recovery-60cm-d60-g03-right-r01",
+      "raw_bytes": 1382026707,
+      "summary_sha256": "4fc552c972fd7e33e57d22b8d4e96f37a9be59111220c8e9fd028b219c2bd2c5",
+      "control_sha256": "9bc3781c278f23b37a46ed9f535861a1c9285c3660b182b68704729ced83fba1",
+      "reference_sha256": "8cb91e42245f70bb8f004ed37657b05177a09a2a8ed9f36d84f78136df1780ca",
+      "clock_audit_sha256": "c96b8d618e2aebad61ada554ca60e484d294b623939106f8627c552eec493f62",
+      "sites": [
+        {
+          "site_id": "P00",
+          "release_s_m": 60.0,
+          "target_offset_m": -0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "measured_normal"
+        },
+        {
+          "site_id": "P03",
+          "release_s_m": 164.0,
+          "target_offset_m": -0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path"
+        },
+        {
+          "site_id": "P02",
+          "release_s_m": 243.0,
+          "target_offset_m": -0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path"
+        }
+      ],
+      "teachers_sha256": "ba6b97d800c54b349b3ad1c9b7dfa66027f05ac2f053ecbcab6a1d5c556db40b",
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/materialized/codex-time-recovery-60cm-d60-g03-right-r01",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/prepared/validation/codex-time-recovery-60cm-d60-g03-right-r01",
+      "peak_abs_accepted_lateral_m": 0.5830566255911401,
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "P00",
+          "accepted": 94,
+          "target_band": 2
+        },
+        {
+          "site_id": "P03",
+          "accepted": 92,
+          "target_band": 6
+        },
+        {
+          "site_id": "P02",
+          "accepted": 0,
+          "target_band": 0
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-60cm-d60-g03-right-r02",
+      "split": "train",
+      "target_abs_lateral_m": 0.6,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "event_cap": 3,
+      "accepted": 281,
+      "target_band_anchors": 11,
+      "completed_events": 3,
+      "accepted_events": 3,
+      "all_planned_recovered": true,
+      "three_event_qualified": true,
+      "end_reason": "EVENT_COMPLETE",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_60cm_20260916/codex-time-recovery-60cm-d60-g03-right-r02",
+      "raw_bytes": 1382321806,
+      "summary_sha256": "758433879f8a6040bc569be378588995d459f8e5fb7f30a97f275595a63473de",
+      "control_sha256": "122373d0df189f802c5e2275723ede046c22fe86ff4fa8091c94f8579999c9cb",
+      "reference_sha256": "30a22b14b87bb4890b58ecb9f82c5957303111d94da99dc7d31943c7515c3819",
+      "clock_audit_sha256": "32ae62fca0fa7efe1b0ca6b57656a30eab6d90816b91c8238cfec7ed1834bacc",
+      "sites": [
+        {
+          "site_id": "P00",
+          "release_s_m": 60.0,
+          "target_offset_m": -0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "measured_normal"
+        },
+        {
+          "site_id": "P03",
+          "release_s_m": 164.0,
+          "target_offset_m": -0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path"
+        },
+        {
+          "site_id": "P02",
+          "release_s_m": 247.0,
+          "target_offset_m": -0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path"
+        }
+      ],
+      "teachers_sha256": "5c05d6c4df698420e1bcbc8f7c26e4749c56e9538b255e8f9a22a5f912117206",
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/materialized/codex-time-recovery-60cm-d60-g03-right-r02",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/prepared/train/codex-time-recovery-60cm-d60-g03-right-r02",
+      "peak_abs_accepted_lateral_m": 0.5831360073254989,
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "P00",
+          "accepted": 93,
+          "target_band": 2
+        },
+        {
+          "site_id": "P03",
+          "accepted": 94,
+          "target_band": 6
+        },
+        {
+          "site_id": "P02",
+          "accepted": 94,
+          "target_band": 3
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-60cm-d60-g03-right-r03",
+      "split": "validation",
+      "target_abs_lateral_m": 0.6,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "event_cap": 3,
+      "accepted": 282,
+      "target_band_anchors": 10,
+      "completed_events": 3,
+      "accepted_events": 3,
+      "all_planned_recovered": true,
+      "three_event_qualified": true,
+      "end_reason": "EVENT_COMPLETE",
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_60cm_20260916/codex-time-recovery-60cm-d60-g03-right-r03",
+      "raw_bytes": 1383909345,
+      "summary_sha256": "4fe0c3ba9c75213bd14c3d092967d976d32ae8846332e39c1130c69ea2c9de67",
+      "control_sha256": "62b4a8ee9171971b14845bf5dc531502f6ac85a518b0f0bf128f2e613da546bc",
+      "reference_sha256": "30a22b14b87bb4890b58ecb9f82c5957303111d94da99dc7d31943c7515c3819",
+      "clock_audit_sha256": "155f92c1cacc044e66c6cf0122afeb37ad166621b4fcce556fb02715078b2b35",
+      "sites": [
+        {
+          "site_id": "P00",
+          "release_s_m": 60.0,
+          "target_offset_m": -0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "measured_normal"
+        },
+        {
+          "site_id": "P03",
+          "release_s_m": 164.0,
+          "target_offset_m": -0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path"
+        },
+        {
+          "site_id": "P02",
+          "release_s_m": 247.0,
+          "target_offset_m": -0.6,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path"
+        }
+      ],
+      "teachers_sha256": "4b645fd4412e2bb381c6087ae2d8de00ea8bb81a19d18056486a9e82a6fb770a",
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/materialized/codex-time-recovery-60cm-d60-g03-right-r03",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_recovery_60cm_20260916/prepared/validation/codex-time-recovery-60cm-d60-g03-right-r03",
+      "peak_abs_accepted_lateral_m": 0.5852149672120126,
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "P00",
+          "accepted": 94,
+          "target_band": 1
+        },
+        {
+          "site_id": "P03",
+          "accepted": 94,
+          "target_band": 6
+        },
+        {
+          "site_id": "P02",
+          "accepted": 94,
+          "target_band": 3
+        }
+      ]
+    }
+  ],
+  "all_raw_file_hashes_and_structure_verified": true,
+  "all_sqlite_quick_checks_passed": true,
+  "all_runs_closed_and_stopped": true
+}
