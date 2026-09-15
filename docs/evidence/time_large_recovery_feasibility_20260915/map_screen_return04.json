@@ -1,0 +1,5786 @@
+{
+  "scope": "OFFLINE_MEASURED_NORMAL_MAP_SCREEN_NOT_DRIVING_OR_TEACHER_DATA",
+  "source_commit": "50d3fa36189086875176d9a1242c83a45907cf70",
+  "source_script_sha256": "13024b505ed724c3f2d91c0ab84a7eff42d76fd5464e026caf196722c9663183",
+  "input_hashes": {
+    "base.csv": "c563a757a243a2521a68acacd565492e1ea158db7e7d68327682583d24fc79e7",
+    "occupancy_grid_map.yaml": "39d5aba44234c1e09fc57421d467d64c1769259cd3c3656032f008d2db4e6a79",
+    "occupancy_grid_map.pgm": "c24af2130a8df96047a49d5b7759af7a0b29645c023e7f3bc6d4ba436275725a"
+  },
+  "normal_source_hashes": {
+    "codex-time-recovery-sites-normal-n03": {
+      "control.jsonl": "09e14ff73088f96fcc72d20e0927761d79bfdc08093f7b93d1915c967d876de6",
+      "reference.json": "0acabc4f13836c4bb96f45ac5b196bc5ff3a336bc1e44f693ecbfbce1dbe2a4f",
+      "result.json": "084d6eed44dee16414ef68c441b3560c347757ccfdd24b57c3e574e0d7bdbb51"
+    },
+    "codex-time-recovery-sites-normal-n02": {
+      "control.jsonl": "2ad94c488e6cc85af0cf33227918a64a0915b1f1d7c8cdfbedf6ddf7cdb0fd51",
+      "reference.json": "282837c42786ccaefe1c5782157721cfc416ec4095177e24782b894436b92a26",
+      "result.json": "a6314b32c729d1e8cddb3034e6a33e8c952395003706c98850695ca49576dfd5"
+    }
+  },
+  "normal_runs": [
+    "codex-time-recovery-sites-normal-n03",
+    "codex-time-recovery-sites-normal-n02"
+  ],
+  "shifted_direction": "normal_to_measured_body_yaw_not_exact_road_centerline",
+  "offset_metric": "commanded_planning_displacement_not_observed_recovery_anchor_offset",
+  "map_radius_m": 1.4,
+  "initial_progress_step_m": 0.05,
+  "maximum_physical_sample_step_m": 0.05,
+  "approach_length_m": 8.0,
+  "hold_length_m": 2.0,
+  "return_length_m": 4.0,
+  "existing_runtime_changes": false,
+  "new_awsim_run": false,
+  "new_teacher_samples": 0,
+  "full_body_collision_or_dynamic_feasibility_proven": false,
+  "deadline_ms": 100,
+  "retry_start_deadline_ms": 80,
+  "deadline_changed": false,
+  "actual_coordinate_smoke": "PASS",
+  "shape_exception_smoke": "PASS",
+  "dense_corner_smoke": "PASS",
+  "rows": [
+    {
+      "release_progress_m": 25.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 15.0,
+      "return_end_progress_m": 29.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049999999999813007,
+          "release_map_xy_m": [
+            89615.83289161445,
+            43151.24412203876
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999613150730382,
+          "release_map_xy_m": [
+            89615.83285432453,
+            43151.2440987132
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 25.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 15.0,
+      "return_end_progress_m": 29.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999999819123645,
+          "release_map_xy_m": [
+            89615.6637514733,
+            43151.13739054082
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999998883948959,
+          "release_map_xy_m": [
+            89615.66374326743,
+            43151.13732113892
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 25.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 15.0,
+      "return_end_progress_m": 29.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049998586190406036,
+          "release_map_xy_m": [
+            89616.0020317556,
+            43151.35085353671
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999876936445076,
+          "release_map_xy_m": [
+            89616.00196538163,
+            43151.35087628748
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 25.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 15.0,
+      "return_end_progress_m": 29.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.0499999785668492,
+          "release_map_xy_m": [
+            89615.49461133216,
+            43151.03065904287
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999995405159178,
+          "release_map_xy_m": [
+            89615.49463221034,
+            43151.030543564644
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 25.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 15.0,
+      "return_end_progress_m": 29.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999840303677143,
+          "release_map_xy_m": [
+            89616.17117189674,
+            43151.45758503465
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049999516371865504,
+          "release_map_xy_m": [
+            89616.17107643872,
+            43151.457653861755
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 25.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 15.0,
+      "return_end_progress_m": 29.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": false,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 171,
+          "failed_progress_min_m": 21.45,
+          "failed_progress_max_m": 26.075000000000003,
+          "maximum_sample_gap_m": 0.049999747782398664,
+          "release_map_xy_m": [
+            89615.32547119101,
+            43150.923927544936
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 171,
+          "failed_progress_min_m": 21.45,
+          "failed_progress_max_m": 26.075000000000003,
+          "maximum_sample_gap_m": 0.049999911333686066,
+          "release_map_xy_m": [
+            89615.32552115325,
+            43150.923765990374
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 25.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 15.0,
+      "return_end_progress_m": 29.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999998144002778,
+          "release_map_xy_m": [
+            89616.3403120379,
+            43151.56431653259
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999951230528309,
+          "release_map_xy_m": [
+            89616.3401874958,
+            43151.564431436025
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 45.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 35.0,
+      "return_end_progress_m": 49.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04651012348264573,
+          "release_map_xy_m": [
+            89619.35783223704,
+            43166.57074825347
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04950047693037293,
+          "release_map_xy_m": [
+            89619.35729668477,
+            43166.569256300085
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 45.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 35.0,
+      "return_end_progress_m": 49.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.048282336339789206,
+          "release_map_xy_m": [
+            89619.39199132139,
+            43166.767809556004
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04314633843688811,
+          "release_map_xy_m": [
+            89619.39154326505,
+            43166.766302415854
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 45.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 35.0,
+      "return_end_progress_m": 49.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999886476862773,
+          "release_map_xy_m": [
+            89619.3236731527,
+            43166.37368695094
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049998371550818155,
+          "release_map_xy_m": [
+            89619.32305010449,
+            43166.372210184316
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 45.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 35.0,
+      "return_end_progress_m": 49.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04727765619251378,
+          "release_map_xy_m": [
+            89619.42615040572,
+            43166.964870858545
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04473546362143402,
+          "release_map_xy_m": [
+            89619.42578984532,
+            43166.96334853162
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 45.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 35.0,
+      "return_end_progress_m": 49.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999878323954071,
+          "release_map_xy_m": [
+            89619.28951406837,
+            43166.1766256484
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.0499993739941192,
+          "release_map_xy_m": [
+            89619.28880352422,
+            43166.17516406855
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 45.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 35.0,
+      "return_end_progress_m": 49.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.048105849211909246,
+          "release_map_xy_m": [
+            89619.46030949007,
+            43167.16193216108
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04632885519210917,
+          "release_map_xy_m": [
+            89619.4600364256,
+            43167.16039464739
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 45.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 35.0,
+      "return_end_progress_m": 49.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.0499971071608417,
+          "release_map_xy_m": [
+            89619.25535498402,
+            43165.979564345864
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049987754609855814,
+          "release_map_xy_m": [
+            89619.25455694394,
+            43165.97811795278
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 60.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 50.0,
+      "return_end_progress_m": 64.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04950966773090019,
+          "release_map_xy_m": [
+            89628.6594705332,
+            43155.36219003678
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.0477214355239983,
+          "release_map_xy_m": [
+            89628.65910456154,
+            43155.362040479704
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 60.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 50.0,
+      "return_end_progress_m": 64.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049667282099420444,
+          "release_map_xy_m": [
+            89628.84360149392,
+            43155.440265572644
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04785458509908437,
+          "release_map_xy_m": [
+            89628.84320105141,
+            43155.44019726071
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 60.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 50.0,
+      "return_end_progress_m": 64.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999928422601819,
+          "release_map_xy_m": [
+            89628.47533957247,
+            43155.284114500915
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999933866118355,
+          "release_map_xy_m": [
+            89628.47500807166,
+            43155.2838836987
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 60.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 50.0,
+      "return_end_progress_m": 64.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04989415729266767,
+          "release_map_xy_m": [
+            89629.02773245465,
+            43155.518341108516
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04805848286201662,
+          "release_map_xy_m": [
+            89629.02729754128,
+            43155.51835404172
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 60.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 50.0,
+      "return_end_progress_m": 64.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999907530542065,
+          "release_map_xy_m": [
+            89628.29120861174,
+            43155.20603896504
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999963649117569,
+          "release_map_xy_m": [
+            89628.29091158179,
+            43155.20572691769
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 60.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 50.0,
+      "return_end_progress_m": 64.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04888561122470833,
+          "release_map_xy_m": [
+            89629.21186341539,
+            43155.59641664438
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04833223338529764,
+          "release_map_xy_m": [
+            89629.21139403114,
+            43155.596510822725
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 60.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 50.0,
+      "return_end_progress_m": 64.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04997666899737189,
+          "release_map_xy_m": [
+            89628.107077651,
+            43155.12796342918
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049984959749305655,
+          "release_map_xy_m": [
+            89628.10681509193,
+            43155.12757013668
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 70.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 60.0,
+      "return_end_progress_m": 74.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04984752101387277,
+          "release_map_xy_m": [
+            89632.89093109265,
+            43146.34729121462
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04963201057216821,
+          "release_map_xy_m": [
+            89632.89058542358,
+            43146.347143667146
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 70.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 60.0,
+      "return_end_progress_m": 74.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049995736846620446,
+          "release_map_xy_m": [
+            89633.0672377852,
+            43146.4417155238
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049987997218110695,
+          "release_map_xy_m": [
+            89633.06684772363,
+            43146.44165081809
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 70.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 60.0,
+      "return_end_progress_m": 74.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999908762614298,
+          "release_map_xy_m": [
+            89632.7146244001,
+            43146.25286690544
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.0499961582971782,
+          "release_map_xy_m": [
+            89632.71432312352,
+            43146.252636516205
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 70.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 60.0,
+      "return_end_progress_m": 74.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04996916157625154,
+          "release_map_xy_m": [
+            89633.24354447775,
+            43146.53613983297
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999302344686846,
+          "release_map_xy_m": [
+            89633.24311002369,
+            43146.536157969036
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 70.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 60.0,
+      "return_end_progress_m": 74.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049993801328951114,
+          "release_map_xy_m": [
+            89632.53831770756,
+            43146.158442596265
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049989959641246313,
+          "release_map_xy_m": [
+            89632.53806082347,
+            43146.158129365256
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 70.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 60.0,
+      "return_end_progress_m": 74.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04998841402674019,
+          "release_map_xy_m": [
+            89633.41985117029,
+            43146.63056414215
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04994597902963657,
+          "release_map_xy_m": [
+            89633.41937232374,
+            43146.63066511998
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 70.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 60.0,
+      "return_end_progress_m": 74.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04998861225926994,
+          "release_map_xy_m": [
+            89632.36201101502,
+            43146.064018287085
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04996870015653447,
+          "release_map_xy_m": [
+            89632.36179852342,
+            43146.063622214315
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 85.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 75.0,
+      "return_end_progress_m": 89.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.0490875512777507,
+          "release_map_xy_m": [
+            89643.2910789217,
+            43136.81799481155
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04548098485932332,
+          "release_map_xy_m": [
+            89643.291485352,
+            43136.81677959138
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 85.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 75.0,
+      "return_end_progress_m": 89.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999800426687614,
+          "release_map_xy_m": [
+            89643.25899313204,
+            43137.0154042898
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.0499972411513871,
+          "release_map_xy_m": [
+            89643.25935358582,
+            43137.014181591374
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 85.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 75.0,
+      "return_end_progress_m": 89.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04850250340080433,
+          "release_map_xy_m": [
+            89643.32316471136,
+            43136.6205853333
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04548098485932332,
+          "release_map_xy_m": [
+            89643.32361711819,
+            43136.61937759139
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 85.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 75.0,
+      "return_end_progress_m": 89.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999826079535456,
+          "release_map_xy_m": [
+            89643.22690734237,
+            43137.21281376804
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049998946443953106,
+          "release_map_xy_m": [
+            89643.22722181963,
+            43137.21158359137
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 85.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 75.0,
+      "return_end_progress_m": 89.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.048435692893945496,
+          "release_map_xy_m": [
+            89643.35525050103,
+            43136.42317585506
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.046024246281707745,
+          "release_map_xy_m": [
+            89643.35574888438,
+            43136.421975591395
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 85.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 75.0,
+      "return_end_progress_m": 89.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": false,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 10,
+          "failed_progress_min_m": 82.9,
+          "failed_progress_max_m": 85.15,
+          "maximum_sample_gap_m": 0.04999690748563423,
+          "release_map_xy_m": [
+            89643.19482155271,
+            43137.41022324629
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 9,
+          "failed_progress_min_m": 82.9,
+          "failed_progress_max_m": 85.15,
+          "maximum_sample_gap_m": 0.04999977797933089,
+          "release_map_xy_m": [
+            89643.19509005344,
+            43137.40898559136
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 85.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 75.0,
+      "return_end_progress_m": 89.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.048435692893945496,
+          "release_map_xy_m": [
+            89643.38733629069,
+            43136.22576637681
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.047205921397209714,
+          "release_map_xy_m": [
+            89643.38788065057,
+            43136.224573591404
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 90.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 80.0,
+      "return_end_progress_m": 94.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.0490875512777507,
+          "release_map_xy_m": [
+            89647.32023043736,
+            43139.80873029228
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.047496393599071096,
+          "release_map_xy_m": [
+            89647.32009732032,
+            43139.80878601478
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 90.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 80.0,
+      "return_end_progress_m": 94.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049992891370464795,
+          "release_map_xy_m": [
+            89647.14060781954,
+            43139.896683206796
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999378652304125,
+          "release_map_xy_m": [
+            89647.14039802748,
+            43139.8965821659
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 90.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 80.0,
+      "return_end_progress_m": 94.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04781185478078444,
+          "release_map_xy_m": [
+            89647.49985305517,
+            43139.72077737776
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04872326465845813,
+          "release_map_xy_m": [
+            89647.49979661316,
+            43139.72098986366
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 90.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 80.0,
+      "return_end_progress_m": 94.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049995391363462385,
+          "release_map_xy_m": [
+            89646.96098520175,
+            43139.98463612131
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999071417655974,
+          "release_map_xy_m": [
+            89646.96069873463,
+            43139.98437831702
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 90.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 80.0,
+      "return_end_progress_m": 94.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04899171549489985,
+          "release_map_xy_m": [
+            89647.67947567297,
+            43139.632824463246
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.048983779439370635,
+          "release_map_xy_m": [
+            89647.679495906,
+            43139.633193712536
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 90.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 80.0,
+      "return_end_progress_m": 94.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999488019598497,
+          "release_map_xy_m": [
+            89646.78136258393,
+            43140.07258903584
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999926230094422,
+          "release_map_xy_m": [
+            89646.78099944179,
+            43140.07217446814
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 90.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 80.0,
+      "return_end_progress_m": 94.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04609569269047538,
+          "release_map_xy_m": [
+            89647.85909829078,
+            43139.54487154872
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.048827511413062345,
+          "release_map_xy_m": [
+            89647.85919519885,
+            43139.545397561415
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 95.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 85.0,
+      "return_end_progress_m": 99.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 51,
+          "failed_progress_min_m": 97.225,
+          "failed_progress_max_m": 100.0,
+          "maximum_sample_gap_m": 0.0490875512777507,
+          "release_map_xy_m": [
+            89647.70190791476,
+            43144.807173453155
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 51,
+          "failed_progress_min_m": 97.225,
+          "failed_progress_max_m": 100.0,
+          "maximum_sample_gap_m": 0.047496393599071096,
+          "release_map_xy_m": [
+            89647.70495348237,
+            43144.807107888526
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 95.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 85.0,
+      "return_end_progress_m": 99.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 31,
+          "failed_progress_min_m": 97.85,
+          "failed_progress_max_m": 100.0,
+          "maximum_sample_gap_m": 0.04999902880205756,
+          "release_map_xy_m": [
+            89647.50483705846,
+            43144.77306952969
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 31,
+          "failed_progress_min_m": 97.85,
+          "failed_progress_max_m": 100.0,
+          "maximum_sample_gap_m": 0.04999940881414337,
+          "release_map_xy_m": [
+            89647.50791738999,
+            43144.77280368617
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 95.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 85.0,
+      "return_end_progress_m": 99.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 112,
+          "failed_progress_min_m": 95.9,
+          "failed_progress_max_m": 100.0,
+          "maximum_sample_gap_m": 0.049458555915000584,
+          "release_map_xy_m": [
+            89647.89897877106,
+            43144.84127737662
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 114,
+          "failed_progress_min_m": 95.9,
+          "failed_progress_max_m": 100.0,
+          "maximum_sample_gap_m": 0.04902354566324406,
+          "release_map_xy_m": [
+            89647.90198957476,
+            43144.84141209088
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 95.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 85.0,
+      "return_end_progress_m": 99.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 26,
+          "failed_progress_min_m": 98.4,
+          "failed_progress_max_m": 100.0,
+          "maximum_sample_gap_m": 0.04999782077774615,
+          "release_map_xy_m": [
+            89647.30776620215,
+            43144.73896560622
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 26,
+          "failed_progress_min_m": 98.4,
+          "failed_progress_max_m": 100.0,
+          "maximum_sample_gap_m": 0.04999264722594442,
+          "release_map_xy_m": [
+            89647.31088129761,
+            43144.73849948383
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 95.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 85.0,
+      "return_end_progress_m": 99.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 146,
+          "failed_progress_min_m": 95.45,
+          "failed_progress_max_m": 100.0,
+          "maximum_sample_gap_m": 0.049601700899185475,
+          "release_map_xy_m": [
+            89648.09604962736,
+            43144.87538130009
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 147,
+          "failed_progress_min_m": 95.225,
+          "failed_progress_max_m": 100.0,
+          "maximum_sample_gap_m": 0.04737088629261032,
+          "release_map_xy_m": [
+            89648.09902566714,
+            43144.87571629322
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 95.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 85.0,
+      "return_end_progress_m": 99.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 25,
+          "failed_progress_min_m": 98.4,
+          "failed_progress_max_m": 100.0,
+          "maximum_sample_gap_m": 0.04999656515387435,
+          "release_map_xy_m": [
+            89647.11069534585,
+            43144.70486168276
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 25,
+          "failed_progress_min_m": 98.4,
+          "failed_progress_max_m": 100.0,
+          "maximum_sample_gap_m": 0.04999691772277496,
+          "release_map_xy_m": [
+            89647.11384520523,
+            43144.704195281476
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 95.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 85.0,
+      "return_end_progress_m": 99.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": false,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 167,
+          "failed_progress_min_m": 94.92500000000001,
+          "failed_progress_max_m": 100.0,
+          "maximum_sample_gap_m": 0.04986421750361509,
+          "release_map_xy_m": [
+            89648.29312048366,
+            43144.90948522355
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 168,
+          "failed_progress_min_m": 94.9,
+          "failed_progress_max_m": 100.0,
+          "maximum_sample_gap_m": 0.04832722565406895,
+          "release_map_xy_m": [
+            89648.29606175952,
+            43144.910020495576
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 100.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 90.0,
+      "return_end_progress_m": 104.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": false,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 202,
+          "failed_progress_min_m": 97.225,
+          "failed_progress_max_m": 104.975,
+          "maximum_sample_gap_m": 0.04904218925856446,
+          "release_map_xy_m": [
+            89645.54635781444,
+            43149.28542405948
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 202,
+          "failed_progress_min_m": 97.225,
+          "failed_progress_max_m": 104.975,
+          "maximum_sample_gap_m": 0.04946272679629243,
+          "release_map_xy_m": [
+            89645.54595066707,
+            43149.28521102075
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 100.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 90.0,
+      "return_end_progress_m": 104.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 82,
+          "failed_progress_min_m": 102.55,
+          "failed_progress_max_m": 104.975,
+          "maximum_sample_gap_m": 0.04999963347311767,
+          "release_map_xy_m": [
+            89645.37543205339,
+            43149.18157616971
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 84,
+          "failed_progress_min_m": 102.32499999999999,
+          "failed_progress_max_m": 104.975,
+          "maximum_sample_gap_m": 0.049999995354444514,
+          "release_map_xy_m": [
+            89645.37500152666,
+            43149.18140162141
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 100.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 90.0,
+      "return_end_progress_m": 104.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": false,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 343,
+          "failed_progress_min_m": 96.1,
+          "failed_progress_max_m": 104.975,
+          "maximum_sample_gap_m": 0.049998409683427156,
+          "release_map_xy_m": [
+            89645.71728357549,
+            43149.38927194926
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 346,
+          "failed_progress_min_m": 95.9,
+          "failed_progress_max_m": 104.975,
+          "maximum_sample_gap_m": 0.04999888634911407,
+          "release_map_xy_m": [
+            89645.71689980749,
+            43149.389020420094
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 100.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 90.0,
+      "return_end_progress_m": 104.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 77,
+          "failed_progress_min_m": 102.8,
+          "failed_progress_max_m": 104.975,
+          "maximum_sample_gap_m": 0.04999941155440774,
+          "release_map_xy_m": [
+            89645.20450629236,
+            43149.077728279924
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 78,
+          "failed_progress_min_m": 102.8,
+          "failed_progress_max_m": 104.975,
+          "maximum_sample_gap_m": 0.049999346189843606,
+          "release_map_xy_m": [
+            89645.20405238625,
+            43149.07759222207
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 100.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 90.0,
+      "return_end_progress_m": 104.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": false,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 363,
+          "failed_progress_min_m": 95.55,
+          "failed_progress_max_m": 104.975,
+          "maximum_sample_gap_m": 0.04992787526167944,
+          "release_map_xy_m": [
+            89645.88820933652,
+            43149.49311983904
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 358,
+          "failed_progress_min_m": 95.55,
+          "failed_progress_max_m": 104.975,
+          "maximum_sample_gap_m": 0.04997568838176813,
+          "release_map_xy_m": [
+            89645.8878489479,
+            43149.492829819435
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 100.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 90.0,
+      "return_end_progress_m": 104.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 70,
+          "failed_progress_min_m": 103.05,
+          "failed_progress_max_m": 104.975,
+          "maximum_sample_gap_m": 0.04999966514811395,
+          "release_map_xy_m": [
+            89645.03358053131,
+            43148.97388039015
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 69,
+          "failed_progress_min_m": 103.05,
+          "failed_progress_max_m": 104.975,
+          "maximum_sample_gap_m": 0.049997923400644864,
+          "release_map_xy_m": [
+            89645.03310324583,
+            43148.97378282273
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 100.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 90.0,
+      "return_end_progress_m": 104.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": false,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 370,
+          "failed_progress_min_m": 95.225,
+          "failed_progress_max_m": 104.975,
+          "maximum_sample_gap_m": 0.04999923172501169,
+          "release_map_xy_m": [
+            89646.05913509757,
+            43149.596967728816
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 369,
+          "failed_progress_min_m": 95.225,
+          "failed_progress_max_m": 104.975,
+          "maximum_sample_gap_m": 0.049872703727433,
+          "release_map_xy_m": [
+            89646.05879808831,
+            43149.59663921878
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 105.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 95.0,
+      "return_end_progress_m": 109.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": false,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 224,
+          "failed_progress_min_m": 97.225,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.048755536958466864,
+          "release_map_xy_m": [
+            89642.83923364882,
+            43153.48084139584
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 225,
+          "failed_progress_min_m": 97.225,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.04966712340404723,
+          "release_map_xy_m": [
+            89642.83944432162,
+            43153.4810245538
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 105.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 95.0,
+      "return_end_progress_m": 109.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999845656105407,
+          "release_map_xy_m": [
+            89642.6782723778,
+            43153.362133901406
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999720902525426,
+          "release_map_xy_m": [
+            89642.67840871868,
+            43153.36241791577
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 105.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 95.0,
+      "return_end_progress_m": 109.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": false,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 372,
+          "failed_progress_min_m": 96.9,
+          "failed_progress_max_m": 106.725,
+          "maximum_sample_gap_m": 0.049996909894684145,
+          "release_map_xy_m": [
+            89643.00019491983,
+            43153.59954889027
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 372,
+          "failed_progress_min_m": 96.9,
+          "failed_progress_max_m": 106.725,
+          "maximum_sample_gap_m": 0.04998943588916059,
+          "release_map_xy_m": [
+            89643.00047992457,
+            43153.599631191835
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 105.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 95.0,
+      "return_end_progress_m": 109.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04998133529506291,
+          "release_map_xy_m": [
+            89642.51731110679,
+            43153.243426406974
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999317188450591,
+          "release_map_xy_m": [
+            89642.51737311574,
+            43153.24381127774
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 105.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 95.0,
+      "return_end_progress_m": 109.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": false,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 385,
+          "failed_progress_min_m": 96.67500000000001,
+          "failed_progress_max_m": 107.07499999999999,
+          "maximum_sample_gap_m": 0.049998429440059,
+          "release_map_xy_m": [
+            89643.16115619085,
+            43153.7182563847
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 391,
+          "failed_progress_min_m": 96.67500000000001,
+          "failed_progress_max_m": 107.07499999999999,
+          "maximum_sample_gap_m": 0.049999379534298526,
+          "release_map_xy_m": [
+            89643.1615155275,
+            43153.71823782987
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 105.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 95.0,
+      "return_end_progress_m": 109.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.0499949017027777,
+          "release_map_xy_m": [
+            89642.35634983578,
+            43153.12471891255
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049998576297824456,
+          "release_map_xy_m": [
+            89642.3563375128,
+            43153.12520463971
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 105.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 95.0,
+      "return_end_progress_m": 109.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": false,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 411,
+          "failed_progress_min_m": 96.45,
+          "failed_progress_max_m": 107.275,
+          "maximum_sample_gap_m": 0.04998896957873837,
+          "release_map_xy_m": [
+            89643.32211746185,
+            43153.83696387913
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 412,
+          "failed_progress_min_m": 96.45,
+          "failed_progress_max_m": 107.275,
+          "maximum_sample_gap_m": 0.04999081023635021,
+          "release_map_xy_m": [
+            89643.32255113045,
+            43153.83684446789
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 110.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 100.0,
+      "return_end_progress_m": 114.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 189,
+          "failed_progress_min_m": 99.0,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.04945341640299986,
+          "release_map_xy_m": [
+            89639.40101213059,
+            43157.08978216149
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 190,
+          "failed_progress_min_m": 99.0,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.04966712340404723,
+          "release_map_xy_m": [
+            89639.40052903882,
+            43157.089402443344
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 110.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 100.0,
+      "return_end_progress_m": 114.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 83,
+          "failed_progress_min_m": 99.0,
+          "failed_progress_max_m": 104.65,
+          "maximum_sample_gap_m": 0.0499941216712169,
+          "release_map_xy_m": [
+            89639.26404934847,
+            43156.94403856365
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 81,
+          "failed_progress_min_m": 99.0,
+          "failed_progress_max_m": 104.3,
+          "maximum_sample_gap_m": 0.04999055530663766,
+          "release_map_xy_m": [
+            89639.26363166439,
+            43156.943597406134
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 110.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 100.0,
+      "return_end_progress_m": 114.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 253,
+          "failed_progress_min_m": 99.0,
+          "failed_progress_max_m": 107.07499999999999,
+          "maximum_sample_gap_m": 0.04999792782753696,
+          "release_map_xy_m": [
+            89639.53797491272,
+            43157.23552575934
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 254,
+          "failed_progress_min_m": 99.0,
+          "failed_progress_max_m": 107.07499999999999,
+          "maximum_sample_gap_m": 0.04999871190447929,
+          "release_map_xy_m": [
+            89639.53742641324,
+            43157.23520748055
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 110.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 100.0,
+      "return_end_progress_m": 114.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 36,
+          "failed_progress_min_m": 99.0,
+          "failed_progress_max_m": 102.82499999999999,
+          "maximum_sample_gap_m": 0.049971636721692546,
+          "release_map_xy_m": [
+            89639.12708656634,
+            43156.7982949658
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 35,
+          "failed_progress_min_m": 99.0,
+          "failed_progress_max_m": 102.82499999999999,
+          "maximum_sample_gap_m": 0.04999912044333643,
+          "release_map_xy_m": [
+            89639.12673428997,
+            43156.79779236893
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 110.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 100.0,
+      "return_end_progress_m": 114.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 296,
+          "failed_progress_min_m": 99.0,
+          "failed_progress_max_m": 107.975,
+          "maximum_sample_gap_m": 0.04999711469772016,
+          "release_map_xy_m": [
+            89639.67493769484,
+            43157.38126935718
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 298,
+          "failed_progress_min_m": 99.0,
+          "failed_progress_max_m": 107.975,
+          "maximum_sample_gap_m": 0.049986675937631786,
+          "release_map_xy_m": [
+            89639.67432378767,
+            43157.381012517755
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 110.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 100.0,
+      "return_end_progress_m": 114.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 30,
+          "failed_progress_min_m": 99.0,
+          "failed_progress_max_m": 101.6,
+          "maximum_sample_gap_m": 0.049970148251212376,
+          "release_map_xy_m": [
+            89638.99012378423,
+            43156.65255136795
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 30,
+          "failed_progress_min_m": 99.0,
+          "failed_progress_max_m": 101.6,
+          "maximum_sample_gap_m": 0.04998361506798272,
+          "release_map_xy_m": [
+            89638.98983691554,
+            43156.65198733172
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 110.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 100.0,
+      "return_end_progress_m": 114.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 337,
+          "failed_progress_min_m": 99.0,
+          "failed_progress_max_m": 108.7,
+          "maximum_sample_gap_m": 0.049958809590731235,
+          "release_map_xy_m": [
+            89639.81190047695,
+            43157.52701295503
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 339,
+          "failed_progress_min_m": 99.0,
+          "failed_progress_max_m": 108.7,
+          "maximum_sample_gap_m": 0.049978441819143515,
+          "release_map_xy_m": [
+            89639.81122116209,
+            43157.526817554965
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 113.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 103.0,
+      "return_end_progress_m": 117.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 136,
+          "failed_progress_min_m": 102.0,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.04989459581767012,
+          "release_map_xy_m": [
+            89637.36583758434,
+            43159.30093382407
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 136,
+          "failed_progress_min_m": 102.0,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.04996462182005813,
+          "release_map_xy_m": [
+            89637.36583843037,
+            43159.30093452391
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 113.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 103.0,
+      "return_end_progress_m": 117.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 106,
+          "failed_progress_min_m": 102.0,
+          "failed_progress_max_m": 105.25,
+          "maximum_sample_gap_m": 0.04999830791737683,
+          "release_map_xy_m": [
+            89637.2069408707,
+            43159.179476694204
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 106,
+          "failed_progress_min_m": 102.0,
+          "failed_progress_max_m": 105.25,
+          "maximum_sample_gap_m": 0.04999925686222635,
+          "release_map_xy_m": [
+            89637.2068363182,
+            43159.179615406174
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 113.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 103.0,
+      "return_end_progress_m": 117.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 163,
+          "failed_progress_min_m": 102.0,
+          "failed_progress_max_m": 106.525,
+          "maximum_sample_gap_m": 0.049988708079453915,
+          "release_map_xy_m": [
+            89637.52473429797,
+            43159.42239095394
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 162,
+          "failed_progress_min_m": 102.0,
+          "failed_progress_max_m": 106.525,
+          "maximum_sample_gap_m": 0.04999852130272878,
+          "release_map_xy_m": [
+            89637.52484054254,
+            43159.42225364165
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 113.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 103.0,
+      "return_end_progress_m": 117.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 101,
+          "failed_progress_min_m": 102.0,
+          "failed_progress_max_m": 105.225,
+          "maximum_sample_gap_m": 0.0499984336191941,
+          "release_map_xy_m": [
+            89637.04804415707,
+            43159.058019564334
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 100,
+          "failed_progress_min_m": 102.0,
+          "failed_progress_max_m": 104.9,
+          "maximum_sample_gap_m": 0.04999747834373483,
+          "release_map_xy_m": [
+            89637.04783420605,
+            43159.058296288444
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 113.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 103.0,
+      "return_end_progress_m": 117.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 190,
+          "failed_progress_min_m": 102.0,
+          "failed_progress_max_m": 107.1,
+          "maximum_sample_gap_m": 0.04997880565341002,
+          "release_map_xy_m": [
+            89637.6836310116,
+            43159.54384808381
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 189,
+          "failed_progress_min_m": 102.0,
+          "failed_progress_max_m": 107.1,
+          "maximum_sample_gap_m": 0.04999418859239887,
+          "release_map_xy_m": [
+            89637.68384265469,
+            43159.54357275938
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 113.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 103.0,
+      "return_end_progress_m": 117.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 103,
+          "failed_progress_min_m": 102.0,
+          "failed_progress_max_m": 104.875,
+          "maximum_sample_gap_m": 0.049999597474870205,
+          "release_map_xy_m": [
+            89636.88914744343,
+            43158.93656243447
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 101,
+          "failed_progress_min_m": 102.0,
+          "failed_progress_max_m": 104.875,
+          "maximum_sample_gap_m": 0.049999606477399164,
+          "release_map_xy_m": [
+            89636.88883209389,
+            43158.936977170706
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 113.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 103.0,
+      "return_end_progress_m": 117.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 225,
+          "failed_progress_min_m": 102.0,
+          "failed_progress_max_m": 108.0,
+          "maximum_sample_gap_m": 0.04995161565672123,
+          "release_map_xy_m": [
+            89637.84252772524,
+            43159.665305213675
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 224,
+          "failed_progress_min_m": 102.0,
+          "failed_progress_max_m": 108.0,
+          "maximum_sample_gap_m": 0.04999235517279462,
+          "release_map_xy_m": [
+            89637.84284476686,
+            43159.66489187712
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 116.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 106.0,
+      "return_end_progress_m": 120.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 22,
+          "failed_progress_min_m": 105.05,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.04989459581767012,
+          "release_map_xy_m": [
+            89635.55603636031,
+            43161.69674861316
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 23,
+          "failed_progress_min_m": 105.05,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.04996462182005813,
+          "release_map_xy_m": [
+            89635.55750649377,
+            43161.698015245594
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 116.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 106.0,
+      "return_end_progress_m": 120.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 22,
+          "failed_progress_min_m": 105.05,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.04999840676903826,
+          "release_map_xy_m": [
+            89635.39764428788,
+            43161.574634112025
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 23,
+          "failed_progress_min_m": 105.05,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.04999944687543129,
+          "release_map_xy_m": [
+            89635.39913697394,
+            43161.57587149754
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 116.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 106.0,
+      "return_end_progress_m": 120.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 22,
+          "failed_progress_min_m": 105.05,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.04999443141045634,
+          "release_map_xy_m": [
+            89635.71442843275,
+            43161.8188631143
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 23,
+          "failed_progress_min_m": 105.05,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.04999945401216765,
+          "release_map_xy_m": [
+            89635.71587601361,
+            43161.82015899365
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 116.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 106.0,
+      "return_end_progress_m": 120.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 22,
+          "failed_progress_min_m": 105.05,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.049998703558037184,
+          "release_map_xy_m": [
+            89635.23925221544,
+            43161.45251961089
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 23,
+          "failed_progress_min_m": 105.05,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.04999681808712008,
+          "release_map_xy_m": [
+            89635.24076745412,
+            43161.45372774948
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 116.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 106.0,
+      "return_end_progress_m": 120.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 22,
+          "failed_progress_min_m": 105.05,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.04999618127296997,
+          "release_map_xy_m": [
+            89635.87282050519,
+            43161.940977615435
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 23,
+          "failed_progress_min_m": 105.05,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.049998924715493664,
+          "release_map_xy_m": [
+            89635.87424553343,
+            43161.94230274171
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 116.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 106.0,
+      "return_end_progress_m": 120.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 22,
+          "failed_progress_min_m": 105.05,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.0499994760470754,
+          "release_map_xy_m": [
+            89635.08086014299,
+            43161.330405109744
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 23,
+          "failed_progress_min_m": 105.05,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.04999931316139477,
+          "release_map_xy_m": [
+            89635.08239793428,
+            43161.331584001426
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 116.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 106.0,
+      "return_end_progress_m": 120.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 22,
+          "failed_progress_min_m": 105.05,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.04999991539187922,
+          "release_map_xy_m": [
+            89636.03121257764,
+            43162.06309211658
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 23,
+          "failed_progress_min_m": 105.05,
+          "failed_progress_max_m": 105.95,
+          "maximum_sample_gap_m": 0.04997746839167412,
+          "release_map_xy_m": [
+            89636.03261505326,
+            43162.06444648976
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 118.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 108.0,
+      "return_end_progress_m": 122.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04989459581767012,
+          "release_map_xy_m": [
+            89634.30500162265,
+            43163.25882137944
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04996462182005813,
+          "release_map_xy_m": [
+            89634.30317434012,
+            43163.25724703576
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 118.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 108.0,
+      "return_end_progress_m": 122.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049999843198727245,
+          "release_map_xy_m": [
+            89634.15292136837,
+            43163.12893067054
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999992952065259,
+          "release_map_xy_m": [
+            89634.15113224195,
+            43163.12731166574
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 118.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 108.0,
+      "return_end_progress_m": 122.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999905686442358,
+          "release_map_xy_m": [
+            89634.45708187693,
+            43163.38871208834
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049998656729528274,
+          "release_map_xy_m": [
+            89634.45521643829,
+            43163.387182405786
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 118.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 108.0,
+      "return_end_progress_m": 122.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999831839162814,
+          "release_map_xy_m": [
+            89634.00084111409,
+            43162.99903996164
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999857164696821,
+          "release_map_xy_m": [
+            89633.99909014377,
+            43162.997376295716
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 118.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 108.0,
+      "return_end_progress_m": 122.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999680766121614,
+          "release_map_xy_m": [
+            89634.60916213121,
+            43163.51860279723
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999525978945558,
+          "release_map_xy_m": [
+            89634.60725853647,
+            43163.51711777581
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 118.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 108.0,
+      "return_end_progress_m": 122.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999952117876357,
+          "release_map_xy_m": [
+            89633.84876085981,
+            43162.86914925274
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999843325290756,
+          "release_map_xy_m": [
+            89633.8470480456,
+            43162.86744092569
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 118.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 108.0,
+      "return_end_progress_m": 122.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999292061578118,
+          "release_map_xy_m": [
+            89634.76124238549,
+            43163.64849350613
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999882031875157,
+          "release_map_xy_m": [
+            89634.75930063464,
+            43163.64705314583
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 140.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 130.0,
+      "return_end_progress_m": 144.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 92,
+          "failed_progress_min_m": 129.0,
+          "failed_progress_max_m": 131.275,
+          "maximum_sample_gap_m": 0.0482538082572272,
+          "release_map_xy_m": [
+            89619.98801710413,
+            43179.89838584266
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 92,
+          "failed_progress_min_m": 129.0,
+          "failed_progress_max_m": 131.275,
+          "maximum_sample_gap_m": 0.048110376565391674,
+          "release_map_xy_m": [
+            89619.98453121122,
+            43179.90613562416
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 140.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 130.0,
+      "return_end_progress_m": 144.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 84,
+          "failed_progress_min_m": 129.0,
+          "failed_progress_max_m": 131.55,
+          "maximum_sample_gap_m": 0.049999842987982275,
+          "release_map_xy_m": [
+            89619.79084110631,
+            43179.86489515913
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 83,
+          "failed_progress_min_m": 129.0,
+          "failed_progress_max_m": 131.55,
+          "maximum_sample_gap_m": 0.04999954478049016,
+          "release_map_xy_m": [
+            89619.78732123945,
+            43179.87284558011
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 140.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 130.0,
+      "return_end_progress_m": 144.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 91,
+          "failed_progress_min_m": 129.0,
+          "failed_progress_max_m": 131.25,
+          "maximum_sample_gap_m": 0.049996747692514464,
+          "release_map_xy_m": [
+            89620.18519310195,
+            43179.931876526185
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 91,
+          "failed_progress_min_m": 129.0,
+          "failed_progress_max_m": 131.25,
+          "maximum_sample_gap_m": 0.04999509253675693,
+          "release_map_xy_m": [
+            89620.18174118298,
+            43179.939425668206
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 140.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 130.0,
+      "return_end_progress_m": 144.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 85,
+          "failed_progress_min_m": 129.0,
+          "failed_progress_max_m": 131.6,
+          "maximum_sample_gap_m": 0.04999906740140048,
+          "release_map_xy_m": [
+            89619.59366510849,
+            43179.831404475604
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 86,
+          "failed_progress_min_m": 129.0,
+          "failed_progress_max_m": 131.6,
+          "maximum_sample_gap_m": 0.04999900115232137,
+          "release_map_xy_m": [
+            89619.59011126767,
+            43179.839555536055
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 140.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 130.0,
+      "return_end_progress_m": 144.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 131,
+          "failed_progress_min_m": 129.0,
+          "failed_progress_max_m": 136.35,
+          "maximum_sample_gap_m": 0.0499943364280808,
+          "release_map_xy_m": [
+            89620.38236909977,
+            43179.96536720971
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 130,
+          "failed_progress_min_m": 129.0,
+          "failed_progress_max_m": 136.35,
+          "maximum_sample_gap_m": 0.049980659336056395,
+          "release_map_xy_m": [
+            89620.37895115477,
+            43179.97271571226
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 140.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 130.0,
+      "return_end_progress_m": 144.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 88,
+          "failed_progress_min_m": 129.0,
+          "failed_progress_max_m": 131.6,
+          "maximum_sample_gap_m": 0.04999859782934785,
+          "release_map_xy_m": [
+            89619.39648911066,
+            43179.79791379208
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 88,
+          "failed_progress_min_m": 129.0,
+          "failed_progress_max_m": 131.6,
+          "maximum_sample_gap_m": 0.04999855448502193,
+          "release_map_xy_m": [
+            89619.3929012959,
+            43179.80626549201
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 140.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 130.0,
+      "return_end_progress_m": 144.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 162,
+          "failed_progress_min_m": 129.0,
+          "failed_progress_max_m": 137.05,
+          "maximum_sample_gap_m": 0.04990781132240815,
+          "release_map_xy_m": [
+            89620.5795450976,
+            43179.99885789324
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 162,
+          "failed_progress_min_m": 129.0,
+          "failed_progress_max_m": 137.05,
+          "maximum_sample_gap_m": 0.04987858023623357,
+          "release_map_xy_m": [
+            89620.57616112653,
+            43180.00600575631
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 160.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 150.0,
+      "return_end_progress_m": 164.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.036179321753802285,
+          "release_map_xy_m": [
+            89634.08414049483,
+            43184.88065628194
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04933780407181915,
+          "release_map_xy_m": [
+            89634.08544658635,
+            43184.882465170034
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 160.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 150.0,
+      "return_end_progress_m": 164.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999203287765564,
+          "release_map_xy_m": [
+            89634.20637340244,
+            43185.03895699671
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049998959261641863,
+          "release_map_xy_m": [
+            89634.20764164971,
+            43185.04079509926
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 160.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 150.0,
+      "return_end_progress_m": 164.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999874665169397,
+          "release_map_xy_m": [
+            89633.96190758722,
+            43184.722355567166
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999952629320642,
+          "release_map_xy_m": [
+            89633.96325152299,
+            43184.72413524081
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 160.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 150.0,
+      "return_end_progress_m": 164.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04996615745524261,
+          "release_map_xy_m": [
+            89634.32860631004,
+            43185.19725771149
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04998746905246092,
+          "release_map_xy_m": [
+            89634.32983671308,
+            43185.199125028485
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 160.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 150.0,
+      "return_end_progress_m": 164.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999685759945352,
+          "release_map_xy_m": [
+            89633.83967467962,
+            43184.56405485239
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049997894873532844,
+          "release_map_xy_m": [
+            89633.84105645963,
+            43184.565805311584
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 160.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 150.0,
+      "return_end_progress_m": 164.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04996557436162367,
+          "release_map_xy_m": [
+            89634.45083921765,
+            43185.35555842626
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04996674519177665,
+          "release_map_xy_m": [
+            89634.45203177645,
+            43185.35745495772
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 160.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 150.0,
+      "return_end_progress_m": 164.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999880231951708,
+          "release_map_xy_m": [
+            89633.71744177201,
+            43184.40575413762
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999913705592391,
+          "release_map_xy_m": [
+            89633.71886139625,
+            43184.40747538235
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 210.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 200.0,
+      "return_end_progress_m": 214.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 112,
+          "failed_progress_min_m": 211.025,
+          "failed_progress_max_m": 213.875,
+          "maximum_sample_gap_m": 0.049944595171711535,
+          "release_map_xy_m": [
+            89654.5350258561,
+            43175.20613692099
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 112,
+          "failed_progress_min_m": 211.025,
+          "failed_progress_max_m": 213.875,
+          "maximum_sample_gap_m": 0.04855010955491363,
+          "release_map_xy_m": [
+            89654.53525288738,
+            43175.20461677082
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 210.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 200.0,
+      "return_end_progress_m": 214.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 87,
+          "failed_progress_min_m": 211.65,
+          "failed_progress_max_m": 213.875,
+          "maximum_sample_gap_m": 0.04999623721573887,
+          "release_map_xy_m": [
+            89654.56804526232,
+            43175.00888145513
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 87,
+          "failed_progress_min_m": 211.65,
+          "failed_progress_max_m": 213.875,
+          "maximum_sample_gap_m": 0.04996591731135902,
+          "release_map_xy_m": [
+            89654.56826024863,
+            43175.00735928908
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 210.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 200.0,
+      "return_end_progress_m": 214.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 133,
+          "failed_progress_min_m": 210.4,
+          "failed_progress_max_m": 213.875,
+          "maximum_sample_gap_m": 0.04999891717600523,
+          "release_map_xy_m": [
+            89654.50200644987,
+            43175.403392386856
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 135,
+          "failed_progress_min_m": 210.4,
+          "failed_progress_max_m": 213.875,
+          "maximum_sample_gap_m": 0.04999794858222665,
+          "release_map_xy_m": [
+            89654.50224552612,
+            43175.40187425256
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 210.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 200.0,
+      "return_end_progress_m": 214.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 64,
+          "failed_progress_min_m": 212.25,
+          "failed_progress_max_m": 213.875,
+          "maximum_sample_gap_m": 0.04998778678959328,
+          "release_map_xy_m": [
+            89654.60106466855,
+            43174.81162598926
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 63,
+          "failed_progress_min_m": 212.25,
+          "failed_progress_max_m": 213.875,
+          "maximum_sample_gap_m": 0.04998259189225094,
+          "release_map_xy_m": [
+            89654.60126760989,
+            43174.810101807336
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 210.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 200.0,
+      "return_end_progress_m": 214.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": false,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 160,
+          "failed_progress_min_m": 209.625,
+          "failed_progress_max_m": 213.875,
+          "maximum_sample_gap_m": 0.049992676833360936,
+          "release_map_xy_m": [
+            89654.46898704364,
+            43175.60064785272
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 163,
+          "failed_progress_min_m": 209.625,
+          "failed_progress_max_m": 213.875,
+          "maximum_sample_gap_m": 0.04999174710916333,
+          "release_map_xy_m": [
+            89654.46923816486,
+            43175.5991317343
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 210.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 200.0,
+      "return_end_progress_m": 214.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 32,
+          "failed_progress_min_m": 213.05,
+          "failed_progress_max_m": 213.875,
+          "maximum_sample_gap_m": 0.04995352673275535,
+          "release_map_xy_m": [
+            89654.63408407476,
+            43174.614370523406
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": true,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 31,
+          "failed_progress_min_m": 213.05,
+          "failed_progress_max_m": 213.875,
+          "maximum_sample_gap_m": 0.049937480854583764,
+          "release_map_xy_m": [
+            89654.63427497116,
+            43174.612844325595
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 210.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 200.0,
+      "return_end_progress_m": 214.0,
+      "both_normal_whole_path_pass": false,
+      "both_normal_release_neighborhood_pass": false,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 187,
+          "failed_progress_min_m": 209.0,
+          "failed_progress_max_m": 213.875,
+          "maximum_sample_gap_m": 0.04998939063049779,
+          "release_map_xy_m": [
+            89654.43596763743,
+            43175.79790331858
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": false,
+          "approach_map_pass": false,
+          "return_map_pass": false,
+          "release_neighborhood_map_pass": false,
+          "failed_points": 190,
+          "failed_progress_min_m": 209.0,
+          "failed_progress_max_m": 213.875,
+          "maximum_sample_gap_m": 0.0499846841474006,
+          "release_map_xy_m": [
+            89654.43623080359,
+            43175.79638921604
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 235.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 225.0,
+      "return_end_progress_m": 239.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.0480518842372598,
+          "release_map_xy_m": [
+            89653.35812282056,
+            43160.32804047357
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04688347547634507,
+          "release_map_xy_m": [
+            89653.35806932484,
+            43160.327911804095
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 235.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 225.0,
+      "return_end_progress_m": 239.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999891669778111,
+          "release_map_xy_m": [
+            89653.42135762681,
+            43160.517780715156
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049999566885529284,
+          "release_map_xy_m": [
+            89653.4211899937,
+            43160.51769004616
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 235.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 225.0,
+      "return_end_progress_m": 239.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04870259838291132,
+          "release_map_xy_m": [
+            89653.29488801431,
+            43160.138300231985
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04688347547634507,
+          "release_map_xy_m": [
+            89653.29494865597,
+            43160.13813356203
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 235.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 225.0,
+      "return_end_progress_m": 239.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049998512717536595,
+          "release_map_xy_m": [
+            89653.48459243307,
+            43160.70752095675
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049999274147663204,
+          "release_map_xy_m": [
+            89653.48431066258,
+            43160.70746828822
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 235.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 225.0,
+      "return_end_progress_m": 239.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04959833203556222,
+          "release_map_xy_m": [
+            89653.23165320804,
+            43159.94855999039
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04688347547634507,
+          "release_map_xy_m": [
+            89653.2318279871,
+            43159.94835531997
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 235.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 225.0,
+      "return_end_progress_m": 239.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999929549603981,
+          "release_map_xy_m": [
+            89653.54782723932,
+            43160.89726119833
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049994973625266344,
+          "release_map_xy_m": [
+            89653.54743133145,
+            43160.89724653029
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 235.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 225.0,
+      "return_end_progress_m": 239.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049597248263917065,
+          "release_map_xy_m": [
+            89653.1684184018,
+            43159.75881974881
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.047457149768215044,
+          "release_map_xy_m": [
+            89653.16870731823,
+            43159.758577077904
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 265.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 255.0,
+      "return_end_progress_m": 269.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.0493167439603802,
+          "release_map_xy_m": [
+            89676.38206475647,
+            43166.53163634898
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04929884001736229,
+          "release_map_xy_m": [
+            89676.38146043579,
+            43166.53113347345
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 265.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 255.0,
+      "return_end_progress_m": 269.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04979649938049014,
+          "release_map_xy_m": [
+            89676.52715637491,
+            43166.66928961722
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04908555833277385,
+          "release_map_xy_m": [
+            89676.52644401003,
+            43166.66890053483
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 265.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 255.0,
+      "return_end_progress_m": 269.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999973496163024,
+          "release_map_xy_m": [
+            89676.23697313803,
+            43166.393983080736
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999808558767748,
+          "release_map_xy_m": [
+            89676.23647686155,
+            43166.39336641207
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 265.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 255.0,
+      "return_end_progress_m": 269.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049845971356484546,
+          "release_map_xy_m": [
+            89676.67224799337,
+            43166.80694288545
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04961725364042152,
+          "release_map_xy_m": [
+            89676.67142758427,
+            43166.80666759621
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 265.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 255.0,
+      "return_end_progress_m": 269.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999688071838829,
+          "release_map_xy_m": [
+            89676.09188151958,
+            43166.2563298125
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999845800830254,
+          "release_map_xy_m": [
+            89676.09149328731,
+            43166.25559935069
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 265.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 255.0,
+      "return_end_progress_m": 269.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04996768182535017,
+          "release_map_xy_m": [
+            89676.8173396118,
+            43166.94459615369
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049912257347259924,
+          "release_map_xy_m": [
+            89676.8164111585,
+            43166.94443465759
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 265.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 255.0,
+      "return_end_progress_m": 269.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999535019373095,
+          "release_map_xy_m": [
+            89675.94678990114,
+            43166.11867654426
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049999532577007906,
+          "release_map_xy_m": [
+            89675.94650971307,
+            43166.11783228931
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 285.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 275.0,
+      "return_end_progress_m": 289.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.03706583060180997,
+          "release_map_xy_m": [
+            89674.36169073133,
+            43149.370386119685
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.03515854041069522,
+          "release_map_xy_m": [
+            89674.3627737911,
+            43149.36818779992
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 285.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 275.0,
+      "return_end_progress_m": 289.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.03707809780793034,
+          "release_map_xy_m": [
+            89674.4608778527,
+            43149.19671425969
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.03577964570107557,
+          "release_map_xy_m": [
+            89674.46199514222,
+            43149.194535493625
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 285.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 275.0,
+      "return_end_progress_m": 289.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999978383729755,
+          "release_map_xy_m": [
+            89674.26250360995,
+            43149.54405797968
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049999639509599604,
+          "release_map_xy_m": [
+            89674.26355243998,
+            43149.54184010621
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 285.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 275.0,
+      "return_end_progress_m": 289.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.03709178941280225,
+          "release_map_xy_m": [
+            89674.56006497408,
+            43149.023042399705
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.03645140781026729,
+          "release_map_xy_m": [
+            89674.56121649336,
+            43149.02088318733
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 285.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 275.0,
+      "return_end_progress_m": 289.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999295502833119,
+          "release_map_xy_m": [
+            89674.16331648857,
+            43149.717729839664
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999445106466128,
+          "release_map_xy_m": [
+            89674.16433108885,
+            43149.715492412506
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 285.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 275.0,
+      "return_end_progress_m": 289.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.03710690384378033,
+          "release_map_xy_m": [
+            89674.65925209546,
+            43148.84937053971
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.03713168920408094,
+          "release_map_xy_m": [
+            89674.66043784448,
+            43148.847230881045
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 285.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 275.0,
+      "return_end_progress_m": 289.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.049995446208192164,
+          "release_map_xy_m": [
+            89674.0641293672,
+            43149.89140169966
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999004177395358,
+          "release_map_xy_m": [
+            89674.06510973773,
+            43149.88914471879
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 305.0,
+      "offset_m": 0.0,
+      "side": "baseline",
+      "start_progress_m": 295.0,
+      "return_end_progress_m": 309.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04791539015470154,
+          "release_map_xy_m": [
+            89657.07098187318,
+            43141.64247443656
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04847587797963594,
+          "release_map_xy_m": [
+            89657.07134630028,
+            43141.642332054056
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 305.0,
+      "offset_m": 0.2,
+      "side": "left",
+      "start_progress_m": 295.0,
+      "return_end_progress_m": 309.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999968434950556,
+          "release_map_xy_m": [
+            89657.26670371804,
+            43141.60132884813
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999940477759766,
+          "release_map_xy_m": [
+            89657.2670029054,
+            43141.600877345394
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 305.0,
+      "offset_m": -0.2,
+      "side": "right",
+      "start_progress_m": 295.0,
+      "return_end_progress_m": 309.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04923857778774152,
+          "release_map_xy_m": [
+            89656.87526002833,
+            43141.68362002498
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04987545594074039,
+          "release_map_xy_m": [
+            89656.87568969515,
+            43141.68378676272
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 305.0,
+      "offset_m": 0.4,
+      "side": "left",
+      "start_progress_m": 295.0,
+      "return_end_progress_m": 309.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999987536951548,
+          "release_map_xy_m": [
+            89657.46242556289,
+            43141.56018325971
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04999936199493661,
+          "release_map_xy_m": [
+            89657.46265951052,
+            43141.559422636725
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 305.0,
+      "offset_m": -0.4,
+      "side": "right",
+      "start_progress_m": 295.0,
+      "return_end_progress_m": 309.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.0491638834252999,
+          "release_map_xy_m": [
+            89656.67953818348,
+            43141.724765613406
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04969101197417866,
+          "release_map_xy_m": [
+            89656.68003309003,
+            43141.72524147139
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 305.0,
+      "offset_m": 0.6,
+      "side": "left",
+      "start_progress_m": 295.0,
+      "return_end_progress_m": 309.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04998398573248988,
+          "release_map_xy_m": [
+            89657.65814740775,
+            43141.519037671285
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04990091363029623,
+          "release_map_xy_m": [
+            89657.65831611566,
+            43141.51796792806
+          ]
+        }
+      ]
+    },
+    {
+      "release_progress_m": 305.0,
+      "offset_m": -0.6,
+      "side": "right",
+      "start_progress_m": 295.0,
+      "return_end_progress_m": 309.0,
+      "both_normal_whole_path_pass": true,
+      "both_normal_release_neighborhood_pass": true,
+      "per_normal": [
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n03",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.047878389378262116,
+          "release_map_xy_m": [
+            89656.48381633862,
+            43141.76591120183
+          ]
+        },
+        {
+          "normal_run_id": "codex-time-recovery-sites-normal-n02",
+          "whole_excursion_map_pass": true,
+          "approach_map_pass": true,
+          "return_map_pass": true,
+          "release_neighborhood_map_pass": true,
+          "failed_points": 0,
+          "failed_progress_min_m": null,
+          "failed_progress_max_m": null,
+          "maximum_sample_gap_m": 0.04607360105345454,
+          "release_map_xy_m": [
+            89656.48437648489,
+            43141.76669618005
+          ]
+        }
+      ]
+    }
+  ]
+}
