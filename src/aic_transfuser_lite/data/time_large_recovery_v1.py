@@ -14,7 +14,7 @@ import re
 from typing import Any, Mapping, Sequence
 
 SCHEMA = 'measured_large_recovery_v1'
-MAX_EVENTS = 6
+MAX_EVENTS = 7
 
 
 @dataclass(frozen=True)

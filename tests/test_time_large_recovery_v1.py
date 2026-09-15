@@ -130,14 +130,15 @@ def test_transient_return_followed_by_drift_cannot_advance_the_event_count():
     assert decision.state.completed_events==0
 
 
-def test_six_event_budget_is_finite_and_all_events_are_separated():
-    cfg=LargeRecoveryConfig(tuple(LargeRecoverySite('P'+str(i),40.+50*i,.2*(-1)**i) for i in range(6)),event_cap=6)
+@pytest.mark.parametrize('count', [3, 5, 6, 7])
+def test_event_budget_is_finite_and_all_events_are_separated(count):
+    cfg=LargeRecoveryConfig(tuple(LargeRecoverySite('P'+str(i),40.+40*i,.2*(-1)**i) for i in range(count)),event_cap=count)
     state,rows=synthetic_run(cfg)
     events=large_recovery_events(rows)
-    assert state.completed_events==6 and state.event_id==6 and state.stage=='complete'
-    assert len(events)==6 and all(e['recovery_confirmed'] for e in events)
+    assert state.completed_events==count and state.event_id==count and state.stage=='complete'
+    assert len(events)==count and all(e['recovery_confirmed'] for e in events)
     assert all(b['preparation_start_ns']>=a['end_publication_ns']+3_000_000_000 for a,b in zip(events,events[1:]))
-    with pytest.raises(ValueError):LargeRecoveryConfig(cfg.sites,event_cap=7)
+    with pytest.raises(ValueError):LargeRecoveryConfig(cfg.sites,event_cap=8)
 
 
 def test_clock_gaps_reset_entry_and_goal_holds_and_regression_fails():

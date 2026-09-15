@@ -1,0 +1,36 @@
+# 大きな横ずれからのAWSIM実走収集
+
+ユーザーの2026-09-15指示により、1周3回から始め、採用条件を満たした段階で
+2回ずつ増やす。実走先は `graneple@192.168.3.10`、教師検証はnative WSL。
+
+今回の有限範囲は、目標横ずれ20cmの左右各1周・各3イベントを先行し、両方の結果と
+教師を確認できた場合に左右各1周・各5イベントを追加する計4周。失敗時は増量せず
+診断する。初期地点は進捗60m、停止地点手前118m、235m。準備開始は各10m手前。
+再試行が必要な場合も原因・修正・元データを残し、最大2回の追加試行までとする。
+7イベントは設定可能だが、既存の両側20cm地図通過候補だけでは40m間隔を維持して
+停止地点を含む7地点を組めないため、今回の実走予定には入れない。
+
+目標5km/h、操舵・センサ・停止領域・計算期限の監視は既存条件を維持する。
+復帰確認後の未来3秒と次回の安定条件を満たすまで、次の横移動を開始しない。
+回数の判定は予定数、準備開始数、実測目標到達数、復帰成功数、有効教師数を分ける。
+停止や目標未達・未復帰・スキップがあれば5回へ増やさない。
+
+専用実行先は `/home/graneple/e2e_autonomous/time_recovery_large_live_20260915`。
+完成済みの小外乱・合成試験の実行先を再利用しない。
+1周+未来確保後に停止、1試行の上限30分、bag上限2GiB、空き10GiB以上を維持する。
+最大2runごと、容量に応じて1runごとにnative WSLへ転送し、hash・構造・SQLiteを
+検証してから転送済みの新規rawだけを限定削除する。
+
+実行コマンド（専用配備・SHA検証後）:
+
+```sh
+PYTHONPATH=/home/graneple/e2e_autonomous/time_recovery_large_live_20260915/source/src \
+python3 /home/graneple/e2e_autonomous/time_recovery_large_live_20260915/source/tools/run_time_recovery_awsim.py \
+  --campaign-root /home/graneple/e2e_autonomous/time_recovery_large_live_20260915 \
+  --run-id codex-time-recovery-large-live-g03-left-r01 --side left \
+  --speed-policy aligned_gain4_v1 --separate-cpus
+```
+
+通常のRVizに基準経路、準備経路、実走履歴、外乱開始マーカーを表示する。
+Camera/LiDAR/egoを連続保存し、確認済みの通常PP復帰区間だけを教師候補にする。
+本収集の完了結果、教師数、増量の可否は試行後に追記する。再学習は今回の範囲外。
