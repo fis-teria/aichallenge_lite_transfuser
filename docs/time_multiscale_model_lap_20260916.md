@@ -4,6 +4,10 @@
 AWSIM本体、シーン、車両・センサファイルは変更せず、全ファイルを開始前後にhash照合する。
 通常RVizにE2Eの生予測 `/visualization/time_path/raw_path` を表示する。
 
+**結果: 通常走行1回とWSL再生評価を完了。区間4まで進行したが、停止領域監視により未完走。**
+記録poseの移動距離は208.605m、最初の停止領域監視は発進許可から164.740秒。
+従来の通常モデルが停止していた区間2を越えたが、1周完走という合格条件は満たしていない。
+
 ## 試験条件
 
 - 12・20・40・60cmの復帰データで再学習したepoch3モデルを使用する。
@@ -48,11 +52,72 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
   tools/evaluate_time_awsim_trial.py --run <verified_raw_run> --output <evaluation>
 ```
 
-走行結果と証拠は完了後に追記する。
-
 ## 配置前の確認結果
 
 source `def95a93cb406688b2af737aa75f38c4701c6bb1` のnative WSL全pytestは **2,706 passed / 4 skipped**、102.39秒。
 元cacheの全hashを照合し、215個のモデルstateは完全一致。既存validationから選んだ12入力についてCUDA・float32予測も完全一致した。
 実行用checkpointは `runs/time_multiscale_model_lap_20260916/multiscale_runtime.pt`、SHA256 `1d36d36d02116a332489dab72e8d2c655b1daf24e34bb1ec5cd33347bb3b61a0`。
 設定の差分は従来通常走行設定に対してこのcheckpoint SHAのみ。元の学習済み重みは変更していない。
+
+## AWSIM走行結果
+
+source `371430c64b6afcb7cd4a91d59855bc053c796983`、run `codex-time-multiscale-lap01`。
+専用deploymentは `/home/graneple/e2e_autonomous/time_multiscale_model_lap_20260916`。
+公式イメージ内のROS smokeはPASS、594 sourceファイルと236 installed Pythonファイルを照合して開始した。
+ROS smokeでは実モデルのPath一致6件と異常時の制動を確認した。
+
+|項目|結果|
+|---|---:|
+|公式Judgeの区間通過|0 → 1 → 2 → 3 → 4|
+|公式周回完了|0回・未完走|
+|最初の停止領域監視|発進許可後164.740秒|
+|最後の制御記録|発進許可後165.005秒|
+|記録poseの移動距離|208.605m|
+|走行中の実測速度中央値|4.608km/h|
+|追従中の実測最高速度|5.115km/h|
+|PP追従指令|3,292件|
+|最終終了理由|`CONTROL_STOPPING_SWEEP_OCCUPIED`|
+
+固定5km/hは目標値であり、実測が常に5km/hだった意味ではない。
+監視作動時は既存runnerが所有シミュレータをfreezeして終了する。自然に制動し切った停止確認や、物理的接触の証明ではない。
+
+過去の通常モデル `uniform_l1` の1回試験は126.223m・区間2で未完走だった
+（[前回の通常走行](time_random_model_lap_20260915.md)）。
+今回の学習比較元 `balanced_geometry` は以前の2走行では発進できず、進捗監視で終了していた
+（[学習方法別の走行比較](time_objective_driving_comparison_20260915.md)）。
+今回はE2Eだけで発進して区間4まで進んだ。一方、各条件の少数試行であり、成功率やデータ追加だけの因果効果の推定はしない。
+今回の走行途中にモデル・速度・PP・監視閾値を調整していない。
+
+## 停止時の再生確認
+
+WSLで保存済みの予測・pose・車速からPP、操舵応答補償、車両運動を再生した。
+3,296指令が一致し、最大計算差は `8.881784197001252e-16`、許容差 `1e-9`。
+再生に必要なpose/planがない56指令は対象外として明記した。
+走行中には `MOTION_YAW_RATE_INVALID` による3指令の一時制動もあったが、最終終了理由は停止領域監視だった。
+
+最初の停止監視時、PPは観測から1.6秒先、現在rear axleから1.925mの点を選択して成立していた。
+plan ageは0.150秒で、先読み延長は不要だった。走行全体の追従指令でも延長は0件。
+要求タイヤ角は−0.157463rad、実測−0.154446radで、この時点の差は0.003016rad。
+これだけで、それ以前の制御誤差の蓄積や学習側の原因を確定しない。
+
+別途、保存LiDARと同じ車両状態で監視も再計算し、`STOPPING_SWEEP_OCCUPIED` を再現した。
+最小ray余裕は−0.007147m。これは観測rayに沿う停止監視領域との余裕であり、車体の接触量ではない。
+新しい停止地点で、予測経路が正常走行線へ十分に戻るか、教師線と監視領域にどれだけ余裕があるかは追加の切り分けが必要。
+
+## RViz・保全・記録
+
+通常の `rviz2` が `/visualization/time_path/raw_path` を購読し、実画面も保存・目視確認した。
+ピンクの短い線がTime modelの生予測。緑の長いRaceTrajectory表示とは別の経路である。
+
+![通常RVizの生予測と停止時の画面](evidence/time_multiscale_model_lap_20260916/evaluation/rviz_after_freeze.png)
+
+AWSIM全1,089ファイル・664,111,503 bytesは開始前後でSHA256完全一致。
+元repoのHEAD・Git差分・RViz設定、既存114コンテナ・39 compose projectを保全し、試験後の稼働コンテナは0。
+
+raw 52ファイル・105,934,936 bytesをnative WSLへ転送し、全サイズ・hashを照合した。
+archive SHA256は `cb006b2425d7e6019d64dbc613e8dcbdecd675f114b875374ad8d8a3bded1f8b`。
+`latest/d1/autoware.log` は同じrun内の実体を指す便宜リンクだった。元を維持し、archiveでは実体を収録、対応を `archive_aliases.json` に記録した。
+
+raw・重み・全評価は `/home/thistle/e2e_autonomous/runs/time_multiscale_model_lap_20260916` に保持。
+小さい検証結果・画像・実行スクリプトは [evidence](evidence/time_multiscale_model_lap_20260916/) に保存する。
+重み、raw、ROS build出力はGitに追加していない。今回の評価走行は学習に使用していない。

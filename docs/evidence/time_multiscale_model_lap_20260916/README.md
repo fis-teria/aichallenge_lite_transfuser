@@ -1,0 +1,7 @@
+# 実行証拠
+
+学習済み重みの実行用metadata補完、WSL tests、ROS smoke、AWSIM 1走行、転送検証・WSL再生評価の記録。
+operatorsは実行時の専用パスを含む保存用スクリプトで、既存結果の上書きを防ぐチェックがある。
+prepare_nativeの予測照合部分では一時スクリプトのTimeSample属性名を修正し、verify_predictions_nativeで照合を完了。testsやexportの再実行、学習重みの変更は行っていない。
+finalize_remoteは環境保全まで完了し、便宜リンクを確認してseal_archiveで実体を記録した。
+重み・raw archive・入力データはnative WSLに保持。

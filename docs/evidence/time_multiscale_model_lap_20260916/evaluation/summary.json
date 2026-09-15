@@ -1,0 +1,128 @@
+{
+  "status": "LAP_NOT_COMPLETED",
+  "evaluator_sha256": "2479e8b460f8a2012fda4b8990f5c9e78312375aec8d818fdc5bfba97a0143ec",
+  "scope": "BOUNDED_SAME_SCENE_TEST_NOT_LAP_OR_AVOIDANCE_ACCEPTANCE",
+  "source_host_status": "FAILED",
+  "official_start_requested": true,
+  "armed_sim_ns": 16959999620,
+  "active_duration_sim_s": 165.004996313,
+  "judge_lap_confirmed": false,
+  "judge_laps": [],
+  "judge_sections": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "host_error": "RuntimeError: CONTROL_STOPPING_SWEEP_OCCUPIED",
+  "requested_stop_reason": null,
+  "active_commands": 3352,
+  "positive_acceleration_commands": 3262,
+  "active_command_reasons": {
+    "TIME_PATH_TRACKING": 3292,
+    "MOTION_YAW_RATE_INVALID": 3,
+    "STOPPING_SWEEP_OCCUPIED": 57
+  },
+  "all_predictions": 1623,
+  "active_observation_predictions": 1471,
+  "foldback_statistics_policy": "legacy_step_heading_v1_not_current_admission",
+  "recorded_geometry_policy_versions": [
+    "distance_resolved_time_geometry_v2"
+  ],
+  "active_new_geometry_reasons": {
+    "RESOLVED": 1471
+  },
+  "control_replay": {
+    "status": "PASS",
+    "matched_commands": 3296,
+    "unavailable_commands": 56,
+    "maximum_absolute_error": 8.881784197001252e-16,
+    "tolerance": 1e-09,
+    "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+    "post_control_rejections": {
+      "MOTION_YAW_RATE_INVALID": 3,
+      "STOPPING_SWEEP_OCCUPIED": 1
+    },
+    "actuator_mapping_matched": 3296,
+    "steering_response_matched": 3296,
+    "vehicle_motion_matched": 3296,
+    "scan_guard_decisions_replayed": false
+  },
+  "speed_policy": "fixed_5kmh",
+  "active_target_speed_mps": {
+    "min": 0.0,
+    "median": 1.3888888888888888,
+    "p95": 1.3888888888888888,
+    "max": 1.3888888888888888
+  },
+  "final_3s_measured_speed_kmh": {
+    "min": 4.668815660476684,
+    "median": 4.717072677612305,
+    "p95": 4.728784103393555,
+    "max": 4.729953718185425
+  },
+  "active_samples_within_0p25_kmh_of_5": 155,
+  "recorded_pose_count": 3296,
+  "recorded_pose_travel_m": 208.6049412536641,
+  "recorded_pose_net_displacement_m": 63.91281115743067,
+  "active_first_fold_source_segment_indices": {
+    "0": 3,
+    "None": 1468
+  },
+  "active_first_turn_abs_rad": {
+    "min": 2.1859094658432943e-05,
+    "median": 0.031026005699841725,
+    "p95": 0.08384818434857302,
+    "max": 1.7450973152573654
+  },
+  "foldback_threshold_rad": 1.2,
+  "active_first_point_x_m": {
+    "min": -0.0041953399777412415,
+    "median": 0.13004343211650848,
+    "p95": 0.13711155951023102,
+    "max": 0.1489877700805664
+  },
+  "active_first_point_y_m": {
+    "min": -0.011212632060050964,
+    "median": 0.0005219727754592896,
+    "p95": 0.004659745842218399,
+    "max": 0.02007543295621872
+  },
+  "active_3s_endpoint_norm_m": {
+    "min": 1.8687345061819067,
+    "median": 3.794323682045912,
+    "p95": 3.9858876178535327,
+    "max": 4.380610672912217
+  },
+  "active_source_speed_0_to_0p3s_mps": {
+    "min": 0.16462372610148204,
+    "median": 1.2813773973608675,
+    "p95": 1.318085638898674,
+    "max": 1.4513905752980942
+  },
+  "inference_duration_ms": {
+    "min": 23.141082,
+    "median": 62.069664,
+    "p95": 98.03336589999999,
+    "max": 124.679467
+  },
+  "max_measured_speed_mps": 1.4208812713623047,
+  "stop_confirmed_before_cleanup": false,
+  "runtime_inference_rejections": {
+    "CURRENT_SENSOR_MISSING": 7,
+    "CURRENT_LONGITUDINAL_SPEED_MISSING": 1
+  },
+  "cleanup_errors": [],
+  "wall_s": 211.4426038530073,
+  "checkpoint_sha256": [
+    "1d36d36d02116a332489dab72e8d2c655b1daf24e34bb1ec5cd33347bb3b61a0"
+  ],
+  "raw_predictions_modified": false,
+  "boundary": "Recorded command and prediction analysis; no measured lane-tracking accuracy or model teacher error.",
+  "source_sha256": {
+    "host_result.json": "61ecf32b047518e451f1e89d5c25b17b6640a35f4611df73e5741a52767df533",
+    "control.jsonl": "274c30904564149af4af4c22a77463ddf430c4d951a8a001f9e74b739b50739d",
+    "inference.jsonl": "ebb85d6eb7423c11e7f8099b92f31d9de001f45e739bdcf4827ea6f5f6bc435c"
+  }
+}
