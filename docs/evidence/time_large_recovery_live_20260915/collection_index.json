@@ -1,0 +1,572 @@
+{
+  "schema": "real_large_recovery_collection_v1",
+  "collection_source_commit": "7780db94b261ffc6024f2cb8fe5971cd52ee93fa",
+  "index_source_commit": "7780db94b261ffc6024f2cb8fe5971cd52ee93fa",
+  "runtime_host": "graneple@192.168.3.10",
+  "native_wsl_raw": "/home/thistle/e2e_autonomous/raw/time_recovery_large_live_20260915",
+  "initial_events_per_lap": 3,
+  "event_increment": 2,
+  "maximum_tested_events_per_lap": 5,
+  "largest_fully_verified_event_cap": 3,
+  "latest_five_event_collection_eligible": false,
+  "target_abs_lateral_m": 0.2,
+  "target_band_tolerance_m": 0.05,
+  "lateral_basis": "relative to matched observed normal driving line; not ground-truth road center",
+  "labels": "measured future trajectory, 30 xy points in meters over 3 seconds",
+  "inputs": "causal camera / LiDAR / ego history from matched actual shifted observations",
+  "training_started": false,
+  "merged_with_existing_dataset": false,
+  "split_policy": "whole runs; g03 left r04 and right r03 train; g03 right r02 and g05 left validation; calibration successes train",
+  "receipts": {
+    "large_g03_left_r01_verified.json": {
+      "sha256": "c60781314522ed0d0929c4a6f8d3051a5ed4de91fd768369631f1864bcd9fb29",
+      "archive_sha256": "9f2013210d415d8b95e6b2423d2128b235912a93cd4e1accfb0f8d1c69e0f5a7",
+      "snapshot_sha256": "297e64c5d1e6b9df73034537d0018b08a034aa3120750554d5ab330acd6cd819"
+    },
+    "large_g03_comparison_verified.json": {
+      "sha256": "3b52cb236058e5208a171d1d8cbf6eb0a600e99aa9fde5b968104188282a1a19",
+      "archive_sha256": "08aeb981009c58995eb48eb28ba13f186a7f8170488f6f1a40f02b29db37e7ec",
+      "snapshot_sha256": "16c93f20551376642b8f4d138cc531b95d16837fc857dbf245775085e3c63aa9"
+    },
+    "large_g03_left_r03_verified.json": {
+      "sha256": "c745ac0be7e24300e762e6efd3a96e543d05e5b587d7533f4556bdeaece45308",
+      "archive_sha256": "a17a8106ef05180283827ea813129415c7cbd81e8c221a6f63afcac7b99b7bd3",
+      "snapshot_sha256": "bf1244f5b0fa705b52205d68423d5e19bc20e450081d00b82ff3658fae9c2b75"
+    },
+    "large_g03_final_verified.json": {
+      "sha256": "43bd43aacac23e60a6a55f028cf0e560a52097c341a7b889f410fd73ff5163f9",
+      "archive_sha256": "2556a3286c5b2eb819b507f4ce53cdf6134ab18f9bb3f9b8583234249852cda2",
+      "snapshot_sha256": "6deddd9e16ba24df6e55952c52388d575b05965975804fc600213f79c2dbc0c9"
+    },
+    "large_g03_right_r03_verified.json": {
+      "sha256": "f24dbad25aa5f65b6c4dac53e11656f2ede6512b2a6d6a5959da0d05c1cafc35",
+      "archive_sha256": "06bde9468983bc34b887c2543741a3267e20ff6049a6ca32569e1360d7c2c570",
+      "snapshot_sha256": "47a11567609f11547e371f6a9348d755660bad4331a1c558444304b9381ae34f"
+    },
+    "large_g05_final_verified.json": {
+      "sha256": "92fd742cb17ca6e1879ad7094e805e73ae00ddaf2cd67d4d85db05667e476dfc",
+      "archive_sha256": "d322f7d95907a6231677f81c1d2f90c0c90dc5acba48f477fc6bf429b9b86818",
+      "snapshot_sha256": "75b3a916d98f186bea57ed6c6bf8aa103716a8a1986f175d7440ec5ffacb8520"
+    }
+  },
+  "splits": {
+    "train": [
+      "codex-time-recovery-large-live-g03-left-r02",
+      "codex-time-recovery-large-live-g03-left-r03",
+      "codex-time-recovery-large-live-g03-left-r04",
+      "codex-time-recovery-large-live-g03-right-r03"
+    ],
+    "validation": [
+      "codex-time-recovery-large-live-g03-right-r02",
+      "codex-time-recovery-large-live-g05-left-r01"
+    ]
+  },
+  "totals": {
+    "train": {
+      "anchors": 812,
+      "target_band_anchors": 101,
+      "accepted_events": 9,
+      "runs": 4
+    },
+    "validation": {
+      "anchors": 282,
+      "target_band_anchors": 26,
+      "accepted_events": 4,
+      "runs": 2
+    }
+  },
+  "absolute_lateral_bands": {
+    "train": {
+      "under_5cm": 505,
+      "5_to_15cm": 206,
+      "15_to_25cm": 101,
+      "25cm_or_more": 0
+    },
+    "validation": {
+      "under_5cm": 179,
+      "5_to_15cm": 77,
+      "15_to_25cm": 26,
+      "25cm_or_more": 0
+    }
+  },
+  "runs": [
+    {
+      "run_id": "codex-time-recovery-large-live-g03-left-r01",
+      "split": "excluded",
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "collection_end_reason": "TARGET_NOT_REACHED",
+      "event_cap": 3,
+      "completed_events": 0,
+      "accepted_events": 0,
+      "accepted_camera_anchors": 0,
+      "target_band_camera_anchors": 0,
+      "all_planned_recovered": false,
+      "increase_eligible": false,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_large_live_20260915/codex-time-recovery-large-live-g03-left-r01",
+      "raw_bytes": 1362567062,
+      "summary_sha256": "45dc1a06a4fd12c9dfbd1807dcca43d6ec1399a0630495d89e0aeeec20ccd18e",
+      "control_sha256": "8a2e56b7eb35e77cab6eb549489dabe476236c4b5b2e0747823dc6c66a9b105e",
+      "reference_sha256": "22d86bbf2b987d16f749c9f1cbab1b7cd1ecb852bfc629b376f26125873f981a",
+      "sites": [
+        {
+          "site_id": "P00",
+          "release_s_m": 60.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0
+        },
+        {
+          "site_id": "S00",
+          "release_s_m": 118.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0
+        },
+        {
+          "site_id": "P02",
+          "release_s_m": 235.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-large-live-g03-left-r02",
+      "split": "train",
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "collection_end_reason": "TARGET_NOT_REACHED",
+      "event_cap": 3,
+      "completed_events": 1,
+      "accepted_events": 1,
+      "accepted_camera_anchors": 92,
+      "target_band_camera_anchors": 10,
+      "all_planned_recovered": false,
+      "increase_eligible": false,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_large_live_20260915/codex-time-recovery-large-live-g03-left-r02",
+      "raw_bytes": 1366877414,
+      "summary_sha256": "71827986742b285e1f15f1bda0fcec5651172e8b8e7fc6d4893b71aa16cc0e14",
+      "control_sha256": "008f70eb9543f39c8b9b5e563df771d90e0cb57f93a4037b200c156f23632b5b",
+      "reference_sha256": "0ea71411d0e5b1bb0dacf76a7c86da445422f4ac06b9dd2bee1b12f8ddb8f140",
+      "sites": [
+        {
+          "site_id": "P00",
+          "release_s_m": 60.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0
+        },
+        {
+          "site_id": "S00",
+          "release_s_m": 118.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0
+        },
+        {
+          "site_id": "P02",
+          "release_s_m": 235.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0
+        }
+      ],
+      "teachers_sha256": "a4f39403e79fc51b6c25432cd5d42b63115f4f9649b6e2c0fe23c3475b7f7991",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_recovery_large_live_20260915/prepared/train/codex-time-recovery-large-live-g03-left-r02",
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_recovery_large_live_20260915/materialized/codex-time-recovery-large-live-g03-left-r02",
+      "peak_abs_accepted_lateral_m": 0.23272958888043402,
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "P00",
+          "accepted": 92,
+          "target_band": 10
+        },
+        {
+          "site_id": "S00",
+          "accepted": 0,
+          "target_band": 0
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-large-live-g03-right-r01",
+      "split": "excluded",
+      "status": "STOPPED_FAILED",
+      "fault": "STOPPING_SWEEP_OCCUPIED",
+      "collection_end_reason": "TARGET_NOT_REACHED",
+      "event_cap": 3,
+      "completed_events": 1,
+      "accepted_events": 0,
+      "accepted_camera_anchors": 0,
+      "target_band_camera_anchors": 0,
+      "all_planned_recovered": false,
+      "increase_eligible": false,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_large_live_20260915/codex-time-recovery-large-live-g03-right-r01",
+      "raw_bytes": 539458057,
+      "summary_sha256": "da38ee0b9fc709683ed3f44eb16f8ce3678f5f3270cf4eb837a3547b511c9e89",
+      "control_sha256": "31a439b46eb730f2b4a65557694b89a3975777a7c0a08e24ed37877a215dcf04",
+      "reference_sha256": "28848ed0e4b94bc0407a39b9c2f394897b8da1930c9736f808e2a132b6478dc1",
+      "sites": [
+        {
+          "site_id": "P00",
+          "release_s_m": 60.0,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0
+        },
+        {
+          "site_id": "S00",
+          "release_s_m": 118.0,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0
+        },
+        {
+          "site_id": "P02",
+          "release_s_m": 235.0,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-large-live-g03-left-r03",
+      "split": "train",
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "collection_end_reason": "WINDOWS_FINISHED",
+      "event_cap": 3,
+      "completed_events": 2,
+      "accepted_events": 2,
+      "accepted_camera_anchors": 157,
+      "target_band_camera_anchors": 26,
+      "all_planned_recovered": false,
+      "increase_eligible": false,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_large_live_20260915/codex-time-recovery-large-live-g03-left-r03",
+      "raw_bytes": 1366962752,
+      "summary_sha256": "2a5ade40e5d170345ab78b0688657a056c1b1b132f4d4f0e7baf2a1c5522a1e3",
+      "control_sha256": "57c3a92faa8ba8f2ceadb1bb5be8231f528aad7b1971f740444de1c6db701144",
+      "reference_sha256": "5392afe4589f256c2a55d02ca0c5f63a9ab891c58337471164f61da1bb139e08",
+      "sites": [
+        {
+          "site_id": "P00",
+          "release_s_m": 60.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "measured_normal"
+        },
+        {
+          "site_id": "S00",
+          "release_s_m": 118.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path"
+        },
+        {
+          "site_id": "P02",
+          "release_s_m": 235.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "measured_normal"
+        }
+      ],
+      "teachers_sha256": "1a553f7d5ed836c5b610249cb42e10b6bc907ccfaa6b7f1a021560a529f2c226",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_recovery_large_live_20260915/prepared/train/codex-time-recovery-large-live-g03-left-r03",
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_recovery_large_live_20260915/materialized/codex-time-recovery-large-live-g03-left-r03",
+      "peak_abs_accepted_lateral_m": 0.23943777979400574,
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "P00",
+          "accepted": 63,
+          "target_band": 13
+        },
+        {
+          "site_id": "S00",
+          "accepted": 94,
+          "target_band": 13
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-large-live-g03-right-r02",
+      "split": "validation",
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "collection_end_reason": "EVENT_COMPLETE",
+      "event_cap": 3,
+      "completed_events": 3,
+      "accepted_events": 3,
+      "accepted_camera_anchors": 214,
+      "target_band_camera_anchors": 12,
+      "all_planned_recovered": true,
+      "increase_eligible": false,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_large_live_20260915/codex-time-recovery-large-live-g03-right-r02",
+      "raw_bytes": 1367311430,
+      "summary_sha256": "94b4997993a7e819207c5626a00ebd2ba1c157e4d3fa7a5df3c699802d9d3a48",
+      "control_sha256": "233f99d0e4f38e4f3b6986fc06b78ef240f3822f49c4a3dddffcbcb234f77470",
+      "reference_sha256": "e7bbba3c7ef4521e534804df70ea52395710e77c56948828cdf83cf346d6d758",
+      "sites": [
+        {
+          "site_id": "P00",
+          "release_s_m": 60.0,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "measured_normal"
+        },
+        {
+          "site_id": "S00",
+          "release_s_m": 118.0,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path"
+        },
+        {
+          "site_id": "P02",
+          "release_s_m": 245.0,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path"
+        }
+      ],
+      "teachers_sha256": "3baf443af02e6646b94db6116de2110b618918c3850cbafc92549f851adfcb43",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_recovery_large_live_20260915/prepared/validation/codex-time-recovery-large-live-g03-right-r02",
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_recovery_large_live_20260915/materialized/codex-time-recovery-large-live-g03-right-r02",
+      "peak_abs_accepted_lateral_m": 0.23017100792056214,
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "P00",
+          "accepted": 53,
+          "target_band": 0
+        },
+        {
+          "site_id": "S00",
+          "accepted": 94,
+          "target_band": 12
+        },
+        {
+          "site_id": "P02",
+          "accepted": 67,
+          "target_band": 0
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-large-live-g03-left-r04",
+      "split": "train",
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "collection_end_reason": "EVENT_COMPLETE",
+      "event_cap": 3,
+      "completed_events": 3,
+      "accepted_events": 3,
+      "accepted_camera_anchors": 282,
+      "target_band_camera_anchors": 38,
+      "all_planned_recovered": true,
+      "increase_eligible": true,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_large_live_20260915/codex-time-recovery-large-live-g03-left-r04",
+      "raw_bytes": 1367806908,
+      "summary_sha256": "e66e3a79aa646e8fc28df58bf1cd9399fb12e6cac347445c1ef23b181b5f985e",
+      "control_sha256": "dffeb0e13373f6ff41a30badc44ca560f5c64ec0d4a14919ddbbc70846960c7a",
+      "reference_sha256": "a5b606f5a809ef3094e9c0737e153de2b18dfa42a881bca7a3ceafcad6cc720e",
+      "sites": [
+        {
+          "site_id": "P00",
+          "release_s_m": 60.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "measured_normal"
+        },
+        {
+          "site_id": "S00",
+          "release_s_m": 118.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path"
+        },
+        {
+          "site_id": "P02",
+          "release_s_m": 245.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path"
+        }
+      ],
+      "teachers_sha256": "2b024cefd3fe08454355136bc2af68b2197a58a3d3289319f7d8835d8dbbfd70",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_recovery_large_live_20260915/prepared/train/codex-time-recovery-large-live-g03-left-r04",
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_recovery_large_live_20260915/materialized/codex-time-recovery-large-live-g03-left-r04",
+      "peak_abs_accepted_lateral_m": 0.2383677282784353,
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "P00",
+          "accepted": 94,
+          "target_band": 14
+        },
+        {
+          "site_id": "S00",
+          "accepted": 94,
+          "target_band": 13
+        },
+        {
+          "site_id": "P02",
+          "accepted": 94,
+          "target_band": 11
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-large-live-g03-right-r03",
+      "split": "train",
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "collection_end_reason": "EVENT_COMPLETE",
+      "event_cap": 3,
+      "completed_events": 3,
+      "accepted_events": 3,
+      "accepted_camera_anchors": 281,
+      "target_band_camera_anchors": 27,
+      "all_planned_recovered": true,
+      "increase_eligible": true,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_large_live_20260915/codex-time-recovery-large-live-g03-right-r03",
+      "raw_bytes": 1367655947,
+      "summary_sha256": "091bb86428f126538c6d776fddfd8a97105c389a62704caf044bc4062707d34f",
+      "control_sha256": "3dd6844d6640c8011ce0fd45436ef8781cb0c8c1430ab0aaec306bd19f2bf58d",
+      "reference_sha256": "e7bbba3c7ef4521e534804df70ea52395710e77c56948828cdf83cf346d6d758",
+      "sites": [
+        {
+          "site_id": "P00",
+          "release_s_m": 60.0,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "measured_normal"
+        },
+        {
+          "site_id": "S00",
+          "release_s_m": 118.0,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path"
+        },
+        {
+          "site_id": "P02",
+          "release_s_m": 245.0,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path"
+        }
+      ],
+      "teachers_sha256": "a6f10404f59fef6ee68804f4e7d59e72d27a584c41558aeac2e1aea6e75590d7",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_recovery_large_live_20260915/prepared/train/codex-time-recovery-large-live-g03-right-r03",
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_recovery_large_live_20260915/materialized/codex-time-recovery-large-live-g03-right-r03",
+      "peak_abs_accepted_lateral_m": 0.2312770100428569,
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "P00",
+          "accepted": 94,
+          "target_band": 5
+        },
+        {
+          "site_id": "S00",
+          "accepted": 94,
+          "target_band": 12
+        },
+        {
+          "site_id": "P02",
+          "accepted": 93,
+          "target_band": 10
+        }
+      ]
+    },
+    {
+      "run_id": "codex-time-recovery-large-live-g05-left-r01",
+      "split": "validation",
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "collection_end_reason": "RECOVERY_NOT_STABLE_AT_END",
+      "event_cap": 5,
+      "completed_events": 1,
+      "accepted_events": 1,
+      "accepted_camera_anchors": 68,
+      "target_band_camera_anchors": 14,
+      "all_planned_recovered": false,
+      "increase_eligible": false,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_recovery_large_live_20260915/codex-time-recovery-large-live-g05-left-r01",
+      "raw_bytes": 1422802391,
+      "summary_sha256": "743171d99649271dfae533fcecc802b991cfbe18b7bc99f43cf9ee2e527cbffb",
+      "control_sha256": "063dbd42fc05e3043eb0b138c0b512a701ff9b570bc3e82543b18966cdba8ef4",
+      "reference_sha256": "ac3a6c71d6fca12658158deea6ce57315acf63288225d2a764e870c1e96169f6",
+      "sites": [
+        {
+          "site_id": "P00",
+          "release_s_m": 60.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "measured_normal"
+        },
+        {
+          "site_id": "S00",
+          "release_s_m": 118.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path"
+        },
+        {
+          "site_id": "P03",
+          "release_s_m": 160.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path"
+        },
+        {
+          "site_id": "P02",
+          "release_s_m": 245.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path"
+        },
+        {
+          "site_id": "P04",
+          "release_s_m": 285.0,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path"
+        }
+      ],
+      "teachers_sha256": "10a8bd43332298f9e10df67c0804f79672ce45b85f7a661b8cbce39a4288aee9",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_recovery_large_live_20260915/prepared/validation/codex-time-recovery-large-live-g05-left-r01",
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_recovery_large_live_20260915/materialized/codex-time-recovery-large-live-g05-left-r01",
+      "peak_abs_accepted_lateral_m": 0.24013521590326792,
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "P00",
+          "accepted": 68,
+          "target_band": 14
+        },
+        {
+          "site_id": "S00",
+          "accepted": 0,
+          "target_band": 0
+        }
+      ]
+    }
+  ],
+  "all_runs_closed_and_stopped": true,
+  "all_raw_file_hashes_and_structure_verified": true,
+  "all_sqlite_quick_checks_passed": true
+}

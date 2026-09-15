@@ -1,0 +1,47 @@
+{
+  "run_id": "codex-time-recovery-large-live-g05-left-r01",
+  "control_sha256": "063dbd42fc05e3043eb0b138c0b512a701ff9b570bc3e82543b18966cdba8ef4",
+  "reason": "RECOVERY_NOT_STABLE_AT_END",
+  "gaps": [
+    {
+      "previous_publication": {
+        "sim_ns": 129009997116,
+        "monotonic_ns": 52850668162314,
+        "sequence": 2765
+      },
+      "next_publication": {
+        "sim_ns": 129164997112,
+        "monotonic_ns": 52850754386486,
+        "sequence": 2766
+      },
+      "publication_sim_delta_ms": 154.999996,
+      "publication_wall_delta_ms": 86.224172,
+      "previous_stable_since_ns": null,
+      "next_stable_since_ns": null
+    },
+    {
+      "previous_publication": {
+        "sim_ns": 135009996982,
+        "monotonic_ns": 52856719289656,
+        "sequence": 2886
+      },
+      "next_publication": {
+        "sim_ns": 135179996978,
+        "monotonic_ns": 52856778100772,
+        "sequence": 2887
+      },
+      "publication_sim_delta_ms": 169.999996,
+      "publication_wall_delta_ms": 58.811116,
+      "previous_stable_since_ns": 129319997109,
+      "next_stable_since_ns": 135169996978
+    }
+  ],
+  "final_observation": {
+    "sim_ns": 135729996966,
+    "lateral_m": 0.016838300119880203,
+    "heading_deg": -0.1956519194734658,
+    "speed_mps": 1.287604570388794,
+    "stable_since_ns": 135169996978
+  },
+  "conclusion": "Clock-stamp gap resets continuous stability; physical lateral/heading/speed values remained within limits. Source of clock delivery/update delay remains unresolved."
+}
