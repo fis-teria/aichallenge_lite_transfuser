@@ -108,7 +108,10 @@ python3 /home/graneple/e2e_autonomous/time_recovery_large_pilot_20260915/source/
 
 ```sh
 tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
-  tools/audit_time_recovery_collection.py --run /native/raw/run-id --output /native/runs/audit.json
+  tools/audit_time_recovery_collection.py \
+  --run /native/raw/run-id \
+  --types /home/thistle/e2e_autonomous/runs/time_recovery_collection_20260913/types \
+  --output /native/runs/audit.json
 ```
 
 `large_recovery_events`で切替と実測復帰、`all_planned_large_events_recovered`で予定件数の
@@ -117,8 +120,38 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
 
 ## 検証記録
 
-関連テスト、全体pytest、保存済み正常データからの経路生成をnative WSLで実施する。
-ROSの接続試験は公式イメージを`--network none`で隔離し、
+実装commit `3ca57f0aa35a5fb7f97018423dbe19b221cf14d1`を対象に、関連テスト、
+全体pytest、保存済み正常データからの経路生成をnative WSLで実施した。
+ROSの接続試験は`graneple@192.168.3.10`上の公式環境イメージ
+`codex-cartographer-v4-build:20260910`を`--network none`で隔離し、
 `tools/smoke_time_large_recovery_ros.py`で合成観測・2系統PP・収集ノード・bag・Path・Markerを
 通す。合成観測は操舵指令に従う車両モデルではないため、AWSIMでの復帰性能や教師取得には数えない。
-結果の確定値と証拠は実行後に追記する。
+
+| 検証 | 結果 | 検証範囲 |
+| --- | --- | --- |
+| native WSL全体pytest | 2,630 passed / 4 skipped、96.76秒 | 状態遷移、左右20/40/60cm、複数イベント、例外、教師区間、既存処理の回帰 |
+| 保存済み正常走行からの初回経路生成 | 左20cm・60m地点で生成・地図検査成功 | 準備経路と候補復帰経路の幾何。最新準備位置から人工的な戻り開始までの物理距離11.864m |
+| 公式ROS合成接続試験 `synthetic_r06` | PASS、全7子プロセス正常終了、bag閉鎖 | 新鮮な通常PP指令への切替、復帰状態の確定、停止、Path 4系統、Marker 3個の受信 |
+| 合成記録をWSLへ転送して再検証 | 全26ファイルのSHA・サイズ、SQLite、phase replay成功 | 準備区間の教師除外と復帰区間の未来30点マスク。合成データの教師採用は0件 |
+
+合成試験では左20cmの規定状態を入力し、切替要求13.557813340秒、通常PPへの
+実送信切替13.608804380秒を確認した。復帰区間201件の制御観測のうち、
+目標横ずれ帯は41件。これらはCamera教師アンカー数ではない。
+通常RViz用のPath/Markerの配信と受信を確認したが、AWSIM走行中のRViz画面確認は未実施。
+
+接続試験の途中で、経路期限切れと、reliable受信を試した際のbest effort publisherとの
+QoS不一致を検出した。最終版ではbest effortで統一し、変更区間のみ経路を細分化して
+配信量を減らし、新モード専用の1MB受信バッファを使用した。旧試行の記録は保全し、
+経路期限や停止条件は緩和していない。複数の修正を合わせて再試験しており、
+バッファだけが期限切れの原因だったと断定する検証ではない。
+
+証拠は[結果一覧](evidence/time_large_recovery_implementation_20260915/summary.json)、
+[全体テストログ](evidence/time_large_recovery_implementation_20260915/full_3ca57f0.log)、
+[ROS試験結果](evidence/time_large_recovery_implementation_20260915/synthetic_smoke_result.json)、
+[WSL再検証](evidence/time_large_recovery_implementation_20260915/synthetic_r06_native_verification.json)、
+[ファイルSHA一覧](evidence/time_large_recovery_implementation_20260915/artifact_manifest.json)に保存した。
+rawの合成bagはWSLと専用実行ディレクトリに保持し、Gitや学習データへ追加していない。
+
+残る確認はAWSIMの実車両モデルでの各左右20→40→60cm・各1イベントの段階試験。
+目標5km/hで横移動と通常PP復帰を実現できるか、実センサの有効教師がどの帯に何件残るかを
+確認してから、1周2回、3回へ増やす。この実装作業では実走収集・再学習を開始していない。

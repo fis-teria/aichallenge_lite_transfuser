@@ -1,0 +1,54 @@
+{
+  "status": "IMPLEMENTED_TESTED_NO_AWSIM_DRIVING",
+  "validated_source_commit": "3ca57f0aa35a5fb7f97018423dbe19b221cf14d1",
+  "full_pytest": {
+    "passed": 2630,
+    "skipped": 4,
+    "warnings": 74,
+    "elapsed_s": 96.76
+  },
+  "synthetic_ros": {
+    "run": "synthetic_r06",
+    "network": "none",
+    "status": "PASS",
+    "new_teacher_samples": 0,
+    "awsim_driving": false
+  },
+  "native_phase_replay": "PASS",
+  "event_cap_default": 1,
+  "event_cap_maximum": 6,
+  "automatic_increase": false,
+  "real_awsim_pilot_completed": false,
+  "training_started": false,
+  "preserved_smoke_attempts": [
+    {
+      "run": "r01",
+      "result": "PYTHONPATH_ENVIRONMENT_SETUP_FAILURE"
+    },
+    {
+      "run": "r02",
+      "result": "DDS_CONFIG_MOUNT_MISSING"
+    },
+    {
+      "run": "r03",
+      "result": "COLLECTOR_TRAJECTORY_STALE"
+    },
+    {
+      "run": "r04",
+      "result": "RELIABLE_SUBSCRIBER_INCOMPATIBLE_WITH_BEST_EFFORT_GENERATOR"
+    },
+    {
+      "run": "r05",
+      "result": "SYNTHETIC_WIRING_PASS"
+    },
+    {
+      "run": "r06",
+      "result": "FINAL_SYNTHETIC_WIRING_AND_NATIVE_REPLAY_PASS"
+    }
+  ],
+  "remaining": [
+    "AWSIM vehicle dynamics pilot at both signs of 0.2/0.4/0.6 m",
+    "Real sensor/history/future validation and actual offset-band camera counts before training",
+    "Confirm graphical RViz during AWSIM driving"
+  ]
+}
