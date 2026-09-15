@@ -46,6 +46,10 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 OPENBLAS_NU
 
 tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
   docs/evidence/time_corner4_learning_diagnosis_20260916/operators/report_native.py
+
+# 結果を確認後、既存train/validation runに残る通常走行区間を候補調査:
+tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
+  docs/evidence/time_corner4_learning_diagnosis_20260916/operators/inspect_unused_nominal.py
 ```
 
 ## 状態分布の監査結果
@@ -80,3 +84,16 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
 全cacheではtrain 42,172のうち入力・全未来支持不足1,368、当該カーブ外35,903、当該カーブ内4,901。
 validation 15,399ではそれぞれ457、13,016、1,926。
 推論比較には支持済みの全復帰と当該カーブ通常走行を使うため、train 9,767、validation 4,604を各保存重みで評価する。
+
+## 収集条件の意味
+
+大きな横ずれの収集器 `src/aic_transfuser_lite/data/time_large_recovery_v1.py` は、
+準備経路で目標横位置±5cmかつ向き差±2°を250ms維持してから通常PPへの切替を要求する。
+復帰の教師は切替後の実測軌道であり、準備経路をそのまま正解にする方式ではない。
+したがって「60cmデータを収集した」ことは「60cm外側かつ外向き5〜7°の状態も学習した」ことを意味しない。
+復帰中に向きが変わる場合もあるので、最終判断には実際の採用アンカーの横位置・向きの同時分布を使う。
+
+既存の指標名 `corner_outward_heading_ge_5deg` は符号付き向き差だけで分類する。
+車が線の右側にいる場合の左向きは線へ戻る方向なので、この指標だけを外向き復帰の件数と解釈しない。
+また、82cm・169cmまで広がった状態の不足と、155秒付近の早期修正不足を分ける。
+後半の大きなずれは失敗の結果でもあり、その不足だけで最初に膨らんだ原因を証明するものではない。
