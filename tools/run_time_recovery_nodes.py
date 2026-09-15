@@ -11,6 +11,7 @@ import time
 from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     COLLECTION_SPEED_POLICIES, collection_speed_gain,
 )
+from aic_transfuser_lite.runtime.recovery_disturbance_markers import MARKER_TOPIC
 
 TOPICS = ['/clock', '/sensing/camera/image_raw', '/sensing/camera/camera_info',
     '/sensing/lidar/scan', '/sensing/gnss/nav_sat_fix', '/sensing/imu/imu_raw',
@@ -18,7 +19,7 @@ TOPICS = ['/clock', '/sensing/camera/image_raw', '/sensing/camera/camera_info',
     '/localization/kinematic_state', '/localization/pose', '/control/command/control_cmd',
     '/awsim/state', '/awsim/status', '/tf', '/tf_static', '/recovery_teacher/nominal_control_cmd',
     '/recovery_teacher/raw_control_cmd', '/recovery_teacher/trajectory', '/recovery_teacher/phase',
-    '/recovery_teacher/baseline_path', '/recovery_teacher/reference_path', '/recovery_teacher/observed_path']
+    '/recovery_teacher/baseline_path', '/recovery_teacher/reference_path', '/recovery_teacher/observed_path', MARKER_TOPIC]
 
 
 def main() -> None:

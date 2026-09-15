@@ -8,6 +8,7 @@ from pathlib import Path
 import time
 
 from aic_transfuser_lite.runtime.path_trace_v1 import ObservedPathTrace
+from aic_transfuser_lite.runtime.recovery_disturbance_markers import DisturbanceLocations, MARKER_TOPIC
 
 
 def main() -> None:
@@ -22,15 +23,21 @@ def main() -> None:
             raise ValueError('DISPLAY_REFERENCE_SHAPE_FINITE')
     import rclpy
     from rclpy.node import Node
-    from rclpy.qos import qos_profile_sensor_data
+    from rclpy.qos import qos_profile_sensor_data, QoSProfile, DurabilityPolicy, ReliabilityPolicy
     from nav_msgs.msg import Odometry, Path as RosPath
-    from geometry_msgs.msg import PoseStamped
+    from geometry_msgs.msg import PoseStamped, Point
+    from std_msgs.msg import String
+    from visualization_msgs.msg import Marker, MarkerArray
 
     rclpy.init()
     node = Node('time_recovery_paths', enable_rosout=False, start_parameter_services=False)
     publishers = {name: node.create_publisher(RosPath, '/recovery_teacher/'+name+'_path', 1)
                   for name in (*fixed, 'observed')}
     trace = ObservedPathTrace()
+    disturbances = DisturbanceLocations()
+    marker_qos = QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE,
+                            durability=DurabilityPolicy.TRANSIENT_LOCAL)
+    marker_publisher = node.create_publisher(MarkerArray, MARKER_TOPIC, marker_qos)
     published = 0
 
     def receive(message) -> None:
@@ -39,6 +46,12 @@ def main() -> None:
         stamp = message.header.stamp
         p = message.pose.pose.position
         trace.add(int(stamp.sec)*10**9+int(stamp.nanosec), (p.x, p.y))
+
+    def receive_phase(message: String) -> None:
+        if disturbances.add(json.loads(message.data)):
+            pending = args.output/'disturbance_markers.pending'
+            pending.write_text(json.dumps(disturbances.report(), indent=2, allow_nan=False))
+            pending.replace(args.output/'disturbance_markers.json')
 
     def publish() -> None:
         nonlocal published
@@ -54,13 +67,43 @@ def main() -> None:
                 p.pose.position.x = float(x); p.pose.position.y = float(y); p.pose.orientation.w = 1.
                 path.poses.append(p)
             publishers[name].publish(path); counts[name] = len(path.poses)
+        markers = MarkerArray()
+        for event in disturbances.events.values():
+            for offset, kind in enumerate((Marker.CYLINDER, Marker.TEXT_VIEW_FACING, Marker.ARROW)):
+                marker = Marker()
+                marker.header.frame_id = 'map'
+                marker.header.stamp.sec = event.publication_sim_ns//10**9
+                marker.header.stamp.nanosec = event.publication_sim_ns%10**9
+                marker.ns = 'recovery_disturbance'; marker.id = event.event_id*3+offset
+                marker.type = kind; marker.action = Marker.ADD
+                marker.pose.orientation.w = 1.
+                marker.pose.position.x = event.x_m; marker.pose.position.y = event.y_m
+                marker.pose.position.z = .15
+                marker.color.r = 1.; marker.color.a = 1.
+                marker.color.g = .8 if event.sign == 1 else .15
+                marker.color.b = .1 if event.sign == 1 else .8
+                if kind == Marker.CYLINDER:
+                    marker.scale.x = .7; marker.scale.y = .7; marker.scale.z = .12
+                elif kind == Marker.TEXT_VIEW_FACING:
+                    marker.text = event.label; marker.scale.z = .8; marker.pose.position.z = 1.
+                else:
+                    # Arrow points to the commanded left/right in the local road view.
+                    marker.scale.x = .10; marker.scale.y = .25; marker.scale.z = .3
+                    angle = event.yaw_rad + event.sign*math.pi/2
+                    marker.points = [Point(), Point(x=1.2*math.cos(angle), y=1.2*math.sin(angle))]
+                markers.markers.append(marker)
+        marker_publisher.publish(markers)
         published += 1
         pending = args.output/'path_heartbeat.pending'
         pending.write_text(json.dumps(dict(monotonic_ns=time.monotonic_ns(), published=published,
-            point_counts=counts, frame_id='map', observed_spacing_m=trace.spacing_m)))
+            point_counts=counts, frame_id='map', observed_spacing_m=trace.spacing_m,
+            disturbance_sites=[event.label for event in disturbances.events.values()],
+            disturbance_marker_count=len(markers.markers), marker_subscribers=[e.node_name
+                for e in node.get_subscriptions_info_by_topic(MARKER_TOPIC)])))
         pending.replace(args.output/'path_heartbeat.json')
 
     node.create_subscription(Odometry, '/localization/kinematic_state', receive, qos_profile_sensor_data)
+    node.create_subscription(String, '/recovery_teacher/phase', receive_phase, 10)
     node.create_timer(.5, publish)
     try:
         rclpy.spin(node)

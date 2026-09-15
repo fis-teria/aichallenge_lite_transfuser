@@ -17,6 +17,7 @@ from aic_transfuser_lite.data.time_recovery_collection_v1 import (
     COLLECTION_SPEED_POLICIES, validate_collection_speed_parameters,
 )
 from integrate_normal_rviz_v4 import DISPLAY, follow_ego_view
+from aic_transfuser_lite.runtime.recovery_disturbance_markers import RVIZ_MARKER_DISPLAY
 
 ROOT = Path('/home/graneple/e2e_autonomous/time_recovery_collection_20260913')
 REPO = Path('/home/graneple/git/autononous_ai/aichallenge-racingkart')
@@ -125,7 +126,7 @@ def main() -> None:
         anchor = 'Visualization Manager:\n  Class: ""\n  Displays:\n'
         if original.count(anchor) != 1:
             raise RuntimeError('RVIZ_LAYOUT_CHANGED')
-        blocks = ''
+        blocks = RVIZ_MARKER_DISPLAY
         for name,color in [('baseline','220; 220; 220'),('reference','255; 130; 30'),('observed','0; 220; 255')]:
             blocks += DISPLAY.replace('V4-20 raw prediction','Recovery teacher '+name).replace('/visualization/v4_20/raw_path','/recovery_teacher/'+name+'_path').replace('255; 60; 180',color)
         rviz_copy = output/'autoware.rviz'; rviz_copy.write_text(follow_ego_view(original.replace(anchor,anchor+blocks,1)))
