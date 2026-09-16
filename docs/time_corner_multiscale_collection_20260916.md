@@ -183,6 +183,9 @@ operatorは実行履歴であり、終了済みcampaignへ同じrun名で再実�
 証跡の `manifest.json` は各ファイルのbyte数とSHA-256を記録する。
 最終検証の `final_verification.json` はmanifest作成後に追加するsidecarであり、
 自己参照を避けるためmanifestの対象外とする。
+native WSLで `MULTISCALE_FINAL_VERIFICATION_PASS` を確認済み。
+28 run、55イベント、5,213サンプル、全将来点の有効mask、run単位splitの非重複、
+検証済みruntime sourceとの一致、証跡408ファイルのhashが通過した。
 
 これらは教師走行の収集・監査結果であり、再学習後のE2Eモデルの完走や復帰改善を
 示す結果ではない。再学習・学習モデルによるAWSIM試験は別途必要である。
