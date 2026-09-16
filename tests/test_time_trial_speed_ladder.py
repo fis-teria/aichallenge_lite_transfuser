@@ -70,11 +70,12 @@ def test_fifteen_does_not_bypass_short_prediction_or_old_speed_domains() -> None
 
 
 @pytest.mark.parametrize('complete,kmh,status,next_target', [
-    (True,14.5,'PASS',20), (True,13.5,'PASS',20), (True,11.5,'TARGET_SPEED_NOT_REACHED',None),
-    (False,14.5,'LAP_NOT_COMPLETED',None), (True,0.,'TARGET_SPEED_NOT_REACHED',None)])
+    (True,14.5,'PASS',20), (True,13.5,'PASS',20), (True,11.5,'PASS',20),
+    (False,14.5,'LAP_NOT_COMPLETED',None), (True,0.,'PASS',20)])
 def test_step_acceptance_uses_observed_speed_and_completion(complete: bool, kmh: float, status: str, next_target: int | None) -> None:
     result = assess_speed_step(15.,complete,np.array([0.]*5+[kmh/3.6]*100))
     assert result['status'] == status and result['next_target_kmh'] == next_target
+    assert result['target_speed_reached'] == (kmh >= 13.5)
 
 
 @pytest.mark.parametrize('samples', [np.array([[1.]]),np.array([float('nan')]),np.array([float('inf')]),np.array([-.031])])
