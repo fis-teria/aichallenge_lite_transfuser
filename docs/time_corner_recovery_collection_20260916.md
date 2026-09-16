@@ -178,3 +178,7 @@ AWSIM 1089ファイルの内容と元repoのHEAD/statusは収集前と一致。�
 次の優先順位は、固定5 km/hの目標と収集用速度条件の整合性確認・速度追従の対処、C05_LATE/C07の単独確認とC11短縮経路の確認、C03/C06の地図を通せる準備経路、不足runの追加、採用済み教師と既存コーパスの統合、その後の再学習・E2E完走比較。今回の有限収集結果だけで、全11地点取得・復帰能力改善・E2E完走を達成したとはしない。
 
 詳細証拠: [実行証拠](evidence/time_corner_recovery_20260916/README.md)。
+
+native WSLでの[最終照合](evidence/time_corner_recovery_20260916/final_verification.json)は
+`FINAL_VERIFICATION_PASS`。証拠206ファイル、全1,475教師の `[N,30,2]` と有効mask、
+run splitの非重複、経路生成元のhash、テスト済み実装からのsource不変を確認した。
