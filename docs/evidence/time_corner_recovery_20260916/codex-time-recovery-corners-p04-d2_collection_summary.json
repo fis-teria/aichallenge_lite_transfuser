@@ -1,0 +1,145 @@
+{
+  "run_id": "codex-time-recovery-corners-p04-d2",
+  "split": "validation",
+  "result_status": "COMPLETE_LAP",
+  "fault": null,
+  "stop_confirmed": true,
+  "closed_bag": true,
+  "planned": [
+    {
+      "site_id": "C04",
+      "release_s_m": 160.68,
+      "target_offset_m": -0.2,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": -0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C04"
+    },
+    {
+      "site_id": "C09",
+      "release_s_m": 263.62,
+      "target_offset_m": 0.2,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C09"
+    }
+  ],
+  "event_cap": 2,
+  "events": [
+    {
+      "event_id": 1,
+      "site_id": "C04",
+      "target_offset_m": -0.2,
+      "corner_id": "C04",
+      "target_heading_rad": -0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "preparation_start_ns": 156739996496,
+      "request_ns": 166484996278,
+      "release_ns": 166529996277,
+      "end_publication_ns": 176579996053,
+      "publication_switch_verified": true,
+      "recovery_confirmed": true,
+      "stable_at_end": true,
+      "completed": true,
+      "recovery_sample_count": 201,
+      "peak_observed_lateral_m": 0.24294900657604865,
+      "target_band_recovery_samples": 59,
+      "target_band_observed": true,
+      "causal_camera_candidates": 83,
+      "accepted_camera_anchors": 83,
+      "target_band_camera_anchors": 18,
+      "peak_abs_anchor_lateral_m": 0.2426930083823644
+    },
+    {
+      "event_id": 2,
+      "site_id": "C09",
+      "target_offset_m": 0.2,
+      "corner_id": "C09",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "preparation_start_ns": 238444994670,
+      "request_ns": 248244994451,
+      "release_ns": 248284994450,
+      "end_publication_ns": 258339994225,
+      "publication_switch_verified": true,
+      "recovery_confirmed": true,
+      "stable_at_end": true,
+      "completed": true,
+      "recovery_sample_count": 201,
+      "peak_observed_lateral_m": 0.2462427284225891,
+      "target_band_recovery_samples": 58,
+      "target_band_observed": true,
+      "causal_camera_candidates": 77,
+      "accepted_camera_anchors": 77,
+      "target_band_camera_anchors": 18,
+      "peak_abs_anchor_lateral_m": 0.24461231895158894
+    }
+  ],
+  "accepted": 160,
+  "target_band_anchors": 36,
+  "marker_locations": {
+    "frame_id": "map",
+    "location_basis": "pose_at_first_preparation_selection_not_proven_displacement",
+    "topic": "/recovery_teacher/disturbance_markers",
+    "events": [
+      {
+        "event_id": 1,
+        "site_id": "C04",
+        "sign": -1,
+        "planned_s_m": 148.68,
+        "actual_s_m": 148.72309158021963,
+        "x_m": 89623.70250179307,
+        "y_m": 43187.456509048236,
+        "yaw_rad": 0.5126667006684553,
+        "pose_stamp_ns": 156719996497,
+        "publication_sim_ns": 156739996496,
+        "publication_sequence": 3429,
+        "effective_rad": 0.0,
+        "target_offset_m": -0.2,
+        "label": "C04 RIGHT PREP 20cm"
+      },
+      {
+        "event_id": 2,
+        "site_id": "C09",
+        "sign": 1,
+        "planned_s_m": 251.62,
+        "actual_s_m": 251.6884641005271,
+        "x_m": 89665.41485045804,
+        "y_m": 43168.3579134469,
+        "yaw_rad": 0.9322010576836934,
+        "pose_stamp_ns": 238414994671,
+        "publication_sim_ns": 238444994670,
+        "publication_sequence": 5063,
+        "effective_rad": 0.0,
+        "target_offset_m": 0.2,
+        "label": "C09 LEFT PREP 20cm"
+      }
+    ]
+  },
+  "training_started": false,
+  "causal_candidates": 160,
+  "input_reasons": {
+    "OK": 160,
+    "CURRENT_SENSOR_MISSING": 28
+  },
+  "teacher_reasons": {
+    "OK": 188
+  },
+  "prepared": {
+    "run_id": "codex-time-recovery-corners-p04-d2",
+    "anchors": 160,
+    "input_valid": 160,
+    "real_input_replay_equal": [
+      "codex-time-recovery-corners-p04-d2:epoch0000:166734996273",
+      "codex-time-recovery-corners-p04-d2:epoch0000:176289996059"
+    ],
+    "input_reason_refinements": []
+  },
+  "all_planned_recovered": true,
+  "all_planned_lateral_events_qualified": true
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "awsim_recovery_parallel_v1",
+  "scope": "time_recovery_corners_20260916",
+  "instances": [
+    {
+      "run_id": "codex-time-recovery-corners-p01-d1",
+      "side": "left",
+      "split": "train",
+      "ros_domain_id": 1,
+      "network_container": "codex-time-recovery-corners-p01-d1-net",
+      "node_cpus": "0-3",
+      "simulation_cpus": "8-9,12-15",
+      "event_cap": 3,
+      "pair": 1
+    },
+    {
+      "run_id": "codex-time-recovery-corners-p01-d2",
+      "side": "right",
+      "split": "validation",
+      "ros_domain_id": 2,
+      "network_container": "codex-time-recovery-corners-p01-d2-net",
+      "node_cpus": "4-7",
+      "simulation_cpus": "10-11,16-19",
+      "event_cap": 3,
+      "pair": 1
+    }
+  ]
+}

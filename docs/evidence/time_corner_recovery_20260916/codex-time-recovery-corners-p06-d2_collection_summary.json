@@ -1,0 +1,97 @@
+{
+  "run_id": "codex-time-recovery-corners-p06-d2",
+  "split": "validation",
+  "result_status": "COMPLETE_LAP",
+  "fault": null,
+  "stop_confirmed": true,
+  "closed_bag": true,
+  "planned": [
+    {
+      "site_id": "C05_LATE",
+      "release_s_m": 185.61,
+      "target_offset_m": 0.2,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C05A",
+      "approach_distance_m": 8.0
+    },
+    {
+      "site_id": "C09",
+      "release_s_m": 263.62,
+      "target_offset_m": 0.2,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C09",
+      "approach_distance_m": 8.0
+    },
+    {
+      "site_id": "C11",
+      "release_s_m": 314.67,
+      "target_offset_m": 0.2,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C11",
+      "approach_distance_m": 6.0
+    }
+  ],
+  "event_cap": 3,
+  "events": [
+    {
+      "event_id": 1,
+      "site_id": "C05_LATE",
+      "target_offset_m": 0.2,
+      "corner_id": "C05A",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "preparation_start_ns": 177709996027,
+      "request_ns": null,
+      "release_ns": null,
+      "end_publication_ns": null,
+      "publication_switch_verified": false,
+      "recovery_confirmed": false,
+      "stable_at_end": false,
+      "completed": false,
+      "recovery_sample_count": 0,
+      "peak_observed_lateral_m": 0.21773236504526133,
+      "target_band_recovery_samples": 0,
+      "target_band_observed": false
+    }
+  ],
+  "accepted": 0,
+  "target_band_anchors": 0,
+  "marker_locations": {
+    "frame_id": "map",
+    "location_basis": "pose_at_first_preparation_selection_not_proven_displacement",
+    "topic": "/recovery_teacher/disturbance_markers",
+    "events": [
+      {
+        "event_id": 1,
+        "site_id": "C05_LATE",
+        "sign": 1,
+        "planned_s_m": 173.61,
+        "actual_s_m": 173.6259897982707,
+        "x_m": 89646.8275864347,
+        "y_m": 43182.67982212807,
+        "yaw_rad": 0.3347750349224686,
+        "pose_stamp_ns": 177644996029,
+        "publication_sim_ns": 177709996027,
+        "publication_sequence": 3851,
+        "effective_rad": 0.0,
+        "target_offset_m": 0.2,
+        "label": "C05_LATE LEFT PREP 20cm"
+      }
+    ]
+  },
+  "training_started": false,
+  "all_planned_recovered": false,
+  "all_planned_lateral_events_qualified": false
+}

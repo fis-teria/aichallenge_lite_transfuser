@@ -1,0 +1,280 @@
+{
+  "status": "COMPLETE_LAP",
+  "run_id": "codex-time-recovery-corners-p03-d2",
+  "side": "right",
+  "official_start_requested": true,
+  "started_unix_s": 1789520797.143996,
+  "scope": "MEASURED_RECOVERY_AWSIM",
+  "fixed_target_mps": 1.3888888888888888,
+  "source_sha": "8cf58f10d797d95ba542328948be75edb5dc9a92",
+  "speed_policy": "aligned_gain4_v1",
+  "separate_cpus": true,
+  "ros_domain_id": 2,
+  "network_mode": "container:codex-time-recovery-corners-p03-d2-net",
+  "sim_limit_s": 1800,
+  "wall_limit_s": 1860,
+  "outer_limit_s": 1980,
+  "run_byte_limit": 2147483648,
+  "task_bag_byte_limit": 12884901888,
+  "required_free_bytes": 10737418240,
+  "prior_task_bag_bytes": 116043776,
+  "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU, 595.91.07\n",
+  "simulator_assets": {
+    "AWSIM_Data/level1": "9ab2e1e8865c02885594e0bbdde372302530f047b5a2e89c455be6a18f3e090b",
+    "AWSIM_Data/StreamingAssets/Vehicle/vehicle.yaml": "5b66e58691091c82d5511535ca458d4c89e85f3b59fa0d0c4a2c7eee47887244",
+    "AWSIM_Data/Managed/Assembly-CSharp.dll": "859e5560dbffd7d0833cd1fe5eb1f36b87fa8d22f6e45eb0e1203d04a1ea6d13"
+  },
+  "reference_sha256": "514ca492970fc158c3d4238e18c5488b25e661954a69cb18075e281e6913f88e",
+  "preparation_reference_sha256": "98ff4fbfe098835dc579fd52179871cd2d62047d1290950057180acc274c284b",
+  "commands": [
+    [
+      "docker",
+      "run",
+      "--cpuset-cpus",
+      "4-7",
+      "--rm",
+      "--name",
+      "codex-time-recovery-corners-p03-d2-nodes",
+      "--network",
+      "container:codex-time-recovery-corners-p03-d2-net",
+      "--label",
+      "aic.recovery.scope=time_recovery_corners_20260916",
+      "--label",
+      "aic.recovery.run_id=codex-time-recovery-corners-p03-d2",
+      "-e",
+      "ROS_DOMAIN_ID=2",
+      "-e",
+      "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_recovery_corners_20260916/codex-time-recovery-corners-p03-d2/cyclonedds.xml:/opt/autoware/cyclonedds.xml:ro",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_recovery_corners_20260916:/capture",
+      "-v",
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro",
+      "--entrypoint",
+      "bash",
+      "codex-cartographer-v4-build:20260910",
+      "-lc",
+      "source /aichallenge/workspace/install/setup.bash && source /capture/cpp_install/setup.bash && export PYTHONPATH=/capture/source/src:${PYTHONPATH:-} && exec python3 /capture/source/tools/run_time_recovery_nodes.py --output /capture/codex-time-recovery-corners-p03-d2 --reference-root /capture/references --side right --run-id codex-time-recovery-corners-p03-d2 --speed-policy aligned_gain4_v1 --ros-domain-id 2"
+    ],
+    [
+      "make",
+      "dev",
+      "DEV_AUTO_START=false",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=2",
+      "AWSIM_VEHICLES=1",
+      "ROS_DOMAIN_ID=2",
+      "AWSIM_READY_DOMAINS=2",
+      "RUN_ID=codex-time-recovery-corners-p03-d2",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_recovery_corners_20260916/codex-time-recovery-corners-p03-d2",
+      "AWSIM_TIMEOUT=1920",
+      "AWSIM_EXTRA_ARGS=--ros2-base-domain 2 -logFile /output/codex-time-recovery-corners-p03-d2/awsim_unity.log"
+    ]
+  ],
+  "bag_bytes": 1305825280,
+  "last_control": {
+    "run_id": "codex-time-recovery-corners-p03-d2",
+    "fault": null,
+    "armed_ns": 35324999210,
+    "armed_wall": 95272.430431205,
+    "stop_reason": "JUDGE_LAP_PLUS_FUTURE",
+    "stop_since_ns": 333729992540,
+    "stop_confirmed": true,
+    "ready_ticks": 0,
+    "commands": 7018,
+    "speed_mps": 0.0,
+    "max_speed_mps": 1.4390918016433716,
+    "phase": "braking",
+    "nominal_count": 36619,
+    "trajectory_count": 336,
+    "large_recovery": {
+      "config": {
+        "sites": [
+          {
+            "site_id": "C01",
+            "release_s_m": 26.85,
+            "target_offset_m": 0.2,
+            "return_length_m": 6.0,
+            "settle_distance_m": 4.0,
+            "preparation_origin": "nominal_path",
+            "target_heading_rad": 0.06981317007977318,
+            "heading_tolerance_rad": 0.017453292519943295,
+            "corner_id": "C01",
+            "approach_distance_m": 8.0
+          },
+          {
+            "site_id": "C02",
+            "release_s_m": 73.6,
+            "target_offset_m": -0.2,
+            "return_length_m": 6.0,
+            "settle_distance_m": 4.0,
+            "preparation_origin": "nominal_path",
+            "target_heading_rad": -0.06981317007977318,
+            "heading_tolerance_rad": 0.017453292519943295,
+            "corner_id": "C02",
+            "approach_distance_m": 8.0
+          }
+        ],
+        "seed": 0,
+        "event_cap": 2
+      },
+      "state": {
+        "stage": "complete",
+        "site_cursor": 2,
+        "event_id": 2,
+        "completed_events": 2,
+        "skipped_sites": [],
+        "approach_seen": true,
+        "last_progress_m": 18.648830622754378,
+        "last_sim_ns": 332644992564,
+        "last_wall_ns": 95569746616404,
+        "last_sequence": 6935,
+        "start_ns": 87764998038,
+        "start_wall_ns": 95324855755396,
+        "request_ns": 97034997831,
+        "release_ns": 97099997829,
+        "confirmed_ns": 102594997706,
+        "stable_since_ns": null,
+        "target_since_ns": 96734997837,
+        "next_allowed_ns": 110159997604,
+        "goal_reached": true,
+        "reason": "EVENT_COMPLETE"
+      },
+      "applied": false,
+      "command_source": "nominal",
+      "lateral_error_m": null,
+      "heading_error_rad": null,
+      "nominal_stamp_ns": 336774992472,
+      "preparation_stamp_ns": 336769992472,
+      "normal_reference_sha256": "514ca492970fc158c3d4238e18c5488b25e661954a69cb18075e281e6913f88e",
+      "preparation_reference_sha256": "98ff4fbfe098835dc579fd52179871cd2d62047d1290950057180acc274c284b"
+    },
+    "rviz_subscribers": [
+      "rviz2",
+      "rosbag2_recorder"
+    ],
+    "monotonic_ns": 95573880407196,
+    "sim_ns": 336784992472,
+    "reason": "REQUESTED_BRAKE",
+    "projection": {
+      "s_m": 19.481715104550133,
+      "offset_m": 0.004415515563376958,
+      "distance_m": 0.004415515563376957,
+      "segment_index": 6,
+      "heading_error_rad": -0.0012056496319168275
+    }
+  },
+  "cleanup_errors": [],
+  "judge_sections": [
+    {
+      "current": 0,
+      "next": 0,
+      "started": "False",
+      "line": "Section line hit: current=0, next=0, started=False",
+      "run_id": "codex-time-recovery-corners-p03-d2",
+      "epoch": 0,
+      "byte_offset": 102973
+    },
+    {
+      "current": 0,
+      "next": 1,
+      "started": "True",
+      "line": "Section line hit: current=0, next=1, started=True",
+      "run_id": "codex-time-recovery-corners-p03-d2",
+      "epoch": 0,
+      "byte_offset": 103024
+    },
+    {
+      "current": 1,
+      "next": 2,
+      "started": "True",
+      "line": "Section line hit: current=1, next=2, started=True",
+      "run_id": "codex-time-recovery-corners-p03-d2",
+      "epoch": 0,
+      "byte_offset": 103134
+    },
+    {
+      "current": 2,
+      "next": 3,
+      "started": "True",
+      "line": "Section line hit: current=2, next=3, started=True",
+      "run_id": "codex-time-recovery-corners-p03-d2",
+      "epoch": 0,
+      "byte_offset": 103184
+    },
+    {
+      "current": 3,
+      "next": 4,
+      "started": "True",
+      "line": "Section line hit: current=3, next=4, started=True",
+      "run_id": "codex-time-recovery-corners-p03-d2",
+      "epoch": 0,
+      "byte_offset": 103234
+    },
+    {
+      "current": 4,
+      "next": 5,
+      "started": "True",
+      "line": "Section line hit: current=4, next=5, started=True",
+      "run_id": "codex-time-recovery-corners-p03-d2",
+      "epoch": 0,
+      "byte_offset": 103344
+    },
+    {
+      "current": 5,
+      "next": 6,
+      "started": "True",
+      "line": "Section line hit: current=5, next=6, started=True",
+      "run_id": "codex-time-recovery-corners-p03-d2",
+      "epoch": 0,
+      "byte_offset": 103394
+    },
+    {
+      "current": 6,
+      "next": 7,
+      "started": "True",
+      "line": "Section line hit: current=6, next=7, started=True",
+      "run_id": "codex-time-recovery-corners-p03-d2",
+      "epoch": 0,
+      "byte_offset": 103444
+    },
+    {
+      "current": 7,
+      "next": 0,
+      "started": "True",
+      "line": "Section line hit: current=7, next=0, started=True",
+      "run_id": "codex-time-recovery-corners-p03-d2",
+      "epoch": 0,
+      "byte_offset": 103494
+    }
+  ],
+  "judge_laps": [
+    {
+      "lap_seconds": 279.1,
+      "laps": 1,
+      "line": "Lap completed: 279.10s, total laps: 1",
+      "run_id": "codex-time-recovery-corners-p03-d2",
+      "epoch": 0,
+      "byte_offset": 103544,
+      "lap_increment_valid": true,
+      "ordered_section_evidence": true
+    }
+  ],
+  "lap_confirmed": true,
+  "ended_unix_s": 1789521178.9291499,
+  "free_bytes": 12271980544,
+  "nodes": {
+    "closed_bag": true,
+    "error": null,
+    "bag_exit": 0,
+    "collector_exit": 0,
+    "preparation_pure_pursuit_exit": 0,
+    "pure_pursuit_exit": 0,
+    "preparation_generator_exit": 0,
+    "generator_exit": 0,
+    "paths_exit": 0
+  }
+}

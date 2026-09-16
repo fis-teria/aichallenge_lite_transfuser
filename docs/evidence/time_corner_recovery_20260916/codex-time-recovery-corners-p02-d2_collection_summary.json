@@ -1,0 +1,160 @@
+{
+  "run_id": "codex-time-recovery-corners-p02-d2",
+  "split": "validation",
+  "result_status": "COMPLETE_LAP",
+  "fault": null,
+  "stop_confirmed": true,
+  "closed_bag": true,
+  "planned": [
+    {
+      "site_id": "C05",
+      "release_s_m": 181.57,
+      "target_offset_m": 0.2,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C05",
+      "approach_distance_m": 8.0
+    },
+    {
+      "site_id": "C07",
+      "release_s_m": 234.0,
+      "target_offset_m": -0.2,
+      "return_length_m": 6.0,
+      "settle_distance_m": 2.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": -0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C07",
+      "approach_distance_m": 4.0
+    },
+    {
+      "site_id": "C10",
+      "release_s_m": 296.44,
+      "target_offset_m": -0.2,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": -0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C10",
+      "approach_distance_m": 8.0
+    }
+  ],
+  "event_cap": 3,
+  "events": [
+    {
+      "event_id": 1,
+      "site_id": "C05",
+      "target_offset_m": 0.2,
+      "corner_id": "C05",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "preparation_start_ns": 174854996091,
+      "request_ns": 184114995884,
+      "release_ns": 184134995884,
+      "end_publication_ns": 194164995660,
+      "publication_switch_verified": true,
+      "recovery_confirmed": true,
+      "stable_at_end": true,
+      "completed": true,
+      "recovery_sample_count": 200,
+      "peak_observed_lateral_m": 0.24899063286105683,
+      "target_band_recovery_samples": 54,
+      "target_band_observed": true,
+      "causal_camera_candidates": 81,
+      "accepted_camera_anchors": 81,
+      "target_band_camera_anchors": 17,
+      "peak_abs_anchor_lateral_m": 0.24872849787030585
+    },
+    {
+      "event_id": 2,
+      "site_id": "C10",
+      "target_offset_m": -0.2,
+      "corner_id": "C10",
+      "target_heading_rad": -0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "preparation_start_ns": 265399994067,
+      "request_ns": 274709993859,
+      "release_ns": 274759993858,
+      "end_publication_ns": 284799993634,
+      "publication_switch_verified": true,
+      "recovery_confirmed": true,
+      "stable_at_end": true,
+      "completed": true,
+      "recovery_sample_count": 201,
+      "peak_observed_lateral_m": 0.24378615953091273,
+      "target_band_recovery_samples": 56,
+      "target_band_observed": true,
+      "causal_camera_candidates": 94,
+      "accepted_camera_anchors": 94,
+      "target_band_camera_anchors": 20,
+      "peak_abs_anchor_lateral_m": 0.24412510620505246
+    }
+  ],
+  "accepted": 175,
+  "target_band_anchors": 37,
+  "marker_locations": {
+    "frame_id": "map",
+    "location_basis": "pose_at_first_preparation_selection_not_proven_displacement",
+    "topic": "/recovery_teacher/disturbance_markers",
+    "events": [
+      {
+        "event_id": 1,
+        "site_id": "C05",
+        "sign": 1,
+        "planned_s_m": 169.57,
+        "actual_s_m": 169.5968902209666,
+        "x_m": 89642.89812877192,
+        "y_m": 43181.69215621457,
+        "yaw_rad": 0.12546826626397503,
+        "pose_stamp_ns": 174834996092,
+        "publication_sim_ns": 174854996091,
+        "publication_sequence": 3814,
+        "effective_rad": 0.0,
+        "target_offset_m": 0.2,
+        "label": "C05 LEFT PREP 20cm"
+      },
+      {
+        "event_id": 2,
+        "site_id": "C10",
+        "sign": -1,
+        "planned_s_m": 284.44,
+        "actual_s_m": 284.44111739788144,
+        "x_m": 89674.85378124971,
+        "y_m": 43149.66586128206,
+        "yaw_rad": -2.572734439873457,
+        "pose_stamp_ns": 265384994068,
+        "publication_sim_ns": 265399994067,
+        "publication_sequence": 5625,
+        "effective_rad": 0.0,
+        "target_offset_m": -0.2,
+        "label": "C10 RIGHT PREP 20cm"
+      }
+    ]
+  },
+  "training_started": false,
+  "causal_candidates": 175,
+  "input_reasons": {
+    "OK": 175,
+    "CURRENT_SENSOR_MISSING": 10,
+    "RAW_HEADING_RATE_INVALID": 3
+  },
+  "teacher_reasons": {
+    "OK": 188
+  },
+  "prepared": {
+    "run_id": "codex-time-recovery-corners-p02-d2",
+    "anchors": 175,
+    "input_valid": 175,
+    "real_input_replay_equal": [
+      "codex-time-recovery-corners-p02-d2:epoch0000:184374995878",
+      "codex-time-recovery-corners-p02-d2:epoch0000:275619993839"
+    ],
+    "input_reason_refinements": []
+  },
+  "all_planned_recovered": false,
+  "all_planned_lateral_events_qualified": false
+}

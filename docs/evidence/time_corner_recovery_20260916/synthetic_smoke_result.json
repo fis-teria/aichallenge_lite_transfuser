@@ -1,0 +1,126 @@
+{
+  "status": "SYNTHETIC_ROS_WIRING_PASS",
+  "awsim_driving": false,
+  "new_teacher_samples": 0,
+  "source_commit": "024fcf710d2853ce8a27de8ec6a2328d2bc6cd66",
+  "path_counts": {
+    "baseline": 120,
+    "reference": 120,
+    "preparation": 501,
+    "observed": 216
+  },
+  "marker_count": 3,
+  "last_control": {
+    "run_id": "codex-time-recovery-large-synthetic-smoke",
+    "fault": null,
+    "armed_ns": 2259388784,
+    "armed_wall": 93707.638827493,
+    "stop_reason": "SYNTHETIC_SMOKE_COMPLETE",
+    "stop_since_ns": 23607259802,
+    "stop_confirmed": true,
+    "ready_ticks": 0,
+    "commands": 499,
+    "speed_mps": 0.0,
+    "max_speed_mps": 1.25,
+    "phase": "braking",
+    "nominal_count": 2482,
+    "trajectory_count": 25,
+    "large_recovery": {
+      "config": {
+        "sites": [
+          {
+            "site_id": "C05",
+            "release_s_m": 181.57,
+            "target_offset_m": 0.2,
+            "return_length_m": 6.0,
+            "settle_distance_m": 4.0,
+            "preparation_origin": "nominal_path",
+            "target_heading_rad": 0.06981317007977318,
+            "heading_tolerance_rad": 0.017453292519943295,
+            "corner_id": "C05"
+          }
+        ],
+        "seed": 0,
+        "event_cap": 1
+      },
+      "state": {
+        "stage": "complete",
+        "site_cursor": 1,
+        "event_id": 1,
+        "completed_events": 1,
+        "skipped_sites": [],
+        "approach_seen": true,
+        "last_progress_m": 194.22733426000008,
+        "last_sim_ns": 23571999644,
+        "last_wall_ns": 93728956198585,
+        "last_sequence": 438,
+        "start_ns": 3867822899,
+        "start_wall_ns": 93709250042875,
+        "request_ns": 13489242838,
+        "release_ns": 13541799514,
+        "confirmed_ns": 16624665250,
+        "stable_since_ns": null,
+        "target_since_ns": 8679685137,
+        "next_allowed_ns": 26571999644,
+        "goal_reached": true,
+        "reason": "EVENT_COMPLETE"
+      },
+      "applied": false,
+      "command_source": "nominal",
+      "lateral_error_m": null,
+      "heading_error_rad": null,
+      "nominal_stamp_ns": 26613086363,
+      "preparation_stamp_ns": 26613086363,
+      "normal_reference_sha256": "514ca492970fc158c3d4238e18c5488b25e661954a69cb18075e281e6913f88e",
+      "preparation_reference_sha256": "4b1b4eb8a135146cdb931f639a2598c6cda1ea88a8eca3bb97fa61ec4dc2cbc4"
+    },
+    "rviz_subscribers": [
+      "rosbag2_recorder",
+      "rviz_synthetic_smoke"
+    ],
+    "monotonic_ns": 93731988641679,
+    "sim_ns": 26613086363,
+    "reason": "REQUESTED_BRAKE",
+    "projection": {
+      "s_m": 194.22733426000008,
+      "offset_m": 0.4196188509232849,
+      "distance_m": 0.4196188509232848,
+      "segment_index": 66,
+      "heading_error_rad": -0.08882193405035976
+    }
+  },
+  "elapsed_s": 25.636013940995326,
+  "events": [
+    {
+      "event_id": 1,
+      "site_id": "C05",
+      "target_offset_m": 0.2,
+      "corner_id": "C05",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "preparation_start_ns": 3867822899,
+      "request_ns": 13489242838,
+      "release_ns": 13541799514,
+      "end_publication_ns": 23571999644,
+      "publication_switch_verified": true,
+      "recovery_confirmed": true,
+      "stable_at_end": true,
+      "completed": true,
+      "recovery_sample_count": 201,
+      "peak_observed_lateral_m": 0.2000000000103645,
+      "target_band_recovery_samples": 41,
+      "target_band_observed": true
+    }
+  ],
+  "nodes": {
+    "closed_bag": true,
+    "error": null,
+    "bag_exit": 0,
+    "collector_exit": 0,
+    "preparation_pure_pursuit_exit": 0,
+    "pure_pursuit_exit": 0,
+    "preparation_generator_exit": 0,
+    "generator_exit": 0,
+    "paths_exit": 0
+  }
+}

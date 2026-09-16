@@ -1,0 +1,146 @@
+{
+  "run_id": "codex-time-recovery-corners-p05-d2",
+  "split": "validation",
+  "result_status": "COMPLETE_LAP",
+  "fault": null,
+  "stop_confirmed": true,
+  "closed_bag": true,
+  "planned": [
+    {
+      "site_id": "C08",
+      "release_s_m": 248.01,
+      "target_offset_m": 0.2,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C08"
+    },
+    {
+      "site_id": "C11",
+      "release_s_m": 314.67,
+      "target_offset_m": 0.2,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C11"
+    }
+  ],
+  "event_cap": 2,
+  "events": [
+    {
+      "event_id": 1,
+      "site_id": "C08",
+      "target_offset_m": 0.2,
+      "corner_id": "C08",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "preparation_start_ns": 225959994949,
+      "request_ns": 235609994733,
+      "release_ns": 235664994732,
+      "end_publication_ns": 245694994508,
+      "publication_switch_verified": true,
+      "recovery_confirmed": true,
+      "stable_at_end": true,
+      "completed": true,
+      "recovery_sample_count": 201,
+      "peak_observed_lateral_m": 0.2523557766029735,
+      "target_band_recovery_samples": 60,
+      "target_band_observed": true,
+      "causal_camera_candidates": 86,
+      "accepted_camera_anchors": 86,
+      "target_band_camera_anchors": 17,
+      "peak_abs_anchor_lateral_m": 0.25214418882448064
+    },
+    {
+      "event_id": 2,
+      "site_id": "C11",
+      "target_offset_m": 0.2,
+      "corner_id": "C11",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "preparation_start_ns": 278744993769,
+      "request_ns": 288099993560,
+      "release_ns": 288149993559,
+      "end_publication_ns": 298189993334,
+      "publication_switch_verified": true,
+      "recovery_confirmed": true,
+      "stable_at_end": true,
+      "completed": true,
+      "recovery_sample_count": 201,
+      "peak_observed_lateral_m": 0.2512802885272183,
+      "target_band_recovery_samples": 59,
+      "target_band_observed": true,
+      "causal_camera_candidates": 94,
+      "accepted_camera_anchors": 94,
+      "target_band_camera_anchors": 19,
+      "peak_abs_anchor_lateral_m": 0.251223496760817
+    }
+  ],
+  "accepted": 180,
+  "target_band_anchors": 36,
+  "marker_locations": {
+    "frame_id": "map",
+    "location_basis": "pose_at_first_preparation_selection_not_proven_displacement",
+    "topic": "/recovery_teacher/disturbance_markers",
+    "events": [
+      {
+        "event_id": 1,
+        "site_id": "C08",
+        "sign": 1,
+        "planned_s_m": 236.01,
+        "actual_s_m": 236.02985897441252,
+        "x_m": 89654.34938247745,
+        "y_m": 43160.029641932386,
+        "yaw_rad": -0.2672240432776899,
+        "pose_stamp_ns": 225944994949,
+        "publication_sim_ns": 225959994949,
+        "publication_sequence": 4798,
+        "effective_rad": 0.0,
+        "target_offset_m": 0.2,
+        "label": "C08 LEFT PREP 20cm"
+      },
+      {
+        "event_id": 2,
+        "site_id": "C11",
+        "sign": 1,
+        "planned_s_m": 302.67,
+        "actual_s_m": 302.7444715596108,
+        "x_m": 89657.78818720033,
+        "y_m": 43143.78382890462,
+        "yaw_rad": -2.0369805282143068,
+        "pose_stamp_ns": 278744993769,
+        "publication_sim_ns": 278744993769,
+        "publication_sequence": 5854,
+        "effective_rad": 0.0,
+        "target_offset_m": 0.2,
+        "label": "C11 LEFT PREP 20cm"
+      }
+    ]
+  },
+  "training_started": false,
+  "causal_candidates": 180,
+  "input_reasons": {
+    "OK": 181,
+    "CURRENT_SENSOR_MISSING": 7
+  },
+  "teacher_reasons": {
+    "OK": 188,
+    "Interpolation endpoints exceed tolerance": 1
+  },
+  "prepared": {
+    "run_id": "codex-time-recovery-corners-p05-d2",
+    "anchors": 180,
+    "input_valid": 180,
+    "real_input_replay_equal": [
+      "codex-time-recovery-corners-p05-d2:epoch0000:235824994728",
+      "codex-time-recovery-corners-p05-d2:epoch0000:288744993546"
+    ],
+    "input_reason_refinements": []
+  },
+  "all_planned_recovered": true,
+  "all_planned_lateral_events_qualified": true
+}
