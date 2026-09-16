@@ -10,15 +10,16 @@ import numpy as np
 from .time_reference_v1 import TimePlan, TimedBodyPose, prepare_time_reference, reference_control
 from .time_geometry_v2 import validate_time_geometry
 from .awsim_steering import CALIBRATED_POLICIES, steering_asset_contract
-from .vehicle_motion_v1 import IDEAL_POLICY, AWSIM_TRIAL_SPEED_POLICIES, AWSIM_TRIAL_TARGETS_KMH, WHEELBASE_M, effective_response_length, validate_vehicle_model_config
+from .vehicle_motion_v1 import IDEAL_POLICY, AWSIM_FIXED_TRIAL_SPEED_POLICIES, AWSIM_TRIAL_SPEED_POLICIES, AWSIM_TRIAL_TARGETS_KMH, WHEELBASE_M, effective_response_length, validate_vehicle_model_config
+from .curvature_speed_v1 import ADAPTIVE_SPEED_POLICY, preview_speed_limit
 from .waypoint_controller import ControllerConfig, select_lookahead, control_from_waypoints
 from .polyline_lookahead_v1 import select_polyline_lookahead
 from .curvature_support_v2 import ACTUAL_STOPPING_SPEED, DIAGNOSTIC_STOPPING_POLICIES, STANDARD_CLEARANCE, NEAR_LIMIT_CLEARANCE, clearance_dimensions
 from ..runtime.awsim_trial_session import trial_duration_limits
 
 
-FIXED_SPEED_POLICIES = ("fixed_5kmh", *AWSIM_TRIAL_SPEED_POLICIES)
-SPEED_POLICIES = ("source_capped_0p25", *FIXED_SPEED_POLICIES)
+FIXED_SPEED_POLICIES = ("fixed_5kmh", *AWSIM_FIXED_TRIAL_SPEED_POLICIES)
+SPEED_POLICIES = ("source_capped_0p25", *FIXED_SPEED_POLICIES, ADAPTIVE_SPEED_POLICY)
 SEGMENT_LOOKAHEAD_POLICY = "stopping_preview_segment_v1"
 EXTENDED_LOOKAHEAD_POLICY = "stopping_preview_extended_v1"
 LOOKAHEAD_POLICIES = ("fixed_1m_v1", "feasible_1_to_1p5m_v1", "stopping_preview_v1",
@@ -138,8 +139,9 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
     reference = prepare_time_reference(plan, current, rear_axle_offset_m=rear_axle_offset_m)
     geometry = validate_time_geometry(plan.xy_m)
     predicted_speed = reference.target_speed_mps
-    target_speed = ceiling if speed_policy in FIXED_SPEED_POLICIES else min(speed_cap_mps, predicted_speed)
-    if (predicted_speed > 1e-6 or speed_policy in FIXED_SPEED_POLICIES) and not geometry["motion_resolved"]:
+    target_speed = (speed_cap_mps if speed_policy == ADAPTIVE_SPEED_POLICY else
+                    ceiling if speed_policy in FIXED_SPEED_POLICIES else min(speed_cap_mps, predicted_speed))
+    if (predicted_speed > 1e-6 or speed_policy in (*FIXED_SPEED_POLICIES, ADAPTIVE_SPEED_POLICY)) and not geometry["motion_resolved"]:
         raise ValueError("TIME_PATH_MOTION_UNRESOLVED")
     reference = replace(reference, target_speed_mps=target_speed)
     response_length = effective_response_length(max(0., speed_mps), vehicle_model_policy)
@@ -196,6 +198,15 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
             raise ValueError("STEERING_INFEASIBLE")
         if np.linalg.norm(forward[-1]) < .1 + max(0., speed_mps) * .5 + speed_mps ** 2 / 2:
             raise ValueError("REFERENCE_STOPPING_DISTANCE")
+    if speed_policy == ADAPTIVE_SPEED_POLICY:
+        speed_plan = preview_speed_limit(reference.xy_current_m, measured_speed_mps=max(0., speed_mps),
+            cruise_ceiling_mps=speed_cap_mps,
+            tracking_curvature_per_m=2*float(target[1])/max(float(target @ target), 1e-6))
+        target_speed = speed_plan['target_speed_mps']
+        reference = replace(reference, target_speed_mps=target_speed)
+        config = replace(config, max_accel_mps2=speed_plan['config']['maximum_acceleration_mps2'],
+                         speed_kp=speed_plan['config']['speed_gain_per_s'])
+        selection_details['longitudinal_preview'] = speed_plan
     if lookahead_policy != "fixed_1m_v1" and target_speed > 1e-6:
         command = control_from_waypoints(np.asarray([target]), target_speed, max(0., speed_mps), config)
     else:

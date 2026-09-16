@@ -20,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from aic_transfuser_lite.control.time_trial_v1 import SPEED_POLICIES, FIXED_SPEED_POLICIES, trial_speed_limits
 from aic_transfuser_lite.control.vehicle_motion_v1 import AWSIM_POLICIES, AWSIM_TRIAL_SPEED_POLICIES
 from aic_transfuser_lite.control.curvature_support_v2 import ACTUAL_STOPPING_SPEED, DIAGNOSTIC_STOPPING_POLICIES, ONE_METRE_STOPPING_TRAVEL
+from aic_transfuser_lite.control.curvature_speed_v1 import ADAPTIVE_SPEED_POLICY
 
 
 def main() -> None:
@@ -33,6 +34,7 @@ def main() -> None:
     fixture_config = json.loads(args.trial_config.read_text()) if args.trial_config else None
     if fixture_config is not None:
         args.speed_policy = fixture_config["speed_policy"]
+    adaptive_speed = args.speed_policy == ADAPTIVE_SPEED_POLICY
     if os.environ.get("ROS_DOMAIN_ID") != "93":
         raise ValueError("ISOLATED_DOMAIN_93_REQUIRED")
     args.output.mkdir(parents=True, exist_ok=False)
@@ -169,8 +171,10 @@ def main() -> None:
             "--rear-axle-forward-m", ".0010000169277191162", "--pose-source", "/time_ros_fixture",
             *controller_settings,
             "--sensor-source", "/time_ros_fixture", "--synthetic-shadow-fixture"], "controller")
-        oracle_source_speed = .8 if args.speed_policy in FIXED_SPEED_POLICIES else .15
-        expected_target = trial_speed_limits(args.speed_policy)[0] if args.speed_policy in FIXED_SPEED_POLICIES else .15
+        oracle_source_speed = .8 if args.speed_policy in (*FIXED_SPEED_POLICIES, ADAPTIVE_SPEED_POLICY) else .15
+        expected_target = trial_speed_limits(args.speed_policy)[0] if args.speed_policy in (*FIXED_SPEED_POLICIES, ADAPTIVE_SPEED_POLICY) else .15
+        def valid_target(value):
+            return (0 < value <= expected_target+1e-5 if adaptive_speed else abs(value-expected_target) < 1e-5)
         oracle_curvature = 0.
         oracle_xy_override = None
         def publish_oracle(t):
@@ -186,7 +190,7 @@ def main() -> None:
                      "raw_xy_m": xy.tolist()}
             message = String(); message.data = json.dumps(value); oracle_publisher.publish(message)
         spin_for(7, publish_oracle)
-        positive = [c for c in commands if c["accel"] > 0 and abs(c["speed"]-expected_target) < 1e-5 and abs(c["steer"]) < 1e-8]
+        positive = [c for c in commands if c["accel"] > 0 and valid_target(c["speed"]) and abs(c["steer"]) < 1e-8]
         if not positive:
             raise RuntimeError("ORACLE_DID_NOT_REACH_SHADOW_PP")
         if fixture_config is not None and fixture_config.get("record_vehicle_motion", False):
@@ -301,7 +305,7 @@ def main() -> None:
                 raise RuntimeError("SEGMENT_TARGET_DID_NOT_REACH_ROS_CONTROL")
             for row in segments:
                 detail = row["details"]; selection = detail["lookahead_selection"]
-                if (row["target_speed_mps"] != expected_target or row["acceleration_mps2"] <= 0
+                if (not valid_target(row["target_speed_mps"]) or row["acceleration_mps2"] <= 0
                         or abs(detail["steer_rad"]) > .3 or selection["steering_margin_rad"] < 0
                         or not 1. <= selection["distance_m"] <= 1.5
                         or "steering_response" not in detail or "steering_actuator" not in detail
@@ -323,7 +327,7 @@ def main() -> None:
                 raise RuntimeError("EXTENDED_TARGET_DID_NOT_REACH_ROS_CONTROL")
             for row in extended:
                 detail = row["details"]; selection = detail["lookahead_selection"]
-                if (row["target_speed_mps"] != expected_target or row["acceleration_mps2"] <= 0
+                if (not valid_target(row["target_speed_mps"]) or row["acceleration_mps2"] <= 0
                         or abs(detail["steer_rad"]) > .3 or selection["steering_margin_rad"] < 0
                         or not 1.5 < selection["distance_m"] <= 2.
                         or "steering_response" not in detail or "steering_actuator" not in detail
@@ -352,7 +356,7 @@ def main() -> None:
                 guard_travel = .4+guard_speed*.5+guard_speed*guard_speed/2
                 if distance_policy == ONE_METRE_STOPPING_TRAVEL:
                     guard_travel = min(guard_travel, 1.)
-                if (abs(speed-expected_target) > 1e-5 or row["target_speed_mps"] != expected_target
+                if (abs(speed-expected_target) > 1e-5 or not valid_target(row["target_speed_mps"])
                         or detail["selected_lookahead_distance_m"] < preview
                         or abs(detail["obstacle_guard"]["stopping_travel_m"]-guard_travel) > 1e-9
                         or detail['obstacle_guard'].get('stopping_distance_policy', ACTUAL_STOPPING_SPEED) != distance_policy
@@ -364,6 +368,29 @@ def main() -> None:
             result[speed_prefix+'_minimum_preview_m'] = preview
             result[speed_prefix+'_scan_stopping_travel_m'] = guard_travel
             result['stopping_distance_policy'] = distance_policy
+        if adaptive_speed:
+            # A real ROS controller must brake for a feasible upcoming bend
+            # without invoking the independent emergency rejection path.
+            oracle_curvature = .08
+            began = time.monotonic()
+            spin_for(2., publish_oracle)
+            records = [json.loads(line) for line in (args.output/'oracle/control.jsonl').read_text().splitlines()]
+            preview = [r for r in records if r.get('reason') == 'SHADOW_CONTROL'
+                       and r['monotonic_ns']/1e9 > began+.8]
+            if len(preview) < 3:
+                raise RuntimeError('CURVATURE_SPEED_PREVIEW_NOT_EXECUTED')
+            for row in preview:
+                plan = row['details'].get('longitudinal_preview', {})
+                if (not 0 < row['target_speed_mps'] < row['speed_mps']
+                        or row['acceleration_mps2'] >= 0 or plan.get('policy') != ADAPTIVE_SPEED_POLICY
+                        or abs(plan['target_speed_mps']-row['target_speed_mps']) > 1e-9
+                        or row['details']['selected_lookahead_distance_m'] < row['details']['minimum_preview_distance_m']):
+                    raise RuntimeError('CURVATURE_SPEED_PREVIEW_OR_MEASURED_SPEED_CONTRACT')
+            successes = [r for r in records if r.get('reason') == 'SHADOW_CONTROL']
+            if any(r['acceleration_mps2'] > .4+1e-9 for r in successes):
+                raise RuntimeError('CURVATURE_SPEED_ACCELERATION_BOUND')
+            result['curvature_preview_braking_commands'] = len(preview)
+            result['curvature_preview_maximum_acceleration_mps2'] = max(r['acceleration_mps2'] for r in successes)
         stale_started = time.monotonic()
         spin_for(1.2)  # Sensors continue; stop sending plans.
         stale = [c for c in commands if c["wall"] > stale_started + .65]

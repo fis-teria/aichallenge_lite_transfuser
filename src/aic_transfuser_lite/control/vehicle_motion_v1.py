@@ -11,6 +11,7 @@ import math
 from typing import Any
 
 from .awsim_steering import CALIBRATED_POLICIES
+from .curvature_speed_v1 import ADAPTIVE_SPEED_POLICY
 
 
 IDEAL_POLICY = "ideal_bicycle_v1"
@@ -18,7 +19,8 @@ AWSIM_POLICY = "awsim_understeer_v1"
 AWSIM_10KMH_POLICY = "awsim_understeer_10kmh_trial_v1"
 AWSIM_15KMH_POLICY = "awsim_understeer_15kmh_trial_v1"
 AWSIM_TRIAL_TARGETS_KMH = {AWSIM_10KMH_POLICY: 10, AWSIM_15KMH_POLICY: 15}
-AWSIM_TRIAL_SPEED_POLICIES = {f'fixed_{target}kmh': policy for policy, target in AWSIM_TRIAL_TARGETS_KMH.items()}
+AWSIM_FIXED_TRIAL_SPEED_POLICIES = {f'fixed_{target}kmh': policy for policy, target in AWSIM_TRIAL_TARGETS_KMH.items()}
+AWSIM_TRIAL_SPEED_POLICIES = {**AWSIM_FIXED_TRIAL_SPEED_POLICIES, ADAPTIVE_SPEED_POLICY: AWSIM_15KMH_POLICY}
 AWSIM_POLICIES = (AWSIM_POLICY, *AWSIM_TRIAL_TARGETS_KMH)
 WHEELBASE_M = 1.087
 MAX_SPEED_MPS = 6. / 3.6
@@ -73,10 +75,11 @@ def validate_vehicle_model_config(config: dict[str, Any]) -> str:
     effective_response_length(0., policy)
     if policy in AWSIM_POLICIES:
         geometry = config.get("geometry", {})
-        speed_policy = f'fixed_{AWSIM_TRIAL_TARGETS_KMH[policy]}kmh' if policy in AWSIM_TRIAL_TARGETS_KMH else "fixed_5kmh"
+        speed_policies = ([key for key, model in AWSIM_TRIAL_SPEED_POLICIES.items() if model == policy]
+                          if policy in AWSIM_TRIAL_TARGETS_KMH else ["fixed_5kmh"])
         if (config.get("steering_policy") not in CALIBRATED_POLICIES
                 or config.get("obstacle_policy") != "steering_support_v2"
-                or config.get("speed_policy") != speed_policy
+                or config.get("speed_policy") not in speed_policies
                 or geometry.get("wheelbase_m") != WHEELBASE_M
                 or geometry.get("scene_sha256") != SCENE_SHA256):
             raise ValueError("VEHICLE_MODEL_ASSET_OR_POLICY_CONTRACT")
