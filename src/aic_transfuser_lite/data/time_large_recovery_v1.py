@@ -51,6 +51,8 @@ class LargeRecoverySite:
     entry_window_lead_m: float = 0.
     # Dimensionless preparation-only interpolation; measured goals stay fixed.
     preparation_normal_fraction: float = .5
+    # Follow the preparation origin before starting the lateral transition, m.
+    preparation_delay_m: float = 0.
 
     def __post_init__(self) -> None:
         if (not isinstance(self.site_id, str) or not re.fullmatch(r'[A-Z][A-Z0-9_]{0,23}', self.site_id)
@@ -58,7 +60,8 @@ class LargeRecoverySite:
                        for v in (self.release_s_m, self.target_offset_m, self.return_length_m, self.settle_distance_m,
                                  self.target_heading_rad, self.heading_tolerance_rad, self.approach_distance_m,
                                  self.preparation_offset_bias_m, self.preparation_heading_bias_rad,
-                                 self.entry_window_lead_m, self.preparation_normal_fraction))
+                                 self.entry_window_lead_m, self.preparation_normal_fraction,
+                                 self.preparation_delay_m))
                 or not 20. <= self.release_s_m <= 325.
                 or abs(self.target_offset_m) not in (.2, .4, .6)
                 or self.return_length_m not in (4., 6., 10.) or self.settle_distance_m not in (2., 4.)
@@ -70,6 +73,9 @@ class LargeRecoverySite:
                 or abs(self.preparation_heading_bias_rad) > math.radians(2.)
                 or not 0. <= self.entry_window_lead_m <= .5
                 or not 0. <= self.preparation_normal_fraction <= 1.
+                or not 0. <= self.preparation_delay_m <= 6.
+                or self.preparation_delay_m > self.approach_distance_m+self.settle_distance_m-6.
+                or self.preparation_delay_m > 0. and self.target_heading_rad+self.preparation_heading_bias_rad == 0.
                 or self.corner_id is not None and (not isinstance(self.corner_id, str)
                     or not re.fullmatch(r'C[0-9]{2}[A-Z]?', self.corner_id))):
             raise ValueError('LARGE_SITE_CONTRACT')

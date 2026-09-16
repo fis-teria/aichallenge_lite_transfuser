@@ -214,3 +214,38 @@ def test_blended_origin_rejects_invalid_fraction_and_still_checks_obstacles():
     occupancy.free[1299-100, 650] = False
     with pytest.raises(ValueError, match='LARGE_SITE_MAP_REJECTED'):
         preparation_course(base, normal, replace(cfg, sites=(site,)), occupancy)
+
+
+def test_delayed_lateral_transition_preserves_short_path_and_early_admission():
+    from dataclasses import replace
+    import math
+    from aic_transfuser_lite.data.time_large_recovery_reference_v1 import preparation_lateral
+    base, normal, occupancy, cfg = fixture()
+    short = replace(cfg.sites[0], preparation_origin='nominal_path', approach_distance_m=4.,
+                    settle_distance_m=2., target_heading_rad=math.radians(4.))
+    delayed = replace(short, approach_distance_m=8., settle_distance_m=4., preparation_delay_m=6.)
+    progress = np.linspace(delayed.start_s_m-1., short.release_s_m+2., 601)
+    np.testing.assert_allclose(preparation_lateral(progress, delayed), preparation_lateral(progress, short), atol=1e-12, rtol=0.)
+    assert delayed.start_s_m == short.start_s_m-6.
+    assert delayed.entry_start_s_m == delayed.start_s_m
+    assert preparation_lateral(np.array([delayed.start_s_m, short.start_s_m]), delayed).tolist() == [0., 0.]
+    points, evidence = preparation_course(base, normal, replace(cfg, sites=(delayed,)), occupancy)
+    assert points and all(e['preparation_map_pass'] for e in evidence)
+    assert delayed.at_goal(.6, math.radians(4.)) == short.at_goal(.6, math.radians(4.))
+    occupancy.free[1299-100, 650] = False
+    with pytest.raises(ValueError, match='LARGE_SITE_MAP_REJECTED'):
+        preparation_course(base, normal, replace(cfg, sites=(delayed,)), occupancy)
+
+
+def test_preparation_delay_rejects_invalid_or_too_short_transitions():
+    from dataclasses import replace
+    import math
+    site = LargeRecoverySite('C03', 60., .6, approach_distance_m=8., settle_distance_m=4.,
+                             target_heading_rad=math.radians(4.))
+    for invalid in (-.1, 6.1, float('nan'), True, '6'):
+        with pytest.raises(ValueError, match='LARGE_SITE_CONTRACT'):
+            replace(site, preparation_delay_m=invalid)
+    with pytest.raises(ValueError, match='LARGE_SITE_CONTRACT'):
+        replace(site, preparation_delay_m=6., approach_distance_m=4.)
+    with pytest.raises(ValueError, match='LARGE_SITE_CONTRACT'):
+        replace(site, preparation_delay_m=1., target_heading_rad=0.)

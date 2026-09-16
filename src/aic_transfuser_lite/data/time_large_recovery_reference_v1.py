@@ -69,7 +69,10 @@ def preparation_lateral(progress: np.ndarray, site: LargeRecoverySite) -> np.nda
 
     Zero-heading legacy profiles are unchanged. Heading profiles use a cubic
     Hermite approach with zero start slope and tan(target heading) release
-    slope. A bounded forward extension supplies PP preview; it is not a label.
+    slope. An optional delay follows the origin first and leaves at least 6 m
+    for the lateral transition. Admission, map screening and preparation time
+    limits still start at the original start_s_m. A bounded forward extension
+    supplies PP preview; it is not a label.
     """
     progress = np.asarray(progress, dtype=float)
     if progress.ndim != 1 or not np.isfinite(progress).all():
@@ -78,8 +81,9 @@ def preparation_lateral(progress: np.ndarray, site: LargeRecoverySite) -> np.nda
     heading = site.target_heading_rad + site.preparation_heading_bias_rad
     if heading == 0.:
         return offset*_smooth((progress-site.start_s_m)/site.approach_distance_m)
-    length = site.release_s_m-site.start_s_m
-    u = np.clip((progress-site.start_s_m)/length, 0., 1.)
+    transition_start = site.start_s_m+site.preparation_delay_m
+    length = site.release_s_m-transition_start
+    u = np.clip((progress-transition_start)/length, 0., 1.)
     slope = math.tan(heading)
     approach = offset*(3*u*u-2*u*u*u)+length*slope*(u*u*u-u*u)
     # C1 extension: linear through release+2 m, taper slope to zero by +6 m.
