@@ -1,0 +1,36 @@
+{
+  "scope": "Observed single model-driven trial with explicitly capped diagnostic stopping horizon",
+  "host_status": "FAILED",
+  "target_speed_kmh": 15.0,
+  "moving_speed_median_kmh": 11.173472499847414,
+  "moving_speed_max_kmh": 13.038402557373047,
+  "tracking_commands": 1663,
+  "tracking_extended_lookahead": 0,
+  "active_command_reasons": {
+    "TIME_PATH_TRACKING": 1663,
+    "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 327,
+    "TIME_PATH_INITIAL_DIRECTION": 38,
+    "MOTION_REAR_LATERAL_INVALID": 89,
+    "MOTION_YAW_RATE_INVALID": 1,
+    "STOPPING_SWEEP_OCCUPIED": 87
+  },
+  "stop_confirmed": false,
+  "raw_path_subscribers": [
+    "rviz2"
+  ],
+  "inference_checkpoint_sha256": [
+    "1fe12ca066791d3eb8907c6921120e2cfbb38925c422d5be54940f4acbdd120a"
+  ],
+  "scan_rejections": [
+    {
+      "sim_after_arm_s": 105.899997633,
+      "reason": "STOPPING_SWEEP_OCCUPIED",
+      "replay": {
+        "reason": "STOPPING_SWEEP_OCCUPIED",
+        "minimum_ray_margin_m": -0.28067859152033514
+      }
+    }
+  ],
+  "maximum_recorded_stopping_travel_m": 1.0,
+  "stopping_distance_policy": "awsim_cap_1m_diagnostic_v1"
+}

@@ -1,0 +1,204 @@
+{
+  "status": "FAILED",
+  "run_id": "codex-time-launch15-stop1m-lap01",
+  "start_time_utc": 1789597481.619349,
+  "scope": "ONE_LAP_MODEL_TRIAL",
+  "official_start_requested": true,
+  "execution_profile": "one_lap",
+  "speed_policy": "fixed_15kmh",
+  "trial_config_sha256": "64d8a27a58be238bc419da1a7d792369db71e29d246f0ac8def6a496ba34fa93",
+  "gpu": {
+    "returncode": 0,
+    "stdout": "NVIDIA GeForce RTX 4060 Laptop GPU, 595.91.07\n",
+    "stderr": ""
+  },
+  "steering_asset_sha256": {
+    "AWSIM_Data/StreamingAssets/Vehicle/vehicle.yaml": "5b66e58691091c82d5511535ca458d4c89e85f3b59fa0d0c4a2c7eee47887244",
+    "AWSIM_Data/Managed/Assembly-CSharp.dll": "859e5560dbffd7d0833cd1fe5eb1f36b87fa8d22f6e45eb0e1203d04a1ea6d13"
+  },
+  "rviz_config": "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz",
+  "rviz_sha256": "981c28955e9bceedb8845ec8d59e57c4f47805040cd84c5e09f2f1430c7bb3f1",
+  "commands": [
+    [
+      "docker",
+      "run",
+      "--rm",
+      "--name",
+      "codex-time-launch15-stop1m-lap01-nodes",
+      "--gpus",
+      "all",
+      "--network",
+      "host",
+      "-e",
+      "ROS_DOMAIN_ID=1",
+      "-e",
+      "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_launch_15kmh_stop1m_20260917/codex-time-launch15-stop1m-lap01/cyclonedds.xml:/opt/autoware/cyclonedds.xml:ro",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_launch_15kmh_stop1m_20260917:/time",
+      "-v",
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro",
+      "--entrypoint",
+      "bash",
+      "codex-cartographer-v4-build:20260910",
+      "-lc",
+      "source /aichallenge/workspace/install/setup.bash && source /time/install/setup.bash && exec python3 /time/source_1c288e0/tools/run_time_path_trial_nodes.py --output /time/codex-time-launch15-stop1m-lap01 --run-id codex-time-launch15-stop1m-lap01 --checkpoint /time/command_off_best.pt --config /time/source_1c288e0/configs/control/time_path_launch_15kmh_stop1m_20260917.json"
+    ],
+    [
+      "make",
+      "dev",
+      "DEV_AUTO_START=false",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=1",
+      "RUN_ID=codex-time-launch15-stop1m-lap01",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_launch_15kmh_stop1m_20260917/codex-time-launch15-stop1m-lap01",
+      "AWSIM_TIMEOUT=660",
+      "AWSIM_EXTRA_ARGS=-logFile /output/codex-time-launch15-stop1m-lap01/awsim_unity.log"
+    ],
+    [
+      "make",
+      "awsim-request-start",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=1",
+      "RUN_ID=codex-time-launch15-stop1m-lap01",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_launch_15kmh_stop1m_20260917/codex-time-launch15-stop1m-lap01",
+      "AWSIM_TIMEOUT=660",
+      "AWSIM_EXTRA_ARGS=-logFile /output/codex-time-launch15-stop1m-lap01/awsim_unity.log"
+    ]
+  ],
+  "last_control": {
+    "fault": "STOPPING_SWEEP_OCCUPIED",
+    "armed_ns": 20499999541,
+    "armed_wall": 171935.222972991,
+    "stop_since_ns": null,
+    "stop_confirmed": false,
+    "positive_count": 1663,
+    "commands": 2741,
+    "max_speed_mps": 3.77162504196167,
+    "requested_stop_reason": null,
+    "speed_mps": 3.263681411743164,
+    "current_pose": {
+      "stamp_ns": 126384997175,
+      "clock": "sim",
+      "epoch": "0",
+      "world_frame": "map",
+      "body_frame": "base_link",
+      "x_m": 89655.71571860761,
+      "y_m": 43138.45101180732,
+      "yaw_rad": -1.8051261155064866
+    },
+    "scan_rejection_recorded": true,
+    "reason": "STOPPING_SWEEP_OCCUPIED",
+    "monotonic_ns": 172041172713596,
+    "sim_ns": 126454997173,
+    "topic": "/control/command/control_cmd"
+  },
+  "last_inference": {
+    "plans": 6,
+    "rejected": 2,
+    "fault": null,
+    "sources_ok": true,
+    "sources": {
+      "camera": [
+        "/awsim_d1"
+      ],
+      "lidar": [
+        "/awsim_d1"
+      ],
+      "velocity": [
+        "/awsim_d1"
+      ],
+      "actual_steering": [
+        "/awsim_d1"
+      ]
+    },
+    "path_subscribers": [
+      "rviz2"
+    ],
+    "monotonic_ns": 171915797968404,
+    "sim_ns": 1084999975,
+    "epoch": "0",
+    "dropped_anchors": 1
+  },
+  "rviz_path_subscribers": [
+    "rviz2"
+  ],
+  "rviz_window": "0x1800010 \"/aichallenge/workspace/install/aichallenge_system_launch/share/aichallenge_system_launch/config/autoware.rviz* - RViz\": (\"rviz2\" \"rviz2\")  1850x1136+10+45  +70+64",
+  "error": "RuntimeError: CONTROL_STOPPING_SWEEP_OCCUPIED",
+  "cleanup_errors": [],
+  "end_time_utc": 1789597641.159549,
+  "wall_s": 159.54014486202504,
+  "judge_lap_confirmed": false,
+  "judge_section_events": [
+    {
+      "current": 0,
+      "next": 0,
+      "started": "False",
+      "line": "Section line hit: current=0, next=0, started=False",
+      "run_id": "codex-time-launch15-stop1m-lap01",
+      "epoch": 0,
+      "byte_offset": 102660
+    },
+    {
+      "current": 0,
+      "next": 1,
+      "started": "True",
+      "line": "Section line hit: current=0, next=1, started=True",
+      "run_id": "codex-time-launch15-stop1m-lap01",
+      "epoch": 0,
+      "byte_offset": 102711
+    },
+    {
+      "current": 1,
+      "next": 2,
+      "started": "True",
+      "line": "Section line hit: current=1, next=2, started=True",
+      "run_id": "codex-time-launch15-stop1m-lap01",
+      "epoch": 0,
+      "byte_offset": 102761
+    },
+    {
+      "current": 2,
+      "next": 3,
+      "started": "True",
+      "line": "Section line hit: current=2, next=3, started=True",
+      "run_id": "codex-time-launch15-stop1m-lap01",
+      "epoch": 0,
+      "byte_offset": 102811
+    },
+    {
+      "current": 3,
+      "next": 4,
+      "started": "True",
+      "line": "Section line hit: current=3, next=4, started=True",
+      "run_id": "codex-time-launch15-stop1m-lap01",
+      "epoch": 0,
+      "byte_offset": 102861
+    },
+    {
+      "current": 4,
+      "next": 5,
+      "started": "True",
+      "line": "Section line hit: current=4, next=5, started=True",
+      "run_id": "codex-time-launch15-stop1m-lap01",
+      "epoch": 0,
+      "byte_offset": 102911
+    },
+    {
+      "current": 5,
+      "next": 6,
+      "started": "True",
+      "line": "Section line hit: current=5, next=6, started=True",
+      "run_id": "codex-time-launch15-stop1m-lap01",
+      "epoch": 0,
+      "byte_offset": 102961
+    }
+  ],
+  "judge_laps": [],
+  "judge_order_invalid": false
+}
