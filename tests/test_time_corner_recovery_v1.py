@@ -61,6 +61,18 @@ def test_heading_profile_has_correct_release_position_and_slope_and_bounded_prev
         preparation_lateral(np.zeros((3, 2)), site)
 
 
+def test_short_preparation_changes_start_without_moving_corner_goal_or_relaxing_spacing():
+    site=replace(sites()[4],approach_distance_m=4.)
+    assert site.start_s_m==site.release_s_m-8.
+    y=preparation_lateral(np.array([site.start_s_m,site.release_s_m]),site)
+    np.testing.assert_allclose(y,[0.,.2],atol=1e-10)
+    # Different approach lengths must still be spaced by start, not release.
+    other=replace(site,site_id='C12',corner_id='C12',release_s_m=site.release_s_m+40.,approach_distance_m=8.)
+    assert len(partition_corner_sites([site,other]))==2
+    with pytest.raises(ValueError):
+        replace(site,approach_distance_m=2.)
+
+
 def test_offline_boundary_uses_requested_heading_and_preserves_legacy_zero_goal():
     _, rows = synthetic_run(LargeRecoveryConfig((LargeRecoverySite('C01',60.,.2),)))
     assert large_recovery_events(rows)[0]['recovery_confirmed']

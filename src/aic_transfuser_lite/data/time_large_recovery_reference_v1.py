@@ -74,7 +74,7 @@ def preparation_lateral(progress: np.ndarray, site: LargeRecoverySite) -> np.nda
     if progress.ndim != 1 or not np.isfinite(progress).all():
         raise ValueError('LARGE_PREPARATION_PROGRESS_SHAPE')
     if site.target_heading_rad == 0.:
-        return site.target_offset_m*_smooth((progress-site.start_s_m)/8.)
+        return site.target_offset_m*_smooth((progress-site.start_s_m)/site.approach_distance_m)
     length = site.release_s_m-site.start_s_m
     u = np.clip((progress-site.start_s_m)/length, 0., 1.)
     slope = math.tan(site.target_heading_rad)

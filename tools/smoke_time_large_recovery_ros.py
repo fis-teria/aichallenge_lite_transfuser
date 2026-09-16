@@ -108,7 +108,8 @@ def main() -> None:
             deviation=0.
             heading_deviation=0.
             if st.get('stage') in ('preparing','handover'):
-                fraction=float(np.clip((current_s-(site['release_s_m']-8.-site.get('settle_distance_m',2.)))/8.,0.,1.))
+                approach=site.get('approach_distance_m',8.)
+                fraction=float(np.clip((current_s-(site['release_s_m']-approach-site.get('settle_distance_m',2.)))/approach,0.,1.))
                 deviation=site['target_offset_m']*fraction*fraction*(3.-2.*fraction)
                 heading_deviation=site.get('target_heading_rad', 0.)*fraction
             elif st.get('stage')=='recovery':

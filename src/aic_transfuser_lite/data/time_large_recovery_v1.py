@@ -28,25 +28,27 @@ class LargeRecoverySite:
     target_heading_rad: float = 0.
     heading_tolerance_rad: float = math.radians(2.)
     corner_id: str | None = None
+    approach_distance_m: float = 8.
 
     def __post_init__(self) -> None:
         if (not isinstance(self.site_id, str) or not re.fullmatch(r'[A-Z][A-Z0-9_]{0,23}', self.site_id)
                 or any(type(v) not in (int, float) or not math.isfinite(v)
                        for v in (self.release_s_m, self.target_offset_m, self.return_length_m, self.settle_distance_m,
-                                 self.target_heading_rad, self.heading_tolerance_rad))
+                                 self.target_heading_rad, self.heading_tolerance_rad, self.approach_distance_m))
                 or not 20. <= self.release_s_m <= 325.
                 or abs(self.target_offset_m) not in (.2, .4, .6)
                 or self.return_length_m not in (4., 6., 10.) or self.settle_distance_m not in (2., 4.)
                 or self.preparation_origin not in ('measured_normal', 'nominal_path')
                 or abs(self.target_heading_rad) > math.radians(7.)
                 or not math.radians(.5) <= self.heading_tolerance_rad <= math.radians(2.)
+                or self.approach_distance_m not in (4., 6., 8.)
                 or self.corner_id is not None and (not isinstance(self.corner_id, str)
                     or not re.fullmatch(r'C[0-9]{2}[A-Z]?', self.corner_id))):
             raise ValueError('LARGE_SITE_CONTRACT')
 
     @property
     def start_s_m(self) -> float:
-        return self.release_s_m - 8. - self.settle_distance_m
+        return self.release_s_m - self.approach_distance_m - self.settle_distance_m
 
     def at_goal(self, lateral_m: float, heading_rad: float) -> bool:
         """Measured error in the unchanged nominal-lap frame, metres/radians."""
@@ -146,7 +148,7 @@ def propose_large_recovery(config: LargeRecoveryConfig, state: LargeRecoveryStat
                            nominal_stamp_ns: int, entry_clear: bool) -> LargeRecoveryDecision:
     """One immutable selection; the caller validates both PP sources and guards.
 
-    Preparation: 8 m lateral move + 2 or 4 m settling, target +/-5 cm and the configured heading tolerance
+    Preparation: 4/6/8 m approach + 2/4 m settling, target +/-5 cm and configured heading tolerance
     continuously for 0.25 s. Request inside [release, release+1] m only.
     Recovery: nominal PP, settle within 10 s, then reserve >=3 s future tail.
     A missed/failed event never increases amplitude, event count or deadlines.
