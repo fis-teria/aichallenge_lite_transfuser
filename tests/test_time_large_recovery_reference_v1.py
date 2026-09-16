@@ -166,3 +166,14 @@ def test_oriented_map_screen_is_explicit_and_legacy_default_remains_circle():
         preparation_course(base,normal,replace(cfg,map_screen_policy='oriented_body_v1'),occupancy)
     with pytest.raises(ValueError,match='LARGE_MAP_SCREEN_POLICY'):
         replace(cfg,map_screen_policy='ignore_obstacles')
+
+
+def test_entry_lead_keeps_screened_path_and_measured_goal_unchanged():
+    from dataclasses import replace
+    base, normal, occupancy, cfg = fixture()
+    early_site = replace(cfg.sites[0], entry_window_lead_m=.5)
+    early = replace(cfg, sites=(early_site,))
+    assert cfg.sites[0].start_s_m-1. <= early_site.entry_start_s_m
+    original = preparation_course(base, normal, cfg, occupancy)
+    assert preparation_course(base, normal, early, occupancy) == original
+    assert early_site.at_goal(early_site.target_offset_m, early_site.target_heading_rad)

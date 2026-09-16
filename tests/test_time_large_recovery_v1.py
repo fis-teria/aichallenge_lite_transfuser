@@ -107,6 +107,27 @@ def test_entry_heading_can_match_recovered_state_without_bypassing_current_clear
             replace(cfg, entry_heading_tolerance_rad=invalid)
 
 
+def test_optional_entry_lead_retains_clearance_stability_and_cooldown():
+    cfg = config()
+    early = replace(cfg, sites=(replace(cfg.sites[0], entry_window_lead_m=.5),))
+    st = LargeRecoveryState(approach_seen=True, stable_since_ns=0,
+        last_sim_ns=950_000_000, last_wall_ns=10_950_000_000)
+    assert cfg.sites[0].entry_start_s_m == 50.
+    assert early.sites[0].entry_start_s_m == 49.5
+    assert early.sites[0].start_s_m == 50. and early.sites[0].release_s_m == 60.
+    assert proposal(st, cfg, s_m=49.5).transition is None
+    assert proposal(st, early, s_m=49.49).transition is None
+    assert proposal(st, early, s_m=49.5).transition == 'start'
+    for changes in ({'entry_clear':False}, {'lateral_m':.051}, {'heading_rad':math.radians(1.01)},
+                    {'speed_mps':1.14}):
+        assert proposal(st, early, s_m=49.5, **changes).transition is None
+    assert proposal(replace(st, stable_since_ns=1), early, s_m=49.5).transition is None
+    assert proposal(replace(st, next_allowed_ns=1_000_000_001), early, s_m=49.5).transition is None
+    for invalid in (True, -.01, .5001, float('nan'), float('inf')):
+        with pytest.raises(ValueError, match='LARGE_SITE_CONTRACT'):
+            replace(cfg.sites[0], entry_window_lead_m=invalid)
+
+
 @pytest.mark.parametrize('offset', [-.6, -.4, -.2, .2, .4, .6])
 def test_parallel_displacement_goals_are_measured_with_either_sign(offset):
     state, rows = synthetic_run(config(1, offset))

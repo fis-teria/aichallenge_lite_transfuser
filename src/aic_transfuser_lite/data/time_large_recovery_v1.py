@@ -47,13 +47,16 @@ class LargeRecoverySite:
     # Calibrate the artificial preparation path without changing measured goals.
     preparation_offset_bias_m: float = 0.
     preparation_heading_bias_rad: float = 0.
+    # Begin only inside the already map-screened 1 m approach prefix.
+    entry_window_lead_m: float = 0.
 
     def __post_init__(self) -> None:
         if (not isinstance(self.site_id, str) or not re.fullmatch(r'[A-Z][A-Z0-9_]{0,23}', self.site_id)
                 or any(type(v) not in (int, float) or not math.isfinite(v)
                        for v in (self.release_s_m, self.target_offset_m, self.return_length_m, self.settle_distance_m,
                                  self.target_heading_rad, self.heading_tolerance_rad, self.approach_distance_m,
-                                 self.preparation_offset_bias_m, self.preparation_heading_bias_rad))
+                                 self.preparation_offset_bias_m, self.preparation_heading_bias_rad,
+                                 self.entry_window_lead_m))
                 or not 20. <= self.release_s_m <= 325.
                 or abs(self.target_offset_m) not in (.2, .4, .6)
                 or self.return_length_m not in (4., 6., 10.) or self.settle_distance_m not in (2., 4.)
@@ -63,6 +66,7 @@ class LargeRecoverySite:
                 or self.approach_distance_m not in (4., 6., 8.)
                 or abs(self.preparation_offset_bias_m) > .1
                 or abs(self.preparation_heading_bias_rad) > math.radians(2.)
+                or not 0. <= self.entry_window_lead_m <= .5
                 or self.corner_id is not None and (not isinstance(self.corner_id, str)
                     or not re.fullmatch(r'C[0-9]{2}[A-Z]?', self.corner_id))):
             raise ValueError('LARGE_SITE_CONTRACT')
@@ -70,6 +74,11 @@ class LargeRecoverySite:
     @property
     def start_s_m(self) -> float:
         return self.release_s_m - self.approach_distance_m - self.settle_distance_m
+
+    @property
+    def entry_start_s_m(self) -> float:
+        """Earliest measured progress for preparation admission, in metres."""
+        return self.start_s_m - self.entry_window_lead_m
 
     def at_goal(self, lateral_m: float, heading_rad: float) -> bool:
         """Measured error in the unchanged nominal-lap frame, metres/radians."""
@@ -220,7 +229,7 @@ def propose_large_recovery(config: LargeRecoveryConfig, state: LargeRecoveryStat
         raise ValueError('LARGE_PROGRESS_REGRESSION')
     speed_ok = collection_speed_eligible(speed_mps, config.speed_policy)
     if st.stage in ('waiting', 'cooldown'):
-        if s_m < config.sites[0].start_s_m:
+        if s_m < config.sites[0].entry_start_s_m:
             st = replace(st, approach_seen=True)
         if not st.approach_seen:
             return LargeRecoveryDecision(st, 'nominal', 'baseline')
@@ -231,7 +240,7 @@ def propose_large_recovery(config: LargeRecoveryConfig, state: LargeRecoveryStat
         ready = (entry_clear and speed_ok and abs(lateral_m) <= .05
                  and abs(heading_rad) <= config.entry_heading_tolerance_rad)
         st = replace(st, stable_since_ns=(st.stable_since_ns if st.stable_since_ns is not None else sim_ns) if ready else None)
-        if (s_m < config.sites[st.site_cursor].start_s_m or st.stable_since_ns is None
+        if (s_m < config.sites[st.site_cursor].entry_start_s_m or st.stable_since_ns is None
                 or sim_ns-st.stable_since_ns < 1_000_000_000
                 or st.next_allowed_ns is not None and sim_ns < st.next_allowed_ns):
             return LargeRecoveryDecision(st, 'nominal', 'baseline')
