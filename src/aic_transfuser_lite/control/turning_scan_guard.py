@@ -16,7 +16,7 @@ import numpy as np
 from .time_reference_v1 import TimedBodyPose
 from .time_trial_v1 import interpolate_body_pose
 from .vehicle_motion_v1 import IDEAL_POLICY, AWSIM_POLICY, stopping_motion
-from .curvature_support_v2 import STANDARD_CLEARANCE, clearance_dimensions
+from .curvature_support_v2 import ACTUAL_STOPPING_SPEED, FIVE_KMH_STOPPING_SPEED, STANDARD_CLEARANCE, clearance_dimensions
 
 
 def select_aligned_scan(capture_receipts_ns: Sequence[tuple[int, int]], poses: Sequence[TimedBodyPose],
@@ -102,7 +102,8 @@ def check_turning_scan(ranges: np.ndarray, angle_min: float, angle_increment: fl
                        envelope_policy: str = "isotropic_v1", vehicle_model_policy: str = IDEAL_POLICY,
                        heading_rate_radps: float | None = None,
                        reported_lateral_mps: float | None = None,
-                       clearance_profile: str = STANDARD_CLEARANCE) -> dict[str, Any]:
+                       clearance_profile: str = STANDARD_CLEARANCE,
+                       stopping_distance_policy: str = ACTUAL_STOPPING_SPEED) -> dict[str, Any]:
     """Scan ranges [N] at its original capture pose, expressed in current rear.
 
     scan_in_current_rear=(forward_m,left_m,yaw_rad), obtained using time-aligned
@@ -112,6 +113,9 @@ def check_turning_scan(ranges: np.ndarray, angle_min: float, angle_increment: fl
     """
     r = np.asarray(ranges, dtype=float)
     clearance_dimensions(clearance_profile)
+    if (stopping_distance_policy not in (ACTUAL_STOPPING_SPEED, FIVE_KMH_STOPPING_SPEED)
+            or (stopping_distance_policy != ACTUAL_STOPPING_SPEED and envelope_policy != 'curvature_support_v2')):
+        raise ValueError('STOPPING_DISTANCE_POLICY')
     if clearance_profile != STANDARD_CLEARANCE and (envelope_policy != 'curvature_support_v2' or vehicle_model_policy != AWSIM_POLICY):
         raise ValueError('NEAR_LIMIT_REQUIRES_AWSIM_SUPPORT_GUARD')
     if envelope_policy not in ("isotropic_v1", "curvature_support_v2"):
@@ -137,7 +141,7 @@ def check_turning_scan(ranges: np.ndarray, angle_min: float, angle_increment: fl
         from .curvature_support_v2 import check_support_ranges
         return check_support_ranges(r, angles, range_max, angle_increment, sensor, speed_mps,
                                     measured_steer_rad, issued_steer_rad, previous_steer_rad, motion=motion,
-                                    clearance_profile=clearance_profile)
+                                    clearance_profile=clearance_profile, stopping_distance_policy=stopping_distance_policy)
     # Include angular gaps conservatively in the rectangle inflation. No
     # obstacle behind a hit is declared free solely because that hit lies off
     # the centerline of the predicted path.

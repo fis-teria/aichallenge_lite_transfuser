@@ -7,7 +7,7 @@ from typing import Any, Sequence
 
 import numpy as np
 
-from ..control.curvature_support_v2 import curvature_support_envelope, clearance_dimensions, STANDARD_CLEARANCE
+from ..control.curvature_support_v2 import ACTUAL_STOPPING_SPEED, curvature_support_envelope, stopping_envelope_parameters, STANDARD_CLEARANCE
 from ..control.time_reference_v1 import TimedBodyPose
 from ..control.time_trial_v1 import interpolate_body_pose
 from ..control.turning_scan_guard import check_turning_scan
@@ -59,7 +59,8 @@ def project_to_polyline(point_xy_m: np.ndarray, path_xy_m: np.ndarray) -> dict[s
 def scan_margin(scan: dict[str, Any], sensor: Sequence[float], *, speed_mps: float,
                 measured_rad: float, issued_rad: float, previous_rad: float,
                 yaw_rate_radps: float, lateral_mps: float,
-                clearance_profile: str = STANDARD_CLEARANCE, vehicle_model_policy: str = AWSIM_POLICY) -> dict[str, Any]:
+                clearance_profile: str = STANDARD_CLEARANCE, vehicle_model_policy: str = AWSIM_POLICY,
+                stopping_distance_policy: str = ACTUAL_STOPPING_SPEED) -> dict[str, Any]:
     """Original LiDAR ranges [N]; exact existing monitor plus signed rejected margin.
 
     Validation and motion contracts stay in the production guard. A negative
@@ -69,7 +70,8 @@ def scan_margin(scan: dict[str, Any], sensor: Sequence[float], *, speed_mps: flo
                   issued_steer_rad=issued_rad, previous_steer_rad=previous_rad,
                   scan_in_current_rear=tuple(sensor), envelope_policy="curvature_support_v2",
                   vehicle_model_policy=vehicle_model_policy, heading_rate_radps=yaw_rate_radps,
-                  reported_lateral_mps=lateral_mps, clearance_profile=clearance_profile)
+                  reported_lateral_mps=lateral_mps, clearance_profile=clearance_profile,
+                  stopping_distance_policy=stopping_distance_policy)
     try:
         result = check_turning_scan(np.asarray(scan["ranges"]), scan["angle_min"],
             scan["angle_increment"], scan["range_min"], scan["range_max"], **kwargs)
@@ -79,11 +81,11 @@ def scan_margin(scan: dict[str, Any], sensor: Sequence[float], *, speed_mps: flo
             return {"reason": str(exc), "minimum_ray_margin_m": None}
     motion = stopping_motion(speed_mps, measured_rad, issued_rad, previous_rad,
         policy=vehicle_model_policy, heading_rate_radps=yaw_rate_radps, reported_lateral_mps=lateral_mps)
-    v = max(0., speed_mps)
-    reserve, _ = clearance_dimensions(clearance_profile)
-    n, h, _ = curvature_support_envelope(*motion["curvature_interval_per_m"], reserve+.5*v+v*v/2,
+    travel, lateral_padding, _ = stopping_envelope_parameters(speed_mps, motion,
+        clearance_profile=clearance_profile, stopping_distance_policy=stopping_distance_policy)
+    n, h, _ = curvature_support_envelope(*motion["curvature_interval_per_m"], travel,
         scan["angle_increment"], np.asarray(sensor[:2]),
-        lateral_padding_m=motion["lateral_displacement_bound_m"], clearance_profile=clearance_profile,
+        lateral_padding_m=lateral_padding, clearance_profile=clearance_profile,
         vehicle_model_policy=vehicle_model_policy)
     a = scan["angle_min"]+np.arange(len(scan["ranges"]))*scan["angle_increment"]+sensor[2]
     projected = n @ np.column_stack([np.cos(a), np.sin(a)]).T

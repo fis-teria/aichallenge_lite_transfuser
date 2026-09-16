@@ -57,6 +57,7 @@ def main() -> None:
     vehicle_model_policy = IDEAL_POLICY
     record_vehicle_motion = False
     clearance_profile = 'standard_v1'
+    stopping_distance_policy = 'measured_speed_v1'
     speed_policy = args.speed_policy or "source_capped_0p25"
     if args.trial_config is not None:
         config_bytes = args.trial_config.read_bytes()
@@ -69,6 +70,7 @@ def main() -> None:
         vehicle_model_policy = config.get("vehicle_model_policy", IDEAL_POLICY)
         record_vehicle_motion = config.get("record_vehicle_motion", False)
         clearance_profile = config.get('diagnostic_clearance_profile', 'standard_v1')
+        stopping_distance_policy = config.get('stopping_distance_policy', 'measured_speed_v1')
         if (config["checkpoint_sha256"] != args.checkpoint_sha256
                 or config["geometry"]["rear_axle_forward_in_base_link_m"] != args.rear_axle_forward_m):
             raise ValueError("TRIAL_CONFIG_IDENTITY")
@@ -223,6 +225,7 @@ def main() -> None:
                         "steering_policy": steering_policy, "steering_response_gain": steering_gain,
                         "lookahead_policy": lookahead_policy,
                         "vehicle_model_policy": vehicle_model_policy,
+                        "stopping_distance_policy": stopping_distance_policy,
                         "execution_profile": execution_profile, "drive_limit_sim_s": drive_sim_s,
                         "rear_axle_forward_m": args.rear_axle_forward_m})
         reason = "WAIT_AUTHORIZATION" if live else "SHADOW_ONLY"
@@ -422,6 +425,7 @@ def main() -> None:
                     vehicle_model_policy=vehicle_model_policy,
                     heading_rate_radps=heading_rate, reported_lateral_mps=reported_lateral,
                     clearance_profile=clearance_profile,
+                    stopping_distance_policy=stopping_distance_policy,
                     envelope_policy="curvature_support_v2" if obstacle_policy == "steering_support_v2" else "isotropic_v1")
                 details["obstacle_guard"] = guard
                 details["scan_in_current_rear"] = scan_alignment

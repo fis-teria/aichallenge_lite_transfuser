@@ -12,10 +12,42 @@ import math
 from typing import Any
 
 import numpy as np
-from .vehicle_motion_v1 import IDEAL_POLICY, MAX_CURVATURE_PER_M, MAX_REAR_LATERAL_MPS, stopping_motion, vehicle_model_speed_limit
+from .vehicle_motion_v1 import AWSIM_10KMH_POLICY, IDEAL_POLICY, MAX_CURVATURE_PER_M, MAX_REAR_LATERAL_MPS, stopping_motion, vehicle_model_speed_limit
 
 STANDARD_CLEARANCE = 'standard_v1'
 NEAR_LIMIT_CLEARANCE = 'awsim_near_limit_v1'
+ACTUAL_STOPPING_SPEED = 'measured_speed_v1'
+FIVE_KMH_STOPPING_SPEED = 'awsim_cap_5kmh_diagnostic_v1'
+
+
+def stopping_envelope_parameters(speed_mps: float, motion: dict[str, Any], *,
+                                 clearance_profile: str = STANDARD_CLEARANCE,
+                                 stopping_distance_policy: str = ACTUAL_STOPPING_SPEED
+                                 ) -> tuple[float, float, dict[str, Any]]:
+    """Return travel m, lateral padding m, and explicit diagnostic metadata.
+
+    The 5 km/h cap is a simulator comparison, not stopping containment at the
+    actual higher speed. Curvature and measured-motion validation still use
+    actual speed; only the envelope's travel/time horizon is capped.
+    """
+    reserve, _ = clearance_dimensions(clearance_profile)
+    if stopping_distance_policy not in (ACTUAL_STOPPING_SPEED, FIVE_KMH_STOPPING_SPEED):
+        raise ValueError('STOPPING_DISTANCE_POLICY')
+    if not math.isfinite(speed_mps) or not -.03 <= speed_mps <= vehicle_model_speed_limit(motion['policy']):
+        raise ValueError('STOPPING_DISTANCE_SPEED')
+    speed = max(0., speed_mps)
+    lateral_padding = motion['lateral_displacement_bound_m']
+    metadata: dict[str, Any] = {}
+    if stopping_distance_policy == FIVE_KMH_STOPPING_SPEED:
+        if motion['policy'] != AWSIM_10KMH_POLICY or clearance_profile != STANDARD_CLEARANCE:
+            raise ValueError('FIVE_KMH_STOPPING_REQUIRES_TEN_KMH_STANDARD_GUARD')
+        speed = min(speed, 5./3.6)
+        lateral_padding = MAX_REAR_LATERAL_MPS*(.5+speed)
+        metadata = dict(stopping_distance_policy=stopping_distance_policy,
+                        envelope_speed_mps=speed, measured_speed_mps=speed_mps,
+                        lateral_padding_m=lateral_padding, diagnostic_only=True,
+                        actual_speed_stopping_envelope=False)
+    return reserve+speed*.5+speed**2/2, lateral_padding, metadata
 
 
 def clearance_dimensions(profile: str) -> tuple[float, float]:
@@ -95,16 +127,17 @@ def check_support_ranges(ranges: np.ndarray, angles: np.ndarray, range_max: floa
                          angle_step_rad: float, sensor: np.ndarray, speed_mps: float,
                          measured_steer_rad: float, issued_steer_rad: float,
                          previous_steer_rad: float | None, *, motion: dict[str, Any] | None = None,
-                         clearance_profile: str = STANDARD_CLEARANCE) -> dict[str, Any]:
+                         clearance_profile: str = STANDARD_CLEARANCE,
+                         stopping_distance_policy: str = ACTUAL_STOPPING_SPEED) -> dict[str, Any]:
     """Internal ray test after check_turning_scan validates scan/state/frame."""
     if motion is None:
         motion = stopping_motion(speed_mps, measured_steer_rad, issued_steer_rad, previous_steer_rad)
     k_min, k_max = motion["curvature_interval_per_m"]
-    speed = max(0., speed_mps)
-    reserve, _ = clearance_dimensions(clearance_profile)
+    travel, lateral_padding, diagnostic = stopping_envelope_parameters(speed_mps, motion,
+        clearance_profile=clearance_profile, stopping_distance_policy=stopping_distance_policy)
     normals, support, metadata = curvature_support_envelope(k_min, k_max,
-        reserve+speed*.5+speed**2/2, angle_step_rad, sensor[:2],
-        lateral_padding_m=motion["lateral_displacement_bound_m"], clearance_profile=clearance_profile,
+        travel, angle_step_rad, sensor[:2],
+        lateral_padding_m=lateral_padding, clearance_profile=clearance_profile,
         vehicle_model_policy=motion["policy"])
     remaining = support-normals@sensor[:2]
     directions = normals@np.column_stack([np.cos(angles+sensor[2]), np.sin(angles+sensor[2])]).T
@@ -119,7 +152,7 @@ def check_support_ranges(ranges: np.ndarray, angles: np.ndarray, range_max: floa
     margins = np.minimum(ranges, range_max)-required
     if np.any(margins[observed] <= 0.):
         raise ValueError("STOPPING_SWEEP_OCCUPIED")
-    return {**metadata, "vehicle_motion": motion, "scope": "FORWARD_SCAN_PROXIMITY_NOT_ALL_AROUND_FREE_SPACE",
+    return {**metadata, **diagnostic, "vehicle_motion": motion, "scope": "FORWARD_SCAN_PROXIMITY_NOT_ALL_AROUND_FREE_SPACE",
         "minimum_ray_margin_m": float(margins[observed].min()) if observed.any() else float(range_max),
         "checked_rays": int(observed.sum()), "measured_steer_rad": measured_steer_rad,
         "issued_steer_rad": issued_steer_rad, "previous_steer_rad": previous_steer_rad,
