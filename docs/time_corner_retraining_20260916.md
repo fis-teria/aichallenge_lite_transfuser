@@ -39,3 +39,24 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python tools/train_
 ```
 
 進行・結果はこの文書へ追記する。監査、再学習、オフライン比較、AWSIM完走は別々に判定する。
+
+## 読込ワーカーの中断と再実行
+
+初回は1epoch目の1,050更新を記録後、4つの読込ワーカーにbus errorが発生し、WSL自体が停止した。
+ログは共有メモリ不足の可能性を示すが、VM停止の直接原因は確定していない。
+再起動後のWSLはRAM上限16GiB、swap4GiB、`/dev/shm`約7.9GiB。元データと中断checkpointは保全する。
+
+入力読込だけをworkers=0へ変更し、ワーカー間の共有メモリ転送を使わずに再実行する。
+数学的な学習設定とデータは維持し、同じ前回モデルから新しい出力先へ3epochを実行する。
+中断した初回と再実行の更新数・時間は別記する。途中checkpointからの厳密resumeとは扱わない。
+教師manifestと学習planには実際のworkers=0を記録する。追加収集・モデル構造・PPの変更はない。
+
+```bash
+tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 \
+  timeout --signal=TERM --kill-after=30s 10800s .venv/bin/python -u tools/train_time_corner_recovery.py train \
+  --plan ../runs/time_corner_retraining_20260916/resolved_plan.json --loader-workers 0 \
+  --training-output ../runs/time_corner_retraining_20260916/training_serial
+tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python tools/train_time_corner_recovery.py compare \
+  --plan ../runs/time_corner_retraining_20260916/resolved_plan.json --loader-workers 0 \
+  --training-output ../runs/time_corner_retraining_20260916/training_serial
+```

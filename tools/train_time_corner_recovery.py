@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 from copy import deepcopy
+from dataclasses import replace
 import json
 from pathlib import Path
 import resource
@@ -135,7 +136,17 @@ def prepare(root: Path, repo: Path, plan: dict[str, Any]) -> None:
                          target_anchors=len(c['proof']['target_anchor_ids']))), flush=True)
 
 
-def train(root: Path, repo: Path, plan: dict[str, Any], *, resume: bool) -> None:
+def execution_plan(plan: dict[str, Any], loader_workers: int | None) -> CorpusTrainingPlan:
+    """Change only input-loading concurrency, retaining the mathematical plan."""
+    result = CorpusTrainingPlan(**plan['training'])
+    if loader_workers is not None:
+        result = replace(result, workers=loader_workers)
+    result.validate()
+    return result
+
+
+def train(root: Path, repo: Path, plan: dict[str, Any], *, resume: bool,
+          loader_workers: int | None = None, output: Path | None = None) -> None:
     if not torch.cuda.is_available():
         raise RuntimeError('native WSL CUDA required')
     c = context(root, repo, plan)
@@ -155,27 +166,36 @@ def train(root: Path, repo: Path, plan: dict[str, Any], *, resume: bool) -> None
     head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=repo, text=True).strip()
     teacher = training_teacher_manifest(plan=plan, cache=c['cache'], auxiliary_identity=objective.identity,
         preparation_sha256=_sha(out/'data_and_budget_verification.json'), source=head)
+    actual_plan = execution_plan(plan, loader_workers)
+    output = output or root/plan['output']
+    teacher['actual_loader_workers'] = actual_plan.workers
+    teacher.pop('manifest_sha256')
+    teacher['manifest_sha256'] = content_sha256(teacher)
     split, val, selected = c['cache']['split_manifest'], c['validation'], c['selection']
     identity = TimeCheckpointIdentity(split['manifest_sha256'], teacher['manifest_sha256'],
         content_sha256([r for r in split['runs'] if r['split']=='train']), 'corner_recovery_finetune', head)
     result = run_training_arm(c['sampler'], Subset(val, selected), train_run_ids=c['sampler'].run_ids,
         validation_run_ids=[val.run_ids[i] for i in selected], split_manifest=split, teacher_manifest=teacher,
-        identity=identity, config=config, plan=CorpusTrainingPlan(**plan['training']), output=root/plan['output'],
+        identity=identity, config=config, plan=actual_plan, output=output,
         resume=resume, initialization=source, initialization_sha256=plan['initialization_sha256'],
         initialization_identity=initial_identity, retain_epoch_checkpoints=True, recovery_objective=objective)
     if (not result['reload_predictions_exact'] or result['optimizer_steps'] != plan['expected_optimizer_steps']
-            or read_json(root/plan['output']/'initial_validation.json') != read_json(source.parent/'best_validation.json')):
+            or read_json(output/'initial_validation.json') != read_json(source.parent/'best_validation.json')):
         raise ValueError('reload, training budget or initial validation replay failed')
-    write(root/plan['output']/'verification.json', dict(status='PASS', source_commit=head,
-        checkpoint_sha256=_sha(root/plan['output']/'best.pt'), optimizer_steps=result['optimizer_steps'],
-        reload_predictions_exact=True, initial_validation_exact=True, sealed_test_read=False))
+    write(output/'verification.json', dict(status='PASS', source_commit=head,
+        checkpoint_sha256=_sha(output/'best.pt'), optimizer_steps=result['optimizer_steps'],
+        reload_predictions_exact=True, initial_validation_exact=True, sealed_test_read=False,
+        actual_loader_workers=actual_plan.workers))
     print(json.dumps(dict(status='TRAINING_COMPLETE', best_epoch=result['best_epoch'])), flush=True)
 
 
-def compare(root: Path, repo: Path, plan: dict[str, Any]) -> None:
+def compare(root: Path, repo: Path, plan: dict[str, Any], *, loader_workers: int | None = None,
+            output: Path | None = None) -> None:
     c = context(root, repo, plan)
-    check = read_json(root/plan['output']/'verification.json')
-    if check['status'] != 'PASS' or _sha(root/plan['output']/'best.pt') != check['checkpoint_sha256']:
+    output = output or root/plan['output']
+    workers = execution_plan(plan, loader_workers).workers
+    check = read_json(output/'verification.json')
+    if check['status'] != 'PASS' or _sha(output/'best.pt') != check['checkpoint_sha256']:
         raise ValueError('verified completed training required')
     out = root/plan['audit_output']/'comparison'
     out.mkdir(exist_ok=False)
@@ -191,7 +211,7 @@ def compare(root: Path, repo: Path, plan: dict[str, Any]) -> None:
         groups[Path(group['analysis']).name] = [i for i, r in enumerate(ds.run_ids) if r in ids]
     truth = pp_rows(ds, list(range(len(ds))), ds.targets, c['controller'], teacher=True)
     reports = {}
-    for label, checkpoint in [('before', root/plan['initialization']), ('after', root/plan['output']/'best.pt')]:
+    for label, checkpoint in [('before', root/plan['initialization']), ('after', output/'best.pt')]:
         payload = torch.load(checkpoint, map_location='cpu', weights_only=False)
         config = TimeModelConfig.from_dict(payload['config'])
         model = build_time_model(config).to('cuda')
@@ -200,7 +220,7 @@ def compare(root: Path, repo: Path, plan: dict[str, Any]) -> None:
         values = torch.full((len(ds), 30, 2), float('nan'))
         for indices in (selected, remainder):
             metrics, pred = evaluate_time_batched(model, Subset(ds, indices), run_ids=[ds.run_ids[i] for i in indices],
-                split_manifest=c['cache']['split_manifest'], batch_size=32, workers=4, precision='float32')
+                split_manifest=c['cache']['split_manifest'], batch_size=32, workers=workers, precision='float32')
             values[indices] = pred
             if indices is selected and metrics != read_json(checkpoint.parent/'best_validation.json'):
                 raise ValueError('selected validation did not exactly replay')
@@ -231,6 +251,8 @@ def main() -> None:
     ap.add_argument('--plan', type=Path, required=True)
     ap.add_argument('--root', type=Path, default=Path('..'))
     ap.add_argument('--resume', action='store_true')
+    ap.add_argument('--loader-workers', type=int)
+    ap.add_argument('--training-output', type=Path)
     args = ap.parse_args()
     root, repo = args.root.resolve(), Path(__file__).resolve().parents[1]
     if root.as_posix().startswith('/mnt/') or subprocess.check_output(['git', 'status', '--porcelain'], cwd=repo).strip():
@@ -243,8 +265,15 @@ def main() -> None:
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
     plan = read_json(args.plan)
+    output = args.training_output.resolve() if args.training_output else None
+    if output is not None and not output.is_relative_to(root/'runs'):
+        raise ValueError('training output must stay in the native runs directory')
+    if args.command not in ('train', 'compare') and (output is not None or args.loader_workers is not None):
+        raise ValueError('execution overrides apply only to training and comparison')
     if args.command == 'train':
-        train(root, repo, plan, resume=args.resume)
+        train(root, repo, plan, resume=args.resume, loader_workers=args.loader_workers, output=output)
+    elif args.command == 'compare':
+        compare(root, repo, plan, loader_workers=args.loader_workers, output=output)
     else:
         {'audit':audit, 'prepare':prepare, 'compare':compare}[args.command](root, repo, plan)
 

@@ -5,7 +5,7 @@ import sys
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'tools'))
-from train_time_corner_recovery import build_sampler, require_completed_collection
+from train_time_corner_recovery import build_sampler, require_completed_collection, execution_plan
 from test_time_recovery_matched_mix_v1 import setup
 
 
@@ -36,3 +36,14 @@ def test_unfinished_or_faulted_recording_is_not_adopted(field, value):
     summary[field] = value
     with pytest.raises(ValueError, match='completed lap'):
         require_completed_collection(summary)
+
+
+def test_serial_loading_preserves_batch_precision_budget_and_original_plan():
+    from dataclasses import asdict
+    plan = dict(training=dict(epochs=3,batch_size=32,workers=4,seed=42,learning_rate=3e-5,precision='float32'))
+    original = asdict(execution_plan(plan,None))
+    serial = asdict(execution_plan(plan,0))
+    assert {k for k in original if original[k] != serial[k]} == {'workers'}
+    assert serial['workers'] == 0 and plan['training']['workers'] == 4
+    with pytest.raises(ValueError):
+        execution_plan(plan,-1)
