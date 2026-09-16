@@ -133,3 +133,36 @@ def test_preparation_pp_has_separate_topics_and_retains_same_speed_policy(tmp_pa
     assert 'external_target_vel:=1.3888888888888888' in pp
     assert not any('/control/command/control_cmd' in a for command in result.values() for a in command)
     assert 'csv_path:='+str(tmp_path/'left_preparation.csv') in result['preparation_generator']
+
+
+def test_preparation_bias_changes_command_geometry_but_not_the_observed_goal():
+    from dataclasses import replace
+    import math
+    from aic_transfuser_lite.data.time_large_recovery_reference_v1 import preparation_lateral
+    site=LargeRecoverySite('C01',60.,.6,target_heading_rad=math.radians(4.),
+        heading_tolerance_rad=math.radians(1.),corner_id='C01')
+    tuned=replace(site,preparation_offset_bias_m=-.05,preparation_heading_bias_rad=math.radians(1.))
+    x=np.array([site.start_s_m,60.-1e-4,60.,60.+1e-4])
+    y=preparation_lateral(x,tuned)
+    assert y[0]==0. and y[2]==pytest.approx(.55)
+    assert (y[3]-y[1])/2e-4==pytest.approx(math.tan(math.radians(5.)),abs=1e-5)
+    assert tuned.at_goal(.6,math.radians(4.)) == site.at_goal(.6,math.radians(4.))
+    assert not tuned.at_goal(.50,math.radians(4.))
+    for change in ({'preparation_offset_bias_m':.11},{'preparation_heading_bias_rad':float('nan')},
+                   {'preparation_heading_bias_rad':math.radians(3.)}):
+        with pytest.raises(ValueError,match='LARGE_SITE_CONTRACT'):replace(site,**change)
+
+
+def test_oriented_map_screen_is_explicit_and_legacy_default_remains_circle():
+    from dataclasses import replace
+    base,normal,occupancy,cfg=fixture()
+    assert cfg.map_screen_policy=='circle_1p4_v1'
+    points,evidence=preparation_course(base,normal,replace(cfg,map_screen_policy='oriented_body_v1'),occupancy)
+    assert points and evidence[0]['map_screen_policy']=='oriented_body_v1'
+    assert evidence[0]['body_in_base_link_m']['half_width']==.85
+    assert not evidence[0]['physical_dynamic_recovery_proven']
+    occupancy.free[1299-100,650]=False
+    with pytest.raises(ValueError,match='LARGE_SITE_MAP_REJECTED'):
+        preparation_course(base,normal,replace(cfg,map_screen_policy='oriented_body_v1'),occupancy)
+    with pytest.raises(ValueError,match='LARGE_MAP_SCREEN_POLICY'):
+        replace(cfg,map_screen_policy='ignore_obstacles')

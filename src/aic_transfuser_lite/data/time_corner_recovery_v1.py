@@ -96,7 +96,7 @@ def pending_corner_laps(sites: Sequence[LargeRecoverySite], coverage: Mapping[st
     if coverage.get('schema') != 'corner_recovery_coverage_v1' or split not in ('train', 'validation'):
         raise ValueError('CORNER_PENDING_COVERAGE')
     if set(coverage['corners']) != {s.corner_id for s in sites} or any(
-            coverage['corners'][s.corner_id]['target'] != asdict(s) for s in sites):
+            LargeRecoverySite(**coverage['corners'][s.corner_id]['target']) != s for s in sites):
         raise ValueError('CORNER_TARGET_IDENTITY')
     missing = coverage['missing'][split]
     expected = [s.corner_id for s in sites if not coverage['corners'][s.corner_id][split]]

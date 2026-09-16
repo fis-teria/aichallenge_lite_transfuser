@@ -16,6 +16,7 @@ from typing import Any, Mapping, Sequence
 SCHEMA = 'measured_large_recovery_v1'
 MAX_EVENTS = 7
 SPEED_POLICIES = ('bounded_5kmh_v1', 'record_actual_v1')
+MAP_SCREEN_POLICIES = ('circle_1p4_v1', 'oriented_body_v1')
 
 
 def collection_speed_eligible(speed_mps: float, policy: str) -> bool:
@@ -43,12 +44,16 @@ class LargeRecoverySite:
     heading_tolerance_rad: float = math.radians(2.)
     corner_id: str | None = None
     approach_distance_m: float = 8.
+    # Calibrate the artificial preparation path without changing measured goals.
+    preparation_offset_bias_m: float = 0.
+    preparation_heading_bias_rad: float = 0.
 
     def __post_init__(self) -> None:
         if (not isinstance(self.site_id, str) or not re.fullmatch(r'[A-Z][A-Z0-9_]{0,23}', self.site_id)
                 or any(type(v) not in (int, float) or not math.isfinite(v)
                        for v in (self.release_s_m, self.target_offset_m, self.return_length_m, self.settle_distance_m,
-                                 self.target_heading_rad, self.heading_tolerance_rad, self.approach_distance_m))
+                                 self.target_heading_rad, self.heading_tolerance_rad, self.approach_distance_m,
+                                 self.preparation_offset_bias_m, self.preparation_heading_bias_rad))
                 or not 20. <= self.release_s_m <= 325.
                 or abs(self.target_offset_m) not in (.2, .4, .6)
                 or self.return_length_m not in (4., 6., 10.) or self.settle_distance_m not in (2., 4.)
@@ -56,6 +61,8 @@ class LargeRecoverySite:
                 or abs(self.target_heading_rad) > math.radians(7.)
                 or not math.radians(.5) <= self.heading_tolerance_rad <= math.radians(2.)
                 or self.approach_distance_m not in (4., 6., 8.)
+                or abs(self.preparation_offset_bias_m) > .1
+                or abs(self.preparation_heading_bias_rad) > math.radians(2.)
                 or self.corner_id is not None and (not isinstance(self.corner_id, str)
                     or not re.fullmatch(r'C[0-9]{2}[A-Z]?', self.corner_id))):
             raise ValueError('LARGE_SITE_CONTRACT')
@@ -78,10 +85,13 @@ class LargeRecoveryConfig:
     speed_policy: str = 'bounded_5kmh_v1'
     entry_heading_tolerance_rad: float = math.radians(1.)
     recovery_duration_s: float = 10.
+    map_screen_policy: str = 'circle_1p4_v1'
 
     def __post_init__(self) -> None:
         if self.speed_policy not in SPEED_POLICIES:
             raise ValueError('LARGE_SPEED_POLICY')
+        if self.map_screen_policy not in MAP_SCREEN_POLICIES:
+            raise ValueError('LARGE_MAP_SCREEN_POLICY')
         if (type(self.recovery_duration_s) not in (int, float)
                 or not math.isfinite(self.recovery_duration_s)
                 or not 10. <= self.recovery_duration_s <= 15.):

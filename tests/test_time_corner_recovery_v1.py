@@ -127,3 +127,11 @@ def test_entry_coverage_keeps_overspeed_anchors_only_under_recorded_policy():
     audit['anchor_states'][0]['speed_mps'] = float('nan')
     with pytest.raises(ValueError, match='FINITE'):
         corner_coverage(sites(), [audit])
+
+
+def test_legacy_corner_coverage_loads_default_preparation_calibration():
+    coverage=corner_coverage(sites(),[audited_run()])
+    for row in coverage['corners'].values():
+        row['target'].pop('preparation_offset_bias_m')
+        row['target'].pop('preparation_heading_bias_rad')
+    assert pending_corner_laps(sites(),coverage,split='train')

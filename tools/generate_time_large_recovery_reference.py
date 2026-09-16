@@ -65,7 +65,8 @@ def main() -> None:
         event_cap=plan['event_cap'], required_site_ids=plan.get('required_site_ids', ()))
     config = replace(config, speed_policy=plan.get('speed_policy', 'bounded_5kmh_v1'),
                      entry_heading_tolerance_rad=plan.get('entry_heading_tolerance_rad', math.radians(1.)),
-                     recovery_duration_s=plan.get('recovery_duration_s', 10.))
+                     recovery_duration_s=plan.get('recovery_duration_s', 10.),
+                     map_screen_policy=plan.get('map_screen_policy', 'circle_1p4_v1'))
     base = load_pose_course(args.inputs/'base.csv')
     baseline = [[p.x_m, p.y_m] for p in base]
     old = json.loads((args.normal_run/'reference.json').read_bytes())

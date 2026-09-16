@@ -16,6 +16,7 @@ import numpy as np
 
 from .recovery_reference_v3 import MpcReferencePointV3, OccupancyMapV3, _recompute_geometry
 from .time_large_recovery_v1 import SCHEMA, LargeRecoveryConfig, LargeRecoverySite
+from .time_recovery_map_body_v1 import body_polyline_is_free, REAR_M, FRONT_M, HALF_WIDTH_M
 
 
 def validate_large_reference(reference: Mapping[str, Any], root: Path | None = None
@@ -73,12 +74,14 @@ def preparation_lateral(progress: np.ndarray, site: LargeRecoverySite) -> np.nda
     progress = np.asarray(progress, dtype=float)
     if progress.ndim != 1 or not np.isfinite(progress).all():
         raise ValueError('LARGE_PREPARATION_PROGRESS_SHAPE')
-    if site.target_heading_rad == 0.:
-        return site.target_offset_m*_smooth((progress-site.start_s_m)/site.approach_distance_m)
+    offset = site.target_offset_m + site.preparation_offset_bias_m
+    heading = site.target_heading_rad + site.preparation_heading_bias_rad
+    if heading == 0.:
+        return offset*_smooth((progress-site.start_s_m)/site.approach_distance_m)
     length = site.release_s_m-site.start_s_m
     u = np.clip((progress-site.start_s_m)/length, 0., 1.)
-    slope = math.tan(site.target_heading_rad)
-    approach = site.target_offset_m*(3*u*u-2*u*u*u)+length*slope*(u*u*u-u*u)
+    slope = math.tan(heading)
+    approach = offset*(3*u*u-2*u*u*u)+length*slope*(u*u*u-u*u)
     # C1 extension: linear through release+2 m, taper slope to zero by +6 m.
     d = np.maximum(progress-site.release_s_m, 0.)
     v = np.clip((d-2.)/4., 0., 1.)
@@ -127,6 +130,7 @@ def preparation_course(base: Sequence[MpcReferencePointV3], normal: np.ndarray,
     s = s[np.r_[True, np.diff(s) > 1e-5]]
     x = np.interp(s, bs, bx); y = np.interp(s, bs, by)
     evidence = []
+    screen = _map_free if config.map_screen_policy == 'circle_1p4_v1' else body_polyline_is_free
     for site in config.sites:
         lo, hi = site.start_s_m-4., site.release_s_m+22.
         if not normal[0, 0] <= lo < hi <= normal[-1, 0] or hi > bs[-1]:
@@ -147,7 +151,7 @@ def preparation_course(base: Sequence[MpcReferencePointV3], normal: np.ndarray,
         if preview_arc_m < 10.:
             raise ValueError('LARGE_PREPARATION_PREVIEW_TOO_SHORT')
         active = (s >= site.start_s_m-1.) & (s <= site.release_s_m+2.)
-        preparation_pass = _map_free(occupancy, np.column_stack((x[active], y[active])))
+        preparation_pass = screen(occupancy, np.column_stack((x[active], y[active])))
         # Screen a candidate measured-normal return separately; the actual
         # official PP response still requires an AWSIM pilot.
         rs = np.linspace(site.release_s_m, site.release_s_m+site.return_length_m+1.,
@@ -155,12 +159,17 @@ def preparation_course(base: Sequence[MpcReferencePointV3], normal: np.ndarray,
         rx, ry = [np.interp(rs, normal[:, 0], normal[:, k]) for k in (1, 2)]
         ryaw = np.interp(rs, normal[:, 0], np.unwrap(normal[:, 3]))
         shift = site.target_offset_m*(1.-_smooth((rs-site.release_s_m)/site.return_length_m))
-        return_pass = _map_free(occupancy, np.column_stack((rx-np.sin(ryaw)*shift, ry+np.cos(ryaw)*shift)))
+        return_pass = screen(occupancy, np.column_stack((rx-np.sin(ryaw)*shift, ry+np.cos(ryaw)*shift)))
         evidence.append(dict(site_id=site.site_id, preparation_map_pass=preparation_pass,
                              corner_id=site.corner_id, target_heading_rad=site.target_heading_rad,
                              candidate_return_map_pass=return_pass, map_radius_m=1.4,
                              hidden_return_preview_arc_m=preview_arc_m,
                              physical_dynamic_recovery_proven=False))
+        if config.map_screen_policy == 'oriented_body_v1':
+            evidence[-1].pop('map_radius_m')
+            evidence[-1].update(map_screen_policy=config.map_screen_policy,
+                body_in_base_link_m=dict(rear=REAR_M,front=FRONT_M,half_width=HALF_WIDTH_M),
+                scope='STATIC_PLANNED_PATH_NOT_DYNAMIC_RECOVERY')
         if not preparation_pass or not return_pass:
             raise ValueError('LARGE_SITE_MAP_REJECTED:'+site.site_id)
     actual_s, yaw, kappa = _recompute_geometry(x, y)
