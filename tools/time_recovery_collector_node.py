@@ -343,7 +343,8 @@ def main() -> None:
             validate_nominal(stamp_ns=stamp(nominal.stamp), now_ns=clock_ns, received_ns=received,
                 now_wall_ns=now, target_mps=float(nominal.longitudinal.speed),
                 acceleration_mps2=float(nominal.longitudinal.acceleration),
-                steering_input_rad=float(nominal.lateral.steering_tire_angle), measured_speed_mps=speed)
+                steering_input_rad=float(nominal.lateral.steering_tire_angle), measured_speed_mps=speed,
+                record_overspeed=large_config is not None and large_config.speed_policy == 'record_actual_v1')
             trajectory = inputs['trajectory'][0]
             if large_config is not None:
                 trajectory_invalid = trajectory.point_count < 20 or not trajectory.target_speed_valid
@@ -383,7 +384,8 @@ def main() -> None:
                             received_ns=preparation_received, now_wall_ns=now,
                             target_mps=float(preparation.longitudinal.speed),
                             acceleration_mps2=float(preparation.longitudinal.acceleration),
-                            steering_input_rad=float(preparation.lateral.steering_tire_angle), measured_speed_mps=speed)
+                            steering_input_rad=float(preparation.lateral.steering_tire_angle), measured_speed_mps=speed,
+                            record_overspeed=large_config.speed_policy == 'record_actual_v1')
                         requested_angle = float(preparation.lateral.steering_tire_angle)
             if pulse_config is not None and state['armed_ns'] is not None:
                 if pulse_guide[0, 0] <= projection['s_m'] <= pulse_guide[-1, 0]:
@@ -527,6 +529,9 @@ def main() -> None:
                        if 'nominal' in inputs and math.isfinite(inputs['nominal'][0].lateral.steering_tire_angle) else None,
                    nominal_stamp_ns=stamp(inputs['nominal'][0].stamp) if 'nominal' in inputs else None)
         row['publication'] = publication  # ROS publication boundary, not simulator application time.
+        if large_config is not None:
+            row['collection_speed_policy'] = large_config.speed_policy
+            row['above_legacy_collection_speed'] = (state['speed_mps'] is not None and state['speed_mps'] > 1.4)
         if large_config is not None:
             applied = publication is not None and target > 0 and not state['fault'] and large_decision is not None
             row['annotation_schema'] = LARGE_SCHEMA

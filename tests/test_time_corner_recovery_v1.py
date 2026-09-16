@@ -115,3 +115,15 @@ def test_coverage_requires_valid_entry_state_in_both_whole_run_splits():
     c['missing']['train'] = []
     with pytest.raises(ValueError, match='PENDING_IDENTITY'):
         pending_corner_laps(sites(), c, split='train')
+
+
+def test_entry_coverage_keeps_overspeed_anchors_only_under_recorded_policy():
+    audit = audited_run()
+    for row in audit['anchor_states']:
+        row['speed_mps'] = 1.8
+    assert 'C01' in corner_coverage(sites(), [audit])['missing']['train']
+    audit['events'][0]['speed_policy'] = 'record_actual_v1'
+    assert 'C01' not in corner_coverage(sites(), [audit])['missing']['train']
+    audit['anchor_states'][0]['speed_mps'] = float('nan')
+    with pytest.raises(ValueError, match='FINITE'):
+        corner_coverage(sites(), [audit])

@@ -8,6 +8,7 @@ import pytest
 from aic_transfuser_lite.data.time_large_recovery_v1 import (
     SCHEMA, LargeRecoverySite, LargeRecoveryConfig, LargeRecoveryState,
     propose_large_recovery, commit_large_recovery, large_recovery_events, large_event_at, select_large_sites,
+    collection_speed_eligible,
 )
 from aic_transfuser_lite.data.time_recovery_collection_v1 import collection_phase_windows, recovery_teacher_mask, check_collection_input_time
 from aic_transfuser_lite.runtime.recovery_disturbance_markers import DisturbanceLocations
@@ -25,7 +26,7 @@ def proposal(state=LargeRecoveryState(), cfg=None, **changes):
     return propose_large_recovery(cfg or config(), state, **values)
 
 
-def synthetic_run(cfg=None, *, reach=True):
+def synthetic_run(cfg=None, *, reach=True, speed_mps=1.25):
     """Synthetic observed-state replay; not an AWSIM/dynamic vehicle result."""
     cfg = cfg or config(2)
     state = LargeRecoveryState(); rows = []
@@ -40,9 +41,9 @@ def synthetic_run(cfg=None, *, reach=True):
         if state.stage == 'recovery':
             lat = cfg.sites[state.site_cursor].target_offset_m*max(0., 1-(ns-state.release_ns)/4e9)
         decision = proposal(state, cfg, sim_ns=ns, wall_ns=ns+10_000_000_000,
-                            s_m=s, nominal_stamp_ns=ns, lateral_m=float(lat))
+                            s_m=s, nominal_stamp_ns=ns, lateral_m=float(lat), speed_mps=speed_mps)
         state = commit_large_recovery(decision, sim_ns=ns, wall_ns=ns+10_000_000_001, sequence=index+1)
-        rows.append(dict(annotation_schema=SCHEMA, phase=decision.phase, target_speed_mps=5/3.6, speed_mps=1.25,
+        rows.append(dict(annotation_schema=SCHEMA, phase=decision.phase, target_speed_mps=5/3.6, speed_mps=speed_mps,
             publication=dict(sim_ns=ns, monotonic_ns=ns+10_000_000_001, sequence=index+1),
             large_recovery=dict(config=asdict(cfg), state=asdict(state), applied=True,
                 command_source=decision.command_source, lateral_error_m=float(lat), heading_error_rad=0., nominal_stamp_ns=ns),
@@ -62,6 +63,30 @@ def test_two_events_recover_with_publication_boundary_and_future_tail():
         assert recovery_teacher_mask(event['release_ns']+150_000_000, windows).all()
         assert large_event_at(event['release_ns'], events)['event_id'] == event['event_id']
     assert large_event_at(events[0]['request_ns'], events) is None
+
+
+@pytest.mark.parametrize('speed', [1.40056765, 1.43136, 1.8])
+def test_record_actual_speed_reaches_all_events_and_survives_teacher_audit(speed):
+    cfg = replace(config(2), speed_policy='record_actual_v1')
+    state, rows = synthetic_run(cfg, speed_mps=speed)
+    events = large_recovery_events(rows)
+    assert state.completed_events == 2
+    assert all(e['recovery_confirmed'] and e['stable_at_end'] for e in events)
+    assert all(e['above_legacy_speed_samples'] > 0 and e['peak_observed_speed_mps'] == speed for e in events)
+    assert recovery_teacher_mask(events[0]['release_ns']+150_000_000, collection_phase_windows(rows)).all()
+    # Config recorded before this policy existed keeps the original meaning.
+    for row in rows:
+        del row['large_recovery']['config']['speed_policy']
+    assert not any(e['recovery_confirmed'] for e in large_recovery_events(rows))
+
+
+def test_record_actual_policy_rejects_unknown_nonfinite_and_nonforward_observations():
+    with pytest.raises(ValueError, match='SPEED_POLICY'):
+        replace(config(), speed_policy='anything')
+    for speed in (float('nan'), float('inf'), -.1, 0., 1.14):
+        assert not collection_speed_eligible(speed, 'record_actual_v1')
+    assert not collection_speed_eligible(1.5, 'bounded_5kmh_v1')
+    assert collection_speed_eligible(1.5, 'record_actual_v1')
 
 
 @pytest.mark.parametrize('offset', [-.6, -.4, -.2, .2, .4, .6])

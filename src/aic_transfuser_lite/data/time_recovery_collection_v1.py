@@ -369,7 +369,7 @@ def recovery_teacher_mask(observation_ns: int, windows: Sequence[PhaseWindow]) -
 
 def validate_nominal(*, stamp_ns: int, now_ns: int, received_ns: int, now_wall_ns: int,
                      target_mps: float, acceleration_mps2: float, steering_input_rad: float,
-                     measured_speed_mps: float) -> None:
+                     measured_speed_mps: float, record_overspeed: bool = False) -> None:
     """Reject stale/nonfinite/out-of-contract teacher commands before actuation."""
     if any(type(t) is not int or t < 0 for t in (stamp_ns, now_ns, received_ns, now_wall_ns)):
         raise ValueError("NOMINAL_CLOCK_INVALID")
@@ -379,8 +379,12 @@ def validate_nominal(*, stamp_ns: int, now_ns: int, received_ns: int, now_wall_n
         raise ValueError("NOMINAL_NONFINITE")
     if not math.isclose(target_mps, TARGET_MPS, abs_tol=1e-5):
         raise ValueError("NOMINAL_FIXED_SPEED_MISMATCH")
-    if not -.03 <= measured_speed_mps <= OVERSPEED_MPS:
+    if type(record_overspeed) is not bool:
+        raise ValueError('NOMINAL_RECORD_OVERSPEED_CONTRACT')
+    if measured_speed_mps < -.03 or not record_overspeed and measured_speed_mps > OVERSPEED_MPS:
         raise ValueError("OVERSPEED_OR_REVERSE")
+    # Explicit collection policy: the final stopping sweep still uses actual
+    # speed. The command target and actuator bounds are unchanged.
     # The pinned official PP emits bounded nominal input up to 0.64 rad.
     # The final publisher separately retains the existing 0.5 rad / 0.8 rad/s
     # limits BEFORE the unchanged stopping-sweep monitor is evaluated.

@@ -1,5 +1,20 @@
 import numpy as np
 import pytest
+
+
+def test_explicit_overspeed_recording_keeps_command_and_observation_contracts():
+    settings = dict(stamp_ns=1_000_000_000, now_ns=1_000_000_000,
+        received_ns=2_000_000_000, now_wall_ns=2_000_000_000,
+        target_mps=5/3.6, acceleration_mps2=0., steering_input_rad=0., measured_speed_mps=1.8)
+    with pytest.raises(ValueError, match='OVERSPEED'):
+        validate_nominal(**settings)
+    validate_nominal(**settings, record_overspeed=True)
+    for key, value, reason in (('measured_speed_mps', -.1, 'REVERSE'),
+            ('measured_speed_mps', float('inf'), 'NONFINITE'),
+            ('target_mps', 1.8, 'FIXED_SPEED'), ('steering_input_rad', .7, 'STEERING'),
+            ('now_ns', 2_000_000_000, 'STALE')):
+        with pytest.raises(ValueError, match=reason):
+            validate_nominal(**{**settings, key:value}, record_overspeed=True)
 import csv
 
 from aic_transfuser_lite.data.time_recovery_collection_v1 import (

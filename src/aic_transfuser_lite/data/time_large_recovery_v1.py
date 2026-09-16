@@ -15,6 +15,20 @@ from typing import Any, Mapping, Sequence
 
 SCHEMA = 'measured_large_recovery_v1'
 MAX_EVENTS = 7
+SPEED_POLICIES = ('bounded_5kmh_v1', 'record_actual_v1')
+
+
+def collection_speed_eligible(speed_mps: float, policy: str) -> bool:
+    """Acquisition gate, independent of measured-speed stopping-sweep safety.
+
+    New collections can retain overspeed observations instead of discarding an
+    event. The legacy default keeps historical recording audits reproducible.
+    Both policies require forward motion; neither changes the 5 km/h target.
+    """
+    if policy not in SPEED_POLICIES:
+        raise ValueError('LARGE_SPEED_POLICY')
+    return (type(speed_mps) in (int, float) and math.isfinite(speed_mps)
+            and speed_mps >= 1.15 and (policy == 'record_actual_v1' or speed_mps <= 1.4))
 
 
 @dataclass(frozen=True)
@@ -61,8 +75,11 @@ class LargeRecoveryConfig:
     sites: tuple[LargeRecoverySite, ...]
     seed: int = 0
     event_cap: int = 1
+    speed_policy: str = 'bounded_5kmh_v1'
 
     def __post_init__(self) -> None:
+        if self.speed_policy not in SPEED_POLICIES:
+            raise ValueError('LARGE_SPEED_POLICY')
         if not isinstance(self.sites, (tuple, list)):
             raise ValueError('LARGE_SITES_SEQUENCE')
         sites = tuple(LargeRecoverySite(**s) if isinstance(s, dict) else s for s in self.sites)
@@ -173,7 +190,7 @@ def propose_large_recovery(config: LargeRecoveryConfig, state: LargeRecoveryStat
         return LargeRecoveryDecision(st, 'nominal', 'invalid' if st.stage == 'aborted' else 'baseline')
     if state.approach_seen and state.last_progress_m is not None and s_m < state.last_progress_m-5.:
         raise ValueError('LARGE_PROGRESS_REGRESSION')
-    speed_ok = 1.15 <= speed_mps <= 1.4
+    speed_ok = collection_speed_eligible(speed_mps, config.speed_policy)
     if st.stage in ('waiting', 'cooldown'):
         if s_m < config.sites[0].start_s_m:
             st = replace(st, approach_seen=True)
@@ -314,7 +331,7 @@ def large_recovery_events(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, A
                     or pub['monotonic_ns']-previous_wall > 300_000_000):
                 since = None
             settled = (abs(data['lateral_error_m']) <= .1 and abs(data['heading_error_rad']) <= math.radians(2.)
-                       and 1.15 <= row['speed_mps'] <= 1.4)
+                       and collection_speed_eligible(row['speed_mps'], config.speed_policy))
             since = (since if since is not None else t) if settled else None
             if since is not None and t-since >= 1_000_000_000 and release is not None and t-release <= 10_000_000_000:
                 confirmed = True
@@ -326,9 +343,12 @@ def large_recovery_events(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, A
             end = completions[0]; data = end['large_recovery']; t = end['publication']['sim_ns']
             stable_end = (0 <= t-previous <= 150_000_000 and t-since >= 1_000_000_000
                           and abs(data['lateral_error_m']) <= .1 and abs(data['heading_error_rad']) <= math.radians(2.)
-                          and 1.15 <= end['speed_mps'] <= 1.4)
+                          and collection_speed_eligible(end['speed_mps'], config.speed_policy))
         target_samples = sum(abs(r['large_recovery']['lateral_error_m']-site.target_offset_m) <= .1 for r in recoveries)
         result.append(dict(event_id=event_id, site_id=site.site_id, target_offset_m=site.target_offset_m,
+            speed_policy=config.speed_policy,
+            peak_observed_speed_mps=max(r['speed_mps'] for r in group),
+            above_legacy_speed_samples=sum(r['speed_mps'] > 1.4 for r in group),
             corner_id=site.corner_id, target_heading_rad=site.target_heading_rad,
             heading_tolerance_rad=site.heading_tolerance_rad,
             preparation_start_ns=preparations[0]['publication']['sim_ns'], request_ns=request, release_ns=release,

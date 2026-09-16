@@ -9,7 +9,7 @@ from dataclasses import asdict
 import math
 from typing import Any, Mapping, Sequence
 
-from .time_large_recovery_v1 import LargeRecoveryConfig, LargeRecoverySite, MAX_EVENTS
+from .time_large_recovery_v1 import LargeRecoveryConfig, LargeRecoverySite, MAX_EVENTS, collection_speed_eligible
 
 
 def partition_corner_sites(sites: Sequence[LargeRecoverySite], *, event_cap: int = 3
@@ -68,6 +68,7 @@ def corner_coverage(sites: Sequence[LargeRecoverySite], audits: Sequence[Mapping
             # can satisfy it. Earlier nearby recovery cannot substitute.
             ids = {e['event_id'] for e in events if e['target_offset_m'] == site.target_offset_m
                    and e['target_heading_rad'] == site.target_heading_rad}
+            policies = {e['event_id']: e.get('speed_policy', 'bounded_5kmh_v1') for e in events}
             anchors = [a for a in states if a['event_id'] in ids and a['site_id'] == site.site_id]
             matched = []
             for a in anchors:
@@ -76,7 +77,7 @@ def corner_coverage(sites: Sequence[LargeRecoverySite], audits: Sequence[Mapping
                     raise ValueError('CORNER_ANCHOR_FINITE')
                 if (site.release_s_m-.5 <= a['base_s_m'] <= site.release_s_m+3.
                         and site.at_goal(a['lateral_m'], a['heading_rad'])
-                        and 1.15 <= a['speed_mps'] <= 1.4):
+                        and collection_speed_eligible(a['speed_mps'], policies[a['event_id']])):
                     matched.append(a['anchor_id'])
             if len(anchors) >= minimum_event_anchors and len(matched) >= minimum_state_anchors:
                 by_corner[site.corner_id][split].append(dict(run_id=name, event_anchors=len(anchors),
