@@ -67,7 +67,7 @@ for row in index['runs']:
     for name in ('result.json', 'disturbance_markers.json', 'parallel_admission.json'):
         source = raw_root / row['run_id'] / name
         if source.exists():
-            copy(source, 'runs/' + row['run_id'] + '/' + name)
+            copy(source, 'run_reports/' + row['run_id'] + '/' + name)
 (destination / '.gitattributes').write_bytes(b'* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol\n')
 (destination / 'README.md').write_text('''# 実行証拠
 
