@@ -77,10 +77,15 @@ class LargeRecoveryConfig:
     event_cap: int = 1
     speed_policy: str = 'bounded_5kmh_v1'
     entry_heading_tolerance_rad: float = math.radians(1.)
+    recovery_duration_s: float = 10.
 
     def __post_init__(self) -> None:
         if self.speed_policy not in SPEED_POLICIES:
             raise ValueError('LARGE_SPEED_POLICY')
+        if (type(self.recovery_duration_s) not in (int, float)
+                or not math.isfinite(self.recovery_duration_s)
+                or not 10. <= self.recovery_duration_s <= 15.):
+            raise ValueError('LARGE_RECOVERY_DURATION')
         if (type(self.entry_heading_tolerance_rad) not in (int, float)
                 or not math.isfinite(self.entry_heading_tolerance_rad)
                 or not math.radians(.5) <= self.entry_heading_tolerance_rad <= math.radians(2.)):
@@ -96,6 +101,11 @@ class LargeRecoveryConfig:
                 or any(b.start_s_m-a.start_s_m < 40. for a, b in zip(sites, sites[1:]))):
             raise ValueError('LARGE_SITE_BUDGET_OR_SPACING')
         object.__setattr__(self, 'sites', sites)
+
+    @property
+    def recovery_duration_ns(self) -> int:
+        """Finite observed recovery window, independent of sensor freshness."""
+        return round(self.recovery_duration_s * 1_000_000_000)
 
 
 def select_large_sites(candidates: Sequence[LargeRecoverySite], *, seed: int,
@@ -257,8 +267,8 @@ def propose_large_recovery(config: LargeRecoveryConfig, state: LargeRecoveryStat
     if st.confirmed_ns is None and since is not None and sim_ns-since >= 1_000_000_000:
         st = replace(st, confirmed_ns=sim_ns)
         transition = 'confirm'
-    if sim_ns-st.release_ns >= 10_000_000_000:
-        if st.confirmed_ns is None or st.confirmed_ns-st.release_ns > 10_000_000_000:
+    if sim_ns-st.release_ns >= config.recovery_duration_ns:
+        if st.confirmed_ns is None or st.confirmed_ns-st.release_ns > config.recovery_duration_ns:
             return LargeRecoveryDecision(replace(st, stage='aborted', reason='RECOVERY_NOT_CONFIRMED'), 'nominal', 'invalid')
         if since is None or sim_ns-since < 1_000_000_000:
             return LargeRecoveryDecision(replace(st, stage='aborted', reason='RECOVERY_NOT_STABLE_AT_END'), 'nominal', 'invalid')
@@ -339,7 +349,7 @@ def large_recovery_events(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, A
             settled = (abs(data['lateral_error_m']) <= .1 and abs(data['heading_error_rad']) <= math.radians(2.)
                        and collection_speed_eligible(row['speed_mps'], config.speed_policy))
             since = (since if since is not None else t) if settled else None
-            if since is not None and t-since >= 1_000_000_000 and release is not None and t-release <= 10_000_000_000:
+            if since is not None and t-since >= 1_000_000_000 and release is not None and t-release <= config.recovery_duration_ns:
                 confirmed = True
             previous = t; previous_wall = pub['monotonic_ns']
         completions = [r for r in group if r['large_recovery']['state']['completed_events'] >= event_id]
@@ -353,6 +363,7 @@ def large_recovery_events(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, A
         target_samples = sum(abs(r['large_recovery']['lateral_error_m']-site.target_offset_m) <= .1 for r in recoveries)
         result.append(dict(event_id=event_id, site_id=site.site_id, target_offset_m=site.target_offset_m,
             speed_policy=config.speed_policy,
+            recovery_duration_s=config.recovery_duration_s,
             peak_observed_speed_mps=max(r['speed_mps'] for r in group),
             above_legacy_speed_samples=sum(r['speed_mps'] > 1.4 for r in group),
             corner_id=site.corner_id, target_heading_rad=site.target_heading_rad,

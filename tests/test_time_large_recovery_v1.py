@@ -26,12 +26,12 @@ def proposal(state=LargeRecoveryState(), cfg=None, **changes):
     return propose_large_recovery(cfg or config(), state, **values)
 
 
-def synthetic_run(cfg=None, *, reach=True, speed_mps=1.25):
+def synthetic_run(cfg=None, *, reach=True, speed_mps=1.25, recovery_decay_s=4.):
     """Synthetic observed-state replay; not an AWSIM/dynamic vehicle result."""
     cfg = cfg or config(2)
     state = LargeRecoveryState(); rows = []
     start_s = cfg.sites[0].start_s_m-3.
-    finish = 1+(cfg.sites[-1].release_s_m-start_s)/1.25+15
+    finish = 1+(cfg.sites[-1].release_s_m-start_s)/1.25+cfg.recovery_duration_s+5.
     for index in range(round((finish-1)/.05)):
         t = 1+index*.05; ns = round(t*1e9); s = start_s+(t-1)*1.25
         lat = 0.
@@ -39,7 +39,7 @@ def synthetic_run(cfg=None, *, reach=True, speed_mps=1.25):
             site = cfg.sites[state.site_cursor]; f = np.clip((s-site.start_s_m)/8., 0., 1.)
             lat = site.target_offset_m*f*f*(3-2*f)
         if state.stage == 'recovery':
-            lat = cfg.sites[state.site_cursor].target_offset_m*max(0., 1-(ns-state.release_ns)/4e9)
+            lat = cfg.sites[state.site_cursor].target_offset_m*max(0., 1-(ns-state.release_ns)/(recovery_decay_s*1e9))
         decision = proposal(state, cfg, sim_ns=ns, wall_ns=ns+10_000_000_000,
                             s_m=s, nominal_stamp_ns=ns, lateral_m=float(lat), speed_mps=speed_mps)
         state = commit_large_recovery(decision, sim_ns=ns, wall_ns=ns+10_000_000_001, sequence=index+1)
@@ -112,6 +112,31 @@ def test_parallel_displacement_goals_are_measured_with_either_sign(offset):
     event, = large_recovery_events(rows)
     assert state.completed_events == 1 and event['recovery_confirmed']
     assert event['peak_observed_lateral_m'] == pytest.approx(abs(offset))
+
+
+def test_explicit_longer_recovery_records_slow_return_without_weakening_stability_or_old_audit():
+    original = config(1)
+    state, rows = synthetic_run(original, recovery_decay_s=12.)
+    assert state.stage == 'aborted' and state.reason == 'RECOVERY_NOT_CONFIRMED'
+    assert not large_recovery_events(rows)[0]['recovery_confirmed']
+    longer = replace(original, recovery_duration_s=15.)
+    state, rows = synthetic_run(longer, recovery_decay_s=12.)
+    event, = large_recovery_events(rows)
+    assert state.stage == 'complete' and state.completed_events == 1
+    assert event['recovery_confirmed'] and event['stable_at_end']
+    assert event['recovery_duration_s'] == 15.
+    assert event['end_publication_ns']-event['release_ns'] == 15_000_000_000
+    assert recovery_teacher_mask(event['release_ns']+150_000_000, collection_phase_windows(rows)).all()
+    changed = deepcopy(rows)
+    completion = next(r for r in changed if r['large_recovery']['state']['completed_events'] == 1)
+    completion['large_recovery']['lateral_error_m'] = .101
+    assert not large_recovery_events(changed)[0]['recovery_confirmed']
+    for row in rows:
+        del row['large_recovery']['config']['recovery_duration_s']
+    assert not large_recovery_events(rows)[0]['recovery_confirmed']
+    for invalid in (9.99, 15.01, True, float('nan'), float('inf')):
+        with pytest.raises(ValueError, match='LARGE_RECOVERY_DURATION'):
+            replace(original, recovery_duration_s=invalid)
 
 
 def test_failed_target_prevents_later_injection_and_labels():
