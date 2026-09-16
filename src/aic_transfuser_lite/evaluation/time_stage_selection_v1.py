@@ -28,8 +28,10 @@ def select_stage_candidate(reports: Sequence[dict[str,Any]], *, baseline_id: str
 
     xy stages require run-macro ADE/3 s errors, one fixed population fingerprint
     and positive anchor/run support. Launch cases have fixed IDs including age,
-    teacher applicability, PP acceptance, and selected physical tire angle [rad].
+    teacher applicability, PP acceptance, and selected physical tire angles [rad].
     Every teacher-supported launch case must pass; dropping a case is an error.
+    Margin comparisons allow the curvature actually required by the teacher;
+    an initial prediction that understeers must not make that teacher inadmissible.
     """
     policy.validate()
     ids=[r['candidate_id'] for r in reports]
@@ -47,6 +49,10 @@ def select_stage_candidate(reports: Sequence[dict[str,Any]], *, baseline_id: str
             if (type(row['teacher_accepted']) is not bool or type(row['accepted']) is not bool
                     or not math.isfinite(row['age_s']) or not 0<=row['age_s']<=.5):
                 raise ValueError('explicit boolean support and launch ages within 0..0.5 s required')
+            teacher_angle=row.get('teacher_steer_rad')
+            if row['teacher_accepted'] and (teacher_angle is None or not math.isfinite(teacher_angle)
+                    or abs(teacher_angle)>.3):
+                raise ValueError('supported teacher angle must satisfy the physical contract')
         return result
     initial=launch_index(baseline)
     supported={key for key,row in initial.items() if row['teacher_accepted']}
@@ -58,9 +64,9 @@ def select_stage_candidate(reports: Sequence[dict[str,Any]], *, baseline_id: str
             raise ValueError('candidate validation population changed')
         cases=launch_index(report)
         if cases.keys()!=initial.keys() or any(
-                (cases[k]['teacher_accepted'],cases[k]['run_id'],cases[k]['age_s']) !=
-                (initial[k]['teacher_accepted'],initial[k]['run_id'],initial[k]['age_s']) for k in initial):
-            raise ValueError('launch cases, ages or teacher denominator changed')
+                (cases[k]['teacher_accepted'],cases[k].get('teacher_steer_rad'),cases[k]['run_id'],cases[k]['age_s']) !=
+                (initial[k]['teacher_accepted'],initial[k].get('teacher_steer_rad'),initial[k]['run_id'],initial[k]['age_s']) for k in initial):
+            raise ValueError('launch cases, ages, teacher angle or denominator changed')
         reasons=[];relative=[]
         for stage in sorted(stages):
             row,old=report['xy'][stage],baseline['xy'][stage]
@@ -85,12 +91,14 @@ def select_stage_candidate(reports: Sequence[dict[str,Any]], *, baseline_id: str
             if angle is None or not math.isfinite(angle) or abs(angle)>.3:
                 rejected.append(key);continue
             margin=.3-abs(angle);margins.append(margin)
+            reference_margin=.3-abs(row['teacher_steer_rad'])
             if old['accepted']:
                 old_angle=old.get('steer_rad')
                 if old_angle is None or not math.isfinite(old_angle) or abs(old_angle)>.3:
                     raise ValueError('baseline accepted PP angle outside physical contract')
-                if margin+policy.launch_margin_tolerance_rad < .3-abs(old_angle):
-                    reasons.append('launch:STEERING_MARGIN_REGRESSED:'+key)
+                reference_margin=min(reference_margin,.3-abs(old_angle))
+            if margin+policy.launch_margin_tolerance_rad < reference_margin:
+                reasons.append('launch:STEERING_MARGIN_REGRESSED:'+key)
         if rejected:reasons.append('launch:PP_REJECTED')
         decisions.append(dict(candidate_id=report['candidate_id'],eligible=not reasons,reasons=reasons,
             launch_supported=len(supported),launch_rejected_case_ids=rejected,
@@ -104,4 +112,5 @@ def select_stage_candidate(reports: Sequence[dict[str,Any]], *, baseline_id: str
         selected_candidate_id=selected['candidate_id'] if selected else baseline_id,
         selected_meets_gate=selected is not None,runtime_test_allowed=promoted,
         baseline_id=baseline_id,policy=asdict(policy),decisions=decisions,
+        launch_margin_reference='minimum_of_teacher_and_accepted_initial_margin_else_teacher',
         scope='OFFLINE_DEVELOPMENT_GATE_NOT_CLOSED_LOOP_CERTIFICATION')

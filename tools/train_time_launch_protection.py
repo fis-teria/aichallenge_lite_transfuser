@@ -381,7 +381,8 @@ def evaluate(root: Path,repo: Path,plan: dict[str,Any],existing_only: bool) -> N
                 else sensor_predictions[row['sample_index']])
             p=pp_probe(xy,TimedBodyPose(**row['observation_pose']),TimedBodyPose(**row['current_pose']),row['speed_mps'],proof['controller'])
             launch.append(dict(case_id=row['case_id'],run_id=row['run_id'],origin=row['origin'],age_s=row['age_s'],
-                teacher_accepted=row['teacher']['accepted'],accepted=p['accepted'],steer_rad=p.get('steer_rad'),reason=p['reason']))
+                teacher_accepted=row['teacher']['accepted'],teacher_steer_rad=row['teacher'].get('steer_rad'),
+                accepted=p['accepted'],steer_rad=p.get('steer_rad'),reason=p['reason']))
         report=dict(candidate_id=name,checkpoint=str(path),checkpoint_sha256=_sha(path),
             population_sha256=proof['population_sha256'],xy=stage_errors(prediction,val,selected,proof['validation']['stages']),launch=launch)
         write(out/(name+'.json'),report);np.save(out/(name+'_predictions.npy'),prediction,allow_pickle=False)

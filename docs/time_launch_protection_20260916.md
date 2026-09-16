@@ -29,7 +29,7 @@
 
 採用条件は学習結果を見る前に固定する。
 
-- 発進: 教師PPが成立する全ケースで予測PPも成立。物理操舵限界±0.3radは維持する。初期モデルが成立した同じケースより選択操舵余裕を0.001radを超えて悪化させない。
+- 発進: 教師PPが成立する全ケースで予測PPも成立。物理操舵限界±0.3radは維持する。選択操舵余裕の比較基準は、同じケースの教師と成立した初期モデルの余裕の小さい方とし、0.001radを超えて悪化させない。初期モデルが不成立なら教師を基準にする。初期モデルの旋回不足で見かけ上の余裕が増えた場合にも、教師の必要旋回を許容する。
 - 通常・復帰: 各run均等ADEは初期値＋max(5%,1mm)、3秒先誤差は初期値＋max(5%,2mm)以内。
 - 合格候補と初期モデルの中で、通常／復帰のADE・3秒先誤差を初期値で正規化した4指標の平均が最小のものを選ぶ。同点なら初期モデルを維持する。
 - 全ての判断は`selection.json`に残す。`runtime_test_allowed=true`は次の有限AWSIM試験に進めることだけを意味し、完走・無衝突の証明ではない。
@@ -38,7 +38,7 @@
 
 ## 実行
 
-Windowsでcommitし、`tools/sync_to_wsl.ps1`の公式手順で同一sourceを同期する。以下はnative WSL repo内。出力先は`/home/thistle/e2e_autonomous/runs/time_launch_protection_20260916`。
+Windowsでcommitし、`tools/sync_to_wsl.ps1`の公式手順で同一sourceを同期する。以下はnative WSL repo内。出力先は`/home/thistle/e2e_autonomous/runs/time_launch_protection_v2_20260916`。
 
 ```bash
 tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -m pytest -q
@@ -55,4 +55,6 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -u tools/tra
 
 ## 実行結果
 
-実装・検証・学習結果を確認後、この節に追記する。現時点の予備監査は収集済み通常走行16件のReady遷移確認までであり、新たな学習成功やAWSIM完走を示すものではない。
+実装・検証・学習結果を確認後、この節に追記する。
+
+最初の判定実装は初期モデルの操舵余裕だけを基準にしたため、正しい教師そのものが210ケース中166ケースで余裕条件に違反した。教師PPは全210ケース成立する。この矛盾を教師のoracle監査で確認し、初回の比較学習をepoch1途中・学習後validationを見る前に中断した。修正は学習結果への閾値合わせではなく、教師の必要旋回を許容する判定の整合性修正である。最初の出力`time_launch_protection_20260916`は保全し、v2で両条件を同じ初期重みからやり直す。

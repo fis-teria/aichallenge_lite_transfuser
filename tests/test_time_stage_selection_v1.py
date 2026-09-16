@@ -9,7 +9,7 @@ def report(name='initial',factor=1.):
     return dict(candidate_id=name,population_sha256='fixed',xy={stage:dict(
         anchors=20,runs=2,ade_m=.02*factor,endpoint_3s_m=.05*factor) for stage in ['nominal','recovery']},
         launch=[dict(case_id=f'r{i}:{age}',run_id=f'r{i}',age_s=age,teacher_accepted=True,
-                     accepted=True,steer_rad=.25) for i in (1,2) for age in (0.,.5)])
+                     teacher_steer_rad=.25,accepted=True,steer_rad=.25) for i in (1,2) for age in (0.,.5)])
 
 
 def choose(*rows):
@@ -38,11 +38,12 @@ def test_recovery_gain_cannot_hide_nominal_regression_or_margin_loss():
     assert choose(report(),bad)['selected_candidate_id']=='initial'
 
 
-@pytest.mark.parametrize('change',['drop','teacher','age','support','population'])
+@pytest.mark.parametrize('change',['drop','teacher','teacher_angle','age','support','population'])
 def test_changing_validation_denominator_is_rejected(change):
     bad=report('new',.5)
     if change=='drop':bad['launch'].pop()
     elif change=='teacher':bad['launch'][0]['teacher_accepted']=False
+    elif change=='teacher_angle':bad['launch'][0]['teacher_steer_rad']=.26
     elif change=='age':bad['launch'][0]['age_s']=.1
     elif change=='support':bad['xy']['nominal']['anchors']=19
     else:bad['population_sha256']='different'
@@ -73,3 +74,26 @@ def test_nonfinite_prediction_metric_fails_candidate_without_dropping_support(va
 def test_accepted_angle_above_physical_limit_is_not_admitted():
     bad=report('new',.8);bad['launch'][0]['steer_rad']=.3000001
     assert not choose(report(),bad)['runtime_test_allowed']
+
+
+def test_exact_teacher_is_admissible_even_when_initial_understeers():
+    initial=report();teacher=report('teacher_oracle',0.)
+    for old,new in zip(initial['launch'],teacher['launch'],strict=True):
+        old['teacher_steer_rad']=new['teacher_steer_rad']=.28
+        new['steer_rad']=.28
+    assert choose(initial,teacher)['runtime_test_allowed']
+    teacher['launch'][0]['steer_rad']=.282
+    assert not choose(initial,teacher)['runtime_test_allowed']
+
+
+def test_repaired_initial_rejection_still_preserves_teacher_steering_margin():
+    initial=report();initial['launch'][0].update(accepted=False,steer_rad=None)
+    bad=report('new',.9);bad['launch'][0]['steer_rad']=.299
+    assert not choose(initial,bad)['runtime_test_allowed']
+
+
+@pytest.mark.parametrize('angle',[None,float('nan'),float('inf'),.300001])
+def test_unsupported_physical_teacher_is_an_evidence_error(angle):
+    initial=report();initial['launch'][0]['teacher_steer_rad']=angle
+    with pytest.raises(ValueError,match='teacher angle'):
+        choose(initial)
