@@ -19,7 +19,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from aic_transfuser_lite.control.time_trial_v1 import SPEED_POLICIES, FIXED_SPEED_POLICIES, trial_speed_limits
 from aic_transfuser_lite.control.vehicle_motion_v1 import AWSIM_POLICIES
-from aic_transfuser_lite.control.curvature_support_v2 import ACTUAL_STOPPING_SPEED, FIVE_KMH_STOPPING_SPEED
+from aic_transfuser_lite.control.curvature_support_v2 import ACTUAL_STOPPING_SPEED, DIAGNOSTIC_STOPPING_POLICIES, ONE_METRE_STOPPING_TRAVEL
 
 
 def main() -> None:
@@ -348,8 +348,10 @@ def main() -> None:
                 speed = row["speed_mps"]
                 preview = .4+speed*.5+speed*speed/2
                 distance_policy = fixture_config.get('stopping_distance_policy', ACTUAL_STOPPING_SPEED)
-                guard_speed = min(speed, 5/3.6) if distance_policy == FIVE_KMH_STOPPING_SPEED else speed
+                guard_speed = min(speed, 5/3.6) if distance_policy in DIAGNOSTIC_STOPPING_POLICIES else speed
                 guard_travel = .4+guard_speed*.5+guard_speed*guard_speed/2
+                if distance_policy == ONE_METRE_STOPPING_TRAVEL:
+                    guard_travel = min(guard_travel, 1.)
                 if (abs(speed-expected_target) > 1e-5 or row["target_speed_mps"] != expected_target
                         or detail["selected_lookahead_distance_m"] < preview
                         or abs(detail["obstacle_guard"]["stopping_travel_m"]-guard_travel) > 1e-9

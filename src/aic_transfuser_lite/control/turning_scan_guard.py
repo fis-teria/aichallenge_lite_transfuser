@@ -16,7 +16,7 @@ import numpy as np
 from .time_reference_v1 import TimedBodyPose
 from .time_trial_v1 import interpolate_body_pose
 from .vehicle_motion_v1 import IDEAL_POLICY, AWSIM_POLICY, stopping_motion
-from .curvature_support_v2 import ACTUAL_STOPPING_SPEED, FIVE_KMH_STOPPING_SPEED, STANDARD_CLEARANCE, clearance_dimensions
+from .curvature_support_v2 import ACTUAL_STOPPING_SPEED, DIAGNOSTIC_STOPPING_POLICIES, STANDARD_CLEARANCE, clearance_dimensions
 
 
 def select_aligned_scan(capture_receipts_ns: Sequence[tuple[int, int]], poses: Sequence[TimedBodyPose],
@@ -113,7 +113,7 @@ def check_turning_scan(ranges: np.ndarray, angle_min: float, angle_increment: fl
     """
     r = np.asarray(ranges, dtype=float)
     clearance_dimensions(clearance_profile)
-    if (stopping_distance_policy not in (ACTUAL_STOPPING_SPEED, FIVE_KMH_STOPPING_SPEED)
+    if (stopping_distance_policy not in (ACTUAL_STOPPING_SPEED, *DIAGNOSTIC_STOPPING_POLICIES)
             or (stopping_distance_policy != ACTUAL_STOPPING_SPEED and envelope_policy != 'curvature_support_v2')):
         raise ValueError('STOPPING_DISTANCE_POLICY')
     if clearance_profile != STANDARD_CLEARANCE and (envelope_policy != 'curvature_support_v2' or vehicle_model_policy != AWSIM_POLICY):

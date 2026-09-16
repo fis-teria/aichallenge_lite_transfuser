@@ -18,6 +18,8 @@ STANDARD_CLEARANCE = 'standard_v1'
 NEAR_LIMIT_CLEARANCE = 'awsim_near_limit_v1'
 ACTUAL_STOPPING_SPEED = 'measured_speed_v1'
 FIVE_KMH_STOPPING_SPEED = 'awsim_cap_5kmh_diagnostic_v1'
+ONE_METRE_STOPPING_TRAVEL = 'awsim_cap_1m_diagnostic_v1'
+DIAGNOSTIC_STOPPING_POLICIES = (FIVE_KMH_STOPPING_SPEED, ONE_METRE_STOPPING_TRAVEL)
 
 
 def stopping_envelope_parameters(speed_mps: float, motion: dict[str, Any], *,
@@ -27,18 +29,19 @@ def stopping_envelope_parameters(speed_mps: float, motion: dict[str, Any], *,
     """Return travel m, lateral padding m, and explicit diagnostic metadata.
 
     The 5 km/h cap is a simulator comparison, not stopping containment at the
-    actual higher speed. Curvature and measured-motion validation still use
-    actual speed; only the envelope's travel/time horizon is capped.
+    actual higher speed. The 1 m profile additionally caps travel, preserving
+    the 5 km/h profile's lateral padding. Curvature and measured-motion
+    validation still use actual speed.
     """
     reserve, _ = clearance_dimensions(clearance_profile)
-    if stopping_distance_policy not in (ACTUAL_STOPPING_SPEED, FIVE_KMH_STOPPING_SPEED):
+    if stopping_distance_policy not in (ACTUAL_STOPPING_SPEED, *DIAGNOSTIC_STOPPING_POLICIES):
         raise ValueError('STOPPING_DISTANCE_POLICY')
     if not math.isfinite(speed_mps) or not -.03 <= speed_mps <= vehicle_model_speed_limit(motion['policy']):
         raise ValueError('STOPPING_DISTANCE_SPEED')
     speed = max(0., speed_mps)
     lateral_padding = motion['lateral_displacement_bound_m']
     metadata: dict[str, Any] = {}
-    if stopping_distance_policy == FIVE_KMH_STOPPING_SPEED:
+    if stopping_distance_policy in DIAGNOSTIC_STOPPING_POLICIES:
         if motion['policy'] != AWSIM_10KMH_POLICY or clearance_profile != STANDARD_CLEARANCE:
             raise ValueError('FIVE_KMH_STOPPING_REQUIRES_TEN_KMH_STANDARD_GUARD')
         speed = min(speed, 5./3.6)
@@ -47,7 +50,11 @@ def stopping_envelope_parameters(speed_mps: float, motion: dict[str, Any], *,
                         envelope_speed_mps=speed, measured_speed_mps=speed_mps,
                         lateral_padding_m=lateral_padding, diagnostic_only=True,
                         actual_speed_stopping_envelope=False)
-    return reserve+speed*.5+speed**2/2, lateral_padding, metadata
+    travel = reserve+speed*.5+speed**2/2
+    if stopping_distance_policy == ONE_METRE_STOPPING_TRAVEL:
+        travel = min(travel, 1.)
+        metadata['stopping_travel_cap_m'] = 1.
+    return travel, lateral_padding, metadata
 
 
 def clearance_dimensions(profile: str) -> tuple[float, float]:

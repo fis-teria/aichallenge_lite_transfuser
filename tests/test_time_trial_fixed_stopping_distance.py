@@ -7,11 +7,11 @@ import numpy as np
 import pytest
 
 from aic_transfuser_lite.control.curvature_support_v2 import (
-    ACTUAL_STOPPING_SPEED, FIVE_KMH_STOPPING_SPEED, stopping_envelope_parameters,
+    ACTUAL_STOPPING_SPEED, FIVE_KMH_STOPPING_SPEED, ONE_METRE_STOPPING_TRAVEL,
 )
 from aic_transfuser_lite.control.time_trial_v1 import validate_trial_config
 from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan
-from aic_transfuser_lite.control.vehicle_motion_v1 import AWSIM_10KMH_POLICY, AWSIM_POLICY, stopping_motion
+from aic_transfuser_lite.control.vehicle_motion_v1 import AWSIM_10KMH_POLICY, AWSIM_POLICY
 from aic_transfuser_lite.evaluation.time_clearance_v1 import scan_margin
 
 
@@ -23,11 +23,12 @@ def check(ranges: np.ndarray, speed: float, policy: str = FIVE_KMH_STOPPING_SPEE
     return check_turning_scan(ranges, -np.pi, 2*np.pi/750, .1, 25., **{**kwargs, **overrides})
 
 
-def test_scope_keeps_previous_ten_kmh_config_and_pp_settings() -> None:
+@pytest.mark.parametrize('suffix,policy', [('stop5', FIVE_KMH_STOPPING_SPEED), ('stop1m', ONE_METRE_STOPPING_TRAVEL)])
+def test_scope_keeps_previous_ten_kmh_config_and_pp_settings(suffix: str, policy: str) -> None:
     root = Path(__file__).parents[1]/'configs/control'
     old = json.loads((root/'time_path_launch_10kmh_20260917.json').read_bytes())
-    new = json.loads((root/'time_path_launch_10kmh_stop5_20260917.json').read_bytes())
-    assert new == {**old, 'stopping_distance_policy': FIVE_KMH_STOPPING_SPEED,
+    new = json.loads((root/f'time_path_launch_10kmh_{suffix}_20260917.json').read_bytes())
+    assert new == {**old, 'stopping_distance_policy': policy,
                   'diagnostic_only': True, 'maximum_diagnostic_trials': 1}
     assert validate_trial_config(new) == 'fixed_10kmh'
     assert validate_trial_config(old) == 'fixed_10kmh'
@@ -81,7 +82,8 @@ def test_diagnostic_does_not_hide_invalid_actual_state(overrides: dict) -> None:
         check(np.full(750, np.inf), 5/3.6, **overrides)
 
 
-def test_recorded_diagnostic_envelope_is_verified_and_tampering_rejected() -> None:
+@pytest.mark.parametrize('policy', [FIVE_KMH_STOPPING_SPEED, ONE_METRE_STOPPING_TRAVEL])
+def test_recorded_diagnostic_envelope_is_verified_and_tampering_rejected(policy: str) -> None:
     from aic_transfuser_lite.control.awsim_steering import CALIBRATED_POLICY, command_steering
     from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
     from aic_transfuser_lite.control.time_trial_v1 import time_trial_control
@@ -94,16 +96,40 @@ def test_recorded_diagnostic_envelope_is_verified_and_tampering_rejected() -> No
     calculated = time_trial_control(plan, pose, speed_mps=speed, rear_axle_offset_m=(0., 0.), **options)
     assert calculated['minimum_preview_distance_m'] == pytest.approx(5.646913580246914)
     mapping = command_steering(0., 0., .05, policy=CALIBRATED_POLICY)
-    guard = check(np.full(750, np.inf), speed)
+    guard = check(np.full(750, np.inf), speed, policy)
     command = dict(plan_id=plan.plan_id, reason='TIME_PATH_TRACKING', speed_mps=speed,
         steer_rad=0., measured_steer_rad=0., motion_observation=dict(frame='base_link', heading_rate_radps=0., reported_lateral_mps=0.),
         details={**calculated, 'current_pose': pose.__dict__, 'observation_pose': pose.__dict__,
                  'steering_actuator': mapping, 'obstacle_guard': guard})
     saved = [dict(plan_id=plan.plan_id, raw_xy_m=plan.xy_m.tolist())]
     kwargs = dict(**options, obstacle_policy='steering_support_v2', steering_policy=CALIBRATED_POLICY,
-                  stopping_distance_policy=FIVE_KMH_STOPPING_SPEED)
+                  stopping_distance_policy=policy)
     assert replay_recorded_control([command], saved, 0., **kwargs)['matched_commands'] == 1
     for key, wrong in [('stopping_travel_m', 5.647), ('measured_speed_mps', 5/3.6), ('actual_speed_stopping_envelope', True)]:
         bad = deepcopy(command); bad['details']['obstacle_guard'][key] = wrong
         with pytest.raises(ValueError, match='diagnostic stopping envelope differs'):
             replay_recorded_control([bad], saved, 0., **kwargs)
+
+
+@pytest.mark.parametrize('speed', [0., .2, 5/3.6, 10/3.6, 11/3.6])
+def test_one_metre_cap_preserves_previous_padding_and_actual_motion(speed: float) -> None:
+    clear = np.full(750, np.inf)
+    five = check(clear, speed)
+    one = check(clear, speed, ONE_METRE_STOPPING_TRAVEL)
+    assert one['stopping_travel_m'] == min(1., five['stopping_travel_m'])
+    assert one['stopping_travel_cap_m'] == 1.
+    for key in ['vehicle_motion', 'lateral_padding_m', 'envelope_speed_mps', 'measured_speed_mps']:
+        assert one[key] == five[key]
+    if five['stopping_travel_m'] <= 1.:
+        assert one['minimum_ray_margin_m'] == five['minimum_ray_margin_m']
+
+
+def test_one_metre_diagnostic_passes_distant_wall_but_rejects_nearer_wall() -> None:
+    ranges = np.full(750, np.inf)
+    ranges[375] = 3.8-1.649
+    with pytest.raises(ValueError, match='STOPPING_SWEEP_OCCUPIED'):
+        check(ranges, 10/3.6)
+    assert check(ranges, 10/3.6, ONE_METRE_STOPPING_TRAVEL)['minimum_ray_margin_m'] > 0
+    ranges[375] = 2.5-1.649
+    with pytest.raises(ValueError, match='STOPPING_SWEEP_OCCUPIED'):
+        check(ranges, 10/3.6, ONE_METRE_STOPPING_TRAVEL)
