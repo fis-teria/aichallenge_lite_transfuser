@@ -1,0 +1,1491 @@
+{
+  "plan": {
+    "schema": "awsim_recovery_parallel_v1",
+    "scope": "time_recovery_corner60_20260916",
+    "instances": [
+      {
+        "run_id": "codex-time-recovery-corner60-p04-d1",
+        "side": "left",
+        "split": "train",
+        "ros_domain_id": 1,
+        "network_container": "codex-time-recovery-corner60-p04-d1-net",
+        "node_cpus": "0-3",
+        "simulation_cpus": "8-9,12-15",
+        "event_cap": 3,
+        "pair": 4
+      },
+      {
+        "run_id": "codex-time-recovery-corner60-p04-d2",
+        "side": "right",
+        "split": "validation",
+        "ros_domain_id": 2,
+        "network_container": "codex-time-recovery-corner60-p04-d2-net",
+        "node_cpus": "4-7",
+        "simulation_cpus": "10-11,16-19",
+        "event_cap": 3,
+        "pair": 4
+      }
+    ]
+  },
+  "inspections": [
+    {
+      "Id": "338a4545c3846bc20915274d593c2a44e4aaae345ab6c9e5a68ad620f3b92fcf",
+      "Created": "2026-09-16T04:01:13.729144086Z",
+      "Path": "/docker-entrypoint.sh",
+      "Args": [
+        "bash",
+        "-lc",
+        "exec /aichallenge/run_autoware.bash awsim 1 /output/codex-time-recovery-corner60-p04-d1"
+      ],
+      "State": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 1296047,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-16T04:01:13.76283365Z",
+        "FinishedAt": "0001-01-01T00:00:00Z"
+      },
+      "Image": "sha256:8c650c13157ffabbc3a72bab08865ccff8338f9025b43a8f4405b4c6b96d1ba7",
+      "ResolvConfPath": "/var/lib/docker/containers/368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef/resolv.conf",
+      "HostnamePath": "/var/lib/docker/containers/368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef/hostname",
+      "HostsPath": "/var/lib/docker/containers/368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef/hosts",
+      "LogPath": "/var/lib/docker/containers/338a4545c3846bc20915274d593c2a44e4aaae345ab6c9e5a68ad620f3b92fcf/338a4545c3846bc20915274d593c2a44e4aaae345ab6c9e5a68ad620f3b92fcf-json.log",
+      "Name": "/codex-time-recovery-corner60-p04-d1-autoware-1",
+      "RestartCount": 0,
+      "Driver": "overlayfs",
+      "Platform": "linux",
+      "MountLabel": "",
+      "ProcessLabel": "",
+      "AppArmorProfile": "unconfined",
+      "ExecIDs": null,
+      "HostConfig": {
+        "Binds": [
+          "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/codex-time-recovery-corner60-p04-d1:/output:rw",
+          "/run/user:/run/user:rw",
+          "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:rw",
+          "/home/graneple/git/autononous_ai/aichallenge-racingkart/remote:/remote:rw",
+          "/home/graneple/git/autononous_ai/aichallenge-racingkart/vehicle:/vehicle:rw",
+          "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/codex-time-recovery-corner60-p04-d1/cyclonedds.xml:/opt/autoware/cyclonedds.xml:ro",
+          "/tmp/.X11-unix:/tmp/.X11-unix:rw",
+          "/dev/dri:/dev/dri:rw",
+          "/run/user/1000/.mutter-Xwaylandauth.FOTJV3:/run/user/1000/.mutter-Xwaylandauth.FOTJV3:rw",
+          "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/codex-time-recovery-corner60-p04-d1/autoware.rviz:/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz:ro"
+        ],
+        "ContainerIDFile": "",
+        "LogConfig": {
+          "Type": "json-file",
+          "Config": {}
+        },
+        "NetworkMode": "container:368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef",
+        "PortBindings": {},
+        "RestartPolicy": {
+          "Name": "no",
+          "MaximumRetryCount": 0
+        },
+        "AutoRemove": false,
+        "VolumeDriver": "",
+        "VolumesFrom": null,
+        "ConsoleSize": [
+          0,
+          0
+        ],
+        "CapAdd": null,
+        "CapDrop": null,
+        "CgroupnsMode": "private",
+        "Dns": null,
+        "DnsOptions": null,
+        "DnsSearch": null,
+        "ExtraHosts": [],
+        "GroupAdd": null,
+        "IpcMode": "private",
+        "Cgroup": "",
+        "Links": null,
+        "OomScoreAdj": 0,
+        "PidMode": "",
+        "Privileged": true,
+        "PublishAllPorts": false,
+        "ReadonlyRootfs": false,
+        "SecurityOpt": [
+          "label=disable"
+        ],
+        "UTSMode": "",
+        "UsernsMode": "",
+        "ShmSize": 67108864,
+        "Runtime": "runc",
+        "Isolation": "",
+        "CpuShares": 0,
+        "Memory": 0,
+        "NanoCpus": 0,
+        "CgroupParent": "",
+        "BlkioWeight": 0,
+        "BlkioWeightDevice": null,
+        "BlkioDeviceReadBps": null,
+        "BlkioDeviceWriteBps": null,
+        "BlkioDeviceReadIOps": null,
+        "BlkioDeviceWriteIOps": null,
+        "CpuPeriod": 0,
+        "CpuQuota": 0,
+        "CpuRealtimePeriod": 0,
+        "CpuRealtimeRuntime": 0,
+        "CpusetCpus": "8-9,12-15",
+        "CpusetMems": "",
+        "Devices": [
+          {
+            "PathOnHost": "/dev/dri",
+            "PathInContainer": "/dev/dri",
+            "CgroupPermissions": "rwm"
+          },
+          {
+            "PathOnHost": "/dev/video0",
+            "PathInContainer": "/dev/video0",
+            "CgroupPermissions": "rwm"
+          },
+          {
+            "PathOnHost": "/dev/input",
+            "PathInContainer": "/dev/input",
+            "CgroupPermissions": "rwm"
+          }
+        ],
+        "DeviceCgroupRules": null,
+        "DeviceRequests": [
+          {
+            "Driver": "nvidia",
+            "Count": -1,
+            "DeviceIDs": null,
+            "Capabilities": [
+              [
+                "gpu"
+              ]
+            ],
+            "Options": null
+          }
+        ],
+        "MemoryReservation": 0,
+        "MemorySwap": 0,
+        "MemorySwappiness": null,
+        "OomKillDisable": null,
+        "PidsLimit": null,
+        "Ulimits": null,
+        "CpuCount": 0,
+        "CpuPercent": 0,
+        "IOMaximumIOps": 0,
+        "IOMaximumBandwidth": 0,
+        "MaskedPaths": null,
+        "ReadonlyPaths": null
+      },
+      "Storage": {
+        "RootFS": {
+          "Snapshot": {
+            "Name": "overlayfs"
+          }
+        }
+      },
+      "Mounts": [
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge",
+          "Destination": "/aichallenge",
+          "Mode": "rw",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/git/autononous_ai/aichallenge-racingkart/remote",
+          "Destination": "/remote",
+          "Mode": "rw",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/git/autononous_ai/aichallenge-racingkart/vehicle",
+          "Destination": "/vehicle",
+          "Mode": "rw",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/tmp/.X11-unix",
+          "Destination": "/tmp/.X11-unix",
+          "Mode": "rw",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/dev/dri",
+          "Destination": "/dev/dri",
+          "Mode": "rw",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/run/user/1000/.mutter-Xwaylandauth.FOTJV3",
+          "Destination": "/run/user/1000/.mutter-Xwaylandauth.FOTJV3",
+          "Mode": "rw",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/codex-time-recovery-corner60-p04-d1/autoware.rviz",
+          "Destination": "/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/codex-time-recovery-corner60-p04-d1",
+          "Destination": "/output",
+          "Mode": "rw",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/codex-time-recovery-corner60-p04-d1/cyclonedds.xml",
+          "Destination": "/opt/autoware/cyclonedds.xml",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/run/user",
+          "Destination": "/run/user",
+          "Mode": "rw",
+          "RW": true,
+          "Propagation": "rprivate"
+        }
+      ],
+      "Config": {
+        "Hostname": "368bf4fb19ae",
+        "Domainname": "",
+        "User": "",
+        "AttachStdin": false,
+        "AttachStdout": true,
+        "AttachStderr": true,
+        "Tty": false,
+        "OpenStdin": false,
+        "StdinOnce": false,
+        "Env": [
+          "AWSIM_TIMEOUT=1920",
+          "AWSIM_VEHICLES=1",
+          "STATE_LATTICE_V2_PRODUCER_INSTANCE_ID=0",
+          "OPPONENT_MOTION_PREDICTION_ENABLED=false",
+          "V4_SHADOW_CONFIG=",
+          "PP_CORE_EXACT_SNAPSHOT_ENABLED=false",
+          "STATE_LATTICE_V2_SESSION_ID=",
+          "LAUNCH_AWSIM=true",
+          "CAPTURE=false",
+          "V4_SHADOW_SETUP=",
+          "RUN_MODE=awsim",
+          "__NV_PRIME_RENDER_OFFLOAD=1",
+          "V4_SHADOW_ENABLED=false",
+          "USER=graneple",
+          "PLANNER_PP_CONTROL_SMOKE_LIVE_SPATIAL=false",
+          "NVIDIA_VISIBLE_DEVICES=all",
+          "TZ=Asia/Tokyo",
+          "AWSIM_START_COUNT_SECONDS",
+          "SIM_MODE=",
+          "QT_X11_NO_MITSHM=1",
+          "CONTROL_METHOD=v4_20_external",
+          "AWSIM_START_MODE",
+          "ROS_LOG_DIR=",
+          "RACE_ARM_ON_VEHICLE_STATE=Start",
+          "COLCON_TRACE=",
+          "HOST_GID=1000",
+          "STATE_LATTICE_V2_PP_PRODUCER_INSTANCE_ID=",
+          "AWSIM_LAPS=2",
+          "STATE_LATTICE_V2_LIVE_PROPOSAL_PUBLISH_ENABLED=false",
+          "NVIDIA_DRIVER_CAPABILITIES=all",
+          "AWSIM_EXTRA_ARGS=--ros2-base-domain 1 -logFile /output/codex-time-recovery-corner60-p04-d1/awsim_unity.log",
+          "AUTOSTART_DEBUG_VISUALIZATION=true",
+          "V4_SHADOW_LAUNCH=",
+          "VK_ICD_FILENAMES",
+          "OVERTAKE_TRAJECTORY_BACKEND=current",
+          "HOST_UID=1000",
+          "ROS_HOME=",
+          "CMD=",
+          "ROS_DOMAIN_ID=1",
+          "RUN_RVIZ=true",
+          "RUN_KIND=dev",
+          "STATE_LATTICE_V2_LIVE_PROPOSAL_ACCEPT_ENABLED=false",
+          "ROSBAG=false",
+          "__VK_LAYER_NV_optimus=NVIDIA_only",
+          "XAUTHORITY=/run/user/1000/.mutter-Xwaylandauth.FOTJV3",
+          "STATE_LATTICE_V4_POC_COMMAND_ACTIVATION_ENABLED=false",
+          "DISPLAY=:0",
+          "ROS_DISTRO=humble",
+          "PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "QT_QPA_PLATFORMTHEME=qt5ct",
+          "XDG_RUNTIME_DIR=/tmp/xdg",
+          "ROS_LOCALHOST_ONLY=0",
+          "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+          "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+          "RCUTILS_COLORIZED_OUTPUT=1"
+        ],
+        "Cmd": [
+          "bash",
+          "-lc",
+          "exec /aichallenge/run_autoware.bash awsim 1 /output/codex-time-recovery-corner60-p04-d1"
+        ],
+        "Image": "aichallenge-2025-dev",
+        "Volumes": null,
+        "WorkingDir": "/output/codex-time-recovery-corner60-p04-d1",
+        "Entrypoint": [
+          "/docker-entrypoint.sh"
+        ],
+        "Labels": {
+          "com.docker.compose.config-hash": "018fef88033b5da911e608c6dc6656b863ba52db77f11b6f1366387d58bcca89",
+          "com.docker.compose.container-number": "1",
+          "com.docker.compose.depends_on": "",
+          "com.docker.compose.image": "sha256:8c650c13157ffabbc3a72bab08865ccff8338f9025b43a8f4405b4c6b96d1ba7",
+          "com.docker.compose.oneoff": "False",
+          "com.docker.compose.project": "codex-time-recovery-corner60-p04-d1",
+          "com.docker.compose.project.config_files": "/home/graneple/git/autononous_ai/aichallenge-racingkart/docker-compose.yml,/home/graneple/git/autononous_ai/aichallenge-racingkart/docker-compose.gpu.yml,/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/codex-time-recovery-corner60-p04-d1/compose.json",
+          "com.docker.compose.project.working_dir": "/home/graneple/git/autononous_ai/aichallenge-racingkart",
+          "com.docker.compose.service": "autoware",
+          "com.docker.compose.version": "5.1.3",
+          "org.opencontainers.image.created": "2025-12-16T05:26:42.211Z",
+          "org.opencontainers.image.description": "Autoware - the world's leading open-source software project for autonomous driving",
+          "org.opencontainers.image.licenses": "Apache-2.0",
+          "org.opencontainers.image.ref.name": "ubuntu",
+          "org.opencontainers.image.revision": "3b8f7eae97522507c5ab656ecdd5073bb8820192",
+          "org.opencontainers.image.source": "https://github.com/AutomotiveAIChallenge/autoware",
+          "org.opencontainers.image.title": "autoware",
+          "org.opencontainers.image.url": "https://github.com/AutomotiveAIChallenge/autoware",
+          "org.opencontainers.image.version": "humble-latest"
+        },
+        "StopSignal": "SIGINT",
+        "StopTimeout": 180
+      },
+      "NetworkSettings": {
+        "SandboxID": "",
+        "SandboxKey": "",
+        "Ports": {},
+        "Networks": {}
+      },
+      "ImageManifestDescriptor": {
+        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+        "digest": "sha256:5bf10eb6d8b1ba987fca1b3cd4084bf72c0896fc0b42a5100fba5e7bb7424f88",
+        "size": 6541,
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      }
+    },
+    {
+      "Id": "496cd57066ae89657b734625334ef14d4c730a67dd87f56656d104c372d8f183",
+      "Created": "2026-09-16T04:01:13.211948596Z",
+      "Path": "/docker-entrypoint.sh",
+      "Args": [
+        "bash",
+        "-lc",
+        "exec env PULSE_SERVER=unix:/run/user/1000/pulse/native /aichallenge/run_simulator.bash dev >\"/output/codex-time-recovery-corner60-p04-d1/awsim.log\" 2>&1"
+      ],
+      "State": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 1295897,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-16T04:01:13.286366763Z",
+        "FinishedAt": "0001-01-01T00:00:00Z"
+      },
+      "Image": "sha256:8c650c13157ffabbc3a72bab08865ccff8338f9025b43a8f4405b4c6b96d1ba7",
+      "ResolvConfPath": "/var/lib/docker/containers/368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef/resolv.conf",
+      "HostnamePath": "/var/lib/docker/containers/368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef/hostname",
+      "HostsPath": "/var/lib/docker/containers/368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef/hosts",
+      "LogPath": "/var/lib/docker/containers/496cd57066ae89657b734625334ef14d4c730a67dd87f56656d104c372d8f183/496cd57066ae89657b734625334ef14d4c730a67dd87f56656d104c372d8f183-json.log",
+      "Name": "/codex-time-recovery-corner60-p04-d1-simulator-1",
+      "RestartCount": 0,
+      "Driver": "overlayfs",
+      "Platform": "linux",
+      "MountLabel": "",
+      "ProcessLabel": "",
+      "AppArmorProfile": "unconfined",
+      "ExecIDs": null,
+      "HostConfig": {
+        "Binds": [
+          "/home/graneple/git/autononous_ai/aichallenge-racingkart/remote:/remote:rw",
+          "/home/graneple/git/autononous_ai/aichallenge-racingkart/vehicle:/vehicle:rw",
+          "/tmp/.X11-unix:/tmp/.X11-unix:rw",
+          "/dev/dri:/dev/dri:rw",
+          "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/codex-time-recovery-corner60-p04-d1:/output:rw",
+          "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:rw",
+          "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/codex-time-recovery-corner60-p04-d1/cyclonedds.xml:/opt/autoware/cyclonedds.xml:ro",
+          "/run/user:/run/user:rw",
+          "/run/user/1000/.mutter-Xwaylandauth.FOTJV3:/run/user/1000/.mutter-Xwaylandauth.FOTJV3:rw",
+          "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/codex-time-recovery-corner60-p04-d1/autoware.rviz:/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz:ro"
+        ],
+        "ContainerIDFile": "",
+        "LogConfig": {
+          "Type": "json-file",
+          "Config": {}
+        },
+        "NetworkMode": "container:368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef",
+        "PortBindings": {},
+        "RestartPolicy": {
+          "Name": "no",
+          "MaximumRetryCount": 0
+        },
+        "AutoRemove": false,
+        "VolumeDriver": "",
+        "VolumesFrom": null,
+        "ConsoleSize": [
+          0,
+          0
+        ],
+        "CapAdd": null,
+        "CapDrop": null,
+        "CgroupnsMode": "private",
+        "Dns": null,
+        "DnsOptions": null,
+        "DnsSearch": null,
+        "ExtraHosts": [],
+        "GroupAdd": null,
+        "IpcMode": "private",
+        "Cgroup": "",
+        "Links": null,
+        "OomScoreAdj": 0,
+        "PidMode": "",
+        "Privileged": true,
+        "PublishAllPorts": false,
+        "ReadonlyRootfs": false,
+        "SecurityOpt": [
+          "label=disable"
+        ],
+        "UTSMode": "",
+        "UsernsMode": "",
+        "ShmSize": 67108864,
+        "Runtime": "runc",
+        "Isolation": "",
+        "CpuShares": 0,
+        "Memory": 0,
+        "NanoCpus": 0,
+        "CgroupParent": "",
+        "BlkioWeight": 0,
+        "BlkioWeightDevice": null,
+        "BlkioDeviceReadBps": null,
+        "BlkioDeviceWriteBps": null,
+        "BlkioDeviceReadIOps": null,
+        "BlkioDeviceWriteIOps": null,
+        "CpuPeriod": 0,
+        "CpuQuota": 0,
+        "CpuRealtimePeriod": 0,
+        "CpuRealtimeRuntime": 0,
+        "CpusetCpus": "8-9,12-15",
+        "CpusetMems": "",
+        "Devices": [
+          {
+            "PathOnHost": "/dev/dri",
+            "PathInContainer": "/dev/dri",
+            "CgroupPermissions": "rwm"
+          },
+          {
+            "PathOnHost": "/dev/video0",
+            "PathInContainer": "/dev/video0",
+            "CgroupPermissions": "rwm"
+          },
+          {
+            "PathOnHost": "/dev/input",
+            "PathInContainer": "/dev/input",
+            "CgroupPermissions": "rwm"
+          }
+        ],
+        "DeviceCgroupRules": null,
+        "DeviceRequests": [
+          {
+            "Driver": "nvidia",
+            "Count": -1,
+            "DeviceIDs": null,
+            "Capabilities": [
+              [
+                "gpu"
+              ]
+            ],
+            "Options": null
+          }
+        ],
+        "MemoryReservation": 0,
+        "MemorySwap": 0,
+        "MemorySwappiness": null,
+        "OomKillDisable": null,
+        "PidsLimit": null,
+        "Ulimits": null,
+        "CpuCount": 0,
+        "CpuPercent": 0,
+        "IOMaximumIOps": 0,
+        "IOMaximumBandwidth": 0,
+        "MaskedPaths": null,
+        "ReadonlyPaths": null
+      },
+      "Storage": {
+        "RootFS": {
+          "Snapshot": {
+            "Name": "overlayfs"
+          }
+        }
+      },
+      "Mounts": [
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/git/autononous_ai/aichallenge-racingkart/remote",
+          "Destination": "/remote",
+          "Mode": "rw",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/codex-time-recovery-corner60-p04-d1",
+          "Destination": "/output",
+          "Mode": "rw",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge",
+          "Destination": "/aichallenge",
+          "Mode": "rw",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/codex-time-recovery-corner60-p04-d1/cyclonedds.xml",
+          "Destination": "/opt/autoware/cyclonedds.xml",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/run/user",
+          "Destination": "/run/user",
+          "Mode": "rw",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/codex-time-recovery-corner60-p04-d1/autoware.rviz",
+          "Destination": "/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/git/autononous_ai/aichallenge-racingkart/vehicle",
+          "Destination": "/vehicle",
+          "Mode": "rw",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/tmp/.X11-unix",
+          "Destination": "/tmp/.X11-unix",
+          "Mode": "rw",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/dev/dri",
+          "Destination": "/dev/dri",
+          "Mode": "rw",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/run/user/1000/.mutter-Xwaylandauth.FOTJV3",
+          "Destination": "/run/user/1000/.mutter-Xwaylandauth.FOTJV3",
+          "Mode": "rw",
+          "RW": true,
+          "Propagation": "rprivate"
+        }
+      ],
+      "Config": {
+        "Hostname": "368bf4fb19ae",
+        "Domainname": "",
+        "User": "",
+        "AttachStdin": false,
+        "AttachStdout": true,
+        "AttachStderr": true,
+        "Tty": false,
+        "OpenStdin": false,
+        "StdinOnce": false,
+        "Env": [
+          "STATE_LATTICE_V2_SESSION_ID=",
+          "ROSBAG=false",
+          "V4_SHADOW_LAUNCH=",
+          "__VK_LAYER_NV_optimus=NVIDIA_only",
+          "V4_SHADOW_CONFIG=",
+          "SIM_MODE=dev",
+          "V4_SHADOW_ENABLED=false",
+          "CONTROL_METHOD=v4_20_external",
+          "AWSIM_VEHICLES=1",
+          "LAUNCH_AWSIM=true",
+          "HOST_UID=1000",
+          "ROS_LOG_DIR=",
+          "VK_ICD_FILENAMES",
+          "AWSIM_EXTRA_ARGS=--ros2-base-domain 1 -logFile /output/codex-time-recovery-corner60-p04-d1/awsim_unity.log",
+          "CAPTURE=false",
+          "RUN_KIND=",
+          "HOST_GID=1000",
+          "CMD=",
+          "TZ=Asia/Tokyo",
+          "OVERTAKE_TRAJECTORY_BACKEND=current",
+          "USER=graneple",
+          "QT_X11_NO_MITSHM=1",
+          "PLANNER_PP_CONTROL_SMOKE_LIVE_SPATIAL=false",
+          "AWSIM_START_MODE=sync",
+          "ROS_DOMAIN_ID=0",
+          "NVIDIA_VISIBLE_DEVICES=all",
+          "STATE_LATTICE_V4_POC_COMMAND_ACTIVATION_ENABLED=false",
+          "V4_SHADOW_SETUP=",
+          "PP_CORE_EXACT_SNAPSHOT_ENABLED=false",
+          "COLCON_TRACE=",
+          "OPPONENT_MOTION_PREDICTION_ENABLED=false",
+          "AWSIM_START_COUNT_SECONDS=",
+          "AUTOSTART_DEBUG_VISUALIZATION=true",
+          "STATE_LATTICE_V2_LIVE_PROPOSAL_PUBLISH_ENABLED=false",
+          "ROS_DISTRO=humble",
+          "RACE_ARM_ON_VEHICLE_STATE=Start",
+          "__NV_PRIME_RENDER_OFFLOAD=1",
+          "DISPLAY=:0",
+          "AWSIM_TIMEOUT=1920",
+          "AWSIM_LAPS=2",
+          "STATE_LATTICE_V2_PP_PRODUCER_INSTANCE_ID=",
+          "XAUTHORITY=/run/user/1000/.mutter-Xwaylandauth.FOTJV3",
+          "NVIDIA_DRIVER_CAPABILITIES=all",
+          "ROS_HOME=",
+          "STATE_LATTICE_V2_PRODUCER_INSTANCE_ID=0",
+          "STATE_LATTICE_V2_LIVE_PROPOSAL_ACCEPT_ENABLED=false",
+          "RUN_MODE=",
+          "RUN_RVIZ=true",
+          "PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "QT_QPA_PLATFORMTHEME=qt5ct",
+          "XDG_RUNTIME_DIR=/tmp/xdg",
+          "ROS_LOCALHOST_ONLY=0",
+          "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+          "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+          "RCUTILS_COLORIZED_OUTPUT=1"
+        ],
+        "Cmd": [
+          "bash",
+          "-lc",
+          "exec env PULSE_SERVER=unix:/run/user/1000/pulse/native /aichallenge/run_simulator.bash dev >\"/output/codex-time-recovery-corner60-p04-d1/awsim.log\" 2>&1"
+        ],
+        "Image": "aichallenge-2025-dev",
+        "Volumes": null,
+        "WorkingDir": "/output/codex-time-recovery-corner60-p04-d1",
+        "Entrypoint": [
+          "/docker-entrypoint.sh"
+        ],
+        "Labels": {
+          "com.docker.compose.config-hash": "20c895c7a61cdb8240e0ad2b88fa956a0394eec03755e2edd5cf7590816507f7",
+          "com.docker.compose.container-number": "1",
+          "com.docker.compose.depends_on": "",
+          "com.docker.compose.image": "sha256:8c650c13157ffabbc3a72bab08865ccff8338f9025b43a8f4405b4c6b96d1ba7",
+          "com.docker.compose.oneoff": "False",
+          "com.docker.compose.project": "codex-time-recovery-corner60-p04-d1",
+          "com.docker.compose.project.config_files": "/home/graneple/git/autononous_ai/aichallenge-racingkart/docker-compose.yml,/home/graneple/git/autononous_ai/aichallenge-racingkart/docker-compose.gpu.yml,/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/codex-time-recovery-corner60-p04-d1/compose.json",
+          "com.docker.compose.project.working_dir": "/home/graneple/git/autononous_ai/aichallenge-racingkart",
+          "com.docker.compose.service": "simulator",
+          "com.docker.compose.version": "5.1.3",
+          "org.opencontainers.image.created": "2025-12-16T05:26:42.211Z",
+          "org.opencontainers.image.description": "Autoware - the world's leading open-source software project for autonomous driving",
+          "org.opencontainers.image.licenses": "Apache-2.0",
+          "org.opencontainers.image.ref.name": "ubuntu",
+          "org.opencontainers.image.revision": "3b8f7eae97522507c5ab656ecdd5073bb8820192",
+          "org.opencontainers.image.source": "https://github.com/AutomotiveAIChallenge/autoware",
+          "org.opencontainers.image.title": "autoware",
+          "org.opencontainers.image.url": "https://github.com/AutomotiveAIChallenge/autoware",
+          "org.opencontainers.image.version": "humble-latest"
+        },
+        "StopTimeout": 10
+      },
+      "NetworkSettings": {
+        "SandboxID": "",
+        "SandboxKey": "",
+        "Ports": {},
+        "Networks": {}
+      },
+      "ImageManifestDescriptor": {
+        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+        "digest": "sha256:5bf10eb6d8b1ba987fca1b3cd4084bf72c0896fc0b42a5100fba5e7bb7424f88",
+        "size": 6541,
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      }
+    },
+    {
+      "Id": "79edb40cebc1d869080be1d8f54ffedda4cec41740860ddb073624b619a2f445",
+      "Created": "2026-09-16T04:01:07.351388975Z",
+      "Path": "bash",
+      "Args": [
+        "-lc",
+        "source /aichallenge/workspace/install/setup.bash && source /capture/cpp_install/setup.bash && export PYTHONPATH=/capture/source/src:${PYTHONPATH:-} && exec python3 /capture/source/tools/run_time_recovery_nodes.py --output /capture/codex-time-recovery-corner60-p04-d1 --reference-root /capture/references --side left --run-id codex-time-recovery-corner60-p04-d1 --speed-policy aligned_gain4_v1 --ros-domain-id 1"
+      ],
+      "State": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 1295407,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-16T04:01:07.39121285Z",
+        "FinishedAt": "0001-01-01T00:00:00Z"
+      },
+      "Image": "sha256:d9fd07234bd1c9fe083a2adf6c5cbdcc925cf4bbefba3b7a74898cb301449e02",
+      "ResolvConfPath": "/var/lib/docker/containers/368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef/resolv.conf",
+      "HostnamePath": "/var/lib/docker/containers/368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef/hostname",
+      "HostsPath": "/var/lib/docker/containers/368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef/hosts",
+      "LogPath": "/var/lib/docker/containers/79edb40cebc1d869080be1d8f54ffedda4cec41740860ddb073624b619a2f445/79edb40cebc1d869080be1d8f54ffedda4cec41740860ddb073624b619a2f445-json.log",
+      "Name": "/codex-time-recovery-corner60-p04-d1-nodes",
+      "RestartCount": 0,
+      "Driver": "overlayfs",
+      "Platform": "linux",
+      "MountLabel": "",
+      "ProcessLabel": "",
+      "AppArmorProfile": "docker-default",
+      "ExecIDs": null,
+      "HostConfig": {
+        "Binds": [
+          "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/codex-time-recovery-corner60-p04-d1/cyclonedds.xml:/opt/autoware/cyclonedds.xml:ro",
+          "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916:/capture",
+          "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro"
+        ],
+        "ContainerIDFile": "",
+        "LogConfig": {
+          "Type": "json-file",
+          "Config": {}
+        },
+        "NetworkMode": "container:368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef",
+        "PortBindings": {},
+        "RestartPolicy": {
+          "Name": "no",
+          "MaximumRetryCount": 0
+        },
+        "AutoRemove": true,
+        "VolumeDriver": "",
+        "VolumesFrom": null,
+        "ConsoleSize": [
+          0,
+          0
+        ],
+        "CapAdd": null,
+        "CapDrop": null,
+        "CgroupnsMode": "private",
+        "Dns": null,
+        "DnsOptions": [],
+        "DnsSearch": [],
+        "ExtraHosts": null,
+        "GroupAdd": null,
+        "IpcMode": "private",
+        "Cgroup": "",
+        "Links": null,
+        "OomScoreAdj": 0,
+        "PidMode": "",
+        "Privileged": false,
+        "PublishAllPorts": false,
+        "ReadonlyRootfs": false,
+        "SecurityOpt": null,
+        "UTSMode": "",
+        "UsernsMode": "",
+        "ShmSize": 67108864,
+        "Runtime": "runc",
+        "Isolation": "",
+        "CpuShares": 0,
+        "Memory": 0,
+        "NanoCpus": 0,
+        "CgroupParent": "",
+        "BlkioWeight": 0,
+        "BlkioWeightDevice": [],
+        "BlkioDeviceReadBps": [],
+        "BlkioDeviceWriteBps": [],
+        "BlkioDeviceReadIOps": [],
+        "BlkioDeviceWriteIOps": [],
+        "CpuPeriod": 0,
+        "CpuQuota": 0,
+        "CpuRealtimePeriod": 0,
+        "CpuRealtimeRuntime": 0,
+        "CpusetCpus": "0-3",
+        "CpusetMems": "",
+        "Devices": [],
+        "DeviceCgroupRules": null,
+        "DeviceRequests": null,
+        "MemoryReservation": 0,
+        "MemorySwap": 0,
+        "MemorySwappiness": null,
+        "OomKillDisable": null,
+        "PidsLimit": null,
+        "Ulimits": [],
+        "CpuCount": 0,
+        "CpuPercent": 0,
+        "IOMaximumIOps": 0,
+        "IOMaximumBandwidth": 0,
+        "MaskedPaths": [
+          "/proc/acpi",
+          "/proc/asound",
+          "/proc/interrupts",
+          "/proc/kcore",
+          "/proc/keys",
+          "/proc/latency_stats",
+          "/proc/sched_debug",
+          "/proc/scsi",
+          "/proc/timer_list",
+          "/proc/timer_stats",
+          "/sys/devices/virtual/powercap",
+          "/sys/firmware",
+          "/sys/devices/system/cpu/cpu0/thermal_throttle",
+          "/sys/devices/system/cpu/cpu1/thermal_throttle",
+          "/sys/devices/system/cpu/cpu2/thermal_throttle",
+          "/sys/devices/system/cpu/cpu3/thermal_throttle",
+          "/sys/devices/system/cpu/cpu4/thermal_throttle",
+          "/sys/devices/system/cpu/cpu5/thermal_throttle",
+          "/sys/devices/system/cpu/cpu6/thermal_throttle",
+          "/sys/devices/system/cpu/cpu7/thermal_throttle",
+          "/sys/devices/system/cpu/cpu8/thermal_throttle",
+          "/sys/devices/system/cpu/cpu9/thermal_throttle",
+          "/sys/devices/system/cpu/cpu10/thermal_throttle",
+          "/sys/devices/system/cpu/cpu11/thermal_throttle",
+          "/sys/devices/system/cpu/cpu12/thermal_throttle",
+          "/sys/devices/system/cpu/cpu13/thermal_throttle",
+          "/sys/devices/system/cpu/cpu14/thermal_throttle",
+          "/sys/devices/system/cpu/cpu15/thermal_throttle",
+          "/sys/devices/system/cpu/cpu16/thermal_throttle",
+          "/sys/devices/system/cpu/cpu17/thermal_throttle",
+          "/sys/devices/system/cpu/cpu18/thermal_throttle",
+          "/sys/devices/system/cpu/cpu19/thermal_throttle"
+        ],
+        "ReadonlyPaths": [
+          "/proc/bus",
+          "/proc/fs",
+          "/proc/irq",
+          "/proc/sys",
+          "/proc/sysrq-trigger"
+        ]
+      },
+      "Storage": {
+        "RootFS": {
+          "Snapshot": {
+            "Name": "overlayfs"
+          }
+        }
+      },
+      "Mounts": [
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/codex-time-recovery-corner60-p04-d1/cyclonedds.xml",
+          "Destination": "/opt/autoware/cyclonedds.xml",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916",
+          "Destination": "/capture",
+          "Mode": "",
+          "RW": true,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge",
+          "Destination": "/aichallenge",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        }
+      ],
+      "Config": {
+        "Hostname": "368bf4fb19ae",
+        "Domainname": "",
+        "User": "root",
+        "AttachStdin": false,
+        "AttachStdout": true,
+        "AttachStderr": true,
+        "Tty": false,
+        "OpenStdin": false,
+        "StdinOnce": false,
+        "Env": [
+          "ROS_DOMAIN_ID=1",
+          "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+          "PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "QT_QPA_PLATFORMTHEME=qt5ct",
+          "XDG_RUNTIME_DIR=/tmp/xdg",
+          "ROS_LOCALHOST_ONLY=0",
+          "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+          "RCUTILS_COLORIZED_OUTPUT=1"
+        ],
+        "Cmd": [
+          "-lc",
+          "source /aichallenge/workspace/install/setup.bash && source /capture/cpp_install/setup.bash && export PYTHONPATH=/capture/source/src:${PYTHONPATH:-} && exec python3 /capture/source/tools/run_time_recovery_nodes.py --output /capture/codex-time-recovery-corner60-p04-d1 --reference-root /capture/references --side left --run-id codex-time-recovery-corner60-p04-d1 --speed-policy aligned_gain4_v1 --ros-domain-id 1"
+        ],
+        "Image": "codex-cartographer-v4-build:20260910",
+        "Volumes": null,
+        "WorkingDir": "/autoware",
+        "Entrypoint": [
+          "bash"
+        ],
+        "Labels": {
+          "aic.recovery.run_id": "codex-time-recovery-corner60-p04-d1",
+          "aic.recovery.scope": "time_recovery_corner60_20260916",
+          "org.opencontainers.image.created": "2025-12-16T05:26:42.211Z",
+          "org.opencontainers.image.description": "Autoware - the world's leading open-source software project for autonomous driving",
+          "org.opencontainers.image.licenses": "Apache-2.0",
+          "org.opencontainers.image.ref.name": "ubuntu",
+          "org.opencontainers.image.revision": "3b8f7eae97522507c5ab656ecdd5073bb8820192",
+          "org.opencontainers.image.source": "https://github.com/AutomotiveAIChallenge/autoware",
+          "org.opencontainers.image.title": "autoware",
+          "org.opencontainers.image.url": "https://github.com/AutomotiveAIChallenge/autoware",
+          "org.opencontainers.image.version": "humble-latest"
+        }
+      },
+      "NetworkSettings": {
+        "SandboxID": "",
+        "SandboxKey": "",
+        "Ports": {},
+        "Networks": {}
+      },
+      "ImageManifestDescriptor": {
+        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+        "digest": "sha256:fbdfe9543d93d53af50e293a90b49f772aa3e6773ec84f3feae149d7f7fc8bd2",
+        "size": 6734,
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      }
+    },
+    {
+      "Id": "421be124ad54f9ae1d5fa82979cd806590fb880bf0c95a900fb62e3ddaaa0d80",
+      "Created": "2026-09-16T04:00:47.565863003Z",
+      "Path": "sleep",
+      "Args": [
+        "infinity"
+      ],
+      "State": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 1294826,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-16T04:00:47.615670933Z",
+        "FinishedAt": "0001-01-01T00:00:00Z"
+      },
+      "Image": "sha256:d9fd07234bd1c9fe083a2adf6c5cbdcc925cf4bbefba3b7a74898cb301449e02",
+      "ResolvConfPath": "/var/lib/docker/containers/421be124ad54f9ae1d5fa82979cd806590fb880bf0c95a900fb62e3ddaaa0d80/resolv.conf",
+      "HostnamePath": "/var/lib/docker/containers/421be124ad54f9ae1d5fa82979cd806590fb880bf0c95a900fb62e3ddaaa0d80/hostname",
+      "HostsPath": "/var/lib/docker/containers/421be124ad54f9ae1d5fa82979cd806590fb880bf0c95a900fb62e3ddaaa0d80/hosts",
+      "LogPath": "/var/lib/docker/containers/421be124ad54f9ae1d5fa82979cd806590fb880bf0c95a900fb62e3ddaaa0d80/421be124ad54f9ae1d5fa82979cd806590fb880bf0c95a900fb62e3ddaaa0d80-json.log",
+      "Name": "/codex-time-recovery-corner60-p04-d2-net",
+      "RestartCount": 0,
+      "Driver": "overlayfs",
+      "Platform": "linux",
+      "MountLabel": "",
+      "ProcessLabel": "",
+      "AppArmorProfile": "docker-default",
+      "ExecIDs": null,
+      "HostConfig": {
+        "Binds": [
+          "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/probe_cyclonedds.xml:/opt/autoware/cyclonedds.xml:ro",
+          "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro"
+        ],
+        "ContainerIDFile": "",
+        "LogConfig": {
+          "Type": "json-file",
+          "Config": {}
+        },
+        "NetworkMode": "none",
+        "PortBindings": {},
+        "RestartPolicy": {
+          "Name": "no",
+          "MaximumRetryCount": 0
+        },
+        "AutoRemove": false,
+        "VolumeDriver": "",
+        "VolumesFrom": null,
+        "ConsoleSize": [
+          0,
+          0
+        ],
+        "CapAdd": null,
+        "CapDrop": null,
+        "CgroupnsMode": "private",
+        "Dns": null,
+        "DnsOptions": [],
+        "DnsSearch": [],
+        "ExtraHosts": null,
+        "GroupAdd": null,
+        "IpcMode": "private",
+        "Cgroup": "",
+        "Links": null,
+        "OomScoreAdj": 0,
+        "PidMode": "",
+        "Privileged": false,
+        "PublishAllPorts": false,
+        "ReadonlyRootfs": false,
+        "SecurityOpt": null,
+        "UTSMode": "",
+        "UsernsMode": "",
+        "ShmSize": 67108864,
+        "Runtime": "runc",
+        "Isolation": "",
+        "CpuShares": 0,
+        "Memory": 0,
+        "NanoCpus": 0,
+        "CgroupParent": "",
+        "BlkioWeight": 0,
+        "BlkioWeightDevice": [],
+        "BlkioDeviceReadBps": [],
+        "BlkioDeviceWriteBps": [],
+        "BlkioDeviceReadIOps": [],
+        "BlkioDeviceWriteIOps": [],
+        "CpuPeriod": 0,
+        "CpuQuota": 0,
+        "CpuRealtimePeriod": 0,
+        "CpuRealtimeRuntime": 0,
+        "CpusetCpus": "",
+        "CpusetMems": "",
+        "Devices": [],
+        "DeviceCgroupRules": null,
+        "DeviceRequests": null,
+        "MemoryReservation": 0,
+        "MemorySwap": 0,
+        "MemorySwappiness": null,
+        "OomKillDisable": null,
+        "PidsLimit": null,
+        "Ulimits": [],
+        "CpuCount": 0,
+        "CpuPercent": 0,
+        "IOMaximumIOps": 0,
+        "IOMaximumBandwidth": 0,
+        "MaskedPaths": [
+          "/proc/acpi",
+          "/proc/asound",
+          "/proc/interrupts",
+          "/proc/kcore",
+          "/proc/keys",
+          "/proc/latency_stats",
+          "/proc/sched_debug",
+          "/proc/scsi",
+          "/proc/timer_list",
+          "/proc/timer_stats",
+          "/sys/devices/virtual/powercap",
+          "/sys/firmware",
+          "/sys/devices/system/cpu/cpu0/thermal_throttle",
+          "/sys/devices/system/cpu/cpu1/thermal_throttle",
+          "/sys/devices/system/cpu/cpu2/thermal_throttle",
+          "/sys/devices/system/cpu/cpu3/thermal_throttle",
+          "/sys/devices/system/cpu/cpu4/thermal_throttle",
+          "/sys/devices/system/cpu/cpu5/thermal_throttle",
+          "/sys/devices/system/cpu/cpu6/thermal_throttle",
+          "/sys/devices/system/cpu/cpu7/thermal_throttle",
+          "/sys/devices/system/cpu/cpu8/thermal_throttle",
+          "/sys/devices/system/cpu/cpu9/thermal_throttle",
+          "/sys/devices/system/cpu/cpu10/thermal_throttle",
+          "/sys/devices/system/cpu/cpu11/thermal_throttle",
+          "/sys/devices/system/cpu/cpu12/thermal_throttle",
+          "/sys/devices/system/cpu/cpu13/thermal_throttle",
+          "/sys/devices/system/cpu/cpu14/thermal_throttle",
+          "/sys/devices/system/cpu/cpu15/thermal_throttle",
+          "/sys/devices/system/cpu/cpu16/thermal_throttle",
+          "/sys/devices/system/cpu/cpu17/thermal_throttle",
+          "/sys/devices/system/cpu/cpu18/thermal_throttle",
+          "/sys/devices/system/cpu/cpu19/thermal_throttle"
+        ],
+        "ReadonlyPaths": [
+          "/proc/bus",
+          "/proc/fs",
+          "/proc/irq",
+          "/proc/sys",
+          "/proc/sysrq-trigger"
+        ]
+      },
+      "Storage": {
+        "RootFS": {
+          "Snapshot": {
+            "Name": "overlayfs"
+          }
+        }
+      },
+      "Mounts": [
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/probe_cyclonedds.xml",
+          "Destination": "/opt/autoware/cyclonedds.xml",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge",
+          "Destination": "/aichallenge",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        }
+      ],
+      "Config": {
+        "Hostname": "421be124ad54",
+        "Domainname": "",
+        "User": "root",
+        "AttachStdin": false,
+        "AttachStdout": false,
+        "AttachStderr": false,
+        "Tty": false,
+        "OpenStdin": false,
+        "StdinOnce": false,
+        "Env": [
+          "ROS_DOMAIN_ID=0",
+          "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+          "PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "QT_QPA_PLATFORMTHEME=qt5ct",
+          "XDG_RUNTIME_DIR=/tmp/xdg",
+          "ROS_LOCALHOST_ONLY=0",
+          "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+          "RCUTILS_COLORIZED_OUTPUT=1"
+        ],
+        "Cmd": [
+          "infinity"
+        ],
+        "Image": "codex-cartographer-v4-build:20260910",
+        "Volumes": null,
+        "WorkingDir": "/autoware",
+        "Entrypoint": [
+          "sleep"
+        ],
+        "Labels": {
+          "aic.recovery.run_id": "codex-time-recovery-corner60-p04-d2",
+          "aic.recovery.scope": "time_recovery_corner60_20260916",
+          "org.opencontainers.image.created": "2025-12-16T05:26:42.211Z",
+          "org.opencontainers.image.description": "Autoware - the world's leading open-source software project for autonomous driving",
+          "org.opencontainers.image.licenses": "Apache-2.0",
+          "org.opencontainers.image.ref.name": "ubuntu",
+          "org.opencontainers.image.revision": "3b8f7eae97522507c5ab656ecdd5073bb8820192",
+          "org.opencontainers.image.source": "https://github.com/AutomotiveAIChallenge/autoware",
+          "org.opencontainers.image.title": "autoware",
+          "org.opencontainers.image.url": "https://github.com/AutomotiveAIChallenge/autoware",
+          "org.opencontainers.image.version": "humble-latest"
+        }
+      },
+      "NetworkSettings": {
+        "SandboxID": "63f8b0913dc931a4391ebface27ff267c01645a536848d5d4ffa6572a7a32cc1",
+        "SandboxKey": "/var/run/docker/netns/63f8b0913dc9",
+        "Ports": {},
+        "Networks": {
+          "none": {
+            "IPAMConfig": null,
+            "Links": null,
+            "Aliases": null,
+            "DriverOpts": null,
+            "GwPriority": 0,
+            "NetworkID": "9e797fbbeeb8fbfb877880a5970830ef1e9ea8f243880ad69e591a0e57710733",
+            "EndpointID": "d51257b6114eb1b7c908f3b0a65baa772c08b64ac6f69a92058a3c42b8aa5ce5",
+            "Gateway": "",
+            "IPAddress": "",
+            "MacAddress": "",
+            "IPPrefixLen": 0,
+            "IPv6Gateway": "",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "DNSNames": null
+          }
+        }
+      },
+      "ImageManifestDescriptor": {
+        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+        "digest": "sha256:fbdfe9543d93d53af50e293a90b49f772aa3e6773ec84f3feae149d7f7fc8bd2",
+        "size": 6734,
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      }
+    },
+    {
+      "Id": "368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef",
+      "Created": "2026-09-16T04:00:47.330204391Z",
+      "Path": "sleep",
+      "Args": [
+        "infinity"
+      ],
+      "State": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 1294768,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-16T04:00:47.397105424Z",
+        "FinishedAt": "0001-01-01T00:00:00Z"
+      },
+      "Image": "sha256:d9fd07234bd1c9fe083a2adf6c5cbdcc925cf4bbefba3b7a74898cb301449e02",
+      "ResolvConfPath": "/var/lib/docker/containers/368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef/resolv.conf",
+      "HostnamePath": "/var/lib/docker/containers/368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef/hostname",
+      "HostsPath": "/var/lib/docker/containers/368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef/hosts",
+      "LogPath": "/var/lib/docker/containers/368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef/368bf4fb19ae70327eeca410b43be797bf6b29748cc29429bea8a48c3a163fef-json.log",
+      "Name": "/codex-time-recovery-corner60-p04-d1-net",
+      "RestartCount": 0,
+      "Driver": "overlayfs",
+      "Platform": "linux",
+      "MountLabel": "",
+      "ProcessLabel": "",
+      "AppArmorProfile": "docker-default",
+      "ExecIDs": null,
+      "HostConfig": {
+        "Binds": [
+          "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/probe_cyclonedds.xml:/opt/autoware/cyclonedds.xml:ro",
+          "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro"
+        ],
+        "ContainerIDFile": "",
+        "LogConfig": {
+          "Type": "json-file",
+          "Config": {}
+        },
+        "NetworkMode": "none",
+        "PortBindings": {},
+        "RestartPolicy": {
+          "Name": "no",
+          "MaximumRetryCount": 0
+        },
+        "AutoRemove": false,
+        "VolumeDriver": "",
+        "VolumesFrom": null,
+        "ConsoleSize": [
+          0,
+          0
+        ],
+        "CapAdd": null,
+        "CapDrop": null,
+        "CgroupnsMode": "private",
+        "Dns": null,
+        "DnsOptions": [],
+        "DnsSearch": [],
+        "ExtraHosts": null,
+        "GroupAdd": null,
+        "IpcMode": "private",
+        "Cgroup": "",
+        "Links": null,
+        "OomScoreAdj": 0,
+        "PidMode": "",
+        "Privileged": false,
+        "PublishAllPorts": false,
+        "ReadonlyRootfs": false,
+        "SecurityOpt": null,
+        "UTSMode": "",
+        "UsernsMode": "",
+        "ShmSize": 67108864,
+        "Runtime": "runc",
+        "Isolation": "",
+        "CpuShares": 0,
+        "Memory": 0,
+        "NanoCpus": 0,
+        "CgroupParent": "",
+        "BlkioWeight": 0,
+        "BlkioWeightDevice": [],
+        "BlkioDeviceReadBps": [],
+        "BlkioDeviceWriteBps": [],
+        "BlkioDeviceReadIOps": [],
+        "BlkioDeviceWriteIOps": [],
+        "CpuPeriod": 0,
+        "CpuQuota": 0,
+        "CpuRealtimePeriod": 0,
+        "CpuRealtimeRuntime": 0,
+        "CpusetCpus": "",
+        "CpusetMems": "",
+        "Devices": [],
+        "DeviceCgroupRules": null,
+        "DeviceRequests": null,
+        "MemoryReservation": 0,
+        "MemorySwap": 0,
+        "MemorySwappiness": null,
+        "OomKillDisable": null,
+        "PidsLimit": null,
+        "Ulimits": [],
+        "CpuCount": 0,
+        "CpuPercent": 0,
+        "IOMaximumIOps": 0,
+        "IOMaximumBandwidth": 0,
+        "MaskedPaths": [
+          "/proc/acpi",
+          "/proc/asound",
+          "/proc/interrupts",
+          "/proc/kcore",
+          "/proc/keys",
+          "/proc/latency_stats",
+          "/proc/sched_debug",
+          "/proc/scsi",
+          "/proc/timer_list",
+          "/proc/timer_stats",
+          "/sys/devices/virtual/powercap",
+          "/sys/firmware",
+          "/sys/devices/system/cpu/cpu0/thermal_throttle",
+          "/sys/devices/system/cpu/cpu1/thermal_throttle",
+          "/sys/devices/system/cpu/cpu2/thermal_throttle",
+          "/sys/devices/system/cpu/cpu3/thermal_throttle",
+          "/sys/devices/system/cpu/cpu4/thermal_throttle",
+          "/sys/devices/system/cpu/cpu5/thermal_throttle",
+          "/sys/devices/system/cpu/cpu6/thermal_throttle",
+          "/sys/devices/system/cpu/cpu7/thermal_throttle",
+          "/sys/devices/system/cpu/cpu8/thermal_throttle",
+          "/sys/devices/system/cpu/cpu9/thermal_throttle",
+          "/sys/devices/system/cpu/cpu10/thermal_throttle",
+          "/sys/devices/system/cpu/cpu11/thermal_throttle",
+          "/sys/devices/system/cpu/cpu12/thermal_throttle",
+          "/sys/devices/system/cpu/cpu13/thermal_throttle",
+          "/sys/devices/system/cpu/cpu14/thermal_throttle",
+          "/sys/devices/system/cpu/cpu15/thermal_throttle",
+          "/sys/devices/system/cpu/cpu16/thermal_throttle",
+          "/sys/devices/system/cpu/cpu17/thermal_throttle",
+          "/sys/devices/system/cpu/cpu18/thermal_throttle",
+          "/sys/devices/system/cpu/cpu19/thermal_throttle"
+        ],
+        "ReadonlyPaths": [
+          "/proc/bus",
+          "/proc/fs",
+          "/proc/irq",
+          "/proc/sys",
+          "/proc/sysrq-trigger"
+        ]
+      },
+      "Storage": {
+        "RootFS": {
+          "Snapshot": {
+            "Name": "overlayfs"
+          }
+        }
+      },
+      "Mounts": [
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/e2e_autonomous/time_recovery_corner60_20260916/probe_cyclonedds.xml",
+          "Destination": "/opt/autoware/cyclonedds.xml",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        },
+        {
+          "Type": "bind",
+          "Source": "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge",
+          "Destination": "/aichallenge",
+          "Mode": "ro",
+          "RW": false,
+          "Propagation": "rprivate"
+        }
+      ],
+      "Config": {
+        "Hostname": "368bf4fb19ae",
+        "Domainname": "",
+        "User": "root",
+        "AttachStdin": false,
+        "AttachStdout": false,
+        "AttachStderr": false,
+        "Tty": false,
+        "OpenStdin": false,
+        "StdinOnce": false,
+        "Env": [
+          "ROS_DOMAIN_ID=0",
+          "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+          "PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "QT_QPA_PLATFORMTHEME=qt5ct",
+          "XDG_RUNTIME_DIR=/tmp/xdg",
+          "ROS_LOCALHOST_ONLY=0",
+          "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
+          "RCUTILS_COLORIZED_OUTPUT=1"
+        ],
+        "Cmd": [
+          "infinity"
+        ],
+        "Image": "codex-cartographer-v4-build:20260910",
+        "Volumes": null,
+        "WorkingDir": "/autoware",
+        "Entrypoint": [
+          "sleep"
+        ],
+        "Labels": {
+          "aic.recovery.run_id": "codex-time-recovery-corner60-p04-d1",
+          "aic.recovery.scope": "time_recovery_corner60_20260916",
+          "org.opencontainers.image.created": "2025-12-16T05:26:42.211Z",
+          "org.opencontainers.image.description": "Autoware - the world's leading open-source software project for autonomous driving",
+          "org.opencontainers.image.licenses": "Apache-2.0",
+          "org.opencontainers.image.ref.name": "ubuntu",
+          "org.opencontainers.image.revision": "3b8f7eae97522507c5ab656ecdd5073bb8820192",
+          "org.opencontainers.image.source": "https://github.com/AutomotiveAIChallenge/autoware",
+          "org.opencontainers.image.title": "autoware",
+          "org.opencontainers.image.url": "https://github.com/AutomotiveAIChallenge/autoware",
+          "org.opencontainers.image.version": "humble-latest"
+        }
+      },
+      "NetworkSettings": {
+        "SandboxID": "ccd6ac742a757862c92f6a713678771354359f39082b2c887beeb27b8f2d12e4",
+        "SandboxKey": "/var/run/docker/netns/ccd6ac742a75",
+        "Ports": {},
+        "Networks": {
+          "none": {
+            "IPAMConfig": null,
+            "Links": null,
+            "Aliases": null,
+            "DriverOpts": null,
+            "GwPriority": 0,
+            "NetworkID": "9e797fbbeeb8fbfb877880a5970830ef1e9ea8f243880ad69e591a0e57710733",
+            "EndpointID": "0837e516ec38d1501eb15bed6da9319df77f029a762cc47a8701bc0a5343b911",
+            "Gateway": "",
+            "IPAddress": "",
+            "MacAddress": "",
+            "IPPrefixLen": 0,
+            "IPv6Gateway": "",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "DNSNames": null
+          }
+        }
+      },
+      "ImageManifestDescriptor": {
+        "mediaType": "application/vnd.oci.image.manifest.v1+json",
+        "digest": "sha256:fbdfe9543d93d53af50e293a90b49f772aa3e6773ec84f3feae149d7f7fc8bd2",
+        "size": 6734,
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      }
+    }
+  ]
+}

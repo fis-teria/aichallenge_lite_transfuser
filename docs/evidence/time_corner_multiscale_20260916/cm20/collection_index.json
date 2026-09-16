@@ -1,0 +1,840 @@
+{
+  "schema": "observed_corner_recovery_collection_v1",
+  "index_source_commit": "78e6f89d5a97aa380d9e3d8281b6368788d7c72a",
+  "runtime_host": "graneple@192.168.3.10",
+  "native_wsl_raw": "/home/thistle/e2e_autonomous/raw/time_corner_multiscale20_20260916",
+  "maximum_attempts": 12,
+  "maximum_events_per_lap": 3,
+  "fixed_target_kmh": 5,
+  "labels": "Observed future positions: 30 xy points in meters over 3 seconds",
+  "inputs": "Causal camera, LiDAR and ego history at the actual shifted pose",
+  "split_policy": "Whole runs; same corners, not held-out-corner generalization",
+  "collection_speed_policy": "record_actual_v1",
+  "retained_physical_guard_domain_mps": 1.6666666666666665,
+  "training_started": false,
+  "merged_with_existing_dataset": false,
+  "receipts": {
+    "corner20_pair01_20260916_verified.json": {
+      "sha256": "d454a83685974f83d3a96ece94654628bd2e377f5ed849f934edc053d08198c0",
+      "archive_sha256": "ab00d39185b2e2914ec1ed49afe1f1cdeb762578c2c7bf0d95483f56aefe5e0b",
+      "snapshot_sha256": "4cc74068d6e4ce5714cbf375d43f9c91f1f5047127f71d3c836fbaceea982135"
+    },
+    "corner20_pair02_20260916_verified.json": {
+      "sha256": "26a232a659af22cc05a98727a9a9300bf9bc0ef5e3418be3f6b8189b24e3fbca",
+      "archive_sha256": "2159108386a83372da91bca4671fc6383834fd51d23a25dc388c1d2eb255eb14",
+      "snapshot_sha256": "e90c23b03ac248c8ac7234bd560565da9031ccdf718a27a166fa1fa4cce813ef"
+    },
+    "corner20_pair03_20260916_verified.json": {
+      "sha256": "5717d883b883f610dba9f6058cc73e6b4a27b08056170db4b19a0792acd66378",
+      "archive_sha256": "53561d93efc78a270a0bcff9be33494d0af183670006c33f3807bf0335c9c2c3",
+      "snapshot_sha256": "ac6baad2d0395967467f1aadda3188a99698f1d8719346d1dcf8d5ebc0f60adf"
+    },
+    "corner20_pair04_20260916_verified.json": {
+      "sha256": "ec37bd5d6e3fd85ca0cceee4ba813e5feaf74717b9f6d572efdc30cb272defa6",
+      "archive_sha256": "6020c8bca8baf0f6f06ed052ff34633ff95cee2410b108065d192e04e20337d3",
+      "snapshot_sha256": "ad9058e7763d7fbc98fd9bec73ea3e72c42350399a9b52899631782faff74ec2"
+    }
+  },
+  "splits": {
+    "train": [
+      "codex-time-recovery-corner20-p01-d1",
+      "codex-time-recovery-corner20-p02-d1",
+      "codex-time-recovery-corner20-p03-d1",
+      "codex-time-recovery-corner20-p04-d1"
+    ],
+    "validation": [
+      "codex-time-recovery-corner20-p01-d2",
+      "codex-time-recovery-corner20-p02-d2",
+      "codex-time-recovery-corner20-p03-d2",
+      "codex-time-recovery-corner20-p04-d2"
+    ]
+  },
+  "totals": {
+    "train": {
+      "anchors": 769,
+      "target_band_anchors": 165,
+      "events": 9,
+      "runs": 4
+    },
+    "validation": {
+      "anchors": 795,
+      "target_band_anchors": 178,
+      "events": 9,
+      "runs": 4
+    }
+  },
+  "runs": [
+    {
+      "run_id": "codex-time-recovery-corner20-p01-d1",
+      "split": "train",
+      "accepted": 246,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "judge_lap_confirmed": true,
+      "stop_confirmed": true,
+      "end_condition": "STOP_CONFIRMED",
+      "lap_times_s": [
+        279.19
+      ],
+      "event_cap": 3,
+      "source_sha": "78e6f89d5a97aa380d9e3d8281b6368788d7c72a",
+      "ros_domain_id": 1,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_corner_multiscale20_20260916/codex-time-recovery-corner20-p01-d1",
+      "raw_bytes": 1383217748,
+      "target_band_anchors": 52,
+      "completed_events": 3,
+      "accepted_events": 3,
+      "end_reason": "EVENT_COMPLETE",
+      "sites": [
+        {
+          "site_id": "C05_LATE",
+          "release_s_m": 185.61,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": 0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C05A",
+          "approach_distance_m": 8.0
+        },
+        {
+          "site_id": "C07",
+          "release_s_m": 234.0,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": -0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C07",
+          "approach_distance_m": 4.0
+        },
+        {
+          "site_id": "C11",
+          "release_s_m": 314.67,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": 0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C11",
+          "approach_distance_m": 6.0
+        }
+      ],
+      "summary_sha256": "9447f9bca9fa60d34237a879d51e16f64206faf80ef3b0d489211e64dac208b1",
+      "control_sha256": "24faf9b1befe474adf75812be55a5b9fbb93849e9449059ce3f6407dd2568dba",
+      "reference_sha256": "b5356a62f1377335622e851fcbfae42c8463420c577ade19173aaeb338fc2f4d",
+      "clock_audit_sha256": "6604b52f23187768020b2ae12e7e62122dfb360c51fd8ec6a10eb1b503bc29e7",
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "C05_LATE",
+          "corner_id": "C05A",
+          "accepted": 79,
+          "target_band": 19,
+          "entry_state_anchors": 3
+        },
+        {
+          "site_id": "C07",
+          "corner_id": "C07",
+          "accepted": 83,
+          "target_band": 18,
+          "entry_state_anchors": 2
+        },
+        {
+          "site_id": "C11",
+          "corner_id": "C11",
+          "accepted": 84,
+          "target_band": 15,
+          "entry_state_anchors": 3
+        }
+      ],
+      "maximum_measured_speed_mps": 1.4376609325408936,
+      "collection_speed_policy": "record_actual_v1",
+      "above_legacy_event_speed_samples": 124,
+      "above_legacy_accepted_anchor_count": 0,
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_corner_multiscale20_20260916/materialized/codex-time-recovery-corner20-p01-d1",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_corner_multiscale20_20260916/prepared/train/codex-time-recovery-corner20-p01-d1",
+      "teachers_sha256": "96956c01db517f4d4ab4f8636151ab8fb0f7521de57c6b2553a6f32861d31046",
+      "peak_abs_accepted_lateral_m": 0.2561439849686272
+    },
+    {
+      "run_id": "codex-time-recovery-corner20-p01-d2",
+      "split": "validation",
+      "accepted": 267,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "judge_lap_confirmed": true,
+      "stop_confirmed": true,
+      "end_condition": "STOP_CONFIRMED",
+      "lap_times_s": [
+        279.18
+      ],
+      "event_cap": 3,
+      "source_sha": "78e6f89d5a97aa380d9e3d8281b6368788d7c72a",
+      "ros_domain_id": 2,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_corner_multiscale20_20260916/codex-time-recovery-corner20-p01-d2",
+      "raw_bytes": 1411052582,
+      "target_band_anchors": 58,
+      "completed_events": 3,
+      "accepted_events": 3,
+      "end_reason": "EVENT_COMPLETE",
+      "sites": [
+        {
+          "site_id": "C05_LATE",
+          "release_s_m": 185.61,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": 0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C05A",
+          "approach_distance_m": 8.0
+        },
+        {
+          "site_id": "C07",
+          "release_s_m": 234.0,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": -0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C07",
+          "approach_distance_m": 4.0
+        },
+        {
+          "site_id": "C11",
+          "release_s_m": 314.67,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": 0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C11",
+          "approach_distance_m": 6.0
+        }
+      ],
+      "summary_sha256": "61ab93aade0dd9bff9781b78f416f94a104d26e4b2f22b4b10422b21661b13b4",
+      "control_sha256": "7518c4cef6ea636180b689acf1011cde83741fd02a38635a800b163d6f40af02",
+      "reference_sha256": "14d3d4062a1b7f31537b18faea3f590e9d0c459a322965bdf00d9fe020475804",
+      "clock_audit_sha256": "731ade7b5d1be11bfe76df855c8c130b5bf73153bd7e1f0615c53d2e2d16ba7a",
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "C05_LATE",
+          "corner_id": "C05A",
+          "accepted": 86,
+          "target_band": 18,
+          "entry_state_anchors": 2
+        },
+        {
+          "site_id": "C07",
+          "corner_id": "C07",
+          "accepted": 86,
+          "target_band": 18,
+          "entry_state_anchors": 2
+        },
+        {
+          "site_id": "C11",
+          "corner_id": "C11",
+          "accepted": 95,
+          "target_band": 22,
+          "entry_state_anchors": 4
+        }
+      ],
+      "maximum_measured_speed_mps": 1.435083031654358,
+      "collection_speed_policy": "record_actual_v1",
+      "above_legacy_event_speed_samples": 121,
+      "above_legacy_accepted_anchor_count": 0,
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_corner_multiscale20_20260916/materialized/codex-time-recovery-corner20-p01-d2",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_corner_multiscale20_20260916/prepared/validation/codex-time-recovery-corner20-p01-d2",
+      "teachers_sha256": "6d4b29c96e37c19d8fcc5b5cf694ee3e5c8cb3dee207f0831a3a06631bbec540",
+      "peak_abs_accepted_lateral_m": 0.2484007495762552
+    },
+    {
+      "run_id": "codex-time-recovery-corner20-p02-d1",
+      "split": "train",
+      "accepted": 260,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "judge_lap_confirmed": true,
+      "stop_confirmed": true,
+      "end_condition": "STOP_CONFIRMED",
+      "lap_times_s": [
+        279.12
+      ],
+      "event_cap": 3,
+      "source_sha": "78e6f89d5a97aa380d9e3d8281b6368788d7c72a",
+      "ros_domain_id": 1,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_corner_multiscale20_20260916/codex-time-recovery-corner20-p02-d1",
+      "raw_bytes": 1386124275,
+      "target_band_anchors": 55,
+      "completed_events": 3,
+      "accepted_events": 3,
+      "end_reason": "EVENT_COMPLETE",
+      "sites": [
+        {
+          "site_id": "C01",
+          "release_s_m": 26.85,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": 0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C01",
+          "approach_distance_m": 8.0
+        },
+        {
+          "site_id": "C04",
+          "release_s_m": 160.68,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": -0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C04",
+          "approach_distance_m": 8.0
+        },
+        {
+          "site_id": "C10",
+          "release_s_m": 296.44,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": -0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C10",
+          "approach_distance_m": 8.0
+        }
+      ],
+      "summary_sha256": "ea03b9daee0f3daf4b4edbca75126251fc260006f599776c755c45d185310c46",
+      "control_sha256": "67d7abb8f69b0bc20878ed012dc7389a29044f411f6536ba7e2abd11044eac82",
+      "reference_sha256": "07e7fc921731e920771ee4a2fdfaf1d0551b2ac2b3de54b762bd29b3c8ba6740",
+      "clock_audit_sha256": "7a5056dfbbe78ce9c1631a9abe599be4349548699763d0661b28cb48ff18dee5",
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "C01",
+          "corner_id": "C01",
+          "accepted": 92,
+          "target_band": 19,
+          "entry_state_anchors": 2
+        },
+        {
+          "site_id": "C04",
+          "corner_id": "C04",
+          "accepted": 83,
+          "target_band": 17,
+          "entry_state_anchors": 1
+        },
+        {
+          "site_id": "C10",
+          "corner_id": "C10",
+          "accepted": 85,
+          "target_band": 19,
+          "entry_state_anchors": 3
+        }
+      ],
+      "maximum_measured_speed_mps": 1.437117576599121,
+      "collection_speed_policy": "record_actual_v1",
+      "above_legacy_event_speed_samples": 121,
+      "above_legacy_accepted_anchor_count": 0,
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_corner_multiscale20_20260916/materialized/codex-time-recovery-corner20-p02-d1",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_corner_multiscale20_20260916/prepared/train/codex-time-recovery-corner20-p02-d1",
+      "teachers_sha256": "de115c97c681c31dda34fa88ff1ec592ac1f6dde441378c4678f71c47da70d89",
+      "peak_abs_accepted_lateral_m": 0.24308857568961745
+    },
+    {
+      "run_id": "codex-time-recovery-corner20-p02-d2",
+      "split": "validation",
+      "accepted": 261,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "judge_lap_confirmed": true,
+      "stop_confirmed": true,
+      "end_condition": "STOP_CONFIRMED",
+      "lap_times_s": [
+        279.12
+      ],
+      "event_cap": 3,
+      "source_sha": "78e6f89d5a97aa380d9e3d8281b6368788d7c72a",
+      "ros_domain_id": 2,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_corner_multiscale20_20260916/codex-time-recovery-corner20-p02-d2",
+      "raw_bytes": 1413347945,
+      "target_band_anchors": 57,
+      "completed_events": 3,
+      "accepted_events": 3,
+      "end_reason": "EVENT_COMPLETE",
+      "sites": [
+        {
+          "site_id": "C01",
+          "release_s_m": 26.85,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": 0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C01",
+          "approach_distance_m": 8.0
+        },
+        {
+          "site_id": "C04",
+          "release_s_m": 160.68,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": -0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C04",
+          "approach_distance_m": 8.0
+        },
+        {
+          "site_id": "C10",
+          "release_s_m": 296.44,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": -0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C10",
+          "approach_distance_m": 8.0
+        }
+      ],
+      "summary_sha256": "5279adb5337d1a578d1d1fc970ead9b99b13590b3030b333ca8eb730d993dd63",
+      "control_sha256": "0f00485f8c7a5e62270c0a31219fa162db4ed899db4d04419e913c85660f5c0b",
+      "reference_sha256": "73a4a4bfb3ba2504a3bc080c6748fa672aaa3a731b76c3c1874d1f9d7fd7893a",
+      "clock_audit_sha256": "003a8516b5a49b52791389d9e4b706714d8c3690e7ce6caba3bfd89c5d1bf276",
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "C01",
+          "corner_id": "C01",
+          "accepted": 83,
+          "target_band": 18,
+          "entry_state_anchors": 3
+        },
+        {
+          "site_id": "C04",
+          "corner_id": "C04",
+          "accepted": 85,
+          "target_band": 19,
+          "entry_state_anchors": 0
+        },
+        {
+          "site_id": "C10",
+          "corner_id": "C10",
+          "accepted": 93,
+          "target_band": 20,
+          "entry_state_anchors": 3
+        }
+      ],
+      "maximum_measured_speed_mps": 1.4351264238357544,
+      "collection_speed_policy": "record_actual_v1",
+      "above_legacy_event_speed_samples": 119,
+      "above_legacy_accepted_anchor_count": 0,
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_corner_multiscale20_20260916/materialized/codex-time-recovery-corner20-p02-d2",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_corner_multiscale20_20260916/prepared/validation/codex-time-recovery-corner20-p02-d2",
+      "teachers_sha256": "64b7675e3ae480c79d65e28ad5b9496d826c699e96a8fd687d4e58cf2c7f66d8",
+      "peak_abs_accepted_lateral_m": 0.24637488156394738
+    },
+    {
+      "run_id": "codex-time-recovery-corner20-p03-d1",
+      "split": "train",
+      "accepted": 88,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "judge_lap_confirmed": true,
+      "stop_confirmed": true,
+      "end_condition": "STOP_CONFIRMED",
+      "lap_times_s": [
+        279.19
+      ],
+      "event_cap": 3,
+      "source_sha": "78e6f89d5a97aa380d9e3d8281b6368788d7c72a",
+      "ros_domain_id": 1,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_corner_multiscale20_20260916/codex-time-recovery-corner20-p03-d1",
+      "raw_bytes": 1377770026,
+      "target_band_anchors": 21,
+      "completed_events": 1,
+      "accepted_events": 1,
+      "end_reason": "TARGET_NOT_REACHED",
+      "sites": [
+        {
+          "site_id": "C03_NEAR",
+          "release_s_m": 139.69,
+          "target_offset_m": 0.2,
+          "return_length_m": 4.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": 0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C03A",
+          "approach_distance_m": 4.0
+        },
+        {
+          "site_id": "C06_NEAR",
+          "release_s_m": 204.28,
+          "target_offset_m": -0.2,
+          "return_length_m": 4.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": -0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C06A",
+          "approach_distance_m": 4.0
+        },
+        {
+          "site_id": "C11",
+          "release_s_m": 314.67,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": 0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C11",
+          "approach_distance_m": 6.0
+        }
+      ],
+      "summary_sha256": "961f64ecd2544e7c5e9423c155920d13559d4bcb0c8a3dde8f12d768f9dac2bc",
+      "control_sha256": "b4f243518b5aa006962171ec1bb30e3d3daa9ea026b8b37d4a4e59ae5c28b596",
+      "reference_sha256": "124c953df4f6473611a4e9621cc33facceba91779764380421586bed095fc593",
+      "clock_audit_sha256": "c7cd326095895e4dd1f8bd693fc776b1e73654804ad09ca6ef310a487b64f0c5",
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "C03_NEAR",
+          "corner_id": "C03A",
+          "accepted": 88,
+          "target_band": 21,
+          "entry_state_anchors": 1
+        },
+        {
+          "site_id": "C06_NEAR",
+          "corner_id": "C06A",
+          "accepted": 0,
+          "target_band": 0,
+          "entry_state_anchors": 0
+        }
+      ],
+      "maximum_measured_speed_mps": 1.4373735189437866,
+      "collection_speed_policy": "record_actual_v1",
+      "above_legacy_event_speed_samples": 116,
+      "above_legacy_accepted_anchor_count": 0,
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_corner_multiscale20_20260916/materialized/codex-time-recovery-corner20-p03-d1",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_corner_multiscale20_20260916/prepared/train/codex-time-recovery-corner20-p03-d1",
+      "teachers_sha256": "bd6a030c792926d3059b9a1265c0a3a2ca4e39f538d7802a8ce81d360eed1bc9",
+      "peak_abs_accepted_lateral_m": 0.25092589450221814
+    },
+    {
+      "run_id": "codex-time-recovery-corner20-p03-d2",
+      "split": "validation",
+      "accepted": 81,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "judge_lap_confirmed": true,
+      "stop_confirmed": true,
+      "end_condition": "STOP_CONFIRMED",
+      "lap_times_s": [
+        279.19
+      ],
+      "event_cap": 3,
+      "source_sha": "78e6f89d5a97aa380d9e3d8281b6368788d7c72a",
+      "ros_domain_id": 2,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_corner_multiscale20_20260916/codex-time-recovery-corner20-p03-d2",
+      "raw_bytes": 1403243259,
+      "target_band_anchors": 21,
+      "completed_events": 1,
+      "accepted_events": 1,
+      "end_reason": "TARGET_NOT_REACHED",
+      "sites": [
+        {
+          "site_id": "C03_NEAR",
+          "release_s_m": 139.69,
+          "target_offset_m": 0.2,
+          "return_length_m": 4.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": 0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C03A",
+          "approach_distance_m": 4.0
+        },
+        {
+          "site_id": "C06_NEAR",
+          "release_s_m": 204.28,
+          "target_offset_m": -0.2,
+          "return_length_m": 4.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": -0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C06A",
+          "approach_distance_m": 4.0
+        },
+        {
+          "site_id": "C11",
+          "release_s_m": 314.67,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": 0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C11",
+          "approach_distance_m": 6.0
+        }
+      ],
+      "summary_sha256": "cc35fb75aac987fe715df17859d63e1ec58384e8754decb2f145956f9927d965",
+      "control_sha256": "d00230924cc139da3c927cb5ac9580eaf640ce402b1c7b2bde122f0dd1de3814",
+      "reference_sha256": "77c7315ff8e5d2a7dd1853d9d437b92faa74a7c162cc958df43c018257a772b3",
+      "clock_audit_sha256": "6803e8ee70777ca00ae8624f65844e26bdb89b27d1f8e79a3e12b2734eefe890",
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "C03_NEAR",
+          "corner_id": "C03A",
+          "accepted": 81,
+          "target_band": 21,
+          "entry_state_anchors": 1
+        },
+        {
+          "site_id": "C06_NEAR",
+          "corner_id": "C06A",
+          "accepted": 0,
+          "target_band": 0,
+          "entry_state_anchors": 0
+        }
+      ],
+      "maximum_measured_speed_mps": 1.4373517036437988,
+      "collection_speed_policy": "record_actual_v1",
+      "above_legacy_event_speed_samples": 120,
+      "above_legacy_accepted_anchor_count": 0,
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_corner_multiscale20_20260916/materialized/codex-time-recovery-corner20-p03-d2",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_corner_multiscale20_20260916/prepared/validation/codex-time-recovery-corner20-p03-d2",
+      "teachers_sha256": "e0967d00c7c504dd80094c20f0f4788241d31b61ddedeaf8217f8101f79cd094",
+      "peak_abs_accepted_lateral_m": 0.25025044961985665
+    },
+    {
+      "run_id": "codex-time-recovery-corner20-p04-d1",
+      "split": "train",
+      "accepted": 175,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "judge_lap_confirmed": true,
+      "stop_confirmed": true,
+      "end_condition": "STOP_CONFIRMED",
+      "lap_times_s": [
+        279.09
+      ],
+      "event_cap": 3,
+      "source_sha": "78e6f89d5a97aa380d9e3d8281b6368788d7c72a",
+      "ros_domain_id": 1,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_corner_multiscale20_20260916/codex-time-recovery-corner20-p04-d1",
+      "raw_bytes": 1384842777,
+      "target_band_anchors": 37,
+      "completed_events": 2,
+      "accepted_events": 2,
+      "end_reason": "EVENT_COMPLETE",
+      "sites": [
+        {
+          "site_id": "C01",
+          "release_s_m": 26.85,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": 0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C01",
+          "approach_distance_m": 8.0
+        },
+        {
+          "site_id": "C06_NEAR",
+          "release_s_m": 204.28,
+          "target_offset_m": -0.2,
+          "return_length_m": 4.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": -0.06981317007977318,
+          "heading_tolerance_rad": 0.03490658503988659,
+          "corner_id": "C06A",
+          "approach_distance_m": 4.0
+        },
+        {
+          "site_id": "C10",
+          "release_s_m": 296.44,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": -0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C10",
+          "approach_distance_m": 8.0
+        }
+      ],
+      "summary_sha256": "edc45328861fafd5d934ec621fce28ea25fbe64854d5e29d3452b9b404ae8b2e",
+      "control_sha256": "9761a52f0b05739c63fb943760b35431a283a5396a6f23a5887797dbf1aedc66",
+      "reference_sha256": "d17cde0a7b20d4e357c9934c08b362b07cc907e7e6dc946aa1ef1dd8bab5c3aa",
+      "clock_audit_sha256": "da79b50e93c6b46969e7354ad10c76ddd33e2d272e0436ff1a4a1fdf2eeb41e4",
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "C01",
+          "corner_id": "C01",
+          "accepted": 94,
+          "target_band": 20,
+          "entry_state_anchors": 2
+        },
+        {
+          "site_id": "C10",
+          "corner_id": "C10",
+          "accepted": 81,
+          "target_band": 17,
+          "entry_state_anchors": 3
+        }
+      ],
+      "maximum_measured_speed_mps": 1.4356532096862793,
+      "collection_speed_policy": "record_actual_v1",
+      "above_legacy_event_speed_samples": 120,
+      "above_legacy_accepted_anchor_count": 0,
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_corner_multiscale20_20260916/materialized/codex-time-recovery-corner20-p04-d1",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_corner_multiscale20_20260916/prepared/train/codex-time-recovery-corner20-p04-d1",
+      "teachers_sha256": "ce5e6e3b2f4de5dd6429e1bdb5aac5927c2fc37dc4971d0b178e5c277dd5b8f9",
+      "peak_abs_accepted_lateral_m": 0.24149860394966843
+    },
+    {
+      "run_id": "codex-time-recovery-corner20-p04-d2",
+      "split": "validation",
+      "accepted": 186,
+      "status": "COMPLETE_LAP",
+      "fault": null,
+      "judge_lap_confirmed": true,
+      "stop_confirmed": true,
+      "end_condition": "STOP_CONFIRMED",
+      "lap_times_s": [
+        279.1
+      ],
+      "event_cap": 3,
+      "source_sha": "78e6f89d5a97aa380d9e3d8281b6368788d7c72a",
+      "ros_domain_id": 2,
+      "raw_path": "/home/thistle/e2e_autonomous/raw/time_corner_multiscale20_20260916/codex-time-recovery-corner20-p04-d2",
+      "raw_bytes": 1410351808,
+      "target_band_anchors": 42,
+      "completed_events": 2,
+      "accepted_events": 2,
+      "end_reason": "EVENT_COMPLETE",
+      "sites": [
+        {
+          "site_id": "C01",
+          "release_s_m": 26.85,
+          "target_offset_m": 0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": 0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C01",
+          "approach_distance_m": 8.0
+        },
+        {
+          "site_id": "C06_NEAR",
+          "release_s_m": 204.28,
+          "target_offset_m": -0.2,
+          "return_length_m": 4.0,
+          "settle_distance_m": 2.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": -0.06981317007977318,
+          "heading_tolerance_rad": 0.03490658503988659,
+          "corner_id": "C06A",
+          "approach_distance_m": 4.0
+        },
+        {
+          "site_id": "C10",
+          "release_s_m": 296.44,
+          "target_offset_m": -0.2,
+          "return_length_m": 6.0,
+          "settle_distance_m": 4.0,
+          "preparation_origin": "nominal_path",
+          "target_heading_rad": -0.06981317007977318,
+          "heading_tolerance_rad": 0.017453292519943295,
+          "corner_id": "C10",
+          "approach_distance_m": 8.0
+        }
+      ],
+      "summary_sha256": "cf5ecf08059eec494ec2b48751f9cbb570c3bd3d480ab08dceeac132d87ce86a",
+      "control_sha256": "3ef8cd0bde662304f2cbc0a1e7f13fa245887603562ce11604c552c27a7a20c8",
+      "reference_sha256": "637c898e06e899d43f752380fc1fd1f93593faa88daef3196e5a05d689efe0fd",
+      "clock_audit_sha256": "cc9d6b2eea23babac5ba1ab73d1709f5dc2536bc10926ed7903995e273451099",
+      "teacher_anchors_per_event": [
+        {
+          "site_id": "C01",
+          "corner_id": "C01",
+          "accepted": 92,
+          "target_band": 21,
+          "entry_state_anchors": 2
+        },
+        {
+          "site_id": "C10",
+          "corner_id": "C10",
+          "accepted": 94,
+          "target_band": 21,
+          "entry_state_anchors": 3
+        }
+      ],
+      "maximum_measured_speed_mps": 1.4374967813491821,
+      "collection_speed_policy": "record_actual_v1",
+      "above_legacy_event_speed_samples": 120,
+      "above_legacy_accepted_anchor_count": 0,
+      "materialized_path": "/home/thistle/e2e_autonomous/runs/time_corner_multiscale20_20260916/materialized/codex-time-recovery-corner20-p04-d2",
+      "prepared_path": "/home/thistle/e2e_autonomous/runs/time_corner_multiscale20_20260916/prepared/validation/codex-time-recovery-corner20-p04-d2",
+      "teachers_sha256": "84e78b653f9faeeee8d563b6031c893a0efa2f9c3758e43e2b5cf5820e7edd4a",
+      "peak_abs_accepted_lateral_m": 0.24147757507314419
+    }
+  ],
+  "raw_bytes": 11169950420,
+  "maximum_accepted_control_sim_gap_ms": 84.999998,
+  "all_raw_file_hashes_and_structure_verified": true,
+  "all_sqlite_quick_checks_passed": true,
+  "all_runs_closed_and_safe_end_verified": true,
+  "end_conditions": {
+    "codex-time-recovery-corner20-p01-d1": "STOP_CONFIRMED",
+    "codex-time-recovery-corner20-p01-d2": "STOP_CONFIRMED",
+    "codex-time-recovery-corner20-p02-d1": "STOP_CONFIRMED",
+    "codex-time-recovery-corner20-p02-d2": "STOP_CONFIRMED",
+    "codex-time-recovery-corner20-p03-d1": "STOP_CONFIRMED",
+    "codex-time-recovery-corner20-p03-d2": "STOP_CONFIRMED",
+    "codex-time-recovery-corner20-p04-d1": "STOP_CONFIRMED",
+    "codex-time-recovery-corner20-p04-d2": "STOP_CONFIRMED"
+  },
+  "coverage_sha256": "71ad86f26d9b92018fa172c4d839dd50813d900dd0b0b5d2518d9f69f26a22e1",
+  "all_mandatory_corners_covered": false,
+  "missing_mandatory_corners": {
+    "train": [
+      "C01",
+      "C02",
+      "C03",
+      "C04",
+      "C05",
+      "C06",
+      "C07",
+      "C08",
+      "C09"
+    ],
+    "validation": [
+      "C02",
+      "C03",
+      "C04",
+      "C05",
+      "C06",
+      "C07",
+      "C08",
+      "C09"
+    ]
+  }
+}

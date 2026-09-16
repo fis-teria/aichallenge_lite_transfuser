@@ -1,0 +1,345 @@
+{
+  "runs": [
+    {
+      "run_id": "codex-time-recovery-corner60-p01-d1",
+      "control_sha256": "c08739c71c14cb0ba45aaebac9e3daba4f3114eb5e73880d93916592a0221067",
+      "status": "STOPPED_FAILED",
+      "fault": "FRESH_ALIGNED_SCAN_MISSING",
+      "error": null,
+      "source_sha": "21ccfef00a415c85dd033d447cd8ed25a5ad974f",
+      "ever_authorized": true,
+      "adopted_teacher_anchors": 0,
+      "raw_retained": true,
+      "first_fault": {
+        "sim_ns": 191399995721,
+        "monotonic_ns": 104274844223889,
+        "speed_mps": 1.299638032913208,
+        "processing_ms": 7.402599,
+        "decision_wall_ms": 79.755112,
+        "thread_cpu_ms": 4.024574,
+        "stage_wall_ms": {
+          "snapshot_selection": 2.163549,
+          "authority_clock": 0.480156,
+          "source_input_validation": 0.535628,
+          "motion_reference": 3.662016
+        },
+        "snapshot_retry_reasons": [
+          "STALE_scan"
+        ],
+        "input_timing_ns": {
+          "nominal": {
+            "capture_ns": 191369995722,
+            "receipt_monotonic_ns": 104274839308344,
+            "receipt_age_ns": 4915545
+          },
+          "preparation_nominal": {
+            "capture_ns": 191354995722,
+            "receipt_monotonic_ns": 104274835410732,
+            "receipt_age_ns": 8813157
+          },
+          "steering": {
+            "capture_ns": 191379995722,
+            "receipt_monotonic_ns": 104274840627388,
+            "receipt_age_ns": 3596501
+          },
+          "velocity": {
+            "capture_ns": 191379995722,
+            "receipt_monotonic_ns": 104274840934195,
+            "receipt_age_ns": 3289694
+          },
+          "scan": {
+            "capture_ns": 191350426272,
+            "receipt_monotonic_ns": 104274824345929,
+            "receipt_age_ns": 19877960
+          },
+          "imu": {
+            "capture_ns": 191399995721,
+            "receipt_monotonic_ns": 104274844015947,
+            "receipt_age_ns": 207942
+          },
+          "camera": {
+            "capture_ns": 191304995724,
+            "receipt_monotonic_ns": 104274791680913,
+            "receipt_age_ns": 52542976
+          },
+          "pose": {
+            "capture_ns": 191349995722,
+            "receipt_monotonic_ns": 104274829307227,
+            "receipt_age_ns": 14916662
+          },
+          "preparation_trajectory": {
+            "capture_ns": 191004995730,
+            "receipt_monotonic_ns": 104274416298156,
+            "receipt_age_ns": 427925733
+          },
+          "trajectory": {
+            "capture_ns": 191004995730,
+            "receipt_monotonic_ns": 104274415949867,
+            "receipt_age_ns": 428274022
+          }
+        },
+        "scan_history_ns": [
+          [
+            191093932375,
+            104274516915772
+          ],
+          [
+            191164247397,
+            104274639815999
+          ],
+          [
+            191250426270,
+            104274760364559
+          ],
+          [
+            191350426272,
+            104274824345929
+          ]
+        ],
+        "last_pose_stamps_ns": [
+          191089995728,
+          191139995727,
+          191159995727,
+          191199995726,
+          191199995726,
+          191224995725,
+          191224995725,
+          191249995725,
+          191304995724,
+          191304995724,
+          191349995722,
+          191349995722
+        ]
+      }
+    },
+    {
+      "run_id": "codex-time-recovery-corner60-p01-d2",
+      "control_sha256": "56edc6403a1f6d069d49511c69b473d7907c7e987b15f75b25c7d609843410b6",
+      "status": "STOPPED_FAILED",
+      "fault": "COLLECTION_COMPUTATION_TIMEOUT",
+      "error": null,
+      "source_sha": "21ccfef00a415c85dd033d447cd8ed25a5ad974f",
+      "ever_authorized": true,
+      "adopted_teacher_anchors": 0,
+      "raw_retained": true,
+      "first_fault": {
+        "sim_ns": 126224997178,
+        "monotonic_ns": 104275136016754,
+        "speed_mps": 1.218142032623291,
+        "processing_ms": 128.925981,
+        "decision_wall_ms": 128.99951,
+        "thread_cpu_ms": 60.32391,
+        "stage_wall_ms": {
+          "snapshot_selection": 13.358175,
+          "authority_clock": 8.041315,
+          "source_input_validation": 11.287305,
+          "motion_reference": 18.976788,
+          "scan_alignment": 11.983448,
+          "scan_guard": 59.051674
+        },
+        "snapshot_retry_reasons": [],
+        "input_timing_ns": {
+          "preparation_nominal": {
+            "capture_ns": 126224997178,
+            "receipt_monotonic_ns": 104275125827433,
+            "receipt_age_ns": 10189321
+          },
+          "nominal": {
+            "capture_ns": 126224997178,
+            "receipt_monotonic_ns": 104275133213433,
+            "receipt_age_ns": 2803321
+          },
+          "steering": {
+            "capture_ns": 126209997178,
+            "receipt_monotonic_ns": 104275100125662,
+            "receipt_age_ns": 35891092
+          },
+          "velocity": {
+            "capture_ns": 126209997178,
+            "receipt_monotonic_ns": 104275099938455,
+            "receipt_age_ns": 36078299
+          },
+          "scan": {
+            "capture_ns": 126180631523,
+            "receipt_monotonic_ns": 104275062997530,
+            "receipt_age_ns": 73019224
+          },
+          "imu": {
+            "capture_ns": 126199997179,
+            "receipt_monotonic_ns": 104275086379658,
+            "receipt_age_ns": 49637096
+          },
+          "camera": {
+            "capture_ns": 126204997179,
+            "receipt_monotonic_ns": 104275092698683,
+            "receipt_age_ns": 43318071
+          },
+          "pose": {
+            "capture_ns": 126224997178,
+            "receipt_monotonic_ns": 104275113374324,
+            "receipt_age_ns": 22642430
+          },
+          "trajectory": {
+            "capture_ns": 126004997183,
+            "receipt_monotonic_ns": 104274898155028,
+            "receipt_age_ns": 237861726
+          },
+          "preparation_trajectory": {
+            "capture_ns": 126004997183,
+            "receipt_monotonic_ns": 104274898414037,
+            "receipt_age_ns": 237602717
+          }
+        },
+        "scan_history_ns": null,
+        "last_pose_stamps_ns": []
+      }
+    },
+    {
+      "run_id": "codex-time-recovery-corner60-p02-d1",
+      "control_sha256": "52696bbe372f4e68b279ad364929493368193a37b3d5feb6ba97e339d63eb72b",
+      "status": "STOPPED_FAILED",
+      "fault": "FRESH_ALIGNED_SCAN_MISSING",
+      "error": null,
+      "source_sha": "21ccfef00a415c85dd033d447cd8ed25a5ad974f",
+      "ever_authorized": true,
+      "adopted_teacher_anchors": 0,
+      "raw_retained": true,
+      "first_fault": {
+        "sim_ns": 28769999356,
+        "monotonic_ns": 104563546579894,
+        "speed_mps": 0.4814237058162689,
+        "processing_ms": 2.336121,
+        "decision_wall_ms": 25.071415,
+        "thread_cpu_ms": 2.357372,
+        "stage_wall_ms": {
+          "snapshot_selection": 0.657946,
+          "authority_clock": 0.310731,
+          "source_input_validation": 0.338418,
+          "motion_reference": 0.657121
+        },
+        "snapshot_retry_reasons": [
+          "FRESH_ALIGNED_SCAN_MISSING"
+        ],
+        "input_timing_ns": {
+          "nominal": {
+            "capture_ns": 28769999356,
+            "receipt_monotonic_ns": 104563538854824,
+            "receipt_age_ns": 7725070
+          },
+          "preparation_nominal": {
+            "capture_ns": 28769999356,
+            "receipt_monotonic_ns": 104563542158659,
+            "receipt_age_ns": 4421235
+          },
+          "steering": {
+            "capture_ns": 28769999356,
+            "receipt_monotonic_ns": 104563511248745,
+            "receipt_age_ns": 35331149
+          },
+          "velocity": {
+            "capture_ns": 28769999356,
+            "receipt_monotonic_ns": 104563511428948,
+            "receipt_age_ns": 35150946
+          },
+          "scan": {
+            "capture_ns": 28771335843,
+            "receipt_monotonic_ns": 104563513178120,
+            "receipt_age_ns": 33401774
+          },
+          "imu": {
+            "capture_ns": 28749999357,
+            "receipt_monotonic_ns": 104563503041730,
+            "receipt_age_ns": 43538164
+          },
+          "camera": {
+            "capture_ns": 28764999357,
+            "receipt_monotonic_ns": 104563510503419,
+            "receipt_age_ns": 36076475
+          },
+          "pose": {
+            "capture_ns": 28769999356,
+            "receipt_monotonic_ns": 104563511150024,
+            "receipt_age_ns": 35429870
+          },
+          "trajectory": {
+            "capture_ns": 28004999374,
+            "receipt_monotonic_ns": 104562511618056,
+            "receipt_age_ns": 1034961838
+          },
+          "preparation_trajectory": {
+            "capture_ns": 28004999374,
+            "receipt_monotonic_ns": 104562511766129,
+            "receipt_age_ns": 1034813765
+          }
+        },
+        "scan_history_ns": [
+          [
+            28471335839,
+            104563104745640
+          ],
+          [
+            28571335840,
+            104563227428544
+          ],
+          [
+            28671335841,
+            104563366582404
+          ],
+          [
+            28771335843,
+            104563513178120
+          ]
+        ],
+        "last_pose_stamps_ns": [
+          28509999362,
+          28554999361,
+          28554999361,
+          28569999361,
+          28604999360,
+          28629999360,
+          28659999359,
+          28664999359,
+          28734999357,
+          28739999357,
+          28764999357,
+          28769999356
+        ]
+      }
+    },
+    {
+      "run_id": "codex-time-recovery-corner60-p02-d2",
+      "control_sha256": "d98c35c927d7317340866f85298dcfbd63e79396cb82351c8f9810e502b2a8d3",
+      "status": "FAILED",
+      "fault": null,
+      "error": "ValueError: exactly one new ordinary RViz window required",
+      "source_sha": "21ccfef00a415c85dd033d447cd8ed25a5ad974f",
+      "ever_authorized": false,
+      "adopted_teacher_anchors": 0,
+      "raw_retained": true,
+      "first_fault": {
+        "sim_ns": null,
+        "monotonic_ns": null,
+        "speed_mps": null,
+        "processing_ms": null,
+        "decision_wall_ms": null,
+        "thread_cpu_ms": null,
+        "stage_wall_ms": null,
+        "snapshot_retry_reasons": null,
+        "input_timing_ns": null,
+        "scan_history_ns": null,
+        "last_pose_stamps_ns": []
+      }
+    }
+  ],
+  "pair02_resources": {
+    "sha256": "0a4c3b423d9088ea3f3af276862f930806170a090e6c83f346e7d75b1eb9aadd",
+    "samples": 137,
+    "minimum_available_memory_gib": 7.4060516357421875,
+    "maximum_package_temperature_c": 72.0,
+    "package_thermal_throttle_delta": 0,
+    "swap_in_pages": 127,
+    "swap_out_pages": 0
+  },
+  "quality_policy_unchanged": true,
+  "mitigation": "Restore original CPU allocation; at most three timing snapshot retries with the unchanged 100ms deadline, actual bracketing poses, freshness and physical guards."
+}

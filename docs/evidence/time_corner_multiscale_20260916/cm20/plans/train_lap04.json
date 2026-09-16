@@ -1,0 +1,51 @@
+{
+  "name": "train_lap04",
+  "split": "train",
+  "seed": 20260916,
+  "event_cap": 3,
+  "candidates": [
+    {
+      "site_id": "C01",
+      "release_s_m": 26.85,
+      "target_offset_m": 0.2,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C01",
+      "approach_distance_m": 8.0
+    },
+    {
+      "site_id": "C06_NEAR",
+      "release_s_m": 204.28,
+      "target_offset_m": -0.2,
+      "return_length_m": 4.0,
+      "settle_distance_m": 2.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": -0.06981317007977318,
+      "heading_tolerance_rad": 0.03490658503988659,
+      "corner_id": "C06A",
+      "approach_distance_m": 4.0
+    },
+    {
+      "site_id": "C10",
+      "release_s_m": 296.44,
+      "target_offset_m": -0.2,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": -0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C10",
+      "approach_distance_m": 8.0
+    }
+  ],
+  "required_site_ids": [
+    "C01",
+    "C06_NEAR",
+    "C10"
+  ],
+  "speed_policy": "record_actual_v1",
+  "note": "C06A retains 20cm target and uses existing 2 degree heading tolerance; original exact C06 coverage unchanged"
+}

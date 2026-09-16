@@ -1,0 +1,166 @@
+{
+  "run_id": "codex-time-recovery-corner40-p01-d1",
+  "split": "train",
+  "result_status": "COMPLETE_LAP",
+  "fault": null,
+  "stop_confirmed": true,
+  "closed_bag": true,
+  "planned": [
+    {
+      "site_id": "C01",
+      "release_s_m": 26.85,
+      "target_offset_m": 0.4,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.03490658503988659,
+      "corner_id": "C01",
+      "approach_distance_m": 8.0
+    },
+    {
+      "site_id": "C04",
+      "release_s_m": 160.68,
+      "target_offset_m": -0.4,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": -0.06981317007977318,
+      "heading_tolerance_rad": 0.03490658503988659,
+      "corner_id": "C04",
+      "approach_distance_m": 8.0
+    },
+    {
+      "site_id": "C07",
+      "release_s_m": 234.0,
+      "target_offset_m": -0.4,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": -0.06981317007977318,
+      "heading_tolerance_rad": 0.03490658503988659,
+      "corner_id": "C07",
+      "approach_distance_m": 8.0
+    }
+  ],
+  "event_cap": 3,
+  "events": [
+    {
+      "event_id": 1,
+      "site_id": "C01",
+      "target_offset_m": 0.4,
+      "speed_policy": "record_actual_v1",
+      "peak_observed_speed_mps": 1.3065747022628784,
+      "above_legacy_speed_samples": 0,
+      "corner_id": "C01",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.03490658503988659,
+      "preparation_start_ns": 44649999001,
+      "request_ns": 54004998792,
+      "release_ns": 54059998791,
+      "end_publication_ns": 64099998567,
+      "publication_switch_verified": true,
+      "recovery_confirmed": true,
+      "stable_at_end": true,
+      "completed": true,
+      "recovery_sample_count": 201,
+      "peak_observed_lateral_m": 0.44833815531817034,
+      "target_band_recovery_samples": 41,
+      "target_band_observed": true,
+      "causal_camera_candidates": 94,
+      "accepted_camera_anchors": 94,
+      "target_band_camera_anchors": 15,
+      "peak_abs_anchor_lateral_m": 0.4487486711987703
+    },
+    {
+      "event_id": 2,
+      "site_id": "C04",
+      "target_offset_m": -0.4,
+      "speed_policy": "record_actual_v1",
+      "peak_observed_speed_mps": 1.4349915981292725,
+      "above_legacy_speed_samples": 123,
+      "corner_id": "C04",
+      "target_heading_rad": -0.06981317007977318,
+      "heading_tolerance_rad": 0.03490658503988659,
+      "preparation_start_ns": 150969996625,
+      "request_ns": 160704996407,
+      "release_ns": 160749996406,
+      "end_publication_ns": 170804996182,
+      "publication_switch_verified": true,
+      "recovery_confirmed": true,
+      "stable_at_end": true,
+      "completed": true,
+      "recovery_sample_count": 201,
+      "peak_observed_lateral_m": 0.4574633821177088,
+      "target_band_recovery_samples": 43,
+      "target_band_observed": true,
+      "causal_camera_candidates": 85,
+      "accepted_camera_anchors": 85,
+      "target_band_camera_anchors": 9,
+      "peak_abs_anchor_lateral_m": 0.45541831131792243
+    }
+  ],
+  "accepted": 179,
+  "target_band_anchors": 24,
+  "marker_locations": {
+    "frame_id": "map",
+    "location_basis": "pose_at_first_preparation_selection_not_proven_displacement",
+    "topic": "/recovery_teacher/disturbance_markers",
+    "events": [
+      {
+        "event_id": 1,
+        "site_id": "C01",
+        "sign": 1,
+        "planned_s_m": 14.850000000000001,
+        "actual_s_m": 14.887327576679114,
+        "x_m": 89621.51404732844,
+        "y_m": 43142.878776402875,
+        "yaw_rad": 2.181028212489799,
+        "pose_stamp_ns": 44629999002,
+        "publication_sim_ns": 44649999001,
+        "publication_sequence": 1113,
+        "effective_rad": 0.0,
+        "target_offset_m": 0.4,
+        "label": "C01 LEFT PREP 40cm"
+      },
+      {
+        "event_id": 2,
+        "site_id": "C04",
+        "sign": -1,
+        "planned_s_m": 148.68,
+        "actual_s_m": 148.7036558867252,
+        "x_m": 89623.68346437563,
+        "y_m": 43187.449242161005,
+        "yaw_rad": 0.5163588197349936,
+        "pose_stamp_ns": 150934996626,
+        "publication_sim_ns": 150969996625,
+        "publication_sequence": 3239,
+        "effective_rad": 0.0,
+        "target_offset_m": -0.4,
+        "label": "C04 RIGHT PREP 40cm"
+      }
+    ]
+  },
+  "training_started": false,
+  "causal_candidates": 179,
+  "input_reasons": {
+    "OK": 181,
+    "CURRENT_SENSOR_MISSING": 7
+  },
+  "teacher_reasons": {
+    "OK": 188,
+    "Interpolation endpoints exceed tolerance": 2
+  },
+  "prepared": {
+    "run_id": "codex-time-recovery-corner40-p01-d1",
+    "anchors": 179,
+    "input_valid": 179,
+    "real_input_replay_equal": [
+      "codex-time-recovery-corner40-p01-d1:epoch0000:54279998786",
+      "codex-time-recovery-corner40-p01-d1:epoch0000:63624998577"
+    ],
+    "input_reason_refinements": []
+  },
+  "all_planned_recovered": false,
+  "all_planned_lateral_events_qualified": false
+}

@@ -1,0 +1,25 @@
+{
+  "run_id": "codex-time-recovery-corner40-p04-d2",
+  "status": "STOPPED_FAILED",
+  "fault": "STALE_scan",
+  "control_sha256": "0015c28fc304078e813957d86327fe91364890aa2531c28b422dc6979dd8e3aa",
+  "first_fault_sim_ns": 266039994053,
+  "first_fault_monotonic_ns": 103886708591287,
+  "first_fault_progress_m": 284.7156167188321,
+  "speed_mps": 1.3030682802200317,
+  "decision_wall_ms": 96.942445,
+  "thread_cpu_ms": 18.766619,
+  "used_scan": {
+    "capture_ns": 265894420845,
+    "receipt_monotonic_ns": 103886538692556,
+    "receipt_age_ns": 169898731
+  },
+  "newest_received_scan_capture_ns": 265994420847,
+  "completed_events_at_fault": 2,
+  "last_event_release_ns": 225709994954,
+  "margin_after_last_event_tail_s": 27.269999323,
+  "final_stop_confirmed": true,
+  "adopted_teacher_anchors": 0,
+  "raw_retained": true,
+  "interpretation": "The selected scan became stale during a slow control decision; a newer scan arrived. The exact source of scheduling delay is not established. This is not an acquisition speed-limit stop. Completed earlier event candidates remain in the preserved raw run but are not promoted under the unchanged complete-lap/fault-free audit policy."
+}
