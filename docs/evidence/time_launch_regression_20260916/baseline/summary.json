@@ -1,0 +1,4862 @@
+{
+  "status": "PASS",
+  "scope": "PAIRED_EXISTING_SAME_ASSET_BASELINE_INPUTS_NOT_NEW_DRIVING",
+  "anchors": 92,
+  "sources": [
+    {
+      "run_id": "codex-time-recovery-speedbase-r30",
+      "anchors": 47,
+      "excluded": {},
+      "armed_ns": 29249999346,
+      "sensor_metadata": {
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        },
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        }
+      },
+      "scope": "EXISTING_CALIBRATION_BASELINE_DIAGNOSTIC_NOT_UNTOUCHED_TEST"
+    },
+    {
+      "run_id": "codex-time-recovery-speedbase-r31",
+      "anchors": 45,
+      "excluded": {},
+      "armed_ns": 27419999387,
+      "sensor_metadata": {
+        "lidar": {
+          "shapes": [
+            [
+              750
+            ]
+          ],
+          "frames": [
+            "lidar"
+          ]
+        },
+        "camera": {
+          "encodings": [
+            "bgr8"
+          ],
+          "shapes": [
+            [
+              256,
+              384,
+              3
+            ]
+          ]
+        },
+        "pose": {
+          "frames": [
+            [
+              "map",
+              "base_link"
+            ]
+          ]
+        }
+      },
+      "scope": "EXISTING_CALIBRATION_BASELINE_DIAGNOSTIC_NOT_UNTOUCHED_TEST"
+    }
+  ],
+  "pp": {
+    "all": {
+      "0.0": {
+        "old": {
+          "attempted": 92,
+          "applicable": 92,
+          "accepted": 92,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 92
+          },
+          "max_absolute_steer_rad": 0.2999715522841445,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 75,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 2.844771585547301e-05,
+            "median": 0.09293961386190688,
+            "max": 0.29659874606733827
+          }
+        },
+        "epoch1": {
+          "attempted": 92,
+          "applicable": 92,
+          "accepted": 92,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 92
+          },
+          "max_absolute_steer_rad": 0.29995446907091583,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 75,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 4.553092908415879e-05,
+            "median": 0.08417192838373257,
+            "max": 0.2995218516240447
+          }
+        },
+        "epoch2": {
+          "attempted": 92,
+          "applicable": 92,
+          "accepted": 67,
+          "accepted_fraction": 0.7282608695652174,
+          "reasons": {
+            "PP_ACCEPTED": 67,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 25
+          },
+          "max_absolute_steer_rad": 0.2999948731825294,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 58,
+          "failure_geometry": {
+            "TIRE_LIMIT": 25
+          },
+          "selected_margin_rad": {
+            "min": 5.126817470613165e-06,
+            "median": 0.11188867611845438,
+            "max": 0.29783324384496096
+          }
+        },
+        "epoch3": {
+          "attempted": 92,
+          "applicable": 92,
+          "accepted": 92,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 92
+          },
+          "max_absolute_steer_rad": 0.2996196893626331,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 75,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0003803106373668763,
+            "median": 0.07833666591419843,
+            "max": 0.29862102267166424
+          }
+        },
+        "teacher": {
+          "attempted": 92,
+          "applicable": 92,
+          "accepted": 75,
+          "accepted_fraction": 0.8152173913043478,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 17,
+            "PP_ACCEPTED": 75
+          },
+          "max_absolute_steer_rad": 0.26956481196495463,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 75,
+          "failure_geometry": {
+            "NO_POINT_IN_DISTANCE_BAND": 17
+          },
+          "selected_margin_rad": {
+            "min": 0.030435188035045357,
+            "median": 0.08275661158039757,
+            "max": 0.29681928419743697
+          }
+        }
+      },
+      "0.1": {
+        "old": {
+          "attempted": 90,
+          "applicable": 90,
+          "accepted": 90,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 90
+          },
+          "max_absolute_steer_rad": 0.29999687516755047,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 74,
+          "accepted_on_teacher_support": 74,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 3.1248324495192215e-06,
+            "median": 0.10569648966368805,
+            "max": 0.29685194455539216
+          }
+        },
+        "epoch1": {
+          "attempted": 90,
+          "applicable": 90,
+          "accepted": 90,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 90
+          },
+          "max_absolute_steer_rad": 0.2999079403600151,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 74,
+          "accepted_on_teacher_support": 74,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 9.20596399848761e-05,
+            "median": 0.09665474198933884,
+            "max": 0.29592461959228716
+          }
+        },
+        "epoch2": {
+          "attempted": 90,
+          "applicable": 90,
+          "accepted": 66,
+          "accepted_fraction": 0.7333333333333333,
+          "reasons": {
+            "PP_ACCEPTED": 66,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 24
+          },
+          "max_absolute_steer_rad": 0.2999793441080712,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 74,
+          "accepted_on_teacher_support": 57,
+          "failure_geometry": {
+            "TIRE_LIMIT": 24
+          },
+          "selected_margin_rad": {
+            "min": 2.065589192878914e-05,
+            "median": 0.12297520645074259,
+            "max": 0.2976601052782688
+          }
+        },
+        "epoch3": {
+          "attempted": 90,
+          "applicable": 90,
+          "accepted": 90,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 90
+          },
+          "max_absolute_steer_rad": 0.2995919057712228,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 74,
+          "accepted_on_teacher_support": 74,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00040809422877718937,
+            "median": 0.0921476303284542,
+            "max": 0.295771677220978
+          }
+        },
+        "teacher": {
+          "attempted": 90,
+          "applicable": 90,
+          "accepted": 74,
+          "accepted_fraction": 0.8222222222222222,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 16,
+            "PP_ACCEPTED": 74
+          },
+          "max_absolute_steer_rad": 0.270104541715138,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 74,
+          "accepted_on_teacher_support": 74,
+          "failure_geometry": {
+            "NO_POINT_IN_DISTANCE_BAND": 16
+          },
+          "selected_margin_rad": {
+            "min": 0.02989545828486201,
+            "median": 0.09304457256915119,
+            "max": 0.29623623767101176
+          }
+        }
+      },
+      "0.2": {
+        "old": {
+          "attempted": 90,
+          "applicable": 90,
+          "accepted": 90,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 90
+          },
+          "max_absolute_steer_rad": 0.2999482355286334,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 74,
+          "accepted_on_teacher_support": 74,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 5.176447136656659e-05,
+            "median": 0.11739142267565128,
+            "max": 0.296360335172147
+          }
+        },
+        "epoch1": {
+          "attempted": 90,
+          "applicable": 90,
+          "accepted": 90,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 90
+          },
+          "max_absolute_steer_rad": 0.2998521893794499,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 74,
+          "accepted_on_teacher_support": 74,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00014781062055008176,
+            "median": 0.11370420431083834,
+            "max": 0.29529981476282796
+          }
+        },
+        "epoch2": {
+          "attempted": 90,
+          "applicable": 90,
+          "accepted": 68,
+          "accepted_fraction": 0.7555555555555555,
+          "reasons": {
+            "PP_ACCEPTED": 68,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 22
+          },
+          "max_absolute_steer_rad": 0.29998531604941014,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 74,
+          "accepted_on_teacher_support": 58,
+          "failure_geometry": {
+            "TIRE_LIMIT": 22
+          },
+          "selected_margin_rad": {
+            "min": 1.4683950589844397e-05,
+            "median": 0.13457452176982682,
+            "max": 0.2972851472086482
+          }
+        },
+        "epoch3": {
+          "attempted": 90,
+          "applicable": 90,
+          "accepted": 90,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 90
+          },
+          "max_absolute_steer_rad": 0.2995718594836025,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 74,
+          "accepted_on_teacher_support": 74,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0004281405163975016,
+            "median": 0.10569482183463347,
+            "max": 0.2973126865281697
+          }
+        },
+        "teacher": {
+          "attempted": 90,
+          "applicable": 90,
+          "accepted": 74,
+          "accepted_fraction": 0.8222222222222222,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 16,
+            "PP_ACCEPTED": 74
+          },
+          "max_absolute_steer_rad": 0.27064284536299765,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 74,
+          "accepted_on_teacher_support": 74,
+          "failure_geometry": {
+            "NO_POINT_IN_DISTANCE_BAND": 16
+          },
+          "selected_margin_rad": {
+            "min": 0.029357154637002336,
+            "median": 0.11103799916400516,
+            "max": 0.29565227483001116
+          }
+        }
+      },
+      "0.3": {
+        "old": {
+          "attempted": 91,
+          "applicable": 91,
+          "accepted": 91,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 91
+          },
+          "max_absolute_steer_rad": 0.2999825407928143,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 75,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 1.745920718571048e-05,
+            "median": 0.13126867794260744,
+            "max": 0.2991178296349544
+          }
+        },
+        "epoch1": {
+          "attempted": 91,
+          "applicable": 91,
+          "accepted": 91,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 91
+          },
+          "max_absolute_steer_rad": 0.2999060619540327,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 75,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 9.393804596730115e-05,
+            "median": 0.13175119448814035,
+            "max": 0.29904949592009605
+          }
+        },
+        "epoch2": {
+          "attempted": 91,
+          "applicable": 91,
+          "accepted": 70,
+          "accepted_fraction": 0.7692307692307693,
+          "reasons": {
+            "PP_ACCEPTED": 70,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 21
+          },
+          "max_absolute_steer_rad": 0.29999984338769903,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 61,
+          "failure_geometry": {
+            "TIRE_LIMIT": 21
+          },
+          "selected_margin_rad": {
+            "min": 1.566123009610898e-07,
+            "median": 0.15468875617862304,
+            "max": 0.2988270386461772
+          }
+        },
+        "epoch3": {
+          "attempted": 91,
+          "applicable": 91,
+          "accepted": 91,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 91
+          },
+          "max_absolute_steer_rad": 0.29982982387690643,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 75,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00017017612309355723,
+            "median": 0.1266644697964616,
+            "max": 0.2958533808180182
+          }
+        },
+        "teacher": {
+          "attempted": 91,
+          "applicable": 91,
+          "accepted": 75,
+          "accepted_fraction": 0.8241758241758241,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 16,
+            "PP_ACCEPTED": 75
+          },
+          "max_absolute_steer_rad": 0.27117958989269086,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 75,
+          "failure_geometry": {
+            "NO_POINT_IN_DISTANCE_BAND": 16
+          },
+          "selected_margin_rad": {
+            "min": 0.028820410107309125,
+            "median": 0.11971317840730164,
+            "max": 0.2951301457587505
+          }
+        }
+      },
+      "0.4": {
+        "old": {
+          "attempted": 91,
+          "applicable": 91,
+          "accepted": 91,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 91
+          },
+          "max_absolute_steer_rad": 0.2999935880786692,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 75,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 6.411921330773396e-06,
+            "median": 0.15040287524956186,
+            "max": 0.298736913876447
+          }
+        },
+        "epoch1": {
+          "attempted": 91,
+          "applicable": 91,
+          "accepted": 91,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 91
+          },
+          "max_absolute_steer_rad": 0.29991418864979147,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 75,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 8.581135020852004e-05,
+            "median": 0.15156013747563274,
+            "max": 0.2976987969617247
+          }
+        },
+        "epoch2": {
+          "attempted": 91,
+          "applicable": 91,
+          "accepted": 77,
+          "accepted_fraction": 0.8461538461538461,
+          "reasons": {
+            "PP_ACCEPTED": 77,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 14
+          },
+          "max_absolute_steer_rad": 0.29999720958633913,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 64,
+          "failure_geometry": {
+            "TIRE_LIMIT": 14
+          },
+          "selected_margin_rad": {
+            "min": 2.790413660858082e-06,
+            "median": 0.15845774672004656,
+            "max": 0.29725333465882214
+          }
+        },
+        "epoch3": {
+          "attempted": 91,
+          "applicable": 91,
+          "accepted": 89,
+          "accepted_fraction": 0.978021978021978,
+          "reasons": {
+            "PP_ACCEPTED": 89,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 2
+          },
+          "max_absolute_steer_rad": 0.2996375941986505,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 73,
+          "failure_geometry": {
+            "TIRE_LIMIT": 2
+          },
+          "selected_margin_rad": {
+            "min": 0.00036240580134949685,
+            "median": 0.14496965518239996,
+            "max": 0.29870393979177323
+          }
+        },
+        "teacher": {
+          "attempted": 91,
+          "applicable": 91,
+          "accepted": 75,
+          "accepted_fraction": 0.8241758241758241,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 16,
+            "PP_ACCEPTED": 75
+          },
+          "max_absolute_steer_rad": 0.27171472712545197,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 75,
+          "failure_geometry": {
+            "NO_POINT_IN_DISTANCE_BAND": 16
+          },
+          "selected_margin_rad": {
+            "min": 0.028285272874548018,
+            "median": 0.13764696656800784,
+            "max": 0.295545679755302
+          }
+        }
+      },
+      "0.5": {
+        "old": {
+          "attempted": 91,
+          "applicable": 91,
+          "accepted": 91,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 91
+          },
+          "max_absolute_steer_rad": 0.2999180729297383,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 75,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 8.192707026166701e-05,
+            "median": 0.16121647004556972,
+            "max": 0.29752726681338937
+          }
+        },
+        "epoch1": {
+          "attempted": 91,
+          "applicable": 91,
+          "accepted": 91,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 91
+          },
+          "max_absolute_steer_rad": 0.29986488740513706,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 75,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00013511259486292948,
+            "median": 0.1704376340131463,
+            "max": 0.29530570893789754
+          }
+        },
+        "epoch2": {
+          "attempted": 91,
+          "applicable": 91,
+          "accepted": 80,
+          "accepted_fraction": 0.8791208791208791,
+          "reasons": {
+            "PP_ACCEPTED": 80,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 11
+          },
+          "max_absolute_steer_rad": 0.2999974364482553,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 65,
+          "failure_geometry": {
+            "TIRE_LIMIT": 11
+          },
+          "selected_margin_rad": {
+            "min": 2.5635517447164524e-06,
+            "median": 0.16885037129738623,
+            "max": 0.29777940780747364
+          }
+        },
+        "epoch3": {
+          "attempted": 91,
+          "applicable": 91,
+          "accepted": 87,
+          "accepted_fraction": 0.9560439560439561,
+          "reasons": {
+            "PP_ACCEPTED": 87,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 4
+          },
+          "max_absolute_steer_rad": 0.29944969432377505,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 71,
+          "failure_geometry": {
+            "TIRE_LIMIT": 4
+          },
+          "selected_margin_rad": {
+            "min": 0.0005503056762249381,
+            "median": 0.16482584023001223,
+            "max": 0.29925369537056884
+          }
+        },
+        "teacher": {
+          "attempted": 91,
+          "applicable": 91,
+          "accepted": 75,
+          "accepted_fraction": 0.8241758241758241,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 16,
+            "PP_ACCEPTED": 75
+          },
+          "max_absolute_steer_rad": 0.2722481800829834,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 75,
+          "accepted_on_teacher_support": 75,
+          "failure_geometry": {
+            "NO_POINT_IN_DISTANCE_BAND": 16
+          },
+          "selected_margin_rad": {
+            "min": 0.027751819917016585,
+            "median": 0.1559807406675465,
+            "max": 0.2959613758160498
+          }
+        }
+      }
+    },
+    "creep": {
+      "0.0": {
+        "old": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2736482192844604,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.026351780715539563,
+            "median": 0.07877004372831908,
+            "max": 0.10521456234052906
+          }
+        },
+        "epoch1": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2766457703623352,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.023354229637664814,
+            "median": 0.07475762034835699,
+            "max": 0.09804465019472317
+          }
+        },
+        "epoch2": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2870637979338171,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0129362020661829,
+            "median": 0.06876570606492911,
+            "max": 0.09309513895847465
+          }
+        },
+        "epoch3": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2777914198422827,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.02220858015771726,
+            "median": 0.07622363596807454,
+            "max": 0.09784223487396648
+          }
+        },
+        "teacher": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.26956481196495463,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.030435188035045357,
+            "median": 0.037721570359854406,
+            "max": 0.040286220253199057
+          }
+        }
+      },
+      "0.1": {
+        "old": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.27577893689621763,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.02422106310378236,
+            "median": 0.07540235178050256,
+            "max": 0.10448663776937595
+          }
+        },
+        "epoch1": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2789165241709313,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.021083475829068665,
+            "median": 0.07134822763162373,
+            "max": 0.09698842924164652
+          }
+        },
+        "epoch2": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2893675030035703,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.010632496996429708,
+            "median": 0.06461758344043807,
+            "max": 0.09361662841340104
+          }
+        },
+        "epoch3": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2799374727371412,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.020062527262858787,
+            "median": 0.07279013476507683,
+            "max": 0.09676153663583872
+          }
+        },
+        "teacher": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.270104541715138,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.02989545828486201,
+            "median": 0.035929479718692287,
+            "max": 0.03892885313835048
+          }
+        }
+      },
+      "0.2": {
+        "old": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.28060156439351147,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.019398435606488518,
+            "median": 0.0718239130649401,
+            "max": 0.10957537512966403
+          }
+        },
+        "epoch1": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.28351608976280024,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.01648391023719975,
+            "median": 0.06768230481442916,
+            "max": 0.1014036002515512
+          }
+        },
+        "epoch2": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2945835561611299,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0054164438388700775,
+            "median": 0.05999418430999852,
+            "max": 0.09724544635524746
+          }
+        },
+        "epoch3": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2847924045332126,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.015207595466787405,
+            "median": 0.06911200197994402,
+            "max": 0.1008309253318257
+          }
+        },
+        "teacher": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.27064284536299765,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.029357154637002336,
+            "median": 0.034711281294666635,
+            "max": 0.040697809196715895
+          }
+        }
+      },
+      "0.3": {
+        "old": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.28603412371633213,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.013965876283667855,
+            "median": 0.07319816883116292,
+            "max": 0.12231999099491583
+          }
+        },
+        "epoch1": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.28890095223098555,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.011099047769014436,
+            "median": 0.06848058958068887,
+            "max": 0.11231871535841753
+          }
+        },
+        "epoch2": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.29958779307269745,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0004122069273025386,
+            "median": 0.06037514142570631,
+            "max": 0.1070415583264549
+          }
+        },
+        "epoch3": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2902871605769555,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.009712839423044461,
+            "median": 0.06984466404585848,
+            "max": 0.1130123624309392
+          }
+        },
+        "teacher": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.27117958989269086,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.028820410107309125,
+            "median": 0.03777195588745952,
+            "max": 0.046744165722353626
+          }
+        }
+      },
+      "0.4": {
+        "old": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2932509442559995,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.006749055744000476,
+            "median": 0.0778600055489326,
+            "max": 0.1352956293463963
+          }
+        },
+        "epoch1": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.29605740478494585,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.003942595215054134,
+            "median": 0.07339244226831565,
+            "max": 0.12666636842883972
+          }
+        },
+        "epoch2": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2994489895057754,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0005510104942245686,
+            "median": 0.0642424481141877,
+            "max": 0.11942308752309261
+          }
+        },
+        "epoch3": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2976015987905345,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.002398401209465495,
+            "median": 0.07354420181885697,
+            "max": 0.1252629104587849
+          }
+        },
+        "teacher": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2682474483132273,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.03175255168677271,
+            "median": 0.038031660134214884,
+            "max": 0.06684064229348421
+          }
+        }
+      },
+      "0.5": {
+        "old": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.29161948715908365,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.008380512840916343,
+            "median": 0.08720386647323464,
+            "max": 0.15788608177374505
+          }
+        },
+        "epoch1": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2958420635957817,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.004157936404218299,
+            "median": 0.08266830122026732,
+            "max": 0.14790600157183234
+          }
+        },
+        "epoch2": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2996092962866875,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0003907037133125124,
+            "median": 0.07204135163510282,
+            "max": 0.13856230231683964
+          }
+        },
+        "epoch3": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2972379218770712,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0027620781229287794,
+            "median": 0.08251086762271281,
+            "max": 0.14685135055287787
+          }
+        },
+        "teacher": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2665346913696004,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.03346530863039959,
+            "median": 0.05065004571948603,
+            "max": 0.08075072723453477
+          }
+        }
+      }
+    },
+    "moving": {
+      "0.0": {
+        "old": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.2143577432762429,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.08564225672375708,
+            "median": 0.17933686793459186,
+            "max": 0.29659874606733827
+          }
+        },
+        "epoch1": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.2292136884127857,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0707863115872143,
+            "median": 0.17315853290035216,
+            "max": 0.2995218516240447
+          }
+        },
+        "epoch2": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.22753065422888377,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.07246934577111622,
+            "median": 0.17463893767191133,
+            "max": 0.29783324384496096
+          }
+        },
+        "epoch3": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.24118245832517748,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.058817541674822504,
+            "median": 0.17365295515271764,
+            "max": 0.29862102267166424
+          }
+        },
+        "teacher": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.26391548324841596,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.03608451675158403,
+            "median": 0.18598417077355933,
+            "max": 0.29681928419743697
+          }
+        }
+      },
+      "0.1": {
+        "old": {
+          "attempted": 46,
+          "applicable": 46,
+          "accepted": 46,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 46
+          },
+          "max_absolute_steer_rad": 0.19656080024351524,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 46,
+          "accepted_on_teacher_support": 46,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.10343919975648475,
+            "median": 0.19886026318294206,
+            "max": 0.29685194455539216
+          }
+        },
+        "epoch1": {
+          "attempted": 46,
+          "applicable": 46,
+          "accepted": 46,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 46
+          },
+          "max_absolute_steer_rad": 0.20533510571980623,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 46,
+          "accepted_on_teacher_support": 46,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.09466489428019376,
+            "median": 0.19581370067461779,
+            "max": 0.29592461959228716
+          }
+        },
+        "epoch2": {
+          "attempted": 46,
+          "applicable": 46,
+          "accepted": 46,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 46
+          },
+          "max_absolute_steer_rad": 0.21800007463880627,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 46,
+          "accepted_on_teacher_support": 46,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.08199992536119372,
+            "median": 0.19557613520905553,
+            "max": 0.2976601052782688
+          }
+        },
+        "epoch3": {
+          "attempted": 46,
+          "applicable": 46,
+          "accepted": 46,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 46
+          },
+          "max_absolute_steer_rad": 0.21378335014449798,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 46,
+          "accepted_on_teacher_support": 46,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.08621664985550201,
+            "median": 0.19328920773899327,
+            "max": 0.295771677220978
+          }
+        },
+        "teacher": {
+          "attempted": 46,
+          "applicable": 46,
+          "accepted": 46,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 46
+          },
+          "max_absolute_steer_rad": 0.26403654185487513,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 46,
+          "accepted_on_teacher_support": 46,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.03596345814512486,
+            "median": 0.19611767337604544,
+            "max": 0.29623623767101176
+          }
+        }
+      },
+      "0.2": {
+        "old": {
+          "attempted": 46,
+          "applicable": 46,
+          "accepted": 46,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 46
+          },
+          "max_absolute_steer_rad": 0.18430830379346358,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 46,
+          "accepted_on_teacher_support": 46,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.11569169620653641,
+            "median": 0.21138159079236013,
+            "max": 0.296360335172147
+          }
+        },
+        "epoch1": {
+          "attempted": 46,
+          "applicable": 46,
+          "accepted": 46,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 46
+          },
+          "max_absolute_steer_rad": 0.1883043442520521,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 46,
+          "accepted_on_teacher_support": 46,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.11169565574794788,
+            "median": 0.20996858253091952,
+            "max": 0.29529981476282796
+          }
+        },
+        "epoch2": {
+          "attempted": 46,
+          "applicable": 46,
+          "accepted": 46,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 46
+          },
+          "max_absolute_steer_rad": 0.19463359779145512,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 46,
+          "accepted_on_teacher_support": 46,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.10536640220854487,
+            "median": 0.20927119487005347,
+            "max": 0.2972851472086482
+          }
+        },
+        "epoch3": {
+          "attempted": 46,
+          "applicable": 46,
+          "accepted": 46,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 46
+          },
+          "max_absolute_steer_rad": 0.19783770414407517,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 46,
+          "accepted_on_teacher_support": 46,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.10216229585592482,
+            "median": 0.2062337739445897,
+            "max": 0.2973126865281697
+          }
+        },
+        "teacher": {
+          "attempted": 46,
+          "applicable": 46,
+          "accepted": 46,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 46
+          },
+          "max_absolute_steer_rad": 0.2609707290975616,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 46,
+          "accepted_on_teacher_support": 46,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.03902927090243841,
+            "median": 0.2137744505610635,
+            "max": 0.29565227483001116
+          }
+        }
+      },
+      "0.3": {
+        "old": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.17397325849020723,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.12602674150979276,
+            "median": 0.22962450897201103,
+            "max": 0.2991178296349544
+          }
+        },
+        "epoch1": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.17092446065293068,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.1290755393470693,
+            "median": 0.23085699197140455,
+            "max": 0.29904949592009605
+          }
+        },
+        "epoch2": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.17622182096725633,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.12377817903274366,
+            "median": 0.22891228412591325,
+            "max": 0.2988270386461772
+          }
+        },
+        "epoch3": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.17597667136537085,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.12402332863462914,
+            "median": 0.22517457509154065,
+            "max": 0.2958533808180182
+          }
+        },
+        "teacher": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.24110123042083834,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.05889876957916165,
+            "median": 0.22602272719086958,
+            "max": 0.2951301457587505
+          }
+        }
+      },
+      "0.4": {
+        "old": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.1528289273053409,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.1471710726946591,
+            "median": 0.24253493851327373,
+            "max": 0.298736913876447
+          }
+        },
+        "epoch1": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.15050308646286017,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.14949691353713981,
+            "median": 0.24651659295264824,
+            "max": 0.2976987969617247
+          }
+        },
+        "epoch2": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.157813674739675,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.14218632526032499,
+            "median": 0.24374493083641657,
+            "max": 0.29725333465882214
+          }
+        },
+        "epoch3": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.15898797813617183,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.14101202186382816,
+            "median": 0.23907565739383685,
+            "max": 0.29870393979177323
+          }
+        },
+        "teacher": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.2286455047204456,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0713544952795544,
+            "median": 0.23536908134355872,
+            "max": 0.295545679755302
+          }
+        }
+      },
+      "0.5": {
+        "old": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.1407438542498107,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.1592561457501893,
+            "median": 0.25006229424192017,
+            "max": 0.29752726681338937
+          }
+        },
+        "epoch1": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.1295958857212071,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.1704041142787929,
+            "median": 0.256496386565664,
+            "max": 0.29530570893789754
+          }
+        },
+        "epoch2": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.14367881886005737,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.15632118113994262,
+            "median": 0.25309808991812627,
+            "max": 0.29777940780747364
+          }
+        },
+        "epoch3": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.14271262019726158,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.1572873798027384,
+            "median": 0.24760842725092472,
+            "max": 0.29925369537056884
+          }
+        },
+        "teacher": {
+          "attempted": 47,
+          "applicable": 47,
+          "accepted": 47,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 47
+          },
+          "max_absolute_steer_rad": 0.2090761677771082,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 47,
+          "accepted_on_teacher_support": 47,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0909238322228918,
+            "median": 0.23680190442850035,
+            "max": 0.2959613758160498
+          }
+        }
+      }
+    },
+    "stationary_future_launch": {
+      "0.0": {
+        "old": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.2999715522841445,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 2.844771585547301e-05,
+            "median": 0.0002825711904265171,
+            "max": 0.0024848268544724883
+          }
+        },
+        "epoch1": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.29995446907091583,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 4.553092908415879e-05,
+            "median": 0.00025128192414053396,
+            "max": 0.001337073141883749
+          }
+        },
+        "epoch2": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 3,
+          "accepted_fraction": 0.15,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 17,
+            "PP_ACCEPTED": 3
+          },
+          "max_absolute_steer_rad": 0.29998563734290234,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 3,
+          "failure_geometry": {
+            "TIRE_LIMIT": 17
+          },
+          "selected_margin_rad": {
+            "min": 1.436265709764406e-05,
+            "median": 1.995695306761247e-05,
+            "max": 5.787946021101886e-05
+          }
+        },
+        "epoch3": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.2996196893626331,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0003803106373668763,
+            "median": 0.0020489200017032583,
+            "max": 0.0021253705816755564
+          }
+        },
+        "teacher": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.2636610194127912,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0363389805872088,
+            "median": 0.044387047028894955,
+            "max": 0.04693710367990406
+          }
+        }
+      },
+      "0.1": {
+        "old": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.29999687516755047,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 3.1248324495192215e-06,
+            "median": 0.00029275084284835495,
+            "max": 0.002251168020314942
+          }
+        },
+        "epoch1": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.2999079403600151,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 9.20596399848761e-05,
+            "median": 0.00028199413685403574,
+            "max": 0.0027811128996214074
+          }
+        },
+        "epoch2": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 3,
+          "accepted_fraction": 0.15,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 17,
+            "PP_ACCEPTED": 3
+          },
+          "max_absolute_steer_rad": 0.29996448439529005,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 3,
+          "failure_geometry": {
+            "TIRE_LIMIT": 17
+          },
+          "selected_margin_rad": {
+            "min": 3.5515604709934756e-05,
+            "median": 4.281960072405333e-05,
+            "max": 8.573743944267909e-05
+          }
+        },
+        "epoch3": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.2995919057712228,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00040809422877718937,
+            "median": 0.002065752047269026,
+            "max": 0.0021549911611667416
+          }
+        },
+        "teacher": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.26361768769539956,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.03638231230460043,
+            "median": 0.04442910326948027,
+            "max": 0.04697743786212011
+          }
+        }
+      },
+      "0.2": {
+        "old": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.2999482355286334,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 5.176447136656659e-05,
+            "median": 0.0003396938164245411,
+            "max": 0.0023487820215475907
+          }
+        },
+        "epoch1": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.2998521893794499,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00014781062055008176,
+            "median": 0.00032937854063852523,
+            "max": 0.002874628934547263
+          }
+        },
+        "epoch2": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 4,
+          "accepted_fraction": 0.2,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 16,
+            "PP_ACCEPTED": 4
+          },
+          "max_absolute_steer_rad": 0.29998531604941014,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 4,
+          "failure_geometry": {
+            "TIRE_LIMIT": 16
+          },
+          "selected_margin_rad": {
+            "min": 1.4683950589844397e-05,
+            "median": 6.509925414380224e-05,
+            "max": 0.00010687184515056902
+          }
+        },
+        "epoch3": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.2995718594836025,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0004281405163975016,
+            "median": 0.0020701220075366733,
+            "max": 0.002177409741488334
+          }
+        },
+        "teacher": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.2635602321771524,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.03643976782284758,
+            "median": 0.044474354887667905,
+            "max": 0.047017123662347116
+          }
+        }
+      },
+      "0.3": {
+        "old": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.2999825407928143,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 1.745920718571048e-05,
+            "median": 0.0003636910782796876,
+            "max": 0.0012789499563862217
+          }
+        },
+        "epoch1": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.2999060619540327,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 9.393804596730115e-05,
+            "median": 0.00035096689986247043,
+            "max": 0.0017268326197800166
+          }
+        },
+        "epoch2": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 6,
+          "accepted_fraction": 0.3,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 14,
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.29999984338769903,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {
+            "TIRE_LIMIT": 14
+          },
+          "selected_margin_rad": {
+            "min": 1.566123009610898e-07,
+            "median": 5.940236551685296e-05,
+            "max": 0.00012877898422924972
+          }
+        },
+        "epoch3": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.29982982387690643,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00017017612309355723,
+            "median": 0.002086871799463097,
+            "max": 0.0022007144003982626
+          }
+        },
+        "teacher": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.26587273906692577,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.03412726093307422,
+            "median": 0.04451466557265604,
+            "max": 0.04706724634939491
+          }
+        }
+      },
+      "0.4": {
+        "old": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.2998774124676402,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0001225875323597747,
+            "median": 0.0004044974685669389,
+            "max": 0.002113999247984333
+          }
+        },
+        "epoch1": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.29991418864979147,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 8.581135020852004e-05,
+            "median": 0.0003827739862796997,
+            "max": 0.0032710112769341326
+          }
+        },
+        "epoch2": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 9,
+          "accepted_fraction": 0.45,
+          "reasons": {
+            "PP_ACCEPTED": 9,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 11
+          },
+          "max_absolute_steer_rad": 0.29999720958633913,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 9,
+          "failure_geometry": {
+            "TIRE_LIMIT": 11
+          },
+          "selected_margin_rad": {
+            "min": 2.790413660858082e-06,
+            "median": 2.088928715215932e-05,
+            "max": 0.00015384761484543708
+          }
+        },
+        "epoch3": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 18,
+          "accepted_fraction": 0.9,
+          "reasons": {
+            "PP_ACCEPTED": 18,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 2
+          },
+          "max_absolute_steer_rad": 0.2996375941986505,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 18,
+          "failure_geometry": {
+            "TIRE_LIMIT": 2
+          },
+          "selected_margin_rad": {
+            "min": 0.00036240580134949685,
+            "median": 0.0021110889684145817,
+            "max": 0.0022273185762580194
+          }
+        },
+        "teacher": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.27171472712545197,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.028285272874548018,
+            "median": 0.04506326236128669,
+            "max": 0.04710332665571465
+          }
+        }
+      },
+      "0.5": {
+        "old": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.2998495905603979,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00015040943960209496,
+            "median": 0.00043544407288176323,
+            "max": 0.002331515495013148
+          }
+        },
+        "epoch1": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.29986488740513706,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00013511259486292948,
+            "median": 0.0004125863144845976,
+            "max": 0.003350903542743977
+          }
+        },
+        "epoch2": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 10,
+          "accepted_fraction": 0.5,
+          "reasons": {
+            "PP_ACCEPTED": 10,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 10
+          },
+          "max_absolute_steer_rad": 0.2999974364482553,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 10,
+          "failure_geometry": {
+            "TIRE_LIMIT": 10
+          },
+          "selected_margin_rad": {
+            "min": 2.5635517447164524e-06,
+            "median": 3.4689940605153735e-05,
+            "max": 0.00014082552831651274
+          }
+        },
+        "epoch3": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 16,
+          "accepted_fraction": 0.8,
+          "reasons": {
+            "PP_ACCEPTED": 16,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 4
+          },
+          "max_absolute_steer_rad": 0.29944969432377505,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 16,
+          "failure_geometry": {
+            "TIRE_LIMIT": 4
+          },
+          "selected_margin_rad": {
+            "min": 0.0005503056762249381,
+            "median": 0.002126197078218872,
+            "max": 0.002208519725595104
+          }
+        },
+        "teacher": {
+          "attempted": 20,
+          "applicable": 20,
+          "accepted": 20,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 20
+          },
+          "max_absolute_steer_rad": 0.2722481800829834,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 20,
+          "accepted_on_teacher_support": 20,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.027751819917016585,
+            "median": 0.04460092048079625,
+            "max": 0.04714094217068582
+          }
+        }
+      }
+    },
+    "stationary_transition": {
+      "0.0": {
+        "old": {
+          "attempted": 17,
+          "applicable": 17,
+          "accepted": 17,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 17
+          },
+          "max_absolute_steer_rad": 0.2999025682125013,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 9.743178749871406e-05,
+            "median": 0.0002845759742662879,
+            "max": 0.002444750040470123
+          }
+        },
+        "epoch1": {
+          "attempted": 17,
+          "applicable": 17,
+          "accepted": 17,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 17
+          },
+          "max_absolute_steer_rad": 0.2998646976589134,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00013530234108660721,
+            "median": 0.0004238813338832692,
+            "max": 0.0015038768522622203
+          }
+        },
+        "epoch2": {
+          "attempted": 17,
+          "applicable": 17,
+          "accepted": 9,
+          "accepted_fraction": 0.5294117647058824,
+          "reasons": {
+            "PP_ACCEPTED": 9,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 8
+          },
+          "max_absolute_steer_rad": 0.2999948731825294,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "TIRE_LIMIT": 8
+          },
+          "selected_margin_rad": {
+            "min": 5.126817470613165e-06,
+            "median": 0.0009327273928891322,
+            "max": 0.0013514227032624948
+          }
+        },
+        "epoch3": {
+          "attempted": 17,
+          "applicable": 17,
+          "accepted": 17,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 17
+          },
+          "max_absolute_steer_rad": 0.2995446736893124,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0004553263106875649,
+            "median": 0.002049755926563257,
+            "max": 0.0021489805887508484
+          }
+        },
+        "teacher": {
+          "attempted": 17,
+          "applicable": 17,
+          "accepted": 0,
+          "accepted_fraction": 0.0,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 17
+          },
+          "max_absolute_steer_rad": null,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "NO_POINT_IN_DISTANCE_BAND": 17
+          },
+          "selected_margin_rad": {}
+        }
+      },
+      "0.1": {
+        "old": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 16,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 16
+          },
+          "max_absolute_steer_rad": 0.2998692339108903,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00013076608910966847,
+            "median": 0.000314758771706225,
+            "max": 0.002470353080670007
+          }
+        },
+        "epoch1": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 16,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 16
+          },
+          "max_absolute_steer_rad": 0.29983199263230237,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00016800736769762015,
+            "median": 0.0004022301596809108,
+            "max": 0.0015341659764212534
+          }
+        },
+        "epoch2": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 9,
+          "accepted_fraction": 0.5625,
+          "reasons": {
+            "PP_ACCEPTED": 9,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 7
+          },
+          "max_absolute_steer_rad": 0.2999793441080712,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "TIRE_LIMIT": 7
+          },
+          "selected_margin_rad": {
+            "min": 2.065589192878914e-05,
+            "median": 0.0009574190069950306,
+            "max": 0.0013766815738293081
+          }
+        },
+        "epoch3": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 16,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 16
+          },
+          "max_absolute_steer_rad": 0.2995195097415925,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0004804902584074622,
+            "median": 0.002045130897574826,
+            "max": 0.0021536587218822234
+          }
+        },
+        "teacher": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 0,
+          "accepted_fraction": 0.0,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 16
+          },
+          "max_absolute_steer_rad": null,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "NO_POINT_IN_DISTANCE_BAND": 16
+          },
+          "selected_margin_rad": {}
+        }
+      },
+      "0.2": {
+        "old": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 16,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 16
+          },
+          "max_absolute_steer_rad": 0.2998385665693711,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00016143343062891002,
+            "median": 0.0003485891164695387,
+            "max": 0.002497848236871436
+          }
+        },
+        "epoch1": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 16,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 16
+          },
+          "max_absolute_steer_rad": 0.29980190416750774,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00019809583249225104,
+            "median": 0.00043327411423824125,
+            "max": 0.0010725758006653874
+          }
+        },
+        "epoch2": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 10,
+          "accepted_fraction": 0.625,
+          "reasons": {
+            "PP_ACCEPTED": 10,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 6
+          },
+          "max_absolute_steer_rad": 0.2999557566066366,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "TIRE_LIMIT": 6
+          },
+          "selected_margin_rad": {
+            "min": 4.424339336339678e-05,
+            "median": 0.000975711536927909,
+            "max": 0.0013967925520617097
+          }
+        },
+        "epoch3": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 16,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 16
+          },
+          "max_absolute_steer_rad": 0.2993465274311709,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0006534725688290832,
+            "median": 0.002101638418657792,
+            "max": 0.0021979729341002896
+          }
+        },
+        "teacher": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 0,
+          "accepted_fraction": 0.0,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 16
+          },
+          "max_absolute_steer_rad": null,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "NO_POINT_IN_DISTANCE_BAND": 16
+          },
+          "selected_margin_rad": {}
+        }
+      },
+      "0.3": {
+        "old": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 16,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 16
+          },
+          "max_absolute_steer_rad": 0.2999816037542767,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 1.839624572330667e-05,
+            "median": 0.00038031993418696786,
+            "max": 0.0024838703185771638
+          }
+        },
+        "epoch1": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 16,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 16
+          },
+          "max_absolute_steer_rad": 0.2997700486327859,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00022995136721409848,
+            "median": 0.000518884774517836,
+            "max": 0.0015930937021471636
+          }
+        },
+        "epoch2": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 9,
+          "accepted_fraction": 0.5625,
+          "reasons": {
+            "PP_ACCEPTED": 9,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 7
+          },
+          "max_absolute_steer_rad": 0.29992470930601206,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "TIRE_LIMIT": 7
+          },
+          "selected_margin_rad": {
+            "min": 7.529069398792831e-05,
+            "median": 0.0010080803569123553,
+            "max": 0.0014178139212608354
+          }
+        },
+        "epoch3": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 16,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 16
+          },
+          "max_absolute_steer_rad": 0.29947047241658814,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0005295275834118485,
+            "median": 0.0020979504065079813,
+            "max": 0.00222322212909426
+          }
+        },
+        "teacher": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 0,
+          "accepted_fraction": 0.0,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 16
+          },
+          "max_absolute_steer_rad": null,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "NO_POINT_IN_DISTANCE_BAND": 16
+          },
+          "selected_margin_rad": {}
+        }
+      },
+      "0.4": {
+        "old": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 16,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 16
+          },
+          "max_absolute_steer_rad": 0.2999935880786692,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 6.411921330773396e-06,
+            "median": 0.000402997633359492,
+            "max": 0.0009231638909116269
+          }
+        },
+        "epoch1": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 16,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 16
+          },
+          "max_absolute_steer_rad": 0.2996345301351673,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0003654698648327126,
+            "median": 0.000549467521069269,
+            "max": 0.0016233928969242029
+          }
+        },
+        "epoch2": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 13,
+          "accepted_fraction": 0.8125,
+          "reasons": {
+            "PP_ACCEPTED": 13,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 3
+          },
+          "max_absolute_steer_rad": 0.29998939124654395,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "TIRE_LIMIT": 3
+          },
+          "selected_margin_rad": {
+            "min": 1.0608753456042841e-05,
+            "median": 0.00016027786213718143,
+            "max": 0.0014420351697068678
+          }
+        },
+        "epoch3": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 16,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 16
+          },
+          "max_absolute_steer_rad": 0.29944523258985506,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0005547674101449296,
+            "median": 0.0021510135828253785,
+            "max": 0.00224898590759004
+          }
+        },
+        "teacher": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 0,
+          "accepted_fraction": 0.0,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 16
+          },
+          "max_absolute_steer_rad": null,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "NO_POINT_IN_DISTANCE_BAND": 16
+          },
+          "selected_margin_rad": {}
+        }
+      },
+      "0.5": {
+        "old": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 16,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 16
+          },
+          "max_absolute_steer_rad": 0.2999180729297383,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 8.192707026166701e-05,
+            "median": 0.00043552498144672214,
+            "max": 0.0009548650043342266
+          }
+        },
+        "epoch1": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 16,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 16
+          },
+          "max_absolute_steer_rad": 0.2997082337811302,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00029176621886978227,
+            "median": 0.0005262708358771961,
+            "max": 0.0016544673489026218
+          }
+        },
+        "epoch2": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 15,
+          "accepted_fraction": 0.9375,
+          "reasons": {
+            "PP_ACCEPTED": 15,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 1
+          },
+          "max_absolute_steer_rad": 0.29998955243541797,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "TIRE_LIMIT": 1
+          },
+          "selected_margin_rad": {
+            "min": 1.0447564582016788e-05,
+            "median": 0.00012179644964094294,
+            "max": 0.0014664366508349014
+          }
+        },
+        "epoch3": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 16,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 16
+          },
+          "max_absolute_steer_rad": 0.2994194008009928,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0005805991990072146,
+            "median": 0.0021747166089985948,
+            "max": 0.002272109633237096
+          }
+        },
+        "teacher": {
+          "attempted": 16,
+          "applicable": 16,
+          "accepted": 0,
+          "accepted_fraction": 0.0,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 16
+          },
+          "max_absolute_steer_rad": null,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 0,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "NO_POINT_IN_DISTANCE_BAND": 16
+          },
+          "selected_margin_rad": {}
+        }
+      }
+    }
+  },
+  "near_arm_pp": {
+    "all": {
+      "0.0": {
+        "old": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.29989965192515605,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00010034807484393671,
+            "median": 0.03213953342123019,
+            "max": 0.10521456234052906
+          }
+        },
+        "epoch1": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.29995446907091583,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 4.553092908415879e-05,
+            "median": 0.028655290898113167,
+            "max": 0.09804465019472317
+          }
+        },
+        "epoch2": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 8,
+          "accepted_fraction": 0.5714285714285714,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 6,
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2870637979338171,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {
+            "TIRE_LIMIT": 6
+          },
+          "selected_margin_rad": {
+            "min": 0.0129362020661829,
+            "median": 0.06876570606492911,
+            "max": 0.09309513895847465
+          }
+        },
+        "epoch3": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.2996196893626331,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0003803106373668763,
+            "median": 0.028650427081174268,
+            "max": 0.09784223487396648
+          }
+        },
+        "teacher": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.26956481196495463,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.030435188035045357,
+            "median": 0.03855815569527099,
+            "max": 0.040286220253199057
+          }
+        }
+      },
+      "0.1": {
+        "old": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.29999687516755047,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 3.1248324495192215e-06,
+            "median": 0.030058799993347818,
+            "max": 0.10448663776937595
+          }
+        },
+        "epoch1": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.2999079403600151,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 9.20596399848761e-05,
+            "median": 0.026508981027280554,
+            "max": 0.09698842924164652
+          }
+        },
+        "epoch2": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 8,
+          "accepted_fraction": 0.5714285714285714,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 6,
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2893675030035703,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {
+            "TIRE_LIMIT": 6
+          },
+          "selected_margin_rad": {
+            "min": 0.010632496996429708,
+            "median": 0.06461758344043807,
+            "max": 0.09361662841340104
+          }
+        },
+        "epoch3": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.2995919057712228,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00040809422877718937,
+            "median": 0.02655823088628051,
+            "max": 0.09676153663583872
+          }
+        },
+        "teacher": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.270104541715138,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.02989545828486201,
+            "median": 0.03836940039466907,
+            "max": 0.03988845767955895
+          }
+        }
+      },
+      "0.2": {
+        "old": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.2998353036710613,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0001646963289386738,
+            "median": 0.025132974405186248,
+            "max": 0.10957537512966403
+          }
+        },
+        "epoch1": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.29976130794071915,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0002386920592808428,
+            "median": 0.02215652567165477,
+            "max": 0.1014036002515512
+          }
+        },
+        "epoch2": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 8,
+          "accepted_fraction": 0.5714285714285714,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 6,
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2945835561611299,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {
+            "TIRE_LIMIT": 6
+          },
+          "selected_margin_rad": {
+            "min": 0.0054164438388700775,
+            "median": 0.05999418430999852,
+            "max": 0.09724544635524746
+          }
+        },
+        "epoch3": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.2995718594836025,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0004281405163975016,
+            "median": 0.022061984196924234,
+            "max": 0.1008309253318257
+          }
+        },
+        "teacher": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.27064284536299765,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.029357154637002336,
+            "median": 0.03789287441390096,
+            "max": 0.040697809196715895
+          }
+        }
+      },
+      "0.3": {
+        "old": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.2999825407928143,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 1.745920718571048e-05,
+            "median": 0.019679894853791402,
+            "max": 0.12231999099491583
+          }
+        },
+        "epoch1": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.2999060619540327,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 9.393804596730115e-05,
+            "median": 0.01695464157508092,
+            "max": 0.11231871535841753
+          }
+        },
+        "epoch2": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 8,
+          "accepted_fraction": 0.5714285714285714,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 6,
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.29958779307269745,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {
+            "TIRE_LIMIT": 6
+          },
+          "selected_margin_rad": {
+            "min": 0.0004122069273025386,
+            "median": 0.06037514142570631,
+            "max": 0.1070415583264549
+          }
+        },
+        "epoch3": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.29982982387690643,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00017017612309355723,
+            "median": 0.01564603065246889,
+            "max": 0.1130123624309392
+          }
+        },
+        "teacher": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.27117958989269086,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.028820410107309125,
+            "median": 0.03784734785939353,
+            "max": 0.046744165722353626
+          }
+        }
+      },
+      "0.4": {
+        "old": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.29972901917596045,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00027098082403953505,
+            "median": 0.014335632371725027,
+            "max": 0.1352956293463963
+          }
+        },
+        "epoch1": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.29991418864979147,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 8.581135020852004e-05,
+            "median": 0.011623436620386313,
+            "max": 0.12666636842883972
+          }
+        },
+        "epoch2": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 8,
+          "accepted_fraction": 0.5714285714285714,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 6,
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2994489895057754,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {
+            "TIRE_LIMIT": 6
+          },
+          "selected_margin_rad": {
+            "min": 0.0005510104942245686,
+            "median": 0.0642424481141877,
+            "max": 0.11942308752309261
+          }
+        },
+        "epoch3": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 12,
+          "accepted_fraction": 0.8571428571428571,
+          "reasons": {
+            "PP_ACCEPTED": 12,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 2
+          },
+          "max_absolute_steer_rad": 0.2996375941986505,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 12,
+          "failure_geometry": {
+            "TIRE_LIMIT": 2
+          },
+          "selected_margin_rad": {
+            "min": 0.00036240580134949685,
+            "median": 0.03625546450894121,
+            "max": 0.1252629104587849
+          }
+        },
+        "teacher": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.27171472712545197,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.028285272874548018,
+            "median": 0.037503058887285806,
+            "max": 0.06684064229348421
+          }
+        }
+      },
+      "0.5": {
+        "old": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.29963638584391655,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00036361415608343606,
+            "median": 0.014806481598829302,
+            "max": 0.15788608177374505
+          }
+        },
+        "epoch1": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.29986488740513706,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00013511259486292948,
+            "median": 0.011311857790776342,
+            "max": 0.14790600157183234
+          }
+        },
+        "epoch2": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 8,
+          "accepted_fraction": 0.5714285714285714,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 6,
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2996092962866875,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {
+            "TIRE_LIMIT": 6
+          },
+          "selected_margin_rad": {
+            "min": 0.0003907037133125124,
+            "median": 0.07204135163510282,
+            "max": 0.13856230231683964
+          }
+        },
+        "epoch3": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 10,
+          "accepted_fraction": 0.7142857142857143,
+          "reasons": {
+            "PP_ACCEPTED": 10,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 4
+          },
+          "max_absolute_steer_rad": 0.29944969432377505,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 10,
+          "failure_geometry": {
+            "TIRE_LIMIT": 4
+          },
+          "selected_margin_rad": {
+            "min": 0.0005503056762249381,
+            "median": 0.06350756719190358,
+            "max": 0.14685135055287787
+          }
+        },
+        "teacher": {
+          "attempted": 14,
+          "applicable": 14,
+          "accepted": 14,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 14
+          },
+          "max_absolute_steer_rad": 0.2722481800829834,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 14,
+          "accepted_on_teacher_support": 14,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.027751819917016585,
+            "median": 0.03756200200473811,
+            "max": 0.08075072723453477
+          }
+        }
+      }
+    },
+    "creep": {
+      "0.0": {
+        "old": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2736482192844604,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.026351780715539563,
+            "median": 0.07877004372831908,
+            "max": 0.10521456234052906
+          }
+        },
+        "epoch1": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2766457703623352,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.023354229637664814,
+            "median": 0.07475762034835699,
+            "max": 0.09804465019472317
+          }
+        },
+        "epoch2": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2870637979338171,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0129362020661829,
+            "median": 0.06876570606492911,
+            "max": 0.09309513895847465
+          }
+        },
+        "epoch3": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2777914198422827,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.02220858015771726,
+            "median": 0.07622363596807454,
+            "max": 0.09784223487396648
+          }
+        },
+        "teacher": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.26956481196495463,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.030435188035045357,
+            "median": 0.037721570359854406,
+            "max": 0.040286220253199057
+          }
+        }
+      },
+      "0.1": {
+        "old": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.27577893689621763,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.02422106310378236,
+            "median": 0.07540235178050256,
+            "max": 0.10448663776937595
+          }
+        },
+        "epoch1": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2789165241709313,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.021083475829068665,
+            "median": 0.07134822763162373,
+            "max": 0.09698842924164652
+          }
+        },
+        "epoch2": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2893675030035703,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.010632496996429708,
+            "median": 0.06461758344043807,
+            "max": 0.09361662841340104
+          }
+        },
+        "epoch3": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2799374727371412,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.020062527262858787,
+            "median": 0.07279013476507683,
+            "max": 0.09676153663583872
+          }
+        },
+        "teacher": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.270104541715138,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.02989545828486201,
+            "median": 0.035929479718692287,
+            "max": 0.03892885313835048
+          }
+        }
+      },
+      "0.2": {
+        "old": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.28060156439351147,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.019398435606488518,
+            "median": 0.0718239130649401,
+            "max": 0.10957537512966403
+          }
+        },
+        "epoch1": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.28351608976280024,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.01648391023719975,
+            "median": 0.06768230481442916,
+            "max": 0.1014036002515512
+          }
+        },
+        "epoch2": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2945835561611299,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0054164438388700775,
+            "median": 0.05999418430999852,
+            "max": 0.09724544635524746
+          }
+        },
+        "epoch3": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2847924045332126,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.015207595466787405,
+            "median": 0.06911200197994402,
+            "max": 0.1008309253318257
+          }
+        },
+        "teacher": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.27064284536299765,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.029357154637002336,
+            "median": 0.034711281294666635,
+            "max": 0.040697809196715895
+          }
+        }
+      },
+      "0.3": {
+        "old": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.28603412371633213,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.013965876283667855,
+            "median": 0.07319816883116292,
+            "max": 0.12231999099491583
+          }
+        },
+        "epoch1": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.28890095223098555,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.011099047769014436,
+            "median": 0.06848058958068887,
+            "max": 0.11231871535841753
+          }
+        },
+        "epoch2": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.29958779307269745,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0004122069273025386,
+            "median": 0.06037514142570631,
+            "max": 0.1070415583264549
+          }
+        },
+        "epoch3": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2902871605769555,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.009712839423044461,
+            "median": 0.06984466404585848,
+            "max": 0.1130123624309392
+          }
+        },
+        "teacher": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.27117958989269086,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.028820410107309125,
+            "median": 0.03777195588745952,
+            "max": 0.046744165722353626
+          }
+        }
+      },
+      "0.4": {
+        "old": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2932509442559995,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.006749055744000476,
+            "median": 0.0778600055489326,
+            "max": 0.1352956293463963
+          }
+        },
+        "epoch1": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.29605740478494585,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.003942595215054134,
+            "median": 0.07339244226831565,
+            "max": 0.12666636842883972
+          }
+        },
+        "epoch2": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2994489895057754,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0005510104942245686,
+            "median": 0.0642424481141877,
+            "max": 0.11942308752309261
+          }
+        },
+        "epoch3": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2976015987905345,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.002398401209465495,
+            "median": 0.07354420181885697,
+            "max": 0.1252629104587849
+          }
+        },
+        "teacher": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2682474483132273,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.03175255168677271,
+            "median": 0.038031660134214884,
+            "max": 0.06684064229348421
+          }
+        }
+      },
+      "0.5": {
+        "old": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.29161948715908365,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.008380512840916343,
+            "median": 0.08720386647323464,
+            "max": 0.15788608177374505
+          }
+        },
+        "epoch1": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2958420635957817,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.004157936404218299,
+            "median": 0.08266830122026732,
+            "max": 0.14790600157183234
+          }
+        },
+        "epoch2": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2996092962866875,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0003907037133125124,
+            "median": 0.07204135163510282,
+            "max": 0.13856230231683964
+          }
+        },
+        "epoch3": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2972379218770712,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0027620781229287794,
+            "median": 0.08251086762271281,
+            "max": 0.14685135055287787
+          }
+        },
+        "teacher": {
+          "attempted": 8,
+          "applicable": 8,
+          "accepted": 8,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 8
+          },
+          "max_absolute_steer_rad": 0.2665346913696004,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 8,
+          "accepted_on_teacher_support": 8,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.03346530863039959,
+            "median": 0.05065004571948603,
+            "max": 0.08075072723453477
+          }
+        }
+      }
+    },
+    "stationary_future_launch": {
+      "0.0": {
+        "old": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.29989965192515605,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00010034807484393671,
+            "median": 0.0005375433894173609,
+            "max": 0.0024701519914974157
+          }
+        },
+        "epoch1": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.29995446907091583,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 4.553092908415879e-05,
+            "median": 0.00021300078543989853,
+            "max": 0.001337073141883749
+          }
+        },
+        "epoch2": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 0,
+          "accepted_fraction": 0.0,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 6
+          },
+          "max_absolute_steer_rad": null,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "TIRE_LIMIT": 6
+          },
+          "selected_margin_rad": {}
+        },
+        "epoch3": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.2996196893626331,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0003803106373668763,
+            "median": 0.0019407292039307633,
+            "max": 0.0020762738636871947
+          }
+        },
+        "teacher": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.26165646114276925,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.03834353885723074,
+            "median": 0.03891332459102459,
+            "max": 0.04011759020571193
+          }
+        }
+      },
+      "0.1": {
+        "old": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.29999687516755047,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 3.1248324495192215e-06,
+            "median": 0.00026274160092545906,
+            "max": 0.002251168020314942
+          }
+        },
+        "epoch1": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.2999079403600151,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 9.20596399848761e-05,
+            "median": 0.00024865432612111715,
+            "max": 0.0027811128996214074
+          }
+        },
+        "epoch2": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 0,
+          "accepted_fraction": 0.0,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 6
+          },
+          "max_absolute_steer_rad": null,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "TIRE_LIMIT": 6
+          },
+          "selected_margin_rad": {}
+        },
+        "epoch3": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.2995919057712228,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00040809422877718937,
+            "median": 0.0019656604617971085,
+            "max": 0.0020720946331396206
+          }
+        },
+        "teacher": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.2616062282719119,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.03839377172808811,
+            "median": 0.03890103048176605,
+            "max": 0.03988845767955895
+          }
+        }
+      },
+      "0.2": {
+        "old": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.2998353036710613,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0001646963289386738,
+            "median": 0.0007644653908953358,
+            "max": 0.0023487820215475907
+          }
+        },
+        "epoch1": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.29976130794071915,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0002386920592808428,
+            "median": 0.0013242565161785402,
+            "max": 0.002874628934547263
+          }
+        },
+        "epoch2": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 0,
+          "accepted_fraction": 0.0,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 6
+          },
+          "max_absolute_steer_rad": null,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "TIRE_LIMIT": 6
+          },
+          "selected_margin_rad": {}
+        },
+        "epoch3": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.2995718594836025,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.0004281405163975016,
+            "median": 0.0012557628842409518,
+            "max": 0.0020549855063147215
+          }
+        },
+        "teacher": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.26294574697369183,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.03705425302630816,
+            "median": 0.03851860477258365,
+            "max": 0.039492475447918673
+          }
+        }
+      },
+      "0.3": {
+        "old": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.2999825407928143,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 1.745920718571048e-05,
+            "median": 0.0005735511642747382,
+            "max": 0.0012789499563862217
+          }
+        },
+        "epoch1": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.2999060619540327,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 9.393804596730115e-05,
+            "median": 0.0008510761813393941,
+            "max": 0.0017268326197800166
+          }
+        },
+        "epoch2": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 0,
+          "accepted_fraction": 0.0,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 6
+          },
+          "max_absolute_steer_rad": null,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "TIRE_LIMIT": 6
+          },
+          "selected_margin_rad": {}
+        },
+        "epoch3": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.29982982387690643,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00017017612309355723,
+            "median": 0.000517081040335654,
+            "max": 0.0018908979126200376
+          }
+        },
+        "teacher": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.26587273906692577,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.03412726093307422,
+            "median": 0.0381103237884641,
+            "max": 0.04220534499585005
+          }
+        }
+      },
+      "0.4": {
+        "old": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.29972901917596045,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00027098082403953505,
+            "median": 0.001266544489871152,
+            "max": 0.002113999247984333
+          }
+        },
+        "epoch1": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.29991418864979147,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 8.581135020852004e-05,
+            "median": 0.0004568614337720489,
+            "max": 0.0032710112769341326
+          }
+        },
+        "epoch2": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 0,
+          "accepted_fraction": 0.0,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 6
+          },
+          "max_absolute_steer_rad": null,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "TIRE_LIMIT": 6
+          },
+          "selected_margin_rad": {}
+        },
+        "epoch3": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 4,
+          "accepted_fraction": 0.6666666666666666,
+          "reasons": {
+            "PP_ACCEPTED": 4,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 2
+          },
+          "max_absolute_steer_rad": 0.2996375941986505,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 4,
+          "failure_geometry": {
+            "TIRE_LIMIT": 2
+          },
+          "selected_margin_rad": {
+            "min": 0.00036240580134949685,
+            "median": 0.0006703731548554082,
+            "max": 0.001788888625615992
+          }
+        },
+        "teacher": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.27171472712545197,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.028285272874548018,
+            "median": 0.03719975298129141,
+            "max": 0.045764921056489716
+          }
+        }
+      },
+      "0.5": {
+        "old": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.29963638584391655,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00036361415608343606,
+            "median": 0.0014897898057921743,
+            "max": 0.002331515495013148
+          }
+        },
+        "epoch1": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.29986488740513706,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.00013511259486292948,
+            "median": 0.0006358849812223011,
+            "max": 0.003350903542743977
+          }
+        },
+        "epoch2": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 0,
+          "accepted_fraction": 0.0,
+          "reasons": {
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 6
+          },
+          "max_absolute_steer_rad": null,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 0,
+          "failure_geometry": {
+            "TIRE_LIMIT": 6
+          },
+          "selected_margin_rad": {}
+        },
+        "epoch3": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 2,
+          "accepted_fraction": 0.3333333333333333,
+          "reasons": {
+            "PP_ACCEPTED": 2,
+            "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 4
+          },
+          "max_absolute_steer_rad": 0.29944969432377505,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 2,
+          "failure_geometry": {
+            "TIRE_LIMIT": 4
+          },
+          "selected_margin_rad": {
+            "min": 0.0005503056762249381,
+            "median": 0.0012067691186741503,
+            "max": 0.0018632325611233624
+          }
+        },
+        "teacher": {
+          "attempted": 6,
+          "applicable": 6,
+          "accepted": 6,
+          "accepted_fraction": 1.0,
+          "reasons": {
+            "PP_ACCEPTED": 6
+          },
+          "max_absolute_steer_rad": 0.2722481800829834,
+          "scope": "PP_CALCULATION_ONLY_NOT_SAFETY_OR_CLOSED_LOOP",
+          "teacher_supported": 6,
+          "accepted_on_teacher_support": 6,
+          "failure_geometry": {},
+          "selected_margin_rad": {
+            "min": 0.027751819917016585,
+            "median": 0.03489490035927184,
+            "max": 0.042366712614554436
+          }
+        }
+      }
+    }
+  },
+  "missing_future_pose": {
+    "0.5": 1,
+    "0.4": 1,
+    "0.3": 1,
+    "0.2": 2,
+    "0.1": 2
+  },
+  "future_pose_teacher_max_error_m": 2.9433076026117458e-08,
+  "batch_size": 1,
+  "no_teacher_or_future_pose_model_inputs": true,
+  "test_read": false
+}

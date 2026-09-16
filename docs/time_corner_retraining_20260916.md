@@ -7,6 +7,8 @@
 AWSIMでは発進後5.15秒の制御103回中97回で`STEERING_FEASIBLE_LOOKAHEAD_MISSING`となり、`PROGRESS_STALLED`で停止した。
 従来モデルが到達した区間4や今回のコーナー復帰性能を実走で比較できる段階には達していない。
 
+その後の旧モデル・各epoch・実測教師の同一入力比較は[発進停止の切り分け](time_launch_regression_20260916.md)を参照。epoch2の経路が操舵不成立へ悪化しており、遅延の除去だけでは救済できないことを確認した。
+
 残る16条件の追加収集を区切り、採用済みの教師を既存の12/20/40/60cm統合cacheへ追加する。
 Windowsを編集正本とし、source commitを公式同期して、native WSLのworktree lock内で監査・学習・評価する。
 旧cache、モデル、収集証跡は保持する。未充足条件を充足済みに変更しない。
