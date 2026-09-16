@@ -1,0 +1,110 @@
+{
+  "training": {
+    "epochs": 3,
+    "batch_size": 32,
+    "workers": 4,
+    "seed": 42,
+    "learning_rate": 3e-05,
+    "weight_decay": 0.0001,
+    "max_grad_norm": 1.0,
+    "precision": "float32"
+  },
+  "selection_run_ids": [
+    "5kmh_run03",
+    "5kmh_run06",
+    "8kmh_run06",
+    "8kmh_run09",
+    "codex-time-recovery-right040-r22",
+    "codex-time-recovery-left020-r23"
+  ],
+  "selection": "minimum_original_six_validation_runs_macro_3s_error_m",
+  "new_validation_usage": "post_selection_diagnostic_only",
+  "test_usage": "sealed",
+  "offline_controller_config": "configs/control/time_path_expanded_5kmh_20260914.json",
+  "geometry": {
+    "near_weight_m_per_rad": 1.0,
+    "far_weight": 0.5,
+    "far_start_s": 2.0,
+    "rear_axle_offset_m": [
+      0.0010000169277191162,
+      0.0
+    ]
+  },
+  "balanced_target_fraction": 0.25,
+  "experiment": "corner_recovery_finetune_20260916",
+  "parent_cache": "datasets/cache/time_recovery_multiscale_20260916",
+  "parent_cache_sha256": "f2b463b73f1d1cb7993b151754ca16488fcbd5748887375ee71b30d56316efc9",
+  "cache": "datasets/cache/time_corner_retraining_20260916",
+  "audit_output": "runs/time_corner_retraining_20260916",
+  "output": "runs/time_corner_retraining_20260916/training",
+  "initialization": "runs/time_recovery_multiscale_20260916/training/best.pt",
+  "initialization_sha256": "685f8b8f9936ab7e272be12616982374fd8a8d61fbe4a304b25475dc2a206ba8",
+  "prior_preparation": "runs/time_recovery_multiscale_20260916/data_and_budget_verification.json",
+  "prior_preparation_sha256": "ded9c561e2e85fdd337a7a68fddef340931f74a9f65a4db7f1bd39135716b4b0",
+  "source_guard_commit": "51d50e63e071123995545429e2d1a252e7485ec7",
+  "recovery_repeats": 2,
+  "expected_additions": {
+    "train": 6495,
+    "validation": 5800
+  },
+  "expected": {
+    "unique_train": 48667,
+    "unique_recovery_train": 11941,
+    "validation_total": 21199,
+    "selection_validation": 12346,
+    "presentations_per_epoch": 60608
+  },
+  "expected_optimizer_steps": 5682,
+  "outer_training_timeout_s": 10800,
+  "collections": [
+    {
+      "analysis": "runs/time_recovery_parallel_20260916",
+      "raw": "raw/time_recovery_parallel_20260916",
+      "index_sha256": "e680f8e8ef2d68dc82d4ff9ff5eeddd0951e193b162ec92d3a28f1761c1d9c56",
+      "mode": "large",
+      "amplitude_group": 0.6
+    },
+    {
+      "analysis": "runs/time_corner_recovery_20260916",
+      "raw": "raw/time_corner_recovery_20260916",
+      "index_sha256": "9de23eb54c0b9bcd0c692c2d9c626ce8ac4fb2ffb2a349329a8f0b812b390bd6",
+      "mode": "large",
+      "amplitude_group": 0.2
+    },
+    {
+      "analysis": "runs/time_corner_multiscale20_20260916",
+      "raw": "raw/time_corner_multiscale20_20260916",
+      "index_sha256": "9591ac93ceed33f6df4e80185681d31ec38b565de2c83d901d953d91bf406dc8",
+      "mode": "large",
+      "amplitude_group": 0.2
+    },
+    {
+      "analysis": "runs/time_corner_multiscale40_20260916",
+      "raw": "raw/time_corner_multiscale40_20260916",
+      "index_sha256": "78bb94db37ba8301889a8585935ab22bf1ffd9a2d29d851c3ff50ae346cd04ef",
+      "mode": "large",
+      "amplitude_group": 0.4
+    },
+    {
+      "analysis": "runs/time_corner_multiscale60_20260916",
+      "raw": "raw/time_corner_multiscale60_20260916",
+      "index_sha256": "9823b98ac528ac0e53627335a89ae044de185b5372ac6149e180a3fe5bcc571c",
+      "mode": "large",
+      "amplitude_group": 0.6
+    },
+    {
+      "analysis": "runs/time_corner_gap_20260916",
+      "raw": "raw/time_corner_gap_20260916",
+      "index_sha256": "f549de561b1de39f6defd2049ba93d6a8b530671c370265099df8671f2666d07",
+      "mode": "large",
+      "amplitude_group": "mixed"
+    },
+    {
+      "analysis": "runs/time_corner_gap2_20260916",
+      "raw": "raw/time_corner_gap2_20260916",
+      "index_sha256": "435ddb5ec60049cb2a0930cf76ad8ea90eafa047c9109f0a6031476dc8fa7844",
+      "mode": "large",
+      "amplitude_group": "mixed"
+    }
+  ]
+}
