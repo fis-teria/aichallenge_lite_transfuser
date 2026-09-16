@@ -177,3 +177,40 @@ def test_entry_lead_keeps_screened_path_and_measured_goal_unchanged():
     original = preparation_course(base, normal, cfg, occupancy)
     assert preparation_course(base, normal, early, occupancy) == original
     assert early_site.at_goal(early_site.target_offset_m, early_site.target_heading_rad)
+
+
+@pytest.mark.parametrize('fraction', [0., .25, .5, 1.])
+def test_blended_command_origin_uses_metres_without_changing_measured_goal(fraction):
+    from dataclasses import replace
+    base, normal, occupancy, cfg = fixture()
+    normal = normal.copy()
+    normal[:, 2] += .3
+    normal[:, 5] = .3
+    before = normal.copy()
+    site = replace(cfg.sites[0], target_offset_m=-.2,
+                   preparation_origin='blended_normal', preparation_normal_fraction=fraction)
+    points, evidence = preparation_course(base, normal, replace(cfg, sites=(site,)), occupancy)
+    xy = np.asarray([[p.x_m, p.y_m] for p in points])
+    assert xy.shape == (len(points), 2) and np.isfinite(xy).all()
+    for progress in (58., 60., 62., 70.):
+        point = xy[np.argmin(np.linalg.norm(xy-[progress, 0.], axis=1))]
+        np.testing.assert_allclose(point, [progress, -.2+.3*fraction], atol=1e-6, rtol=0.)
+    np.testing.assert_array_equal(normal, before)
+    assert site.at_goal(-.2, 0.) and not site.at_goal(-.1, 0.)
+    assert all(e['preparation_map_pass'] and e['candidate_return_map_pass'] for e in evidence)
+    if fraction in (0., 1.):
+        legacy = replace(site, preparation_origin='nominal_path' if fraction == 0. else 'measured_normal')
+        legacy_points, _ = preparation_course(base, normal, replace(cfg, sites=(legacy,)), occupancy)
+        np.testing.assert_allclose(xy, [[p.x_m, p.y_m] for p in legacy_points], atol=1e-12, rtol=0.)
+
+
+def test_blended_origin_rejects_invalid_fraction_and_still_checks_obstacles():
+    from dataclasses import replace
+    base, normal, occupancy, cfg = fixture()
+    site = replace(cfg.sites[0], preparation_origin='blended_normal')
+    for invalid in (-.01, 1.01, float('nan'), float('inf'), True, '0.5'):
+        with pytest.raises(ValueError, match='LARGE_SITE_CONTRACT'):
+            replace(site, preparation_normal_fraction=invalid)
+    occupancy.free[1299-100, 650] = False
+    with pytest.raises(ValueError, match='LARGE_SITE_MAP_REJECTED'):
+        preparation_course(base, normal, replace(cfg, sites=(site,)), occupancy)

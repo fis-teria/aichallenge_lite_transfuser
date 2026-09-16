@@ -110,7 +110,10 @@ def preparation_course(base: Sequence[MpcReferencePointV3], normal: np.ndarray,
     normal [N,6] = base progress m, map x/y m, body yaw rad, speed m/s,
     signed offset from base m. Measured normal poses define the goal frame.
     Preparation may shift the original command path, so normal tracking error
-    is not necessarily commanded a second time. Actual poses remain labels.
+    is not necessarily commanded a second time. A blended origin interpolates
+    command x/y between the original path and measured normal trace using a
+    dimensionless fraction in [0,1]. It does not interpolate goal frames or
+    observed teachers. Actual poses remain labels.
     The path is nominal outside finite preparation patches. Runtime command
     selection must end by release+2 m, before the artificial far return.
     """
@@ -141,6 +144,11 @@ def preparation_course(base: Sequence[MpcReferencePointV3], normal: np.ndarray,
             nx, ny = np.interp(progress, bs, bx), np.interp(progress, bs, by)
         else:
             nx, ny = [np.interp(progress, normal[:, 0], normal[:, k]) for k in (1, 2)]
+            if site.preparation_origin == 'blended_normal':
+                fraction = site.preparation_normal_fraction
+                nominal_x, nominal_y = np.interp(progress, bs, bx), np.interp(progress, bs, by)
+                nx = nominal_x + fraction*(nx-nominal_x)
+                ny = nominal_y + fraction*(ny-nominal_y)
         yaw = np.interp(progress, normal[:, 0], np.unwrap(normal[:, 3]))
         envelope = _smooth((progress-lo)/4.)*(1.-_smooth((progress-(site.release_s_m+14.))/8.))
         lateral = preparation_lateral(progress, site)

@@ -49,6 +49,8 @@ class LargeRecoverySite:
     preparation_heading_bias_rad: float = 0.
     # Begin only inside the already map-screened 1 m approach prefix.
     entry_window_lead_m: float = 0.
+    # Dimensionless preparation-only interpolation; measured goals stay fixed.
+    preparation_normal_fraction: float = .5
 
     def __post_init__(self) -> None:
         if (not isinstance(self.site_id, str) or not re.fullmatch(r'[A-Z][A-Z0-9_]{0,23}', self.site_id)
@@ -56,17 +58,18 @@ class LargeRecoverySite:
                        for v in (self.release_s_m, self.target_offset_m, self.return_length_m, self.settle_distance_m,
                                  self.target_heading_rad, self.heading_tolerance_rad, self.approach_distance_m,
                                  self.preparation_offset_bias_m, self.preparation_heading_bias_rad,
-                                 self.entry_window_lead_m))
+                                 self.entry_window_lead_m, self.preparation_normal_fraction))
                 or not 20. <= self.release_s_m <= 325.
                 or abs(self.target_offset_m) not in (.2, .4, .6)
                 or self.return_length_m not in (4., 6., 10.) or self.settle_distance_m not in (2., 4.)
-                or self.preparation_origin not in ('measured_normal', 'nominal_path')
+                or self.preparation_origin not in ('measured_normal', 'nominal_path', 'blended_normal')
                 or abs(self.target_heading_rad) > math.radians(7.)
                 or not math.radians(.5) <= self.heading_tolerance_rad <= math.radians(2.)
                 or self.approach_distance_m not in (4., 6., 8.)
                 or abs(self.preparation_offset_bias_m) > .1
                 or abs(self.preparation_heading_bias_rad) > math.radians(2.)
                 or not 0. <= self.entry_window_lead_m <= .5
+                or not 0. <= self.preparation_normal_fraction <= 1.
                 or self.corner_id is not None and (not isinstance(self.corner_id, str)
                     or not re.fullmatch(r'C[0-9]{2}[A-Z]?', self.corner_id))):
             raise ValueError('LARGE_SITE_CONTRACT')
