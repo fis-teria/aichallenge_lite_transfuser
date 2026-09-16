@@ -1,0 +1,171 @@
+{
+  "status": "PARTIAL",
+  "fps": 10,
+  "audio": false,
+  "scope": "OWNED_AWSIM_AND_RVIZ_WINDOWS_ONLY",
+  "windows": {
+    "awsim": "0x1200008",
+    "rviz": "0x1800010"
+  },
+  "commands": {
+    "awsim": [
+      "docker",
+      "run",
+      "--rm",
+      "--network",
+      "none",
+      "--user",
+      "1000:1000",
+      "--name",
+      "codex-time-launch10-stop1m-lap01-video-awsim",
+      "-v",
+      "/tmp/.X11-unix:/tmp/.X11-unix:ro",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_launch_10kmh_stop1m_20260917/codex-time-launch10-stop1m-lap01:/video",
+      "--entrypoint",
+      "ffmpeg",
+      "sha256:bb87615a2749f96e56ed2b26500d776a6093166f9c72cb45d7437b3835eee332",
+      "-hide_banner",
+      "-loglevel",
+      "warning",
+      "-nostdin",
+      "-n",
+      "-f",
+      "x11grab",
+      "-framerate",
+      "10",
+      "-draw_mouse",
+      "0",
+      "-window_id",
+      "0x1200008",
+      "-i",
+      ":0",
+      "-an",
+      "-vf",
+      "scale=1280:-2",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "ultrafast",
+      "-crf",
+      "23",
+      "-threads",
+      "2",
+      "-pix_fmt",
+      "yuv420p",
+      "-movflags",
+      "+faststart",
+      "-t",
+      "720",
+      "-progress",
+      "/video/awsim_video.progress",
+      "/video/awsim.mp4"
+    ],
+    "rviz": [
+      "docker",
+      "run",
+      "--rm",
+      "--network",
+      "none",
+      "--user",
+      "1000:1000",
+      "--name",
+      "codex-time-launch10-stop1m-lap01-video-rviz",
+      "-v",
+      "/tmp/.X11-unix:/tmp/.X11-unix:ro",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_launch_10kmh_stop1m_20260917/codex-time-launch10-stop1m-lap01:/video",
+      "--entrypoint",
+      "ffmpeg",
+      "sha256:bb87615a2749f96e56ed2b26500d776a6093166f9c72cb45d7437b3835eee332",
+      "-hide_banner",
+      "-loglevel",
+      "warning",
+      "-nostdin",
+      "-n",
+      "-f",
+      "x11grab",
+      "-framerate",
+      "10",
+      "-draw_mouse",
+      "0",
+      "-window_id",
+      "0x1800010",
+      "-i",
+      ":0",
+      "-an",
+      "-vf",
+      "scale=1280:-2",
+      "-c:v",
+      "libx264",
+      "-preset",
+      "ultrafast",
+      "-crf",
+      "23",
+      "-threads",
+      "2",
+      "-pix_fmt",
+      "yuv420p",
+      "-movflags",
+      "+faststart",
+      "-t",
+      "720",
+      "-progress",
+      "/video/rviz_video.progress",
+      "/video/rviz.mp4"
+    ]
+  },
+  "start_monotonic_ns": 170633596831786,
+  "streams": {
+    "awsim": {
+      "file": "awsim.mp4",
+      "ffmpeg_exit": 255,
+      "probe": {
+        "programs": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 960,
+            "avg_frame_rate": "10/1",
+            "nb_frames": "1667"
+          }
+        ],
+        "format": {
+          "duration": "166.700000",
+          "size": "77448104"
+        }
+      }
+    },
+    "rviz": {
+      "file": "rviz.mp4",
+      "ffmpeg_exit": 0,
+      "probe": {
+        "programs": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 786,
+            "avg_frame_rate": "10/1",
+            "nb_frames": "197"
+          }
+        ],
+        "format": {
+          "duration": "19.700000",
+          "size": "585961"
+        }
+      }
+    }
+  },
+  "interruptions": {
+    "rviz": {
+      "exit": 0,
+      "observed_monotonic_ns": 170654148732494
+    }
+  },
+  "image_id": "sha256:bb87615a2749f96e56ed2b26500d776a6093166f9c72cb45d7437b3835eee332",
+  "ready_monotonic_ns": 170634465716643,
+  "errors": [],
+  "end_monotonic_ns": 170801719957100
+}

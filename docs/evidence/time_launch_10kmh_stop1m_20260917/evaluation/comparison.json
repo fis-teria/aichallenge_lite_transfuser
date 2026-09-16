@@ -1,0 +1,113 @@
+{
+  "status": "PASS",
+  "scope": "ONE_OBSERVED_RUN_PER_SETTING_NOT_REPEATABILITY_OR_BRAKING_VALIDATION",
+  "runs": [
+    {
+      "condition": "5 km/h, normal guard",
+      "run_id": "codex-time-launch-lap01",
+      "summary_status": "LAP_COMPLETED",
+      "target_speed_kmh": 5.0,
+      "stopping_distance_policy": "measured_speed_v1",
+      "travel_from_authorization_m": 382.6879290241533,
+      "judge_lap_confirmed": true,
+      "judge_laps": [
+        {
+          "lap_seconds": 285.82,
+          "laps": 1,
+          "line": "Lap completed: 285.82s, total laps: 1",
+          "run_id": "codex-time-launch-lap01",
+          "epoch": 0,
+          "byte_offset": 103113,
+          "lap_increment_valid": true,
+          "ordered_section_evidence": true
+        }
+      ],
+      "judge_sections": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        0
+      ],
+      "host_error": null,
+      "host_sha256": "32d60dceb8c71141a2263b04a24c540fb671d034e0650933adf772d7fb47ff75",
+      "config_sha256": "fe3823f0e55fe81aaff294887880679641c1d5f232ff033da7d89a3147c5124b"
+    },
+    {
+      "condition": "10 km/h, normal guard",
+      "run_id": "codex-time-launch10-lap02",
+      "summary_status": "LAP_NOT_COMPLETED",
+      "target_speed_kmh": 10.0,
+      "stopping_distance_policy": "measured_speed_v1",
+      "travel_from_authorization_m": 44.949381522113626,
+      "judge_lap_confirmed": false,
+      "judge_laps": [],
+      "judge_sections": [
+        0,
+        1
+      ],
+      "host_error": "RuntimeError: CONTROL_STOPPING_SWEEP_OCCUPIED",
+      "host_sha256": "94e7f19c196648ddced5aff034e6d6a0d2f6d715b461df57d9182b4be6d1cc26",
+      "config_sha256": "42cf4e414e76ea8f2fc883ad8e5e23827b5703612cbede503f36ac5e1469fa59"
+    },
+    {
+      "condition": "10 km/h, 5 km/h guard horizon",
+      "run_id": "codex-time-launch10-stop5-lap01",
+      "summary_status": "LAP_NOT_COMPLETED",
+      "target_speed_kmh": 10.0,
+      "stopping_distance_policy": "awsim_cap_5kmh_diagnostic_v1",
+      "travel_from_authorization_m": 202.36920066528603,
+      "judge_lap_confirmed": false,
+      "judge_laps": [],
+      "judge_sections": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "host_error": "RuntimeError: CONTROL_STOPPING_SWEEP_OCCUPIED",
+      "host_sha256": "0f945988d7b93e9aa6cedfc615584e1af4b26c92eed0c9789fcf0f34b0734809",
+      "config_sha256": "36188f037215082c46a5d096254a2460ea74b0589bfb513d19ee397976b833b5"
+    },
+    {
+      "condition": "10 km/h, 1 m guard horizon",
+      "run_id": "codex-time-launch10-stop1m-lap01",
+      "summary_status": "LAP_COMPLETED",
+      "target_speed_kmh": 10.0,
+      "stopping_distance_policy": "awsim_cap_1m_diagnostic_v1",
+      "travel_from_authorization_m": 370.1106610037844,
+      "judge_lap_confirmed": true,
+      "judge_laps": [
+        {
+          "lap_seconds": 134.74,
+          "laps": 1,
+          "line": "Lap completed: 134.74s, total laps: 1",
+          "run_id": "codex-time-launch10-stop1m-lap01",
+          "epoch": 0,
+          "byte_offset": 103166,
+          "lap_increment_valid": true,
+          "ordered_section_evidence": true
+        }
+      ],
+      "judge_sections": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        0
+      ],
+      "host_error": null,
+      "host_sha256": "52ebea508480552a0bccf9365d520f2a152edc5fbe2d528f6f93c094d3396833",
+      "config_sha256": "1fb005eb9d2a9470b3e154d2977781ffdc50d9d4ba5135633246d79876c74a68"
+    }
+  ]
+}

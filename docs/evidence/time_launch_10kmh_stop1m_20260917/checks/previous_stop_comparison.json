@@ -1,0 +1,57 @@
+{
+  "status": "PASS",
+  "scope": "PAIRED_REPLAY_NOT_NEW_CLOSED_LOOP_RESULT",
+  "previous_control_sha256": "0702945086ecabc82ff21c833cac7869e7327aadac6e5c28b165ad0ae9fcf0ff",
+  "previous_reason": "STOPPING_SWEEP_OCCUPIED",
+  "diagnostic_reason": "PASS",
+  "diagnostic_guard": {
+    "policy": "CURVATURE_INTERVAL_SUPPORT_V2",
+    "support_directions": 64,
+    "sweep_samples": 201,
+    "integration_step_m": 0.005,
+    "maximum_position_integration_error_m": 0.0005420128423747716,
+    "maximum_discretization_padding_m": 0.08064381471785925,
+    "stopping_travel_m": 1.0,
+    "whole_sweep_convex_enclosure": true,
+    "stopping_distance_policy": "awsim_cap_1m_diagnostic_v1",
+    "envelope_speed_mps": 1.3888888888888888,
+    "measured_speed_mps": 2.6493008136749268,
+    "lateral_padding_m": 0.056666666666666664,
+    "diagnostic_only": true,
+    "actual_speed_stopping_envelope": false,
+    "stopping_travel_cap_m": 1.0,
+    "vehicle_motion": {
+      "policy": "awsim_understeer_10kmh_trial_v1",
+      "static_wheelbase_m": 1.087,
+      "nominal_response_length_m": 1.4028457660602383,
+      "lateral_displacement_bound_m": 0.0944790244102478,
+      "scope": "EXTRAPOLATED_10KMH_AWSIM_TRIAL_CONDITIONAL_BRAKING_BOUNDS",
+      "gradient_interval_s2_per_m": [
+        0.0,
+        0.2
+      ],
+      "braking_speed_interval_mps": [
+        0.0,
+        2.6493008136749268
+      ],
+      "heading_rate_radps": -0.4337756633758545,
+      "reported_lateral_mps": -0.05185920000076294,
+      "rear_lateral_mps": 0.024051546261020462,
+      "measured_curvature_per_m": -0.1637321292987303,
+      "low_speed_full_curvature_interval": false,
+      "calibrated_at_10kmh": false,
+      "maximum_trial_speed_mps": 3.0555555555555554,
+      "curvature_interval_per_m": [
+        -0.21680513694990866,
+        -0.08463156836257202
+      ]
+    },
+    "scope": "FORWARD_SCAN_PROXIMITY_NOT_ALL_AROUND_FREE_SPACE",
+    "minimum_ray_margin_m": 0.7008107900089953,
+    "checked_rays": 750,
+    "measured_steer_rad": -0.20775525271892548,
+    "issued_steer_rad": -0.22323989178452122,
+    "previous_steer_rad": -0.2314441333121557,
+    "full_body_free_space_verified": false
+  }
+}
