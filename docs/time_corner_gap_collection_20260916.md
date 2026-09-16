@@ -157,6 +157,8 @@ native WSLのrootは`/home/thistle/e2e_autonomous`。
 Windowsでコミットした実行sourceは`cfd9366`、`62dbe8b`、最終`d591c8f`。
 最終sourceのWSLテストはfocused 68件、全体`2,752 passed, 4 skipped`。
 教師生成と入力検証もnative WSLの同一worktree lock内で実施した。
+保存証跡216ファイルと12 run・2,432教師の最終照合もPASS。
+`final_verification.json`は照合後に追加したsidecarで、証跡manifestの自己参照に含めない。
 走行したのは教師PP。学習用データへの統合、再学習、E2Eモデルの走行再評価は今回未実施。
 
 以下は実行済みコマンドの例。campaignはsealedなので、再収集では新しいrootと有限予算を用意する。
