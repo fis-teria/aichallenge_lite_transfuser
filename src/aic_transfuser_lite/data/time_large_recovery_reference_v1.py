@@ -15,7 +15,7 @@ from typing import Any, Mapping, Sequence
 import numpy as np
 
 from .recovery_reference_v3 import MpcReferencePointV3, OccupancyMapV3, _recompute_geometry
-from .time_large_recovery_v1 import SCHEMA, LargeRecoveryConfig
+from .time_large_recovery_v1 import SCHEMA, LargeRecoveryConfig, LargeRecoverySite
 
 
 def validate_large_reference(reference: Mapping[str, Any], root: Path | None = None
@@ -61,6 +61,29 @@ def validate_large_reference(reference: Mapping[str, Any], root: Path | None = N
 def _smooth(value: np.ndarray) -> np.ndarray:
     value = np.clip(value, 0., 1.)
     return value*value*(3.-2.*value)
+
+
+def preparation_lateral(progress: np.ndarray, site: LargeRecoverySite) -> np.ndarray:
+    """Command-path offset [N] m; actual goal requires measured state validation.
+
+    Zero-heading legacy profiles are unchanged. Heading profiles use a cubic
+    Hermite approach with zero start slope and tan(target heading) release
+    slope. A bounded forward extension supplies PP preview; it is not a label.
+    """
+    progress = np.asarray(progress, dtype=float)
+    if progress.ndim != 1 or not np.isfinite(progress).all():
+        raise ValueError('LARGE_PREPARATION_PROGRESS_SHAPE')
+    if site.target_heading_rad == 0.:
+        return site.target_offset_m*_smooth((progress-site.start_s_m)/8.)
+    length = site.release_s_m-site.start_s_m
+    u = np.clip((progress-site.start_s_m)/length, 0., 1.)
+    slope = math.tan(site.target_heading_rad)
+    approach = site.target_offset_m*(3*u*u-2*u*u*u)+length*slope*(u*u*u-u*u)
+    # C1 extension: linear through release+2 m, taper slope to zero by +6 m.
+    d = np.maximum(progress-site.release_s_m, 0.)
+    v = np.clip((d-2.)/4., 0., 1.)
+    extension = np.minimum(d, 2.)+4.*(v-v**3+.5*v**4)
+    return approach+slope*extension
 
 
 def _map_free(occupancy: OccupancyMapV3, xy: np.ndarray) -> bool:
@@ -116,7 +139,7 @@ def preparation_course(base: Sequence[MpcReferencePointV3], normal: np.ndarray,
             nx, ny = [np.interp(progress, normal[:, 0], normal[:, k]) for k in (1, 2)]
         yaw = np.interp(progress, normal[:, 0], np.unwrap(normal[:, 3]))
         envelope = _smooth((progress-lo)/4.)*(1.-_smooth((progress-(site.release_s_m+14.))/8.))
-        lateral = site.target_offset_m*_smooth((progress-site.start_s_m)/8.)
+        lateral = preparation_lateral(progress, site)
         x[mask] += envelope*(nx-x[mask]-np.sin(yaw)*lateral)
         y[mask] += envelope*(ny-y[mask]+np.cos(yaw)*lateral)
         preview = (s >= site.release_s_m+2.) & (s <= site.release_s_m+14.)
@@ -134,6 +157,7 @@ def preparation_course(base: Sequence[MpcReferencePointV3], normal: np.ndarray,
         shift = site.target_offset_m*(1.-_smooth((rs-site.release_s_m)/site.return_length_m))
         return_pass = _map_free(occupancy, np.column_stack((rx-np.sin(ryaw)*shift, ry+np.cos(ryaw)*shift)))
         evidence.append(dict(site_id=site.site_id, preparation_map_pass=preparation_pass,
+                             corner_id=site.corner_id, target_heading_rad=site.target_heading_rad,
                              candidate_return_map_pass=return_pass, map_radius_m=1.4,
                              hidden_return_preview_arc_m=preview_arc_m,
                              physical_dynamic_recovery_proven=False))

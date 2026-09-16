@@ -25,20 +25,33 @@ class LargeRecoverySite:
     return_length_m: float = 6.
     settle_distance_m: float = 2.
     preparation_origin: str = 'measured_normal'
+    target_heading_rad: float = 0.
+    heading_tolerance_rad: float = math.radians(2.)
+    corner_id: str | None = None
 
     def __post_init__(self) -> None:
         if (not isinstance(self.site_id, str) or not re.fullmatch(r'[A-Z][A-Z0-9_]{0,23}', self.site_id)
                 or any(type(v) not in (int, float) or not math.isfinite(v)
-                       for v in (self.release_s_m, self.target_offset_m, self.return_length_m, self.settle_distance_m))
-                or not 25. <= self.release_s_m <= 300.
+                       for v in (self.release_s_m, self.target_offset_m, self.return_length_m, self.settle_distance_m,
+                                 self.target_heading_rad, self.heading_tolerance_rad))
+                or not 20. <= self.release_s_m <= 325.
                 or abs(self.target_offset_m) not in (.2, .4, .6)
                 or self.return_length_m not in (4., 6., 10.) or self.settle_distance_m not in (2., 4.)
-                or self.preparation_origin not in ('measured_normal', 'nominal_path')):
+                or self.preparation_origin not in ('measured_normal', 'nominal_path')
+                or abs(self.target_heading_rad) > math.radians(7.)
+                or not math.radians(.5) <= self.heading_tolerance_rad <= math.radians(2.)
+                or self.corner_id is not None and (not isinstance(self.corner_id, str)
+                    or not re.fullmatch(r'C[0-9]{2}[A-Z]?', self.corner_id))):
             raise ValueError('LARGE_SITE_CONTRACT')
 
     @property
     def start_s_m(self) -> float:
         return self.release_s_m - 8. - self.settle_distance_m
+
+    def at_goal(self, lateral_m: float, heading_rad: float) -> bool:
+        """Measured error in the unchanged nominal-lap frame, metres/radians."""
+        return (abs(lateral_m-self.target_offset_m) <= .05
+                and abs(heading_rad-self.target_heading_rad) <= self.heading_tolerance_rad)
 
 
 @dataclass(frozen=True)
@@ -133,7 +146,7 @@ def propose_large_recovery(config: LargeRecoveryConfig, state: LargeRecoveryStat
                            nominal_stamp_ns: int, entry_clear: bool) -> LargeRecoveryDecision:
     """One immutable selection; the caller validates both PP sources and guards.
 
-    Preparation: 8 m lateral move + 2 or 4 m settling, target +/-5 cm and +/-2 deg
+    Preparation: 8 m lateral move + 2 or 4 m settling, target +/-5 cm and the configured heading tolerance
     continuously for 0.25 s. Request inside [release, release+1] m only.
     Recovery: nominal PP, settle within 10 s, then reserve >=3 s future tail.
     A missed/failed event never increases amplitude, event count or deadlines.
@@ -192,7 +205,7 @@ def propose_large_recovery(config: LargeRecoveryConfig, state: LargeRecoveryStat
             # Fresh nominal remains the teacher fallback, with an invalid event.
             return LargeRecoveryDecision(replace(st, stage='aborted', reason=bound), 'nominal', 'invalid')
     if st.stage == 'preparing':
-        goal = abs(lateral_m-site.target_offset_m) <= .05 and abs(heading_rad) <= math.radians(2.)
+        goal = site.at_goal(lateral_m, heading_rad)
         since = (st.target_since_ns if st.target_since_ns is not None else sim_ns) if goal else None
         st = replace(st, target_since_ns=since)
         if s_m > site.release_s_m+1.:
@@ -286,8 +299,8 @@ def large_recovery_events(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, A
             boundary = (d['state']['request_ns'] == request and d['state']['release_ns'] == release
                         and d['nominal_stamp_ns'] > request and release >= d['nominal_stamp_ns']
                         and requests[0]['publication']['sequence'] < recoveries[0]['publication']['sequence']
-                        and abs(requests[0]['large_recovery']['lateral_error_m']-site.target_offset_m) <= .05
-                        and abs(requests[0]['large_recovery']['heading_error_rad']) <= math.radians(2.))
+                        and site.at_goal(requests[0]['large_recovery']['lateral_error_m'],
+                                         requests[0]['large_recovery']['heading_error_rad']))
         else:
             request = release = None
         confirmed = False; since = None; previous = None; previous_wall = None
@@ -314,6 +327,8 @@ def large_recovery_events(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, A
                           and 1.15 <= end['speed_mps'] <= 1.4)
         target_samples = sum(abs(r['large_recovery']['lateral_error_m']-site.target_offset_m) <= .1 for r in recoveries)
         result.append(dict(event_id=event_id, site_id=site.site_id, target_offset_m=site.target_offset_m,
+            corner_id=site.corner_id, target_heading_rad=site.target_heading_rad,
+            heading_tolerance_rad=site.heading_tolerance_rad,
             preparation_start_ns=preparations[0]['publication']['sim_ns'], request_ns=request, release_ns=release,
             end_publication_ns=completions[0]['publication']['sim_ns'] if completions else None,
             publication_switch_verified=boundary, recovery_confirmed=bool(boundary and confirmed and completed and stable_end),

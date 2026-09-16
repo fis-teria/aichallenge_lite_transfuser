@@ -127,7 +127,9 @@ def materialize_recovery_run(run: Path, destination: Path, *, split: str, types:
                 if event is None:
                     raise ValueError('LARGE_TEACHER_EVENT_MISSING')
                 row.update(recovery_event_id=event['event_id'], recovery_site_id=event['site_id'],
-                           requested_recovery_offset_m=event['target_offset_m'])
+                           requested_recovery_offset_m=event['target_offset_m'],
+                           recovery_corner_id=event['corner_id'],
+                           requested_recovery_heading_rad=event['target_heading_rad'])
             accepted.append(row)
             labels.append(teacher)
     expected = [r['anchor_id'] for r in prior['anchors'] if r['usable_full'] and r.get('phase_and_xy_full')]

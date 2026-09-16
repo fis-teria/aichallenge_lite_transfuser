@@ -106,15 +106,18 @@ def main() -> None:
                 current_s=site['release_s_m']-14.+1.25*(now-drive_start)
             st=control.get('large_recovery',{}).get('state',{})
             deviation=0.
+            heading_deviation=0.
             if st.get('stage') in ('preparing','handover'):
                 fraction=float(np.clip((current_s-(site['release_s_m']-8.-site.get('settle_distance_m',2.)))/8.,0.,1.))
                 deviation=site['target_offset_m']*fraction*fraction*(3.-2.*fraction)
+                heading_deviation=site.get('target_heading_rad', 0.)*fraction
             elif st.get('stage')=='recovery':
                 deviation=site['target_offset_m']*max(0.,1.-(ns-st['release_ns'])/4e9)
+                heading_deviation=site.get('target_heading_rad', 0.)*max(0.,1.-(ns-st['release_ns'])/4e9)
             i=min(len(baseline)-2,max(0,int(np.searchsorted(progress,current_s)-1)))
             tangent=math.atan2(*(baseline[i+1]-baseline[i])[::-1])
             offset=float(np.interp(current_s,guide[:,0],guide[:,1]))+deviation
-            yaw=float(np.interp(current_s,guide[:,0],np.unwrap(guide[:,2])))
+            yaw=float(np.interp(current_s,guide[:,0],np.unwrap(guide[:,2])))+heading_deviation
             x=float(np.interp(current_s,progress,baseline[:,0]))-math.sin(tangent)*offset
             y=float(np.interp(current_s,progress,baseline[:,1]))+math.cos(tangent)*offset
             speed=0. if stop_at is not None else 1.25
