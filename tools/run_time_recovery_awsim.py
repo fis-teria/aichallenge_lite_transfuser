@@ -314,7 +314,10 @@ def main() -> None:
                         'nodes': node_info['HostConfig']['CpusetCpus'],
                         'simulation': [i['HostConfig']['CpusetCpus'] for i in inspections]}, indent=2))
                 official=launch(['make','awsim-request-start',*make_args],'official_start')
-                if official.wait(timeout=20):
+                # Two GPU instances can finish the official DDS handshake
+                # before the compose helper exits. Keep a finite startup-only
+                # allowance; collector/sensor/actuator deadlines are unchanged.
+                if official.wait(timeout=60 if instance is not None else 20):
                     raise RuntimeError('OFFICIAL_START_FAILED')
                 result['official_start_requested']=True
                 authorization = output/'drive_authorized.pending'
