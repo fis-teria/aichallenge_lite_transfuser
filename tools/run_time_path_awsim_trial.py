@@ -198,7 +198,7 @@ def main() -> None:
         make = launch(result["commands"][1], "make")
         while time.monotonic() - started < outer_wall_s - 25:
             if video is not None:
-                video.assert_alive()
+                video.monitor()
             if probe.poll() is not None:
                 raise RuntimeError("TRIAL_NODES_EXIT")
             if make.poll() is not None and make.returncode:

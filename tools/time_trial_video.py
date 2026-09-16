@@ -45,7 +45,7 @@ class TrialVideo:
         self.processes: list[tuple[str, subprocess.Popen, Any]] = []
         self.record: dict[str, Any] = {'status': 'STARTING', 'fps': 10, 'audio': False,
             'scope': 'OWNED_AWSIM_AND_RVIZ_WINDOWS_ONLY', 'windows': windows, 'commands': {},
-            'start_monotonic_ns': time.monotonic_ns(), 'streams': {}}
+            'start_monotonic_ns': time.monotonic_ns(), 'streams': {}, 'interruptions': {}}
         self.image = subprocess.check_output(['docker', 'image', 'inspect', 'codex-time-video:20260917',
                                               '--format', '{{.Id}}'], text=True, timeout=10).strip()
         if not re.fullmatch(r'sha256:[0-9a-f]{64}', self.image):
@@ -84,6 +84,15 @@ class TrialVideo:
             if process.poll() is not None:
                 raise RuntimeError('VIDEO_RECORDER_EXIT:'+role)
 
+    def monitor(self) -> None:
+        """Capture is diagnostic; window changes must not interrupt driving."""
+        for role, process, _ in self.processes:
+            code = process.poll()
+            if code is not None and role not in self.record['interruptions']:
+                self.record['interruptions'][role] = dict(exit=code, observed_monotonic_ns=time.monotonic_ns())
+                self.record['status'] = 'PARTIAL'
+                self._save()
+
     def _save(self) -> None:
         (self.output/'video_recording.json').write_text(json.dumps(self.record, indent=2))
 
@@ -114,6 +123,7 @@ class TrialVideo:
             finally:
                 stream.close()
         self.processes.clear()
-        self.record.update(status='PASS' if not errors else 'FAILED', errors=errors, end_monotonic_ns=time.monotonic_ns())
+        status = 'FAILED' if errors else 'PARTIAL' if self.record['interruptions'] else 'PASS'
+        self.record.update(status=status, errors=errors, end_monotonic_ns=time.monotonic_ns())
         self._save()
         return errors
