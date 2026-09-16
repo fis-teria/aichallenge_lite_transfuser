@@ -42,12 +42,13 @@ def validate_collection_speed_parameters(policy: str, parameters: Mapping[str, o
 
 
 def collection_snapshot_retry_allowed(reason: str, *, attempt: int, elapsed_ns: int) -> bool:
-    """One fresh-snapshot retry, only for timing and before the 100 ms deadline.
+    """At most three fresh-snapshot retries within the same 100 ms deadline.
 
-    Reserve 20 ms for the second computation. Geometric, actuator, source and
+    Reserve 20 ms for recomputation. Geometric, actuator, source and
     clock-reset faults never retry. A retry sends no unvalidated go command.
     """
-    return (attempt == 0 and 0 <= elapsed_ns <= 80_000_000
+    return (type(attempt) is int and 0 <= attempt < 3
+            and type(elapsed_ns) is int and 0 <= elapsed_ns <= 80_000_000
             and (reason.startswith('STALE_') or reason in {
                 'CLOCK_STALE', 'NOMINAL_STALE_OR_FUTURE', 'FRESH_ALIGNED_SCAN_MISSING',
                 'STATE_FRAME_OR_CAPTURE_SKEW'}))
@@ -63,7 +64,7 @@ def check_collection_decision_age(*, started_ns: int, now_ns: int) -> None:
 def collection_snapshot_retry_wait_ns(elapsed_ns: int) -> int:
     """Yield up to 20 ms for real ROS arrivals, retaining 20 ms to recompute.
 
-    Called only after the single timing retry is admitted. This never creates
+    Called only after a bounded timing retry is admitted. This never creates
     samples or extends the total 100 ms decision deadline.
     """
     if type(elapsed_ns) is not int or not 0 <= elapsed_ns <= 80_000_000:

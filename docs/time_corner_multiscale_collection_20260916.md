@@ -40,3 +40,60 @@ bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q
 以後はplanへ `"entry_heading_tolerance_rad": 0.03490658503988659` を指定して、
 既存の復帰安定条件と同じ2度を開始にも使う。既定値1度と旧記録の意味は維持する。
 横ずれ5cm以内、1秒連続安定、現在のクリアランス、センサ・停止監視は維持する。
+
+## 実装の検証
+
+- 収集速度条件の変更: `78e6f89d5a97aa380d9e3d8281b6368788d7c72a`。
+  native WSLで `2730 passed, 4 skipped`。
+- 開始時の向き許容値を明示する変更: `21ccfef00a415c85dd033d447cd8ed25a5ad974f`。
+  native WSLで `2731 passed, 4 skipped`。既定の1度、明示した2度、範囲外、
+  横ずれ過大、現在のクリアランス不成立を回帰テストで確認した。
+- 20cmの全runと40cmのpair01は前者、40cmのpair02以降と60cmのpair01/02は後者を使用する。
+  各runの `source_sha` と参照設定を記録する。
+
+60cmでは、最新LiDARの時刻が最新poseより約1.3ms先で、1つ前のLiDARもposeの
+70ms欠落区間に当たる事例を確認した。20ms待つ再取得1回ではまだ実測poseが揃わず、
+計算自体は約2msでも停止した。時刻関連の理由に限り再取得を最大3回とし、再取得・待機・
+再計算を含めた100msの総締切、150msのcapture鮮度、poseの実測補間条件は維持する。
+補間用poseの捏造・外挿、停止領域・source異常・clock resetの再試行は行わない。
+CPU割り当てを3Pコア/環境に増やす試験ではこの問題を解消できなかったため、元の
+2Pコア/環境と、AWSIM/Autoware用1P+4Eコア/環境の構成へ戻す。
+
+独立した停止領域計算の物理モデルが扱える速度上限6km/hは変更していない。
+収集用の上限超過を理由に捨てる条件と、実測速度で車体停止領域を計算できる条件は
+別である。今回の実走速度と上限超過による収集停止数は、最終集計に記録する。
+
+## データと再現手順
+
+native WSLの保存先は各振幅について次のとおり。
+
+- raw: `/home/thistle/e2e_autonomous/raw/time_corner_multiscale{20,40,60}_20260916`
+- 教師・入力キャッシュ・監査:
+  `/home/thistle/e2e_autonomous/runs/time_corner_multiscale{20,40,60}_20260916`
+- 教師は復帰開始後の実測将来3秒、30点のxy座標 `[N,30,2]`。
+  準備用に生成した経路は教師に含めない。
+- domain 1のrunをtrain、domain 2のrunをvalidationとする。
+  同じコーナーの独立走行であり、未見コーナーへの汎化を測るsplitではない。
+
+実行したコマンド形式:
+
+```powershell
+python -u tmp/time_corner_multiscale40_20260916/collect_pair.py --pair 2 --left train_lap02_h2_e2 --right validation_lap02_h2_e2
+python -u tmp/time_corner_multiscale40_20260916/audit_pair.py --pair 2
+python -u tmp/time_corner_multiscale40_20260916/audit_finish.py --pair 4
+python -u tmp/time_corner_multiscale40_20260916/finish_remote.py
+```
+
+`collect_pair.py` が独立した2環境の起動、周回、停止、転送、照合、確認済みrawの
+実行側整理を行う。`audit_pair.py` はWSL lock内で教師生成・入力検証・時計監査を行う。
+走行中に前pairの監査を進めるが、同期・試験・転送照合とWSL lockを同時に取得しない。
+40cm pair01は同期とのlock競合で照合の起動だけが拒否されたため、保存済みarchiveから
+`resume_transfer01.py` で照合を再開した。再走行や未照合rawの削除は行っていない。
+
+実際の計画JSON、operator、検証receipt、全体テストログを
+`docs/evidence/time_corner_multiscale_20260916` に保存する。
+operatorは実行履歴であり、終了済みcampaignへ同じrun名で再実行しない。
+新しい収集では保存先・run ID・有限の試行上限を新設する。
+
+これらは教師走行の収集・監査結果であり、再学習後のE2Eモデルの完走や復帰改善を
+示す結果ではない。再学習・学習モデルによるAWSIM試験は別途必要である。

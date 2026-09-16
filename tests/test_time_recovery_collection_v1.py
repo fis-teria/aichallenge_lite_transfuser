@@ -226,11 +226,16 @@ def test_scan_alignment_needs_pose_timeline_even_when_latest_motion_is_fresh():
 
 def test_expired_snapshot_retry_is_bounded_and_does_not_retry_physical_or_reset_faults():
     assert collection_snapshot_retry_allowed('STALE_scan', attempt=0, elapsed_ns=59_000_000)
-    assert not collection_snapshot_retry_allowed('STALE_scan', attempt=1, elapsed_ns=60_000_000)
+    assert collection_snapshot_retry_allowed('STALE_scan', attempt=1, elapsed_ns=60_000_000)
+    assert collection_snapshot_retry_allowed('STALE_scan', attempt=2, elapsed_ns=80_000_000)
+    assert not collection_snapshot_retry_allowed('STALE_scan', attempt=3, elapsed_ns=1)
     assert not collection_snapshot_retry_allowed('STALE_scan', attempt=0, elapsed_ns=80_000_001)
     for reason in ('STOPPING_SWEEP_OCCUPIED', 'CLOCK_RESET', 'SOURCE_pose', 'OVERSPEED_OR_REVERSE',
                    'COLLECTION_COMPUTATION_TIMEOUT', 'SCAN_POSE_ALIGNMENT'):
-        assert not collection_snapshot_retry_allowed(reason, attempt=0, elapsed_ns=1)
+        for attempt in range(4):
+            assert not collection_snapshot_retry_allowed(reason, attempt=attempt, elapsed_ns=1)
+    for attempt in (-1, 4, 1.5, True):
+        assert not collection_snapshot_retry_allowed('STALE_scan', attempt=attempt, elapsed_ns=1)
     check_collection_decision_age(started_ns=100, now_ns=100_000_100)
     with pytest.raises(ValueError, match='COMPUTATION_TIMEOUT'):
         check_collection_decision_age(started_ns=100, now_ns=100_000_101)
@@ -247,6 +252,40 @@ def test_retry_allows_real_arrival_time_without_extending_computation_budget():
     for invalid in (-1,80_000_001,1.5):
         with pytest.raises(ValueError,match='RETRY_WAIT_CONTRACT'):
             collection_snapshot_retry_wait_ns(invalid)
+
+
+def test_scan_pose_arriving_after_second_snapshot_can_be_used_before_original_deadline():
+    from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
+    from aic_transfuser_lite.control.turning_scan_guard import select_aligned_scan
+    from aic_transfuser_lite.data.time_recovery_collection_v1 import collection_snapshot_retry_wait_ns
+
+    # Recorded corner60-p02-d1 times. The latest scan is 1.336 ms ahead of
+    # the latest pose; the older scan falls in a 70 ms pose gap. Neither is
+    # admissible. Only an actually arriving later pose may resolve this.
+    times = [28_604_999_360, 28_629_999_360, 28_659_999_359,
+             28_664_999_359, 28_734_999_357, 28_739_999_357,
+             28_764_999_357, 28_769_999_356]
+    pose = lambda t: TimedBodyPose(t, 'sim', '0', 'map', 'base_link', t/1e9, 0., 0.)
+    poses = [pose(t) for t in times]
+    scans = [(28_671_335_841, 1_000_000_000), (28_771_335_843, 1_145_000_000)]
+    elapsed = 3_000_000
+    for attempt in (0, 1):
+        with pytest.raises(ValueError, match='FRESH_ALIGNED_SCAN_MISSING'):
+            select_aligned_scan(scans, poses, poses[-1], now_sim_ns=times[-1],
+                                now_receipt_ns=1_160_000_000+elapsed)
+        assert collection_snapshot_retry_allowed('FRESH_ALIGNED_SCAN_MISSING',
+                                                 attempt=attempt, elapsed_ns=elapsed)
+        elapsed += collection_snapshot_retry_wait_ns(elapsed)+3_000_000
+    # Synthetic later *received* observation, not extrapolation of old poses.
+    poses.append(pose(28_789_999_356))
+    index, captured = select_aligned_scan(scans, poses, poses[-1],
+        now_sim_ns=poses[-1].stamp_ns, now_receipt_ns=1_160_000_000+elapsed)
+    assert index == 1 and captured.stamp_ns == scans[1][0]
+    check_collection_decision_age(started_ns=0, now_ns=elapsed+8_000_000)
+    # Continued absence still has a finite attempt limit and a hard deadline.
+    assert not collection_snapshot_retry_allowed('FRESH_ALIGNED_SCAN_MISSING', attempt=3, elapsed_ns=elapsed)
+    with pytest.raises(ValueError, match='COLLECTION_COMPUTATION_TIMEOUT'):
+        check_collection_decision_age(started_ns=0, now_ns=100_000_001)
 
 
 def test_imu_must_be_fresh_and_aligned_with_selected_measured_velocity():

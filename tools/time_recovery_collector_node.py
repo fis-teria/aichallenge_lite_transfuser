@@ -445,7 +445,7 @@ def main() -> None:
             if not state['fault'] and collection_snapshot_retry_allowed(str(exc), attempt=attempt,
                     elapsed_ns=retry_elapsed):
                 time.sleep(collection_snapshot_retry_wait_ns(retry_elapsed)/1e9)
-                return tick(1, started_ns, (*retry_reasons, str(exc)))
+                return tick(attempt+1, started_ns, (*retry_reasons, str(exc)))
             reason = str(exc); angle = previous[0]; accel = -1.; target = 0.; state['ready_ticks'] = 0
             if state['armed_ns'] is not None and reason != 'REQUESTED_BRAKE':
                 state['fault'] = reason
@@ -519,7 +519,7 @@ def main() -> None:
             elapsed = time.monotonic_ns()-started_ns
             if elapsed <= 80_000_000:
                 time.sleep(collection_snapshot_retry_wait_ns(elapsed)/1e9)
-            return tick(1, started_ns, (*retry_reasons, retry_after_snapshot))
+            return tick(attempt+1, started_ns, (*retry_reasons, retry_after_snapshot))
         previous[:] = [angle, wall]
         row = dict(event='CONTROL_AND_PHASE', monotonic_ns=now, sim_ns=clock_ns, reason=reason,
                    phase=phase, projection=projection, speed_mps=state['speed_mps'],
