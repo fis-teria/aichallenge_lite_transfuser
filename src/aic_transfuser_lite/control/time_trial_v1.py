@@ -10,14 +10,14 @@ import numpy as np
 from .time_reference_v1 import TimePlan, TimedBodyPose, prepare_time_reference, reference_control
 from .time_geometry_v2 import validate_time_geometry
 from .awsim_steering import CALIBRATED_POLICIES, steering_asset_contract
-from .vehicle_motion_v1 import IDEAL_POLICY, AWSIM_10KMH_POLICY, WHEELBASE_M, effective_response_length, validate_vehicle_model_config
+from .vehicle_motion_v1 import IDEAL_POLICY, AWSIM_TRIAL_SPEED_POLICIES, AWSIM_TRIAL_TARGETS_KMH, WHEELBASE_M, effective_response_length, validate_vehicle_model_config
 from .waypoint_controller import ControllerConfig, select_lookahead, control_from_waypoints
 from .polyline_lookahead_v1 import select_polyline_lookahead
 from .curvature_support_v2 import ACTUAL_STOPPING_SPEED, DIAGNOSTIC_STOPPING_POLICIES, STANDARD_CLEARANCE, NEAR_LIMIT_CLEARANCE, clearance_dimensions
 from ..runtime.awsim_trial_session import trial_duration_limits
 
 
-FIXED_SPEED_POLICIES = ("fixed_5kmh", "fixed_10kmh")
+FIXED_SPEED_POLICIES = ("fixed_5kmh", *AWSIM_TRIAL_SPEED_POLICIES)
 SPEED_POLICIES = ("source_capped_0p25", *FIXED_SPEED_POLICIES)
 SEGMENT_LOOKAHEAD_POLICY = "stopping_preview_segment_v1"
 EXTENDED_LOOKAHEAD_POLICY = "stopping_preview_extended_v1"
@@ -31,8 +31,9 @@ def trial_speed_limits(speed_policy: str) -> tuple[float, float]:
         return .25, .45
     if speed_policy == "fixed_5kmh":
         return 5. / 3.6, 6. / 3.6
-    if speed_policy == "fixed_10kmh":
-        return 10. / 3.6, 11. / 3.6
+    if speed_policy in AWSIM_TRIAL_SPEED_POLICIES:
+        target = AWSIM_TRIAL_TARGETS_KMH[AWSIM_TRIAL_SPEED_POLICIES[speed_policy]]
+        return target/3.6, (target+1)/3.6
     raise ValueError("TRIAL_SPEED_POLICY")
 
 
@@ -43,7 +44,7 @@ def validate_trial_config(config: dict[str, Any]) -> str:
         raise ValueError("TRIAL_MOTION_RECORDING_FLAG")
     steering_asset_contract(config)
     validate_vehicle_model_config(config)
-    if policy == "fixed_10kmh" and config.get("vehicle_model_policy") != AWSIM_10KMH_POLICY:
+    if policy in AWSIM_TRIAL_SPEED_POLICIES and config.get("vehicle_model_policy") != AWSIM_TRIAL_SPEED_POLICIES[policy]:
         raise ValueError("TRIAL_SPEED_MODEL_CONTRACT")
     lookahead_policy = config.get("lookahead_policy", "fixed_1m_v1")
     if lookahead_policy not in LOOKAHEAD_POLICIES:
@@ -59,11 +60,11 @@ def validate_trial_config(config: dict[str, Any]) -> str:
         raise ValueError('STOPPING_DISTANCE_POLICY')
     if distance_policy in DIAGNOSTIC_STOPPING_POLICIES and (
             config.get('diagnostic_only') is not True or type(config.get('maximum_diagnostic_trials')) is not int
-            or config.get('maximum_diagnostic_trials') != 1 or policy != 'fixed_10kmh'
+            or config.get('maximum_diagnostic_trials') != 1 or policy not in AWSIM_TRIAL_SPEED_POLICIES
             or config.get('host') != 'graneple@192.168.3.10'
             or config.get('execution_profile') != 'one_lap'
             or config.get('obstacle_policy') != 'steering_support_v2'
-            or config.get('vehicle_model_policy') != AWSIM_10KMH_POLICY
+            or config.get('vehicle_model_policy') != AWSIM_TRIAL_SPEED_POLICIES.get(policy)
             or clearance_profile != STANDARD_CLEARANCE):
         raise ValueError('FIVE_KMH_STOPPING_DIAGNOSTIC_SCOPE_REQUIRED')
     if clearance_profile == NEAR_LIMIT_CLEARANCE and (
@@ -121,7 +122,8 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
     Reject geometry failures instead of cutting/fixing the predicted trajectory.
     """
     ceiling, overspeed = trial_speed_limits(speed_policy)
-    if (speed_policy == "fixed_10kmh") != (vehicle_model_policy == AWSIM_10KMH_POLICY):
+    if (speed_policy in AWSIM_TRIAL_SPEED_POLICIES or vehicle_model_policy in AWSIM_TRIAL_TARGETS_KMH) and (
+            AWSIM_TRIAL_SPEED_POLICIES.get(speed_policy) != vehicle_model_policy):
         raise ValueError("TRIAL_SPEED_MODEL_CONTRACT")
     if lookahead_policy not in LOOKAHEAD_POLICIES:
         raise ValueError("TRIAL_LOOKAHEAD_POLICY")

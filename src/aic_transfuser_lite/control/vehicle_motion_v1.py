@@ -16,7 +16,10 @@ from .awsim_steering import CALIBRATED_POLICIES
 IDEAL_POLICY = "ideal_bicycle_v1"
 AWSIM_POLICY = "awsim_understeer_v1"
 AWSIM_10KMH_POLICY = "awsim_understeer_10kmh_trial_v1"
-AWSIM_POLICIES = (AWSIM_POLICY, AWSIM_10KMH_POLICY)
+AWSIM_15KMH_POLICY = "awsim_understeer_15kmh_trial_v1"
+AWSIM_TRIAL_TARGETS_KMH = {AWSIM_10KMH_POLICY: 10, AWSIM_15KMH_POLICY: 15}
+AWSIM_TRIAL_SPEED_POLICIES = {f'fixed_{target}kmh': policy for policy, target in AWSIM_TRIAL_TARGETS_KMH.items()}
+AWSIM_POLICIES = (AWSIM_POLICY, *AWSIM_TRIAL_TARGETS_KMH)
 WHEELBASE_M = 1.087
 MAX_SPEED_MPS = 6. / 3.6
 TRIAL_10KMH_MAX_SPEED_MPS = 11. / 3.6
@@ -32,6 +35,8 @@ def vehicle_model_speed_limit(policy: str) -> float:
     """Finite measured-speed domain in m/s; the 10 km/h trial is extrapolated."""
     if policy == AWSIM_10KMH_POLICY:
         return TRIAL_10KMH_MAX_SPEED_MPS
+    if policy in AWSIM_TRIAL_TARGETS_KMH:
+        return (AWSIM_TRIAL_TARGETS_KMH[policy]+1)/3.6
     if policy not in (IDEAL_POLICY, AWSIM_POLICY):
         raise ValueError("VEHICLE_MODEL_POLICY")
     return MAX_SPEED_MPS
@@ -68,19 +73,24 @@ def validate_vehicle_model_config(config: dict[str, Any]) -> str:
     effective_response_length(0., policy)
     if policy in AWSIM_POLICIES:
         geometry = config.get("geometry", {})
-        speed_policy = "fixed_10kmh" if policy == AWSIM_10KMH_POLICY else "fixed_5kmh"
+        speed_policy = f'fixed_{AWSIM_TRIAL_TARGETS_KMH[policy]}kmh' if policy in AWSIM_TRIAL_TARGETS_KMH else "fixed_5kmh"
         if (config.get("steering_policy") not in CALIBRATED_POLICIES
                 or config.get("obstacle_policy") != "steering_support_v2"
                 or config.get("speed_policy") != speed_policy
                 or geometry.get("wheelbase_m") != WHEELBASE_M
                 or geometry.get("scene_sha256") != SCENE_SHA256):
             raise ValueError("VEHICLE_MODEL_ASSET_OR_POLICY_CONTRACT")
-    if policy == AWSIM_10KMH_POLICY and (
+    if policy in AWSIM_TRIAL_TARGETS_KMH and (
             config.get("scope") != "BOUNDED_AWSIM_TRIAL_ONLY"
             or config.get("host") != "graneple@192.168.3.10"
             or config.get("execution_profile") != "one_lap"
             or config.get("record_vehicle_motion") is not True):
         raise ValueError("VEHICLE_MODEL_10KMH_TRIAL_SCOPE")
+    if policy == AWSIM_15KMH_POLICY and (
+            config.get('stopping_distance_policy') != 'awsim_cap_1m_diagnostic_v1'
+            or config.get('lookahead_policy') != 'stopping_preview_extended_v1'
+            or config.get('diagnostic_only') is not True):
+        raise ValueError('VEHICLE_MODEL_SPEED_LADDER_SCOPE')
     return policy
 
 
@@ -129,5 +139,9 @@ def stopping_motion(speed_mps: float, measured_tire_rad: float, issued_tire_rad:
         if policy == AWSIM_10KMH_POLICY:
             metadata.update(scope="EXTRAPOLATED_10KMH_AWSIM_TRIAL_CONDITIONAL_BRAKING_BOUNDS",
                             calibrated_at_10kmh=False, maximum_trial_speed_mps=TRIAL_10KMH_MAX_SPEED_MPS)
+        elif policy in AWSIM_TRIAL_TARGETS_KMH:
+            metadata.update(scope='EXTRAPOLATED_AWSIM_SPEED_LADDER_NOT_CALIBRATED',
+                            calibrated_at_trial_speed=False, target_trial_speed_kmh=AWSIM_TRIAL_TARGETS_KMH[policy],
+                            maximum_trial_speed_mps=vehicle_model_speed_limit(policy))
     metadata["curvature_interval_per_m"] = [min(k), max(k)]
     return metadata

@@ -12,7 +12,7 @@ import math
 from typing import Any
 
 import numpy as np
-from .vehicle_motion_v1 import AWSIM_10KMH_POLICY, IDEAL_POLICY, MAX_CURVATURE_PER_M, MAX_REAR_LATERAL_MPS, stopping_motion, vehicle_model_speed_limit
+from .vehicle_motion_v1 import AWSIM_TRIAL_TARGETS_KMH, IDEAL_POLICY, MAX_CURVATURE_PER_M, MAX_REAR_LATERAL_MPS, stopping_motion, vehicle_model_speed_limit
 
 STANDARD_CLEARANCE = 'standard_v1'
 NEAR_LIMIT_CLEARANCE = 'awsim_near_limit_v1'
@@ -42,7 +42,7 @@ def stopping_envelope_parameters(speed_mps: float, motion: dict[str, Any], *,
     lateral_padding = motion['lateral_displacement_bound_m']
     metadata: dict[str, Any] = {}
     if stopping_distance_policy in DIAGNOSTIC_STOPPING_POLICIES:
-        if motion['policy'] != AWSIM_10KMH_POLICY or clearance_profile != STANDARD_CLEARANCE:
+        if motion['policy'] not in AWSIM_TRIAL_TARGETS_KMH or clearance_profile != STANDARD_CLEARANCE:
             raise ValueError('FIVE_KMH_STOPPING_REQUIRES_TEN_KMH_STANDARD_GUARD')
         speed = min(speed, 5./3.6)
         lateral_padding = MAX_REAR_LATERAL_MPS*(.5+speed)

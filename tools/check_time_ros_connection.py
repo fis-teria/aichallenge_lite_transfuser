@@ -18,7 +18,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from aic_transfuser_lite.control.time_trial_v1 import SPEED_POLICIES, FIXED_SPEED_POLICIES, trial_speed_limits
-from aic_transfuser_lite.control.vehicle_motion_v1 import AWSIM_POLICIES
+from aic_transfuser_lite.control.vehicle_motion_v1 import AWSIM_POLICIES, AWSIM_TRIAL_SPEED_POLICIES
 from aic_transfuser_lite.control.curvature_support_v2 import ACTUAL_STOPPING_SPEED, DIAGNOSTIC_STOPPING_POLICIES, ONE_METRE_STOPPING_TRAVEL
 
 
@@ -331,7 +331,7 @@ def main() -> None:
                     raise RuntimeError("EXTENDED_TARGET_CONTROL_CONTRACT")
             result["extended_target_shadow_commands"] = len(extended)
             result["extended_scope"] = "RECORDED_GEOMETRY_WITH_SYNTHETIC_STATIONARY_CLEAR_SCAN"
-        if args.speed_policy == "fixed_10kmh":
+        if args.speed_policy in AWSIM_TRIAL_SPEED_POLICIES:
             fixture_speed_mps = expected_target
             oracle_source_speed = expected_target + .2
             oracle_xy_override = None
@@ -356,11 +356,13 @@ def main() -> None:
                         or detail["selected_lookahead_distance_m"] < preview
                         or abs(detail["obstacle_guard"]["stopping_travel_m"]-guard_travel) > 1e-9
                         or detail['obstacle_guard'].get('stopping_distance_policy', ACTUAL_STOPPING_SPEED) != distance_policy
-                        or detail["obstacle_guard"]["vehicle_motion"]["calibrated_at_10kmh"] is not False):
+                        or detail['obstacle_guard']['vehicle_motion'][
+                            'calibrated_at_10kmh' if args.speed_policy == 'fixed_10kmh' else 'calibrated_at_trial_speed'] is not False):
                     raise RuntimeError("TEN_KMH_PREVIEW_OR_GUARD_MISMATCH")
-            result["ten_kmh_shadow_commands"] = len(high_speed)
-            result["ten_kmh_minimum_preview_m"] = preview
-            result['ten_kmh_scan_stopping_travel_m'] = guard_travel
+            speed_prefix = 'ten_kmh' if args.speed_policy == 'fixed_10kmh' else 'fifteen_kmh'
+            result[speed_prefix+'_shadow_commands'] = len(high_speed)
+            result[speed_prefix+'_minimum_preview_m'] = preview
+            result[speed_prefix+'_scan_stopping_travel_m'] = guard_travel
             result['stopping_distance_policy'] = distance_policy
         stale_started = time.monotonic()
         spin_for(1.2)  # Sensors continue; stop sending plans.
