@@ -2,7 +2,10 @@
 from copy import deepcopy
 import json
 import math
+import os
 from pathlib import Path
+import subprocess
+import sys
 
 import numpy as np
 import pytest
@@ -18,6 +21,15 @@ from aic_transfuser_lite.control.vehicle_motion_v1 import (
 )
 from tools.evaluate_time_awsim_trial import replay_recorded_control
 from aic_transfuser_lite.evaluation.time_clearance_v1 import scan_margin
+
+
+def test_ros_smoke_cli_resolves_pinned_source_without_pythonpath(tmp_path: Path) -> None:
+    script = Path(__file__).parents[1]/'tools/check_time_ros_connection.py'
+    environment = {k: v for k, v in os.environ.items() if k != 'PYTHONPATH'}
+    result = subprocess.run([sys.executable, str(script), '--help'], cwd=tmp_path,
+        env=environment, text=True, capture_output=True, timeout=15)
+    assert result.returncode == 0, result.stderr
+    assert 'fixed_10kmh' in result.stdout
 
 
 def fixture(curvature: float = 0., source_speed: float = 3.) -> tuple[TimedBodyPose, TimePlan]:

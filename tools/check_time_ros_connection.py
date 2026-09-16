@@ -16,6 +16,7 @@ import time
 
 import numpy as np
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from aic_transfuser_lite.control.time_trial_v1 import SPEED_POLICIES, FIXED_SPEED_POLICIES, trial_speed_limits
 from aic_transfuser_lite.control.vehicle_motion_v1 import AWSIM_POLICIES
 
