@@ -1,0 +1,36 @@
+{
+  "experiment": "time_launch_protection_20260916",
+  "output": "runs/time_launch_protection_20260916",
+  "cache": "datasets/cache/time_corner_retraining_20260916",
+  "cache_sha256": "9662ddbfd37d5829ba9282f0e65f4c07e964eb1b683c007e95e4da9e606e86e7",
+  "parent_experiment": "runs/time_corner_retraining_20260916",
+  "source_guard_commit": "cab1e935d1bb3041a33a57f3ac9d9d4265cf5a17",
+  "initialization": "runs/time_recovery_multiscale_20260916/training/best.pt",
+  "initialization_sha256": "685f8b8f9936ab7e272be12616982374fd8a8d61fbe4a304b25475dc2a206ba8",
+  "controller": "configs/control/time_path_corner_lap_20260916.json",
+  "training": {
+    "epochs": 3, "batch_size": 32, "workers": 0, "seed": 42,
+    "learning_rate": 0.00003, "weight_decay": 0.0001,
+    "max_grad_norm": 1.0, "precision": "float32"
+  },
+  "presentations_per_epoch": 60608,
+  "optimizer_steps_per_arm": 5682,
+  "outer_timeout_seconds_per_arm": 10800,
+  "launch_fraction": 0.05,
+  "launch_window_ns": 2000000000,
+  "launch_speed_max_mps": 0.5,
+  "teacher_span_ns": 3050000000,
+  "launch_ages_s": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5],
+  "selection": {
+    "relative_error_tolerance": 0.05,
+    "ade_tolerance_m": 0.001,
+    "endpoint_tolerance_m": 0.002,
+    "launch_margin_tolerance_rad": 0.001
+  },
+  "validation_role": "all_existing_validation_is_development_selection_in_this_experiment",
+  "awsim_baseline_role": "post_arm_existing_calibration_is_launch_development_only",
+  "test_usage": "sealed",
+  "loss_changes": false,
+  "model_input_changes": false,
+  "awsim_modifications": false
+}
