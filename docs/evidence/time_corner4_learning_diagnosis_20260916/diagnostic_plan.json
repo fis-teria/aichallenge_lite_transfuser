@@ -1,0 +1,173 @@
+{
+  "status": "AUDITING",
+  "source_commit": "e226fedd37cf886b9cec24a88158aaf7814eb71c",
+  "scope": "POST_SELECTION_TRAIN_FIT_AND_STATE_COVERAGE_NOT_CAUSAL_OR_CLOSED_LOOP",
+  "cache_sha256": "f2b463b73f1d1cb7993b151754ca16488fcbd5748887375ee71b30d56316efc9",
+  "plan_sha256": "e3d4a5094562c1c596ecb9d0101df7abaa4bcf68bde5e77c89f92090b5509e49",
+  "preparation_sha256": "ded9c561e2e85fdd337a7a68fddef340931f74a9f65a4db7f1bd39135716b4b0",
+  "trial_hashes": {
+    "control.jsonl": "274c30904564149af4af4c22a77463ddf430c4d951a8a001f9e74b739b50739d",
+    "trial_config.json": "fd2e5ae7af223c9236ba3ec44b58f9fb9a9797a51ed7bd5a103a121b0536bdae"
+  },
+  "reference": {
+    "run": "codex-time-recovery-speedbase-r30",
+    "hashes": {
+      "control.jsonl": "54e127461c0a41a4f189acbee09316c37fb2a10cb664eb8e324b693c76f7c142",
+      "result.json": "a6a266af8fb3e1b892c4ae86f098546376b3f5144268088eecbaaabdb4ca2826",
+      "reference.json": "0acabc4f13836c4bb96f45ac5b196bc5ff3a336bc1e44f693ecbfbce1dbe2a4f",
+      "bag/bag_0.db3": "0bad183ede831f66c14049262ed5e8816c6ae4ff73119ee32ea58bc29e6b2cf7"
+    },
+    "pose_audit": {
+      "input_poses": 5358,
+      "unique_stamps": 5349,
+      "exact_duplicates": 0,
+      "conflicting_stamps": 9,
+      "excluded_segments": 18
+    },
+    "scope": "MEASURED_COMPLETE_TEACHER_NOT_ROAD_CENTER_GROUND_TRUTH",
+    "reference_progress_window_m": [
+      100.0,
+      235.0
+    ]
+  },
+  "checkpoints": {
+    "initial": {
+      "path": "/home/thistle/e2e_autonomous/runs/time_p1_20laps_20260913/command_off/best.pt",
+      "sha256": "e857db4b67d3d9f6a77c2865cfc1fa53e9903e7a1d2d8a371407fbe009a1a44f"
+    },
+    "epoch_01": {
+      "path": "/home/thistle/e2e_autonomous/runs/time_recovery_multiscale_20260916/training/epoch_01.pt",
+      "sha256": "1d66e4837fbcf28e1a31a15681ce531a07b092bae478d1165a19e50677debf39"
+    },
+    "epoch_02": {
+      "path": "/home/thistle/e2e_autonomous/runs/time_recovery_multiscale_20260916/training/epoch_02.pt",
+      "sha256": "be4d4a0524e03871fa6dd0794a233890cce8858c3d1521cc48c72eaf69de355f"
+    },
+    "selected_epoch_03": {
+      "path": "/home/thistle/e2e_autonomous/runs/time_recovery_multiscale_20260916/training/best.pt",
+      "sha256": "685f8b8f9936ab7e272be12616982374fd8a8d61fbe4a304b25475dc2a206ba8"
+    }
+  },
+  "corner_base_progress_m": [
+    165.0,
+    210.0
+  ],
+  "neighborhoods_m_rad_mps": {
+    "narrow": [
+      3.0,
+      0.15,
+      0.08726646259971647,
+      0.25
+    ],
+    "wide": [
+      5.0,
+      0.25,
+      0.17453292519943295,
+      0.4
+    ]
+  },
+  "runtime_queries": [
+    {
+      "time_s": 149.999996648,
+      "base_s_m": 178.7803560944454,
+      "speed_mps": 1.3155804872512817,
+      "world_pose": {
+        "stamp_ns": 166944996268,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89651.69825702532,
+        "y_m": 43184.45836949242,
+        "yaw_rad": 0.5460498917192216
+      },
+      "status": "CORNER",
+      "left_m": -0.46997210544788265,
+      "heading_rad": 0.0476016725210775,
+      "reference_progress_m": 79.33684913689643
+    },
+    {
+      "time_s": 155.004996536,
+      "base_s_m": 185.61010665000504,
+      "speed_mps": 1.3553533554077148,
+      "world_pose": {
+        "stamp_ns": 171944996156,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89657.72965017032,
+        "y_m": 43187.68193110749,
+        "yaw_rad": 0.28391947104908427
+      },
+      "status": "CORNER",
+      "left_m": 0.04924378740335806,
+      "heading_rad": 0.11629987138190319,
+      "reference_progress_m": 86.22136474587464
+    },
+    {
+      "time_s": 159.999996424,
+      "base_s_m": 191.44787223842425,
+      "speed_mps": 1.3146737813949585,
+      "world_pose": {
+        "stamp_ns": 176944996044,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89664.00186868587,
+        "y_m": 43186.794678780454,
+        "yaw_rad": -0.7117322317088041
+      },
+      "status": "CORNER",
+      "left_m": 0.823266674448306,
+      "heading_rad": 0.08922410137373638,
+      "reference_progress_m": 92.27327236844188
+    },
+    {
+      "time_s": 164.739996318,
+      "base_s_m": 196.50089818961442,
+      "speed_mps": 1.310736060142517,
+      "world_pose": {
+        "stamp_ns": 181689995938,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89666.43516982585,
+        "y_m": 43181.273615977625,
+        "yaw_rad": -1.5355550425763584
+      },
+      "status": "CORNER",
+      "left_m": 1.6922301990167676,
+      "heading_rad": 0.09260771036786997,
+      "reference_progress_m": 97.50012422254376
+    }
+  ],
+  "reserved_test_read": false,
+  "optimizer_updates": 0,
+  "checkpoint_selection_changed": false,
+  "new_awsim_trials": 0,
+  "batch_size": 32,
+  "workers": 4,
+  "precision": "float32",
+  "precision_recipe": {
+    "dtype": "float32",
+    "matmul_tf32": false,
+    "cudnn_tf32": false,
+    "cudnn_benchmark": false,
+    "cudnn_deterministic": true
+  },
+  "datasets": {},
+  "models": {},
+  "reused_coverage": {
+    "path": "/home/thistle/e2e_autonomous/runs/time_corner4_learning_diagnosis_20260916",
+    "source_commit": "5c301500628d7ccfbf90afd47f29362a0a7b72c8",
+    "files": {
+      "coverage.json": "42cb339e79c0adab02f2319caacd07caf9bebe605fa6250a0a09d57036b37df7",
+      "train_states.json": "e553c88d4753da7e124a82e08a4edc39dfe351e35605ce80b91e3b304d88405a",
+      "validation_states.json": "43da38207799fdb6b7f5814671786b6d3057030d612c22d4921821c3e8d82414"
+    },
+    "raw_pose_replay_performed_this_run": false
+  }
+}

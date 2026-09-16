@@ -1,0 +1,1241 @@
+{
+  "status": "AUDITING",
+  "source_commit": "e226fedd37cf886b9cec24a88158aaf7814eb71c",
+  "scope": "POST_SELECTION_TRAIN_FIT_AND_STATE_COVERAGE_NOT_CAUSAL_OR_CLOSED_LOOP",
+  "cache_sha256": "f2b463b73f1d1cb7993b151754ca16488fcbd5748887375ee71b30d56316efc9",
+  "plan_sha256": "e3d4a5094562c1c596ecb9d0101df7abaa4bcf68bde5e77c89f92090b5509e49",
+  "preparation_sha256": "ded9c561e2e85fdd337a7a68fddef340931f74a9f65a4db7f1bd39135716b4b0",
+  "trial_hashes": {
+    "control.jsonl": "274c30904564149af4af4c22a77463ddf430c4d951a8a001f9e74b739b50739d",
+    "trial_config.json": "fd2e5ae7af223c9236ba3ec44b58f9fb9a9797a51ed7bd5a103a121b0536bdae"
+  },
+  "reference": {
+    "run": "codex-time-recovery-speedbase-r30",
+    "hashes": {
+      "control.jsonl": "54e127461c0a41a4f189acbee09316c37fb2a10cb664eb8e324b693c76f7c142",
+      "result.json": "a6a266af8fb3e1b892c4ae86f098546376b3f5144268088eecbaaabdb4ca2826",
+      "reference.json": "0acabc4f13836c4bb96f45ac5b196bc5ff3a336bc1e44f693ecbfbce1dbe2a4f",
+      "bag/bag_0.db3": "0bad183ede831f66c14049262ed5e8816c6ae4ff73119ee32ea58bc29e6b2cf7"
+    },
+    "pose_audit": {
+      "input_poses": 5358,
+      "unique_stamps": 5349,
+      "exact_duplicates": 0,
+      "conflicting_stamps": 9,
+      "excluded_segments": 18
+    },
+    "scope": "MEASURED_COMPLETE_TEACHER_NOT_ROAD_CENTER_GROUND_TRUTH",
+    "reference_progress_window_m": [
+      100.0,
+      235.0
+    ]
+  },
+  "checkpoints": {
+    "initial": {
+      "path": "/home/thistle/e2e_autonomous/runs/time_p1_20laps_20260913/command_off/best.pt",
+      "sha256": "e857db4b67d3d9f6a77c2865cfc1fa53e9903e7a1d2d8a371407fbe009a1a44f"
+    },
+    "epoch_01": {
+      "path": "/home/thistle/e2e_autonomous/runs/time_recovery_multiscale_20260916/training/epoch_01.pt",
+      "sha256": "1d66e4837fbcf28e1a31a15681ce531a07b092bae478d1165a19e50677debf39"
+    },
+    "epoch_02": {
+      "path": "/home/thistle/e2e_autonomous/runs/time_recovery_multiscale_20260916/training/epoch_02.pt",
+      "sha256": "be4d4a0524e03871fa6dd0794a233890cce8858c3d1521cc48c72eaf69de355f"
+    },
+    "selected_epoch_03": {
+      "path": "/home/thistle/e2e_autonomous/runs/time_recovery_multiscale_20260916/training/best.pt",
+      "sha256": "685f8b8f9936ab7e272be12616982374fd8a8d61fbe4a304b25475dc2a206ba8"
+    }
+  },
+  "corner_base_progress_m": [
+    165.0,
+    210.0
+  ],
+  "neighborhoods_m_rad_mps": {
+    "narrow": [
+      3.0,
+      0.15,
+      0.08726646259971647,
+      0.25
+    ],
+    "wide": [
+      5.0,
+      0.25,
+      0.17453292519943295,
+      0.4
+    ]
+  },
+  "runtime_queries": [
+    {
+      "time_s": 149.999996648,
+      "base_s_m": 178.7803560944454,
+      "speed_mps": 1.3155804872512817,
+      "world_pose": {
+        "stamp_ns": 166944996268,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89651.69825702532,
+        "y_m": 43184.45836949242,
+        "yaw_rad": 0.5460498917192216
+      },
+      "status": "CORNER",
+      "left_m": -0.46997210544788265,
+      "heading_rad": 0.0476016725210775,
+      "reference_progress_m": 79.33684913689643
+    },
+    {
+      "time_s": 155.004996536,
+      "base_s_m": 185.61010665000504,
+      "speed_mps": 1.3553533554077148,
+      "world_pose": {
+        "stamp_ns": 171944996156,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89657.72965017032,
+        "y_m": 43187.68193110749,
+        "yaw_rad": 0.28391947104908427
+      },
+      "status": "CORNER",
+      "left_m": 0.04924378740335806,
+      "heading_rad": 0.11629987138190319,
+      "reference_progress_m": 86.22136474587464
+    },
+    {
+      "time_s": 159.999996424,
+      "base_s_m": 191.44787223842425,
+      "speed_mps": 1.3146737813949585,
+      "world_pose": {
+        "stamp_ns": 176944996044,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89664.00186868587,
+        "y_m": 43186.794678780454,
+        "yaw_rad": -0.7117322317088041
+      },
+      "status": "CORNER",
+      "left_m": 0.823266674448306,
+      "heading_rad": 0.08922410137373638,
+      "reference_progress_m": 92.27327236844188
+    },
+    {
+      "time_s": 164.739996318,
+      "base_s_m": 196.50089818961442,
+      "speed_mps": 1.310736060142517,
+      "world_pose": {
+        "stamp_ns": 181689995938,
+        "clock": "sim",
+        "epoch": "0",
+        "world_frame": "map",
+        "body_frame": "base_link",
+        "x_m": 89666.43516982585,
+        "y_m": 43181.273615977625,
+        "yaw_rad": -1.5355550425763584
+      },
+      "status": "CORNER",
+      "left_m": 1.6922301990167676,
+      "heading_rad": 0.09260771036786997,
+      "reference_progress_m": 97.50012422254376
+    }
+  ],
+  "reserved_test_read": false,
+  "optimizer_updates": 0,
+  "checkpoint_selection_changed": false,
+  "new_awsim_trials": 0,
+  "batch_size": 32,
+  "workers": 4,
+  "precision": "float32",
+  "precision_recipe": {
+    "dtype": "float32",
+    "matmul_tf32": false,
+    "cudnn_tf32": false,
+    "cudnn_benchmark": false,
+    "cudnn_deterministic": true
+  },
+  "datasets": {
+    "train": {
+      "all_cache_anchors": 42172,
+      "statuses": {
+        "OUTSIDE_CORNER": 35903,
+        "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 1368,
+        "CORNER": 4901
+      },
+      "groups": {
+        "all_recovery": {
+          "anchors": 5446,
+          "runs": 33,
+          "per_run": {
+            "codex-time-recovery-right020-r19": 57,
+            "codex-time-recovery-left020-r20": 57,
+            "codex-time-recovery-left040-r21": 58,
+            "codex-time-recovery-left040-r25": 51,
+            "codex-time-recovery-pulseleft-r38": 93,
+            "codex-time-recovery-pulseright-r39": 92,
+            "codex-time-recovery-pulseleft-r40": 91,
+            "codex-time-recovery-pulseright-r41": 87,
+            "codex-time-recovery-pulseleft-r42": 89,
+            "codex-time-recovery-pulseright-r43": 92,
+            "codex-time-recovery-pulseleft-r44": 92,
+            "codex-time-recovery-pulseright-r45": 93,
+            "codex-time-recovery-earlyleft-r50": 92,
+            "codex-time-recovery-earlyright-r51": 93,
+            "codex-time-recovery-random-r64": 273,
+            "codex-time-recovery-separated-g01-left": 92,
+            "codex-time-recovery-separated-g01-right": 89,
+            "codex-time-recovery-separated-g02-left": 276,
+            "codex-time-recovery-separated-g02-right": 268,
+            "codex-time-recovery-separated-g03-left": 271,
+            "codex-time-recovery-separated-g03-right": 273,
+            "codex-time-recovery-separated-g05-left-r1": 83,
+            "codex-time-recovery-separated-g05-right": 89,
+            "codex-time-recovery-large-live-g03-left-r02": 92,
+            "codex-time-recovery-large-live-g03-left-r03": 157,
+            "codex-time-recovery-large-live-g03-left-r04": 282,
+            "codex-time-recovery-large-live-g03-right-r03": 281,
+            "codex-time-recovery-40cm-d20-g05-left-r02": 470,
+            "codex-time-recovery-40cm-d40-g03-left-r01": 282,
+            "codex-time-recovery-40cm-d40-g03-right-r04": 282,
+            "codex-time-recovery-60cm-d60-g03-left-r02": 188,
+            "codex-time-recovery-60cm-d60-g03-left-r04": 280,
+            "codex-time-recovery-60cm-d60-g03-right-r02": 281
+          },
+          "recovery_events": 47,
+          "presentations_per_epoch": 8920
+        },
+        "corner_all": {
+          "anchors": 4901,
+          "runs": 19,
+          "per_run": {
+            "5kmh_run01": 473,
+            "5kmh_run02": 470,
+            "5kmh_run04": 473,
+            "5kmh_run05": 473,
+            "5kmh_run07": 472,
+            "5kmh_run09": 468,
+            "8kmh_run01": 247,
+            "8kmh_run03": 250,
+            "8kmh_run04": 249,
+            "8kmh_run05": 250,
+            "8kmh_run08": 248,
+            "8kmh_run10": 248,
+            "codex-time-recovery-separated-g02-left": 92,
+            "codex-time-recovery-separated-g02-right": 91,
+            "codex-time-recovery-40cm-d20-g05-left-r02": 58,
+            "codex-time-recovery-40cm-d40-g03-right-r04": 57,
+            "codex-time-recovery-60cm-d60-g03-left-r02": 94,
+            "codex-time-recovery-60cm-d60-g03-left-r04": 94,
+            "codex-time-recovery-60cm-d60-g03-right-r02": 94
+          },
+          "recovery_events": 7,
+          "presentations_per_epoch": 5185
+        },
+        "corner_nominal_5kmh": {
+          "anchors": 2829,
+          "runs": 6,
+          "per_run": {
+            "5kmh_run01": 473,
+            "5kmh_run02": 470,
+            "5kmh_run04": 473,
+            "5kmh_run05": 473,
+            "5kmh_run07": 472,
+            "5kmh_run09": 468
+          },
+          "recovery_events": 0,
+          "presentations_per_epoch": 2829
+        },
+        "corner_nominal_8kmh": {
+          "anchors": 1492,
+          "runs": 6,
+          "per_run": {
+            "8kmh_run01": 247,
+            "8kmh_run03": 250,
+            "8kmh_run04": 249,
+            "8kmh_run05": 250,
+            "8kmh_run08": 248,
+            "8kmh_run10": 248
+          },
+          "recovery_events": 0,
+          "presentations_per_epoch": 1492
+        },
+        "corner_recovery": {
+          "anchors": 580,
+          "runs": 7,
+          "per_run": {
+            "codex-time-recovery-separated-g02-left": 92,
+            "codex-time-recovery-separated-g02-right": 91,
+            "codex-time-recovery-40cm-d20-g05-left-r02": 58,
+            "codex-time-recovery-40cm-d40-g03-right-r04": 57,
+            "codex-time-recovery-60cm-d60-g03-left-r02": 94,
+            "codex-time-recovery-60cm-d60-g03-left-r04": 94,
+            "codex-time-recovery-60cm-d60-g03-right-r02": 94
+          },
+          "recovery_events": 7,
+          "presentations_per_epoch": 864
+        },
+        "corner_left_ge_20cm": {
+          "anchors": 42,
+          "runs": 2,
+          "per_run": {
+            "codex-time-recovery-60cm-d60-g03-left-r02": 21,
+            "codex-time-recovery-60cm-d60-g03-left-r04": 21
+          },
+          "recovery_events": 2,
+          "presentations_per_epoch": 94
+        },
+        "corner_left_ge_40cm": {
+          "anchors": 27,
+          "runs": 2,
+          "per_run": {
+            "codex-time-recovery-60cm-d60-g03-left-r02": 14,
+            "codex-time-recovery-60cm-d60-g03-left-r04": 13
+          },
+          "recovery_events": 2,
+          "presentations_per_epoch": 75
+        },
+        "corner_left_ge_60cm": {
+          "anchors": 1,
+          "runs": 1,
+          "per_run": {
+            "codex-time-recovery-60cm-d60-g03-left-r02": 1
+          },
+          "recovery_events": 1,
+          "presentations_per_epoch": 3
+        },
+        "corner_outward_heading_ge_5deg": {
+          "anchors": 30,
+          "runs": 1,
+          "per_run": {
+            "codex-time-recovery-60cm-d60-g03-right-r02": 30
+          },
+          "recovery_events": 1,
+          "presentations_per_epoch": 40
+        }
+      },
+      "neighborhood_counts": [
+        {
+          "narrow": {
+            "anchors": 0,
+            "runs": 0,
+            "per_run": {},
+            "recovery_events": 0,
+            "presentations_per_epoch": 0
+          },
+          "wide": {
+            "anchors": 0,
+            "runs": 0,
+            "per_run": {},
+            "recovery_events": 0,
+            "presentations_per_epoch": 0
+          }
+        },
+        {
+          "narrow": {
+            "anchors": 0,
+            "runs": 0,
+            "per_run": {},
+            "recovery_events": 0,
+            "presentations_per_epoch": 0
+          },
+          "wide": {
+            "anchors": 466,
+            "runs": 7,
+            "per_run": {
+              "5kmh_run01": 78,
+              "5kmh_run02": 77,
+              "5kmh_run04": 78,
+              "5kmh_run05": 77,
+              "5kmh_run07": 78,
+              "5kmh_run09": 77,
+              "codex-time-recovery-separated-g02-left": 1
+            },
+            "recovery_events": 1,
+            "presentations_per_epoch": 467
+          }
+        },
+        {
+          "narrow": {
+            "anchors": 0,
+            "runs": 0,
+            "per_run": {},
+            "recovery_events": 0,
+            "presentations_per_epoch": 0
+          },
+          "wide": {
+            "anchors": 0,
+            "runs": 0,
+            "per_run": {},
+            "recovery_events": 0,
+            "presentations_per_epoch": 0
+          }
+        },
+        {
+          "narrow": {
+            "anchors": 0,
+            "runs": 0,
+            "per_run": {},
+            "recovery_events": 0,
+            "presentations_per_epoch": 0
+          },
+          "wide": {
+            "anchors": 0,
+            "runs": 0,
+            "per_run": {},
+            "recovery_events": 0,
+            "presentations_per_epoch": 0
+          }
+        }
+      ],
+      "raw_sources": {
+        "5kmh_run01": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run01/bag/bag_0.db3",
+          "sha256": "27e9ed05ab4c453bb7be689e3996fdf4daf8420858cb028524910b355fa56d84",
+          "anchors": 3907,
+          "statuses": {
+            "OUTSIDE_CORNER": 3318,
+            "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 116,
+            "CORNER": 473
+          },
+          "replayed_pose_rows": 5974
+        },
+        "5kmh_run02": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run02/bag/bag_0.db3",
+          "sha256": "8d9b745a1af014168de9163df8767f2d9a30d036c544a280ecf5c39ef4fd4214",
+          "anchors": 3907,
+          "statuses": {
+            "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 116,
+            "OUTSIDE_CORNER": 3321,
+            "CORNER": 470
+          },
+          "replayed_pose_rows": 5960
+        },
+        "5kmh_run04": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run04/bag/bag_0.db3",
+          "sha256": "0c7447d136ebb3c954e5017cb87f23858a495e2458265c394299114b73ea0914",
+          "anchors": 3905,
+          "statuses": {
+            "OUTSIDE_CORNER": 3313,
+            "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 119,
+            "CORNER": 473
+          },
+          "replayed_pose_rows": 5959
+        },
+        "5kmh_run05": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run05/bag/bag_0.db3",
+          "sha256": "0a1155de908cf443f19fa27288bcc1ee14660b836c6386517099c21c93d8796b",
+          "anchors": 3906,
+          "statuses": {
+            "OUTSIDE_CORNER": 3321,
+            "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 112,
+            "CORNER": 473
+          },
+          "replayed_pose_rows": 6007
+        },
+        "5kmh_run07": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run07/bag/bag_0.db3",
+          "sha256": "1f9efdba897b39e2c6ef7a3177b980957068a0294c35c1b0c54f164b74b5282c",
+          "anchors": 3907,
+          "statuses": {
+            "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 117,
+            "OUTSIDE_CORNER": 3318,
+            "CORNER": 472
+          },
+          "replayed_pose_rows": 6010
+        },
+        "5kmh_run09": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run09/bag/bag_0.db3",
+          "sha256": "5e86b64238fe18c5e1085f68b7b4d571453ed104b427eef98c9cbd6d6fa893d5",
+          "anchors": 3906,
+          "statuses": {
+            "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 119,
+            "OUTSIDE_CORNER": 3319,
+            "CORNER": 468
+          },
+          "replayed_pose_rows": 5957
+        },
+        "8kmh_run01": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run01/bag/bag_0.db3",
+          "sha256": "ae46465bd1cad9eedf28dd6825aad20b11f81a29156418dfb912c82e0403df24",
+          "anchors": 2213,
+          "statuses": {
+            "OUTSIDE_CORNER": 1856,
+            "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 110,
+            "CORNER": 247
+          },
+          "replayed_pose_rows": 3300
+        },
+        "8kmh_run03": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run03/bag/bag_0.db3",
+          "sha256": "69c692bd6f74b56e62c234ba20fc95db6181f176bcc7f3bf05c514752c928edc",
+          "anchors": 2215,
+          "statuses": {
+            "OUTSIDE_CORNER": 1855,
+            "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 110,
+            "CORNER": 250
+          },
+          "replayed_pose_rows": 3303
+        },
+        "8kmh_run04": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run04/bag/bag_0.db3",
+          "sha256": "f86b5a001570191888181f41226f1dc90bda25e5684acc6521961a18b8cbcdd2",
+          "anchors": 2215,
+          "statuses": {
+            "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 112,
+            "OUTSIDE_CORNER": 1854,
+            "CORNER": 249
+          },
+          "replayed_pose_rows": 3323
+        },
+        "8kmh_run05": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run05/bag/bag_0.db3",
+          "sha256": "8341a6db92031da52c836adc0d680b09fec3a74ba1cfe7206b41118b21f70768",
+          "anchors": 2215,
+          "statuses": {
+            "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 113,
+            "OUTSIDE_CORNER": 1852,
+            "CORNER": 250
+          },
+          "replayed_pose_rows": 3304
+        },
+        "8kmh_run08": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run08/bag/bag_0.db3",
+          "sha256": "8940e80855372feb52c063b61c06194a72831704704a953d6f25be5b4a3dcbc5",
+          "anchors": 2214,
+          "statuses": {
+            "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 112,
+            "OUTSIDE_CORNER": 1854,
+            "CORNER": 248
+          },
+          "replayed_pose_rows": 3302
+        },
+        "8kmh_run10": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run10/bag/bag_0.db3",
+          "sha256": "48cdf59219fddb62e3ac343501a617432ec9ff57f661586234c0c07351e7cd70",
+          "anchors": 2216,
+          "statuses": {
+            "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 112,
+            "OUTSIDE_CORNER": 1856,
+            "CORNER": 248
+          },
+          "replayed_pose_rows": 3313
+        },
+        "codex-time-recovery-right020-r19": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-right020-r19/raw/bag/bag_0.db3",
+          "sha256": "78ba4002da6f674f0068d6e7770688280730d3cd0af65512ec3fad0ad0940485",
+          "anchors": 57,
+          "statuses": {
+            "OUTSIDE_CORNER": 57
+          },
+          "replayed_pose_rows": 93
+        },
+        "codex-time-recovery-left020-r20": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-left020-r20/raw/bag/bag_0.db3",
+          "sha256": "b807e8dc645db65c8dd89648812b4699f35303d0359c8521ca94706e00ad8b2e",
+          "anchors": 57,
+          "statuses": {
+            "OUTSIDE_CORNER": 57
+          },
+          "replayed_pose_rows": 90
+        },
+        "codex-time-recovery-left040-r21": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-left040-r21/raw/bag/bag_0.db3",
+          "sha256": "3c83cebade8ed1d7dd0297e2d614e1fa6f1b11a8a3d6e766657130ac49ae1abb",
+          "anchors": 58,
+          "statuses": {
+            "OUTSIDE_CORNER": 58
+          },
+          "replayed_pose_rows": 92
+        },
+        "codex-time-recovery-left040-r25": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-left040-r25/raw/bag/bag_0.db3",
+          "sha256": "d9e11c88c9699b5a78f7da84a8222e3a116d30d83162f410ff3dfa4542bd04ab",
+          "anchors": 51,
+          "statuses": {
+            "OUTSIDE_CORNER": 51
+          },
+          "replayed_pose_rows": 83
+        },
+        "codex-time-recovery-pulseleft-r38": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-pulseleft-r38/raw/bag/bag_0.db3",
+          "sha256": "1e85d781b920e55a4bfa7806855dbbb5dd44706a30b2075d8ae6da274a41df64",
+          "anchors": 93,
+          "statuses": {
+            "OUTSIDE_CORNER": 93
+          },
+          "replayed_pose_rows": 148
+        },
+        "codex-time-recovery-pulseright-r39": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-pulseright-r39/raw/bag/bag_0.db3",
+          "sha256": "34714a3c4a0909820cffecbe88f8c5aeee395ee528e9c7c0759b544ccb27c17b",
+          "anchors": 92,
+          "statuses": {
+            "OUTSIDE_CORNER": 92
+          },
+          "replayed_pose_rows": 149
+        },
+        "codex-time-recovery-pulseleft-r40": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-pulseleft-r40/raw/bag/bag_0.db3",
+          "sha256": "58104c28a9e3cf5d11b1a3e4b3a6be21a96770b0994811d600b670c2f60dfed6",
+          "anchors": 91,
+          "statuses": {
+            "OUTSIDE_CORNER": 91
+          },
+          "replayed_pose_rows": 144
+        },
+        "codex-time-recovery-pulseright-r41": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-pulseright-r41/raw/bag/bag_0.db3",
+          "sha256": "210bd90e0a8e78b472a4f546dafd1e262859704269070582e245930e259ddb8a",
+          "anchors": 87,
+          "statuses": {
+            "OUTSIDE_CORNER": 87
+          },
+          "replayed_pose_rows": 136
+        },
+        "codex-time-recovery-pulseleft-r42": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-pulseleft-r42/raw/bag/bag_0.db3",
+          "sha256": "d3c33cced4bf90b4f53aaaf8e9eb6494952db6ca154c06888f7669ad7a0122e0",
+          "anchors": 89,
+          "statuses": {
+            "OUTSIDE_CORNER": 89
+          },
+          "replayed_pose_rows": 144
+        },
+        "codex-time-recovery-pulseright-r43": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-pulseright-r43/raw/bag/bag_0.db3",
+          "sha256": "204ce4ae13fa6e78465fa0724fb0a7d9ce4951e9c8b5c715fe2a419edd4b4574",
+          "anchors": 92,
+          "statuses": {
+            "OUTSIDE_CORNER": 92
+          },
+          "replayed_pose_rows": 152
+        },
+        "codex-time-recovery-pulseleft-r44": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-pulseleft-r44/raw/bag/bag_0.db3",
+          "sha256": "a4fdd3ee7d32f8b285519bb61d855ea03aacd81232799ab14b644e0cf1379457",
+          "anchors": 92,
+          "statuses": {
+            "OUTSIDE_CORNER": 92
+          },
+          "replayed_pose_rows": 151
+        },
+        "codex-time-recovery-pulseright-r45": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-pulseright-r45/raw/bag/bag_0.db3",
+          "sha256": "8f768fd7ae307a2fcf91312a82580ca7e72f1f0eef13008f7daa5ad3cfd16216",
+          "anchors": 93,
+          "statuses": {
+            "OUTSIDE_CORNER": 93
+          },
+          "replayed_pose_rows": 144
+        },
+        "codex-time-recovery-earlyleft-r50": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-earlyleft-r50/raw/bag/bag_0.db3",
+          "sha256": "84a28d6cc179658622bc58f90cfeeff0a123f8af2cdea04e984754a6ff0ddb70",
+          "anchors": 92,
+          "statuses": {
+            "OUTSIDE_CORNER": 92
+          },
+          "replayed_pose_rows": 150
+        },
+        "codex-time-recovery-earlyright-r51": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-earlyright-r51/raw/bag/bag_0.db3",
+          "sha256": "4a1483a4c1706db30729dc4d91e45ae16970a03bdb5a665b6f5917f5878aede1",
+          "anchors": 93,
+          "statuses": {
+            "OUTSIDE_CORNER": 93
+          },
+          "replayed_pose_rows": 149
+        },
+        "codex-time-recovery-random-r64": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-random-r64/raw/bag/bag_0.db3",
+          "sha256": "420a61c979d97cc60b52501d9a6af52a7eb4e39cba9ade57baf75a2ff302894e",
+          "anchors": 273,
+          "statuses": {
+            "OUTSIDE_CORNER": 273
+          },
+          "replayed_pose_rows": 434
+        },
+        "codex-time-recovery-separated-g01-left": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-separated-g01-left/raw/bag/bag_0.db3",
+          "sha256": "1bd847459fcf5e24b5c65941093e05cd0e568d9f88007a97c9d8b5f1ff5fe732",
+          "anchors": 92,
+          "statuses": {
+            "OUTSIDE_CORNER": 92
+          },
+          "replayed_pose_rows": 148
+        },
+        "codex-time-recovery-separated-g01-right": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-separated-g01-right/raw/bag/bag_0.db3",
+          "sha256": "6e8090a729d426b63de028d5d083365926554d7a342d5634c9dde6bb6b9cf252",
+          "anchors": 89,
+          "statuses": {
+            "OUTSIDE_CORNER": 89
+          },
+          "replayed_pose_rows": 149
+        },
+        "codex-time-recovery-separated-g02-left": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-separated-g02-left/raw/bag/bag_0.db3",
+          "sha256": "b3103a0b270abeb744e3cb5f9f2bee6588a1f73ca71978dabcd8280239c24ee4",
+          "anchors": 276,
+          "statuses": {
+            "OUTSIDE_CORNER": 184,
+            "CORNER": 92
+          },
+          "replayed_pose_rows": 439
+        },
+        "codex-time-recovery-separated-g02-right": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-separated-g02-right/raw/bag/bag_0.db3",
+          "sha256": "6210e86c4c38e463a443a2df711a55bc3c1ca32505b35e94df7438be7c196e78",
+          "anchors": 268,
+          "statuses": {
+            "OUTSIDE_CORNER": 177,
+            "CORNER": 91
+          },
+          "replayed_pose_rows": 428
+        },
+        "codex-time-recovery-separated-g03-left": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-separated-g03-left/raw/bag/bag_0.db3",
+          "sha256": "fe734d9c2546e9005d4e4157c1eccf71264caf5b25eb4ae9965da3fffa62f15c",
+          "anchors": 271,
+          "statuses": {
+            "OUTSIDE_CORNER": 271
+          },
+          "replayed_pose_rows": 427
+        },
+        "codex-time-recovery-separated-g03-right": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-separated-g03-right/raw/bag/bag_0.db3",
+          "sha256": "b5c78bbe29aa0705397d58371adb0487a29df9afac45b10ea1bc4f0f3032668e",
+          "anchors": 273,
+          "statuses": {
+            "OUTSIDE_CORNER": 273
+          },
+          "replayed_pose_rows": 444
+        },
+        "codex-time-recovery-separated-g05-left-r1": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-separated-g05-left-r1/raw/bag/bag_0.db3",
+          "sha256": "a4476e0f3791898bd3a6bed36992ee3f99a9a2b816b859b0e85de497e906ce7b",
+          "anchors": 83,
+          "statuses": {
+            "OUTSIDE_CORNER": 83
+          },
+          "replayed_pose_rows": 134
+        },
+        "codex-time-recovery-separated-g05-right": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-separated-g05-right/raw/bag/bag_0.db3",
+          "sha256": "604fdb80a06495a5c7d325f8bbbc1489cf037cc3bec981b3662700b591d28983",
+          "anchors": 89,
+          "statuses": {
+            "OUTSIDE_CORNER": 89
+          },
+          "replayed_pose_rows": 147
+        },
+        "codex-time-recovery-large-live-g03-left-r02": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-large-live-g03-left-r02/raw/bag/bag_0.db3",
+          "sha256": "ec8d424a14bd5a9a8eff02cb272450e520af44bbd21116b99ea938cf9c8642ab",
+          "anchors": 92,
+          "statuses": {
+            "OUTSIDE_CORNER": 92
+          },
+          "replayed_pose_rows": 148
+        },
+        "codex-time-recovery-large-live-g03-left-r03": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-large-live-g03-left-r03/raw/bag/bag_0.db3",
+          "sha256": "9d34c94bc896d228b1b5402061845032056920558d0b58e9adadfc507a0c9848",
+          "anchors": 157,
+          "statuses": {
+            "OUTSIDE_CORNER": 157
+          },
+          "replayed_pose_rows": 251
+        },
+        "codex-time-recovery-large-live-g03-left-r04": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-large-live-g03-left-r04/raw/bag/bag_0.db3",
+          "sha256": "6555dac60ac23756c8dd1d01deb3a46384d9bfa2aca36a8fbcd5d9ea7c839166",
+          "anchors": 282,
+          "statuses": {
+            "OUTSIDE_CORNER": 282
+          },
+          "replayed_pose_rows": 454
+        },
+        "codex-time-recovery-large-live-g03-right-r03": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-large-live-g03-right-r03/raw/bag/bag_0.db3",
+          "sha256": "35512d678b081f73bb3ac5c0f4585ffa25dcd3024efcf5dae365f608fe9f9d07",
+          "anchors": 281,
+          "statuses": {
+            "OUTSIDE_CORNER": 281
+          },
+          "replayed_pose_rows": 447
+        },
+        "codex-time-recovery-40cm-d20-g05-left-r02": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-40cm-d20-g05-left-r02/raw/bag/bag_0.db3",
+          "sha256": "2641e877c4e35101eca86191e0c4824b2c7c862be7bffed33d7535967dad0bb3",
+          "anchors": 470,
+          "statuses": {
+            "OUTSIDE_CORNER": 412,
+            "CORNER": 58
+          },
+          "replayed_pose_rows": 752
+        },
+        "codex-time-recovery-40cm-d40-g03-left-r01": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-40cm-d40-g03-left-r01/raw/bag/bag_0.db3",
+          "sha256": "307d270fabcd8c2be696f0faf6d29c7d521819cfba64d874a647fef83ffa0689",
+          "anchors": 282,
+          "statuses": {
+            "OUTSIDE_CORNER": 282
+          },
+          "replayed_pose_rows": 455
+        },
+        "codex-time-recovery-40cm-d40-g03-right-r04": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-40cm-d40-g03-right-r04/raw/bag/bag_0.db3",
+          "sha256": "cad7523bdb7479ceb3894ce459000b7143c97d0d40c12773bcc130ea71038dff",
+          "anchors": 282,
+          "statuses": {
+            "OUTSIDE_CORNER": 225,
+            "CORNER": 57
+          },
+          "replayed_pose_rows": 456
+        },
+        "codex-time-recovery-60cm-d60-g03-left-r02": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-60cm-d60-g03-left-r02/raw/bag/bag_0.db3",
+          "sha256": "5a4709c34e64ee71cffb225ac7eb58276e32cc184c37bd80d5f805ccafe99c12",
+          "anchors": 188,
+          "statuses": {
+            "OUTSIDE_CORNER": 94,
+            "CORNER": 94
+          },
+          "replayed_pose_rows": 301
+        },
+        "codex-time-recovery-60cm-d60-g03-left-r04": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-60cm-d60-g03-left-r04/raw/bag/bag_0.db3",
+          "sha256": "846f4971416ec350f85b3b43277ed759edfb67f20429e78fe2568ff86f42492e",
+          "anchors": 280,
+          "statuses": {
+            "OUTSIDE_CORNER": 186,
+            "CORNER": 94
+          },
+          "replayed_pose_rows": 454
+        },
+        "codex-time-recovery-60cm-d60-g03-right-r02": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-60cm-d60-g03-right-r02/raw/bag/bag_0.db3",
+          "sha256": "9761741bfbf0141c927713288fd594e17e9f8ac977bb76f63d669e0e2fac6032",
+          "anchors": 281,
+          "statuses": {
+            "OUTSIDE_CORNER": 187,
+            "CORNER": 94
+          },
+          "replayed_pose_rows": 449
+        }
+      },
+      "fit_anchor_order_sha256": "c640da483fe3d4c33970d0341492c1a3d1a5fc93745c4911d2f176e784e7517f"
+    },
+    "validation": {
+      "all_cache_anchors": 15399,
+      "statuses": {
+        "OUTSIDE_CORNER": 13016,
+        "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 457,
+        "CORNER": 1926
+      },
+      "groups": {
+        "all_recovery": {
+          "anchors": 3162,
+          "runs": 18,
+          "per_run": {
+            "codex-time-recovery-right040-r22": 57,
+            "codex-time-recovery-left020-r23": 52,
+            "codex-time-recovery-pulseleft-r46": 93,
+            "codex-time-recovery-pulseright-r47": 93,
+            "codex-time-recovery-random-r65": 243,
+            "codex-time-recovery-separated-g04-left": 278,
+            "codex-time-recovery-separated-g04-right": 280,
+            "codex-time-recovery-large-live-g03-right-r02": 214,
+            "codex-time-recovery-large-live-g05-left-r01": 68,
+            "codex-time-recovery-40cm-d20-g05-left-r01": 283,
+            "codex-time-recovery-40cm-d40-g03-right-r02": 94,
+            "codex-time-recovery-40cm-d40-g03-right-r03": 282,
+            "codex-time-recovery-40cm-d40-g05-left-r01": 94,
+            "codex-time-recovery-60cm-d60-g03-left-r01": 94,
+            "codex-time-recovery-60cm-d60-g03-left-r03": 186,
+            "codex-time-recovery-60cm-d60-g03-left-r05": 283,
+            "codex-time-recovery-60cm-d60-g03-right-r01": 186,
+            "codex-time-recovery-60cm-d60-g03-right-r03": 282
+          },
+          "recovery_events": 32
+        },
+        "corner_all": {
+          "anchors": 1926,
+          "runs": 10,
+          "per_run": {
+            "5kmh_run03": 472,
+            "5kmh_run06": 472,
+            "8kmh_run06": 249,
+            "8kmh_run09": 249,
+            "codex-time-recovery-40cm-d20-g05-left-r01": 57,
+            "codex-time-recovery-40cm-d40-g03-right-r03": 56,
+            "codex-time-recovery-60cm-d60-g03-left-r03": 91,
+            "codex-time-recovery-60cm-d60-g03-left-r05": 94,
+            "codex-time-recovery-60cm-d60-g03-right-r01": 92,
+            "codex-time-recovery-60cm-d60-g03-right-r03": 94
+          },
+          "recovery_events": 6
+        },
+        "corner_nominal_5kmh": {
+          "anchors": 944,
+          "runs": 2,
+          "per_run": {
+            "5kmh_run03": 472,
+            "5kmh_run06": 472
+          },
+          "recovery_events": 0
+        },
+        "corner_nominal_8kmh": {
+          "anchors": 498,
+          "runs": 2,
+          "per_run": {
+            "8kmh_run06": 249,
+            "8kmh_run09": 249
+          },
+          "recovery_events": 0
+        },
+        "corner_recovery": {
+          "anchors": 484,
+          "runs": 6,
+          "per_run": {
+            "codex-time-recovery-40cm-d20-g05-left-r01": 57,
+            "codex-time-recovery-40cm-d40-g03-right-r03": 56,
+            "codex-time-recovery-60cm-d60-g03-left-r03": 91,
+            "codex-time-recovery-60cm-d60-g03-left-r05": 94,
+            "codex-time-recovery-60cm-d60-g03-right-r01": 92,
+            "codex-time-recovery-60cm-d60-g03-right-r03": 94
+          },
+          "recovery_events": 6
+        },
+        "corner_left_ge_20cm": {
+          "anchors": 42,
+          "runs": 2,
+          "per_run": {
+            "codex-time-recovery-60cm-d60-g03-left-r03": 21,
+            "codex-time-recovery-60cm-d60-g03-left-r05": 21
+          },
+          "recovery_events": 2
+        },
+        "corner_left_ge_40cm": {
+          "anchors": 26,
+          "runs": 2,
+          "per_run": {
+            "codex-time-recovery-60cm-d60-g03-left-r03": 13,
+            "codex-time-recovery-60cm-d60-g03-left-r05": 13
+          },
+          "recovery_events": 2
+        },
+        "corner_left_ge_60cm": {
+          "anchors": 2,
+          "runs": 2,
+          "per_run": {
+            "codex-time-recovery-60cm-d60-g03-left-r03": 1,
+            "codex-time-recovery-60cm-d60-g03-left-r05": 1
+          },
+          "recovery_events": 2
+        },
+        "corner_outward_heading_ge_5deg": {
+          "anchors": 56,
+          "runs": 2,
+          "per_run": {
+            "codex-time-recovery-60cm-d60-g03-right-r01": 27,
+            "codex-time-recovery-60cm-d60-g03-right-r03": 29
+          },
+          "recovery_events": 2
+        }
+      },
+      "neighborhood_counts": [
+        {
+          "narrow": {
+            "anchors": 0,
+            "runs": 0,
+            "per_run": {},
+            "recovery_events": 0
+          },
+          "wide": {
+            "anchors": 0,
+            "runs": 0,
+            "per_run": {},
+            "recovery_events": 0
+          }
+        },
+        {
+          "narrow": {
+            "anchors": 0,
+            "runs": 0,
+            "per_run": {},
+            "recovery_events": 0
+          },
+          "wide": {
+            "anchors": 156,
+            "runs": 2,
+            "per_run": {
+              "5kmh_run03": 78,
+              "5kmh_run06": 78
+            },
+            "recovery_events": 0
+          }
+        },
+        {
+          "narrow": {
+            "anchors": 0,
+            "runs": 0,
+            "per_run": {},
+            "recovery_events": 0
+          },
+          "wide": {
+            "anchors": 0,
+            "runs": 0,
+            "per_run": {},
+            "recovery_events": 0
+          }
+        },
+        {
+          "narrow": {
+            "anchors": 0,
+            "runs": 0,
+            "per_run": {},
+            "recovery_events": 0
+          },
+          "wide": {
+            "anchors": 0,
+            "runs": 0,
+            "per_run": {},
+            "recovery_events": 0
+          }
+        }
+      ],
+      "raw_sources": {
+        "5kmh_run03": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run03/bag/bag_0.db3",
+          "sha256": "8a2e823cb2f8ba634ba16d54073d9e449c6404d67adc5028e0509f87a663a558",
+          "anchors": 3905,
+          "statuses": {
+            "OUTSIDE_CORNER": 3327,
+            "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 106,
+            "CORNER": 472
+          },
+          "replayed_pose_rows": 5944
+        },
+        "5kmh_run06": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run06/bag/bag_0.db3",
+          "sha256": "4724b0da7036e2863ccff883a5d0043d487af174c8cfee5be78c9207261751df",
+          "anchors": 3906,
+          "statuses": {
+            "OUTSIDE_CORNER": 3321,
+            "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 113,
+            "CORNER": 472
+          },
+          "replayed_pose_rows": 5985
+        },
+        "8kmh_run06": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run06/bag/bag_0.db3",
+          "sha256": "9bd0eca249645f596573578085afb426ede8d0ba171111ee092dd0b2b3814e45",
+          "anchors": 2212,
+          "statuses": {
+            "OUTSIDE_CORNER": 1849,
+            "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 114,
+            "CORNER": 249
+          },
+          "replayed_pose_rows": 3329
+        },
+        "8kmh_run09": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run09/bag/bag_0.db3",
+          "sha256": "16d4dcb2f2103ef8a9516674ce9b1285373d7d3e0c5ae6c920f3bcc92913cf38",
+          "anchors": 2214,
+          "statuses": {
+            "OUTSIDE_CORNER": 1841,
+            "INPUT_OR_FULL_TEACHER_UNSUPPORTED": 124,
+            "CORNER": 249
+          },
+          "replayed_pose_rows": 3307
+        },
+        "codex-time-recovery-right040-r22": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-right040-r22/raw/bag/bag_0.db3",
+          "sha256": "ac5b79deaf3a0b5ae4a8fd80546c021bb98d0e3dbfd2a6e343ae7431b60ffe55",
+          "anchors": 57,
+          "statuses": {
+            "OUTSIDE_CORNER": 57
+          },
+          "replayed_pose_rows": 88
+        },
+        "codex-time-recovery-left020-r23": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-left020-r23/raw/bag/bag_0.db3",
+          "sha256": "c5b168b9389050f7a9c34a1db3feed38b8131767f9cf01f9e85c113448ebb93e",
+          "anchors": 52,
+          "statuses": {
+            "OUTSIDE_CORNER": 52
+          },
+          "replayed_pose_rows": 84
+        },
+        "codex-time-recovery-pulseleft-r46": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-pulseleft-r46/raw/bag/bag_0.db3",
+          "sha256": "63178739a45c7fd6c0771dbf328bd94bbaead77bac1170da54a13314983f0b59",
+          "anchors": 93,
+          "statuses": {
+            "OUTSIDE_CORNER": 93
+          },
+          "replayed_pose_rows": 146
+        },
+        "codex-time-recovery-pulseright-r47": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-pulseright-r47/raw/bag/bag_0.db3",
+          "sha256": "7a176ea5bfdd2cf546d7bba1f280184ca5fb10e0bdb4f44ff8f4cb8865ac5f6c",
+          "anchors": 93,
+          "statuses": {
+            "OUTSIDE_CORNER": 93
+          },
+          "replayed_pose_rows": 152
+        },
+        "codex-time-recovery-random-r65": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-random-r65/raw/bag/bag_0.db3",
+          "sha256": "d2740ec6af62839354f7a89c76e8edbecd9d01315648fe1593db41f34c3a6d44",
+          "anchors": 243,
+          "statuses": {
+            "OUTSIDE_CORNER": 243
+          },
+          "replayed_pose_rows": 391
+        },
+        "codex-time-recovery-separated-g04-left": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-separated-g04-left/raw/bag/bag_0.db3",
+          "sha256": "ebac64460177a858819d1ed4445f7adc99dbfbd4f057842de08ce6b59ad1a0a2",
+          "anchors": 278,
+          "statuses": {
+            "OUTSIDE_CORNER": 278
+          },
+          "replayed_pose_rows": 444
+        },
+        "codex-time-recovery-separated-g04-right": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-separated-g04-right/raw/bag/bag_0.db3",
+          "sha256": "229af5b6143ff7ccad0ba4b3ec4906725e2511b7490b7f8d91e30083b2f05fe6",
+          "anchors": 280,
+          "statuses": {
+            "OUTSIDE_CORNER": 280
+          },
+          "replayed_pose_rows": 451
+        },
+        "codex-time-recovery-large-live-g03-right-r02": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-large-live-g03-right-r02/raw/bag/bag_0.db3",
+          "sha256": "79d92ae26d6f537ad45f98a0c94fbd607a0b98a0bc8b887a5d43d19ee620aa4e",
+          "anchors": 214,
+          "statuses": {
+            "OUTSIDE_CORNER": 214
+          },
+          "replayed_pose_rows": 341
+        },
+        "codex-time-recovery-large-live-g05-left-r01": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-large-live-g05-left-r01/raw/bag/bag_0.db3",
+          "sha256": "0931eeeff93bf93460cd9d07c07b8d66b8735a03b078c3ab99bcb7bb7362c33c",
+          "anchors": 68,
+          "statuses": {
+            "OUTSIDE_CORNER": 68
+          },
+          "replayed_pose_rows": 106
+        },
+        "codex-time-recovery-40cm-d20-g05-left-r01": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-40cm-d20-g05-left-r01/raw/bag/bag_0.db3",
+          "sha256": "211dce3e35d829480965c3e7a0d295b1650d0b4de13f14386804dcb5a229c05b",
+          "anchors": 283,
+          "statuses": {
+            "OUTSIDE_CORNER": 226,
+            "CORNER": 57
+          },
+          "replayed_pose_rows": 459
+        },
+        "codex-time-recovery-40cm-d40-g03-right-r02": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-40cm-d40-g03-right-r02/raw/bag/bag_0.db3",
+          "sha256": "47b1ecae2bc451e85510ac878a79b44628d171dd4b71f5158541fabc01a170a6",
+          "anchors": 94,
+          "statuses": {
+            "OUTSIDE_CORNER": 94
+          },
+          "replayed_pose_rows": 155
+        },
+        "codex-time-recovery-40cm-d40-g03-right-r03": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-40cm-d40-g03-right-r03/raw/bag/bag_0.db3",
+          "sha256": "7066ae3f81b075a061b0d304e2ba8b82ecb2f84dcf7db96511fa9db61aa94d17",
+          "anchors": 282,
+          "statuses": {
+            "OUTSIDE_CORNER": 226,
+            "CORNER": 56
+          },
+          "replayed_pose_rows": 446
+        },
+        "codex-time-recovery-40cm-d40-g05-left-r01": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-40cm-d40-g05-left-r01/raw/bag/bag_0.db3",
+          "sha256": "07286706c937f56872116da9162253f54434372c4933fa0b1b5e136c2d99af87",
+          "anchors": 94,
+          "statuses": {
+            "OUTSIDE_CORNER": 94
+          },
+          "replayed_pose_rows": 156
+        },
+        "codex-time-recovery-60cm-d60-g03-left-r01": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-60cm-d60-g03-left-r01/raw/bag/bag_0.db3",
+          "sha256": "0ecd516a4a030f09fd325230ede203d71eb80ba9605fb358ec1bc58e8de07d2d",
+          "anchors": 94,
+          "statuses": {
+            "OUTSIDE_CORNER": 94
+          },
+          "replayed_pose_rows": 152
+        },
+        "codex-time-recovery-60cm-d60-g03-left-r03": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-60cm-d60-g03-left-r03/raw/bag/bag_0.db3",
+          "sha256": "fd386a608636f5b42fb0bb8ead06b21c586547356d7c9e27be599cc5ec41a56c",
+          "anchors": 186,
+          "statuses": {
+            "OUTSIDE_CORNER": 95,
+            "CORNER": 91
+          },
+          "replayed_pose_rows": 300
+        },
+        "codex-time-recovery-60cm-d60-g03-left-r05": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-60cm-d60-g03-left-r05/raw/bag/bag_0.db3",
+          "sha256": "d989271bbb31db8861a2d0c45db941a01b53ca41092407627c3312adb7620000",
+          "anchors": 283,
+          "statuses": {
+            "OUTSIDE_CORNER": 189,
+            "CORNER": 94
+          },
+          "replayed_pose_rows": 455
+        },
+        "codex-time-recovery-60cm-d60-g03-right-r01": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-60cm-d60-g03-right-r01/raw/bag/bag_0.db3",
+          "sha256": "e49d97fb4d33ad41b6d4e236854c39289aa938b539b0ca38a9598feb917b944a",
+          "anchors": 186,
+          "statuses": {
+            "OUTSIDE_CORNER": 94,
+            "CORNER": 92
+          },
+          "replayed_pose_rows": 303
+        },
+        "codex-time-recovery-60cm-d60-g03-right-r03": {
+          "bag": "/home/thistle/e2e_autonomous/datasets/cache/time_recovery_multiscale_20260916/materialized/codex-time-recovery-60cm-d60-g03-right-r03/raw/bag/bag_0.db3",
+          "sha256": "5d1e7de1fb1b463b0c4c336bc88b562f15ecd2ce47ef1192dbceb95e5e811381",
+          "anchors": 282,
+          "statuses": {
+            "OUTSIDE_CORNER": 188,
+            "CORNER": 94
+          },
+          "replayed_pose_rows": 445
+        }
+      },
+      "fit_anchor_order_sha256": "ca314d15611c3371c6505d0e305ae09cd4ea09f532ac25a9232b42d923fe75c8"
+    }
+  },
+  "models": {},
+  "reused_coverage": {
+    "path": "/home/thistle/e2e_autonomous/runs/time_corner4_learning_diagnosis_20260916",
+    "source_commit": "5c301500628d7ccfbf90afd47f29362a0a7b72c8",
+    "files": {
+      "coverage.json": "42cb339e79c0adab02f2319caacd07caf9bebe605fa6250a0a09d57036b37df7",
+      "train_states.json": "e553c88d4753da7e124a82e08a4edc39dfe351e35605ce80b91e3b304d88405a",
+      "validation_states.json": "43da38207799fdb6b7f5814671786b6d3057030d612c22d4921821c3e8d82414"
+    },
+    "raw_pose_replay_performed_this_run": false
+  }
+}
