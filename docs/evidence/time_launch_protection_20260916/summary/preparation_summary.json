@@ -1,0 +1,879 @@
+{
+  "source_commit": "7b19a1bab61bb7d30bc1cb0f8fc44b9d1c506136",
+  "proof_sha256": "21a54fc290b845164a67410ec5239c6ba44ddaddbb7dd26a12d90272ae0f4c63",
+  "cache_sha256": "9662ddbfd37d5829ba9282f0e65f4c07e964eb1b683c007e95e4da9e606e86e7",
+  "population_sha256": "27af11159ab41e2b3ee873ddb2bfc04106be426e4a7e7f488dd6145b6d20f581",
+  "plan": {
+    "experiment": "time_launch_protection_v2_20260916",
+    "output": "runs/time_launch_protection_v2_20260916",
+    "cache": "datasets/cache/time_corner_retraining_20260916",
+    "cache_sha256": "9662ddbfd37d5829ba9282f0e65f4c07e964eb1b683c007e95e4da9e606e86e7",
+    "parent_experiment": "runs/time_corner_retraining_20260916",
+    "source_guard_commit": "cab1e935d1bb3041a33a57f3ac9d9d4265cf5a17",
+    "initialization": "runs/time_recovery_multiscale_20260916/training/best.pt",
+    "initialization_sha256": "685f8b8f9936ab7e272be12616982374fd8a8d61fbe4a304b25475dc2a206ba8",
+    "controller": "configs/control/time_path_corner_lap_20260916.json",
+    "training": {
+      "epochs": 3,
+      "batch_size": 32,
+      "workers": 0,
+      "seed": 42,
+      "learning_rate": 3e-05,
+      "weight_decay": 0.0001,
+      "max_grad_norm": 1.0,
+      "precision": "float32"
+    },
+    "presentations_per_epoch": 60608,
+    "optimizer_steps_per_arm": 5682,
+    "outer_timeout_seconds_per_arm": 10800,
+    "launch_fraction": 0.05,
+    "launch_window_ns": 2000000000,
+    "launch_speed_max_mps": 0.5,
+    "teacher_span_ns": 3050000000,
+    "launch_ages_s": [
+      0.0,
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5
+    ],
+    "selection": {
+      "relative_error_tolerance": 0.05,
+      "ade_tolerance_m": 0.001,
+      "endpoint_tolerance_m": 0.002,
+      "launch_margin_tolerance_rad": 0.001
+    },
+    "validation_role": "all_existing_validation_is_development_selection_in_this_experiment",
+    "awsim_baseline_role": "post_arm_existing_calibration_is_launch_development_only",
+    "test_usage": "sealed",
+    "loss_changes": false,
+    "model_input_changes": false,
+    "awsim_modifications": false
+  },
+  "runs": [
+    {
+      "split": "train",
+      "run_id": "5kmh_run01",
+      "window": {
+        "ready_sim_ns": 11609999740,
+        "ready_available_ns": 1789063168149421457,
+        "external_brake_sim_ns": 407519990891
+      },
+      "state_transitions": [
+        {
+          "row_id": 8,
+          "state": "Grounded",
+          "sim_lower_ns": 4904999890,
+          "available_ns": 1789063161458002534
+        },
+        {
+          "row_id": 2553,
+          "state": "Start",
+          "sim_lower_ns": 8539999809,
+          "available_ns": 1789063165085283089
+        },
+        {
+          "row_id": 4703,
+          "state": "Ready",
+          "sim_lower_ns": 11604999740,
+          "available_ns": 1789063168149421457
+        }
+      ],
+      "probe_summary_sha256": "b5032148ddac5a2726d52dfd99b7e7fe4d30b115cb3c788fc320d5ad1310d621",
+      "ready_bound": "first Ready receipt, conservatively bounded by the next received clock",
+      "total": 3907,
+      "excluded": {
+        "SIMULATOR_NOT_READY_AT_CAPTURE": 63,
+        "TEACHER_CROSSES_EXTERNAL_BRAKE": 102
+      },
+      "launch_anchors": 8,
+      "launch_anchor_ids": [
+        "5kmh_run01:epoch0000:11649999739",
+        "5kmh_run01:epoch0000:11754999737",
+        "5kmh_run01:epoch0000:11859999734",
+        "5kmh_run01:epoch0000:11964999732",
+        "5kmh_run01:epoch0000:12069999730",
+        "5kmh_run01:epoch0000:12174999727",
+        "5kmh_run01:epoch0000:12279999725",
+        "5kmh_run01:epoch0000:12384999723"
+      ]
+    },
+    {
+      "split": "train",
+      "run_id": "5kmh_run02",
+      "window": {
+        "ready_sim_ns": 11469999743,
+        "ready_available_ns": 1789065057510779852,
+        "external_brake_sim_ns": 407324990895
+      },
+      "state_transitions": [
+        {
+          "row_id": 10,
+          "state": "Grounded",
+          "sim_lower_ns": 4894999890,
+          "available_ns": 1789065050947492314
+        },
+        {
+          "row_id": 2495,
+          "state": "Start",
+          "sim_lower_ns": 8444999811,
+          "available_ns": 1789065054482162720
+        },
+        {
+          "row_id": 4614,
+          "state": "Ready",
+          "sim_lower_ns": 11464999743,
+          "available_ns": 1789065057510779852
+        }
+      ],
+      "probe_summary_sha256": "0d53ee55b1239ed9b4b8976ed3284859f182237504619bd2ebd0f6ffd109a6a3",
+      "ready_bound": "first Ready receipt, conservatively bounded by the next received clock",
+      "total": 3907,
+      "excluded": {
+        "SIMULATOR_NOT_READY_AT_CAPTURE": 63,
+        "TEACHER_CROSSES_EXTERNAL_BRAKE": 103
+      },
+      "launch_anchors": 7,
+      "launch_anchor_ids": [
+        "5kmh_run02:epoch0000:11544999741",
+        "5kmh_run02:epoch0000:11649999739",
+        "5kmh_run02:epoch0000:11754999737",
+        "5kmh_run02:epoch0000:11859999734",
+        "5kmh_run02:epoch0000:11964999732",
+        "5kmh_run02:epoch0000:12069999730",
+        "5kmh_run02:epoch0000:12174999727"
+      ]
+    },
+    {
+      "split": "train",
+      "run_id": "5kmh_run04",
+      "window": {
+        "ready_sim_ns": 11754999737,
+        "ready_available_ns": 1789066500528294412,
+        "external_brake_sim_ns": 407519990891
+      },
+      "state_transitions": [
+        {
+          "row_id": 19,
+          "state": "Grounded",
+          "sim_lower_ns": null,
+          "available_ns": 1789066493931452830
+        },
+        {
+          "row_id": 2502,
+          "state": "Start",
+          "sim_lower_ns": 8684999805,
+          "available_ns": 1789066497466635167
+        },
+        {
+          "row_id": 4651,
+          "state": "Ready",
+          "sim_lower_ns": 11749999737,
+          "available_ns": 1789066500528294412
+        }
+      ],
+      "probe_summary_sha256": "52cdad2aa327a2573681daeffcd9f3068e016962b39ca2ed468abd258569d4da",
+      "ready_bound": "first Ready receipt, conservatively bounded by the next received clock",
+      "total": 3905,
+      "excluded": {
+        "SIMULATOR_NOT_READY_AT_CAPTURE": 62,
+        "TEACHER_CROSSES_EXTERNAL_BRAKE": 102
+      },
+      "launch_anchors": 7,
+      "launch_anchor_ids": [
+        "5kmh_run04:epoch0000:11754999737",
+        "5kmh_run04:epoch0000:11859999734",
+        "5kmh_run04:epoch0000:11964999732",
+        "5kmh_run04:epoch0000:12069999730",
+        "5kmh_run04:epoch0000:12174999727",
+        "5kmh_run04:epoch0000:12279999725",
+        "5kmh_run04:epoch0000:12384999723"
+      ]
+    },
+    {
+      "split": "train",
+      "run_id": "5kmh_run05",
+      "window": {
+        "ready_sim_ns": 11804999736,
+        "ready_available_ns": 1789067223962892103,
+        "external_brake_sim_ns": 407624990888
+      },
+      "state_transitions": [
+        {
+          "row_id": 18,
+          "state": "Grounded",
+          "sim_lower_ns": null,
+          "available_ns": 1789067217355217848
+        },
+        {
+          "row_id": 2512,
+          "state": "Start",
+          "sim_lower_ns": 8759999804,
+          "available_ns": 1789067220921502748
+        },
+        {
+          "row_id": 4648,
+          "state": "Ready",
+          "sim_lower_ns": 11799999736,
+          "available_ns": 1789067223962892103
+        }
+      ],
+      "probe_summary_sha256": "16c2e87522013aae77c04400844e8b914b1bb4aacec9dcfba9293aca7aef8d50",
+      "ready_bound": "first Ready receipt, conservatively bounded by the next received clock",
+      "total": 3906,
+      "excluded": {
+        "SIMULATOR_NOT_READY_AT_CAPTURE": 63,
+        "TEACHER_CROSSES_EXTERNAL_BRAKE": 102
+      },
+      "launch_anchors": 7,
+      "launch_anchor_ids": [
+        "5kmh_run05:epoch0000:11859999734",
+        "5kmh_run05:epoch0000:11964999732",
+        "5kmh_run05:epoch0000:12069999730",
+        "5kmh_run05:epoch0000:12174999727",
+        "5kmh_run05:epoch0000:12279999725",
+        "5kmh_run05:epoch0000:12384999723",
+        "5kmh_run05:epoch0000:12489999720"
+      ]
+    },
+    {
+      "split": "train",
+      "run_id": "5kmh_run07",
+      "window": {
+        "ready_sim_ns": 11724999737,
+        "ready_available_ns": 1789068667205178316,
+        "external_brake_sim_ns": 407514990891
+      },
+      "state_transitions": [
+        {
+          "row_id": 7,
+          "state": "Grounded",
+          "sim_lower_ns": 5114999885,
+          "available_ns": 1789068660625797952
+        },
+        {
+          "row_id": 2509,
+          "state": "Start",
+          "sim_lower_ns": 8684999805,
+          "available_ns": 1789068664169260802
+        },
+        {
+          "row_id": 4635,
+          "state": "Ready",
+          "sim_lower_ns": 11719999738,
+          "available_ns": 1789068667205178316
+        }
+      ],
+      "probe_summary_sha256": "5e20029d4b66e6ce005aadeb786b025d1a7227d11dec40a8218d0003ae7b9be9",
+      "ready_bound": "first Ready receipt, conservatively bounded by the next received clock",
+      "total": 3907,
+      "excluded": {
+        "SIMULATOR_NOT_READY_AT_CAPTURE": 63,
+        "TEACHER_CROSSES_EXTERNAL_BRAKE": 103
+      },
+      "launch_anchors": 7,
+      "launch_anchor_ids": [
+        "5kmh_run07:epoch0000:11754999737",
+        "5kmh_run07:epoch0000:11859999734",
+        "5kmh_run07:epoch0000:11964999732",
+        "5kmh_run07:epoch0000:12069999730",
+        "5kmh_run07:epoch0000:12174999727",
+        "5kmh_run07:epoch0000:12279999725",
+        "5kmh_run07:epoch0000:12384999723"
+      ]
+    },
+    {
+      "split": "train",
+      "run_id": "5kmh_run09",
+      "window": {
+        "ready_sim_ns": 11724999737,
+        "ready_available_ns": 1789070112931354368,
+        "external_brake_sim_ns": 407504990891
+      },
+      "state_transitions": [
+        {
+          "row_id": 17,
+          "state": "Grounded",
+          "sim_lower_ns": 5174999884,
+          "available_ns": 1789070106384358123
+        },
+        {
+          "row_id": 2485,
+          "state": "Start",
+          "sim_lower_ns": 8689999805,
+          "available_ns": 1789070109895781078
+        },
+        {
+          "row_id": 4612,
+          "state": "Ready",
+          "sim_lower_ns": 11719999738,
+          "available_ns": 1789070112931354368
+        }
+      ],
+      "probe_summary_sha256": "d26654636c33697ae4c981e5eaded02eda79af54b96f56640ff1d18bbe049dbf",
+      "ready_bound": "first Ready receipt, conservatively bounded by the next received clock",
+      "total": 3906,
+      "excluded": {
+        "SIMULATOR_NOT_READY_AT_CAPTURE": 63,
+        "TEACHER_CROSSES_EXTERNAL_BRAKE": 103
+      },
+      "launch_anchors": 8,
+      "launch_anchor_ids": [
+        "5kmh_run09:epoch0000:11754999737",
+        "5kmh_run09:epoch0000:11859999734",
+        "5kmh_run09:epoch0000:11964999732",
+        "5kmh_run09:epoch0000:12069999730",
+        "5kmh_run09:epoch0000:12174999727",
+        "5kmh_run09:epoch0000:12279999725",
+        "5kmh_run09:epoch0000:12384999723",
+        "5kmh_run09:epoch0000:12489999720"
+      ]
+    },
+    {
+      "split": "train",
+      "run_id": "8kmh_run01",
+      "window": {
+        "ready_sim_ns": 11869999734,
+        "ready_available_ns": 1789063617040576898,
+        "external_brake_sim_ns": 229624994867
+      },
+      "state_transitions": [
+        {
+          "row_id": 38,
+          "state": "Grounded",
+          "sim_lower_ns": 5329999880,
+          "available_ns": 1789063610499244129
+        },
+        {
+          "row_id": 2500,
+          "state": "Start",
+          "sim_lower_ns": 8839999802,
+          "available_ns": 1789063614009301332
+        },
+        {
+          "row_id": 4624,
+          "state": "Ready",
+          "sim_lower_ns": 11864999734,
+          "available_ns": 1789063617040576898
+        }
+      ],
+      "probe_summary_sha256": "5ab956ca8fa4aba189aa831c9efce4e5aa29104c39ad3eb157913c12f1e888fb",
+      "ready_bound": "first Ready receipt, conservatively bounded by the next received clock",
+      "total": 2213,
+      "excluded": {
+        "SIMULATOR_NOT_READY_AT_CAPTURE": 63,
+        "TEACHER_CROSSES_EXTERNAL_BRAKE": 106
+      },
+      "launch_anchors": 5,
+      "launch_anchor_ids": [
+        "8kmh_run01:epoch0000:11964999732",
+        "8kmh_run01:epoch0000:12069999730",
+        "8kmh_run01:epoch0000:12174999727",
+        "8kmh_run01:epoch0000:12279999725",
+        "8kmh_run01:epoch0000:12384999723"
+      ]
+    },
+    {
+      "split": "train",
+      "run_id": "8kmh_run03",
+      "window": {
+        "ready_sim_ns": 11719999738,
+        "ready_available_ns": 1789066229364149519,
+        "external_brake_sim_ns": 229614994867
+      },
+      "state_transitions": [
+        {
+          "row_id": 10,
+          "state": "Grounded",
+          "sim_lower_ns": 5104999885,
+          "available_ns": 1789066222766816787
+        },
+        {
+          "row_id": 2504,
+          "state": "Start",
+          "sim_lower_ns": 8664999806,
+          "available_ns": 1789066226317716619
+        },
+        {
+          "row_id": 4642,
+          "state": "Ready",
+          "sim_lower_ns": 11714999738,
+          "available_ns": 1789066229364149519
+        }
+      ],
+      "probe_summary_sha256": "d8b93637cda6f7798ce75d89b710632904379045a017b68b87636b31abafdc58",
+      "ready_bound": "first Ready receipt, conservatively bounded by the next received clock",
+      "total": 2215,
+      "excluded": {
+        "SIMULATOR_NOT_READY_AT_CAPTURE": 63,
+        "TEACHER_CROSSES_EXTERNAL_BRAKE": 106
+      },
+      "launch_anchors": 6,
+      "launch_anchor_ids": [
+        "8kmh_run03:epoch0000:11754999737",
+        "8kmh_run03:epoch0000:11859999734",
+        "8kmh_run03:epoch0000:11964999732",
+        "8kmh_run03:epoch0000:12069999730",
+        "8kmh_run03:epoch0000:12174999727",
+        "8kmh_run03:epoch0000:12279999725"
+      ]
+    },
+    {
+      "split": "train",
+      "run_id": "8kmh_run04",
+      "window": {
+        "ready_sim_ns": 11764999737,
+        "ready_available_ns": 1789066951938755240,
+        "external_brake_sim_ns": 229624994867
+      },
+      "state_transitions": [
+        {
+          "row_id": 28,
+          "state": "Grounded",
+          "sim_lower_ns": null,
+          "available_ns": 1789066945351638016
+        },
+        {
+          "row_id": 2501,
+          "state": "Start",
+          "sim_lower_ns": 8704999805,
+          "available_ns": 1789066948876749407
+        },
+        {
+          "row_id": 4648,
+          "state": "Ready",
+          "sim_lower_ns": 11759999737,
+          "available_ns": 1789066951938755240
+        }
+      ],
+      "probe_summary_sha256": "fa5363b7f413daa5226fe12bcebaf4ccb8c7c93f0a3db8493d77d1bd37d91e5a",
+      "ready_bound": "first Ready receipt, conservatively bounded by the next received clock",
+      "total": 2215,
+      "excluded": {
+        "SIMULATOR_NOT_READY_AT_CAPTURE": 64,
+        "TEACHER_CROSSES_EXTERNAL_BRAKE": 106
+      },
+      "launch_anchors": 6,
+      "launch_anchor_ids": [
+        "8kmh_run04:epoch0000:11859999734",
+        "8kmh_run04:epoch0000:11964999732",
+        "8kmh_run04:epoch0000:12069999730",
+        "8kmh_run04:epoch0000:12174999727",
+        "8kmh_run04:epoch0000:12279999725",
+        "8kmh_run04:epoch0000:12384999723"
+      ]
+    },
+    {
+      "split": "train",
+      "run_id": "8kmh_run05",
+      "window": {
+        "ready_sim_ns": 11754999737,
+        "ready_available_ns": 1789067674539809835,
+        "external_brake_sim_ns": 229604994867
+      },
+      "state_transitions": [
+        {
+          "row_id": 33,
+          "state": "Grounded",
+          "sim_lower_ns": null,
+          "available_ns": 1789067667976912764
+        },
+        {
+          "row_id": 2497,
+          "state": "Start",
+          "sim_lower_ns": 8699999805,
+          "available_ns": 1789067671491673649
+        },
+        {
+          "row_id": 4635,
+          "state": "Ready",
+          "sim_lower_ns": 11749999737,
+          "available_ns": 1789067674539809835
+        }
+      ],
+      "probe_summary_sha256": "c71f5190a938237a6d1ee1c499ab8e338cd32467c89235634962f0ef0e344f39",
+      "ready_bound": "first Ready receipt, conservatively bounded by the next received clock",
+      "total": 2215,
+      "excluded": {
+        "SIMULATOR_NOT_READY_AT_CAPTURE": 63,
+        "TEACHER_CROSSES_EXTERNAL_BRAKE": 106
+      },
+      "launch_anchors": 6,
+      "launch_anchor_ids": [
+        "8kmh_run05:epoch0000:11754999737",
+        "8kmh_run05:epoch0000:11859999734",
+        "8kmh_run05:epoch0000:11964999732",
+        "8kmh_run05:epoch0000:12069999730",
+        "8kmh_run05:epoch0000:12174999727",
+        "8kmh_run05:epoch0000:12279999725"
+      ]
+    },
+    {
+      "split": "train",
+      "run_id": "8kmh_run08",
+      "window": {
+        "ready_sim_ns": 11714999738,
+        "ready_available_ns": 1789069841507095003,
+        "external_brake_sim_ns": 229524994869
+      },
+      "state_transitions": [
+        {
+          "row_id": 8,
+          "state": "Grounded",
+          "sim_lower_ns": null,
+          "available_ns": 1789069834917474247
+        },
+        {
+          "row_id": 2491,
+          "state": "Start",
+          "sim_lower_ns": 8669999806,
+          "available_ns": 1789069838462299987
+        },
+        {
+          "row_id": 4622,
+          "state": "Ready",
+          "sim_lower_ns": 11709999738,
+          "available_ns": 1789069841507095003
+        }
+      ],
+      "probe_summary_sha256": "173c6bc7ad328286ccb2a1d0185daee06e879f29fbe6f8c4fb32cde26eb1c786",
+      "ready_bound": "first Ready receipt, conservatively bounded by the next received clock",
+      "total": 2214,
+      "excluded": {
+        "SIMULATOR_NOT_READY_AT_CAPTURE": 63,
+        "TEACHER_CROSSES_EXTERNAL_BRAKE": 106
+      },
+      "launch_anchors": 5,
+      "launch_anchor_ids": [
+        "8kmh_run08:epoch0000:11754999737",
+        "8kmh_run08:epoch0000:11859999734",
+        "8kmh_run08:epoch0000:11964999732",
+        "8kmh_run08:epoch0000:12069999730",
+        "8kmh_run08:epoch0000:12174999727"
+      ]
+    },
+    {
+      "split": "train",
+      "run_id": "8kmh_run10",
+      "window": {
+        "ready_sim_ns": 11854999735,
+        "ready_available_ns": 1789071286204392974,
+        "external_brake_sim_ns": 229809994863
+      },
+      "state_transitions": [
+        {
+          "row_id": 28,
+          "state": "Grounded",
+          "sim_lower_ns": null,
+          "available_ns": 1789071279599703736
+        },
+        {
+          "row_id": 2526,
+          "state": "Start",
+          "sim_lower_ns": 8799999803,
+          "available_ns": 1789071283158381407
+        },
+        {
+          "row_id": 4662,
+          "state": "Ready",
+          "sim_lower_ns": 11849999735,
+          "available_ns": 1789071286204392974
+        }
+      ],
+      "probe_summary_sha256": "f9f459a06b0eeafb6303b09c3c3c1167bc43123d94d9a40e9ae8c65759bb5dd3",
+      "ready_bound": "first Ready receipt, conservatively bounded by the next received clock",
+      "total": 2216,
+      "excluded": {
+        "SIMULATOR_NOT_READY_AT_CAPTURE": 63,
+        "TEACHER_CROSSES_EXTERNAL_BRAKE": 106
+      },
+      "launch_anchors": 6,
+      "launch_anchor_ids": [
+        "8kmh_run10:epoch0000:11859999734",
+        "8kmh_run10:epoch0000:11964999732",
+        "8kmh_run10:epoch0000:12069999730",
+        "8kmh_run10:epoch0000:12174999727",
+        "8kmh_run10:epoch0000:12279999725",
+        "8kmh_run10:epoch0000:12384999723"
+      ]
+    },
+    {
+      "split": "validation",
+      "run_id": "5kmh_run03",
+      "window": {
+        "ready_sim_ns": 11649999739,
+        "ready_available_ns": 1789065779105921807,
+        "external_brake_sim_ns": 407414990893
+      },
+      "state_transitions": [
+        {
+          "row_id": 9,
+          "state": "Grounded",
+          "sim_lower_ns": 5039999887,
+          "available_ns": 1789065772520531077
+        },
+        {
+          "row_id": 2501,
+          "state": "Start",
+          "sim_lower_ns": 8604999807,
+          "available_ns": 1789065776070783548
+        },
+        {
+          "row_id": 4634,
+          "state": "Ready",
+          "sim_lower_ns": 11644999739,
+          "available_ns": 1789065779105921807
+        }
+      ],
+      "probe_summary_sha256": "998b1164f6d4d6011fc2a9ea901abf32859f08aec275a3cf4261ada2cd03c26a",
+      "ready_bound": "first Ready receipt, conservatively bounded by the next received clock",
+      "total": 3905,
+      "excluded": {
+        "SIMULATOR_NOT_READY_AT_CAPTURE": 62,
+        "TEACHER_CROSSES_EXTERNAL_BRAKE": 102
+      },
+      "launch_anchors": 7,
+      "launch_anchor_ids": [
+        "5kmh_run03:epoch0000:11649999739",
+        "5kmh_run03:epoch0000:11754999737",
+        "5kmh_run03:epoch0000:11859999734",
+        "5kmh_run03:epoch0000:11964999732",
+        "5kmh_run03:epoch0000:12069999730",
+        "5kmh_run03:epoch0000:12174999727",
+        "5kmh_run03:epoch0000:12279999725"
+      ]
+    },
+    {
+      "split": "validation",
+      "run_id": "5kmh_run06",
+      "window": {
+        "ready_sim_ns": 11749999737,
+        "ready_available_ns": 1789067945695573364,
+        "external_brake_sim_ns": 407524990891
+      },
+      "state_transitions": [
+        {
+          "row_id": 9,
+          "state": "Grounded",
+          "sim_lower_ns": 5134999885,
+          "available_ns": 1789067939106523244
+        },
+        {
+          "row_id": 2516,
+          "state": "Start",
+          "sim_lower_ns": 8714999805,
+          "available_ns": 1789067942667223181
+        },
+        {
+          "row_id": 4635,
+          "state": "Ready",
+          "sim_lower_ns": 11744999737,
+          "available_ns": 1789067945695573364
+        }
+      ],
+      "probe_summary_sha256": "9116ea2582decc7c78b4aaffc71738343b353b0a8040ef6dcd06225b618a0006",
+      "ready_bound": "first Ready receipt, conservatively bounded by the next received clock",
+      "total": 3906,
+      "excluded": {
+        "SIMULATOR_NOT_READY_AT_CAPTURE": 62,
+        "TEACHER_CROSSES_EXTERNAL_BRAKE": 103
+      },
+      "launch_anchors": 8,
+      "launch_anchor_ids": [
+        "5kmh_run06:epoch0000:11754999737",
+        "5kmh_run06:epoch0000:11859999734",
+        "5kmh_run06:epoch0000:11964999732",
+        "5kmh_run06:epoch0000:12069999730",
+        "5kmh_run06:epoch0000:12174999727",
+        "5kmh_run06:epoch0000:12279999725",
+        "5kmh_run06:epoch0000:12384999723",
+        "5kmh_run06:epoch0000:12489999720"
+      ]
+    },
+    {
+      "split": "validation",
+      "run_id": "8kmh_run06",
+      "window": {
+        "ready_sim_ns": 11844999735,
+        "ready_available_ns": 1789068396642359473,
+        "external_brake_sim_ns": 229519994869
+      },
+      "state_transitions": [
+        {
+          "row_id": 20,
+          "state": "Grounded",
+          "sim_lower_ns": null,
+          "available_ns": 1789068390070580693
+        },
+        {
+          "row_id": 2495,
+          "state": "Start",
+          "sim_lower_ns": 8794999803,
+          "available_ns": 1789068393596592044
+        },
+        {
+          "row_id": 4631,
+          "state": "Ready",
+          "sim_lower_ns": 11839999735,
+          "available_ns": 1789068396642359473
+        }
+      ],
+      "probe_summary_sha256": "f079c58621f348529fd1eaa83edefe9e9f4e08cf878560afd78ebd2e6e202b5d",
+      "ready_bound": "first Ready receipt, conservatively bounded by the next received clock",
+      "total": 2212,
+      "excluded": {
+        "SIMULATOR_NOT_READY_AT_CAPTURE": 62,
+        "TEACHER_CROSSES_EXTERNAL_BRAKE": 106
+      },
+      "launch_anchors": 6,
+      "launch_anchor_ids": [
+        "8kmh_run06:epoch0000:11859999734",
+        "8kmh_run06:epoch0000:11964999732",
+        "8kmh_run06:epoch0000:12069999730",
+        "8kmh_run06:epoch0000:12174999727",
+        "8kmh_run06:epoch0000:12279999725",
+        "8kmh_run06:epoch0000:12384999723"
+      ]
+    },
+    {
+      "split": "validation",
+      "run_id": "8kmh_run09",
+      "window": {
+        "ready_sim_ns": 11884999734,
+        "ready_available_ns": 1789070563908350123,
+        "external_brake_sim_ns": 229719994865
+      },
+      "state_transitions": [
+        {
+          "row_id": 9,
+          "state": "Grounded",
+          "sim_lower_ns": 5269999882,
+          "available_ns": 1789070557310102159
+        },
+        {
+          "row_id": 2508,
+          "state": "Start",
+          "sim_lower_ns": 8834999802,
+          "available_ns": 1789070560862867662
+        },
+        {
+          "row_id": 4644,
+          "state": "Ready",
+          "sim_lower_ns": 11879999734,
+          "available_ns": 1789070563908350123
+        }
+      ],
+      "probe_summary_sha256": "1f6ab874912f6930beadcc8c3a582c2c9f33bcc5f87725e6ef293c6b5929e3a7",
+      "ready_bound": "first Ready receipt, conservatively bounded by the next received clock",
+      "total": 2214,
+      "excluded": {
+        "SIMULATOR_NOT_READY_AT_CAPTURE": 63,
+        "TEACHER_CROSSES_EXTERNAL_BRAKE": 106
+      },
+      "launch_anchors": 5,
+      "launch_anchor_ids": [
+        "8kmh_run09:epoch0000:11964999732",
+        "8kmh_run09:epoch0000:12069999730",
+        "8kmh_run09:epoch0000:12174999727",
+        "8kmh_run09:epoch0000:12279999725",
+        "8kmh_run09:epoch0000:12384999723"
+      ]
+    }
+  ],
+  "samplers": {
+    "protocol_control": {
+      "presentations": 60608,
+      "eligible_unique": 46660,
+      "protocol_excluded_unique": 2007,
+      "refilled_slots": 2007,
+      "launch_unique": 78,
+      "launch_presentations": 78,
+      "launch_run_presentations": {
+        "5kmh_run01": 8,
+        "5kmh_run02": 7,
+        "5kmh_run04": 7,
+        "5kmh_run05": 7,
+        "5kmh_run07": 7,
+        "5kmh_run09": 8,
+        "8kmh_run01": 5,
+        "8kmh_run03": 6,
+        "8kmh_run04": 6,
+        "8kmh_run05": 6,
+        "8kmh_run08": 5,
+        "8kmh_run10": 6
+      },
+      "surplus_recovery_slots_replaced": 0,
+      "recovery_presentations": 23882,
+      "common_order_sha256": "2a6b511c3a7bf77f3cb83cc154a4ddc26c01669fae5bd7756d25c947fd6e1fc6",
+      "presentation_order_sha256": "2a6b511c3a7bf77f3cb83cc154a4ddc26c01669fae5bd7756d25c947fd6e1fc6",
+      "all_eligible_unique_preserved": true,
+      "inputs_and_teachers_unchanged": true
+    },
+    "launch_balanced": {
+      "presentations": 60608,
+      "eligible_unique": 46660,
+      "protocol_excluded_unique": 2007,
+      "refilled_slots": 2007,
+      "launch_unique": 78,
+      "launch_presentations": 3030,
+      "launch_run_presentations": {
+        "5kmh_run01": 253,
+        "5kmh_run02": 253,
+        "5kmh_run04": 253,
+        "5kmh_run05": 253,
+        "5kmh_run07": 253,
+        "5kmh_run09": 253,
+        "8kmh_run01": 252,
+        "8kmh_run03": 252,
+        "8kmh_run04": 252,
+        "8kmh_run05": 252,
+        "8kmh_run08": 252,
+        "8kmh_run10": 252
+      },
+      "surplus_recovery_slots_replaced": 2952,
+      "recovery_presentations": 20930,
+      "common_order_sha256": "2a6b511c3a7bf77f3cb83cc154a4ddc26c01669fae5bd7756d25c947fd6e1fc6",
+      "presentation_order_sha256": "89ed7410b77d5c8591d62156ee12866434dd35c6d36ff7cf6713ab026141cb5d",
+      "all_eligible_unique_preserved": true,
+      "inputs_and_teachers_unchanged": true
+    }
+  },
+  "train_exclusion_reasons": {
+    "SIMULATOR_NOT_READY_AT_CAPTURE": 756,
+    "TEACHER_CROSSES_EXTERNAL_BRAKE": 1251
+  },
+  "validation_exclusion_reasons": {
+    "SIMULATOR_NOT_READY_AT_CAPTURE": 249,
+    "TEACHER_CROSSES_EXTERNAL_BRAKE": 417
+  },
+  "validation_unsupported_active_anchors": 40,
+  "launch_missing_future_pose": {},
+  "baseline_samples": 9,
+  "raw_sources": {
+    "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run01/bag/bag_0.db3": "27e9ed05ab4c453bb7be689e3996fdf4daf8420858cb028524910b355fa56d84",
+    "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run02/bag/bag_0.db3": "8d9b745a1af014168de9163df8767f2d9a30d036c544a280ecf5c39ef4fd4214",
+    "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run04/bag/bag_0.db3": "0c7447d136ebb3c954e5017cb87f23858a495e2458265c394299114b73ea0914",
+    "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run05/bag/bag_0.db3": "0a1155de908cf443f19fa27288bcc1ee14660b836c6386517099c21c93d8796b",
+    "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run07/bag/bag_0.db3": "1f9efdba897b39e2c6ef7a3177b980957068a0294c35c1b0c54f164b74b5282c",
+    "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run09/bag/bag_0.db3": "5e86b64238fe18c5e1085f68b7b4d571453ed104b427eef98c9cbd6d6fa893d5",
+    "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run01/bag/bag_0.db3": "ae46465bd1cad9eedf28dd6825aad20b11f81a29156418dfb912c82e0403df24",
+    "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run03/bag/bag_0.db3": "69c692bd6f74b56e62c234ba20fc95db6181f176bcc7f3bf05c514752c928edc",
+    "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run04/bag/bag_0.db3": "f86b5a001570191888181f41226f1dc90bda25e5684acc6521961a18b8cbcdd2",
+    "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run05/bag/bag_0.db3": "8341a6db92031da52c836adc0d680b09fec3a74ba1cfe7206b41118b21f70768",
+    "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run08/bag/bag_0.db3": "8940e80855372feb52c063b61c06194a72831704704a953d6f25be5b4a3dcbc5",
+    "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run10/bag/bag_0.db3": "48cdf59219fddb62e3ac343501a617432ec9ff57f661586234c0c07351e7cd70",
+    "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run03/bag/bag_0.db3": "8a2e823cb2f8ba634ba16d54073d9e449c6404d67adc5028e0509f87a663a558",
+    "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/5kmh_run06/bag/bag_0.db3": "4724b0da7036e2863ccff883a5d0043d487af174c8cfee5be78c9207261751df",
+    "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run06/bag/bag_0.db3": "9bd0eca249645f596573578085afb426ede8d0ba171111ee092dd0b2b3814e45",
+    "/home/thistle/e2e_autonomous/datasets/raw/time_teacher_20laps_20260911/runs/8kmh_run09/bag/bag_0.db3": "16d4dcb2f2103ef8a9516674ce9b1285373d7d3e0c5ae6c920f3bcc92913cf38",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_speed_20260914/codex-time-recovery-speedbase-r30/bag/bag_0.db3": "0bad183ede831f66c14049262ed5e8816c6ae4ff73119ee32ea58bc29e6b2cf7",
+    "/home/thistle/e2e_autonomous/raw/time_recovery_speed_20260914/codex-time-recovery-speedbase-r31/bag/bag_0.db3": "0a098a7e212a2feefa6c96a4ab2b730b499799eed6ab866c046ddea71ae45214"
+  },
+  "all_original_files_preserved": true,
+  "launch_calibration_runs": [
+    "codex-time-recovery-speedbase-r30",
+    "codex-time-recovery-speedbase-r31"
+  ],
+  "launch_evaluation_runs_disjoint_from_training": true
+}
