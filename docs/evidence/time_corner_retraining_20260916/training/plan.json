@@ -1,0 +1,141 @@
+{
+  "epochs": 3,
+  "batch_size": 32,
+  "workers": 0,
+  "seed": 42,
+  "learning_rate": 3e-05,
+  "weight_decay": 0.0001,
+  "max_grad_norm": 1.0,
+  "precision": "float32",
+  "checkpoint_every_steps": 250,
+  "log_every_batches": 50,
+  "max_anchors": 181824,
+  "max_optimizer_steps": 5682,
+  "order": "seeded_per_epoch_natural_anchor_permutation",
+  "selection": "minimum_validation_run_macro_3s_error_m",
+  "allow_tf32": false,
+  "cudnn_benchmark": false,
+  "cudnn_deterministic": true,
+  "loss_scaler": null,
+  "device_type": "cuda",
+  "torch_version": "2.7.1+cu128",
+  "retain_epoch_checkpoints": true,
+  "recovery_objective": {
+    "format": "teacher_fixed_time_pp_and_far_y_v1",
+    "plan": {
+      "near_weight_m_per_rad": 1.0,
+      "far_weight": 0.5,
+      "far_start_s": 2.0,
+      "rear_axle_offset_m": [
+        0.0010000169277191162,
+        0.0
+      ]
+    },
+    "controller": {
+      "scope": "BOUNDED_AWSIM_TRIAL_ONLY",
+      "record_vehicle_motion": true,
+      "vehicle_model_policy": "awsim_understeer_v1",
+      "host": "graneple@192.168.3.10",
+      "checkpoint_sha256": "7ec445b6ab955e76d0d71efbd8f2f1dd3066ebe365516df38df8cf18adb56f44",
+      "checkpoint_epoch": 3,
+      "command_history": false,
+      "precision": "float32",
+      "camera_receipt_freeze_ns": 50000000,
+      "capture_clock": "sim",
+      "receipt_clock": "monotonic",
+      "geometry": {
+        "scene_file": "AWSIM_Data/level1",
+        "scene_sha256": "9ab2e1e8865c02885594e0bbdde372302530f047b5a2e89c455be6a18f3e090b",
+        "vehicle": "GoKart1",
+        "base_link_transform_path_id": 796,
+        "rear_wheel_transform_path_ids": [
+          568,
+          756
+        ],
+        "base_link_forward_in_root_m": -0.48500001430511475,
+        "rear_axle_forward_in_root_m": -0.48399999737739563,
+        "rear_axle_forward_in_base_link_m": 0.0010000169277191162,
+        "wheelbase_m": 1.087,
+        "scope": "STATIC_SCENE_PLANAR_GEOMETRY_NOT_DYNAMIC_CALIBRATION"
+      },
+      "speed_policy": "fixed_5kmh",
+      "execution_profile": "one_lap",
+      "obstacle_policy": "steering_support_v2",
+      "lookahead_policy": "stopping_preview_extended_v1",
+      "steering_policy": "awsim_grip_0p6_lead_v1",
+      "steering_asset_sha256": {
+        "AWSIM_Data/StreamingAssets/Vehicle/vehicle.yaml": "5b66e58691091c82d5511535ca458d4c89e85f3b59fa0d0c4a2c7eee47887244",
+        "AWSIM_Data/Managed/Assembly-CSharp.dll": "859e5560dbffd7d0833cd1fe5eb1f36b87fa8d22f6e45eb0e1203d04a1ea6d13"
+      },
+      "drive_limit_sim_s": 600.0,
+      "drive_limit_wall_s": 600.0,
+      "outer_limit_wall_s": 720.0,
+      "speed_cap_mps": 1.3888888888888888,
+      "overspeed_limit_mps": 1.6666666666666665,
+      "plan_max_age_s": 0.5,
+      "controller_wall_period_s": 0.05,
+      "stop_confirmation_speed_mps": 0.03,
+      "stop_confirmation_duration_sim_s": 1.0
+    },
+    "controller_age_s": 0.0,
+    "target_count": 11941,
+    "targets_sha256": "0b3fffeea1b5f3fb7fbbaa3540caefa8cf63131cb3d89c250c2ec45232a42cef",
+    "split_manifest_sha256": "0b51cf2ba7a07b735f004d16cf5bd3da8793f8d9d85b9478c4a1e7a429092154",
+    "normalization": "sum_auxiliary_over_recovery_divide_all_supported_batch_anchors",
+    "runtime_target_selection_in_loss": false
+  },
+  "initialization": {
+    "sha256": "685f8b8f9936ab7e272be12616982374fd8a8d61fbe4a304b25475dc2a206ba8",
+    "identity": {
+      "split_manifest_sha256": "c49eb3a6dc873d8be708c681d09d032b0e1d69d57c6704aad77ea3b993ba422a",
+      "teacher_manifest_sha256": "a74857761f04727b24cd5a133953c39c68f19855f7ebbcf694b928705f0d07c3",
+      "source_sha256": "2037bfa109520d446e585c674d0712d3793dac12e7518104937f4c0d6ef61710",
+      "lineage": "multiscale_balanced_geometry",
+      "source_git_commit": "5e4cea7f030994c2ee4f58fb6fd5af4b170bb1e5"
+    }
+  },
+  "config": {
+    "image_height": 224,
+    "image_width": 384,
+    "lidar_points": 750,
+    "lidar_min_range_m": 0.0,
+    "lidar_max_range_m": 25.0,
+    "lidar_angle_min_rad": -3.141592653589793,
+    "ego_dim": 4,
+    "hidden_dim": 128,
+    "camera_tokens_hw": [
+      4,
+      4
+    ],
+    "lidar_tokens": 32,
+    "fusion_depth": 2,
+    "fusion_heads": 4,
+    "max_sensor_history": 4,
+    "max_ego_history": 10,
+    "command_history_length": 10,
+    "ego_history_length": 10,
+    "history_tolerance_ns": 50000000,
+    "use_command_history": false,
+    "image_history_length": 4,
+    "lidar_history_length": 4,
+    "control_dt_sec": 0.1,
+    "teacher_tolerance_ms": 50.0,
+    "future_steps": 30,
+    "future_dt_sec": 0.1,
+    "capture_clock": "sim",
+    "available_clock": "bag_receipt",
+    "freeze_policy": "available_before_freeze",
+    "pose_world_frame": "map",
+    "pose_body_frame": "base_link",
+    "preprocess_version": "time_preprocess_v1",
+    "history_version": "valid_cnn_fixed_slot_masked_ego_v2"
+  },
+  "identity": {
+    "split_manifest_sha256": "0b51cf2ba7a07b735f004d16cf5bd3da8793f8d9d85b9478c4a1e7a429092154",
+    "teacher_manifest_sha256": "25a6d0e7b746bd4bcd984e1823d7d8b41d8b59b579dbad25f2613a998df8ed61",
+    "source_sha256": "1bdeb56ebecb29fb15b75d62c306b96eec713c51d9daa85853d39097bd5286d5",
+    "lineage": "corner_recovery_finetune",
+    "source_git_commit": "5bd177cd6192b00465be1d902da8999fe7668453"
+  },
+  "initial_weights_sha256": "ad3a16606e8be87412740792dd5c014b73e25cf55af0c8b666a6a94973b3f186"
+}

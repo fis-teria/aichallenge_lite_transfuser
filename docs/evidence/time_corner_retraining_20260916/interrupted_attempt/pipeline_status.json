@@ -1,0 +1,52 @@
+{
+  "source_commit": "f5cec3c9b5c9aa4c71d209cef20073181483b886",
+  "started_unix": 1789548791.92218,
+  "stages": [
+    {
+      "stage": "audit",
+      "command": [
+        "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+        "-u",
+        "tools/train_time_corner_recovery.py",
+        "audit",
+        "--plan",
+        "configs/time_path_p1/recovery_corner_20260916.json"
+      ],
+      "started_unix": 1789548791.9223626,
+      "timeout_s": 2400,
+      "exit": 0,
+      "ended_unix": 1789549316.7794788,
+      "log_sha256": "7bc5a3e1ef7cd9b155220eb94b64a93aeb86f26336ea4a20b1d7ff754197dfa2"
+    },
+    {
+      "stage": "prepare",
+      "command": [
+        "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+        "-u",
+        "tools/train_time_corner_recovery.py",
+        "prepare",
+        "--plan",
+        "../runs/time_corner_retraining_20260916/resolved_plan.json"
+      ],
+      "started_unix": 1789549316.805176,
+      "timeout_s": 2400,
+      "exit": 0,
+      "ended_unix": 1789549821.4688725,
+      "log_sha256": "99bc64942a16c2a71d6b41289a1b7da88dade72e98739f81265f7bbf3c16a8b4"
+    },
+    {
+      "stage": "train",
+      "command": [
+        "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+        "-u",
+        "tools/train_time_corner_recovery.py",
+        "train",
+        "--plan",
+        "../runs/time_corner_retraining_20260916/resolved_plan.json"
+      ],
+      "started_unix": 1789549821.491606,
+      "timeout_s": 10800
+    }
+  ],
+  "status": "RUNNING"
+}

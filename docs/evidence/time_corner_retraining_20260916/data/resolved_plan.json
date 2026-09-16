@@ -1,0 +1,855 @@
+{
+  "training": {
+    "epochs": 3,
+    "batch_size": 32,
+    "workers": 4,
+    "seed": 42,
+    "learning_rate": 3e-05,
+    "weight_decay": 0.0001,
+    "max_grad_norm": 1.0,
+    "precision": "float32"
+  },
+  "selection_run_ids": [
+    "5kmh_run03",
+    "5kmh_run06",
+    "8kmh_run06",
+    "8kmh_run09",
+    "codex-time-recovery-right040-r22",
+    "codex-time-recovery-left020-r23"
+  ],
+  "selection": "minimum_original_six_validation_runs_macro_3s_error_m",
+  "new_validation_usage": "post_selection_diagnostic_only",
+  "test_usage": "sealed",
+  "offline_controller_config": "configs/control/time_path_expanded_5kmh_20260914.json",
+  "geometry": {
+    "near_weight_m_per_rad": 1.0,
+    "far_weight": 0.5,
+    "far_start_s": 2.0,
+    "rear_axle_offset_m": [
+      0.0010000169277191162,
+      0.0
+    ]
+  },
+  "balanced_target_fraction": 0.25,
+  "experiment": "corner_recovery_finetune_20260916",
+  "parent_cache": "datasets/cache/time_recovery_multiscale_20260916",
+  "parent_cache_sha256": "f2b463b73f1d1cb7993b151754ca16488fcbd5748887375ee71b30d56316efc9",
+  "cache": "datasets/cache/time_corner_retraining_20260916",
+  "audit_output": "runs/time_corner_retraining_20260916",
+  "output": "runs/time_corner_retraining_20260916/training",
+  "initialization": "runs/time_recovery_multiscale_20260916/training/best.pt",
+  "initialization_sha256": "685f8b8f9936ab7e272be12616982374fd8a8d61fbe4a304b25475dc2a206ba8",
+  "prior_preparation": "runs/time_recovery_multiscale_20260916/data_and_budget_verification.json",
+  "prior_preparation_sha256": "ded9c561e2e85fdd337a7a68fddef340931f74a9f65a4db7f1bd39135716b4b0",
+  "source_guard_commit": "51d50e63e071123995545429e2d1a252e7485ec7",
+  "recovery_repeats": 2,
+  "expected_additions": {
+    "train": 6495,
+    "validation": 5800
+  },
+  "expected": {
+    "unique_train": 48667,
+    "unique_recovery_train": 11941,
+    "validation_total": 21199,
+    "selection_validation": 12346,
+    "presentations_per_epoch": 60608
+  },
+  "expected_optimizer_steps": 5682,
+  "outer_training_timeout_s": 10800,
+  "collections": [
+    {
+      "analysis": "runs/time_recovery_parallel_20260916",
+      "raw": "raw/time_recovery_parallel_20260916",
+      "index_sha256": "e680f8e8ef2d68dc82d4ff9ff5eeddd0951e193b162ec92d3a28f1761c1d9c56",
+      "mode": "large",
+      "amplitude_group": 0.6
+    },
+    {
+      "analysis": "runs/time_corner_recovery_20260916",
+      "raw": "raw/time_corner_recovery_20260916",
+      "index_sha256": "9de23eb54c0b9bcd0c692c2d9c626ce8ac4fb2ffb2a349329a8f0b812b390bd6",
+      "mode": "large",
+      "amplitude_group": 0.2
+    },
+    {
+      "analysis": "runs/time_corner_multiscale20_20260916",
+      "raw": "raw/time_corner_multiscale20_20260916",
+      "index_sha256": "9591ac93ceed33f6df4e80185681d31ec38b565de2c83d901d953d91bf406dc8",
+      "mode": "large",
+      "amplitude_group": 0.2
+    },
+    {
+      "analysis": "runs/time_corner_multiscale40_20260916",
+      "raw": "raw/time_corner_multiscale40_20260916",
+      "index_sha256": "78bb94db37ba8301889a8585935ab22bf1ffd9a2d29d851c3ff50ae346cd04ef",
+      "mode": "large",
+      "amplitude_group": 0.4
+    },
+    {
+      "analysis": "runs/time_corner_multiscale60_20260916",
+      "raw": "raw/time_corner_multiscale60_20260916",
+      "index_sha256": "9823b98ac528ac0e53627335a89ae044de185b5372ac6149e180a3fe5bcc571c",
+      "mode": "large",
+      "amplitude_group": 0.6
+    },
+    {
+      "analysis": "runs/time_corner_gap_20260916",
+      "raw": "raw/time_corner_gap_20260916",
+      "index_sha256": "f549de561b1de39f6defd2049ba93d6a8b530671c370265099df8671f2666d07",
+      "mode": "large",
+      "amplitude_group": "mixed"
+    },
+    {
+      "analysis": "runs/time_corner_gap2_20260916",
+      "raw": "raw/time_corner_gap2_20260916",
+      "index_sha256": "435ddb5ec60049cb2a0930cf76ad8ea90eafa047c9109f0a6031476dc8fa7844",
+      "mode": "large",
+      "amplitude_group": "mixed"
+    }
+  ],
+  "additions": [
+    {
+      "run_id": "codex-time-recovery-parallel-d1-left-r01",
+      "split": "train",
+      "anchors": 262,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_recovery_parallel_20260916",
+      "raw": "raw/time_recovery_parallel_20260916",
+      "probe": "codex-time-recovery-parallel-d1-left-r01_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-parallel-d1-left-r02",
+      "split": "validation",
+      "anchors": 242,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_recovery_parallel_20260916",
+      "raw": "raw/time_recovery_parallel_20260916",
+      "probe": "codex-time-recovery-parallel-d1-left-r02_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-parallel-d2-right-r02",
+      "split": "validation",
+      "anchors": 242,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_recovery_parallel_20260916",
+      "raw": "raw/time_recovery_parallel_20260916",
+      "probe": "codex-time-recovery-parallel-d2-right-r02_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corners-p01-d1",
+      "split": "train",
+      "anchors": 188,
+      "event_ids": [
+        1,
+        2
+      ],
+      "analysis": "runs/time_corner_recovery_20260916",
+      "raw": "raw/time_corner_recovery_20260916",
+      "probe": "codex-time-recovery-corners-p01-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corners-p02-d1",
+      "split": "train",
+      "anchors": 173,
+      "event_ids": [
+        1,
+        2
+      ],
+      "analysis": "runs/time_corner_recovery_20260916",
+      "raw": "raw/time_corner_recovery_20260916",
+      "probe": "codex-time-recovery-corners-p02-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corners-p02-d2",
+      "split": "validation",
+      "anchors": 175,
+      "event_ids": [
+        1,
+        2
+      ],
+      "analysis": "runs/time_corner_recovery_20260916",
+      "raw": "raw/time_corner_recovery_20260916",
+      "probe": "codex-time-recovery-corners-p02-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corners-p03-d2",
+      "split": "validation",
+      "anchors": 172,
+      "event_ids": [
+        1,
+        2
+      ],
+      "analysis": "runs/time_corner_recovery_20260916",
+      "raw": "raw/time_corner_recovery_20260916",
+      "probe": "codex-time-recovery-corners-p03-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corners-p04-d1",
+      "split": "train",
+      "anchors": 168,
+      "event_ids": [
+        1,
+        2
+      ],
+      "analysis": "runs/time_corner_recovery_20260916",
+      "raw": "raw/time_corner_recovery_20260916",
+      "probe": "codex-time-recovery-corners-p04-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corners-p04-d2",
+      "split": "validation",
+      "anchors": 160,
+      "event_ids": [
+        1,
+        2
+      ],
+      "analysis": "runs/time_corner_recovery_20260916",
+      "raw": "raw/time_corner_recovery_20260916",
+      "probe": "codex-time-recovery-corners-p04-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corners-p05-d1",
+      "split": "train",
+      "anchors": 87,
+      "event_ids": [
+        1
+      ],
+      "analysis": "runs/time_corner_recovery_20260916",
+      "raw": "raw/time_corner_recovery_20260916",
+      "probe": "codex-time-recovery-corners-p05-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corners-p05-d2",
+      "split": "validation",
+      "anchors": 180,
+      "event_ids": [
+        1,
+        2
+      ],
+      "analysis": "runs/time_corner_recovery_20260916",
+      "raw": "raw/time_corner_recovery_20260916",
+      "probe": "codex-time-recovery-corners-p05-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corners-p06-d1",
+      "split": "train",
+      "anchors": 172,
+      "event_ids": [
+        1,
+        2
+      ],
+      "analysis": "runs/time_corner_recovery_20260916",
+      "raw": "raw/time_corner_recovery_20260916",
+      "probe": "codex-time-recovery-corners-p06-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner20-p01-d1",
+      "split": "train",
+      "anchors": 246,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_multiscale20_20260916",
+      "raw": "raw/time_corner_multiscale20_20260916",
+      "probe": "codex-time-recovery-corner20-p01-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner20-p01-d2",
+      "split": "validation",
+      "anchors": 267,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_multiscale20_20260916",
+      "raw": "raw/time_corner_multiscale20_20260916",
+      "probe": "codex-time-recovery-corner20-p01-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner20-p02-d1",
+      "split": "train",
+      "anchors": 260,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_multiscale20_20260916",
+      "raw": "raw/time_corner_multiscale20_20260916",
+      "probe": "codex-time-recovery-corner20-p02-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner20-p02-d2",
+      "split": "validation",
+      "anchors": 261,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_multiscale20_20260916",
+      "raw": "raw/time_corner_multiscale20_20260916",
+      "probe": "codex-time-recovery-corner20-p02-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner20-p03-d1",
+      "split": "train",
+      "anchors": 88,
+      "event_ids": [
+        1
+      ],
+      "analysis": "runs/time_corner_multiscale20_20260916",
+      "raw": "raw/time_corner_multiscale20_20260916",
+      "probe": "codex-time-recovery-corner20-p03-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner20-p03-d2",
+      "split": "validation",
+      "anchors": 81,
+      "event_ids": [
+        1
+      ],
+      "analysis": "runs/time_corner_multiscale20_20260916",
+      "raw": "raw/time_corner_multiscale20_20260916",
+      "probe": "codex-time-recovery-corner20-p03-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner20-p04-d1",
+      "split": "train",
+      "anchors": 175,
+      "event_ids": [
+        1,
+        2
+      ],
+      "analysis": "runs/time_corner_multiscale20_20260916",
+      "raw": "raw/time_corner_multiscale20_20260916",
+      "probe": "codex-time-recovery-corner20-p04-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner20-p04-d2",
+      "split": "validation",
+      "anchors": 186,
+      "event_ids": [
+        1,
+        2
+      ],
+      "analysis": "runs/time_corner_multiscale20_20260916",
+      "raw": "raw/time_corner_multiscale20_20260916",
+      "probe": "codex-time-recovery-corner20-p04-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner40-p01-d1",
+      "split": "train",
+      "anchors": 179,
+      "event_ids": [
+        1,
+        2
+      ],
+      "analysis": "runs/time_corner_multiscale40_20260916",
+      "raw": "raw/time_corner_multiscale40_20260916",
+      "probe": "codex-time-recovery-corner40-p01-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner40-p01-d2",
+      "split": "validation",
+      "anchors": 167,
+      "event_ids": [
+        1,
+        2
+      ],
+      "analysis": "runs/time_corner_multiscale40_20260916",
+      "raw": "raw/time_corner_multiscale40_20260916",
+      "probe": "codex-time-recovery-corner40-p01-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner40-p02-d1",
+      "split": "train",
+      "anchors": 257,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_multiscale40_20260916",
+      "raw": "raw/time_corner_multiscale40_20260916",
+      "probe": "codex-time-recovery-corner40-p02-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner40-p02-d2",
+      "split": "validation",
+      "anchors": 257,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_multiscale40_20260916",
+      "raw": "raw/time_corner_multiscale40_20260916",
+      "probe": "codex-time-recovery-corner40-p02-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner40-p03-d1",
+      "split": "train",
+      "anchors": 248,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_multiscale40_20260916",
+      "raw": "raw/time_corner_multiscale40_20260916",
+      "probe": "codex-time-recovery-corner40-p03-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner40-p03-d2",
+      "split": "validation",
+      "anchors": 251,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_multiscale40_20260916",
+      "raw": "raw/time_corner_multiscale40_20260916",
+      "probe": "codex-time-recovery-corner40-p03-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner40-p04-d1",
+      "split": "train",
+      "anchors": 256,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_multiscale40_20260916",
+      "raw": "raw/time_corner_multiscale40_20260916",
+      "probe": "codex-time-recovery-corner40-p04-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner60-p03-d1",
+      "split": "train",
+      "anchors": 169,
+      "event_ids": [
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_multiscale60_20260916",
+      "raw": "raw/time_corner_multiscale60_20260916",
+      "probe": "codex-time-recovery-corner60-p03-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner60-p03-d2",
+      "split": "validation",
+      "anchors": 179,
+      "event_ids": [
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_multiscale60_20260916",
+      "raw": "raw/time_corner_multiscale60_20260916",
+      "probe": "codex-time-recovery-corner60-p03-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner60-p04-d1",
+      "split": "train",
+      "anchors": 81,
+      "event_ids": [
+        1
+      ],
+      "analysis": "runs/time_corner_multiscale60_20260916",
+      "raw": "raw/time_corner_multiscale60_20260916",
+      "probe": "codex-time-recovery-corner60-p04-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner60-p04-d2",
+      "split": "validation",
+      "anchors": 79,
+      "event_ids": [
+        1
+      ],
+      "analysis": "runs/time_corner_multiscale60_20260916",
+      "raw": "raw/time_corner_multiscale60_20260916",
+      "probe": "codex-time-recovery-corner60-p04-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner60-p05-d1",
+      "split": "train",
+      "anchors": 375,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_multiscale60_20260916",
+      "raw": "raw/time_corner_multiscale60_20260916",
+      "probe": "codex-time-recovery-corner60-p05-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner60-p05-d2",
+      "split": "validation",
+      "anchors": 387,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_multiscale60_20260916",
+      "raw": "raw/time_corner_multiscale60_20260916",
+      "probe": "codex-time-recovery-corner60-p05-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner60-p06-d1",
+      "split": "train",
+      "anchors": 385,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_multiscale60_20260916",
+      "raw": "raw/time_corner_multiscale60_20260916",
+      "probe": "codex-time-recovery-corner60-p06-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-corner60-p06-d2",
+      "split": "validation",
+      "anchors": 379,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_multiscale60_20260916",
+      "raw": "raw/time_corner_multiscale60_20260916",
+      "probe": "codex-time-recovery-corner60-p06-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap-p02-d1",
+      "split": "train",
+      "anchors": 396,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_gap_20260916",
+      "raw": "raw/time_corner_gap_20260916",
+      "probe": "codex-time-recovery-cornergap-p02-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap-p02-d2",
+      "split": "validation",
+      "anchors": 381,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_gap_20260916",
+      "raw": "raw/time_corner_gap_20260916",
+      "probe": "codex-time-recovery-cornergap-p02-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap-p03-d1",
+      "split": "train",
+      "anchors": 125,
+      "event_ids": [
+        1
+      ],
+      "analysis": "runs/time_corner_gap_20260916",
+      "raw": "raw/time_corner_gap_20260916",
+      "probe": "codex-time-recovery-cornergap-p03-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap-p03-d2",
+      "split": "validation",
+      "anchors": 271,
+      "event_ids": [
+        1,
+        2
+      ],
+      "analysis": "runs/time_corner_gap_20260916",
+      "raw": "raw/time_corner_gap_20260916",
+      "probe": "codex-time-recovery-cornergap-p03-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap-p04-d1",
+      "split": "train",
+      "anchors": 131,
+      "event_ids": [
+        1
+      ],
+      "analysis": "runs/time_corner_gap_20260916",
+      "raw": "raw/time_corner_gap_20260916",
+      "probe": "codex-time-recovery-cornergap-p04-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap-p04-d2",
+      "split": "validation",
+      "anchors": 358,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_gap_20260916",
+      "raw": "raw/time_corner_gap_20260916",
+      "probe": "codex-time-recovery-cornergap-p04-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap-p05-d1",
+      "split": "train",
+      "anchors": 127,
+      "event_ids": [
+        1
+      ],
+      "analysis": "runs/time_corner_gap_20260916",
+      "raw": "raw/time_corner_gap_20260916",
+      "probe": "codex-time-recovery-cornergap-p05-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap-p06-d1",
+      "split": "train",
+      "anchors": 253,
+      "event_ids": [
+        1,
+        3
+      ],
+      "analysis": "runs/time_corner_gap_20260916",
+      "raw": "raw/time_corner_gap_20260916",
+      "probe": "codex-time-recovery-cornergap-p06-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap-p06-d2",
+      "split": "validation",
+      "anchors": 390,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_gap_20260916",
+      "raw": "raw/time_corner_gap_20260916",
+      "probe": "codex-time-recovery-cornergap-p06-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap2-p01-d1",
+      "split": "train",
+      "anchors": 378,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_gap2_20260916",
+      "raw": "raw/time_corner_gap2_20260916",
+      "probe": "codex-time-recovery-cornergap2-p01-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap2-p01-d2",
+      "split": "validation",
+      "anchors": 358,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_gap2_20260916",
+      "raw": "raw/time_corner_gap2_20260916",
+      "probe": "codex-time-recovery-cornergap2-p01-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap2-p03-d1",
+      "split": "train",
+      "anchors": 252,
+      "event_ids": [
+        1,
+        2
+      ],
+      "analysis": "runs/time_corner_gap2_20260916",
+      "raw": "raw/time_corner_gap2_20260916",
+      "probe": "codex-time-recovery-cornergap2-p03-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap2-p03-d2",
+      "split": "validation",
+      "anchors": 250,
+      "event_ids": [
+        1,
+        2
+      ],
+      "analysis": "runs/time_corner_gap2_20260916",
+      "raw": "raw/time_corner_gap2_20260916",
+      "probe": "codex-time-recovery-cornergap2-p03-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap2-p04-d1",
+      "split": "train",
+      "anchors": 409,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_gap2_20260916",
+      "raw": "raw/time_corner_gap2_20260916",
+      "probe": "codex-time-recovery-cornergap2-p04-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap2-p05-d1",
+      "split": "train",
+      "anchors": 283,
+      "event_ids": [
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_gap2_20260916",
+      "raw": "raw/time_corner_gap2_20260916",
+      "probe": "codex-time-recovery-cornergap2-p05-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap2-p06-d1",
+      "split": "train",
+      "anchors": 372,
+      "event_ids": [
+        1,
+        2,
+        3
+      ],
+      "analysis": "runs/time_corner_gap2_20260916",
+      "raw": "raw/time_corner_gap2_20260916",
+      "probe": "codex-time-recovery-cornergap2-p06-d1_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    },
+    {
+      "run_id": "codex-time-recovery-cornergap2-p06-d2",
+      "split": "validation",
+      "anchors": 127,
+      "event_ids": [
+        2
+      ],
+      "analysis": "runs/time_corner_gap2_20260916",
+      "raw": "raw/time_corner_gap2_20260916",
+      "probe": "codex-time-recovery-cornergap2-p06-d2_causal_probe.json",
+      "proof": "../time_corner_retraining_20260916/source_verification.json",
+      "proof_sha256": "2a0d2130e68b054c9c3d87397a95af44504713d3b7197b351043dc79a6a94708"
+    }
+  ]
+}

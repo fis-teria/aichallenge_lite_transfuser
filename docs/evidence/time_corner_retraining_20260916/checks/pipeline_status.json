@@ -1,0 +1,52 @@
+{
+  "source_commit": "5bd177cd6192b00465be1d902da8999fe7668453",
+  "status": "COMPLETE",
+  "started_unix": 1789551191.8065052,
+  "stages": [
+    {
+      "stage": "train",
+      "command": [
+        "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+        "-u",
+        "tools/train_time_corner_recovery.py",
+        "train",
+        "--plan",
+        "../runs/time_corner_retraining_20260916/resolved_plan.json",
+        "--loader-workers",
+        "0",
+        "--training-output",
+        "../runs/time_corner_retraining_20260916/training_serial"
+      ],
+      "started_unix": 1789551330.5274658,
+      "timeout_s": 10800,
+      "exit": 0,
+      "ended_unix": 1789555671.2490492,
+      "log_sha256": "939d1f73b3ece3228e53d2353dbdd70cef9fd4dac2066d95e3f0f8c463e1cf92"
+    },
+    {
+      "stage": "compare",
+      "command": [
+        "/home/thistle/e2e_autonomous/e2e_lite_transfuser/.venv/bin/python",
+        "-u",
+        "tools/train_time_corner_recovery.py",
+        "compare",
+        "--plan",
+        "../runs/time_corner_retraining_20260916/resolved_plan.json",
+        "--loader-workers",
+        "0",
+        "--training-output",
+        "../runs/time_corner_retraining_20260916/training_serial"
+      ],
+      "started_unix": 1789555671.321191,
+      "timeout_s": 2400,
+      "exit": 0,
+      "ended_unix": 1789556293.0837903,
+      "log_sha256": "77b1d2d7a82ab18ac4d5fbd64399e3895926263e1bb99cf782db2817565858ad"
+    }
+  ],
+  "prior_attempt": "time_corner_retraining_checks_20260916",
+  "restart_from_original_initialization": true,
+  "shared_memory_worker_transfer": false,
+  "actual_loader_workers": 0,
+  "ended_unix": 1789556293.1668677
+}

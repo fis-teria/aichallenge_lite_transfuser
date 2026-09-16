@@ -1,0 +1,79 @@
+{
+  "status": "PASS",
+  "scope": "RECORDED_LAUNCH_PP_GEOMETRY_NOT_TEACHER_ERROR_OR_NEW_CLOSED_LOOP",
+  "active_commands": 103,
+  "reasons": {
+    "TIME_PATH_TRACKING": 6,
+    "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 97
+  },
+  "rejected_with_radial_candidates": 97,
+  "rejected_without_feasible_segments": 97,
+  "physical_tire_limit_rad": 0.3,
+  "search_band_m": [
+    1.0,
+    2.0
+  ],
+  "rejected_min_vertex_angle_rad": {
+    "min": 0.30012360115797043,
+    "median": 0.32876091762414145,
+    "max": 0.3350214468894889
+  },
+  "angle_statistic_scope": "minimum over existing vertices, not continuous optimum",
+  "rejected_plan_age_s": {
+    "min": 0.10499999800000001,
+    "median": 0.20999999600000002,
+    "max": 0.374999992
+  },
+  "first_rejection": {
+    "after_arm_s": 0.099999998,
+    "reason": "STEERING_FEASIBLE_LOOKAHEAD_MISSING",
+    "plan_id": "codex-time-corner-lap01:0:19104999572:1652",
+    "plan_age_s": 0.20999999600000002,
+    "search_band_m": [
+      1.0,
+      2.0
+    ],
+    "response_length_m": 1.0870186468468066,
+    "radial_segment_intervals": 12,
+    "steering_feasible_segment_intervals": 0,
+    "min_vertex_required_abs_tire_rad": 0.30012360115797043,
+    "endpoint_rear_m": [
+      1.7639089191044948,
+      -0.47502084631124064
+    ],
+    "current_pose": {
+      "stamp_ns": 19314999568,
+      "clock": "sim",
+      "epoch": "0",
+      "world_frame": "map",
+      "body_frame": "base_link",
+      "x_m": 89631.41597137052,
+      "y_m": 43127.80882008568,
+      "yaw_rad": 2.2123360367449654
+    }
+  },
+  "stopping_sweep_rejections": 0,
+  "control_replay": {
+    "status": "PASS",
+    "matched_commands": 103,
+    "unavailable_commands": 0,
+    "maximum_absolute_error": 2.220446049250313e-16,
+    "tolerance": 1e-09,
+    "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+    "post_control_rejections": {},
+    "actuator_mapping_matched": 6,
+    "steering_response_matched": 6,
+    "vehicle_motion_matched": 6,
+    "scan_guard_decisions_replayed": false
+  },
+  "startup_predicted_geometry_is_direct_failure": true,
+  "retraining_data_or_loss_causal_attribution_established": false,
+  "source_sha256": {
+    "trial_config.json": "151a65352d1e6846689c9ebedfed8d50e439470232fa61c7fc3b5d245db3ef0f",
+    "control.jsonl": "e5719f3374df7dd9beeaa9f58a7d27634cce90e4cebe1983eb5a4e21a8c14a56",
+    "inference.jsonl": "b6eb00e23c7d2c76f59cd7cd6c6122533b0816c0c500f1564fa843476b0b51e4",
+    "normal_rviz.xwd": "e4608019af323ba037c065364a4e54e94a5312c178809fe3d9d525f340ca955f",
+    "rviz_drive_002.xwd": "2088b946adb0d02768a5394878d04e2c7acb19e812e124297285f7f788a1ebf5",
+    "rviz_after_freeze.xwd": "fdb14991f064573dbe6859393960c095ba27229f25090dc58ddd809c7d789da4"
+  }
+}
