@@ -1,0 +1,222 @@
+{
+  "pair": 6,
+  "runtime_commit": "1b845eddad371c98aeb54d1176fd6493cc9c6ed4",
+  "plans": [
+    {
+      "name": "train_p06_bias03_heading_tuned",
+      "selections": [
+        {
+          "goal": "60:C04",
+          "site": {
+            "site_id": "C04",
+            "release_s_m": 160.68,
+            "target_offset_m": -0.6,
+            "return_length_m": 6.0,
+            "settle_distance_m": 4.0,
+            "preparation_origin": "nominal_path",
+            "target_heading_rad": -0.06981317007977318,
+            "heading_tolerance_rad": 0.017453292519943295,
+            "corner_id": "C04",
+            "approach_distance_m": 8.0,
+            "preparation_offset_bias_m": 0.08,
+            "preparation_heading_bias_rad": -0.012217304763960306,
+            "entry_window_lead_m": 0.0,
+            "preparation_normal_fraction": 0.5,
+            "preparation_delay_m": 0.0
+          },
+          "map_evidence": [
+            {
+              "site_id": "C04",
+              "preparation_map_pass": true,
+              "corner_id": "C04",
+              "target_heading_rad": -0.06981317007977318,
+              "candidate_return_map_pass": true,
+              "hidden_return_preview_arc_m": 12.666005155131252,
+              "physical_dynamic_recovery_proven": false,
+              "map_screen_policy": "oriented_body_v1",
+              "body_in_base_link_m": {
+                "rear": -0.509,
+                "front": 1.985,
+                "half_width": 0.85
+              },
+              "scope": "STATIC_PLANNED_PATH_NOT_DYNAMIC_RECOVERY"
+            }
+          ],
+          "earlier_rejections": []
+        },
+        {
+          "goal": "20:C06",
+          "site": {
+            "site_id": "C06",
+            "release_s_m": 210.28,
+            "target_offset_m": -0.2,
+            "return_length_m": 6.0,
+            "settle_distance_m": 4.0,
+            "preparation_origin": "blended_normal",
+            "target_heading_rad": -0.06981317007977318,
+            "heading_tolerance_rad": 0.017453292519943295,
+            "corner_id": "C06",
+            "approach_distance_m": 4.0,
+            "preparation_offset_bias_m": 0.1,
+            "preparation_heading_bias_rad": 0.017453292519943295,
+            "entry_window_lead_m": 0.0,
+            "preparation_normal_fraction": 0.65,
+            "preparation_delay_m": 0.0
+          },
+          "map_evidence": [
+            {
+              "site_id": "C06",
+              "preparation_map_pass": true,
+              "corner_id": "C06",
+              "target_heading_rad": -0.06981317007977318,
+              "candidate_return_map_pass": true,
+              "hidden_return_preview_arc_m": 12.646280519164904,
+              "physical_dynamic_recovery_proven": false,
+              "map_screen_policy": "oriented_body_v1",
+              "body_in_base_link_m": {
+                "rear": -0.509,
+                "front": 1.985,
+                "half_width": 0.85
+              },
+              "scope": "STATIC_PLANNED_PATH_NOT_DYNAMIC_RECOVERY"
+            }
+          ],
+          "earlier_rejections": []
+        },
+        {
+          "goal": "60:C09",
+          "site": {
+            "site_id": "C09",
+            "release_s_m": 263.62,
+            "target_offset_m": 0.6,
+            "return_length_m": 6.0,
+            "settle_distance_m": 4.0,
+            "preparation_origin": "nominal_path",
+            "target_heading_rad": 0.06981317007977318,
+            "heading_tolerance_rad": 0.017453292519943295,
+            "corner_id": "C09",
+            "approach_distance_m": 8.0,
+            "preparation_offset_bias_m": -0.08,
+            "preparation_heading_bias_rad": 0.003490658503988659,
+            "entry_window_lead_m": 0.0,
+            "preparation_normal_fraction": 0.5,
+            "preparation_delay_m": 0.0
+          },
+          "map_evidence": [
+            {
+              "site_id": "C09",
+              "preparation_map_pass": true,
+              "corner_id": "C09",
+              "target_heading_rad": 0.06981317007977318,
+              "candidate_return_map_pass": true,
+              "hidden_return_preview_arc_m": 12.769022700627785,
+              "physical_dynamic_recovery_proven": false,
+              "map_screen_policy": "oriented_body_v1",
+              "body_in_base_link_m": {
+                "rear": -0.509,
+                "front": 1.985,
+                "half_width": 0.85
+              },
+              "scope": "STATIC_PLANNED_PATH_NOT_DYNAMIC_RECOVERY"
+            }
+          ],
+          "earlier_rejections": []
+        }
+      ],
+      "goal_keys": [
+        "60:C04",
+        "20:C06",
+        "60:C09"
+      ],
+      "split": "train"
+    },
+    {
+      "name": "validation_p06_bias03_heading_tuned",
+      "selections": [
+        {
+          "goal": "60:C03",
+          "site": {
+            "site_id": "C03",
+            "release_s_m": 133.69,
+            "target_offset_m": 0.6,
+            "return_length_m": 4.0,
+            "settle_distance_m": 4.0,
+            "preparation_origin": "nominal_path",
+            "target_heading_rad": 0.06981317007977318,
+            "heading_tolerance_rad": 0.017453292519943295,
+            "corner_id": "C03",
+            "approach_distance_m": 8.0,
+            "preparation_offset_bias_m": -0.1,
+            "preparation_heading_bias_rad": -0.017453292519943295,
+            "entry_window_lead_m": 0.5,
+            "preparation_normal_fraction": 0.0,
+            "preparation_delay_m": 6.0
+          },
+          "map_evidence": [
+            {
+              "site_id": "C03",
+              "preparation_map_pass": true,
+              "corner_id": "C03",
+              "target_heading_rad": 0.06981317007977318,
+              "candidate_return_map_pass": true,
+              "hidden_return_preview_arc_m": 13.128521396478503,
+              "physical_dynamic_recovery_proven": false,
+              "map_screen_policy": "oriented_body_v1",
+              "body_in_base_link_m": {
+                "rear": -0.509,
+                "front": 1.985,
+                "half_width": 0.85
+              },
+              "scope": "STATIC_PLANNED_PATH_NOT_DYNAMIC_RECOVERY"
+            }
+          ],
+          "earlier_rejections": []
+        },
+        {
+          "goal": "20:C06",
+          "site": {
+            "site_id": "C06",
+            "release_s_m": 210.28,
+            "target_offset_m": -0.2,
+            "return_length_m": 6.0,
+            "settle_distance_m": 4.0,
+            "preparation_origin": "blended_normal",
+            "target_heading_rad": -0.06981317007977318,
+            "heading_tolerance_rad": 0.017453292519943295,
+            "corner_id": "C06",
+            "approach_distance_m": 4.0,
+            "preparation_offset_bias_m": 0.1,
+            "preparation_heading_bias_rad": 0.017453292519943295,
+            "entry_window_lead_m": 0.0,
+            "preparation_normal_fraction": 0.65,
+            "preparation_delay_m": 0.0
+          },
+          "map_evidence": [
+            {
+              "site_id": "C06",
+              "preparation_map_pass": true,
+              "corner_id": "C06",
+              "target_heading_rad": -0.06981317007977318,
+              "candidate_return_map_pass": true,
+              "hidden_return_preview_arc_m": 12.646280519164904,
+              "physical_dynamic_recovery_proven": false,
+              "map_screen_policy": "oriented_body_v1",
+              "body_in_base_link_m": {
+                "rear": -0.509,
+                "front": 1.985,
+                "half_width": 0.85
+              },
+              "scope": "STATIC_PLANNED_PATH_NOT_DYNAMIC_RECOVERY"
+            }
+          ],
+          "earlier_rejections": []
+        }
+      ],
+      "goal_keys": [
+        "60:C03",
+        "20:C06"
+      ],
+      "split": "validation"
+    }
+  ]
+}
