@@ -119,6 +119,12 @@ run単位でdomain 1をtrain、domain 2をvalidationへ割り当てる。
 - [充足判定](evidence/time_corner_gap2_20260916/coverage_final.json)
 - [残条件ごとの既存教師数](evidence/time_corner_gap2_20260916/remaining_coverage_diagnosis.json)
 - [AWSIM・ホスト終了確認](evidence/time_corner_gap2_20260916/host_final_checks.json)
+- [WSL最終照合PASS](evidence/time_corner_gap2_20260916/final_verification.json)
+
+最終照合はWindows/WSLを証拠コミット`3c485a8`に揃え、WSL worktree lock内で実施。
+梱包した201ファイル、参照経路のハッシュ、実行ソースのテスト記録、全採用教師を再照合した。
+`final_verification.json`はこの照合後の記録であり、元の`manifest.json`には含めない。
+元の条件すべての充足については、照合結果も明示的にfalseとしている。
 
 実行コードは組01が`36b47e1`、組02/03が`48ae7af`、組04〜06が`1b845ed`。
 最終コードのWSL pytestは2,759 passed / 4 skipped / 84 warnings。
