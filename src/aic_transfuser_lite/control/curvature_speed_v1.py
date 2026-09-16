@@ -2,7 +2,7 @@
 
 This is a longitudinal limit, not a collision or road-boundary certificate.
 Geometry and measured-speed PP/scan admission remain separate requirements.
-Only curvature measurement resamples points; steering sees the original path.
+Only curvature measurement groups points; steering sees the original path.
 """
 from __future__ import annotations
 
@@ -23,7 +23,6 @@ class CurvatureSpeedConfig:
     response_delay_s: float = .5
     curve_distance_reserve_m: float = .5
     curvature_half_span_m: float = .5
-    sample_step_m: float = .25
     horizon_reserve_m: float = .5
     horizon_extra_delay_s: float = .3
     maximum_acceleration_mps2: float = .4
@@ -36,8 +35,7 @@ class CurvatureSpeedConfig:
                 or any(v <= 0 for k, v in values.items() if k != "minimum_acceleration_mps2")
                 or not -1. <= self.minimum_acceleration_mps2 < 0
                 or self.planning_deceleration_mps2 > -self.minimum_acceleration_mps2
-                or self.maximum_acceleration_mps2 > 1.
-                or self.sample_step_m > self.curvature_half_span_m):
+                or self.maximum_acceleration_mps2 > 1.):
             raise ValueError("CURVATURE_SPEED_CONFIG")
 
 
@@ -47,7 +45,7 @@ def preview_speed_limit(xy_m: np.ndarray, *, measured_speed_mps: float,
     """Return a speed ceiling in m/s from finite [N,2] rear-frame metres.
 
     N is 2..31. Repeated adjacent points are removed only for measurement.
-    Three-point circumcircle curvature is measured over a 1 m spatial span,
+    Three-point circumcircle curvature is measured over at least a 1 m span,
     avoiding the unstable heading of very short 0.1 s prediction segments.
     Each bend limits current speed by v^2 <= v_bend^2 + 2*b*usable_distance;
     usable distance excludes measured-speed delay travel and a fixed reserve.
@@ -68,12 +66,15 @@ def preview_speed_limit(xy_m: np.ndarray, *, measured_speed_mps: float,
     if arc[-1] < 2*config.curvature_half_span_m:
         raise ValueError("CURVATURE_SPEED_PATH_UNRESOLVED")
     half = config.curvature_half_span_m
-    centers = np.unique(np.r_[half, np.arange(half, arc[-1]-half, config.sample_step_m), arc[-1]-half])
-
-    def interpolate(s: np.ndarray) -> np.ndarray:
-        return np.column_stack([np.interp(s, arc, points[:, axis]) for axis in range(2)])
-
-    before, middle, after = (interpolate(centers + offset) for offset in (-half, 0., half))
+    center_indices = np.flatnonzero((arc >= half) & (arc <= arc[-1]-half))
+    if not len(center_indices):
+        raise ValueError("CURVATURE_SPEED_PATH_UNRESOLVED")
+    centers = arc[center_indices]
+    before_indices = np.maximum(0, np.searchsorted(arc, centers-half, side='right')-1)
+    after_indices = np.minimum(len(points)-1, np.searchsorted(arc, centers+half))
+    # Using actual, sufficiently separated vertices avoids curvature spikes
+    # introduced by interpolating different positions within polyline chords.
+    before, middle, after = points[before_indices], points[center_indices], points[after_indices]
     ab, bc, ac = middle-before, after-middle, after-before
     denominator = np.linalg.norm(ab, axis=1)*np.linalg.norm(bc, axis=1)*np.linalg.norm(ac, axis=1)
     if np.any(denominator < 1e-9):
@@ -89,7 +90,7 @@ def preview_speed_limit(xy_m: np.ndarray, *, measured_speed_mps: float,
     projected = points[:-1]+fraction[:, None]*segments
     nearest = int(np.argmin(np.sum(projected**2, axis=1)))
     origin_arc = float(arc[nearest]+fraction[nearest]*math.sqrt(squared[nearest]))
-    support_start = np.maximum(0., centers-half-origin_arc)
+    support_start = np.maximum(0., arc[before_indices]-origin_arc)
     usable = np.maximum(0., support_start-measured_speed_mps*config.response_delay_s
                         -config.curve_distance_reserve_m)
     upstream = np.sqrt(bend_cap**2 + 2*config.planning_deceleration_mps2*usable)
