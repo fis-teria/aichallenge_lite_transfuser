@@ -1,0 +1,65 @@
+{
+  "name": "validation_p02_bias03",
+  "split": "validation",
+  "seed": 20261018,
+  "event_cap": 3,
+  "candidates": [
+    {
+      "site_id": "C02",
+      "release_s_m": 73.6,
+      "target_offset_m": -0.4,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": -0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C02",
+      "approach_distance_m": 8.0,
+      "preparation_offset_bias_m": 0.04,
+      "preparation_heading_bias_rad": -0.005235987755982988
+    },
+    {
+      "site_id": "C03",
+      "release_s_m": 133.69,
+      "target_offset_m": 0.2,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C03",
+      "approach_distance_m": 8.0,
+      "preparation_offset_bias_m": -0.02,
+      "preparation_heading_bias_rad": 0.005235987755982988
+    },
+    {
+      "site_id": "C07",
+      "release_s_m": 234.0,
+      "target_offset_m": -0.2,
+      "return_length_m": 6.0,
+      "settle_distance_m": 2.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": -0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C07",
+      "approach_distance_m": 4.0,
+      "preparation_offset_bias_m": 0.02,
+      "preparation_heading_bias_rad": -0.005235987755982988
+    }
+  ],
+  "required_site_ids": [
+    "C02",
+    "C03",
+    "C07"
+  ],
+  "speed_policy": "record_actual_v1",
+  "entry_heading_tolerance_rad": 0.03490658503988659,
+  "recovery_duration_s": 15.0,
+  "map_screen_policy": "oriented_body_v1",
+  "failed_site_policy": "continue_after_target_miss_v1",
+  "goal_keys": [
+    "40:C02",
+    "20:C03",
+    "20:C07"
+  ]
+}

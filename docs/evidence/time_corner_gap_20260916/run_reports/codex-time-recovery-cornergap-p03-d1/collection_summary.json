@@ -1,0 +1,130 @@
+{
+  "run_id": "codex-time-recovery-cornergap-p03-d1",
+  "split": "train",
+  "result_status": "COMPLETE_LAP",
+  "fault": null,
+  "stop_confirmed": true,
+  "closed_bag": true,
+  "planned": [
+    {
+      "site_id": "C03",
+      "release_s_m": 133.69,
+      "target_offset_m": 0.4,
+      "return_length_m": 4.0,
+      "settle_distance_m": 2.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": 0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C03",
+      "approach_distance_m": 4.0,
+      "preparation_offset_bias_m": -0.04,
+      "preparation_heading_bias_rad": 0.005235987755982988
+    },
+    {
+      "site_id": "C06",
+      "release_s_m": 210.28,
+      "target_offset_m": -0.2,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "measured_normal",
+      "target_heading_rad": -0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C06",
+      "approach_distance_m": 8.0,
+      "preparation_offset_bias_m": 0.06,
+      "preparation_heading_bias_rad": 0.03490658503988659
+    },
+    {
+      "site_id": "C10",
+      "release_s_m": 296.44,
+      "target_offset_m": -0.6,
+      "return_length_m": 6.0,
+      "settle_distance_m": 4.0,
+      "preparation_origin": "nominal_path",
+      "target_heading_rad": -0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "corner_id": "C10",
+      "approach_distance_m": 8.0,
+      "preparation_offset_bias_m": 0.06,
+      "preparation_heading_bias_rad": -0.005235987755982988
+    }
+  ],
+  "event_cap": 3,
+  "events": [
+    {
+      "event_id": 1,
+      "site_id": "C10",
+      "target_offset_m": -0.6,
+      "speed_policy": "record_actual_v1",
+      "recovery_duration_s": 15.0,
+      "peak_observed_speed_mps": 1.3202712535858154,
+      "above_legacy_speed_samples": 0,
+      "corner_id": "C10",
+      "target_heading_rad": -0.06981317007977318,
+      "heading_tolerance_rad": 0.017453292519943295,
+      "preparation_start_ns": 257694994240,
+      "request_ns": 267344994024,
+      "release_ns": 267389994023,
+      "end_publication_ns": 282444993686,
+      "publication_switch_verified": true,
+      "recovery_confirmed": true,
+      "stable_at_end": true,
+      "completed": true,
+      "recovery_sample_count": 301,
+      "peak_observed_lateral_m": 0.6418590631343474,
+      "target_band_recovery_samples": 37,
+      "target_band_observed": true,
+      "causal_camera_candidates": 125,
+      "accepted_camera_anchors": 125,
+      "target_band_camera_anchors": 12,
+      "peak_abs_anchor_lateral_m": 0.6416468628534429
+    }
+  ],
+  "accepted": 125,
+  "target_band_anchors": 12,
+  "marker_locations": {
+    "frame_id": "map",
+    "location_basis": "pose_at_first_preparation_selection_not_proven_displacement",
+    "topic": "/recovery_teacher/disturbance_markers",
+    "events": [
+      {
+        "event_id": 1,
+        "site_id": "C10",
+        "sign": -1,
+        "planned_s_m": 284.44,
+        "actual_s_m": 284.4588475464857,
+        "x_m": 89674.83294127078,
+        "y_m": 43149.651533217024,
+        "yaw_rad": -2.5757416382367953,
+        "pose_stamp_ns": 257664994240,
+        "publication_sim_ns": 257694994240,
+        "publication_sequence": 5324,
+        "effective_rad": 0.0,
+        "target_offset_m": -0.6,
+        "label": "C10 RIGHT PREP 60cm"
+      }
+    ]
+  },
+  "training_started": false,
+  "causal_candidates": 125,
+  "input_reasons": {
+    "OK": 128,
+    "CURRENT_SENSOR_MISSING": 13
+  },
+  "teacher_reasons": {
+    "OK": 141,
+    "Interpolation endpoints exceed tolerance": 3
+  },
+  "prepared": {
+    "run_id": "codex-time-recovery-cornergap-p03-d1",
+    "anchors": 125,
+    "input_valid": 125,
+    "real_input_replay_equal": [
+      "codex-time-recovery-cornergap-p03-d1:epoch0000:267639994017",
+      "codex-time-recovery-cornergap-p03-d1:epoch0000:274779993858"
+    ],
+    "input_reason_refinements": []
+  },
+  "all_planned_recovered": false,
+  "all_planned_lateral_events_qualified": false
+}

@@ -1,0 +1,85 @@
+{
+  "run_id": "codex-time-recovery-cornergap-p03-d2",
+  "control_sha256": "ea6cb70ec3532d01f8a8c556364ddf7b685a3fde8a56ec1a2b02cc081d5bab29",
+  "events": [
+    {
+      "site_id": "C04",
+      "release_ns": 167679996252,
+      "end_ns": 185739995915,
+      "recovered": true,
+      "control_sim_gap": {
+        "count": 361,
+        "median_ms": 49.999999,
+        "p95_ms": 69.999998,
+        "max_ms": 79.999999,
+        "over_150ms": 0
+      },
+      "control_wall_gap": {
+        "count": 361,
+        "median_ms": 49.911896,
+        "p95_ms": 58.015283,
+        "max_ms": 76.820248,
+        "over_150ms": 0
+      },
+      "clock_sim_gap": {
+        "count": 3612,
+        "median_ms": 5.0,
+        "p95_ms": 5.0,
+        "max_ms": 5.0,
+        "over_150ms": 0
+      },
+      "large_control_gaps": []
+    },
+    {
+      "site_id": "C11",
+      "release_ns": 289294993533,
+      "end_ns": 307334993197,
+      "recovered": true,
+      "control_sim_gap": {
+        "count": 361,
+        "median_ms": 49.999999,
+        "p95_ms": 64.999998,
+        "max_ms": 79.999998,
+        "over_150ms": 0
+      },
+      "control_wall_gap": {
+        "count": 361,
+        "median_ms": 49.698269,
+        "p95_ms": 60.776409,
+        "max_ms": 81.937917,
+        "over_150ms": 0
+      },
+      "clock_sim_gap": {
+        "count": 3608,
+        "median_ms": 5.0,
+        "p95_ms": 5.0,
+        "max_ms": 5.0,
+        "over_150ms": 0
+      },
+      "large_control_gaps": []
+    }
+  ],
+  "trajectory_receive_stats": {
+    "trajectory_decode_max_ms": 1.98714,
+    "trajectory_points": 1521,
+    "trajectory_bytes": 133876,
+    "preparation_trajectory_decode_max_ms": 1.483439,
+    "preparation_trajectory_points": 2349,
+    "preparation_trajectory_bytes": 206740
+  },
+  "decision_wall": {
+    "count": 5947,
+    "median_ms": 15.954711,
+    "p95_ms": 31.079501399999998,
+    "max_ms": 65.397073,
+    "over_150ms": 0
+  },
+  "processing": {
+    "count": 5947,
+    "median_ms": 15.906294,
+    "p95_ms": 30.977818199999998,
+    "max_ms": 50.91258,
+    "over_150ms": 0
+  },
+  "scope": "Measured publication timestamps and recorded clock; not actuator command delivery latency"
+}

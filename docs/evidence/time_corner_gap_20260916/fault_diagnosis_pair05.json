@@ -1,0 +1,78 @@
+[
+  {
+    "run_id": "codex-time-recovery-cornergap-p05-d1",
+    "status": "COMPLETE_LAP",
+    "accepted": 127,
+    "untriggered_sites": [
+      "C09"
+    ],
+    "preparation_failures": [
+      {
+        "event_id": 2,
+        "site_id": "C06",
+        "reason": "PREPARATION_SPEED_LIMIT",
+        "sim_ns": 199959995530,
+        "s_m": 209.7728727086413,
+        "speed_mps": 1.1494598388671875,
+        "lateral_m": -0.2571906350957673,
+        "heading_rad": -0.11378395447533318,
+        "requested_offset_m": -0.2,
+        "requested_heading_rad": -0.06981317007977318
+      }
+    ],
+    "fault": null,
+    "fault_state": null,
+    "raw_steering_near_fault": []
+  },
+  {
+    "run_id": "codex-time-recovery-cornergap-p05-d2",
+    "status": "STOPPED_FAILED",
+    "accepted": 0,
+    "untriggered_sites": [
+      "C06",
+      "C11"
+    ],
+    "preparation_failures": [],
+    "fault": "SWEEP_VEHICLE_STATE",
+    "fault_state": {
+      "sim_ns": 187739995803,
+      "reason": "SWEEP_VEHICLE_STATE",
+      "phase": "invalid",
+      "projection": {
+        "s_m": 186.7660876463133,
+        "offset_m": 0.20919070228219772,
+        "distance_m": 0.2091907022821977,
+        "segment_index": 63,
+        "heading_error_rad": -0.07232218433440472
+      },
+      "speed_mps": 1.3369300365447998,
+      "issued_angle_rad": -0.3200385570526123,
+      "nominal_angle_rad": -0.3187243342399597,
+      "measured_steering_rad": null,
+      "guard": {}
+    },
+    "raw_steering_near_fault": [
+      {
+        "capture_ns": 187704995804,
+        "receipt_ns": 1789539776503498154,
+        "value_rad": -0.17903918027877808,
+        "finite": true,
+        "selected_capture": false
+      },
+      {
+        "capture_ns": 187739995803,
+        "receipt_ns": 1789539776539280257,
+        "value_rad": "nan",
+        "finite": false,
+        "selected_capture": true
+      },
+      {
+        "capture_ns": 187774995802,
+        "receipt_ns": 1789539776569827571,
+        "value_rad": -0.18887661397457123,
+        "finite": true,
+        "selected_capture": false
+      }
+    ]
+  }
+]
