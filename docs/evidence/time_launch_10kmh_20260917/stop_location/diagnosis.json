@@ -1,0 +1,92 @@
+{
+  "status": "PASS",
+  "first_guard_after_arm_s": 19.609999562,
+  "current_pose": {
+    "stamp_ns": 38144999147,
+    "clock": "sim",
+    "epoch": "0",
+    "world_frame": "map",
+    "body_frame": "base_link",
+    "x_m": 89616.50002209391,
+    "y_m": 43166.47206748066,
+    "yaw_rad": 0.4581954463407347
+  },
+  "speed_kmh": 9.580354499816895,
+  "selected_lookahead_m": 5.402329444885254,
+  "minimum_preview_m": 5.271623014718466,
+  "source_prediction_endpoint_m": [
+    5.874441290888919,
+    -2.9449086492226746
+  ],
+  "source_prediction_endpoint_norm_m": 6.57126680575117,
+  "predicted_source_speed_mps": 2.5762356073737913,
+  "plan_age_s": 0.24499999500000003,
+  "pp_required_tire_rad": -0.19315799793301625,
+  "measured_tire_rad": -0.2018125057220459,
+  "issued_tire_rad": -0.188106655751406,
+  "stopping_travel_m": 5.271623014718466,
+  "scan_replay": {
+    "reason": "STOPPING_SWEEP_OCCUPIED",
+    "minimum_ray_margin_m": -0.03305658741416728
+  },
+  "motion": {
+    "policy": "awsim_understeer_10kmh_trial_v1",
+    "static_wheelbase_m": 1.087,
+    "nominal_response_length_m": 1.4056916400769508,
+    "lateral_displacement_bound_m": 0.09483628749847411,
+    "scope": "EXTRAPOLATED_10KMH_AWSIM_TRIAL_CONDITIONAL_BRAKING_BOUNDS",
+    "gradient_interval_s2_per_m": [
+      0.0,
+      0.2
+    ],
+    "braking_speed_interval_mps": [
+      0.0,
+      2.6612095832824707
+    ],
+    "heading_rate_radps": -0.47564056515693665,
+    "reported_lateral_mps": -0.06458830833435059,
+    "rear_lateral_mps": 0.018648796238190712,
+    "measured_curvature_per_m": -0.17873096810746392,
+    "low_speed_full_curvature_interval": false,
+    "calibrated_at_10kmh": false,
+    "maximum_trial_speed_mps": 3.0555555555555554,
+    "curvature_interval_per_m": [
+      -0.18822236906943687,
+      -0.07513010906753421
+    ]
+  },
+  "monitor_metadata": {
+    "policy": "CURVATURE_INTERVAL_SUPPORT_V2",
+    "support_directions": 64,
+    "sweep_samples": 1056,
+    "integration_step_m": 0.004996799066083854,
+    "maximum_position_integration_error_m": 0.002479005388548666,
+    "maximum_discretization_padding_m": 0.13678637819478412,
+    "stopping_travel_m": 5.271623014718466,
+    "whole_sweep_convex_enclosure": true
+  },
+  "lidar_points_inside_envelope_rear_xy_m": [
+    [
+      7.413771258471422,
+      -1.039028974283162
+    ],
+    [
+      7.379172810818937,
+      -0.9330022000737521
+    ]
+  ],
+  "lidar_points_inside_envelope_map_xy_m": [
+    [
+      89623.60956988737,
+      43168.81999091393
+    ],
+    [
+      89623.53164132811,
+      43168.89977731052
+    ]
+  ],
+  "physical_contact_confirmed": false,
+  "zero_speed_stop_confirmed": false,
+  "boundary": "First guard decision reproduced; simulator was frozen at runtime fault, not a measured complete braking rollout.",
+  "control_sha256": "6d24565a4fd1eaf3fb6a7cbb71c555f166c2ff46ebbfca903a80efcee9cdfe19"
+}
