@@ -26,7 +26,7 @@ def proposal(state=LargeRecoveryState(), cfg=None, **changes):
     return propose_large_recovery(cfg or config(), state, **values)
 
 
-def synthetic_run(cfg=None, *, reach=True, speed_mps=1.25, recovery_decay_s=4.):
+def synthetic_run(cfg=None, *, reach=True, speed_mps=1.25, recovery_decay_s=4., failed_site_ids=()):
     """Synthetic observed-state replay; not an AWSIM/dynamic vehicle result."""
     cfg = cfg or config(2)
     state = LargeRecoveryState(); rows = []
@@ -35,7 +35,8 @@ def synthetic_run(cfg=None, *, reach=True, speed_mps=1.25, recovery_decay_s=4.):
     for index in range(round((finish-1)/.05)):
         t = 1+index*.05; ns = round(t*1e9); s = start_s+(t-1)*1.25
         lat = 0.
-        if state.stage in ('preparing', 'handover') and reach:
+        if (state.stage in ('preparing', 'handover') and reach
+                and cfg.sites[state.site_cursor].site_id not in failed_site_ids):
             site = cfg.sites[state.site_cursor]; f = np.clip((s-site.start_s_m)/8., 0., 1.)
             lat = site.target_offset_m*f*f*(3-2*f)
         if state.stage == 'recovery':
@@ -144,6 +145,39 @@ def test_failed_target_prevents_later_injection_and_labels():
     assert state.stage == 'aborted' and state.reason == 'TARGET_NOT_REACHED'
     assert state.event_id == 1 and state.completed_events == 0
     assert not any(w.phase == 'recovery' for w in collection_phase_windows(rows))
+
+
+def test_explicit_target_miss_can_continue_without_labeling_failure_as_recovery():
+    cfg=replace(config(2),failed_site_policy='continue_after_target_miss_v1',recovery_duration_s=15.)
+    state,rows=synthetic_run(cfg,failed_site_ids=('P0',))
+    events=large_recovery_events(rows)
+    assert state.stage=='complete' and state.event_id==2 and state.completed_events==1
+    assert state.skipped_sites==(0,)
+    assert not events[0]['completed'] and not events[0]['recovery_confirmed']
+    assert events[1]['completed'] and events[1]['recovery_confirmed']
+    failed=next(r for r in rows if r['large_recovery']['state']['reason']=='TARGET_NOT_REACHED')
+    assert events[1]['preparation_start_ns']>=failed['publication']['sim_ns']+18_000_000_000
+    windows=collection_phase_windows(rows)
+    assert not recovery_teacher_mask(failed['publication']['sim_ns'],windows).any()
+    assert recovery_teacher_mask(events[1]['release_ns']+150_000_000,windows).all()
+    changed=deepcopy(rows)
+    changed[-1]['large_recovery']['state']['completed_events']=2
+    with pytest.raises(ValueError,match='COMPLETION_COUNTER'):large_recovery_events(changed)
+
+
+def test_continue_policy_keeps_entry_stability_and_other_preparation_bounds():
+    cfg=replace(config(2),failed_site_policy='continue_after_target_miss_v1')
+    st=LargeRecoveryState(stage='cooldown',site_cursor=1,event_id=1,approach_seen=True,
+        last_sim_ns=950_000_000,last_wall_ns=10_950_000_000,stable_since_ns=0,next_allowed_ns=2_000_000_000)
+    assert proposal(st,cfg,s_m=100.).transition is None
+    st=replace(st,next_allowed_ns=0)
+    assert proposal(st,cfg,s_m=100.,entry_clear=False).transition is None
+    assert proposal(st,cfg,s_m=100.,lateral_m=.06).transition is None
+    assert proposal(st,cfg,s_m=100.).transition=='start'
+    st=LargeRecoveryState(stage='preparing',event_id=1,start_ns=0,start_wall_ns=10_000_000_000)
+    assert proposal(st,cfg,lateral_m=.76).state.stage=='aborted'
+    with pytest.raises(ValueError,match='LARGE_FAILED_SITE_POLICY'):
+        replace(cfg,failed_site_policy='continue_after_sensor_fault')
 
 
 def test_longer_settling_moves_preparation_earlier_without_releasing_early():

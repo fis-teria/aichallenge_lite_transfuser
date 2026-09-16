@@ -86,12 +86,15 @@ class LargeRecoveryConfig:
     entry_heading_tolerance_rad: float = math.radians(1.)
     recovery_duration_s: float = 10.
     map_screen_policy: str = 'circle_1p4_v1'
+    failed_site_policy: str = 'finish_without_more_events_v1'
 
     def __post_init__(self) -> None:
         if self.speed_policy not in SPEED_POLICIES:
             raise ValueError('LARGE_SPEED_POLICY')
         if self.map_screen_policy not in MAP_SCREEN_POLICIES:
             raise ValueError('LARGE_MAP_SCREEN_POLICY')
+        if self.failed_site_policy not in ('finish_without_more_events_v1', 'continue_after_target_miss_v1'):
+            raise ValueError('LARGE_FAILED_SITE_POLICY')
         if (type(self.recovery_duration_s) not in (int, float)
                 or not math.isfinite(self.recovery_duration_s)
                 or not 10. <= self.recovery_duration_s <= 15.):
@@ -254,6 +257,16 @@ def propose_large_recovery(config: LargeRecoveryConfig, state: LargeRecoveryStat
         since = (st.target_since_ns if st.target_since_ns is not None else sim_ns) if goal else None
         st = replace(st, target_since_ns=since)
         if s_m > site.release_s_m+1.:
+            if config.failed_site_policy == 'continue_after_target_miss_v1':
+                cursor = st.site_cursor+1
+                # A target miss is not a successful recovery. Reserve a full
+                # nominal recovery window plus the normal future tail, then
+                # require the same fresh clearance and continuous stable entry.
+                return LargeRecoveryDecision(replace(st, stage='complete' if cursor == len(config.sites) else 'cooldown',
+                    site_cursor=cursor, skipped_sites=(*st.skipped_sites,st.site_cursor),
+                    reason='TARGET_NOT_REACHED', stable_since_ns=None, target_since_ns=None,
+                    next_allowed_ns=sim_ns+config.recovery_duration_ns+3_000_000_000),
+                    'nominal','invalid','skip')
             return LargeRecoveryDecision(replace(st, stage='aborted', reason='TARGET_NOT_REACHED'), 'nominal', 'invalid')
         if s_m >= site.release_s_m and since is not None and sim_ns-since >= 250_000_000:
             return LargeRecoveryDecision(replace(st, stage='handover', goal_reached=True), 'preparation', 'hold', 'request')
@@ -314,6 +327,8 @@ def commit_large_recovery(decision: LargeRecoveryDecision, *, sim_ns: int,
         st = replace(st, confirmed_ns=sim_ns)
     elif decision.transition == 'complete':
         st = replace(st, next_allowed_ns=sim_ns+3_000_000_000)
+    elif decision.transition == 'skip':
+        st = replace(st,next_allowed_ns=decision.state.next_allowed_ns+sim_ns-decision.state.last_sim_ns)
     return st
 
 
@@ -362,7 +377,11 @@ def large_recovery_events(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, A
             if since is not None and t-since >= 1_000_000_000 and release is not None and t-release <= config.recovery_duration_ns:
                 confirmed = True
             previous = t; previous_wall = pub['monotonic_ns']
-        completions = [r for r in group if r['large_recovery']['state']['completed_events'] >= event_id]
+        completed_before = first['state']['completed_events']
+        if (type(completed_before) is not int or not 0 <= completed_before < event_id
+                or any(r['large_recovery']['state']['completed_events'] not in (completed_before,completed_before+1) for r in group)):
+            raise ValueError('LARGE_AUDIT_COMPLETION_COUNTER')
+        completions = [r for r in group if r['large_recovery']['state']['completed_events'] == completed_before+1]
         completed = bool(completions)
         stable_end = False
         if completed and since is not None and previous is not None:
