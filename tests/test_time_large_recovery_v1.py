@@ -89,6 +89,23 @@ def test_record_actual_policy_rejects_unknown_nonfinite_and_nonforward_observati
     assert collection_speed_eligible(1.5, 'record_actual_v1')
 
 
+def test_entry_heading_can_match_recovered_state_without_bypassing_current_clearance():
+    cfg = replace(config(), speed_policy='record_actual_v1')
+    st = LargeRecoveryState(approach_seen=True, stable_since_ns=0,
+        last_sim_ns=950_000_000, last_wall_ns=10_950_000_000)
+    measured = dict(s_m=50., speed_mps=1.4025565, lateral_m=.01195,
+                    heading_rad=math.radians(1.0764366))
+    assert proposal(st, cfg, **measured).state.event_id == 0
+    aligned = replace(cfg, entry_heading_tolerance_rad=math.radians(2.))
+    assert proposal(st, aligned, **measured).transition == 'start'
+    assert proposal(st, aligned, **measured, entry_clear=False).state.event_id == 0
+    assert proposal(st, aligned, **{**measured, 'heading_rad':math.radians(2.01)}).state.event_id == 0
+    assert proposal(st, aligned, **{**measured, 'lateral_m':.051}).state.event_id == 0
+    for invalid in (float('nan'), 0., math.radians(2.01), True):
+        with pytest.raises(ValueError, match='ENTRY_HEADING_TOLERANCE'):
+            replace(cfg, entry_heading_tolerance_rad=invalid)
+
+
 @pytest.mark.parametrize('offset', [-.6, -.4, -.2, .2, .4, .6])
 def test_parallel_displacement_goals_are_measured_with_either_sign(offset):
     state, rows = synthetic_run(config(1, offset))

@@ -6,6 +6,7 @@ import csv
 from dataclasses import asdict, replace
 import hashlib
 import json
+import math
 from pathlib import Path
 
 import numpy as np
@@ -62,7 +63,8 @@ def main() -> None:
     plan = json.loads(args.plan.read_bytes())
     config = select_large_sites([LargeRecoverySite(**s) for s in plan['candidates']], seed=plan['seed'],
         event_cap=plan['event_cap'], required_site_ids=plan.get('required_site_ids', ()))
-    config = replace(config, speed_policy=plan.get('speed_policy', 'bounded_5kmh_v1'))
+    config = replace(config, speed_policy=plan.get('speed_policy', 'bounded_5kmh_v1'),
+                     entry_heading_tolerance_rad=plan.get('entry_heading_tolerance_rad', math.radians(1.)))
     base = load_pose_course(args.inputs/'base.csv')
     baseline = [[p.x_m, p.y_m] for p in base]
     old = json.loads((args.normal_run/'reference.json').read_bytes())

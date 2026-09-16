@@ -76,10 +76,15 @@ class LargeRecoveryConfig:
     seed: int = 0
     event_cap: int = 1
     speed_policy: str = 'bounded_5kmh_v1'
+    entry_heading_tolerance_rad: float = math.radians(1.)
 
     def __post_init__(self) -> None:
         if self.speed_policy not in SPEED_POLICIES:
             raise ValueError('LARGE_SPEED_POLICY')
+        if (type(self.entry_heading_tolerance_rad) not in (int, float)
+                or not math.isfinite(self.entry_heading_tolerance_rad)
+                or not math.radians(.5) <= self.entry_heading_tolerance_rad <= math.radians(2.)):
+            raise ValueError('LARGE_ENTRY_HEADING_TOLERANCE')
         if not isinstance(self.sites, (tuple, list)):
             raise ValueError('LARGE_SITES_SEQUENCE')
         sites = tuple(LargeRecoverySite(**s) if isinstance(s, dict) else s for s in self.sites)
@@ -200,7 +205,8 @@ def propose_large_recovery(config: LargeRecoveryConfig, state: LargeRecoveryStat
             st = replace(st, skipped_sites=(*st.skipped_sites, st.site_cursor), site_cursor=st.site_cursor+1)
         if st.site_cursor == len(config.sites):
             return LargeRecoveryDecision(replace(st, stage='complete', reason='WINDOWS_FINISHED'), 'nominal', 'baseline')
-        ready = entry_clear and speed_ok and abs(lateral_m) <= .05 and abs(heading_rad) <= math.radians(1.)
+        ready = (entry_clear and speed_ok and abs(lateral_m) <= .05
+                 and abs(heading_rad) <= config.entry_heading_tolerance_rad)
         st = replace(st, stable_since_ns=(st.stable_since_ns if st.stable_since_ns is not None else sim_ns) if ready else None)
         if (s_m < config.sites[st.site_cursor].start_s_m or st.stable_since_ns is None
                 or sim_ns-st.stable_since_ns < 1_000_000_000
