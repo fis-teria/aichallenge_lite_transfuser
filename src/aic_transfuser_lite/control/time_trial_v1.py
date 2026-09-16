@@ -204,7 +204,7 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
             tracking_curvature_per_m=2*float(target[1])/max(float(target @ target), 1e-6))
         target_speed = speed_plan['target_speed_mps']
         reference = replace(reference, target_speed_mps=target_speed)
-        config = replace(config, max_accel_mps2=speed_plan['config']['maximum_acceleration_mps2'],
+        config = replace(config, max_accel_mps2=speed_plan['acceleration_cap_mps2'],
                          speed_kp=speed_plan['config']['speed_gain_per_s'])
         selection_details['longitudinal_preview'] = speed_plan
     if lookahead_policy != "fixed_1m_v1" and target_speed > 1e-6:

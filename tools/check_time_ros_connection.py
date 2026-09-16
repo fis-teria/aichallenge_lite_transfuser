@@ -387,7 +387,9 @@ def main() -> None:
                         or row['details']['selected_lookahead_distance_m'] < row['details']['minimum_preview_distance_m']):
                     raise RuntimeError('CURVATURE_SPEED_PREVIEW_OR_MEASURED_SPEED_CONTRACT')
             successes = [r for r in records if r.get('reason') == 'SHADOW_CONTROL']
-            if any(r['acceleration_mps2'] > .4+1e-9 for r in successes):
+            if any(r['acceleration_mps2'] > r['details']['longitudinal_preview']['acceleration_cap_mps2']+1e-9
+                   or r['acceleration_mps2'] > 1.+1e-9
+                   or (r['speed_mps'] >= 1. and r['acceleration_mps2'] > .8+1e-9) for r in successes):
                 raise RuntimeError('CURVATURE_SPEED_ACCELERATION_BOUND')
             result['curvature_preview_braking_commands'] = len(preview)
             result['curvature_preview_maximum_acceleration_mps2'] = max(r['acceleration_mps2'] for r in successes)

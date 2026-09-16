@@ -25,7 +25,10 @@ class CurvatureSpeedConfig:
     curvature_half_span_m: float = .5
     horizon_reserve_m: float = .5
     horizon_extra_delay_s: float = .3
-    maximum_acceleration_mps2: float = .4
+    maximum_acceleration_mps2: float = .8
+    launch_maximum_acceleration_mps2: float = 1.
+    launch_full_until_mps: float = .5
+    launch_end_mps: float = 1.
     minimum_acceleration_mps2: float = -1.
     speed_gain_per_s: float = 2.
 
@@ -35,7 +38,8 @@ class CurvatureSpeedConfig:
                 or any(v <= 0 for k, v in values.items() if k != "minimum_acceleration_mps2")
                 or not -1. <= self.minimum_acceleration_mps2 < 0
                 or self.planning_deceleration_mps2 > -self.minimum_acceleration_mps2
-                or self.maximum_acceleration_mps2 > 1.):
+                or not self.maximum_acceleration_mps2 <= self.launch_maximum_acceleration_mps2 <= 1.
+                or self.launch_full_until_mps >= self.launch_end_mps):
             raise ValueError("CURVATURE_SPEED_CONFIG")
 
 
@@ -110,10 +114,19 @@ def preview_speed_limit(xy_m: np.ndarray, *, measured_speed_mps: float,
                   tracking_curvature=tracking_cap, prediction_horizon=horizon_cap)
     limiting_reason = min(limits, key=limits.get)
     target = limits[limiting_reason]
+    # 0.4 m/s^2 COMMAND barely moved the AWSIM kart in the first trial; it
+    # is not measured net acceleration. Preserve the established 1.0 launch
+    # authority, taper continuously to 0.8 above 1 m/s. This cap never forces
+    # positive acceleration or raises a curve/horizon-limited target speed.
+    launch_fraction = float(np.clip((measured_speed_mps-config.launch_full_until_mps)/
+        (config.launch_end_mps-config.launch_full_until_mps), 0., 1.))
+    acceleration_cap = (config.launch_maximum_acceleration_mps2*(1-launch_fraction)
+                        +config.maximum_acceleration_mps2*launch_fraction)
     acceleration = float(np.clip(config.speed_gain_per_s*(target-measured_speed_mps),
-        config.minimum_acceleration_mps2, config.maximum_acceleration_mps2))
+        config.minimum_acceleration_mps2, acceleration_cap))
     return dict(policy=ADAPTIVE_SPEED_POLICY, target_speed_mps=target,
-        acceleration_mps2=acceleration, limiting_reason=limiting_reason, limits_mps=limits,
+        acceleration_mps2=acceleration, acceleration_cap_mps2=acceleration_cap,
+        limiting_reason=limiting_reason, limits_mps=limits,
         measured_speed_mps=measured_speed_mps, endpoint_distance_m=endpoint_distance,
         origin_projection_arc_m=origin_arc,
         tracking_curvature_per_m=tracking_curvature_per_m,
