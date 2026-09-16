@@ -59,7 +59,7 @@ def project_to_polyline(point_xy_m: np.ndarray, path_xy_m: np.ndarray) -> dict[s
 def scan_margin(scan: dict[str, Any], sensor: Sequence[float], *, speed_mps: float,
                 measured_rad: float, issued_rad: float, previous_rad: float,
                 yaw_rate_radps: float, lateral_mps: float,
-                clearance_profile: str = STANDARD_CLEARANCE) -> dict[str, Any]:
+                clearance_profile: str = STANDARD_CLEARANCE, vehicle_model_policy: str = AWSIM_POLICY) -> dict[str, Any]:
     """Original LiDAR ranges [N]; exact existing monitor plus signed rejected margin.
 
     Validation and motion contracts stay in the production guard. A negative
@@ -68,7 +68,7 @@ def scan_margin(scan: dict[str, Any], sensor: Sequence[float], *, speed_mps: flo
     kwargs = dict(speed_mps=speed_mps, measured_steer_rad=measured_rad,
                   issued_steer_rad=issued_rad, previous_steer_rad=previous_rad,
                   scan_in_current_rear=tuple(sensor), envelope_policy="curvature_support_v2",
-                  vehicle_model_policy=AWSIM_POLICY, heading_rate_radps=yaw_rate_radps,
+                  vehicle_model_policy=vehicle_model_policy, heading_rate_radps=yaw_rate_radps,
                   reported_lateral_mps=lateral_mps, clearance_profile=clearance_profile)
     try:
         result = check_turning_scan(np.asarray(scan["ranges"]), scan["angle_min"],
@@ -78,12 +78,13 @@ def scan_margin(scan: dict[str, Any], sensor: Sequence[float], *, speed_mps: flo
         if str(exc) != "STOPPING_SWEEP_OCCUPIED":
             return {"reason": str(exc), "minimum_ray_margin_m": None}
     motion = stopping_motion(speed_mps, measured_rad, issued_rad, previous_rad,
-        policy=AWSIM_POLICY, heading_rate_radps=yaw_rate_radps, reported_lateral_mps=lateral_mps)
+        policy=vehicle_model_policy, heading_rate_radps=yaw_rate_radps, reported_lateral_mps=lateral_mps)
     v = max(0., speed_mps)
     reserve, _ = clearance_dimensions(clearance_profile)
     n, h, _ = curvature_support_envelope(*motion["curvature_interval_per_m"], reserve+.5*v+v*v/2,
         scan["angle_increment"], np.asarray(sensor[:2]),
-        lateral_padding_m=motion["lateral_displacement_bound_m"], clearance_profile=clearance_profile)
+        lateral_padding_m=motion["lateral_displacement_bound_m"], clearance_profile=clearance_profile,
+        vehicle_model_policy=vehicle_model_policy)
     a = scan["angle_min"]+np.arange(len(scan["ranges"]))*scan["angle_increment"]+sensor[2]
     projected = n @ np.column_stack([np.cos(a), np.sin(a)]).T
     remaining = h-n @ np.asarray(sensor[:2])

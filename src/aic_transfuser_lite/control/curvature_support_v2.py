@@ -12,7 +12,7 @@ import math
 from typing import Any
 
 import numpy as np
-from .vehicle_motion_v1 import MAX_CURVATURE_PER_M, stopping_motion
+from .vehicle_motion_v1 import IDEAL_POLICY, MAX_CURVATURE_PER_M, MAX_REAR_LATERAL_MPS, stopping_motion, vehicle_model_speed_limit
 
 STANDARD_CLEARANCE = 'standard_v1'
 NEAR_LIMIT_CLEARANCE = 'awsim_near_limit_v1'
@@ -29,7 +29,7 @@ def clearance_dimensions(profile: str) -> tuple[float, float]:
 
 def curvature_support_envelope(k_min: float, k_max: float, travel_m: float,
                                angle_step_rad: float, sensor_xy_m: np.ndarray, *, lateral_padding_m: float = 0.,
-                               clearance_profile: str = STANDARD_CLEARANCE
+                               clearance_profile: str = STANDARD_CLEARANCE, vehicle_model_policy: str = IDEAL_POLICY
                                ) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
     """Return unit normals [64,2], support distances [64] in m, and bounds.
 
@@ -40,14 +40,19 @@ def curvature_support_envelope(k_min: float, k_max: float, travel_m: float,
     """
     sensor = np.asarray(sensor_xy_m, dtype=float)
     reserve, half_width = clearance_dimensions(clearance_profile)
+    maximum_speed = vehicle_model_speed_limit(vehicle_model_policy)
     if (sensor.shape != (2,) or not np.isfinite(sensor).all()
             or not np.isfinite([k_min, k_max, travel_m, angle_step_rad, lateral_padding_m]).all()
             or not -MAX_CURVATURE_PER_M <= k_min <= k_max <= MAX_CURVATURE_PER_M
-            or not 0 <= lateral_padding_m <= .1
-            or not reserve <= travel_m <= reserve+(6/3.6)*.5+(6/3.6)**2/2
+            or not 0 <= lateral_padding_m <= max(.1, MAX_REAR_LATERAL_MPS*(.5+maximum_speed))
+            or not reserve <= travel_m <= reserve+maximum_speed*.5+maximum_speed**2/2
             or not 0 < angle_step_rad <= .02):
         raise ValueError("SUPPORT_ENVELOPE_CONTRACT")
     k_bound = max(abs(k_min), abs(k_max))
+    # Projection maxima below only search one angular period. Preserve that
+    # proof domain when admitting the longer explicit 10 km/h stopping sweep.
+    if k_bound*travel_m >= math.pi:
+        raise ValueError("SUPPORT_ENVELOPE_HEADING_DOMAIN")
     distances = np.linspace(0., travel_m, int(math.ceil(travel_m/.005))+1)
     ds = distances[1]-distances[0]
     midpoint = (distances[:-1]+distances[1:])/2
@@ -99,7 +104,8 @@ def check_support_ranges(ranges: np.ndarray, angles: np.ndarray, range_max: floa
     reserve, _ = clearance_dimensions(clearance_profile)
     normals, support, metadata = curvature_support_envelope(k_min, k_max,
         reserve+speed*.5+speed**2/2, angle_step_rad, sensor[:2],
-        lateral_padding_m=motion["lateral_displacement_bound_m"], clearance_profile=clearance_profile)
+        lateral_padding_m=motion["lateral_displacement_bound_m"], clearance_profile=clearance_profile,
+        vehicle_model_policy=motion["policy"])
     remaining = support-normals@sensor[:2]
     directions = normals@np.column_stack([np.cos(angles+sensor[2]), np.sin(angles+sensor[2])]).T
     parallel = abs(directions) < 1e-12

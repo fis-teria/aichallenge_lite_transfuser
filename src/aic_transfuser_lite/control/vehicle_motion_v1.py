@@ -15,8 +15,11 @@ from .awsim_steering import CALIBRATED_POLICIES
 
 IDEAL_POLICY = "ideal_bicycle_v1"
 AWSIM_POLICY = "awsim_understeer_v1"
+AWSIM_10KMH_POLICY = "awsim_understeer_10kmh_trial_v1"
+AWSIM_POLICIES = (AWSIM_POLICY, AWSIM_10KMH_POLICY)
 WHEELBASE_M = 1.087
 MAX_SPEED_MPS = 6. / 3.6
+TRIAL_10KMH_MAX_SPEED_MPS = 11. / 3.6
 MAX_CURVATURE_PER_M = math.tan(.5) / WHEELBASE_M
 NOMINAL_K_S2_PER_M = .045
 MAX_K_S2_PER_M = .2
@@ -25,13 +28,21 @@ MAX_REAR_LATERAL_MPS = .03
 SCENE_SHA256 = "9ab2e1e8865c02885594e0bbdde372302530f047b5a2e89c455be6a18f3e090b"
 
 
-def effective_response_length(speed_mps: float, policy: str = IDEAL_POLICY) -> float:
-    """Metres in tire=atan(curvature*length); speed in m/s, curvature in 1/m."""
+def vehicle_model_speed_limit(policy: str) -> float:
+    """Finite measured-speed domain in m/s; the 10 km/h trial is extrapolated."""
+    if policy == AWSIM_10KMH_POLICY:
+        return TRIAL_10KMH_MAX_SPEED_MPS
     if policy not in (IDEAL_POLICY, AWSIM_POLICY):
         raise ValueError("VEHICLE_MODEL_POLICY")
-    if not math.isfinite(speed_mps) or not 0 <= speed_mps <= MAX_SPEED_MPS:
+    return MAX_SPEED_MPS
+
+
+def effective_response_length(speed_mps: float, policy: str = IDEAL_POLICY) -> float:
+    """Metres in tire=atan(curvature*length); speed in m/s, curvature in 1/m."""
+    maximum = vehicle_model_speed_limit(policy)
+    if not math.isfinite(speed_mps) or not 0 <= speed_mps <= maximum:
         raise ValueError("VEHICLE_MODEL_SPEED")
-    return WHEELBASE_M + (NOMINAL_K_S2_PER_M*speed_mps**2 if policy == AWSIM_POLICY else 0.)
+    return WHEELBASE_M + (NOMINAL_K_S2_PER_M*speed_mps**2 if policy in AWSIM_POLICIES else 0.)
 
 
 def physical_tire_for_curvature(curvature_per_m: float, speed_mps: float,
@@ -55,14 +66,21 @@ def body_curvature_for_tire(tire_rad: float, speed_mps: float,
 def validate_vehicle_model_config(config: dict[str, Any]) -> str:
     policy = config.get("vehicle_model_policy", IDEAL_POLICY)
     effective_response_length(0., policy)
-    if policy == AWSIM_POLICY:
+    if policy in AWSIM_POLICIES:
         geometry = config.get("geometry", {})
+        speed_policy = "fixed_10kmh" if policy == AWSIM_10KMH_POLICY else "fixed_5kmh"
         if (config.get("steering_policy") not in CALIBRATED_POLICIES
                 or config.get("obstacle_policy") != "steering_support_v2"
-                or config.get("speed_policy") != "fixed_5kmh"
+                or config.get("speed_policy") != speed_policy
                 or geometry.get("wheelbase_m") != WHEELBASE_M
                 or geometry.get("scene_sha256") != SCENE_SHA256):
             raise ValueError("VEHICLE_MODEL_ASSET_OR_POLICY_CONTRACT")
+    if policy == AWSIM_10KMH_POLICY and (
+            config.get("scope") != "BOUNDED_AWSIM_TRIAL_ONLY"
+            or config.get("host") != "graneple@192.168.3.10"
+            or config.get("execution_profile") != "one_lap"
+            or config.get("record_vehicle_motion") is not True):
+        raise ValueError("VEHICLE_MODEL_10KMH_TRIAL_SCOPE")
     return policy
 
 
@@ -81,14 +99,14 @@ def stopping_motion(speed_mps: float, measured_tire_rad: float, issued_tire_rad:
     angles = [measured_tire_rad, issued_tire_rad,
               issued_tire_rad if previous_tire_rad is None else previous_tire_rad]
     if (not all(math.isfinite(x) for x in [speed_mps, *angles])
-            or not -.03 <= speed_mps <= MAX_SPEED_MPS or max(map(abs, angles)) > .5):
+            or not -.03 <= speed_mps <= vehicle_model_speed_limit(policy) or max(map(abs, angles)) > .5):
         raise ValueError("SWEEP_VEHICLE_STATE")
     speed = max(0., speed_mps)
     length = effective_response_length(speed, policy)
     k = [math.tan(a)/WHEELBASE_M for a in angles]
     metadata: dict[str, Any] = {"policy": policy, "static_wheelbase_m": WHEELBASE_M,
         "nominal_response_length_m": length, "lateral_displacement_bound_m": 0.}
-    if policy == AWSIM_POLICY:
+    if policy in AWSIM_POLICIES:
         if heading_rate_radps is None or reported_lateral_mps is None:
             raise ValueError("MOTION_MEASUREMENT_REQUIRED")
         if (not math.isfinite(heading_rate_radps)
@@ -108,5 +126,8 @@ def stopping_motion(speed_mps: float, measured_tire_rad: float, issued_tire_rad:
             "rear_lateral_mps": rear_lateral, "measured_curvature_per_m": measured_curvature,
             "low_speed_full_curvature_interval": speed < .2,
             "lateral_displacement_bound_m": MAX_REAR_LATERAL_MPS*(.5+speed)})
+        if policy == AWSIM_10KMH_POLICY:
+            metadata.update(scope="EXTRAPOLATED_10KMH_AWSIM_TRIAL_CONDITIONAL_BRAKING_BOUNDS",
+                            calibrated_at_10kmh=False, maximum_trial_speed_mps=TRIAL_10KMH_MAX_SPEED_MPS)
     metadata["curvature_interval_per_m"] = [min(k), max(k)]
     return metadata

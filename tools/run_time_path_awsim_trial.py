@@ -42,6 +42,7 @@ def main() -> None:
                     help="Trial configuration relative to this source tree")
     ap.add_argument('--recovery-side', choices=('left', 'right'),
                     help='Teacher bootstrap, finite pulse, then one-way E2E takeover')
+    ap.add_argument('--record-video', action='store_true', help='Record only the owned AWSIM and normal RViz windows')
     args = ap.parse_args()
     if not re.fullmatch(r"codex-time-[a-z0-9-]+", args.run_id):
         raise ValueError("INVALID_OWNED_RUN_ID")
@@ -71,7 +72,7 @@ def main() -> None:
     streams = []; processes = []; compose = None; owned = False
     started = time.monotonic()
     judge = JudgeLog(args.run_id); judge_offset = 0; judge_pending = b""
-    stall = LowSpeedStall(); rviz_window = None; next_capture_sim_s = 2.
+    stall = LowSpeedStall(); rviz_window = None; next_capture_sim_s = 2.; video = None
 
     def run(command, timeout=8, check=True):
         return subprocess.run(command, cwd=repo, env=env, text=True, capture_output=True, timeout=timeout, check=check)
@@ -196,6 +197,8 @@ def main() -> None:
         probe = launch(probe_command, "nodes")
         make = launch(result["commands"][1], "make")
         while time.monotonic() - started < outer_wall_s - 25:
+            if video is not None:
+                video.assert_alive()
             if probe.poll() is not None:
                 raise RuntimeError("TRIAL_NODES_EXIT")
             if make.poll() is not None and make.returncode:
@@ -272,6 +275,10 @@ def main() -> None:
                         result["rviz_capture_error"] = str(exc)
                     if rviz_window is None:
                         raise RuntimeError("NORMAL_RVIZ_WINDOW_MISSING")
+                    if args.record_video:
+                        from time_trial_video import TrialVideo, select_video_windows
+                        video = TrialVideo(output, args.run_id, args.display, select_video_windows(tree, rviz_window))
+                        video.start()
                     if args.recovery_side is not None:
                         from aic_transfuser_lite.data.time_recovery_collection_v1 import validate_collection_speed_parameters
                         import yaml
@@ -313,6 +320,8 @@ def main() -> None:
                                     run(["xwd", "-silent", "-id", rviz_window, "-out", str(output/"rviz_after_freeze.xwd")], timeout=3)
                                 except Exception as exc:
                                     result["final_rviz_capture_error"] = str(exc)
+                            if video is not None:
+                                cleanup.extend(video.stop()); video = None
                             run(["docker", "kill", cid], timeout=3)
                         else:
                             run(["docker", "stop", "-t", "2", cid], timeout=5)
@@ -330,6 +339,8 @@ def main() -> None:
                 run(compose+["down", "--timeout", "2"], timeout=8)
             except Exception as exc:
                 cleanup.append(str(exc))
+        if video is not None:
+            cleanup.extend(video.stop())
         for stream in streams:
             stream.close()
         result.update(cleanup_errors=cleanup, end_time_utc=time.time(), wall_s=time.monotonic()-started)

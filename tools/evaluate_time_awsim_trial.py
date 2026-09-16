@@ -12,10 +12,10 @@ import numpy as np
 
 from aic_transfuser_lite.control.time_geometry_v2 import validate_time_geometry
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
-from aic_transfuser_lite.control.time_trial_v1 import time_trial_control, validate_trial_config
+from aic_transfuser_lite.control.time_trial_v1 import time_trial_control, trial_speed_limits, validate_trial_config
 from aic_transfuser_lite.control.awsim_steering import CALIBRATED_POLICIES, LEAD_POLICY, command_steering
 from aic_transfuser_lite.control.awsim_steering_response import SteeringResponseState, compensate_steering_response
-from aic_transfuser_lite.control.vehicle_motion_v1 import IDEAL_POLICY, AWSIM_POLICY, stopping_motion
+from aic_transfuser_lite.control.vehicle_motion_v1 import IDEAL_POLICY, AWSIM_POLICIES, stopping_motion
 
 
 def response_record_matches(recorded: Any, expected: Any) -> bool:
@@ -53,7 +53,8 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
     scan_reasons = {"OBSERVATION_POSE_MISSING", "FRESH_ALIGNED_SCAN_MISSING", "POSE_ENDPOINT_IDENTITY",
                     "SCAN_FRAME", "SCAN_POSE_IDENTITY_OR_AGE", "SCAN_POSE_ALIGNMENT", "SCAN_CONTRACT",
                     "SCAN_COVERAGE", "SCAN_UNKNOWN", "STOPPING_SWEEP_OCCUPIED", "SWEEP_VEHICLE_STATE",
-                    "MOTION_MEASUREMENT_REQUIRED", "MOTION_YAW_RATE_INVALID", "MOTION_REAR_LATERAL_INVALID"}
+                    "MOTION_MEASUREMENT_REQUIRED", "MOTION_YAW_RATE_INVALID", "MOTION_REAR_LATERAL_INVALID",
+                    "SUPPORT_ENVELOPE_CONTRACT", "SUPPORT_ENVELOPE_HEADING_DOMAIN"}
     for command in commands:
         details = command.get("details", {})
         if not command.get("plan_id") or not all(k in details for k in ("observation_pose", "current_pose")):
@@ -87,7 +88,7 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
                 maximum_error = max(maximum_error, error)
                 if not np.isfinite(error) or error > 1e-9:
                     raise ValueError(f"recorded control differs: {key} error={error}")
-            if vehicle_model_policy == AWSIM_POLICY:
+            if vehicle_model_policy in AWSIM_POLICIES:
                 for key in ("vehicle_model_policy", "static_wheelbase_m", "nominal_response_length_m"):
                     if not response_record_matches(details.get(key), calculated[key]):
                         raise ValueError("recorded vehicle model differs: " + key)
@@ -115,7 +116,7 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
                         and abs(command["steer_rad"]-mapping["issued_input_rad"]) > 1e-9):
                     raise ValueError("recorded issued steering differs")
                 actuator_matched += 1
-                if vehicle_model_policy == AWSIM_POLICY:
+                if vehicle_model_policy in AWSIM_POLICIES:
                     observed_motion = command.get("motion_observation")
                     if not observed_motion or observed_motion.get("frame") != "base_link":
                         raise ValueError("recorded motion observation missing or wrong frame")
@@ -250,6 +251,9 @@ def main() -> None:
         "active_target_speed_mps": quantiles([c["target_speed_mps"] for c in active]),
         "final_3s_measured_speed_kmh": quantiles(np.asarray(late_speeds)*3.6) if late_speeds else None,
         "active_samples_within_0p25_kmh_of_5": sum(c["speed_mps"] is not None and abs(c["speed_mps"]*3.6-5.) <= .25 for c in active),
+        "speed_policy_ceiling_kmh": trial_speed_limits(speed_policy)[0]*3.6,
+        "active_samples_within_0p25_kmh_of_policy_ceiling": sum(c["speed_mps"] is not None
+            and abs(c["speed_mps"]*3.6-trial_speed_limits(speed_policy)[0]*3.6) <= .25 for c in active),
         "recorded_pose_count": len(measured_xy),
         "recorded_pose_travel_m": float(np.linalg.norm(np.diff(measured_xy, axis=0), axis=1).sum()) if len(measured_xy) > 1 else None,
         "recorded_pose_net_displacement_m": float(np.linalg.norm(measured_xy[-1] - measured_xy[0])) if len(measured_xy) > 1 else None,

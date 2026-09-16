@@ -17,7 +17,7 @@ from . import spatial_path_shadow_node_v4 as _source_layout
 from aic_transfuser_lite.control.long_sim_tracking_v4 import check_scan
 from aic_transfuser_lite.control.awsim_steering import command_steering, steering_response_gain
 from aic_transfuser_lite.control.awsim_steering_response import SteeringResponseState, compensate_steering_response
-from aic_transfuser_lite.control.vehicle_motion_v1 import IDEAL_POLICY, AWSIM_POLICY
+from aic_transfuser_lite.control.vehicle_motion_v1 import IDEAL_POLICY, AWSIM_POLICY, AWSIM_POLICIES
 from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, scan_pose_in_rear, select_aligned_scan
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
 from aic_transfuser_lite.control.time_trial_v1 import (
@@ -263,7 +263,7 @@ def main() -> None:
                 "receipt_monotonic_ns": cache["steering"][1],
                 "age_wall_s": (now-cache["steering"][1])/1e9,
             }
-            if vehicle_model_policy == AWSIM_POLICY:
+            if vehicle_model_policy in AWSIM_POLICIES:
                 velocity = cache["velocity"][0]
                 heading_rate, reported_lateral = float(velocity.heading_rate), float(velocity.lateral_velocity)
                 motion_observation = {"stamp_ns": stamp(velocity.header.stamp), "frame": velocity.header.frame_id,

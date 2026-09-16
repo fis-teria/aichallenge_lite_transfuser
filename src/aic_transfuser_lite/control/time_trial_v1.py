@@ -10,14 +10,15 @@ import numpy as np
 from .time_reference_v1 import TimePlan, TimedBodyPose, prepare_time_reference, reference_control
 from .time_geometry_v2 import validate_time_geometry
 from .awsim_steering import CALIBRATED_POLICIES, steering_asset_contract
-from .vehicle_motion_v1 import IDEAL_POLICY, WHEELBASE_M, effective_response_length, validate_vehicle_model_config
+from .vehicle_motion_v1 import IDEAL_POLICY, AWSIM_10KMH_POLICY, WHEELBASE_M, effective_response_length, validate_vehicle_model_config
 from .waypoint_controller import ControllerConfig, select_lookahead, control_from_waypoints
 from .polyline_lookahead_v1 import select_polyline_lookahead
 from .curvature_support_v2 import STANDARD_CLEARANCE, NEAR_LIMIT_CLEARANCE, clearance_dimensions
 from ..runtime.awsim_trial_session import trial_duration_limits
 
 
-SPEED_POLICIES = ("source_capped_0p25", "fixed_5kmh")
+FIXED_SPEED_POLICIES = ("fixed_5kmh", "fixed_10kmh")
+SPEED_POLICIES = ("source_capped_0p25", *FIXED_SPEED_POLICIES)
 SEGMENT_LOOKAHEAD_POLICY = "stopping_preview_segment_v1"
 EXTENDED_LOOKAHEAD_POLICY = "stopping_preview_extended_v1"
 LOOKAHEAD_POLICIES = ("fixed_1m_v1", "feasible_1_to_1p5m_v1", "stopping_preview_v1",
@@ -30,6 +31,8 @@ def trial_speed_limits(speed_policy: str) -> tuple[float, float]:
         return .25, .45
     if speed_policy == "fixed_5kmh":
         return 5. / 3.6, 6. / 3.6
+    if speed_policy == "fixed_10kmh":
+        return 10. / 3.6, 11. / 3.6
     raise ValueError("TRIAL_SPEED_POLICY")
 
 
@@ -40,6 +43,8 @@ def validate_trial_config(config: dict[str, Any]) -> str:
         raise ValueError("TRIAL_MOTION_RECORDING_FLAG")
     steering_asset_contract(config)
     validate_vehicle_model_config(config)
+    if policy == "fixed_10kmh" and config.get("vehicle_model_policy") != AWSIM_10KMH_POLICY:
+        raise ValueError("TRIAL_SPEED_MODEL_CONTRACT")
     lookahead_policy = config.get("lookahead_policy", "fixed_1m_v1")
     if lookahead_policy not in LOOKAHEAD_POLICIES:
         raise ValueError("TRIAL_LOOKAHEAD_POLICY")
@@ -97,28 +102,30 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
                        speed_policy: str = "source_capped_0p25",
                        lookahead_policy: str = "fixed_1m_v1",
                        vehicle_model_policy: str = IDEAL_POLICY) -> dict[str, Any]:
-    """SI units; age-aligned XY, explicit source-speed or fixed-5-km/h target.
+    """SI units; age-aligned XY, explicit source-speed or fixed-speed target.
 
     The static selected-scene rear axle differs by about 1 mm from base_link.
     A larger offset requires a future body-heading contract, not this trial.
     Reject geometry failures instead of cutting/fixing the predicted trajectory.
     """
     ceiling, overspeed = trial_speed_limits(speed_policy)
+    if (speed_policy == "fixed_10kmh") != (vehicle_model_policy == AWSIM_10KMH_POLICY):
+        raise ValueError("TRIAL_SPEED_MODEL_CONTRACT")
     if lookahead_policy not in LOOKAHEAD_POLICIES:
         raise ValueError("TRIAL_LOOKAHEAD_POLICY")
     if speed_cap_mps is None:
         speed_cap_mps = ceiling
     if (not np.isfinite([speed_mps, speed_cap_mps]).all() or not -.03 <= speed_mps <= overspeed
             or not 0 < speed_cap_mps <= ceiling
-            or (speed_policy == "fixed_5kmh" and speed_cap_mps != ceiling)):
+            or (speed_policy in FIXED_SPEED_POLICIES and speed_cap_mps != ceiling)):
         raise ValueError("TRIAL_SPEED_CONTRACT")
     if len(rear_axle_offset_m) != 2 or not np.isfinite(rear_axle_offset_m).all() or np.linalg.norm(rear_axle_offset_m) > .002:
         raise ValueError("BODY_POINT_OFFSET_REQUIRES_FUTURE_HEADING")
     reference = prepare_time_reference(plan, current, rear_axle_offset_m=rear_axle_offset_m)
     geometry = validate_time_geometry(plan.xy_m)
     predicted_speed = reference.target_speed_mps
-    target_speed = ceiling if speed_policy == "fixed_5kmh" else min(speed_cap_mps, predicted_speed)
-    if (predicted_speed > 1e-6 or speed_policy == "fixed_5kmh") and not geometry["motion_resolved"]:
+    target_speed = ceiling if speed_policy in FIXED_SPEED_POLICIES else min(speed_cap_mps, predicted_speed)
+    if (predicted_speed > 1e-6 or speed_policy in FIXED_SPEED_POLICIES) and not geometry["motion_resolved"]:
         raise ValueError("TIME_PATH_MOTION_UNRESOLVED")
     reference = replace(reference, target_speed_mps=target_speed)
     response_length = effective_response_length(max(0., speed_mps), vehicle_model_policy)

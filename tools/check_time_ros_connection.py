@@ -16,13 +16,16 @@ import time
 
 import numpy as np
 
+from aic_transfuser_lite.control.time_trial_v1 import SPEED_POLICIES, FIXED_SPEED_POLICIES, trial_speed_limits
+from aic_transfuser_lite.control.vehicle_motion_v1 import AWSIM_POLICIES
+
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", type=Path, required=True)
     ap.add_argument("--checkpoint-sha256", required=True)
     ap.add_argument("--output", type=Path, required=True)
-    ap.add_argument("--speed-policy", choices=("source_capped_0p25", "fixed_5kmh"), default="source_capped_0p25")
+    ap.add_argument("--speed-policy", choices=SPEED_POLICIES, default="source_capped_0p25")
     ap.add_argument("--trial-config", type=Path)
     args = ap.parse_args()
     fixture_config = json.loads(args.trial_config.read_text()) if args.trial_config else None
@@ -62,7 +65,7 @@ def main() -> None:
     processes = []; streams = []; result = {"status": "FAILED", "scope": "ISOLATED_SYNTHETIC_ROS_NOT_AWSIM"}
     start = time.monotonic(); last_sensor = 0.; counter = 0
     fixture_speed_mps = .1
-    motion_model = fixture_config is not None and fixture_config.get("vehicle_model_policy") == "awsim_understeer_v1"
+    motion_model = fixture_config is not None and fixture_config.get("vehicle_model_policy") in AWSIM_POLICIES
     fixture_heading_rate = 0. if motion_model else .17
     fixture_lateral_mps = 0. if motion_model else -.02
     fixture_scan_offset_ns = 0
@@ -164,8 +167,8 @@ def main() -> None:
             "--rear-axle-forward-m", ".0010000169277191162", "--pose-source", "/time_ros_fixture",
             *controller_settings,
             "--sensor-source", "/time_ros_fixture", "--synthetic-shadow-fixture"], "controller")
-        oracle_source_speed = .8 if args.speed_policy == "fixed_5kmh" else .15
-        expected_target = 5./3.6 if args.speed_policy == "fixed_5kmh" else .15
+        oracle_source_speed = .8 if args.speed_policy in FIXED_SPEED_POLICIES else .15
+        expected_target = trial_speed_limits(args.speed_policy)[0] if args.speed_policy in FIXED_SPEED_POLICIES else .15
         oracle_curvature = 0.
         oracle_xy_override = None
         def publish_oracle(t):
@@ -326,6 +329,29 @@ def main() -> None:
                     raise RuntimeError("EXTENDED_TARGET_CONTROL_CONTRACT")
             result["extended_target_shadow_commands"] = len(extended)
             result["extended_scope"] = "RECORDED_GEOMETRY_WITH_SYNTHETIC_STATIONARY_CLEAR_SCAN"
+        if args.speed_policy == "fixed_10kmh":
+            fixture_speed_mps = expected_target
+            oracle_source_speed = expected_target + .2
+            oracle_xy_override = None
+            oracle_curvature = 0.
+            began = time.monotonic()
+            spin_for(2., publish_oracle)
+            records = [json.loads(line) for line in (args.output/"oracle/control.jsonl").read_text().splitlines()]
+            high_speed = [r for r in records if r.get("reason") == "SHADOW_CONTROL"
+                          and r["monotonic_ns"]/1e9 > began+.8]
+            if len(high_speed) < 3:
+                raise RuntimeError("TEN_KMH_CONTROL_NOT_EXECUTED")
+            for row in high_speed:
+                detail = row["details"]
+                speed = row["speed_mps"]
+                preview = .4+speed*.5+speed*speed/2
+                if (abs(speed-expected_target) > 1e-5 or row["target_speed_mps"] != expected_target
+                        or detail["selected_lookahead_distance_m"] < preview
+                        or abs(detail["obstacle_guard"]["stopping_travel_m"]-preview) > 1e-9
+                        or detail["obstacle_guard"]["vehicle_motion"]["calibrated_at_10kmh"] is not False):
+                    raise RuntimeError("TEN_KMH_PREVIEW_OR_GUARD_MISMATCH")
+            result["ten_kmh_shadow_commands"] = len(high_speed)
+            result["ten_kmh_minimum_preview_m"] = preview
         stale_started = time.monotonic()
         spin_for(1.2)  # Sensors continue; stop sending plans.
         stale = [c for c in commands if c["wall"] > stale_started + .65]
@@ -336,7 +362,7 @@ def main() -> None:
         paused = [c for c in commands if c["wall"] > pause_started + .65]
         if not paused or any(c["accel"] >= 0 for c in paused):
             raise RuntimeError("PAUSED_CLOCK_DID_NOT_BRAKE")
-        fixture_speed_mps = (6./3.6 if args.speed_policy == "fixed_5kmh" else .45) + .05
+        fixture_speed_mps = trial_speed_limits(args.speed_policy)[1] + .05
         overspeed_started = time.monotonic()
         spin_for(1., publish_oracle)
         overspeed = [c for c in commands if c["wall"] > overspeed_started + .4]
