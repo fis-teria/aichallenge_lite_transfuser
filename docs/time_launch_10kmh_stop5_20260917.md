@@ -28,4 +28,20 @@ python tmp/time_launch_10kmh_stop5_20260917/monitor.py
 python tmp/time_launch_10kmh_stop5_20260917/finish_and_evaluate.py
 ```
 
-準備中。合否はこの診断設定下での完走有無として記録し、通常停止領域を使った10km/h完走とは区別する。
+## 結果
+
+**未完走。202.37m、section 4で停止領域監視が発動した。** 前回の44.95mの停止地点と最初の右コーナーは通過できた。発動は発進許可から78.94秒、実測9.537km/h。停止監視の距離は記録上も2.05895mで、通常10km/hの停止領域へ戻っていないことを確認した。
+
+発動時のPP先読みは5.249m、最低先読み5.234m、予測終端6.334m。PP要求操舵−0.2158rad、実測−0.2078radで、±0.3rad以内。停止領域にはLiDARの5点が入り、同じ入力で判定を再現した。ray margin−0.02445mは車体と壁の実距離ではない。シミュレーション凍結による終了で、速度ゼロへの制動完了・物理接触は確認していない。
+
+![停止領域と予測](evidence/time_launch_10kmh_stop5_20260917/stop_location/stopping_monitor.png)
+
+- [AWSIM録画・99.0秒](../tmp/time_launch_10kmh_stop5_20260917/videos/awsim.mp4)：発進前から凍結まで。
+- [RViz録画・41.9秒](../tmp/time_launch_10kmh_stop5_20260917/videos/rviz.mp4)：キャプチャが途中で終了した部分動画。RViz表示と走行は継続し、停止時の静止画も保存した。
+- [評価](evidence/time_launch_10kmh_stop5_20260917/evaluation/summary.json)、[停止判定の再現](evidence/time_launch_10kmh_stop5_20260917/stop_location/diagnosis.json)、[証跡manifest](evidence/time_launch_10kmh_stop5_20260917/manifest.json)。
+
+実走sourceは`2fe108b53c6507d9fbbc190f9af3bd0a622295b0`。全pytest **2833 passed / 4 skipped**、前回5km/hログの制御再生5997件一致、47入力の学習／runtime予測一致、隔離ROSの10km/h＋5km/h監視領域を確認してから試験した。試験中の制御・停止領域メタデータも再生検証を通過した。AWSIM本体1089ファイルの前後ハッシュは一致し、既存環境を復元した。
+
+remote deploymentは`/home/graneple/e2e_autonomous/time_launch_10kmh_stop5_20260917`、run IDは`codex-time-launch10-stop5-lap01`。生ログは`/home/thistle/e2e_autonomous/runs/time_launch_10kmh_stop5_20260917/raw/codex-time-launch10-stop5-lap01`へ転送・検証済み。追加解析は同じWSL lock内で`inspect_native.py`、`route_native.py`、`verify_video_native.py`、`diagnose_stop_native.py`を実行し、Windowsで`pack_evidence.py`を実行した。
+
+この結果は通常停止領域での10km/h完走を意味しない。次の「停止監視1m」はユーザーが別途指定した比較条件として、別config・run IDで記録する。
