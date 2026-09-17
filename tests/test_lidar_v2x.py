@@ -150,8 +150,6 @@ def test_pose_history_never_uses_latest_or_future_unreceived_tf():
     with pytest.raises(LookupError):
         history.at(1.05)
     history.add(1.1, Pose2(.1, 0, 0))
-    # Floating point tolerance is handled using a sub-limit test gap here.
-    history.max_gap_s = .101
     assert history.at(1.05).x_m == pytest.approx(.05)
     history.add(2., Pose2(1, 0, 0))
     with pytest.raises(LookupError, match="gap"):

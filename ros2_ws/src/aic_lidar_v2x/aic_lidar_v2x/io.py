@@ -81,6 +81,6 @@ class PoseHistory:
         if i == 0 or i == len(self.stamps):
             raise LookupError("Measurement is outside the received TF history")
         left, right = self.stamps[i-1], self.stamps[i]
-        if right - left > self.max_gap_s:
+        if right - left > self.max_gap_s + 1e-9:
             raise LookupError("TF gap exceeds interpolation limit")
         return interpolate_pose(self.poses[i-1], self.poses[i], (stamp_s - left) / (right - left))

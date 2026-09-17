@@ -269,7 +269,12 @@ def fit_vehicle_box(xy: np.ndarray, origins: np.ndarray, yaw: float,
     fine_scores = evaluate(fine)
     best_index = int(np.argmin(fine_scores))
     centre = fine[best_index]
-    near_best = grid[scores <= float(fine_scores[best_index]) + 0.03]
+    # Include the refined coordinates in a full-width grid. A coarse x error
+    # must not conceal the genuinely unconstrained y of a partial rear face.
+    ambiguity_grid = np.stack(np.meshgrid(
+        np.unique(np.append(np.linspace(lower[0], upper[0], 17), centre[0])),
+        np.unique(np.append(np.linspace(lower[1], upper[1], 17), centre[1]))), axis=-1).reshape(-1, 2)
+    near_best = ambiguity_grid[evaluate(ambiguity_grid) <= float(fine_scores[best_index]) + 0.03]
     ambiguity = float(np.linalg.norm(near_best - centre, axis=1).max()) if len(near_best) else 0.0
     return rotation.apply(centre[None, :])[0], float(fine_scores[best_index]), ambiguity
 
