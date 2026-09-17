@@ -1,16 +1,12 @@
 # Physical-box braking fixture only. Coordinates are scenario setup/debug data;
 # neither E2E nor SLAM receives this file or simulator object poses.
-# Start grid 1 and calibrated reference s=44 m, three boxes across the lane.
+# Preserve AWSIM's normal ego spawn. Calibrated reference s=44 m box barrier.
 schemaVersion: 2
 name: slam_longitudinal_box_stop
 description: E2E steering with LiDAR-wheel SLAM longitudinal braking only
 fail:
   collision: 1
   timeoutSeconds: 120
-vehicles:
-  "1":
-    at: [375.06, -6.94]
-    yaw: -136.915
 objects:
   box:
     - name: stop_box_center
