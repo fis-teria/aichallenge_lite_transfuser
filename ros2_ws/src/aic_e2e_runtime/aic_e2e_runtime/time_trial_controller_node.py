@@ -114,6 +114,7 @@ def main() -> None:
     from std_msgs.msg import String
     from sensor_msgs.msg import LaserScan
     from rosgraph_msgs.msg import Clock
+    from nav_msgs.msg import Odometry
     from autoware_auto_vehicle_msgs.msg import VelocityReport, SteeringReport
     from autoware_auto_control_msgs.msg import AckermannControlCommand
     from autoware_auto_planning_msgs.msg import Trajectory
@@ -132,6 +133,7 @@ def main() -> None:
                 raise ValueError('ROS_SPEED_PARAMETER_CONFIG_MISMATCH:'+name)
     topic = "/control/command/control_cmd" if live else "/time_path/shadow/control_cmd"
     publisher = None
+    wheel_publisher = node.create_publisher(Odometry, '/time_path/wheel_odometry', 10)
     clock_ns = None
     clock_receipt = 0
     epoch = 0
@@ -239,6 +241,22 @@ def main() -> None:
                         odometry.add_steering(captured, value)
                 for pose, trace in odometry.drain(clock_ns, str(epoch)):
                     poses.append(pose)
+                    wheel = Odometry()
+                    wheel.header.frame_id = pose.world_frame
+                    wheel.child_frame_id = 'base_link'
+                    wheel.header.stamp.sec = pose.stamp_ns // 10**9
+                    wheel.header.stamp.nanosec = pose.stamp_ns % 10**9
+                    wheel.pose.pose.position.x = pose.x_m
+                    wheel.pose.pose.position.y = pose.y_m
+                    wheel.pose.pose.orientation.z = math.sin(pose.yaw_rad/2)
+                    wheel.pose.pose.orientation.w = math.cos(pose.yaw_rad/2)
+                    wheel.twist.twist.linear.x = trace['speed_mps']
+                    wheel.twist.twist.angular.z = trace['estimated_yaw_rate_radps']
+                    # Uncalibrated dead-reckoning uncertainty; never advertise zero covariance.
+                    for axis in range(6):
+                        wheel.pose.covariance[axis*7] = 1e6
+                        wheel.twist.covariance[axis*7] = 1e6
+                    wheel_publisher.publish(wheel)
                     record(dict(event='CONTROL_ODOMETRY', pose=pose.__dict__, inputs=trace))
             except ValueError as exc:
                 state['fault'] = 'ODOMETRY_'+str(exc)

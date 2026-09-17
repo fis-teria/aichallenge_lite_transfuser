@@ -1,0 +1,39 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Global Options:
+    Fixed Frame: map
+    Frame Rate: 20
+  Displays:
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Course boundaries
+      Enabled: true
+      Topic:
+        Value: /map/vector_map_marker
+        Durability Policy: Transient Local
+        Reliability Policy: Reliable
+    - Class: rviz_default_plugins/LaserScan
+      Name: LiDAR aligned using wheel odometry
+      Enabled: true
+      Topic:
+        Value: /time_path/localization/scan
+        Reliability Policy: Best Effort
+      Size (m): 0.05
+      Style: Points
+      Decay Time: 0.5
+    - Class: rviz_default_plugins/Pose
+      Name: Estimated planar base pose
+      Enabled: true
+      Topic:
+        Value: /time_path/localization/pose
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/SetInitialPose
+      Topic: /time_path/localization/initialpose
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Target Frame: time_localized_base_link
+      Scale: 20
