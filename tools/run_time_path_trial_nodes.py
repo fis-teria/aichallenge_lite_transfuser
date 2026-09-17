@@ -19,6 +19,8 @@ def main() -> None:
     ap.add_argument("--config", type=Path, required=True)
     ap.add_argument("--recovery-reference", type=Path)
     args = ap.parse_args()
+    if args.recovery_reference is not None:
+        raise ValueError('GLOBAL_TEACHER_BOOTSTRAP_UNSUPPORTED_WITH_LOCAL_ODOMETRY')
     config = json.loads(args.config.read_text())
     # Use the installed, source-matched standard-library schedule helper.
     from aic_e2e_runtime import spatial_path_shadow_node_v4 as _source_layout
@@ -33,7 +35,7 @@ def main() -> None:
         [sys.executable, "-m", "aic_e2e_runtime.time_trial_controller_node", *common,
          "--trial-config", str(args.config),
          "--rear-axle-forward-m", str(config["geometry"]["rear_axle_forward_in_base_link_m"]),
-         "--pose-source", "/localization/ekf_localizer", "--authorize-awsim-only"],
+         "--authorize-awsim-only"],
     ]
     names = ['inference', 'controller']
     if args.recovery_reference is not None:

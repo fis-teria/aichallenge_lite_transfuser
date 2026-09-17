@@ -49,7 +49,6 @@ def launch_nodes(context):
     controller = Node(package='aic_e2e_runtime', executable='time_trial_controller_node', output='screen',
         parameters=[parameters], arguments=[*common, '--trial-config', str(effective),
             '--rear-axle-forward-m', str(config['geometry']['rear_axle_forward_in_base_link_m']),
-            '--pose-source', '/localization/ekf_localizer',
             *(['--authorize-awsim-only'] if live == 'true' else [])])
     # Parent host independently checks heartbeat and freezes its AWSIM before
     # shutting down control. Never leave a surviving half of this pair running.

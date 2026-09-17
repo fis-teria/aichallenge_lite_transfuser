@@ -25,6 +25,7 @@ from aic_transfuser_lite.control.time_trial_v1 import (
     SPEED_POLICIES, interpolate_body_pose, time_trial_control, trial_speed_limits, validate_trial_config,
 )
 from aic_transfuser_lite.runtime.awsim_trial_session import requested_stop, trial_duration_limits, trial_brake_reason, encode_scan_values
+from aic_transfuser_lite.runtime.time_control_odometry import TimeControlOdometry, CONTROL_ODOMETRY_POLICY
 from aic_transfuser_lite.runtime.time_recovery_takeover_v1 import (
     RecoveryTakeoverState, propose_recovery_takeover, validate_recovery_reference,
 )
@@ -40,7 +41,6 @@ def main() -> None:
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--checkpoint-sha256", required=True)
     parser.add_argument("--rear-axle-forward-m", type=float, required=True)
-    parser.add_argument("--pose-source", required=True)
     parser.add_argument("--sensor-source", default="/awsim_d1")
     parser.add_argument("--authorize-awsim-only", action="store_true")
     parser.add_argument("--synthetic-shadow-fixture", action="store_true")
@@ -50,6 +50,8 @@ def main() -> None:
     settings.add_argument("--trial-config", type=Path)
     settings.add_argument("--speed-policy", choices=SPEED_POLICIES)
     args, ros_args = parser.parse_known_args()
+    if args.recovery_reference is not None:
+        raise ValueError("GLOBAL_TEACHER_BOOTSTRAP_UNSUPPORTED_WITH_LOCAL_ODOMETRY")
     config_sha = None
     execution_profile = "bounded_10s"
     obstacle_policy = "straight_v1"
@@ -110,8 +112,7 @@ def main() -> None:
     from rclpy.node import Node
     from rclpy.qos import qos_profile_sensor_data
     from std_msgs.msg import String
-    from nav_msgs.msg import Odometry
-    from sensor_msgs.msg import Imu, LaserScan
+    from sensor_msgs.msg import LaserScan
     from rosgraph_msgs.msg import Clock
     from autoware_auto_vehicle_msgs.msg import VelocityReport, SteeringReport
     from autoware_auto_control_msgs.msg import AckermannControlCommand
@@ -136,6 +137,7 @@ def main() -> None:
     epoch = 0
     cache = {}
     poses: deque[TimedBodyPose] = deque(maxlen=256)
+    odometry = TimeControlOdometry(args.rear_axle_forward_m, vehicle_model_policy)
     scans: deque[tuple[LaserScan, int]] = deque(maxlen=4)
     previous = [0., time.monotonic()]
     response_state: SteeringResponseState | None = None
@@ -168,14 +170,6 @@ def main() -> None:
                 [message.longitudinal_velocity, message.lateral_velocity, message.heading_rate])
         elif role == "steering":
             row["tire_rad"] = encode_scan_values([message.steering_tire_angle])[0]
-        elif role == "imu":
-            a = message.angular_velocity
-            row["angular_xyz_radps"] = encode_scan_values([a.x, a.y, a.z])
-        elif role == "pose":
-            p, q = message.pose.pose.position, message.pose.pose.orientation
-            row["child_frame"] = message.child_frame_id
-            row["position_xyz_m"] = encode_scan_values([p.x, p.y, p.z])
-            row["quaternion_xyzw"] = encode_scan_values([q.x, q.y, q.z, q.w])
         motion_log.write(json.dumps(row, allow_nan=False) + "\n")
 
     def on_clock(message) -> None:
@@ -183,12 +177,12 @@ def main() -> None:
         t = stamp(message.clock)
         if clock_ns is not None and t < clock_ns:
             state["fault"] = "CLOCK_RESET"; epoch += 1; poses.clear(); scans.clear(); cache.clear()
+            odometry.reset()
             response_state = None
         clock_ns = t; clock_receipt = time.monotonic_ns()
 
     node.create_subscription(Clock, "/clock", on_clock, 10)
     topics = {"plan": ("/time_path/plan", String, "/time_path_inference"),
-              "pose": ("/localization/kinematic_state", Odometry, args.pose_source),
               "velocity": ("/vehicle/status/velocity_status", VelocityReport, args.sensor_source),
               "steering": ("/vehicle/status/steering_status", SteeringReport, args.sensor_source),
               "scan": ("/sensing/lidar/scan", LaserScan, args.sensor_source)}
@@ -199,28 +193,38 @@ def main() -> None:
 
     def receive(role, message) -> None:
         cache[role] = (message, time.monotonic_ns())
-        if role in ("velocity", "steering", "pose"):
+        if role in ("velocity", "steering"):
             observe_motion(role, message)
         if role == "scan":
             scans.append(cache[role])
-        if role == "pose":
-            p = message.pose.pose; q = p.orientation
-            if (message.header.frame_id != "map" or message.child_frame_id != "base_link"
-                    or not np.isfinite([p.position.x, p.position.y, q.x, q.y, q.z, q.w]).all()
-                    or abs(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w - 1) > .01):
-                state["fault"] = "POSE_FRAME_OR_QUATERNION"
-                return
-            yaw = math.atan2(2*(q.w*q.z + q.x*q.y), 1-2*(q.y*q.y + q.z*q.z))
-            poses.append(TimedBodyPose(stamp(message.header.stamp), "sim", str(epoch), "map", "base_link",
-                                       float(p.position.x), float(p.position.y), yaw))
+        if role in ("velocity", "steering") and clock_ns is not None and not state['fault']:
+            try:
+                if names(topics[role][0]) != [args.sensor_source]:
+                    raise ValueError('SOURCE_'+role)
+                captured = stamp(message.stamp if role == 'steering' else message.header.stamp)
+                if not -20_000_000 <= clock_ns-captured <= 150_000_000:
+                    raise ValueError('STALE_'+role)
+                if role == 'velocity':
+                    if message.header.frame_id != 'base_link':
+                        raise ValueError('VELOCITY_FRAME')
+                    speed_value = float(message.longitudinal_velocity)
+                    if math.isfinite(speed_value) and not -.03 <= speed_value <= overspeed_limit_mps:
+                        state['fault'] = 'OVERSPEED_OR_REVERSE'
+                        return
+                    odometry.add_speed(captured, speed_value)
+                else:
+                    odometry.add_steering(captured, float(message.steering_tire_angle))
+                for pose, trace in odometry.drain(clock_ns, str(epoch)):
+                    poses.append(pose)
+                    record(dict(event='CONTROL_ODOMETRY', pose=pose.__dict__, inputs=trace))
+            except ValueError as exc:
+                state['fault'] = 'ODOMETRY_'+str(exc)
 
     for role, (input_topic, kind, _) in topics.items():
         node.create_subscription(kind, input_topic, lambda m, role=role: receive(role, m), qos_profile_sensor_data)
     if motion_log is not None:
-        node.create_subscription(Imu, "/sensing/imu/imu_raw", lambda m: observe_motion("imu", m), qos_profile_sensor_data)
         def record_motion_sources() -> None:
-            sources = {role: names(topics[role][0]) for role in ("velocity", "steering", "pose")}
-            sources["imu"] = names("/sensing/imu/imu_raw")
+            sources = {role: names(topics[role][0]) for role in ("velocity", "steering")}
             motion_log.write(json.dumps({"event": "MOTION_SOURCES", "sim_ns": clock_ns,
                 "monotonic_ns": time.monotonic_ns(), "epoch": str(epoch), "sources": sources}) + "\n")
             motion_log.flush()
@@ -243,6 +247,7 @@ def main() -> None:
                         "steering_policy": steering_policy, "steering_response_gain": steering_gain,
                         "lookahead_policy": lookahead_policy,
                         "vehicle_model_policy": vehicle_model_policy,
+                        "control_odometry_policy": CONTROL_ODOMETRY_POLICY,
                         "stopping_distance_policy": stopping_distance_policy,
                         "scan_occupancy_policy": scan_occupancy_policy,
                         "execution_profile": execution_profile, "drive_limit_sim_s": drive_sim_s,
@@ -270,13 +275,15 @@ def main() -> None:
                 raise ValueError("COMMAND_AUTHORITY")
             if clock_ns is None or now - clock_receipt > 500_000_000:
                 raise ValueError("CLOCK_STALE")
-            for role in ("velocity", "steering", "scan", "pose"):
+            for role in ("velocity", "steering", "scan"):
                 m, received = cache[role]
                 t = stamp(m.stamp if role == "steering" else m.header.stamp)
                 if now - received > 300_000_000 or not -20_000_000 <= clock_ns - t <= 150_000_000:
                     raise ValueError("STALE_" + role)
                 if names(topics[role][0]) != [topics[role][2]]:
                     raise ValueError("SOURCE_" + role)
+            if not poses or not -20_000_000 <= clock_ns-poses[-1].stamp_ns <= 150_000_000:
+                raise ValueError('LOCAL_ODOMETRY_STALE')
             speed = float(cache["velocity"][0].longitudinal_velocity)
             measured_steer = float(cache["steering"][0].steering_tire_angle)
             steering_observation = {

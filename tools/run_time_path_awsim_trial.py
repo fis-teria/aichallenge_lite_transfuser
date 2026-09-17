@@ -54,6 +54,8 @@ def main() -> None:
     ap.add_argument('--npcs', type=int, choices=range(4), default=0)
     ap.add_argument('--pp-vehicles', type=int, choices=range(4), default=0)
     args = ap.parse_args()
+    if args.recovery_side is not None:
+        raise ValueError('GLOBAL_TEACHER_BOOTSTRAP_UNSUPPORTED_WITH_LOCAL_ODOMETRY')
     domains = traffic_domains(args.pp_vehicles, args.npcs)
     if not re.fullmatch(r"codex-time-[a-z0-9-]+", args.run_id):
         raise ValueError("INVALID_OWNED_RUN_ID")
@@ -300,9 +302,14 @@ def main() -> None:
                         continue
                     snapshot = json.loads(path.read_text())
                     traffic[str(domain)] = snapshot
+                    # Ego control has its own wheel-odometry watchdog. Global
+                    # pose is optional evaluation data, never an ego run gate.
+                    required_stamps = ('monotonic_ns', 'status_monotonic_ns') + (
+                        ('odometry_monotonic_ns',) if domain != 1 else ())
                     fresh = all(snapshot.get(key) is not None and time.monotonic_ns()-snapshot[key] < 2_000_000_000
-                                for key in ('monotonic_ns', 'status_monotonic_ns', 'odometry_monotonic_ns'))
-                    valid = (fresh and snapshot['status_messages'] >= 5 and snapshot['odometry_messages'] >= 5
+                                for key in required_stamps)
+                    valid = (fresh and snapshot['status_messages'] >= 5
+                             and (domain == 1 or snapshot['odometry_messages'] >= 5)
                              and snapshot['status_publishers'] == 1 and snapshot['command_publishers'] == 1)
                     traffic_ready = traffic_ready and valid
                     if result['official_start_requested'] and not valid:

@@ -41,8 +41,8 @@ def main() -> None:
     args.output.mkdir(parents=True, exist_ok=False)
     import rclpy
     from rclpy.node import Node
-    from sensor_msgs.msg import Image, Imu, LaserScan
-    from nav_msgs.msg import Odometry, Path as RosPath
+    from sensor_msgs.msg import Image, LaserScan
+    from nav_msgs.msg import Path as RosPath
     from rosgraph_msgs.msg import Clock
     from std_msgs.msg import String
     from autoware_auto_vehicle_msgs.msg import VelocityReport, SteeringReport
@@ -51,8 +51,7 @@ def main() -> None:
     rclpy.init(); node = Node("time_ros_fixture", enable_rosout=False)
     kinds = {"clock": ("/clock", Clock), "image": ("/sensing/camera/image_raw", Image),
              "scan": ("/sensing/lidar/scan", LaserScan), "velocity": ("/vehicle/status/velocity_status", VelocityReport),
-             "steering": ("/vehicle/status/steering_status", SteeringReport), "pose": ("/localization/kinematic_state", Odometry),
-             "imu": ("/sensing/imu/imu_raw", Imu)}
+             "steering": ("/vehicle/status/steering_status", SteeringReport)}
     pubs = {name: node.create_publisher(kind, topic, 10) for name, (topic, kind) in kinds.items()}
     paths = {}; plans = {}; commands = []
     def ns(stamp):
@@ -75,7 +74,6 @@ def main() -> None:
     fixture_lateral_mps = 0. if motion_model else -.02
     fixture_scan_offset_ns = 0
     fixture_scan_obstacle_range_m = None
-    fixture_pose_x_m = None
 
     def launch(module, extra, name):
         stream = (args.output / (name + ".log")).open("x"); streams.append(stream)
@@ -106,13 +104,7 @@ def main() -> None:
         velocity.longitudinal_velocity = fixture_speed_mps
         velocity.heading_rate = fixture_heading_rate; velocity.lateral_velocity = fixture_lateral_mps
         pubs["velocity"].publish(velocity)
-        imu = Imu(); set_stamp(imu.header.stamp, t); imu.header.frame_id = "tamagawa/imu_link"
-        imu.angular_velocity.z = fixture_heading_rate; pubs["imu"].publish(imu)
         steering = SteeringReport(); set_stamp(steering.stamp, t); pubs["steering"].publish(steering)
-        pose = Odometry(); set_stamp(pose.header.stamp, t); pose.header.frame_id = "map"; pose.child_frame_id = "base_link"
-        pose.pose.pose.orientation.w = 1.
-        pose.pose.pose.position.x = .1*(wall-start) if fixture_pose_x_m is None else fixture_pose_x_m
-        pubs["pose"].publish(pose)
         if counter % 5 == 0:
             scan = LaserScan(); set_stamp(scan.header.stamp, t+fixture_scan_offset_ns); scan.header.frame_id = "lidar" if fixture_config else "lidar_link"
             scan.angle_min = -float(np.pi); scan.angle_increment = float(2*np.pi/750)
@@ -173,7 +165,7 @@ def main() -> None:
             controller_settings = ["--trial-config", str(fixture_path)]
         controller = launch("time_trial_controller_node", ["--output", str(args.output / "oracle"),
             "--run-id", "ros-smoke-oracle", "--checkpoint-sha256", "0"*64,
-            "--rear-axle-forward-m", ".0010000169277191162", "--pose-source", "/time_ros_fixture",
+            "--rear-axle-forward-m", ".0010000169277191162",
             *controller_settings,
             "--sensor-source", "/time_ros_fixture", "--synthetic-shadow-fixture"], "controller")
         oracle_source_speed = .8 if args.speed_policy in (*FIXED_SPEED_POLICIES, *ADAPTIVE_SPEED_POLICIES) else .15
@@ -198,15 +190,24 @@ def main() -> None:
         positive = [c for c in commands if c["accel"] > 0 and valid_target(c["speed"]) and abs(c["steer"]) < 1e-8]
         if not positive:
             raise RuntimeError("ORACLE_DID_NOT_REACH_SHADOW_PP")
+        subscriptions = node.get_subscriber_names_and_types_by_node('time_path_controller', '/')
+        forbidden = ('/localization/', '/sensing/imu/', '/sensing/gnss/', '/tf', '/tf_static')
+        if any(topic.startswith(forbidden) for topic, _ in subscriptions):
+            raise RuntimeError('FORBIDDEN_CONTROL_SUBSCRIPTION')
+        rows = [json.loads(line) for line in (args.output/'oracle/control.jsonl').read_text().splitlines()]
+        local = [row for row in rows if row.get('event') == 'CONTROL_ODOMETRY']
+        if len(local) < 5 or any(row['pose']['world_frame'] != 'time_wheel_odom' for row in local):
+            raise RuntimeError('LOCAL_CONTROL_ODOMETRY_MISSING')
+        result.update(gnss_imu_pose_publishers=0, control_subscriptions=subscriptions,
+                      local_odometry_samples=len(local), control_odometry_policy='wheel_speed_steering_v1')
         if fixture_config is not None and fixture_config.get("record_vehicle_motion", False):
             motion = [json.loads(line) for line in (args.output/"oracle/vehicle_observations.jsonl").read_text().splitlines()]
             observed = [r for r in motion if r["event"] == "VEHICLE_OBSERVATION"]
-            for role in ("imu", "velocity", "steering", "pose"):
+            for role in ("velocity", "steering"):
                 selected = [r for r in observed if r["role"] == role]
                 if len(selected) < 5 or any(type(r["stamp_ns"]) is not int for r in selected):
                     raise RuntimeError("MOTION_OBSERVATION_MISSING:" + role)
-            if (abs(next(r for r in observed if r["role"] == "imu")["angular_xyz_radps"][2]-fixture_heading_rate) > 1e-6
-                    or abs(next(r for r in observed if r["role"] == "velocity")["longitudinal_lateral_mps_heading_radps"][2]-fixture_heading_rate) > 1e-6):
+            if abs(next(r for r in observed if r["role"] == "velocity")["longitudinal_lateral_mps_heading_radps"][2]-fixture_heading_rate) > 1e-6:
                 raise RuntimeError("MOTION_ANGULAR_UNITS_OR_FIELDS")
             sources = [r for r in motion if r["event"] == "MOTION_SOURCES"]
             if not sources or any(v != ["/time_ros_fixture"] for v in sources[-1]["sources"].values()):
@@ -300,7 +301,6 @@ def main() -> None:
             fixture = json.loads((Path(__file__).resolve().parents[1]/
                 "tests/fixtures/time_path/recovery_startup_segment.json").read_text())
             fixture_speed_mps = 0.
-            fixture_pose_x_m = .1*(time.monotonic()-start)
             oracle_xy_override = np.asarray(fixture["raw_xy_m"], dtype=float)
             began = time.monotonic()
             spin_for(2., publish_oracle)
