@@ -85,8 +85,12 @@ class SlamSlowdown:
         target = self.cap_mps
         acceleration = acceleration_mps2
         if target < target_mps-1e-9 or not valid:
+            # Track the falling cap as distance closes, not only its current
+            # speed error: d(v_cap)/dt = -v / sqrt(0.25 + 2*gap).
+            feedforward = (-max(0., speed_mps)/math.sqrt(.25+2.*gap)
+                           if valid and gap is not None else 0.)
             acceleration = min(acceleration, -1. if target <= 1e-6 else
-                               max(-1., min(1., 2.*(target-max(0., speed_mps)))))
+                               max(-1., min(1., 2.*(target-max(0., speed_mps))+feedforward)))
         return dict(policy=SLAM_SLOWDOWN_POLICY, valid=valid, reason=reason,
                     scan_stamp_ns=stamp, scan_age_s=age, remaining_stop_gap_m=gap,
                     nominal_target_mps=target_mps, target_speed_mps=target,
