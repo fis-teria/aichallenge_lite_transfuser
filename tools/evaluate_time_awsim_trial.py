@@ -17,7 +17,7 @@ from aic_transfuser_lite.control.awsim_steering import CALIBRATED_POLICIES, LEAD
 from aic_transfuser_lite.control.awsim_steering_response import SteeringResponseState, compensate_steering_response
 from aic_transfuser_lite.control.vehicle_motion_v1 import IDEAL_POLICY, AWSIM_POLICIES, stopping_motion
 from aic_transfuser_lite.control.curvature_support_v2 import ACTUAL_STOPPING_SPEED, stopping_envelope_parameters, SCAN_STOP_POLICY, SCAN_LOG_ONLY_POLICY
-from aic_transfuser_lite.control.curvature_speed_v1 import ADAPTIVE_SPEED_POLICY
+from aic_transfuser_lite.control.curvature_speed_v1 import ADAPTIVE_SPEED_POLICIES, TIME_ADAPTIVE_SPEED_POLICIES
 
 
 def response_record_matches(recorded: Any, expected: Any) -> bool:
@@ -92,9 +92,13 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
                 maximum_error = max(maximum_error, error)
                 if not np.isfinite(error) or error > 1e-9:
                     raise ValueError(f"recorded control differs: {key} error={error}")
-            if speed_policy == ADAPTIVE_SPEED_POLICY and not response_record_matches(
+            if speed_policy in ADAPTIVE_SPEED_POLICIES and not response_record_matches(
                     details.get('longitudinal_preview'), calculated['longitudinal_preview']):
                 raise ValueError('recorded longitudinal preview differs')
+            if speed_policy in TIME_ADAPTIVE_SPEED_POLICIES:
+                for key in ('minimum_preview_distance_m', 'selected_lookahead_distance_m', 'lookahead_selection'):
+                    if not response_record_matches(details.get(key), calculated[key]):
+                        raise ValueError('recorded time preview differs: '+key)
             if vehicle_model_policy in AWSIM_POLICIES:
                 for key in ("vehicle_model_policy", "static_wheelbase_m", "nominal_response_length_m"):
                     if not response_record_matches(details.get(key), calculated[key]):

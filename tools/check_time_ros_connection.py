@@ -20,7 +20,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from aic_transfuser_lite.control.time_trial_v1 import SPEED_POLICIES, FIXED_SPEED_POLICIES, trial_speed_limits
 from aic_transfuser_lite.control.vehicle_motion_v1 import AWSIM_POLICIES, AWSIM_TRIAL_SPEED_POLICIES
 from aic_transfuser_lite.control.curvature_support_v2 import ACTUAL_STOPPING_SPEED, DIAGNOSTIC_STOPPING_POLICIES, ONE_METRE_STOPPING_TRAVEL
-from aic_transfuser_lite.control.curvature_speed_v1 import ADAPTIVE_SPEED_POLICY
+from aic_transfuser_lite.control.curvature_speed_v1 import ADAPTIVE_SPEED_POLICIES
+from aic_transfuser_lite.control.time_preview_v1 import TIME_LOOKAHEAD_POLICY, time_preview_distance
 
 
 def main() -> None:
@@ -34,7 +35,7 @@ def main() -> None:
     fixture_config = json.loads(args.trial_config.read_text()) if args.trial_config else None
     if fixture_config is not None:
         args.speed_policy = fixture_config["speed_policy"]
-    adaptive_speed = args.speed_policy == ADAPTIVE_SPEED_POLICY
+    adaptive_speed = args.speed_policy in ADAPTIVE_SPEED_POLICIES
     if os.environ.get("ROS_DOMAIN_ID") != "93":
         raise ValueError("ISOLATED_DOMAIN_93_REQUIRED")
     args.output.mkdir(parents=True, exist_ok=False)
@@ -175,8 +176,8 @@ def main() -> None:
             "--rear-axle-forward-m", ".0010000169277191162", "--pose-source", "/time_ros_fixture",
             *controller_settings,
             "--sensor-source", "/time_ros_fixture", "--synthetic-shadow-fixture"], "controller")
-        oracle_source_speed = .8 if args.speed_policy in (*FIXED_SPEED_POLICIES, ADAPTIVE_SPEED_POLICY) else .15
-        expected_target = trial_speed_limits(args.speed_policy)[0] if args.speed_policy in (*FIXED_SPEED_POLICIES, ADAPTIVE_SPEED_POLICY) else .15
+        oracle_source_speed = .8 if args.speed_policy in (*FIXED_SPEED_POLICIES, *ADAPTIVE_SPEED_POLICIES) else .15
+        expected_target = trial_speed_limits(args.speed_policy)[0] if args.speed_policy in (*FIXED_SPEED_POLICIES, *ADAPTIVE_SPEED_POLICIES) else .15
         def valid_target(value):
             return (0 < value <= expected_target+1e-5 if adaptive_speed else abs(value-expected_target) < 1e-5)
         oracle_curvature = 0.
@@ -223,7 +224,7 @@ def main() -> None:
             result["sweep_guard_policy"] = expected_guard
             result["scan_ahead_of_pose_ns"] = fixture_scan_offset_ns
         if fixture_config is not None and fixture_config.get("steering_policy") in ("awsim_grip_0p6_v1", "awsim_grip_0p6_lead_v1"):
-            if fixture_config.get("lookahead_policy") in ("stopping_preview_v1", "stopping_preview_segment_v1", "stopping_preview_extended_v1"):
+            if fixture_config.get("lookahead_policy") in ("stopping_preview_v1", "stopping_preview_segment_v1", "stopping_preview_extended_v1", TIME_LOOKAHEAD_POLICY):
                 fixture_speed_mps = 1.2  # Exercise the moving-speed preview, not just startup.
             mapping_count = 0
             for direction in (-1., 1.):
@@ -242,8 +243,10 @@ def main() -> None:
                     if (direction*required < .05 or abs(.6*row["steer_rad"]-actuator_target) > 1e-5
                             or abs(guard["issued_steer_rad"]-.6*row["steer_rad"]) > 1e-9):
                         raise RuntimeError("CALIBRATED_TIRE_AND_INPUT_ANGLE_MISMATCH")
-                    if (fixture_config.get("lookahead_policy") in ("stopping_preview_v1", "stopping_preview_segment_v1", "stopping_preview_extended_v1")
-                            and row["details"]["selected_lookahead_distance_m"] < 1.72):
+                    required_preview = (time_preview_distance(fixture_speed_mps)
+                        if fixture_config.get('lookahead_policy') == TIME_LOOKAHEAD_POLICY else 1.72)
+                    if (fixture_config.get("lookahead_policy") in ("stopping_preview_v1", "stopping_preview_segment_v1", "stopping_preview_extended_v1", TIME_LOOKAHEAD_POLICY)
+                            and row["details"]["selected_lookahead_distance_m"] < required_preview):
                         raise RuntimeError("STOPPING_PREVIEW_NOT_APPLIED_AT_SPEED")
                     if motion_model:
                         motion = guard["vehicle_motion"]
@@ -267,7 +270,7 @@ def main() -> None:
             rejected = [r for r in records if r.get("event") == "COMMAND_SENT"
                         and r["monotonic_ns"]/1e9 > infeasible_started+.5]
             infeasible_reason = ("STEERING_FEASIBLE_LOOKAHEAD_MISSING"
-                                 if fixture_config.get("lookahead_policy") in ("feasible_1_to_1p5m_v1", "stopping_preview_v1", "stopping_preview_segment_v1", "stopping_preview_extended_v1")
+                                 if fixture_config.get("lookahead_policy") in ("feasible_1_to_1p5m_v1", "stopping_preview_v1", "stopping_preview_segment_v1", "stopping_preview_extended_v1", TIME_LOOKAHEAD_POLICY)
                                  else "STEERING_ACTUATOR_INFEASIBLE")
             if not rejected or any(r["reason"] != infeasible_reason
                                    or r["acceleration_mps2"] >= 0 or r["target_speed_mps"] != 0 for r in rejected):
@@ -291,7 +294,7 @@ def main() -> None:
                 motion_brakes[reason] = motion_brakes.get(reason, 0)+len(rejected)
             fixture_heading_rate = fixture_lateral_mps = 0.
             result["invalid_motion_brake_commands"] = motion_brakes
-        if fixture_config is not None and fixture_config.get("lookahead_policy") in ("stopping_preview_segment_v1", "stopping_preview_extended_v1"):
+        if fixture_config is not None and fixture_config.get("lookahead_policy") in ("stopping_preview_segment_v1", "stopping_preview_extended_v1", TIME_LOOKAHEAD_POLICY):
             # Recorded geometry on stationary synthetic sensors. This checks the
             # real ROS -> PP -> lead -> actuator -> clear-scan path, not AWSIM.
             fixture = json.loads((Path(__file__).resolve().parents[1]/
@@ -317,7 +320,7 @@ def main() -> None:
                     raise RuntimeError("SEGMENT_TARGET_CONTROL_CONTRACT")
             result["segment_target_shadow_commands"] = len(segments)
             result["segment_scope"] = "RECORDED_GEOMETRY_WITH_SYNTHETIC_STATIONARY_CLEAR_SCAN"
-        if fixture_config is not None and fixture_config.get("lookahead_policy") == "stopping_preview_extended_v1":
+        if fixture_config is not None and fixture_config.get("lookahead_policy") in ("stopping_preview_extended_v1", TIME_LOOKAHEAD_POLICY):
             fixture = json.loads((Path(__file__).resolve().parents[1]/
                 "tests/fixtures/time_path/expanded_startup_band.json").read_text())
             oracle_xy_override = np.asarray(fixture["raw_xy_m"], dtype=float)
@@ -355,6 +358,8 @@ def main() -> None:
                 detail = row["details"]
                 speed = row["speed_mps"]
                 preview = .4+speed*.5+speed*speed/2
+                if fixture_config.get('lookahead_policy') == TIME_LOOKAHEAD_POLICY:
+                    preview = time_preview_distance(speed)
                 distance_policy = fixture_config.get('stopping_distance_policy', ACTUAL_STOPPING_SPEED)
                 guard_speed = min(speed, 5/3.6) if distance_policy in DIAGNOSTIC_STOPPING_POLICIES else speed
                 guard_travel = .4+guard_speed*.5+guard_speed*guard_speed/2
@@ -367,7 +372,7 @@ def main() -> None:
                         or detail['obstacle_guard']['vehicle_motion'][
                             'calibrated_at_10kmh' if args.speed_policy == 'fixed_10kmh' else 'calibrated_at_trial_speed'] is not False):
                     raise RuntimeError("TEN_KMH_PREVIEW_OR_GUARD_MISMATCH")
-            speed_prefix = 'ten_kmh' if args.speed_policy == 'fixed_10kmh' else 'fifteen_kmh'
+            speed_prefix = 'twenty_kmh' if expected_target > 15/3.6 else 'ten_kmh' if args.speed_policy == 'fixed_10kmh' else 'fifteen_kmh'
             result[speed_prefix+'_shadow_commands'] = len(high_speed)
             result[speed_prefix+'_minimum_preview_m'] = preview
             result[speed_prefix+'_scan_stopping_travel_m'] = guard_travel
@@ -386,7 +391,7 @@ def main() -> None:
             for row in preview:
                 plan = row['details'].get('longitudinal_preview', {})
                 if (not 0 < row['target_speed_mps'] < row['speed_mps']
-                        or row['acceleration_mps2'] >= 0 or plan.get('policy') != ADAPTIVE_SPEED_POLICY
+                        or row['acceleration_mps2'] >= 0 or plan.get('policy') != args.speed_policy
                         or abs(plan['target_speed_mps']-row['target_speed_mps']) > 1e-9
                         or row['details']['selected_lookahead_distance_m'] < row['details']['minimum_preview_distance_m']):
                     raise RuntimeError('CURVATURE_SPEED_PREVIEW_OR_MEASURED_SPEED_CONTRACT')

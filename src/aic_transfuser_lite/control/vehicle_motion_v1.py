@@ -11,16 +11,20 @@ import math
 from typing import Any
 
 from .awsim_steering import CALIBRATED_POLICIES
-from .curvature_speed_v1 import ADAPTIVE_SPEED_POLICY
+from .curvature_speed_v1 import ADAPTIVE_SPEED_POLICY, TIME_ADAPTIVE_SPEED_POLICIES
+from .time_preview_v1 import TIME_LOOKAHEAD_POLICY
 
 
 IDEAL_POLICY = "ideal_bicycle_v1"
 AWSIM_POLICY = "awsim_understeer_v1"
 AWSIM_10KMH_POLICY = "awsim_understeer_10kmh_trial_v1"
 AWSIM_15KMH_POLICY = "awsim_understeer_15kmh_trial_v1"
-AWSIM_TRIAL_TARGETS_KMH = {AWSIM_10KMH_POLICY: 10, AWSIM_15KMH_POLICY: 15}
-AWSIM_FIXED_TRIAL_SPEED_POLICIES = {f'fixed_{target}kmh': policy for policy, target in AWSIM_TRIAL_TARGETS_KMH.items()}
-AWSIM_TRIAL_SPEED_POLICIES = {**AWSIM_FIXED_TRIAL_SPEED_POLICIES, ADAPTIVE_SPEED_POLICY: AWSIM_15KMH_POLICY}
+AWSIM_20KMH_POLICY = "awsim_understeer_20kmh_trial_v1"
+AWSIM_TRIAL_TARGETS_KMH = {AWSIM_10KMH_POLICY: 10, AWSIM_15KMH_POLICY: 15, AWSIM_20KMH_POLICY: 20}
+AWSIM_FIXED_TRIAL_SPEED_POLICIES = {f'fixed_{target}kmh': policy for policy, target in AWSIM_TRIAL_TARGETS_KMH.items() if target <= 15}
+AWSIM_TRIAL_SPEED_POLICIES = {**AWSIM_FIXED_TRIAL_SPEED_POLICIES, ADAPTIVE_SPEED_POLICY: AWSIM_15KMH_POLICY,
+    **{speed_policy: next(model for model, kmh in AWSIM_TRIAL_TARGETS_KMH.items() if kmh == target)
+       for speed_policy, target in TIME_ADAPTIVE_SPEED_POLICIES.items()}}
 AWSIM_POLICIES = (AWSIM_POLICY, *AWSIM_TRIAL_TARGETS_KMH)
 WHEELBASE_M = 1.087
 MAX_SPEED_MPS = 6. / 3.6
@@ -89,9 +93,10 @@ def validate_vehicle_model_config(config: dict[str, Any]) -> str:
             or config.get("execution_profile") != "one_lap"
             or config.get("record_vehicle_motion") is not True):
         raise ValueError("VEHICLE_MODEL_10KMH_TRIAL_SCOPE")
-    if policy == AWSIM_15KMH_POLICY and (
+    if policy in (AWSIM_15KMH_POLICY, AWSIM_20KMH_POLICY) and (
             config.get('stopping_distance_policy') != 'awsim_cap_1m_diagnostic_v1'
-            or config.get('lookahead_policy') != 'stopping_preview_extended_v1'
+            or config.get('lookahead_policy') != (TIME_LOOKAHEAD_POLICY
+                if config.get('speed_policy') in TIME_ADAPTIVE_SPEED_POLICIES else 'stopping_preview_extended_v1')
             or config.get('diagnostic_only') is not True):
         raise ValueError('VEHICLE_MODEL_SPEED_LADDER_SCOPE')
     return policy

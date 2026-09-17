@@ -12,8 +12,14 @@ from typing import Any
 
 import numpy as np
 
+from .time_preview_v1 import (TIME_LOOKAHEAD_POLICY, PREVIEW_TIME_S, PREVIEW_OFFSET_M,
+                              MINIMUM_PREVIEW_M, time_preview_distance, time_horizon_speed_cap)
+
 
 ADAPTIVE_SPEED_POLICY = "curvature_preview_15kmh_v1"
+TIME_ADAPTIVE_SPEED_POLICIES = {'curvature_time_preview_15kmh_v1': 15,
+                                'curvature_time_preview_20kmh_v1': 20}
+ADAPTIVE_SPEED_POLICIES = {ADAPTIVE_SPEED_POLICY: 15, **TIME_ADAPTIVE_SPEED_POLICIES}
 
 
 @dataclass(frozen=True)
@@ -41,6 +47,7 @@ class CurvatureSpeedConfig:
 
 def preview_speed_limit(xy_m: np.ndarray, *, measured_speed_mps: float,
                         cruise_ceiling_mps: float, tracking_curvature_per_m: float,
+                        policy: str = ADAPTIVE_SPEED_POLICY,
                         config: CurvatureSpeedConfig = CurvatureSpeedConfig()) -> dict[str, Any]:
     """Return a speed ceiling in m/s from finite [N,2] rear-frame metres.
 
@@ -49,14 +56,17 @@ def preview_speed_limit(xy_m: np.ndarray, *, measured_speed_mps: float,
     avoiding the unstable heading of very short 0.1 s prediction segments.
     Each bend limits current speed by v^2 <= v_bend^2 + 2*b*usable_distance;
     usable distance excludes measured-speed delay travel and a fixed reserve.
-    The endpoint also bounds the unchanged PP preview .4+.5*v+v^2/2, with
-    additional anticipation. No minimum-speed floor can override these limits.
+    The legacy endpoint bound uses stopping preview; explicit time policies
+    use the shared linear PP preview with additional anticipation. No
+    minimum-speed floor can override a short horizon or a bend.
     """
     points = np.asarray(xy_m, dtype=float)
     if (points.ndim != 2 or points.shape[1:] != (2,) or not 2 <= len(points) <= 31
             or not np.isfinite(points).all()
             or not np.isfinite([measured_speed_mps, cruise_ceiling_mps, tracking_curvature_per_m]).all()
-            or not 0 <= measured_speed_mps <= 16/3.6 or not 0 < cruise_ceiling_mps <= 15/3.6):
+            or policy not in ADAPTIVE_SPEED_POLICIES
+            or not 0 <= measured_speed_mps <= (ADAPTIVE_SPEED_POLICIES[policy]+1)/3.6
+            or not 0 < cruise_ceiling_mps <= ADAPTIVE_SPEED_POLICIES[policy]/3.6):
         raise ValueError("CURVATURE_SPEED_INPUT")
     lengths = np.linalg.norm(np.diff(points, axis=0), axis=1)
     points = points[np.r_[True, lengths > 1e-9]]
@@ -106,6 +116,14 @@ def preview_speed_limit(xy_m: np.ndarray, *, measured_speed_mps: float,
     delay = .5+config.horizon_extra_delay_s
     horizon_cap = max(0., -delay + math.sqrt(delay**2 + 2*max(0.,
         endpoint_distance-config.horizon_reserve_m-.4)))
+    horizon_details = {}
+    if policy in TIME_ADAPTIVE_SPEED_POLICIES:
+        horizon_cap = time_horizon_speed_cap(endpoint_distance,
+            reserve_m=config.horizon_reserve_m, extra_delay_s=config.horizon_extra_delay_s)
+        horizon_details['horizon_contract'] = dict(policy=TIME_LOOKAHEAD_POLICY,
+            preview_time_s=PREVIEW_TIME_S, offset_m=PREVIEW_OFFSET_M, minimum_m=MINIMUM_PREVIEW_M,
+            required_at_measured_speed_m=time_preview_distance(measured_speed_mps),
+            stopping_distance_used_for_pp=False)
     limits = dict(cruise=cruise_ceiling_mps, preview_curvature=curve_cap,
                   tracking_curvature=tracking_cap, prediction_horizon=horizon_cap)
     limiting_reason = min(limits, key=limits.get)
@@ -117,7 +135,7 @@ def preview_speed_limit(xy_m: np.ndarray, *, measured_speed_mps: float,
     acceleration_cap = config.maximum_acceleration_mps2
     acceleration = float(np.clip(config.speed_gain_per_s*(target-measured_speed_mps),
         config.minimum_acceleration_mps2, acceleration_cap))
-    return dict(policy=ADAPTIVE_SPEED_POLICY, target_speed_mps=target,
+    return dict(policy=policy, target_speed_mps=target,
         acceleration_mps2=acceleration, acceleration_cap_mps2=acceleration_cap,
         limiting_reason=limiting_reason, limits_mps=limits,
         measured_speed_mps=measured_speed_mps, endpoint_distance_m=endpoint_distance,
@@ -128,5 +146,5 @@ def preview_speed_limit(xy_m: np.ndarray, *, measured_speed_mps: float,
         limiting_curve_curvature_per_m=float(curvature[index]),
         limiting_curve_local_speed_mps=float(bend_cap[index]),
         limiting_curve_usable_distance_m=float(usable[index]),
-        samples=len(centers), config=asdict(config),
+        samples=len(centers), config=asdict(config), **horizon_details,
         scope="LONGITUDINAL_PREVIEW_LIMIT_NOT_COLLISION_PROOF")

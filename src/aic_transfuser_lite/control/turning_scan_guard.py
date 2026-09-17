@@ -15,7 +15,7 @@ import numpy as np
 
 from .time_reference_v1 import TimedBodyPose
 from .time_trial_v1 import interpolate_body_pose
-from .vehicle_motion_v1 import IDEAL_POLICY, AWSIM_POLICY, AWSIM_15KMH_POLICY, stopping_motion
+from .vehicle_motion_v1 import IDEAL_POLICY, AWSIM_POLICY, AWSIM_15KMH_POLICY, AWSIM_20KMH_POLICY, stopping_motion
 from .curvature_support_v2 import ACTUAL_STOPPING_SPEED, DIAGNOSTIC_STOPPING_POLICIES, STANDARD_CLEARANCE, ONE_METRE_STOPPING_TRAVEL, SCAN_STOP_POLICY, SCAN_LOG_ONLY_POLICY, clearance_dimensions
 
 
@@ -117,7 +117,7 @@ def check_turning_scan(ranges: np.ndarray, angle_min: float, angle_increment: fl
     if occupancy_policy not in (SCAN_STOP_POLICY, SCAN_LOG_ONLY_POLICY):
         raise ValueError('SCAN_OCCUPANCY_POLICY')
     if occupancy_policy == SCAN_LOG_ONLY_POLICY and (
-            envelope_policy != 'curvature_support_v2' or vehicle_model_policy != AWSIM_15KMH_POLICY
+            envelope_policy != 'curvature_support_v2' or vehicle_model_policy not in (AWSIM_15KMH_POLICY, AWSIM_20KMH_POLICY)
             or stopping_distance_policy != ONE_METRE_STOPPING_TRAVEL or clearance_profile != STANDARD_CLEARANCE):
         raise ValueError('SCAN_LOG_ONLY_REQUIRES_AWSIM_DIAGNOSTIC')
     if (stopping_distance_policy not in (ACTUAL_STOPPING_SPEED, *DIAGNOSTIC_STOPPING_POLICIES)
