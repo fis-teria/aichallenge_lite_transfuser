@@ -29,7 +29,9 @@ try:
     checked={}
     margins=dict(obstacle_longitudinal_inflation_m=1.10,obstacle_lateral_inflation_m=1.15,
         clearance_target_m=.35,**{'brain.footprint_radius_m':.65,'brain.footprint_front_m':1.06,'brain.footprint_rear_m':1.10})
-    for name,parameters in [('reference_space_mppi_planner',margins),
+    for name,parameters in [('reference_space_mppi_planner',dict(margins, **{
+            'brain.collection_motion_enabled':True,'brain.collection_avoidance_continuation':True})),
+            ('mppi_recovery_controller',{'collection_planned_stop_gate':True}),
             ('simple_trajectory_generator',{'execution_profile.max_speed_mps':float(os.environ['TEACHER_SPEED_CAP_MPS'])})]:
         endpoint=next(s for s in subscriptions if s.node_name==name)
         fqn=endpoint.node_namespace.rstrip('/')+'/'+name
@@ -39,8 +41,10 @@ try:
         future=client.call_async(request)
         rclpy.spin_until_future_complete(probe,future,timeout_sec=5)
         assert future.done() and future.result() is not None
-        values={k:v.double_value for k,v in zip(parameters,future.result().values)}
-        assert all(math.isclose(values[k],v,abs_tol=1e-8) for k,v in parameters.items()),(fqn,values)
+        values={k:(v.bool_value if isinstance(parameters[k],bool) else v.double_value)
+                for k,v in zip(parameters,future.result().values)}
+        assert all(values[k] is v if isinstance(v,bool) else math.isclose(values[k],v,abs_tol=1e-8)
+                   for k,v in parameters.items()),(fqn,values)
         checked[fqn]=values
     client=probe.create_client(GetParameters, '/lidar_v2x/get_parameters')
     assert client.wait_for_service(timeout_sec=5)
