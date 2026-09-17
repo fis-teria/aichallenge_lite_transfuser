@@ -1,0 +1,54 @@
+{
+  "source_commit": "879657928c42eb9d243093146a2b0ea6946d22b1",
+  "run_id": "codex-time-slam-slowdown-lap03",
+  "status": "STOPPED_NO_LAP",
+  "stop_reason": "PROGRESS_STALLED",
+  "maximum_speed_mps": 0.25555741786956787,
+  "command_count": 820,
+  "guarded_commands": 48,
+  "obstacle_limited_commands": 0,
+  "obstacle_brake_commands": 0,
+  "invalid_perception_brake_commands": 7,
+  "command_reasons": {
+    "'velocity'": 10,
+    "CLOCK_STALE": 259,
+    "WAIT_AUTHORIZATION": 358,
+    "TIME_PATH_TRACKING": 48,
+    "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 7,
+    "TIME_PATH_INITIAL_DIRECTION": 93,
+    "PLAN_STALE": 1,
+    "REQUESTED_BRAKE": 29,
+    "STALE_scan": 1,
+    "STALE_velocity": 14
+  },
+  "limiter_reasons": {
+    "CLEAR": 15,
+    "SLAM_INPUT_STALE_OR_UNMATCHED": 7,
+    "CLEAR_RELEASE": 26
+  },
+  "steering_unchanged_for_all_guarded_commands": true,
+  "targets_and_accelerations_never_increased": true,
+  "no_gnss_imu_global_pose_inputs": true,
+  "maximum_target_reduction_mps": 0.0,
+  "obstacle_speed_samples": [],
+  "judge_laps": [],
+  "cleanup_errors": [],
+  "artifacts": {
+    "host_result.json": {
+      "bytes": 42735,
+      "sha256": "69e4b06c8d54fe7a14d7f3e88a09f4751d5a73e3e4326ac084c3013262466d12"
+    },
+    "control.jsonl": {
+      "bytes": 1325318,
+      "sha256": "73e491f270c3c60ffed70290be2d3b86e0f4382bdfbd67c20d90da524cf9f4c3"
+    },
+    "rviz.mp4": {
+      "bytes": 1041193,
+      "sha256": "30df26f8c0a541e6857e3c740f34b9d178d3d42842b410ca2fb5cdbb19dc9f7b"
+    },
+    "awsim.mp4": {
+      "bytes": 3664600,
+      "sha256": "395f35cc2269955ac4aeede8e4c01a2090a8fefb171c6980c15a1fc2183e3513"
+    }
+  }
+}
