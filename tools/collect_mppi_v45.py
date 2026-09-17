@@ -92,9 +92,11 @@ def main() -> None:
         services = document['services']
         run = compiled.container_run_dir
         assets = source/'integrations/mppi_v45/assets/multi_purpose_mpc_ros/env/final_ver3'
+        recovery_config = source/'integrations/mppi_v45/assets/multi_purpose_mpc_ros/config/config.yaml'
         volumes = [f'{repo}/aichallenge:/aichallenge:ro',f'{source}:/source:ro',f'{runtime}:/runtime:ro',
             f'{assets}:/aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros/env/final_ver3:ro',
-            f'{assets}:/aichallenge/workspace/install/multi_purpose_mpc_ros/share/multi_purpose_mpc_ros/env/final_ver3:ro']
+            f'{assets}:/aichallenge/workspace/install/multi_purpose_mpc_ros/share/multi_purpose_mpc_ros/env/final_ver3:ro',
+            f'{recovery_config}:/aichallenge/workspace/install/multi_purpose_mpc_ros/share/multi_purpose_mpc_ros/config/config.yaml:ro']
         ego = services['scn-car1']
         ego['volumes'] = [*ego.get('volumes',[]),*volumes]
         ego['environment'].update(VEHICLE_ID='d1',TEACHER_SPEED_CAP_MPS=str(args.speed_cap_kmh/3.6))
