@@ -137,6 +137,22 @@ def test_detection_rejects_bad_sensor_not_empty_road():
         Detector(replace(cfg, object_model="known_vehicle"), detector.wall_map)
 
 
+def test_mapped_wall_is_not_fragmented_into_fake_vehicles():
+    # Continuous x=5 wall, with an imperfect map that only contains portions.
+    # Its short residual gaps must not become confirmed objects.
+    free = np.ones((200, 200), dtype=bool)
+    free[40:80, 150] = False
+    free[85:115, 150] = False
+    free[120:160, 150] = False
+    cfg = Config()
+    detector = Detector(cfg, StaticMap(free, .1, Pose2(-10, -10, 0), .1))
+    angles = np.linspace(-.8, .8, 300)
+    scan = Scan(1., 5. / np.cos(angles), -.8, 1.6/299, 0., 25.)
+    found, stats = detector.detect(scan, Pose2(0, 0, 0), Pose2(0, 0, 0), Pose2(0, 0, 0))
+    assert found == []
+    assert stats["wall_connected_points"] == 300
+
+
 def test_reference_uses_geometry_and_planar_tf_rejects_tilt():
     reference = Reference(np.array([[0., 0.], [0., 1.], [0., 1.], [1., 1.]]))
     assert reference.yaw_at(np.array([0., .5])) == pytest.approx(math.pi / 2)

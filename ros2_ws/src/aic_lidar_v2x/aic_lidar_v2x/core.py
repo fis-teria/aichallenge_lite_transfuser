@@ -86,7 +86,7 @@ class Scan:
 class Config:
     max_range_m: float = 20.0
     wall_margin_m: float = 0.25
-    cluster_gap_m: float = 0.25
+    cluster_gap_m: float = 0.35
     min_cluster_points: int = 4
     max_cluster_extent_m: float = 3.0
     association_gate_m: float = 0.65
@@ -373,9 +373,19 @@ class Detector:
         ego = ((local[:, 0] >= -cfg.ego_rear_m) & (local[:, 0] <= cfg.ego_front_m) &
                (np.abs(local[:, 1]) <= cfg.ego_half_width_m))
         interior = self.wall_map.is_interior(xy)
-        keep = ~ego & interior
+        # Cluster before subtraction as well: a mapped wall must not become a
+        # row of short "vehicles" where localization/map errors cut it up.
+        wall_connected = np.zeros(len(xy), dtype=bool)
+        candidates = np.flatnonzero(~ego)
+        for group in clusters(xy[candidates], cfg.cluster_gap_m):
+            original = candidates[group]
+            extent = float(np.linalg.norm(np.ptp(xy[original], axis=0)))
+            if extent > cfg.max_cluster_extent_m and np.mean(~interior[original]) >= 0.25:
+                wall_connected[original] = True
+        keep = ~ego & interior & ~wall_connected
         stats = dict(valid_points=len(xy), ego_points=int(ego.sum()),
                      malformed_points=int(malformed.sum()),
+                     wall_connected_points=int(wall_connected.sum()),
                      background_points=int((~interior).sum()), residual_points=int(keep.sum()),
                      small_clusters=0, oversized_clusters=0, rejected_box_fits=0)
         xy, origins = xy[keep], origins[keep]
