@@ -193,7 +193,6 @@ def main() -> None:
             result['background_launch_sha256'] = sha(traffic_launch)
             for domain in domains[1:]:
                 log_dir = f'/output/{args.run_id}/traffic_d{domain}'
-                (output/args.run_id/f'traffic_d{domain}').mkdir(parents=True)
                 command = ['ros2', 'launch', '/time_background.launch.xml', 'simulation:=true',
                     'launch_vehicle_interface:=false', 'use_sim_time:=true', 'run_rviz:=false',
                     'capture:=false', 'rosbag:=false', 'control_method:=pure_pursuit',
@@ -285,6 +284,10 @@ def main() -> None:
             if traffic_process is not None and traffic_process.poll() is not None:
                 raise RuntimeError('TRAFFIC_OBSERVER_EXIT')
             if args.pp_vehicles and make.poll() == 0 and not backgrounds_started:
+                # The simulator's fingerprint step must create an empty run
+                # directory first; creating child logs earlier rejects startup.
+                for domain in domains[1:]:
+                    (output/args.run_id/f'traffic_d{domain}').mkdir()
                 run(compose+['up', '-d', '--no-deps', *traffic_services], timeout=30)
                 backgrounds_started = True
             traffic_ready = True

@@ -31,7 +31,7 @@ def main() -> None:
             context = Context()
             context.init(args=[], domain_id=domain)
             contexts.append(context)
-            node = Node('time_traffic_observer', context=context)
+            node = Node(f'time_traffic_observer_d{domain}', context=context)
             nodes.append(node)
             journal = (args.output/f'traffic_d{domain}.jsonl').open('x', buffering=1)
             journals.append(journal)
