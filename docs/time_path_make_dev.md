@@ -8,7 +8,8 @@
 EKF姿勢から車速・実操舵角による局所オドメトリへ変更した。
 制御ノードはGNSS、IMU、外部pose、TFを購読しない。
 [入力契約・検証結果・制限](time_control_without_gnss_imu.md)を参照。
-下記の既存入口は新版へ接続済み。従来のGNSS依存版の実走結果は新版の完走証明ではない。
+下記の既存入口は新版へ接続済み。新版も単独車両で1周132.36秒、公式ペナルティ0を確認した。
+複数周・障害物回避・地図位置合わせの検証は別途必要。
 
 ## AWSIMを起動する
 
@@ -23,7 +24,7 @@ make dev MAX_SPEED_KMH=20 CORNER_MAX_SPEED_KMH=10
 make dev MAX_SPEED_KMH=15 CORNER_MAX_SPEED_KMH=8 TIME_RECORD_VIDEO=1
 ```
 
-現在の入口は `~/e2e_autonomous/time_no_gnss_20260918/source_992c1ce` を選ぶ。
+現在の入口は `~/e2e_autonomous/time_no_gnss_20260918_r2/source_967f3c0` を選ぶ。
 そのsourceから直接起動する場合は `make dev DEV_CONTROLLER=time ...` と指定する。
 既存deploymentのMakefileは新版へ転送し、指定された速度変数を引き渡す。
 旧source・install・過去runは保全し、旧sourceを直接実行した場合は旧版のままとなる。
