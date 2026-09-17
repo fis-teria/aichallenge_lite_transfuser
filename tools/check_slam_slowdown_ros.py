@@ -78,7 +78,7 @@ def main() -> None:
                     plan_pub.publish(String(data=json.dumps(dict(event='PLAN', run_id=args.output.name,
                         epoch='0', plan_id=str(t), observation_ns=t, clock='sim', frame='base_link',
                         dt_s=.1, checkpoint_sha256='0'*64, precision='float32', producer_kind='SYNTHETIC_ROS_FIXTURE',
-                        raw_xy_m=[[math.sin(.03*d)/.03, (1-math.cos(.03*d))/.03] for d in distances]))))
+                        raw_xy_m=[[math.sin(.01*d)/.01, (1-math.cos(.01*d))/.01] for d in distances]))))
             for node in (sensor, inference, observer): rclpy.spin_once(node, timeout_sec=.001)
             assert not observer.get_publishers_info_by_topic('/control/command/control_cmd')
     def records():
