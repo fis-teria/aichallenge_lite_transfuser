@@ -235,7 +235,51 @@ bash tools/with_wsl_training_lock.sh env PYTHONPATH="$PWD/src" \
 [教師接続の検証記録](lidar_v2x_teacher_validation.json) に保存した。
 従来の [shadow検証記録](lidar_v2x_validation.json) は履歴として保全している。
 
-**今回の新接続でのAWSIM回避走行は未実施。** 接続と設定維持の確認までであり、
-表面位置のずれを既存マージンで常に吸収できる証明ではない。
-次の収集では、この教師接続での無接触・通過・有効なセンサ/将来poseを確認してから
-教師データへ採用する。AWSIM本体・センサ取付TFは変更していない。
+この接続試験の後、次節のAWSIM回避収集を実施した。
+接続と設定維持だけでは、表面位置のずれを既存マージンで常に吸収できる証明にはならない。
+AWSIM本体・センサ取付TFは変更していない。
+
+## AWSIMでの教師収集（2026-09-18）
+
+SI26で停止NPCを障害物として、直線・コーナー入口・出口の8配置を9回試行した。
+教師はLiDAR V2Xを入力するMPPI V44、速度上限10 km/h、既存マージンを維持。
+E2Eは推論のみのshadow。箱・コーン・歩行者・移動車両はこのバッチに含まない。
+
+- 実走6回: 無接触かつ地図内で通過した2回を採用候補とし、4回を接触・はみ出し・未通過で除外。
+- 起動不良3回: `PlayStart`から進まず、学習候補から除外。
+- 前進回避候補446観測: 直線B中央203、コーナー入口B左243。独立した成功走行は2回。
+- 全585ファイル、2,398,503,242 bytes（約2.40 GB）をnative WSLへ移し、全SHA-256を照合。
+- rawはCamera 8,145観測（実走bagは7,588）、LiDAR 17,108 scan。失敗・後退もrawには保管。
+
+将来教師は実測poseの30点×0.1 s。共有の時間履歴選択・教師生成を用い、
+前1 s〜後3 sに後退が混ざる観測、履歴/未来不足、緊急停止、未通過・接触したrunを除く。
+`stop_probability`は停止意図が不明なため未設定。既存の学習splitへの統合・再学習は未実施。
+runと関連配置sectorを分離せず扱い、frameランダムsplitをしない。
+
+実行中の`brain.follow_gap_m`は5.0 m。静止物・20 km/h以下の相手が基準経路を塞ぐとき、
+基準経路へ投影した自車前端と推定相手後端の距離が5 m以内でAVOID候補を要求する。
+進行中のOVERTAKE等の状態条件もあり、検出距離25 mとは別。今回この開始条件は変更していない。
+接触や停滞は残っており、5 m条件だけが原因とは未確定。成功した出口の回避データは未取得。
+
+保存先は`/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/`。
+`collected/<run_id>/`にraw・provenance・転送manifest、`audits/<run_id>/`に
+`audit.json`・`anchors.jsonl`・`observed_teachers.npz`を置く。
+`summary/training_candidates.jsonl`が採用候補の索引、`summary/collection_paths.png`が実走図。
+再実行スクリプトと転送確認記録は`reproduction.zip`に保存し、同じくhash照合済み。
+
+```bash
+cd /home/thistle/e2e_autonomous/e2e_lite_transfuser_lidar_v2x_margin
+# 出力先は未作成のディレクトリを指定する。
+bash tools/with_wsl_training_lock.sh env PYTHONPATH="$PWD/src" \
+  .venv/bin/python tools/audit_lidar_v2x_obstacles.py \
+  --collected /path/to/collected/run \
+  --output /path/to/new_audit
+```
+
+監査commit `89622a6faa6f16400a6e5a7c06f6b9287476c5b3`のWSL全体試験は
+**3,042 passed / 4 skipped**。実データでも入力tensor・教師軌道の組立を確認した。
+起動前終了の3 bagはraw保存・索引化のみとし、実走6 bagを時間教師の監査へ通した。
+既存monitorの結果書込後exit 139は残るため、最終状態とbag完了・decodeを別途確認する。
+AWSIM 1,092ファイル・V44ソース926ファイルに変更がないことを照合し、専用コンテナは停止済み。
+[各試行・保存先・検証記録](lidar_v2x_obstacle_collection_validation.json)に詳細を記載した。
+これはMPPI教師の収集であり、E2Eの閉ループ回避性能を示す結果ではない。

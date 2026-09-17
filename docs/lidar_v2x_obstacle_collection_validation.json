@@ -1,0 +1,553 @@
+{
+  "schema_version": 1,
+  "scope": "MPPI V44 teacher collection; E2E inference shadow only",
+  "host": "si26-pc008@192.168.3.13",
+  "speed_cap_mps": 2.7777777777777777,
+  "obstacle_type": "stationary physical NPC kart; unchanged AWSIM assets",
+  "margins": "unchanged V44 configuration",
+  "avoidance_start_gate": {
+    "live_parameter": "brain.follow_gap_m",
+    "value_m": 5.0,
+    "queried_run": "lidar-v44-xc-l-01",
+    "meaning": "Reference-projected ego front to estimated target rear; blocked reference and target speed <=20 km/h, with maneuver-state conditions.",
+    "unchanged": true
+  },
+  "attempted_runs": 9,
+  "distinct_configurations": 8,
+  "distinct_driven_configurations": 6,
+  "driven_runs": 6,
+  "selected_runs": 2,
+  "quarantined_driving_runs": 4,
+  "startup_failed_runs": 3,
+  "camera_frames_all_bags": 8145,
+  "camera_frames_driven_bags": 7588,
+  "lidar_scans_all_bags": 17108,
+  "forward_avoidance_anchors": 446,
+  "total_verified_bytes": 2398503242,
+  "total_verified_files": 585,
+  "training_split_assigned": false,
+  "training_performed": false,
+  "split_policy": "Whole run and related placement-sector groups must stay together; no frame random split.",
+  "label_contract": "Observed future poses: 30 XY points at 0.1 s, base_link at observation; receipt+50 ms availability proxy.",
+  "count_warning": "Anchors are overlapping camera observations, not independent avoidance events.",
+  "limitations": [
+    "Existing monitor processes exit 139 after report generation; bag completion and decoding checked separately.",
+    "Footprint clearance uses native V2X for evaluation only and is approximate.",
+    "No moving NPC, pedestrian, cone or box examples in this batch.",
+    "Not an E2E closed-loop avoidance test."
+  ],
+  "runs": [
+    {
+      "run_id": "lidar-v44-sb-c-01",
+      "cases": [
+        "straight_b_center"
+      ],
+      "category": "FORWARD_AVOIDANCE_CANDIDATE",
+      "started_at": "2026-09-17T18:52:23.417790+00:00",
+      "started": true,
+      "finish_reached": true,
+      "finish_reason": "reference_s_reached",
+      "min_clearance_m": 0.309,
+      "max_off_track_depth_m": 0.0,
+      "penalties": {
+        "crash": 0,
+        "wall": 0,
+        "over": 0,
+        "block": 0
+      },
+      "camera_frames": 616,
+      "lidar_scans": 1293,
+      "forward_avoidance_anchors": 203,
+      "stop_requests": 0,
+      "scenario_verdict": "passed",
+      "monitor_process_returncode": 139,
+      "monitor_final_status": 0,
+      "verified_bytes": 213151032,
+      "verified_files": 65,
+      "all_sha256_match": true,
+      "audit_sha256": "58bc77a868c2123759cbcf2c13c757f1e396659d584067e0813bcd4b85a0a779",
+      "split_groups": [
+        "sector_04"
+      ],
+      "locations": [
+        {
+          "site": "straight_b",
+          "context": "middle",
+          "monitor_reference_s_m": 84.24997107133024,
+          "actual_lateral_m": 0.0
+        }
+      ],
+      "raw_directory": "/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/collected/lidar-v44-sb-c-01",
+      "audit_directory": "/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/audits/lidar-v44-sb-c-01",
+      "camera_topic": "/sensing/camera/image_raw",
+      "first_camera_mode_observations": [
+        {
+          "mode": "AVOID",
+          "sim_s": 42.624999047,
+          "sample_dt_s": -0.015000000000000568,
+          "center_station_gap_m": 7.050000000000011,
+          "ego_speed_mps": 0.6362,
+          "distance_meaning": "Native actor and ego reference-station separation; not the internal LiDAR body-gap gate."
+        },
+        {
+          "mode": "OVERTAKE",
+          "sim_s": 25.089999439,
+          "sample_dt_s": -0.004999999999999005,
+          "center_station_gap_m": 13.550000000000011,
+          "ego_speed_mps": 2.2515,
+          "distance_meaning": "Native actor and ego reference-station separation; not the internal LiDAR body-gap gate."
+        }
+      ],
+      "selection_reason_ja": "採用候補"
+    },
+    {
+      "run_id": "lidar-v44-ea-l-01",
+      "cases": [
+        "entry_a_left"
+      ],
+      "category": "QUARANTINED_DRIVING",
+      "started_at": "2026-09-17T18:58:03.849565+00:00",
+      "started": true,
+      "finish_reached": true,
+      "finish_reason": "reference_s_reached",
+      "min_clearance_m": 0.643,
+      "max_off_track_depth_m": 0.4,
+      "penalties": {
+        "crash": 0,
+        "wall": 0,
+        "over": 0,
+        "block": 0
+      },
+      "camera_frames": 839,
+      "lidar_scans": 1763,
+      "forward_avoidance_anchors": 0,
+      "stop_requests": 0,
+      "scenario_verdict": "failed",
+      "monitor_process_returncode": 139,
+      "monitor_final_status": 0,
+      "verified_bytes": 328633544,
+      "verified_files": 65,
+      "all_sha256_match": true,
+      "audit_sha256": "b8f2c694360dba55e4b6b06f30510010d177040d9a9baa90a807441a89cdbcd2",
+      "split_groups": [
+        "sector_04"
+      ],
+      "locations": [
+        {
+          "site": "entry_a",
+          "context": "entry",
+          "monitor_reference_s_m": 54.32584450035684,
+          "actual_lateral_m": 0.7
+        }
+      ],
+      "raw_directory": "/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/collected/lidar-v44-ea-l-01",
+      "audit_directory": "/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/audits/lidar-v44-ea-l-01",
+      "camera_topic": "/sensing/camera/image_raw",
+      "first_camera_mode_observations": [
+        {
+          "mode": "AVOID",
+          "sim_s": 17.739999603,
+          "sample_dt_s": 0.00999999999999801,
+          "center_station_gap_m": 6.944000000000003,
+          "ego_speed_mps": 0.8819,
+          "distance_meaning": "Native actor and ego reference-station separation; not the internal LiDAR body-gap gate."
+        }
+      ],
+      "selection_reason_ja": "道路はみ出し"
+    },
+    {
+      "run_id": "lidar-v44-sc-r-01",
+      "cases": [
+        "straight_c_right"
+      ],
+      "category": "QUARANTINED_DRIVING",
+      "started_at": "2026-09-17T19:02:51.917351+00:00",
+      "started": true,
+      "finish_reached": false,
+      "finish_reason": "native_finish_before_expected",
+      "min_clearance_m": 1.032,
+      "max_off_track_depth_m": 0.0,
+      "penalties": {
+        "crash": 0,
+        "wall": 0,
+        "over": 0,
+        "block": 0
+      },
+      "camera_frames": 2366,
+      "lidar_scans": 4969,
+      "forward_avoidance_anchors": 0,
+      "stop_requests": 0,
+      "scenario_verdict": "not_judged",
+      "monitor_process_returncode": 139,
+      "monitor_final_status": 0,
+      "verified_bytes": 630450324,
+      "verified_files": 67,
+      "all_sha256_match": true,
+      "audit_sha256": "0ffd52341ed145265388d3709d124995edf3339a4f6577e5746659a847576d01",
+      "split_groups": [
+        "sector_06"
+      ],
+      "locations": [
+        {
+          "site": "straight_c",
+          "context": "middle",
+          "monitor_reference_s_m": 140.63440346096843,
+          "actual_lateral_m": -0.4
+        }
+      ],
+      "raw_directory": "/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/collected/lidar-v44-sc-r-01",
+      "audit_directory": "/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/audits/lidar-v44-sc-r-01",
+      "camera_topic": "/sensing/camera/image_raw",
+      "first_camera_mode_observations": [
+        {
+          "mode": "AVOID",
+          "sim_s": 141.114996845,
+          "sample_dt_s": -0.029999999000011712,
+          "center_station_gap_m": 6.9599999999999795,
+          "ego_speed_mps": 0.0068,
+          "distance_meaning": "Native actor and ego reference-station separation; not the internal LiDAR body-gap gate."
+        }
+      ],
+      "selection_reason_ja": "制限時間内に未通過"
+    },
+    {
+      "run_id": "lidar-v44-eb-l-01",
+      "cases": [
+        "entry_b_left"
+      ],
+      "category": "FORWARD_AVOIDANCE_CANDIDATE",
+      "started_at": "2026-09-17T19:08:13.545125+00:00",
+      "started": true,
+      "finish_reached": true,
+      "finish_reason": "reference_s_reached",
+      "min_clearance_m": 0.409,
+      "max_off_track_depth_m": 0.0,
+      "penalties": {
+        "crash": 0,
+        "wall": 0,
+        "over": 0,
+        "block": 0
+      },
+      "camera_frames": 971,
+      "lidar_scans": 2039,
+      "forward_avoidance_anchors": 243,
+      "stop_requests": 0,
+      "scenario_verdict": "passed",
+      "monitor_process_returncode": 139,
+      "monitor_final_status": 0,
+      "verified_bytes": 379743342,
+      "verified_files": 65,
+      "all_sha256_match": true,
+      "audit_sha256": "81899b8fe45ba603126e8d0dcfae984a16001bb6b00e10140ef9568dbb4ce0ac",
+      "split_groups": [
+        "sector_06"
+      ],
+      "locations": [
+        {
+          "site": "entry_b",
+          "context": "entry",
+          "monitor_reference_s_m": 98.30503497220838,
+          "actual_lateral_m": 0.4
+        }
+      ],
+      "raw_directory": "/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/collected/lidar-v44-eb-l-01",
+      "audit_directory": "/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/audits/lidar-v44-eb-l-01",
+      "camera_topic": "/sensing/camera/image_raw",
+      "first_camera_mode_observations": [
+        {
+          "mode": "AVOID",
+          "sim_s": 34.85499922,
+          "sample_dt_s": -0.00999999900000148,
+          "center_station_gap_m": 6.997,
+          "ego_speed_mps": 0.61,
+          "distance_meaning": "Native actor and ego reference-station separation; not the internal LiDAR body-gap gate."
+        }
+      ],
+      "selection_reason_ja": "採用候補"
+    },
+    {
+      "run_id": "lidar-v44-xa-r-01",
+      "cases": [
+        "exit_a_right"
+      ],
+      "category": "STARTUP_FAILED_NO_DRIVING",
+      "started_at": "2026-09-17T19:11:05.695362+00:00",
+      "started": false,
+      "finish_reached": false,
+      "finish_reason": "playstart_stall",
+      "min_clearance_m": 53.768,
+      "max_off_track_depth_m": 0.0,
+      "penalties": {
+        "crash": 0,
+        "wall": 0,
+        "over": 0,
+        "block": 0
+      },
+      "camera_frames": 200,
+      "lidar_scans": 421,
+      "forward_avoidance_anchors": 0,
+      "stop_requests": 0,
+      "scenario_verdict": "not_judged",
+      "monitor_process_returncode": 139,
+      "monitor_final_status": 13,
+      "verified_bytes": 14123893,
+      "verified_files": 64,
+      "all_sha256_match": true,
+      "audit_sha256": null,
+      "split_groups": [
+        "sector_07"
+      ],
+      "locations": [
+        {
+          "site": "exit_a",
+          "context": "exit",
+          "monitor_reference_s_m": 188.90894956954924,
+          "actual_lateral_m": -0.4
+        }
+      ],
+      "raw_directory": "/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/collected/lidar-v44-xa-r-01",
+      "audit_directory": null,
+      "camera_topic": "/sensing/camera/image_raw",
+      "first_camera_mode_observations": [],
+      "selection_reason_ja": "起動不良（PlayStartから進まず）"
+    },
+    {
+      "run_id": "lidar-v44-xa-r-02",
+      "cases": [
+        "exit_a_right"
+      ],
+      "category": "STARTUP_FAILED_NO_DRIVING",
+      "started_at": "2026-09-17T19:12:59.600779+00:00",
+      "started": false,
+      "finish_reached": false,
+      "finish_reason": "playstart_stall",
+      "min_clearance_m": 53.768,
+      "max_off_track_depth_m": 0.0,
+      "penalties": {
+        "crash": 0,
+        "wall": 0,
+        "over": 0,
+        "block": 0
+      },
+      "camera_frames": 152,
+      "lidar_scans": 320,
+      "forward_avoidance_anchors": 0,
+      "stop_requests": 0,
+      "scenario_verdict": "not_judged",
+      "monitor_process_returncode": 139,
+      "monitor_final_status": 13,
+      "verified_bytes": 10640630,
+      "verified_files": 64,
+      "all_sha256_match": true,
+      "audit_sha256": null,
+      "split_groups": [
+        "sector_07"
+      ],
+      "locations": [
+        {
+          "site": "exit_a",
+          "context": "exit",
+          "monitor_reference_s_m": 188.90894956954924,
+          "actual_lateral_m": -0.4
+        }
+      ],
+      "raw_directory": "/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/collected/lidar-v44-xa-r-02",
+      "audit_directory": null,
+      "camera_topic": "/sensing/camera/image_raw",
+      "first_camera_mode_observations": [],
+      "selection_reason_ja": "起動不良（PlayStartから進まず）"
+    },
+    {
+      "run_id": "lidar-v44-xc-l-01",
+      "cases": [
+        "exit_c_left"
+      ],
+      "category": "QUARANTINED_DRIVING",
+      "started_at": "2026-09-17T19:14:35.726121+00:00",
+      "started": true,
+      "finish_reached": true,
+      "finish_reason": "reference_s_reached",
+      "min_clearance_m": 0.0,
+      "max_off_track_depth_m": 0.6,
+      "penalties": {
+        "crash": 1,
+        "wall": 0,
+        "over": 0,
+        "block": 0
+      },
+      "camera_frames": 1877,
+      "lidar_scans": 3943,
+      "forward_avoidance_anchors": 0,
+      "stop_requests": 0,
+      "scenario_verdict": "failed",
+      "monitor_process_returncode": 139,
+      "monitor_final_status": 0,
+      "verified_bytes": 457547159,
+      "verified_files": 66,
+      "all_sha256_match": true,
+      "audit_sha256": "a6d21185d69d29a6d6fbc6726d4c8b8f2be4197d44f56a2c957ac397b88aae47",
+      "split_groups": [
+        "sector_11"
+      ],
+      "locations": [
+        {
+          "site": "exit_c",
+          "context": "exit",
+          "monitor_reference_s_m": 308.57020812289517,
+          "actual_lateral_m": 0.4
+        }
+      ],
+      "raw_directory": "/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/collected/lidar-v44-xc-l-01",
+      "audit_directory": "/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/audits/lidar-v44-xc-l-01",
+      "camera_topic": "/sensing/camera/image_raw",
+      "first_camera_mode_observations": [
+        {
+          "mode": "AVOID",
+          "sim_s": 141.849996829,
+          "sample_dt_s": -0.01999999999998181,
+          "center_station_gap_m": 7.518000000000029,
+          "ego_speed_mps": 0.1575,
+          "distance_meaning": "Native actor and ego reference-station separation; not the internal LiDAR body-gap gate."
+        }
+      ],
+      "selection_reason_ja": "接触・道路はみ出し"
+    },
+    {
+      "run_id": "lidar-v44-xb-l-01",
+      "cases": [
+        "exit_b_left"
+      ],
+      "category": "STARTUP_FAILED_NO_DRIVING",
+      "started_at": "2026-09-17T19:19:04.680756+00:00",
+      "started": false,
+      "finish_reached": false,
+      "finish_reason": "playstart_stall",
+      "min_clearance_m": 48.587,
+      "max_off_track_depth_m": 0.0,
+      "penalties": {
+        "crash": 0,
+        "wall": 0,
+        "over": 0,
+        "block": 0
+      },
+      "camera_frames": 205,
+      "lidar_scans": 430,
+      "forward_avoidance_anchors": 0,
+      "stop_requests": 0,
+      "scenario_verdict": "not_judged",
+      "monitor_process_returncode": 139,
+      "monitor_final_status": 13,
+      "verified_bytes": 13891788,
+      "verified_files": 64,
+      "all_sha256_match": true,
+      "audit_sha256": null,
+      "split_groups": [
+        "sector_09"
+      ],
+      "locations": [
+        {
+          "site": "exit_b",
+          "context": "exit",
+          "monitor_reference_s_m": 231.27337597147306,
+          "actual_lateral_m": 0.4
+        }
+      ],
+      "raw_directory": "/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/collected/lidar-v44-xb-l-01",
+      "audit_directory": null,
+      "camera_topic": "/sensing/camera/image_raw",
+      "first_camera_mode_observations": [],
+      "selection_reason_ja": "起動不良（PlayStartから進まず）"
+    },
+    {
+      "run_id": "lidar-v44-sb-l-01",
+      "cases": [
+        "straight_b_left"
+      ],
+      "category": "QUARANTINED_DRIVING",
+      "started_at": "2026-09-17T19:20:56.329822+00:00",
+      "started": true,
+      "finish_reached": true,
+      "finish_reason": "reference_s_reached",
+      "min_clearance_m": 0.0,
+      "max_off_track_depth_m": 0.0,
+      "penalties": {
+        "crash": 1,
+        "wall": 0,
+        "over": 0,
+        "block": 0
+      },
+      "camera_frames": 919,
+      "lidar_scans": 1930,
+      "forward_avoidance_anchors": 0,
+      "stop_requests": 0,
+      "scenario_verdict": "failed",
+      "monitor_process_returncode": 139,
+      "monitor_final_status": 0,
+      "verified_bytes": 350321530,
+      "verified_files": 65,
+      "all_sha256_match": true,
+      "audit_sha256": "07d4073644dbbb2004c99e0830fa8c0699fa7fcc4370b6dac892cbe86b8ada24",
+      "split_groups": [
+        "sector_04"
+      ],
+      "locations": [
+        {
+          "site": "straight_b",
+          "context": "middle",
+          "monitor_reference_s_m": 84.25156879094072,
+          "actual_lateral_m": 0.4
+        }
+      ],
+      "raw_directory": "/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/collected/lidar-v44-sb-l-01",
+      "audit_directory": "/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/audits/lidar-v44-sb-l-01",
+      "camera_topic": "/sensing/camera/image_raw",
+      "first_camera_mode_observations": [
+        {
+          "mode": "AVOID",
+          "sim_s": 30.444999319,
+          "sample_dt_s": -0.019999999999999574,
+          "center_station_gap_m": 7.186000000000007,
+          "ego_speed_mps": 0.2291,
+          "distance_meaning": "Native actor and ego reference-station separation; not the internal LiDAR body-gap gate."
+        }
+      ],
+      "selection_reason_ja": "接触"
+    }
+  ],
+  "preservation": {
+    "awsim_files_checked": 1092,
+    "awsim_changed": [],
+    "teacher_source_files_checked": 926,
+    "teacher_source_changed": [],
+    "teacher_archive_unchanged": true,
+    "original_scenario_unchanged": true,
+    "original_rviz_unchanged": true,
+    "original_recorder_unchanged": true,
+    "active_container_names": [
+      "ga_yaw_slip_ablation_ws-rosbag-cleaner-1"
+    ]
+  },
+  "audit_commit": "89622a6faa6f16400a6e5a7c06f6b9287476c5b3",
+  "validation": {
+    "command": "bash tools/with_wsl_training_lock.sh env PYTHONPATH=$PWD/src .venv/bin/python -m pytest -q",
+    "host": "native WSL",
+    "passed": 3042,
+    "skipped": 4,
+    "warnings": 84,
+    "elapsed_s": 122.01,
+    "skip_reasons": [
+      "OSQP unavailable",
+      "Draft2020 validator unavailable",
+      "jsonschema unavailable",
+      "optional official Tiny package absent"
+    ],
+    "audited_driving_bags": 6,
+    "new_regression_tests_passed": 6
+  },
+  "reproduction_zip": {
+    "path": "/home/thistle/e2e_autonomous/runs/lidar_v2x_obstacles_20260918/reproduction.zip",
+    "bytes": 21248,
+    "sha256": "94e4f89b8aa0ec61b53ff8f4a6c5c5a7de9c13f10ad5d0df0c93205a304d045d",
+    "wsl_sha256_verified": true
+  }
+}
