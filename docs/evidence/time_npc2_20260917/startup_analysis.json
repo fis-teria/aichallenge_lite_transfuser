@@ -1,0 +1,46 @@
+{
+  "status": "BLOCKED_BEFORE_EGO_DRIVE",
+  "run_id": "codex-time-npc2-lap01",
+  "source_commit": "568633d94213b9fb3971dac2327adb86d5914e74",
+  "checkpoint_sha256": "1fe12ca066791d3eb8907c6921120e2cfbb38925c422d5be54940f4acbdd120a",
+  "requested_npcs": 2,
+  "npc_startup": {
+    "requested_count": 2,
+    "spawned_count": 2,
+    "mode": "racing-line",
+    "vehicle_collisions_enabled": true,
+    "settings_log": "Applied race settings: boosts=2, sound=False, ranking=True, collisions=True, wallRecovery=True, minimap=True"
+  },
+  "official_start_requested": false,
+  "armed_events": 0,
+  "tracking_commands": 0,
+  "judge_lap_confirmed": false,
+  "max_abs_observed_speed_kmh": 1.6455014247185317e-06,
+  "host_error": "TimeoutExpired: Command '['make', 'awsim-request-start', 'CONTROL_METHOD=v4_20_external', 'CAPTURE=false', 'ROSBAG=false', 'AWSIM_LAPS=1', 'RUN_ID=codex-time-npc2-lap01', 'OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_npc2_20260917/codex-time-npc2-lap01', 'AWSIM_TIMEOUT=660', 'AWSIM_EXTRA_ARGS=--npcs 2 --collisions on -logFile /output/codex-time-npc2-lap01/awsim_unity.log']' timed out after 20 seconds",
+  "cleanup_errors": [],
+  "camera_argument_null_exceptions": 426,
+  "camera_exception_sample": "ArgumentNullException: Value cannot be null.\nParameter name: texture\n  at (wrapper managed-to-native) UnityEngine.ComputeShader.SetTexture(UnityEngine.ComputeShader,int,int,UnityEngine.Texture,int)\n  at UnityEngine.ComputeShader.SetTexture (System.Int32 kernelIndex, System.String name, UnityEngine.Texture texture) [0x00009] in <4b1b4d2bea0d4c7a87adc0ab876809a2>:0 \n  at AWSIM.CameraSensor.DoRenderReal () [0x00011] in <b3b4bb0cff8d47d398e43b717f0e7668>:0 \n  at AWSIM.CameraSensor.DoRender () [0x00018] in <b3b4bb0cff8d47d398e43b717f0e7668>:0 \n  at AWSIM.CameraSensorHolder+<RenderCamera>d__7.MoveNext () [0x00034] in <b3b4bb0cff8d47d398e43b717f0e7668>:0 \n  at UnityEngine.SetupCoroutine.InvokeMoveNext (System.Collections.IEnumerator enumerator, System.IntPtr returnValueAddress) [0x00026] in <4b1b4d2bea0d4c7a87adc0ab876809a2>:0 \nUnityEngine.MonoBehaviour:StartCoroutineManaged2(MonoBehaviour, IEnumerator)\nUnityEngine.MonoBehaviour:StartCoroutine(IEnumerator)\nAWSIM.<FixedUpdateRoutine>d__6:MoveNext()\nUnityEngine.SetupCoroutine:InvokeMoveNext(IEnumerator, IntPtr)",
+  "d1_state_publisher_creation_log_count": 3,
+  "d1_status_publisher_creation_log_count": 3,
+  "initialization_transitions": [
+    "[autostart_orchestrator_node.py-13] [INFO] [1789612635.384495990] [autostart_orchestrator]: race initialization ready=false",
+    "[autostart_orchestrator_node.py-13] [INFO] [1789612646.447875167] [autostart_orchestrator]: race initialization ready=true",
+    "[autostart_orchestrator_node.py-13] [INFO] [1789612646.968620163] [autostart_orchestrator]: race initialization ready=false"
+  ],
+  "official_start_observations": [
+    "[awsim-start] admin state: waitstart",
+    "[awsim-start] vehicle domain 1 state: ready",
+    "[awsim-start] vehicle domain 1 initialization ready: false"
+  ],
+  "command_reasons": {
+    "'velocity'": 12,
+    "CLOCK_STALE": 314,
+    "'pose'": 7,
+    "WAIT_AUTHORIZATION": 449,
+    "STALE_velocity": 5
+  },
+  "limitations": [
+    "No ego drive was authorized; no conclusion about E2E obstacle avoidance or lap completion.",
+    "NPC JudgeSystem cloning is the likely source of shared domain state; no live GID-to-object binding was captured."
+  ]
+}

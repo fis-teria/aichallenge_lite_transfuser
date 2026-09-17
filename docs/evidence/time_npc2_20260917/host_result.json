@@ -1,0 +1,150 @@
+{
+  "status": "FAILED",
+  "run_id": "codex-time-npc2-lap01",
+  "start_time_utc": 1789612619.2494612,
+  "scope": "ONE_LAP_MODEL_TRIAL",
+  "official_start_requested": false,
+  "execution_profile": "one_lap",
+  "requested_npcs": 2,
+  "speed_policy": "curvature_time_preview_20kmh_v1",
+  "trial_config_sha256": "2cba99a7930133cbc93d5c281be7fd33d86ac4eccbe9757d3369f19ba426d252",
+  "gpu": {
+    "returncode": 0,
+    "stdout": "NVIDIA GeForce RTX 4060 Laptop GPU, 595.91.07\n",
+    "stderr": ""
+  },
+  "steering_asset_sha256": {
+    "AWSIM_Data/StreamingAssets/Vehicle/vehicle.yaml": "5b66e58691091c82d5511535ca458d4c89e85f3b59fa0d0c4a2c7eee47887244",
+    "AWSIM_Data/Managed/Assembly-CSharp.dll": "859e5560dbffd7d0833cd1fe5eb1f36b87fa8d22f6e45eb0e1203d04a1ea6d13"
+  },
+  "rviz_config": "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz",
+  "rviz_sha256": "981c28955e9bceedb8845ec8d59e57c4f47805040cd84c5e09f2f1430c7bb3f1",
+  "commands": [
+    [
+      "docker",
+      "run",
+      "--rm",
+      "--name",
+      "codex-time-npc2-lap01-nodes",
+      "--gpus",
+      "all",
+      "--network",
+      "host",
+      "-e",
+      "ROS_DOMAIN_ID=1",
+      "-e",
+      "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_npc2_20260917/codex-time-npc2-lap01/cyclonedds.xml:/opt/autoware/cyclonedds.xml:ro",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_npc2_20260917:/time",
+      "-v",
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro",
+      "--entrypoint",
+      "bash",
+      "codex-cartographer-v4-build:20260910",
+      "-lc",
+      "source /aichallenge/workspace/install/setup.bash && source /time/install/setup.bash && exec ros2 launch aic_e2e_runtime time_path_awsim.launch.py output:=/time/codex-time-npc2-lap01 run_id:=codex-time-npc2-lap01 checkpoint:=/time/command_off_best.pt config:=/time/codex-time-npc2-lap01/trial_config.json authorize_awsim_only:=true max_speed_kmh:=20.0 corner_max_speed_kmh:=10.0"
+    ],
+    [
+      "make",
+      "dev",
+      "DEV_AUTO_START=false",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=1",
+      "RUN_ID=codex-time-npc2-lap01",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_npc2_20260917/codex-time-npc2-lap01",
+      "AWSIM_TIMEOUT=660",
+      "AWSIM_EXTRA_ARGS=--npcs 2 --collisions on -logFile /output/codex-time-npc2-lap01/awsim_unity.log"
+    ],
+    [
+      "make",
+      "awsim-request-start",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=1",
+      "RUN_ID=codex-time-npc2-lap01",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_npc2_20260917/codex-time-npc2-lap01",
+      "AWSIM_TIMEOUT=660",
+      "AWSIM_EXTRA_ARGS=--npcs 2 --collisions on -logFile /output/codex-time-npc2-lap01/awsim_unity.log"
+    ]
+  ],
+  "last_control": {
+    "fault": null,
+    "armed_ns": null,
+    "armed_wall": null,
+    "stop_since_ns": null,
+    "stop_confirmed": false,
+    "positive_count": 0,
+    "commands": 253,
+    "max_speed_mps": 2.915060406394332e-07,
+    "requested_stop_reason": null,
+    "speed_mps": -6.113027239962321e-08,
+    "current_pose": {
+      "stamp_ns": 1124999974,
+      "clock": "sim",
+      "epoch": "0",
+      "world_frame": "map",
+      "body_frame": "base_link",
+      "x_m": 89631.41619264176,
+      "y_m": 43127.808585119914,
+      "yaw_rad": 2.21616902845413
+    },
+    "scan_rejection_recorded": false,
+    "scan_observation_recorded": false,
+    "scan_would_stop_commands": 0,
+    "reason": "WAIT_AUTHORIZATION",
+    "monotonic_ns": 187053564613840,
+    "sim_ns": 1139999974,
+    "topic": "/control/command/control_cmd"
+  },
+  "last_inference": {
+    "plans": 5,
+    "rejected": 2,
+    "fault": null,
+    "sources_ok": true,
+    "sources": {
+      "camera": [
+        "/awsim_d1"
+      ],
+      "lidar": [
+        "/awsim_d1"
+      ],
+      "velocity": [
+        "/awsim_d1"
+      ],
+      "actual_steering": [
+        "/awsim_d1"
+      ]
+    },
+    "path_subscribers": [
+      "rviz2"
+    ],
+    "monotonic_ns": 187053563598830,
+    "sim_ns": 1139999974,
+    "epoch": "0",
+    "dropped_anchors": 2
+  },
+  "npc_startup": {
+    "requested_count": 2,
+    "spawned_count": 2,
+    "mode": "racing-line",
+    "vehicle_collisions_enabled": true,
+    "settings_log": "Applied race settings: boosts=2, sound=False, ranking=True, collisions=True, wallRecovery=True, minimap=True"
+  },
+  "rviz_path_subscribers": [
+    "rviz2"
+  ],
+  "rviz_window": "0x1800010 \"/aichallenge/workspace/install/aichallenge_system_launch/share/aichallenge_system_launch/config/autoware.rviz* - RViz\": (\"rviz2\" \"rviz2\")  1850x1136+10+45  +70+64",
+  "error": "TimeoutExpired: Command '['make', 'awsim-request-start', 'CONTROL_METHOD=v4_20_external', 'CAPTURE=false', 'ROSBAG=false', 'AWSIM_LAPS=1', 'RUN_ID=codex-time-npc2-lap01', 'OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_npc2_20260917/codex-time-npc2-lap01', 'AWSIM_TIMEOUT=660', 'AWSIM_EXTRA_ARGS=--npcs 2 --collisions on -logFile /output/codex-time-npc2-lap01/awsim_unity.log']' timed out after 20 seconds",
+  "cleanup_errors": [],
+  "end_time_utc": 1789612673.8945138,
+  "wall_s": 54.644988646992715,
+  "judge_lap_confirmed": false,
+  "judge_section_events": [],
+  "judge_laps": [],
+  "judge_order_invalid": false
+}
