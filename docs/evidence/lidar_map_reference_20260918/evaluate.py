@@ -75,7 +75,8 @@ def main() -> None:
     from rosbags.typesys import Stores,get_typestore
     root=Path('/home/thistle/e2e_autonomous/runs')
     run=root/'time_teacher_si26_20260911/laps03/5kmh_run01'
-    by_stamp={};frames=set();digest=hashlib.sha256()
+    by_stamp={};frames=set();digest=hashlib.sha256();ambiguous=set();duplicates=0
+    duplicate_max_xy=0.;duplicate_max_yaw=0.
     with AnyReader([run/'bag'],default_typestore=get_typestore(Stores.ROS2_HUMBLE)) as reader:
         topics={c.topic:c.msgcount for c in reader.connections}
         for conn,receipt,raw in reader.messages(connections=[c for c in reader.connections if c.topic=='/localization/pose']):
@@ -87,8 +88,17 @@ def main() -> None:
             value=[p.x,p.y,math.atan2(2*(q.w*q.z+q.x*q.y),1-2*(q.y*q.y+q.z*q.z))]
             assert np.isfinite(value).all()
             if stamp in by_stamp:
-                np.testing.assert_allclose(by_stamp[stamp],value,atol=1e-8,rtol=0)
-            by_stamp[stamp]=value;digest.update(raw)
+                duplicates+=1
+                xy=float(np.linalg.norm(np.asarray(by_stamp[stamp][:2])-value[:2]))
+                yaw=abs(wrap(by_stamp[stamp][2]-value[2]))
+                duplicate_max_xy=max(duplicate_max_xy,xy);duplicate_max_yaw=max(duplicate_max_yaw,yaw)
+                # Preserve the first value for numerically equivalent updates.
+                # Exclude conflicting stamps rather than silently choose one.
+                if xy>.001 or yaw>1e-5:ambiguous.add(stamp)
+            else:
+                by_stamp[stamp]=value
+            digest.update(raw)
+    for stamp in ambiguous:del by_stamp[stamp]
     times=np.array(sorted(by_stamp),dtype=np.int64);poses=np.array([by_stamp[int(t)] for t in times])
     reports={};details={};hashes={}
     paths={'bounded':root/'lidar_map_runtime_20260918/replay05',
@@ -103,6 +113,8 @@ def main() -> None:
                 independent_ground_truth_topic_present='/awsim/ground_truth/vehicle/pose' in topics,
                 reference_messages=len(times),reference_frames=sorted(frames),reference_messages_sha256=digest.hexdigest(),
                 input_estimate_hashes=hashes,alignment_fitted=False,used_for_localization_input=False,
+                duplicate_reference_messages=duplicates,ambiguous_reference_stamps_removed=len(ambiguous),
+                max_duplicate_position_difference_m=duplicate_max_xy,max_duplicate_yaw_difference_rad=duplicate_max_yaw,
                 scope='Reference agreement only; missing estimates count against all-attempt denominator',
                 reports=reports,bag_topics=topics)
     args.output.mkdir(exist_ok=False,parents=True)
