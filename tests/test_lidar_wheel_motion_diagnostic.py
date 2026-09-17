@@ -35,6 +35,17 @@ def test_mount_lever_and_base_units() -> None:
     np.testing.assert_allclose(module.base_motion(lidar),base,atol=1e-12)
 
 
+def test_centimetre_noise_does_not_create_false_motion() -> None:
+    rng=np.random.default_rng(160)
+    reference=room()
+    truth=np.array([.19,-.005,-.013])
+    current=module.transform(reference,module.inverse(truth))
+    reference+=rng.normal(0,.01,reference.shape)
+    current+=rng.normal(0,.01,current.shape)
+    result=module.register(reference,current)
+    np.testing.assert_allclose(result.pose,truth,atol=.005)
+
+
 def test_corridor_is_not_longitudinal_ground_truth() -> None:
     x=np.linspace(-12,12,350)
     reference=np.concatenate([np.column_stack((x,np.full_like(x,-4))),[[np.nan,np.nan]],np.column_stack((x,np.full_like(x,4)))])

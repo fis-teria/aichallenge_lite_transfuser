@@ -52,14 +52,34 @@ def cloud_from_scan(scan: object) -> np.ndarray:
 
 class ScanSurface:
     def __init__(self, points: np.ndarray) -> None:
-        """Adjacent valid beams form local line segments, excluding range jumps."""
+        """Fit local surfaces over up to nine adjacent beams, excluding jumps.
+
+        Two-beam normals amplify centimetre range noise into spurious corners.
+        PCA over a <=0.45 m neighbourhood estimates the wall normal instead.
+        Reject discontinuities / curved windows with minor/major variance >.08.
+        """
         pts = np.asarray(points, dtype=float)
         if pts.ndim != 2 or pts.shape[1] != 2 or not 3 <= len(pts) <= 10000:
             raise ValueError('CLOUD_SHAPE')
-        a, b = pts[:-1], pts[1:]
-        length = np.linalg.norm(b-a, axis=1)
-        valid = np.isfinite(a).all(axis=1) & np.isfinite(b).all(axis=1) & (length > .002) & (length < .6)
-        self.a = a[valid]; self.v = b[valid] - self.a
+        starts, vectors = [], []
+        for i, point in enumerate(pts):
+            if not np.isfinite(point).all():
+                continue
+            neighbours=pts[max(0,i-4):min(len(pts),i+5)]
+            good=np.isfinite(neighbours).all(axis=1) & (np.linalg.norm(neighbours-point,axis=1)<.45)
+            neighbours=neighbours[good]
+            if len(neighbours)<5:
+                continue
+            centre=neighbours.mean(axis=0); centred=neighbours-centre
+            values,basis=np.linalg.eigh(centred.T@centred)
+            if values[-1]<1e-6 or values[0]/values[-1]>.08:
+                continue
+            direction=basis[:,-1]; projection=centred@direction
+            lo,hi=float(projection.min()),float(projection.max())
+            if hi-lo<.05:
+                continue
+            starts.append(centre+lo*direction);vectors.append((hi-lo)*direction)
+        self.a=np.asarray(starts); self.v=np.asarray(vectors)
         if len(self.a) < 30:
             raise ValueError('INSUFFICIENT_SURFACE')
         self.tree = cKDTree(self.a + self.v*.5)
