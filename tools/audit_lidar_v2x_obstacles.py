@@ -44,6 +44,26 @@ def overlap(start_ns: int, end_ns: int, intervals: list[tuple[int, int]]) -> boo
     return any(start_ns <= end and end_ns >= start for start, end in intervals)
 
 
+def coalesce_sim_clock_receipts(samples: list[ClockSample]) -> list[ClockSample]:
+    """rosbag --use-sim-time can stamp several /clock updates identically.
+
+    Preserve the last monotonic simulation update per receipt. A real clock
+    reversal remains an error; only repeated bag receipt stamps are collapsed.
+    Raw rows remain in the original bag.
+    """
+    result: list[ClockSample] = []
+    for sample in samples:
+        if result:
+            previous = result[-1]
+            if sample.bag_stamp_ns < previous.bag_stamp_ns or sample.sim_stamp_ns < previous.sim_stamp_ns:
+                raise ValueError('Clock reversal requires separate epoch handling')
+            if sample.bag_stamp_ns == previous.bag_stamp_ns:
+                result[-1] = sample
+                continue
+        result.append(sample)
+    return result
+
+
 def audit(collected: Path, output: Path) -> dict:
     receipt = json.loads((collected/'transfer_verified.json').read_text())
     assert receipt['all_sha256_match']
@@ -103,7 +123,8 @@ def audit(collected: Path, output: Path) -> dict:
                 states.append((receipt_ns,m.data))
             else:
                 stop_requests.append(receipt_ns)
-    epochs = segment_clock_epochs(clocks,max_forward_jump_ns=5_000_000_000)
+    clock_receipts = coalesce_sim_clock_receipts(clocks)
+    epochs = segment_clock_epochs(clock_receipts,max_forward_jump_ns=5_000_000_000)
     assert len(epochs) == 1, 'Clock reset/jump needs a separate epoch audit'
     epoch = replace(epochs[0],first_bag_stamp_ns=begin,last_bag_stamp_ns=end)
     events = read_time_events(bag,run=run_id,epochs=[epoch],capture_clock='sim')
@@ -132,6 +153,8 @@ def audit(collected: Path, output: Path) -> dict:
     anchors = sorted(cameras.values(),key=lambda x:x.capture_ns)
     labels = np.full((len(anchors),30,2),np.nan,np.float32)
     masks = np.zeros((len(anchors),30),bool)
+    velocity = np.full((len(anchors),30),np.nan,np.float32)
+    velocity_masks = np.zeros((len(anchors),30),bool)
     selected = np.zeros(len(anchors),bool)
     rows = []
     rejected = Counter()
@@ -147,6 +170,7 @@ def audit(collected: Path, output: Path) -> dict:
             freeze_ns=anchor.available_ns+50_000_000,intervention_ns=intervention)
         if teacher is not None:
             labels[i],masks[i] = teacher.xy_m,teacher.xy_mask
+            velocity[i],velocity_masks[i] = teacher.velocity_mps,teacher.velocity_mask
         mi = int(np.searchsorted(mode_times,t,side='right'))-1
         oi = int(np.searchsorted(object_times,anchor.available_ns+50_000_000,side='right'))-1
         mode = modes[mi][1] if mi>=0 and t-modes[mi][0] <= 200_000_000 else 'MISSING'
@@ -195,6 +219,7 @@ def audit(collected: Path, output: Path) -> dict:
         label_contract=dict(shape=list(labels.shape),units='m',dt_s=.1,frame='base_link_at_observation',
                             source='OBSERVED_FUTURE_POSE',freeze_delay_receipt_ns=50_000_000,config=asdict(config)),
         source_bag=str(bag),source_verified_bytes=verified_bytes,training_split_assigned=False,
+        duplicate_sim_clock_receipts_coalesced=len(clocks)-len(clock_receipts),
         collection_scope='MPPI teacher drive; E2E inference shadow only',
         limitations=['V2X-derived footprint clearance is approximate, not a contact mesh oracle.',
                      'Forward candidate mask excludes reverse and unknown stop intent; raw reverse/stops are preserved.',
@@ -203,7 +228,8 @@ def audit(collected: Path, output: Path) -> dict:
     (output/'audit.json').write_text(json.dumps(report,indent=2)+'\n')
     (output/'anchors.jsonl').write_text(''.join(json.dumps(r,separators=(',',':'))+'\n' for r in rows))
     np.savez_compressed(output/'observed_teachers.npz',observation_ns=np.array([a.capture_ns for a in anchors],np.int64),
-        xy_m=labels,xy_mask=masks,forward_avoidance_eligible=selected)
+        xy_m=labels,xy_mask=masks,velocity_mps=velocity,velocity_mask=velocity_masks,
+        forward_avoidance_eligible=selected)
     if pictures:
         sheet=Image.new('RGB',(1152,281*((len(pictures)+2)//3)))
         for i,pic in enumerate(pictures):sheet.paste(pic,((i%3)*384,(i//3)*281))
