@@ -140,7 +140,7 @@ class Match:
 
 def match_scan(course: BoundaryMap, points_lidar: np.ndarray, predicted: np.ndarray,
                *, initializing: bool = False) -> Match:
-    """Point-to-line registration; weak directions remain at the wheel prior.
+    """Point-to-line registration; wheel prior regularizes weak directions.
 
     Sensor points [N,2] m. Fixed verified mount: forward 1.65 m, zero yaw.
     Thresholds are bounded diagnostic-localization gates, not a safety rating.
@@ -175,8 +175,13 @@ def match_scan(course: BoundaryMap, points_lidar: np.ndarray, predicted: np.ndar
         rank = int(strong.sum())
         if rank < 2:
             break
-        vectors = basis[:, strong]
-        step = -vectors @ ((vectors.T @ (jac.T @ (weight*residual))) / (eigenvalues[strong]+.1))
+        # Exact straight corridors have a null longitudinal direction: leave it
+        # unchanged. A gentle bend carries weak but real longitudinal evidence;
+        # ridge regularization limits that update instead of throwing it away
+        # until a hard rank threshold is crossed. Rank still reports DEGRADED.
+        observable = eigenvalues > max(.05, eigenvalues[-1]*.001)
+        vectors = basis[:, observable]
+        step = -vectors @ ((vectors.T @ (jac.T @ (weight*residual))) / (eigenvalues[observable]+1.))
         step[2] /= 5.
         scale = max(1., np.linalg.norm(step[:2])/.2, abs(step[2])/.04)
         estimate += step/scale
