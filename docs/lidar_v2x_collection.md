@@ -90,6 +90,7 @@ tools/with_wsl_training_lock.sh .venv/bin/python tools/replay_lidar_v2x.py \
 
 ROS 2 HumbleとV44と同じ`v2x_msgs`をsourceした環境で、独立パッケージとしてビルドする。
 build/install/logはWSL native側（AWSIMホストへの適用時は専用実験領域）に置く。
+WSLで実施する場合は、以下のビルド・ROS起動も `tools/with_wsl_training_lock.sh` 経由で実行する。
 
 ```bash
 colcon build --base-paths /path/to/e2e_lite_transfuser/ros2_ws/src/aic_lidar_v2x \
@@ -140,9 +141,16 @@ native V2Xは照合専用で、検出器・追跡器への入力には使って�
 
 | モード | 対応候補 / 母集団 | native V2X位置との差・中央値 / P95 | 処理時間P95 |
 |---|---:|---:|---:|
-| surface・rolling | 461 / 472 | 0.555 / 0.788 m | 14.25 ms |
+| surface・rolling | 461 / 472 | 0.555 / 0.788 m | 14.66 ms |
 | surface・snapshot | 461 / 472 | 0.558 / 0.790 m | 13.77 ms |
 | known_vehicle・rolling | 167 / 472 | 0.954 / 1.136 m | 17.12 ms |
+
+処理時間はWSLでの検出・追跡・payload作成のCPU時間で、DDS通信・TF待ち時間は含まない。
+最終ソースの全体pytestは **3,017 passed / 4 skipped**、追加の数値テストは21件。
+skipは既存のOSQP、jsonschema関連、公式Tiny packageの不足によるもの。
+ROSパッケージのビルドと有限通信試験も成功し、型・標準偏差の単位・ID・TF欠損・
+NaN入力・scan timeout・native V2X非配信を確認した。
+使用commit、入力SHA、各比較条件、試験集計は [検証記録](lidar_v2x_validation.json) に保存した。
 
 表面候補の検出はできたが、表面中心を車両中心として流用すると約0.55mのずれが残る。
 矩形の既知寸法による中心補正はこのデータでは悪化したため採用しない。
