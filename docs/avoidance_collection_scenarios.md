@@ -98,3 +98,24 @@ bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -m pyte
 
 単体試験は位置shape、角度・速度の単位、分割漏洩、周回境界、pilot順序、既存出力保全を確認する。
 実H2Hでの生成結果と実走前に残る確認は、別の検証JSONに記録する。
+
+## 作成済みセット
+
+生成sourceは `b16cac5991b5a0d84f3219db7734984a4bb2f487`。
+SI26の既存H2Hで16地点・96配置要求を検査し、境界で重複した6配置を除外。
+90配置から単独270条件（train 198 / validation 72）、3台配置3条件を生成した。
+H2Hの構文・意味検査とAWSIMシナリオへの変換を全273条件で確認した。
+地図・Reference・H2H Python入力のハッシュは生成前後で一致した。
+
+pilotは5 km/hの72条件（train 52 / validation 20）。過去の起動不良付近というH2H警告がある
+27条件はpilotに含めず、後続の配置probe対象としてキューに残した。
+既存採用データとは未統合で、新しい実走成功イベントはまだ0件。
+
+SI26の保存先:
+`/home/si26-pc008/e2e_collection_scenarios/avoidance_static_v1_b16cac5/`
+
+WSLで新規20試験と全体 **3,067 passed / 4 skipped / 84 warnings** を確認した。
+全体所要149.91秒。skipは既存のOSQP・JSON Schema validator・optional Tiny環境の不足。
+教師の修正作業、稼働環境、AWSIMの起動は操作していない。
+
+詳細は [検証記録](avoidance_collection_scenarios_validation.json)。
