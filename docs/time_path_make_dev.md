@@ -4,6 +4,12 @@
 `time_path_awsim.launch.py` を追加。旧V4/tinyの `make dev` 分岐は維持する。
 モデルの再学習・予測経路の平滑化は行わない。
 
+2026-09-18: TimePathの走行制御・LiDAR観測の位置合わせは、GNSS/IMU由来の
+EKF姿勢から車速・実操舵角による局所オドメトリへ変更した。
+制御ノードはGNSS、IMU、外部pose、TFを購読しない。
+[入力契約・検証結果・制限](time_control_without_gnss_imu.md)を参照。
+下記の既存入口は新版へ接続済み。従来のGNSS依存版の実走結果は新版の完走証明ではない。
+
 ## AWSIMを起動する
 
 実行先は `graneple@192.168.3.10`。準備済みdeploymentには既定でTimePathを選ぶ
@@ -17,9 +23,10 @@ make dev MAX_SPEED_KMH=20 CORNER_MAX_SPEED_KMH=10
 make dev MAX_SPEED_KMH=15 CORNER_MAX_SPEED_KMH=8 TIME_RECORD_VIDEO=1
 ```
 
-deployment内の `source_f235112` ディレクトリから直接起動する場合は
-`make dev DEV_CONTROLLER=time ...` と指定する。deploymentのMakefileはこの
-検証済みsourceを選び、指定された速度変数をそのまま引き渡す。
+現在の入口は `~/e2e_autonomous/time_no_gnss_20260918/source_992c1ce` を選ぶ。
+そのsourceから直接起動する場合は `make dev DEV_CONTROLLER=time ...` と指定する。
+既存deploymentのMakefileは新版へ転送し、指定された速度変数を引き渡す。
+旧source・install・過去runは保全し、旧sourceを直接実行した場合は旧版のままとなる。
 
 `tools/time_dev_runner.py` が既存の有限試験runnerを呼ぶ。通常RVizに
 `/visualization/time_path/raw_path` を表示し、公式Start、1周判定、制動停止、
