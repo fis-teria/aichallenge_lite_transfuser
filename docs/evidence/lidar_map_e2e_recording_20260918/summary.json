@@ -1,0 +1,109 @@
+{
+  "run_id": "codex-time-lidar-record01",
+  "status": "COMPLETE_LAP",
+  "judge_laps": [
+    {
+      "lap_seconds": 132.36,
+      "laps": 1,
+      "line": "Lap completed: 132.36s, total laps: 1",
+      "run_id": "codex-time-lidar-record01",
+      "epoch": 0,
+      "byte_offset": 103113,
+      "lap_increment_valid": true,
+      "ordered_section_evidence": true
+    }
+  ],
+  "last_control": {
+    "fault": null,
+    "armed_ns": 18894999577,
+    "armed_wall": 248534.061243629,
+    "stop_since_ns": 162594996365,
+    "stop_confirmed": true,
+    "positive_count": 2543,
+    "commands": 3457,
+    "max_speed_mps": 3.5947446823120117,
+    "requested_stop_reason": "JUDGE_FIRST_LAP",
+    "speed_mps": 0.0,
+    "current_pose": {
+      "stamp_ns": 163624996342,
+      "clock": "sim",
+      "epoch": "0",
+      "world_frame": "time_wheel_odom",
+      "body_frame": "base_link",
+      "x_m": -11.909722297662167,
+      "y_m": -21.750946849611072,
+      "yaw_rad": 0.8967998756609514
+    },
+    "scan_rejection_recorded": false,
+    "scan_observation_recorded": false,
+    "scan_would_stop_commands": 0,
+    "reason": "REQUESTED_BRAKE",
+    "monotonic_ns": 248678811115131,
+    "sim_ns": 163644996342,
+    "topic": "/control/command/control_cmd"
+  },
+  "video_status": "PASS",
+  "video_streams": {
+    "awsim": {
+      "file": "awsim.mp4",
+      "ffmpeg_exit": 255,
+      "probe": {
+        "programs": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 960,
+            "avg_frame_rate": "10/1",
+            "nb_frames": "1615"
+          }
+        ],
+        "format": {
+          "duration": "161.500000",
+          "size": "84878266"
+        }
+      }
+    },
+    "rviz": {
+      "file": "rviz.mp4",
+      "ffmpeg_exit": 255,
+      "probe": {
+        "programs": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 786,
+            "avg_frame_rate": "10/1",
+            "nb_frames": "1620"
+          }
+        ],
+        "format": {
+          "duration": "162.000000",
+          "size": "49063039"
+        }
+      }
+    }
+  },
+  "correction_scope": "DISPLAY_AND_EVALUATION_ONLY_NO_CONTROL_INPUT",
+  "ground_truth_samples": 0,
+  "processed_scan_stamps": 713,
+  "published_corrected_scan_stamps": 269,
+  "processed_modes": {
+    "DEGRADED": 179,
+    "TRACKING": 90,
+    "REJECTED_INSUFFICIENT_SUPPORT": 417,
+    "INITIALIZING": 26,
+    "REJECTED_UNOBSERVABLE": 1
+  },
+  "reference_topic": "/localization/pose (Autoware estimate; NOT AWSIM ground truth)",
+  "reference_conflicting_duplicate_stamps": 9,
+  "matched_valid_pose_samples": 269,
+  "reference_xy_median_m": 9.151108332057795,
+  "reference_xy_p95_m": 48.442006078171886,
+  "reference_xy_max_m": 63.72768696226826,
+  "reference_yaw_median_deg": 44.35203202427901,
+  "reference_within_1m_and_10deg_count": 59,
+  "reference_within_0p5m_and_5deg_count": 2,
+  "cleanup_errors": []
+}
