@@ -1,0 +1,111 @@
+# LiDAR物体検出・V2X変換モジュール
+
+`aic_lidar_v2x` は、LaserScan・時刻付きTF・既知の静的地図から物体候補を検出・追跡し、
+MPPI V44と同じV2Xメッセージ型へ変換する独立ROS 2パッケージ。
+現段階の起動モードは **shadow（検出の検証・収録用）**。
+`teacher_ready=false` を明示し、運転ノードの起動や入力の自動切替は行わない。
+
+## 構成と入出力
+
+1. `core.py`: ROS非依存。無効レンジの除去、ビーム時刻でのSE(2)補間、自己車体除去、
+   地図壁の除去、距離クラスタリング、ID付き追跡、V2X形式への変換。
+2. `io.py`: ROS形式の地図YAML/画像、Reference CSV、平面TFの検証。
+3. `node.py`: LaserScanとtf2を接続し、V2X・検出詳細・状態・通常RViz用MarkerArrayを配信。
+
+| 入出力 | 内容 |
+|---|---|
+| 入力 `/sensing/lidar/scan` | `sensor_msgs/LaserScan`、range m、angle rad |
+| 入力 `/tf`, `/tf_static` | 観測時刻の `map -> lidar` と `map -> base_link` |
+| 入力 `map_yaml` | ROS trinary地図。unknown・地図外は物体候補にしない |
+| 任意入力 `reference_csv` | `known_vehicle` モードの向き事前情報。教師専用 |
+| 出力 `/collection/lidar_v2x/vehicle_positions` | `v2x_msgs/V2XVehiclePositionArray`、map座標 |
+| 出力 `/collection/lidar_v2x/objects` | JSON。ID、観測サイズ、速度、中心表現、box fit誤差・曖昧さ |
+| 出力 `/collection/lidar_v2x/status` | JSON。入力有効性、欠損理由、`teacher_ready=false` |
+| 出力 `/collection/lidar_v2x/markers` | 通常RVizのMarkerArray表示用、観測した範囲を表示 |
+
+native `/v2x/vehicle_positions` を入力に使わず、同トピックへも配信しない。
+E2Eの入力・モデル・制御権限は変更しない。教師用の地図/Reference/検出結果を
+学生モデルの入力へ混入させない。AWSIM本体・車両アセットの変更は不要。
+
+## V44との契約確認
+
+確認対象はSI26に保存された `mppi-sim-v44` のsourceと実際の`v2x_msgs`。
+
+- `V2XVehiclePosition` はheader、vehicle_id、position、covarianceのみ。
+  **この環境のcovarianceは標準偏差[m]であり分散[m²]ではない**。
+  V44 `receiveVehiclePositions` もそのまま `sigma_x_m/sigma_y_m` として読む。
+- V44はID文字列から履歴を持ち、位置差分から速度を推定する。
+  このモジュールは `lidar_000001` 等を使い、同一プロセス内のresetでもIDを再使用しない。
+- 大きさ・向き・物体分類はV2Xに格納できない。V44には固定の車体寸法を使う処理があり、
+  recovery側にも別の障害物近似がある。**任意サイズの障害物を安全に表現できる契約ではない**。
+- 受信箇所はMPPI planner `input/vehicle_positions`、Reference選択
+  `input/vehicle_positions`、recovery `input/vehicles`。
+  将来教師入力に採用する場合、これらを専用トピックへ一括で切り替え、実グラフで確認する。
+  nativeと合成データを同じトピックから交互配信すると、recoveryのactive IDリストが置き換わる。
+
+## 検出の2モード
+
+- `surface`（既定）: 観測点のXY外接矩形中心を出す。任意物体の候補を保持できるが、
+  **車両の中心位置ではない**。V2X出力は互換性検証用。
+- `known_vehicle`: 寸法既知・コースに沿うNPCという収集条件を明示して使う。
+  既定2.064m × 1.30m、ReferenceのXYから求めた向きで矩形を置き、
+  センサから矩形への最初の交点と実測レンジを照合して中心を推定する。
+  物体分類器ではないため、任意の箱や壁を車に見立てた正しさは保証しない。
+  一面しか見えない場合の中心の曖昧さを別の値として記録する。
+  寸法や曖昧さをcovarianceへ偽装して埋め込まない。
+
+位置標準偏差0.15mは未較正の設定値。V44へ実制御入力として採用する前に較正する。
+壁の除去余白0.25mは壁際の物体も除去し得る。未観測の奥行きや隠れた物体を復元する機能はない。
+走査平面より低い物体など、2D LiDARが検出できない物体も対象外。
+
+`motion_model=rolling` はLaserScanのtime_incrementに従い、最初と最後のビーム時刻のTFで補間。
+`snapshot` は全ビームをheader時刻の同時観測として扱う。実センサ/シミュレータの仕様に合わせて選ぶ。
+TFがない場合に最新TFや単位変換へ置き換えない。大きいroll/pitchは平面モデルの範囲外として拒否する。
+NaN等の不正レンジが20%を超えるscanは、物体ゼロとして配信せず入力異常にする。
+観測欠落時に位置・時刻を捏造して配信せず、再同定用の履歴だけ0.5s残す。
+
+## 実行
+
+Windowsで当該変更をコミットし、`tools/sync_to_wsl.ps1`で同じcommitをWSLへ同期する。
+既存の別タスクのindexがある場合は保全し、当該commitのcleanなWindows transport cloneから同期する。
+
+```bash
+cd /home/thistle/e2e_autonomous/e2e_lite_transfuser
+tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q
+
+tools/with_wsl_training_lock.sh .venv/bin/python tools/replay_lidar_v2x.py \
+  --bag /path/to/native-wsl/rosbag2_autoware \
+  --map-yaml /path/to/occupancy_grid_map.yaml \
+  --output /path/to/native-wsl/runs/lidar_v2x_surface
+
+tools/with_wsl_training_lock.sh .venv/bin/python tools/replay_lidar_v2x.py \
+  --bag /path/to/native-wsl/rosbag2_autoware \
+  --map-yaml /path/to/occupancy_grid_map.yaml \
+  --reference-csv /path/to/in_corce_line.csv \
+  --object-model known_vehicle \
+  --output /path/to/native-wsl/runs/lidar_v2x_vehicle
+```
+
+ROS 2 HumbleとV44と同じ`v2x_msgs`をsourceした環境で、独立パッケージとしてビルドする。
+build/install/logはWSL native側（AWSIMホストへの適用時は専用実験領域）に置く。
+
+```bash
+colcon build --base-paths /path/to/e2e_lite_transfuser/ros2_ws/src/aic_lidar_v2x \
+  --build-base /path/to/native/build --install-base /path/to/native/install
+source /path/to/native/install/local_setup.bash
+ros2 launch aic_lidar_v2x shadow.launch.py \
+  map_yaml:=/path/to/occupancy_grid_map.yaml
+# 既知NPCモデルを比較する場合はreference_csvとobject_model:=known_vehicleを指定。
+```
+
+RVizのFixed Frameを `map` にし、MarkerArrayに `/collection/lidar_v2x/markers` を指定する。
+rosbagには元のCamera/LiDAR/TF/ego/教師軌跡/native V2Xと、上記4出力を収録する。
+学習用future trajectoryは従来どおり観測した将来poseから作り、run/配置シナリオ単位でsplitする。
+
+## 採用前に残る検証
+
+単体試験と保存走行のreplayに加え、公式ROS環境での通信・欠損試験、native V2Xとの
+比較、壁際/コーナー/遮蔽での見失いを確認する。
+教師切替にはshape表現と検出欠損時の停止/収集除外の接続が必要。
+`input_valid=true` は変換できた意味であり、走行可能・障害物不存在・教師収集許可を意味しない。
+replayが成功しても、閉ループ回避走行や学習データ採用の証明にはしない。
