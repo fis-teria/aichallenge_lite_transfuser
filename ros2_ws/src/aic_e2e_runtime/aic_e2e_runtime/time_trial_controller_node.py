@@ -58,6 +58,7 @@ def main() -> None:
     record_vehicle_motion = False
     clearance_profile = 'standard_v1'
     stopping_distance_policy = 'measured_speed_v1'
+    scan_occupancy_policy = 'stop_v1'
     speed_policy = args.speed_policy or "source_capped_0p25"
     if args.trial_config is not None:
         config_bytes = args.trial_config.read_bytes()
@@ -71,6 +72,7 @@ def main() -> None:
         record_vehicle_motion = config.get("record_vehicle_motion", False)
         clearance_profile = config.get('diagnostic_clearance_profile', 'standard_v1')
         stopping_distance_policy = config.get('stopping_distance_policy', 'measured_speed_v1')
+        scan_occupancy_policy = config.get('scan_occupancy_policy', 'stop_v1')
         if (config["checkpoint_sha256"] != args.checkpoint_sha256
                 or config["geometry"]["rear_axle_forward_in_base_link_m"] != args.rear_axle_forward_m):
             raise ValueError("TRIAL_CONFIG_IDENTITY")
@@ -125,7 +127,7 @@ def main() -> None:
     state = {"fault": None, "armed_ns": None, "armed_wall": None, "stop_since_ns": None,
              "stop_confirmed": False, "positive_count": 0, "commands": 0, "max_speed_mps": 0.,
              "requested_stop_reason": None, "speed_mps": None, "current_pose": None,
-             "scan_rejection_recorded": False}
+             "scan_rejection_recorded": False, "scan_observation_recorded": False, "scan_would_stop_commands": 0}
 
     def stamp(t) -> int:
         return int(t.sec) * 10**9 + int(t.nanosec)
@@ -226,6 +228,7 @@ def main() -> None:
                         "lookahead_policy": lookahead_policy,
                         "vehicle_model_policy": vehicle_model_policy,
                         "stopping_distance_policy": stopping_distance_policy,
+                        "scan_occupancy_policy": scan_occupancy_policy,
                         "execution_profile": execution_profile, "drive_limit_sim_s": drive_sim_s,
                         "rear_axle_forward_m": args.rear_axle_forward_m})
         reason = "WAIT_AUTHORIZATION" if live else "SHADOW_ONLY"
@@ -426,11 +429,29 @@ def main() -> None:
                     heading_rate_radps=heading_rate, reported_lateral_mps=reported_lateral,
                     clearance_profile=clearance_profile,
                     stopping_distance_policy=stopping_distance_policy,
+                    occupancy_policy=scan_occupancy_policy,
                     envelope_policy="curvature_support_v2" if obstacle_policy == "steering_support_v2" else "isotropic_v1")
                 details["obstacle_guard"] = guard
                 details["scan_in_current_rear"] = scan_alignment
                 details["scan_stamp_ns"] = captured.stamp_ns
                 details["clearance_m"] = guard["minimum_ray_margin_m"]
+                if guard.get('would_stop_reason'):
+                    state['scan_would_stop_commands'] += 1
+                    if not state['scan_observation_recorded']:
+                        scalar_names = ('angle_min', 'angle_increment', 'range_min', 'range_max')
+                        record(dict(event='SCAN_GUARD_OBSERVED', reason=guard['would_stop_reason'],
+                            action='LOG_ONLY_CONTINUED', speed_mps=speed, scan_stamp_ns=stamp(laser.header.stamp),
+                            scan_frame=laser.header.frame_id,
+                            scan={**dict(zip(scalar_names, encode_scan_values(getattr(laser,k) for k in scalar_names))),
+                                  'ranges':encode_scan_values(laser.ranges)},
+                            current_pose=state['current_pose'], pose_history=[p.__dict__ for p in poses],
+                            latest_plan_json=cache['plan'][0].data, scan_in_current_rear=scan_alignment,
+                            measured_steer_rad=measured_steer, issued_steer_rad=mapping['issued_tire_target_rad'],
+                            previous_steer_rad=mapping['previous_tire_target_rad'],
+                            motion_observation=motion_observation, steering_observation=steering_observation,
+                            vehicle_model_policy=vehicle_model_policy, clearance_profile=clearance_profile,
+                            scan_occupancy_policy=scan_occupancy_policy, obstacle_guard=guard))
+                        state['scan_observation_recorded'] = True
                 checking_scan = False
             plan_id = plan.plan_id
             reason = ('RECOVERY_TEACHER_BOOTSTRAP' if control_owner == 'TEACHER_BOOTSTRAP'

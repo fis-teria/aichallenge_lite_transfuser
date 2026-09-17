@@ -20,6 +20,8 @@ ACTUAL_STOPPING_SPEED = 'measured_speed_v1'
 FIVE_KMH_STOPPING_SPEED = 'awsim_cap_5kmh_diagnostic_v1'
 ONE_METRE_STOPPING_TRAVEL = 'awsim_cap_1m_diagnostic_v1'
 DIAGNOSTIC_STOPPING_POLICIES = (FIVE_KMH_STOPPING_SPEED, ONE_METRE_STOPPING_TRAVEL)
+SCAN_STOP_POLICY = 'stop_v1'
+SCAN_LOG_ONLY_POLICY = 'log_only_awsim_v1'
 
 
 def stopping_envelope_parameters(speed_mps: float, motion: dict[str, Any], *,
@@ -135,8 +137,11 @@ def check_support_ranges(ranges: np.ndarray, angles: np.ndarray, range_max: floa
                          measured_steer_rad: float, issued_steer_rad: float,
                          previous_steer_rad: float | None, *, motion: dict[str, Any] | None = None,
                          clearance_profile: str = STANDARD_CLEARANCE,
-                         stopping_distance_policy: str = ACTUAL_STOPPING_SPEED) -> dict[str, Any]:
+                         stopping_distance_policy: str = ACTUAL_STOPPING_SPEED,
+                         occupancy_policy: str = SCAN_STOP_POLICY) -> dict[str, Any]:
     """Internal ray test after check_turning_scan validates scan/state/frame."""
+    if occupancy_policy not in (SCAN_STOP_POLICY, SCAN_LOG_ONLY_POLICY):
+        raise ValueError('SCAN_OCCUPANCY_POLICY')
     if motion is None:
         motion = stopping_motion(speed_mps, measured_steer_rad, issued_steer_rad, previous_steer_rad)
     k_min, k_max = motion["curvature_interval_per_m"]
@@ -157,9 +162,15 @@ def check_support_ranges(ranges: np.ndarray, angles: np.ndarray, range_max: floa
     required = np.where(intersects, far, 0.)
     observed = required > 0.
     margins = np.minimum(ranges, range_max)-required
-    if np.any(margins[observed] <= 0.):
+    occupied = int(np.count_nonzero(margins[observed] <= 0.))
+    if occupied and occupancy_policy == SCAN_STOP_POLICY:
         raise ValueError("STOPPING_SWEEP_OCCUPIED")
+    occupancy = (dict(occupancy_policy=occupancy_policy, proximity_stop_enforced=False,
+                      would_stop_reason='STOPPING_SWEEP_OCCUPIED' if occupied else None,
+                      occupied_ray_count=occupied, diagnostic_only=True)
+                 if occupancy_policy == SCAN_LOG_ONLY_POLICY else {})
     return {**metadata, **diagnostic, "vehicle_motion": motion, "scope": "FORWARD_SCAN_PROXIMITY_NOT_ALL_AROUND_FREE_SPACE",
+        **occupancy,
         "minimum_ray_margin_m": float(margins[observed].min()) if observed.any() else float(range_max),
         "checked_rays": int(observed.sum()), "measured_steer_rad": measured_steer_rad,
         "issued_steer_rad": issued_steer_rad, "previous_steer_rad": previous_steer_rad,

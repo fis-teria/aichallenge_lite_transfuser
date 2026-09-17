@@ -14,7 +14,7 @@ from .vehicle_motion_v1 import IDEAL_POLICY, AWSIM_FIXED_TRIAL_SPEED_POLICIES, A
 from .curvature_speed_v1 import ADAPTIVE_SPEED_POLICY, preview_speed_limit
 from .waypoint_controller import ControllerConfig, select_lookahead, control_from_waypoints
 from .polyline_lookahead_v1 import select_polyline_lookahead
-from .curvature_support_v2 import ACTUAL_STOPPING_SPEED, DIAGNOSTIC_STOPPING_POLICIES, STANDARD_CLEARANCE, NEAR_LIMIT_CLEARANCE, clearance_dimensions
+from .curvature_support_v2 import ACTUAL_STOPPING_SPEED, DIAGNOSTIC_STOPPING_POLICIES, STANDARD_CLEARANCE, NEAR_LIMIT_CLEARANCE, ONE_METRE_STOPPING_TRAVEL, SCAN_STOP_POLICY, SCAN_LOG_ONLY_POLICY, clearance_dimensions
 from ..runtime.awsim_trial_session import trial_duration_limits
 
 
@@ -57,6 +57,13 @@ def validate_trial_config(config: dict[str, Any]) -> str:
     clearance_profile = config.get('diagnostic_clearance_profile', STANDARD_CLEARANCE)
     clearance_dimensions(clearance_profile)
     distance_policy = config.get('stopping_distance_policy', ACTUAL_STOPPING_SPEED)
+    occupancy_policy = config.get('scan_occupancy_policy', SCAN_STOP_POLICY)
+    if occupancy_policy not in (SCAN_STOP_POLICY, SCAN_LOG_ONLY_POLICY):
+        raise ValueError('SCAN_OCCUPANCY_POLICY')
+    if occupancy_policy == SCAN_LOG_ONLY_POLICY and (
+            policy != ADAPTIVE_SPEED_POLICY or distance_policy != ONE_METRE_STOPPING_TRAVEL
+            or clearance_profile != STANDARD_CLEARANCE):
+        raise ValueError('SCAN_LOG_ONLY_REQUIRES_ADAPTIVE_DIAGNOSTIC')
     if distance_policy not in (ACTUAL_STOPPING_SPEED, *DIAGNOSTIC_STOPPING_POLICIES):
         raise ValueError('STOPPING_DISTANCE_POLICY')
     if distance_policy in DIAGNOSTIC_STOPPING_POLICIES and (

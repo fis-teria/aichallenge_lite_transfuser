@@ -73,6 +73,7 @@ def main() -> None:
     fixture_heading_rate = 0. if motion_model else .17
     fixture_lateral_mps = 0. if motion_model else -.02
     fixture_scan_offset_ns = 0
+    fixture_scan_obstacle_range_m = None
     fixture_pose_x_m = None
 
     def launch(module, extra, name):
@@ -115,7 +116,10 @@ def main() -> None:
             scan = LaserScan(); set_stamp(scan.header.stamp, t+fixture_scan_offset_ns); scan.header.frame_id = "lidar" if fixture_config else "lidar_link"
             scan.angle_min = -float(np.pi); scan.angle_increment = float(2*np.pi/750)
             scan.angle_max = scan.angle_min + 749 * scan.angle_increment
-            scan.range_min = .1; scan.range_max = 25.; scan.ranges = [25.] * 750; pubs["scan"].publish(scan)
+            scan.range_min = .1; scan.range_max = 25.; scan.ranges = [25.] * 750
+            if fixture_scan_obstacle_range_m is not None:
+                scan.ranges[375] = fixture_scan_obstacle_range_m
+            pubs["scan"].publish(scan)
             image = Image(); set_stamp(image.header.stamp, t); image.header.frame_id = "camera_link"
             image.height = 72; image.width = 128; image.step = 384; image.encoding = "rgb8"
             image.data = bytes([128]) * (72*128*3); pubs["image"].publish(image)
@@ -393,6 +397,28 @@ def main() -> None:
                 raise RuntimeError('CURVATURE_SPEED_ACCELERATION_BOUND')
             result['curvature_preview_braking_commands'] = len(preview)
             result['curvature_preview_maximum_acceleration_mps2'] = max(r['acceleration_mps2'] for r in successes)
+        if fixture_config is not None and fixture_config.get('scan_occupancy_policy') == 'log_only_awsim_v1':
+            fixture_scan_obstacle_range_m = 1.
+            fixture_speed_mps = 1.2
+            oracle_curvature = 0.
+            began = time.monotonic()
+            spin_for(1.5, publish_oracle)
+            records = [json.loads(line) for line in (args.output/'oracle/control.jsonl').read_text().splitlines()]
+            continued = [r for r in records if r.get('reason') == 'SHADOW_CONTROL'
+                         and r['monotonic_ns']/1e9 > began+.7]
+            if len(continued) < 3:
+                raise RuntimeError('LOG_ONLY_OBSTACLE_DID_NOT_CONTINUE')
+            for row in continued:
+                guard = row['details']['obstacle_guard']
+                if (row['acceleration_mps2'] <= 0 or row['target_speed_mps'] <= row['speed_mps']
+                        or guard.get('proximity_stop_enforced') is not False
+                        or guard.get('would_stop_reason') != 'STOPPING_SWEEP_OCCUPIED'
+                        or guard.get('occupied_ray_count', 0) < 1 or guard['minimum_ray_margin_m'] > 0):
+                    raise RuntimeError('LOG_ONLY_OBSTACLE_CONTRACT')
+            if not any(r.get('event') == 'SCAN_GUARD_OBSERVED' and r.get('action') == 'LOG_ONLY_CONTINUED' for r in records):
+                raise RuntimeError('LOG_ONLY_SCAN_SNAPSHOT_MISSING')
+            result['log_only_positive_commands_with_obstacle'] = len(continued)
+            fixture_scan_obstacle_range_m = None
         stale_started = time.monotonic()
         spin_for(1.2)  # Sensors continue; stop sending plans.
         stale = [c for c in commands if c["wall"] > stale_started + .65]

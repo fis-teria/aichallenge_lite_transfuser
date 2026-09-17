@@ -1,0 +1,133 @@
+{
+  "status": "LAP_NOT_COMPLETED",
+  "evaluator_sha256": "ad6aa419e18eda79912ca6dd14cf2839ae9b50f83e3e7af81d899923ef17c9df",
+  "scope": "BOUNDED_SAME_SCENE_TEST_NOT_LAP_OR_AVOIDANCE_ACCEPTANCE",
+  "source_host_status": "FAILED",
+  "official_start_requested": true,
+  "stopping_distance_policy": "awsim_cap_1m_diagnostic_v1",
+  "armed_sim_ns": 19964999553,
+  "active_duration_sim_s": 95.824997859,
+  "judge_lap_confirmed": false,
+  "judge_laps": [],
+  "judge_sections": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "host_error": "RuntimeError: CONTROL_STOPPING_SWEEP_OCCUPIED",
+  "requested_stop_reason": null,
+  "active_commands": 1993,
+  "positive_acceleration_commands": 1853,
+  "active_command_reasons": {
+    "TIME_PATH_TRACKING": 1907,
+    "MOTION_YAW_RATE_INVALID": 1,
+    "TIME_PATH_INITIAL_DIRECTION": 2,
+    "MOTION_REAR_LATERAL_INVALID": 1,
+    "STOPPING_SWEEP_OCCUPIED": 82
+  },
+  "all_predictions": 1040,
+  "active_observation_predictions": 865,
+  "foldback_statistics_policy": "legacy_step_heading_v1_not_current_admission",
+  "recorded_geometry_policy_versions": [
+    "distance_resolved_time_geometry_v2"
+  ],
+  "active_new_geometry_reasons": {
+    "RESOLVED": 864,
+    "TIME_PATH_INITIAL_DIRECTION": 1
+  },
+  "control_replay": {
+    "status": "PASS",
+    "matched_commands": 1912,
+    "unavailable_commands": 81,
+    "maximum_absolute_error": 7.144285163462882e-12,
+    "tolerance": 1e-09,
+    "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+    "post_control_rejections": {
+      "MOTION_YAW_RATE_INVALID": 1,
+      "MOTION_REAR_LATERAL_INVALID": 1,
+      "STOPPING_SWEEP_OCCUPIED": 1
+    },
+    "actuator_mapping_matched": 1910,
+    "steering_response_matched": 1910,
+    "vehicle_motion_matched": 1910,
+    "scan_guard_decisions_replayed": false
+  },
+  "speed_policy": "curvature_preview_15kmh_v1",
+  "active_target_speed_mps": {
+    "min": 0.0,
+    "median": 2.4009526534529932,
+    "p95": 2.683402751046439,
+    "max": 2.999484803331664
+  },
+  "final_3s_measured_speed_kmh": {
+    "min": 7.242778015136719,
+    "median": 7.8650633811950685,
+    "p95": 8.206502838134766,
+    "max": 8.212980651855469
+  },
+  "active_samples_within_0p25_kmh_of_5": 12,
+  "speed_policy_ceiling_kmh": 15.000000000000002,
+  "active_samples_within_0p25_kmh_of_policy_ceiling": 0,
+  "recorded_pose_count": 1912,
+  "recorded_pose_travel_m": 203.3981121815059,
+  "recorded_pose_net_displacement_m": 60.806967759378836,
+  "active_first_fold_source_segment_indices": {
+    "None": 865
+  },
+  "active_first_turn_abs_rad": {
+    "min": 1.3884244974100499e-05,
+    "median": 0.021110374775965772,
+    "p95": 0.07281671968102395,
+    "max": 0.6074703574371768
+  },
+  "foldback_threshold_rad": 1.2,
+  "active_first_point_x_m": {
+    "min": 0.017946451902389526,
+    "median": 0.22939103841781616,
+    "p95": 0.2691100716590881,
+    "max": 0.35986921191215515
+  },
+  "active_first_point_y_m": {
+    "min": -0.0757516622543335,
+    "median": 0.0008887723088264465,
+    "p95": 0.011656125634908676,
+    "max": 0.021465860307216644
+  },
+  "active_3s_endpoint_norm_m": {
+    "min": 2.388112438824855,
+    "median": 6.25662386735563,
+    "p95": 7.117881130151957,
+    "max": 8.194917490449765
+  },
+  "active_source_speed_0_to_0p3s_mps": {
+    "min": 0.07959022597144216,
+    "median": 2.1709051386972518,
+    "p95": 2.4820200436076307,
+    "max": 3.0238174816079626
+  },
+  "inference_duration_ms": {
+    "min": 26.787865,
+    "median": 87.357856,
+    "p95": 131.28447519999997,
+    "max": 172.39745
+  },
+  "max_measured_speed_mps": 2.870720863342285,
+  "stop_confirmed_before_cleanup": false,
+  "runtime_inference_rejections": {
+    "CURRENT_SENSOR_MISSING": 19
+  },
+  "cleanup_errors": [],
+  "wall_s": 148.47931867901934,
+  "checkpoint_sha256": [
+    "1fe12ca066791d3eb8907c6921120e2cfbb38925c422d5be54940f4acbdd120a"
+  ],
+  "raw_predictions_modified": false,
+  "boundary": "Recorded command and prediction analysis; no measured lane-tracking accuracy or model teacher error.",
+  "source_sha256": {
+    "host_result.json": "b172ebf6749d8974048579e53caca020203833b7b95e0446df35f5270a904152",
+    "control.jsonl": "664f03160e5c02c6638a81ca89e926dc4284671fb2f47c8e7ba65071e3b5586a",
+    "inference.jsonl": "d7ae7f663183556c38ba275895f46c4a40f14322dde0d2a898ca2e359fde61fd"
+  }
+}

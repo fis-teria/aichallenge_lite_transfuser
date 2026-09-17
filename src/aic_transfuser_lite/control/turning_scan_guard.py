@@ -15,8 +15,8 @@ import numpy as np
 
 from .time_reference_v1 import TimedBodyPose
 from .time_trial_v1 import interpolate_body_pose
-from .vehicle_motion_v1 import IDEAL_POLICY, AWSIM_POLICY, stopping_motion
-from .curvature_support_v2 import ACTUAL_STOPPING_SPEED, DIAGNOSTIC_STOPPING_POLICIES, STANDARD_CLEARANCE, clearance_dimensions
+from .vehicle_motion_v1 import IDEAL_POLICY, AWSIM_POLICY, AWSIM_15KMH_POLICY, stopping_motion
+from .curvature_support_v2 import ACTUAL_STOPPING_SPEED, DIAGNOSTIC_STOPPING_POLICIES, STANDARD_CLEARANCE, ONE_METRE_STOPPING_TRAVEL, SCAN_STOP_POLICY, SCAN_LOG_ONLY_POLICY, clearance_dimensions
 
 
 def select_aligned_scan(capture_receipts_ns: Sequence[tuple[int, int]], poses: Sequence[TimedBodyPose],
@@ -103,7 +103,8 @@ def check_turning_scan(ranges: np.ndarray, angle_min: float, angle_increment: fl
                        heading_rate_radps: float | None = None,
                        reported_lateral_mps: float | None = None,
                        clearance_profile: str = STANDARD_CLEARANCE,
-                       stopping_distance_policy: str = ACTUAL_STOPPING_SPEED) -> dict[str, Any]:
+                       stopping_distance_policy: str = ACTUAL_STOPPING_SPEED,
+                       occupancy_policy: str = SCAN_STOP_POLICY) -> dict[str, Any]:
     """Scan ranges [N] at its original capture pose, expressed in current rear.
 
     scan_in_current_rear=(forward_m,left_m,yaw_rad), obtained using time-aligned
@@ -113,6 +114,12 @@ def check_turning_scan(ranges: np.ndarray, angle_min: float, angle_increment: fl
     """
     r = np.asarray(ranges, dtype=float)
     clearance_dimensions(clearance_profile)
+    if occupancy_policy not in (SCAN_STOP_POLICY, SCAN_LOG_ONLY_POLICY):
+        raise ValueError('SCAN_OCCUPANCY_POLICY')
+    if occupancy_policy == SCAN_LOG_ONLY_POLICY and (
+            envelope_policy != 'curvature_support_v2' or vehicle_model_policy != AWSIM_15KMH_POLICY
+            or stopping_distance_policy != ONE_METRE_STOPPING_TRAVEL or clearance_profile != STANDARD_CLEARANCE):
+        raise ValueError('SCAN_LOG_ONLY_REQUIRES_AWSIM_DIAGNOSTIC')
     if (stopping_distance_policy not in (ACTUAL_STOPPING_SPEED, *DIAGNOSTIC_STOPPING_POLICIES)
             or (stopping_distance_policy != ACTUAL_STOPPING_SPEED and envelope_policy != 'curvature_support_v2')):
         raise ValueError('STOPPING_DISTANCE_POLICY')
@@ -141,7 +148,8 @@ def check_turning_scan(ranges: np.ndarray, angle_min: float, angle_increment: fl
         from .curvature_support_v2 import check_support_ranges
         return check_support_ranges(r, angles, range_max, angle_increment, sensor, speed_mps,
                                     measured_steer_rad, issued_steer_rad, previous_steer_rad, motion=motion,
-                                    clearance_profile=clearance_profile, stopping_distance_policy=stopping_distance_policy)
+                                    clearance_profile=clearance_profile, stopping_distance_policy=stopping_distance_policy,
+                                    occupancy_policy=occupancy_policy)
     # Include angular gaps conservatively in the rectangle inflation. No
     # obstacle behind a hit is declared free solely because that hit lies off
     # the centerline of the predicted path.

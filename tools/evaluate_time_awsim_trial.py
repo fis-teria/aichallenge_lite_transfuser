@@ -16,7 +16,7 @@ from aic_transfuser_lite.control.time_trial_v1 import time_trial_control, trial_
 from aic_transfuser_lite.control.awsim_steering import CALIBRATED_POLICIES, LEAD_POLICY, command_steering
 from aic_transfuser_lite.control.awsim_steering_response import SteeringResponseState, compensate_steering_response
 from aic_transfuser_lite.control.vehicle_motion_v1 import IDEAL_POLICY, AWSIM_POLICIES, stopping_motion
-from aic_transfuser_lite.control.curvature_support_v2 import ACTUAL_STOPPING_SPEED, stopping_envelope_parameters
+from aic_transfuser_lite.control.curvature_support_v2 import ACTUAL_STOPPING_SPEED, stopping_envelope_parameters, SCAN_STOP_POLICY, SCAN_LOG_ONLY_POLICY
 from aic_transfuser_lite.control.curvature_speed_v1 import ADAPTIVE_SPEED_POLICY
 
 
@@ -39,7 +39,8 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
                             speed_policy: str = "source_capped_0p25", obstacle_policy: str = "straight_v1",
                             steering_policy: str = "identity_v1", lookahead_policy: str = "fixed_1m_v1",
                             vehicle_model_policy: str = IDEAL_POLICY,
-                            stopping_distance_policy: str = ACTUAL_STOPPING_SPEED) -> dict[str, Any]:
+                            stopping_distance_policy: str = ACTUAL_STOPPING_SPEED,
+                            scan_occupancy_policy: str = SCAN_STOP_POLICY) -> dict[str, Any]:
     """Reproduce decisions from recorded raw predictions, poses, and measured speed.
 
     This covers the calculation before the separate output steering-rate clamp.
@@ -148,6 +149,16 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
                             for key, expected in {**diagnostic, 'stopping_travel_m': travel}.items():
                                 if not response_record_matches(stored_guard.get(key), expected):
                                     raise ValueError('recorded diagnostic stopping envelope differs: '+key)
+                        if command['reason'] == 'TIME_PATH_TRACKING' and scan_occupancy_policy == SCAN_LOG_ONLY_POLICY:
+                            stored_guard = details.get('obstacle_guard', {})
+                            blocked = stored_guard.get('occupied_ray_count', -1)
+                            if (stored_guard.get('occupancy_policy') != SCAN_LOG_ONLY_POLICY
+                                    or stored_guard.get('proximity_stop_enforced') is not False
+                                    or type(blocked) is not int or blocked < 0
+                                    or not np.isfinite(stored_guard.get('minimum_ray_margin_m', float('nan')))
+                                    or (stored_guard.get('minimum_ray_margin_m', float('nan')) <= 0) != (blocked > 0)
+                                    or stored_guard.get('would_stop_reason') != ('STOPPING_SWEEP_OCCUPIED' if blocked else None)):
+                                raise ValueError('recorded log-only scan policy differs')
                     motion_matched += 1
             elif steering_policy == LEAD_POLICY and command["reason"] == "TIME_PATH_TRACKING":
                 raise ValueError("recorded steering actuator missing")
@@ -236,7 +247,7 @@ def main() -> None:
         config = json.loads(config_bytes)
         for key, default in (("obstacle_policy", "straight_v1"), ("steering_policy", "identity_v1"),
                              ("lookahead_policy", "fixed_1m_v1"), ("vehicle_model_policy", IDEAL_POLICY),
-                             ('stopping_distance_policy', ACTUAL_STOPPING_SPEED)):
+                             ('stopping_distance_policy', ACTUAL_STOPPING_SPEED), ('scan_occupancy_policy', SCAN_STOP_POLICY)):
             if config.get(key, default) != publishers[0].get(key, default):
                 raise ValueError("recorded runtime/config mismatch: " + key)
     replay = replay_recorded_control(active, plans, publishers[0]["rear_axle_forward_m"], speed_policy=speed_policy,
@@ -244,13 +255,16 @@ def main() -> None:
         steering_policy=publishers[0].get("steering_policy", "identity_v1"),
         lookahead_policy=publishers[0].get("lookahead_policy", "fixed_1m_v1"),
         vehicle_model_policy=publishers[0].get("vehicle_model_policy", IDEAL_POLICY),
-        stopping_distance_policy=publishers[0].get('stopping_distance_policy', ACTUAL_STOPPING_SPEED))
+        stopping_distance_policy=publishers[0].get('stopping_distance_policy', ACTUAL_STOPPING_SPEED),
+        scan_occupancy_policy=publishers[0].get('scan_occupancy_policy', SCAN_STOP_POLICY))
     late_speeds = [c["speed_mps"] for c in active if c["sim_ns"] >= end - 3_000_000_000 and c["speed_mps"] is not None]
     result = {"status": ("LAP_COMPLETED" if host.get("judge_lap_confirmed") and host["status"] == "COMPLETE_LAP" else "LAP_NOT_COMPLETED") if host["scope"] == "ONE_LAP_MODEL_TRIAL" else ("COMPLETED_NO_POSITIVE_DRIVE" if positive == 0 else "COMPLETED_POSITIVE_COMMANDS_OBSERVED"),
         "evaluator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "scope": "BOUNDED_SAME_SCENE_TEST_NOT_LAP_OR_AVOIDANCE_ACCEPTANCE",
         "source_host_status": host["status"], "official_start_requested": host["official_start_requested"],
         'stopping_distance_policy': publishers[0].get('stopping_distance_policy', ACTUAL_STOPPING_SPEED),
+        'scan_occupancy_policy': publishers[0].get('scan_occupancy_policy', SCAN_STOP_POLICY),
+        'scan_would_stop_commands': sum(bool(c.get('details', {}).get('obstacle_guard', {}).get('would_stop_reason')) for c in active),
         "armed_sim_ns": start, "active_duration_sim_s": duration_s,
         "judge_lap_confirmed": host.get("judge_lap_confirmed", False), "judge_laps": host.get("judge_laps", []),
         "judge_sections": [s["next"] for s in host.get("judge_section_events", [])],
