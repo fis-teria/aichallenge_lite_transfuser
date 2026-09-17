@@ -43,7 +43,8 @@ def main(argv: list[str] | None = None) -> None:
     poses: deque[TimedBodyPose] = deque(maxlen=1024)
     pending: deque = deque(maxlen=24)
     waiting: deque = deque(maxlen=24)
-    plan = None; plan_wall = 0; processed = 0; rejected = 0; dropped = 0
+    plans: deque = deque(maxlen=32)
+    processed = 0; rejected = 0; dropped = 0
     state = dict(input_valid=False, reason='WAIT_INPUT', motion_authority=False)
     pubs = {
         'scan_input': node.create_publisher(LaserScan, '/time_path/slam/input_scan', qos_profile_sensor_data),
@@ -132,16 +133,15 @@ def main(argv: list[str] | None = None) -> None:
             fatal = str(exc)
 
     def on_plan(msg) -> None:
-        nonlocal plan, plan_wall
         try:
             packet = json.loads(msg.data)
             xy = np.asarray(packet['raw_xy_m'], dtype=float)
             if (packet['event'] != 'PLAN' or packet['frame'] != 'base_link'
                     or xy.shape != (30, 2) or not np.isfinite(xy).all()):
                 raise ValueError('PLAN_CONTRACT')
-            plan = packet; plan_wall = time.monotonic_ns()
+            plans.append((packet, time.monotonic_ns()))
         except (ValueError, KeyError, TypeError) as exc:
-            plan = None
+            plans.clear()
             journal.write(json.dumps(dict(event='PLAN_REJECTED', reason=str(exc)))+'\n')
 
     node.create_subscription(Clock, '/clock', on_clock, 10)
@@ -161,22 +161,29 @@ def main(argv: list[str] | None = None) -> None:
         pose = interpolate_body_pose(poses, stamp, tolerance_ns=100_000_000)
         p = np.array([pose.x_m, pose.y_m, pose.yaw_rad])
         path_world = None
-        if (plan is not None and 0 <= clock-plan['observation_ns'] <= 500_000_000
-                and time.monotonic_ns()-plan_wall <= 750_000_000
-                and names('/time_path/plan') == ['/time_path_inference']):
-            try:
-                anchor = interpolate_body_pose(poses, plan['observation_ns'], tolerance_ns=100_000_000)
+        plan_observation_ns = None
+        if names('/time_path/plan') == ['/time_path_inference']:
+            # SLAM can trail the newest prediction. Select a received plan whose
+            # observation pose is already available, without relabeling its time.
+            for plan, plan_wall in reversed(plans):
+                if (plan['observation_ns'] > stamp or not 0 <= clock-plan['observation_ns'] <= 500_000_000
+                        or time.monotonic_ns()-plan_wall > 750_000_000):
+                    continue
+                try:
+                    anchor = interpolate_body_pose(poses, plan['observation_ns'], tolerance_ns=100_000_000)
+                except ValueError:
+                    continue  # Explicitly unavailable until a bracketed observation exists.
                 body_pose = np.array([anchor.x_m-1.65*math.cos(anchor.yaw_rad),
                                       anchor.y_m-1.65*math.sin(anchor.yaw_rad), anchor.yaw_rad])
                 xy = np.asarray(plan['raw_xy_m'])
                 if np.linalg.norm(np.diff(np.vstack(([0., 0.], xy)), axis=0), axis=1).max() > .01:
-                    path_world = transform(xy, body_pose)
-            except ValueError:
-                pass  # Missing plan-time SLAM pose explicitly produces path_valid=false.
+                    path_world = transform(xy, body_pose); plan_observation_ns = plan['observation_ns']
+                break
         state = detector.update(stamp, scan.ranges, scan.angle_min, scan.angle_increment,
                                 scan.range_min, scan.range_max, p, path_world)
         state.update(event='OBSTACLES', reason='OK', sim_ns=clock, monotonic_ns=time.monotonic_ns(),
                      gnss_imu_map_inputs=False, pose_source='Cartographer scan+wheel_odometry',
+                     plan_observation_ns=plan_observation_ns,
                      scan_age_s=(clock-stamp)/1e9)
         processed += 1; last_process_ns = stamp; last_process_wall = time.monotonic_ns()
         journal.write(json.dumps(state, allow_nan=False)+'\n')
