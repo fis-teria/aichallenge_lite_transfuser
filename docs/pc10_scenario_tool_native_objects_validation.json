@@ -1,0 +1,101 @@
+{
+  "task": "PC10 scenario tool and native cone / box / pole placement",
+  "source_test_commit": "b86415fcef5b37ce613aaca33458e19b98958468",
+  "host": "graneple@192.168.3.10",
+  "tool_directory": "/home/graneple/git/autononous_ai/aichallenge-racingkart/scenario_tool",
+  "base_package_sha256": "415c40778cc35761d715436fa2fbd27a443d66c7a1073226bbf964d6b039bbbb",
+  "patch_sha256": "0e23dc10f458bf94d22bfb5db84a3e48aee3081b1482e617ea72ef41b48d521f",
+  "tool_self_test": {
+    "executed": 350,
+    "passed": 343,
+    "skipped": 7,
+    "failed": 0,
+    "seconds": 51.509,
+    "wrapper_exit_code": 0,
+    "log": "/home/graneple/e2e_autonomous/scenario_tool_setup_20260918/self-test-final-r2.log"
+  },
+  "browser": {
+    "javascript_errors": [],
+    "loaded_objects": 3,
+    "added_object": "box",
+    "validation": "検証 OK: pc10_tool_smoke — ego(submission), parked_npc(static_physical) 警告: seed 未指定のためシナリオ内容から決定的に導出しました (seed=0) 警告: 物体はAWSIM標準形状です。物体別の離隔・通過判定は未対応で、接触は公式wall/obstacleカウンタで監視します。",
+    "ego_image_preserved": true,
+    "ego_start_grid_preserved": true,
+    "object_heading_edit_deg": 30
+  },
+  "live_smoke": {
+    "run_id": "pc10-objects-smoke-r2-20260918",
+    "execution": {
+      "ok": true,
+      "phase": "finished",
+      "reason": "distance_travelled",
+      "awsim_exit_detected": false,
+      "monitor_status": 0
+    },
+    "verdict": "passed",
+    "exit_code": 0,
+    "duration_sec": 34.464,
+    "finish_distance_m": 5.0,
+    "native_objects_spawned": 3,
+    "official_crash_count": 0,
+    "official_wall_count": 0,
+    "camera_frames_received": 85,
+    "lidar_scans_saved": 50,
+    "tf_static_transforms": 8,
+    "controller": "cached Autoware image; not E2E or MPPI V45",
+    "purpose": "placement, startup and clean shutdown; not avoidance performance"
+  },
+  "preservation": {
+    "base_files_unchanged": {
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/docker-compose.yml": true,
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/Makefile": true,
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge/run_autoware.bash": true,
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge/simulator/AWSIM/AWSIM.x86_64": true,
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge/simulator/AWSIM/UnityPlayer.so": true,
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge/simulator/AWSIM/AWSIM_Data/Managed/Assembly-CSharp.dll": true,
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge/simulator/AWSIM/AWSIM_Data/level1": true
+    },
+    "deployed_patch_matches_manifest": {
+      "agent/scenario_monitor.py": true,
+      "scenario_tool/calibrate_cmd.py": true,
+      "scenario_tool/compiler.py": true,
+      "scenario_tool/evaluate.py": true,
+      "scenario_tool/gui/server.py": true,
+      "scenario_tool/gui/static/index.html": true,
+      "scenario_tool/objects.py": true,
+      "scenario_tool/probe_cmd.py": true,
+      "scenario_tool/runner.py": true,
+      "scenario_tool/scenario.py": true,
+      "schema/scenario.schema.json": true,
+      "tests/test_native_objects.py": true,
+      "tests/test_scenario_tool.py": true
+    },
+    "owned_containers_remaining": [],
+    "gui_stopped": true,
+    "disk_free_bytes": 5226668032
+  },
+  "patch_roundtrip": {
+    "passed": true,
+    "file_hashes_verified": 13
+  },
+  "wsl_pytest": {
+    "repository": "/home/thistle/e2e_autonomous/e2e_lite_transfuser_lidar_v2x_margin",
+    "command": "bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -m pytest -q",
+    "passed": 3077,
+    "skipped": 4,
+    "warnings": 84,
+    "seconds": 113.68,
+    "evidence": "pytest final summary",
+    "log_sha256": "862dc2c825332c1e2be4304848e5096712a72827f693ea251a5935e73f561f89",
+    "transport_exit_code": 1,
+    "transport_note": "After pytest completed successfully, the SSH shell exit-status capture had a quoting error. Test counts come from the saved pytest summary; no pytest exit code was captured."
+  },
+  "limitations": [
+    "Standard AWSIM prefab sizes only; objects can move on contact",
+    "No per-object clearance or passing assertion",
+    "Official penalty counters do not prove absence of every physical contact",
+    "Live yaw calibration not verified",
+    "No identification of every object in LiDAR; no avoidance or full-lap validation",
+    "V45 collection and training remain paused"
+  ]
+}

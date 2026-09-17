@@ -55,6 +55,8 @@ git apply --no-index /path/to/patch/scenario_tool.patch
 物体生成数は当該runのAWSIMログで照合する。物体を含む `no_collision` は、
 当該runの公式 `d1-result-details.json` の `crash` / `wall` カウントを使う。
 ログ・カウント欠落は未判定とし、0件と仮定しない。物体別の最小距離や通過判定は未対応。
+公式カウントは接触法線などのAWSIM側の条件に従い、全接触の検出を保証するものではない。
+確認した標準実装では、車両以外との接触は法線と鉛直の内積の絶対値が0.6未満の場合にwallへ計上される。
 
 導入時に確認した終了時の不具合も修正した。監視executorを止めてspin threadをjoinしてから
 ROSノードを破棄し、監視プロセスが異常終了したrunを成功扱いにしない。
