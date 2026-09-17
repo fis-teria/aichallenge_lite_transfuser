@@ -1,4 +1,4 @@
-"""Owned single-vehicle make-dev trial, finite model-only drive then measured stop.
+"""Owned single-ego make-dev trial, finite model-only drive then measured stop.
 
 Run under an outer timeout of (configured outer wall limit - 10 s) + 10 s kill grace.
 Normal Autoware RViz is reused. No remote Git operation, global cleanup or
@@ -21,7 +21,9 @@ import time
 from integrate_normal_rviz_v4 import ensure_time_path, follow_ego_view
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from aic_transfuser_lite.runtime.awsim_trial_session import JudgeLog, LowSpeedStall, trial_duration_limits
+from aic_transfuser_lite.runtime.awsim_trial_session import (
+    JudgeLog, LowSpeedStall, npc_startup_evidence, trial_duration_limits,
+)
 from aic_transfuser_lite.control.awsim_steering import steering_asset_contract
 from aic_transfuser_lite.control.time_dev_v1 import configure_dev_speeds
 from aic_transfuser_lite.control.time_trial_v1 import validate_trial_config
@@ -48,6 +50,7 @@ def main() -> None:
     ap.add_argument('--ros-launch', action='store_true', help='Use the installed time_path_awsim ROS launch')
     ap.add_argument('--max-speed-kmh', type=float)
     ap.add_argument('--corner-max-speed-kmh', type=float)
+    ap.add_argument('--npcs', type=int, choices=range(4), default=0)
     args = ap.parse_args()
     if not re.fullmatch(r"codex-time-[a-z0-9-]+", args.run_id):
         raise ValueError("INVALID_OWNED_RUN_ID")
@@ -71,6 +74,8 @@ def main() -> None:
         raise ValueError('SPEED_PARAMETERS_REQUIRE_ROS_LAUNCH')
     validate_trial_config(config)
     execution_profile = config.get("execution_profile", "bounded_10s")
+    if args.npcs and (execution_profile != 'one_lap' or args.recovery_side is not None):
+        raise ValueError('NPC_TRIAL_REQUIRES_ONE_LAP_WITHOUT_TEACHER')
     drive_sim_s, drive_wall_s, outer_wall_s = trial_duration_limits(execution_profile)
     output = deployment / args.run_id; output.mkdir(exist_ok=False)
     effective_config = output / 'trial_config.json'
@@ -80,6 +85,7 @@ def main() -> None:
     result = {"status": "FAILED", "run_id": args.run_id, "start_time_utc": time.time(),
               "scope": "ONE_LAP_MODEL_TRIAL" if execution_profile == "one_lap" else "10_SIM_SECOND_MODEL_TRIAL",
               "official_start_requested": False, "execution_profile": execution_profile,
+              "requested_npcs": args.npcs,
               "speed_policy": config.get("speed_policy", "source_capped_0p25"),
               "trial_config_sha256": sha(effective_config)}
     if args.recovery_side is not None:
@@ -211,9 +217,14 @@ def main() -> None:
             "codex-cartographer-v4-build:20260910", "-lc", shell]
         make_args = ["CONTROL_METHOD=v4_20_external", "CAPTURE=false", "ROSBAG=false", "AWSIM_LAPS=1",
                      "RUN_ID="+args.run_id, "OUTPUT_HOST_ROOT="+str(output)]
+        simulator_args = ['--npcs', str(args.npcs)]
+        if args.npcs:
+            simulator_args += ['--collisions', 'on']
         if execution_profile == "one_lap":
             # Compose mounts this host output directory at /output in AWSIM.
-            make_args += ["AWSIM_TIMEOUT=660", "AWSIM_EXTRA_ARGS=-logFile " + str(Path("/output")/args.run_id/"awsim_unity.log")]
+            make_args += ["AWSIM_TIMEOUT=660"]
+            simulator_args += ['-logFile', str(Path('/output')/args.run_id/'awsim_unity.log')]
+        make_args += ['AWSIM_EXTRA_ARGS=' + ' '.join(simulator_args)]
         result["commands"] = [probe_command, ["make", "dev", "DEV_AUTO_START=false", *make_args]]
         owned = True
         probe = launch(probe_command, "nodes")
@@ -274,6 +285,9 @@ def main() -> None:
                         time.sleep(.1); continue
                     if execution_profile == "one_lap" and not unity.exists():
                         raise RuntimeError("JUDGE_LOG_MISSING")
+                    if execution_profile == 'one_lap':
+                        result['npc_startup'] = npc_startup_evidence(unity.read_text(errors='replace'), args.npcs)
+                        (output/'npc_startup.json').write_text(json.dumps(result['npc_startup'], indent=2))
                     result["rviz_path_subscribers"] = inference["path_subscribers"]
                     inspections = []
                     for service in ("simulator", "autoware"):

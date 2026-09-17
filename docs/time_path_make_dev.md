@@ -33,6 +33,7 @@ AWSIM本体・scene・センサは変更しない。今回試験中のLiDAR近�
 |`MAX_SPEED_KMH`|20|全体の目標速度上限、km/h|
 |`CORNER_MAX_SPEED_KMH`|10|コーナー内の目標速度上限、km/h|
 |`TIME_RECORD_VIDEO`|0|1でAWSIMと通常RVizの動画を保存|
+|`TIME_NPCS`|0|AWSIM内蔵NPC車両の台数、0〜3。自車のE2Eは1台のまま|
 |`TIME_RUN_ID`|UTC時刻から生成|任意指定は `codex-time-...`、既存runの再利用禁止|
 |`TIME_DEPLOYMENT`|sourceの親|installと `command_off_best.pt` を持つ専用deployment|
 |`DISPLAY`|環境値、なければ`:0`|実際のデスクトップdisplay|
@@ -41,6 +42,17 @@ AWSIM本体・scene・センサは変更しない。今回試験中のLiDAR近�
 実速度超過の停止閾値は全体上限+1 km/h。内部計算はm/s。
 上限値は維持速度や実速度の瞬時上限を保証する値ではない。
 曲率、予測経路の残り長さに応じて、これより遅い目標を選ぶ。
+
+NPC対応sourceを配置したdeploymentでは、次の条件で2台のNPCを追加できる:
+
+```bash
+make dev MAX_SPEED_KMH=20 CORNER_MAX_SPEED_KMH=10 TIME_NPCS=2 TIME_RECORD_VIDEO=1
+```
+
+既存AWSIMの `--npcs` を使用し、本体・sceneを編集しない。
+NPCありでは `--collisions on` を明示し、公式Start前にUnityログで
+要求台数の生成、`racing-line` モード、車両同士の衝突判定を確認する。
+NPC速度と出現位置は既存AWSIMの実装に従う。起動確認だけで回避成功とは判定しない。
 
 コーナー判定は予測経路の1 m以上の区間から測った曲率とPP追従曲率に基づく。
 絶対曲率0.05 /m以上（半径20 m以下）でコーナー上限を全面適用。

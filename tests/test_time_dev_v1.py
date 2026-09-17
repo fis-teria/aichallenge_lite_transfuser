@@ -137,3 +137,13 @@ def test_make_runner_uses_ros_launch_and_finite_supervision():
     with pytest.raises(ValueError, match='INVALID_OWNED_RUN_ID'):
         make_command(source=ROOT, deployment=ROOT, run_id='../old-run', display=':0',
                      speeds=TimeDevSpeeds(), record_video=False)
+
+
+def test_make_runner_forwards_two_npcs_without_extra_ego_controllers():
+    command = make_command(source=ROOT, deployment=ROOT, run_id='codex-time-npc-test',
+        display=':0', speeds=TimeDevSpeeds(), record_video=True, npcs=2)
+    assert command[command.index('--npcs') + 1] == '2'
+    assert '--recovery-side' not in command
+    with pytest.raises(ValueError, match='NPC_COUNT'):
+        make_command(source=ROOT, deployment=ROOT, run_id='codex-time-npc-test',
+            display=':0', speeds=TimeDevSpeeds(), record_video=False, npcs=4)

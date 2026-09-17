@@ -6,6 +6,37 @@ import re
 from typing import Any, Iterable
 
 
+def validate_npc_count(count: int) -> int:
+    """Built-in AWSIM supports one ego vehicle plus zero to three NPCs."""
+    if type(count) is not int or not 0 <= count <= 3:
+        raise ValueError("NPC_COUNT_MUST_BE_INTEGER_0_TO_3")
+    return count
+
+
+def npc_startup_evidence(log_text: str, requested_count: int) -> dict[str, Any]:
+    """Check actual NPC creation and collisions before authorizing ego motion.
+
+    This only verifies startup, not NPC speed, subsequent contact or avoidance.
+    """
+    validate_npc_count(requested_count)
+    spawns = re.findall(
+        r"NpcRuntimeManager: spawned (\d+) NPC kart\(s\) named C1\.\.C(\d+) in ([a-z-]+) mode\.",
+        log_text,
+    )
+    if requested_count == 0:
+        if spawns:
+            raise ValueError("UNEXPECTED_NPC_SPAWN")
+        return {"requested_count": 0, "spawned_count": 0, "mode": None}
+    if spawns != [(str(requested_count), str(requested_count), "racing-line")]:
+        raise ValueError("NPC_SPAWN_EVIDENCE_MISMATCH")
+    settings = re.findall(r"^Applied race settings:.*$", log_text, re.MULTILINE)
+    if not settings or not re.search(r"\bcollisions=True(?:,|\s|$)", settings[-1]):
+        raise ValueError("NPC_VEHICLE_COLLISIONS_NOT_ENABLED")
+    return {"requested_count": requested_count, "spawned_count": requested_count,
+            "mode": "racing-line", "vehicle_collisions_enabled": True,
+            "settings_log": settings[-1].strip()}
+
+
 def trial_duration_limits(profile: str = "bounded_10s") -> tuple[float, float, float]:
     """(drive simulation seconds, drive wall seconds, total wall seconds)."""
     if profile == "bounded_10s":

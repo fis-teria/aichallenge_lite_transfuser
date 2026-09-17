@@ -10,9 +10,10 @@ TINY_WALL_SECONDS ?= 120
 MAX_SPEED_KMH ?= 20
 CORNER_MAX_SPEED_KMH ?= 10
 TIME_RECORD_VIDEO ?= 0
+TIME_NPCS ?= 0
 dev:
 ifeq ($(DEV_CONTROLLER),time)
-	python3 tools/time_dev_runner.py --max-speed-kmh "$(MAX_SPEED_KMH)" --corner-max-speed-kmh "$(CORNER_MAX_SPEED_KMH)" $(if $(TIME_DEPLOYMENT),--deployment "$(TIME_DEPLOYMENT)",) $(if $(TIME_RUN_ID),--run-id "$(TIME_RUN_ID)",) $(if $(DISPLAY),--display "$(DISPLAY)",) $(if $(filter 1,$(TIME_RECORD_VIDEO)),--record-video,)
+	python3 tools/time_dev_runner.py --max-speed-kmh "$(MAX_SPEED_KMH)" --corner-max-speed-kmh "$(CORNER_MAX_SPEED_KMH)" --npcs "$(TIME_NPCS)" $(if $(TIME_DEPLOYMENT),--deployment "$(TIME_DEPLOYMENT)",) $(if $(TIME_RUN_ID),--run-id "$(TIME_RUN_ID)",) $(if $(DISPLAY),--display "$(DISPLAY)",) $(if $(filter 1,$(TIME_RECORD_VIDEO)),--record-video,)
 else
 ifeq ($(CONTROL_METHOD),tiny_lidar_net_guarded)
 	python3 tools/tiny_dev_runner.py --control-method tiny_lidar_net_guarded $(if $(filter 1,$(TINY_GUI_RETRY)),--gui-retry,) $(if $(filter 2,$(TINY_GUI_RETRY)),--gui-retry2,) $(if $(filter 1,$(TINY_GUI_LAP)),--gui-lap,) --sim-repo "$(SIM_REPO)" --official-package "$(TINY_PACKAGE)" --install-root "$(TINY_INSTALL)" --display "$(DISPLAY)" --xauthority "$(XAUTHORITY)" --output "$(TINY_OUTPUT)" --commit "$(TINY_COMMIT)" --phase $(if $(filter 1,$(TINY_GUI_LAP)),lap,short) --wall-seconds $(if $(filter 1,$(TINY_GUI_LAP)),600,120) --budget "$(TINY_BUDGET)"
