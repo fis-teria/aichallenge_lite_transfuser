@@ -255,6 +255,14 @@ class MapLocalizer:
             return None
         prior = self.seed if self.map_to_odom is None else compose(self.map_to_odom, wheel_pose)
         result = match_scan(self.course, points, prior, initializing=self.matches < 3)
+        if not result.accepted and result.reason == 'CORRECTION_LIMIT' and self.matches >= 3:
+            # map->odom may jump when a bend resolves accumulated straight-road
+            # drift. Retry only inside the original bounded initialization
+            # envelope, and suppress outputs until three scans reconfirm it.
+            candidate = match_scan(self.course, points, prior, initializing=True)
+            if candidate.accepted:
+                result = candidate
+                self.matches = 0
         self.status = result.reason
         if result.accepted:
             self.map_to_odom = compose(result.pose, inverse(wheel_pose))

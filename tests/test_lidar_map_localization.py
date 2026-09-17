@@ -120,3 +120,19 @@ def test_lanelet_loader_uses_only_explicit_boundary_nodes(tmp_path):
     course = BoundaryMap.from_lanelet(path)
     assert course.segments.shape == (2,2,2)
     np.testing.assert_allclose(course.origin,[1,2])
+
+
+def test_bounded_relocalization_requires_confirmation_before_output():
+    course, world=fixture();tracker=MapLocalizer(course);p=np.array([89603.,43101.,.1])
+    tracker.initialize(p)
+    for i in range(3):tracker.update(1_000_000_000+i*200_000_000,np.zeros(3),observed(world,p))
+    assert tracker.valid(1_400_000_000)
+    # A corner reveals 0.6m accumulated dead-reckoning error.
+    bad_wheel=np.array([.6,0,0])
+    result=tracker.update(1_600_000_000,bad_wheel,observed(world,p))
+    assert result.accepted and not tracker.valid(1_600_000_000)
+    assert tracker.status=='INITIALIZING'
+    tracker.update(1_800_000_000,bad_wheel,observed(world,p))
+    assert not tracker.valid(1_800_000_000)
+    tracker.update(2_000_000_000,bad_wheel,observed(world,p))
+    assert tracker.valid(2_000_000_000)
