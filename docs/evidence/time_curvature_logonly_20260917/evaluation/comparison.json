@@ -1,0 +1,256 @@
+{
+  "scope": "FOUR_SINGLE_SAME_SCENE_RUNS_NOT_REPEATED_SUCCESS_RATE",
+  "trials": [
+    {
+      "label": "Fixed 10 km/h",
+      "source_run": "/home/thistle/e2e_autonomous/runs/time_launch_10kmh_stop1m_20260917/raw/codex-time-launch10-stop1m-lap01",
+      "lap_completed": true,
+      "scan_occupancy_policy": "stop_v1",
+      "scan_would_stop_commands": 0,
+      "lap_records": [
+        {
+          "lap_seconds": 134.74,
+          "laps": 1,
+          "line": "Lap completed: 134.74s, total laps: 1",
+          "run_id": "codex-time-launch10-stop1m-lap01",
+          "epoch": 0,
+          "byte_offset": 103166,
+          "lap_increment_valid": true,
+          "ordered_section_evidence": true
+        }
+      ],
+      "recorded_distance_m": 370.1106610037844,
+      "moving_actual_kmh": {
+        "min": 0.4795077323913574,
+        "median": 9.572384262084961,
+        "p95": 9.754498615264893,
+        "max": 10.074350452423095
+      },
+      "active_commands": 2874,
+      "tracking_commands": 2801,
+      "reason_counts": {
+        "TIME_PATH_TRACKING": 2801,
+        "MOTION_REAR_LATERAL_INVALID": 52,
+        "MOTION_YAW_RATE_INVALID": 2,
+        "TIME_PATH_INITIAL_DIRECTION": 19
+      },
+      "lookahead_rejection_commands": 0,
+      "lookahead_rejection_fraction": 0.0,
+      "distinct_scan_rejections": 0,
+      "minimum_admitted_ray_margin_m": 0.14416292143828335,
+      "margin_scope": "Scan-to-padded-monitor ray margin, NOT physical wall clearance",
+      "stop_confirmed": true,
+      "preview_limits": {},
+      "normal_acceleration_range_mps2": [
+        -0.07849841647677991,
+        1.0
+      ],
+      "normal_braking_commands": 19,
+      "control_replay": {
+        "status": "PASS",
+        "matched_commands": 2874,
+        "unavailable_commands": 0,
+        "maximum_absolute_error": 8.881784197001252e-16,
+        "tolerance": 1e-09,
+        "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+        "post_control_rejections": {
+          "MOTION_REAR_LATERAL_INVALID": 52,
+          "MOTION_YAW_RATE_INVALID": 2
+        },
+        "actuator_mapping_matched": 2855,
+        "steering_response_matched": 2855,
+        "vehicle_motion_matched": 2855,
+        "scan_guard_decisions_replayed": false
+      },
+      "control_sha256": "ade6b0463782ebe71e66e9e7d7ccf60cf49413d988f7bb1946033eeab7e8ddb4"
+    },
+    {
+      "label": "Fixed 15 km/h",
+      "source_run": "/home/thistle/e2e_autonomous/runs/time_launch_15kmh_stop1m_20260917/raw/codex-time-launch15-stop1m-lap01",
+      "lap_completed": false,
+      "scan_occupancy_policy": "stop_v1",
+      "scan_would_stop_commands": 0,
+      "lap_records": [],
+      "recorded_distance_m": 315.19987621219155,
+      "moving_actual_kmh": {
+        "min": 0.4249018728733063,
+        "median": 11.299616146087647,
+        "p95": 12.384156589508056,
+        "max": 13.577850151062012
+      },
+      "active_commands": 2205,
+      "tracking_commands": 1663,
+      "reason_counts": {
+        "TIME_PATH_TRACKING": 1663,
+        "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 327,
+        "TIME_PATH_INITIAL_DIRECTION": 38,
+        "MOTION_REAR_LATERAL_INVALID": 89,
+        "MOTION_YAW_RATE_INVALID": 1,
+        "STOPPING_SWEEP_OCCUPIED": 87
+      },
+      "lookahead_rejection_commands": 327,
+      "lookahead_rejection_fraction": 0.14829931972789115,
+      "distinct_scan_rejections": 1,
+      "minimum_admitted_ray_margin_m": 0.005375631924212199,
+      "margin_scope": "Scan-to-padded-monitor ray margin, NOT physical wall clearance",
+      "stop_confirmed": false,
+      "preview_limits": {},
+      "normal_acceleration_range_mps2": [
+        1.0,
+        1.0
+      ],
+      "normal_braking_commands": 0,
+      "control_replay": {
+        "status": "PASS",
+        "matched_commands": 2119,
+        "unavailable_commands": 86,
+        "maximum_absolute_error": 1.7763568394002505e-15,
+        "tolerance": 1e-09,
+        "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+        "post_control_rejections": {
+          "MOTION_REAR_LATERAL_INVALID": 89,
+          "MOTION_YAW_RATE_INVALID": 1,
+          "STOPPING_SWEEP_OCCUPIED": 1
+        },
+        "actuator_mapping_matched": 1754,
+        "steering_response_matched": 1754,
+        "vehicle_motion_matched": 1754,
+        "scan_guard_decisions_replayed": false
+      },
+      "control_sha256": "6dfc9960de56590eb36cb21370632e227f477e6db22c06db27c750686b62a31c"
+    },
+    {
+      "label": "Adaptive + proximity stop",
+      "source_run": "/home/thistle/e2e_autonomous/runs/time_curvature_launch_20260917/raw/codex-time-curve15-lap02",
+      "lap_completed": false,
+      "scan_occupancy_policy": "stop_v1",
+      "scan_would_stop_commands": 0,
+      "lap_records": [],
+      "recorded_distance_m": 203.3981121815059,
+      "moving_actual_kmh": {
+        "min": 0.4354492574930191,
+        "median": 7.830993747711182,
+        "p95": 8.826593170166015,
+        "max": 10.334595108032227
+      },
+      "active_commands": 1993,
+      "tracking_commands": 1907,
+      "reason_counts": {
+        "TIME_PATH_TRACKING": 1907,
+        "MOTION_YAW_RATE_INVALID": 1,
+        "TIME_PATH_INITIAL_DIRECTION": 2,
+        "MOTION_REAR_LATERAL_INVALID": 1,
+        "STOPPING_SWEEP_OCCUPIED": 82
+      },
+      "lookahead_rejection_commands": 0,
+      "lookahead_rejection_fraction": 0.0,
+      "distinct_scan_rejections": 1,
+      "minimum_admitted_ray_margin_m": 0.015341110871899266,
+      "margin_scope": "Scan-to-padded-monitor ray margin, NOT physical wall clearance",
+      "stop_confirmed": false,
+      "preview_limits": {
+        "prediction_horizon": 1705,
+        "preview_curvature": 202
+      },
+      "normal_acceleration_range_mps2": [
+        -0.3419616463690023,
+        1.0
+      ],
+      "normal_braking_commands": 54,
+      "control_replay": {
+        "status": "PASS",
+        "matched_commands": 1912,
+        "unavailable_commands": 81,
+        "maximum_absolute_error": 7.144285163462882e-12,
+        "tolerance": 1e-09,
+        "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+        "post_control_rejections": {
+          "MOTION_YAW_RATE_INVALID": 1,
+          "MOTION_REAR_LATERAL_INVALID": 1,
+          "STOPPING_SWEEP_OCCUPIED": 1
+        },
+        "actuator_mapping_matched": 1910,
+        "steering_response_matched": 1910,
+        "vehicle_motion_matched": 1910,
+        "scan_guard_decisions_replayed": false
+      },
+      "control_sha256": "664f03160e5c02c6638a81ca89e926dc4284671fb2f47c8e7ba65071e3b5586a",
+      "normal_target_kmh_percentiles": [
+        3.9415318850325303,
+        7.643262014082939,
+        8.733831516673286,
+        9.54487079281704,
+        10.798145291993992
+      ]
+    },
+    {
+      "label": "Adaptive + proximity logging only",
+      "source_run": "/home/thistle/e2e_autonomous/runs/time_curvature_logonly_20260917/raw/codex-time-curve15-logonly-lap03",
+      "lap_completed": false,
+      "scan_occupancy_policy": "log_only_awsim_v1",
+      "scan_would_stop_commands": 0,
+      "lap_records": [],
+      "recorded_distance_m": 215.1405025127016,
+      "moving_actual_kmh": {
+        "min": 0.39192183315753937,
+        "median": 7.614942455291748,
+        "p95": 8.859175872802735,
+        "max": 10.33700180053711
+      },
+      "active_commands": 2191,
+      "tracking_commands": 2082,
+      "reason_counts": {
+        "TIME_PATH_TRACKING": 2082,
+        "MOTION_YAW_RATE_INVALID": 1,
+        "TIME_PATH_INITIAL_DIRECTION": 1,
+        "MOTION_REAR_LATERAL_INVALID": 2,
+        "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 103,
+        "PLAN_STALE": 2
+      },
+      "lookahead_rejection_commands": 103,
+      "lookahead_rejection_fraction": 0.04701049748973072,
+      "distinct_scan_rejections": 0,
+      "minimum_admitted_ray_margin_m": 0.02266857166106906,
+      "margin_scope": "Scan-to-padded-monitor ray margin, NOT physical wall clearance",
+      "stop_confirmed": true,
+      "preview_limits": {
+        "prediction_horizon": 1872,
+        "preview_curvature": 210
+      },
+      "normal_acceleration_range_mps2": [
+        -0.29668303414447283,
+        1.0
+      ],
+      "normal_braking_commands": 42,
+      "control_replay": {
+        "status": "PASS",
+        "matched_commands": 2189,
+        "unavailable_commands": 2,
+        "maximum_absolute_error": 5.329070518200751e-15,
+        "tolerance": 1e-09,
+        "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+        "post_control_rejections": {
+          "MOTION_YAW_RATE_INVALID": 1,
+          "MOTION_REAR_LATERAL_INVALID": 2
+        },
+        "actuator_mapping_matched": 2085,
+        "steering_response_matched": 2085,
+        "vehicle_motion_matched": 2085,
+        "scan_guard_decisions_replayed": false
+      },
+      "control_sha256": "f004f8221aeb7533f4c002e87796064dbca7bddcccc4454ea0963284d7e25bdc",
+      "normal_target_kmh_percentiles": [
+        0.8907819878975397,
+        7.080091844168687,
+        8.584467606574531,
+        9.536301586292808,
+        10.767359808656538
+      ]
+    }
+  ],
+  "same_checkpoint_sha256": "1fe12ca066791d3eb8907c6921120e2cfbb38925c422d5be54940f4acbdd120a",
+  "same_stopping_distance_policy": "awsim_cap_1m_diagnostic_v1",
+  "proximity_stop_enforcement_differs": true,
+  "contact_certified": false,
+  "contact_evidence_boundary": "Judge lap and scan monitor only; no independent physical-contact sensor contract"
+}

@@ -66,17 +66,19 @@ def test_exit_reaccelerates_to_ceiling_without_floor_overriding_corner() -> None
     straight = limit(path(0., 15.), speed=2.5)
     assert corner['acceleration_mps2'] < 0
     assert straight['target_speed_mps'] == 15/3.6
-    assert straight['acceleration_mps2'] == .8
+    assert straight['acceleration_mps2'] == 1.
     steady = limit(path(0., 15.), speed=15/3.6)
     assert steady['acceleration_mps2'] == 0.
     assert limit(path(0., 15.), speed=16/3.6)['acceleration_mps2'] < 0
 
 
-def test_launch_acceleration_tapers_and_never_overrides_a_lower_speed_cap() -> None:
+def test_existing_acceleration_authority_never_overrides_a_lower_speed_cap() -> None:
     assert limit(path(0., 15.), speed=0.)['acceleration_mps2'] == 1.
     assert limit(path(0., 15.), speed=.5)['acceleration_mps2'] == 1.
-    assert limit(path(0., 15.), speed=.75)['acceleration_mps2'] == pytest.approx(.9)
-    assert limit(path(0., 15.), speed=1.)['acceleration_mps2'] == .8
+    assert limit(path(0., 15.), speed=.75)['acceleration_mps2'] == 1.
+    assert limit(path(0., 15.), speed=1.)['acceleration_mps2'] == 1.
+    # At a small positive error the original 4/s proportional response stays.
+    assert limit(path(0., 15.), speed=15/3.6-.1)['acceleration_mps2'] == pytest.approx(.4)
     short = limit(path(0., 1.1), speed=.5)
     assert short['target_speed_mps'] < .5
     assert short['acceleration_mps2'] < 0.  # Launch authority is not a speed floor.

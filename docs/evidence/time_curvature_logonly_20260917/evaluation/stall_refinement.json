@@ -1,0 +1,77 @@
+{
+  "scope": "OBSERVED_RESPONSE_BEFORE_ADMISSION_FAILURE_NOT_NET_FORCE_CALIBRATION",
+  "all_preceding_3s_commands_tracking": true,
+  "all_preceding_3s_acceleration_commands_positive": true,
+  "prior_3s_command_acceleration_range_mps2": [
+    0.11168416038221718,
+    0.6824615965009104
+  ],
+  "prior_3s_speed_start_end_kmh": [
+    4.120914602279663,
+    0.5998486340045929
+  ],
+  "traces": [
+    {
+      "t_s": 101.299997736,
+      "speed_kmh": 4.120914602279663,
+      "target_kmh": 5.328149415012736,
+      "acceleration_command_mps2": 0.6706860070739293,
+      "measured_tire_rad": -0.051945652812719345,
+      "reason": "TIME_PATH_TRACKING",
+      "limit": "prediction_horizon",
+      "endpoint_distance_m": 3.179294630369364
+    },
+    {
+      "t_s": 101.789997725,
+      "speed_kmh": 3.6958235263824464,
+      "target_kmh": 4.794975859819906,
+      "acceleration_command_mps2": 0.610640185243033,
+      "measured_tire_rad": -0.045033782720565796,
+      "reason": "TIME_PATH_TRACKING",
+      "limit": "prediction_horizon",
+      "endpoint_distance_m": 2.852579261142681
+    },
+    {
+      "t_s": 102.294997713,
+      "speed_kmh": 3.2528509140014648,
+      "target_kmh": 4.324581774954474,
+      "acceleration_command_mps2": 0.5954060338627829,
+      "measured_tire_rad": -0.03389738127589226,
+      "reason": "TIME_PATH_TRACKING",
+      "limit": "prediction_horizon",
+      "endpoint_distance_m": 2.5825462404323365
+    },
+    {
+      "t_s": 102.789997702,
+      "speed_kmh": 2.806237578392029,
+      "target_kmh": 3.7870852493661067,
+      "acceleration_command_mps2": 0.5449153727633766,
+      "measured_tire_rad": -0.0209171324968338,
+      "reason": "TIME_PATH_TRACKING",
+      "limit": "prediction_horizon",
+      "endpoint_distance_m": 2.2948929676819105
+    },
+    {
+      "t_s": 103.294997691,
+      "speed_kmh": 2.23721616268158,
+      "target_kmh": 3.029808670365751,
+      "acceleration_command_mps2": 0.4403291709356507,
+      "measured_tire_rad": -0.02061983197927475,
+      "reason": "TIME_PATH_TRACKING",
+      "limit": "prediction_horizon",
+      "endpoint_distance_m": 1.9274474737781715
+    },
+    {
+      "t_s": 103.79999768,
+      "speed_kmh": 1.4316388249397278,
+      "target_kmh": 1.939593344509028,
+      "acceleration_command_mps2": 0.282196955316278,
+      "measured_tire_rad": -0.030370105057954788,
+      "reason": "TIME_PATH_TRACKING",
+      "limit": "prediction_horizon",
+      "endpoint_distance_m": 1.4761604940754522
+    }
+  ],
+  "cause_boundary": "Speed declined while positive longitudinal commands were sent; low-speed actuation and shrinking-horizon feedback need alignment. No training-data shortage conclusion follows.",
+  "video_observation": "Extracted stop frames show the kart on the course with visible wall separation; this is not a full-lap no-contact certificate."
+}
