@@ -32,6 +32,7 @@ Reference資産は実行コンテナのsource/install両方の`multi_purpose_mpc
 専用教師プロセスのPYTHONPATHへ追加する。Recovery用`config.yaml`も採用版をread-onlyで参照する。PC10 underlayの古いPython依存は置換しない。
 
 ```bash
+export PYTHONPATH="/source/integrations/mppi_v45/support:${PYTHONPATH:-}"
 ros2 launch aic_lidar_v2x teacher_v45.launch.py \
   map_yaml:=/source/integrations/mppi_v45/assets/multi_purpose_mpc_ros/env/final_ver3/occupancy_grid_map.yaml \
   domain_id:=1 speed_cap_mps:=1.3888888888888888 run_rviz:=false

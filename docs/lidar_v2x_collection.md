@@ -8,6 +8,11 @@ MPPI V44と同じV2Xメッセージ型へ変換する独立ROS 2パッケージ�
 教師モードはLiDARの検出位置を既存V2X入力と同じ他車近似へ渡す。
 追加の楕円・物体寸法推定・中心補正は導入しない。
 
+MPPI V45とPC10での収集には `teacher_v45.launch.py` を使う。
+採用ソース・依存モジュール・専用overlayの手順は
+[MPPI V45の運用手順](../integrations/mppi_v45/README.md)、
+実走結果は [PC10収集記録](mppi_v45_pc10_collection.md) を参照。
+
 ## 構成と入出力
 
 1. `core.py`: ROS非依存。無効レンジの除去、ビーム時刻でのSE(2)補間、自己車体除去、
