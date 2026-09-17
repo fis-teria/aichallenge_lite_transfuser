@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import tempfile
+import threading
 import time
 
 import numpy as np
@@ -40,6 +41,8 @@ def main() -> None:
         mount.header.frame_id, mount.child_frame_id = "base_link", "lidar"
         mount.transform.rotation.w = 1.0
         static_pub.sendTransform(mount)
+        spin_thread = threading.Thread(target=executor.spin, daemon=True)
+        spin_thread.start()
         start = time.monotonic()
         invalid_phase_count = None
         missing_tf_count = None
@@ -70,13 +73,11 @@ def main() -> None:
                     scan_pub.publish(scan)
                 if invalid_phase_count is None and elapsed >= 3.3:
                     invalid_phase_count = len(messages)
-                executor.spin_once(timeout_sec=.01)
-                time.sleep(.01)
-            for _ in range(20):
-                executor.spin_once(timeout_sec=.01)
+                time.sleep(.02)
+            time.sleep(.1)
             nonempty = [m for m in messages if m.vehicles]
             assert missing_tf_count == 0, "Published before map TF was available"
-            assert len(nonempty) >= 5, "No confirmed object delivered through ROS"
+            assert len(nonempty) >= 5, f"No confirmed object delivered through ROS: {detector.tf.all_frames_as_yaml()}"
             assert len(messages) == invalid_phase_count, "Invalid/stale scans published fresh empty arrays"
             assert all(m.header.frame_id == "map" for m in messages)
             ids = {v.vehicle_id for m in nonempty for v in m.vehicles}
@@ -91,6 +92,7 @@ def main() -> None:
                 track_ids=sorted(ids), reasons=reasons, native_v2x_publishers=0, driving_publishers=0)), flush=True)
         finally:
             executor.shutdown()
+            spin_thread.join(timeout=2)
             detector.destroy_node()
             probe.destroy_node()
             rclpy.shutdown()
