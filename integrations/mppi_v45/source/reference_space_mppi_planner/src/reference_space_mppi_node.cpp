@@ -1701,10 +1701,10 @@ private:
             body_gap>0.,body_gap,station,plan.connection_end_station_m);
       }
     }
-    if(inputs.active_command && inputs.active_command->corridor_side==0 &&
-        inputs.driving_fsm.mode()!=DrivingMode::FREE_RUN) {
+    if(keepAdoptedReturn(inputs,decision)) {
       // The adopted return owns its geometry until measured alignment. A new
-      // passing opportunity cannot replace a return that is still in progress.
+      // collection avoidance may search again when a fresh obstacle still
+      // blocks the Reference. Adoption must pass the same swept validator.
       decision.generate_lateral=false;
       decision.finish_avoid=scene.reference_valid && scene.reference_aligned;
       decision.generate_return=!decision.finish_avoid;
@@ -2789,6 +2789,13 @@ private:
     if(front_merge_attack_enabled_ && inputs.active_preparation && inputs.active_preparation->front_merge &&
         inputs.active_command && inputs.active_command->corridor_side!=0) return true;
     return delta>0. && delta<=brain_trigger_distance_m_;
+  }
+
+  bool keepAdoptedReturn(const BrainInputs &inputs,const DrivingPlan &decision) const {
+    const bool collection_replan=collection_avoidance_continuation_ &&
+        decision.maneuver==DrivingMode::AVOID && decision.generate_lateral;
+    return inputs.active_command && inputs.active_command->corridor_side==0 &&
+        inputs.driving_fsm.mode()!=DrivingMode::FREE_RUN && !collection_replan;
   }
 
   bool continueCollectionAvoidance(const BrainInputs &inputs) const {

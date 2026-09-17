@@ -991,6 +991,19 @@ TEST_F(NodeFallbackTest, CollectionFitOwnsTheSnapshotEvenWhenOnlinePredictionIsE
   EXPECT_FALSE(node.observed_vehicles_.at("lidar_test").online_motion);
 }
 
+TEST_F(NodeFallbackTest, CollectionCanSearchAroundFreshObstacleDuringAnAdoptedReturn) {
+  BrainInputs inputs; inputs.active_command=Command{};
+  inputs.active_command->corridor_side=0; inputs.driving_fsm.acceptLateral();
+  const DrivingPlan avoid{true,false,false,DrivingMode::AVOID};
+  EXPECT_TRUE(node.keepAdoptedReturn(inputs,avoid));
+  node.collection_avoidance_continuation_=true;
+  EXPECT_FALSE(node.keepAdoptedReturn(inputs,avoid));
+  EXPECT_TRUE(node.keepAdoptedReturn(inputs,{false,true,false,DrivingMode::AVOID}));
+  EXPECT_TRUE(node.keepAdoptedReturn(inputs,{true,false,false,DrivingMode::OVERTAKE}));
+  inputs.active_command->corridor_side=1;
+  EXPECT_FALSE(node.keepAdoptedReturn(inputs,avoid));
+}
+
 TEST_F(NodeFallbackTest, CollectionContinuationRequiresAdoptedTargetIdentity) {
   BrainInputs inputs;
   inputs.leading=FollowVehicle{};
