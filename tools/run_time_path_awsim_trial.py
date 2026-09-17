@@ -18,7 +18,7 @@ import subprocess
 import sys
 import time
 
-from integrate_normal_rviz_v4 import ensure_time_path, follow_ego_view
+from integrate_normal_rviz_v4 import ensure_time_path, follow_ego_view, enable_lidar_map_comparison
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from aic_transfuser_lite.runtime.awsim_trial_session import (
@@ -53,7 +53,15 @@ def main() -> None:
     ap.add_argument('--corner-max-speed-kmh', type=float)
     ap.add_argument('--npcs', type=int, choices=range(4), default=0)
     ap.add_argument('--pp-vehicles', type=int, choices=range(4), default=0)
+    ap.add_argument('--lidar-map-comparison', action='store_true',
+                    help='Run aggressive map correction as display/evaluation sidecar; no control input')
+    ap.add_argument('--lidar-map-initial-pose', type=float, nargs=3, metavar=('X_M', 'Y_M', 'YAW_RAD'))
     args = ap.parse_args()
+    if args.lidar_map_comparison != (args.lidar_map_initial_pose is not None):
+        raise ValueError('LIDAR_COMPARISON_REQUIRES_EXPLICIT_MANUAL_INITIAL_POSE')
+    if args.lidar_map_comparison:
+        from aic_transfuser_lite.runtime.lidar_map_localization import pose_array
+        pose_array(args.lidar_map_initial_pose)
     if args.recovery_side is not None:
         raise ValueError('GLOBAL_TEACHER_BOOTSTRAP_UNSUPPORTED_WITH_LOCAL_ODOMETRY')
     domains = traffic_domains(args.pp_vehicles, args.npcs)
@@ -103,6 +111,7 @@ def main() -> None:
     if args.pp_vehicles:
         judge = DomainLapJudge(args.run_id)
     traffic_process = None
+    localization_process = None
     traffic_services = tuple(f'traffic{domain}' for domain in domains[1:])
     stall = LowSpeedStall(); rviz_window = None; next_capture_sim_s = 2.; video = None
     rviz = None; rviz_bytes = None; enabled = None
@@ -223,6 +232,8 @@ def main() -> None:
         enabled_text = ensure_time_path(text.replace("\r\n", "\n"))
         if execution_profile == "one_lap":
             enabled_text = follow_ego_view(enabled_text)
+        if args.lidar_map_comparison:
+            enabled_text = enable_lidar_map_comparison(enabled_text)
         enabled = enabled_text.replace("\n", newline).encode("utf-8")
         if enabled != rviz_bytes:
             rviz.write_bytes(enabled)
@@ -266,6 +277,16 @@ def main() -> None:
         result["commands"] = [probe_command, ["make", "dev", "DEV_AUTO_START=false", *make_args]]
         owned = True
         probe = launch(probe_command, "nodes")
+        if args.lidar_map_comparison:
+            observer_command = ['python3', str(source_in_container/'tools/observe_lidar_map_trial.py'),
+                '--output', str(inside), '--initial-pose', *map(str, args.lidar_map_initial_pose)]
+            observer = probe_command.copy()
+            observer[observer.index('--name')+1] = args.run_id+'-localization'
+            observer[-1] = ('source /aichallenge/workspace/install/setup.bash && '
+                           'source /time/install/setup.bash && exec '+shlex.join(observer_command))
+            result['commands'].append(observer)
+            result['lidar_correction_scope'] = 'DISPLAY_AND_EVALUATION_ONLY_NO_CONTROL_INPUT'
+            localization_process = launch(observer, 'localization_observer')
         if args.pp_vehicles:
             observer_command = ['python3', str(source_in_container/'tools/observe_time_traffic.py'),
                                 '--output', str(inside), '--domains', *map(str, domains)]
@@ -281,6 +302,8 @@ def main() -> None:
                 video.monitor()
             if probe.poll() is not None:
                 raise RuntimeError("TRIAL_NODES_EXIT")
+            if localization_process is not None and localization_process.poll() is not None:
+                raise RuntimeError('LOCALIZATION_OBSERVER_EXIT')
             if make.poll() is not None and make.returncode:
                 raise RuntimeError("MAKE_DEV_FAILED")
             if traffic_process is not None and traffic_process.poll() is not None:
@@ -364,6 +387,13 @@ def main() -> None:
             if ip.exists() and cp.exists() and make.poll() == 0 and not result["official_start_requested"]:
                 inference = json.loads(ip.read_text()); result["last_inference"] = inference
                 if traffic_ready and inference["plans"] >= 5 and control["reason"] == "WAIT_AUTHORIZATION" and control["commands"] >= 5:
+                    if args.lidar_map_comparison:
+                        ready = output/'localization_ready.json'
+                        if not ready.exists():
+                            if time.monotonic()-started > 75:
+                                raise RuntimeError('LOCALIZATION_DISPLAY_NOT_READY')
+                            time.sleep(.1); continue
+                        result['localization_ready'] = json.loads(ready.read_text())
                     if not any(name.startswith("rviz") for name in inference.get("path_subscribers", [])):
                         if time.monotonic()-started > 45:
                             raise RuntimeError("RVIZ_PATH_NOT_SUBSCRIBED")
@@ -475,6 +505,8 @@ def main() -> None:
                 except Exception as exc:
                     cleanup.append(str(exc))
             run(["docker", "stop", "-t", "2", args.run_id+"-nodes"], timeout=5, check=False)
+            if localization_process is not None:
+                run(['docker', 'stop', '-t', '2', args.run_id+'-localization'], timeout=5, check=False)
             if traffic_process is not None:
                 run(['docker', 'stop', '-t', '2', args.run_id+'-traffic'], timeout=5, check=False)
             for process in processes:

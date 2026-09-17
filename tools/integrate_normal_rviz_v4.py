@@ -65,6 +65,60 @@ def follow_ego_view(text: str) -> str:
     return text[:match.start()] + block + text[match.end():]
 
 
+def enable_lidar_map_comparison(text: str) -> str:
+    """Add cyan corrected and orange original scans; retain the normal map.
+
+    The wide, vehicle-centred view exposes incorrect map matches as well as
+    small offsets. Original scan ranges/TF and vehicle control are unchanged.
+    """
+    if '/time_path/localization/scan' in text:
+        raise ValueError('LOCALIZATION_DISPLAY_ALREADY_PRESENT')
+    anchor = 'Visualization Manager:\n  Class: ""\n  Displays:\n'
+    if text.count(anchor) != 1:
+        raise ValueError('UNKNOWN_RVIZ_LAYOUT')
+    displays = ''
+    for name, topic, color in (
+        ('Corrected LiDAR - cyan', '/time_path/localization/scan', '0; 255; 255'),
+        ('Original LiDAR - orange', '/sensing/lidar/scan', '255; 140; 30'),
+    ):
+        displays += f'''    - Class: rviz_default_plugins/LaserScan
+      Name: {name}
+      Enabled: true
+      Topic:
+        Value: {topic}
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Style: Points
+      Size (Pixels): 4
+      Color Transformer: FlatColor
+      Color: {color}
+      Position Transformer: XYZ
+      Decay Time: 0.3
+      Use Fixed Frame: true
+'''
+    displays += '''    - Class: rviz_default_plugins/Pose
+      Name: Corrected vehicle pose - cyan
+      Enabled: true
+      Topic:
+        Value: /time_path/localization/pose
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Color: 0; 255; 255
+      Shape: Arrow
+      Shaft Length: 2
+      Shaft Radius: 0.2
+      Head Length: 1
+      Head Radius: 0.5
+'''
+    result = text.replace(anchor, anchor+displays, 1)
+    result = follow_ego_view(result)
+    return result.replace('      Scale: 60\n', '      Scale: 10\n', 1)
+
+
 def main() -> None:
     ap=argparse.ArgumentParser();ap.add_argument('config',type=Path)
     ap.add_argument('--ten',action='store_true')
