@@ -1,0 +1,37 @@
+{
+  "status": "PARTIAL_OR_FAILED",
+  "fault": null,
+  "correction_mode": "unlimited",
+  "input_topics": [
+    "/clock",
+    "/sensing/lidar/scan",
+    "/vehicle/status/steering_status",
+    "/vehicle/status/velocity_status"
+  ],
+  "gnss_imu_pose_tf_inputs": false,
+  "selected_message_sha256": "4b92c07b047b546e4c45af95a91d68e376fe7867e29639d5c006d57546f28f63",
+  "map_sha256": "126a62f2ef21560ace0eb39a0f52a6a5e86ef6b9951b0ead1511e46e4b418dc4",
+  "initial_pose": [
+    89631.0,
+    43128.0,
+    2.12
+  ],
+  "initialization_source": "Explicit fixed approximate start supplied on command line; not read from bag pose",
+  "counts": {
+    "/vehicle/status/steering_status": 11724,
+    "/clock": 82067,
+    "/sensing/lidar/scan": 8207,
+    "/vehicle/status/velocity_status": 11722,
+    "unbracketed_scans": 1,
+    "INITIALIZING": 2,
+    "DEGRADED": 275,
+    "TRACKING": 17,
+    "REJECTED_INSUFFICIENT_SUPPORT": 5,
+    "LOST_REINITIALIZE": 1730
+  },
+  "scans": 2029,
+  "valid_scans": 292,
+  "valid_fraction": 0.14391325776244454,
+  "valid_mean_boundary_distance_m": 0.06310836273413703,
+  "scope": "Offline localization only; lane boundaries are not physical-wall truth; no motion authority"
+}

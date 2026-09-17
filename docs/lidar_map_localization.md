@@ -123,6 +123,36 @@ localizer単独の隔離ROS試験も成功し、次を確認した。
 `correction_mode:=simulation_aggressive` を付ける。同じ入力で上限だけの影響を見る場合は `unlimited`。
 既存起動との比較のため、引数を省略した場合は `bounded`。
 
+同一の5kmh bag・地図・初期値での比較結果（2026-09-18）:
+
+|モード|有効な照合時刻 / 全2029回|結果|
+|---|---|---|
+|従来 `bounded`|198 / 2029（9.76%）|45.789秒で補正拒否|
+|`unlimited`|292 / 2029（14.39%）|元の拒否地点を通過。64秒付近で対応点不足|
+|`simulation_aggressive`|706 / 2029（34.80%）|72秒付近まで連続、その後も自動再照合して断続的に復帰|
+
+強補正では45.789秒に約1.35 mの補正を採用して照合を継続した。
+採用した補正の最大は位置2.044 m、向き16.668°。
+補正量超過による拒否は0回となり、残る不成立1307回は `INSUFFICIENT_SUPPORT`。
+例として72.442秒では0.3 m以内に重なる点の割合が54.4%で、共通条件55%を下回った。
+不成立後も車輪予測で探索を続け、最終415.097秒にも有効出力へ復帰している。
+**有効率は判定を通過した割合で、正解位置に一致した割合ではない。全周安定追従は未達。**
+保存点群を地図境界に強く寄せるため、外れた境界への対応付けが正しいかは引き続き未確認。
+無効区間を跨ぐ線は実走軌跡とは扱わず、比較図では有効時刻を帯として表示する。
+
+[比較図・有効区間](evidence/lidar_map_aggressive_20260918/comparison.png)と
+[数値](evidence/lidar_map_aggressive_20260918/comparison.json)を保存。
+演算本体のreplay commitは `97744de2af412b989df1c033cdcc1c0884b75bd4`、
+ROS試験用commitは `b3b0263a16efef581cccfc022ca20914e67599d4`。
+localizer単体14件成功、全体 `pytest -q` は **3046 passed, 4 skipped, 84 warnings**（133.13秒）。
+
+公式ROS環境でbuild・248 Python sourceのinstalled hash一致・launch引数を確認。
+従来モードと強補正モードの隔離ROS smokeが成功し、強補正では約2 mの初期位置ずれの補正と、
+scan途絶後の手動seedなし自動復帰を確認した。初回配送はconfigs不足でbuild失敗したため、
+不足ファイルを含む別directoryへ再配送し、初回ログを残した。
+検証用配置は `/home/graneple/e2e_autonomous/time_lidar_aggressive_20260918_r2`。
+通常の `make dev` の転送先は変更しておらず、このモードでのAWSIM実走は未実施。
+
 Windowsのコミットを通常のsync手順でnative WSLへ同期後:
 
 ```bash

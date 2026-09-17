@@ -1,0 +1,103 @@
+{
+  "status": "PASS",
+  "source_commit": "b3b0263a16efef581cccfc022ca20914e67599d4",
+  "archive_sha256": "090c30965658264d6591e8494b7b28c16bf98b5fc10b7f1f4bf9b42ffd9da25d",
+  "installed_sources_checked": 248,
+  "checks": {
+    "bounded": {
+      "status": "PASS",
+      "aligned_scans": 31,
+      "subscriptions": [
+        [
+          "/clock",
+          [
+            "rosgraph_msgs/msg/Clock"
+          ]
+        ],
+        [
+          "/sensing/lidar/scan",
+          [
+            "sensor_msgs/msg/LaserScan"
+          ]
+        ],
+        [
+          "/time_path/localization/initialpose",
+          [
+            "geometry_msgs/msg/PoseWithCovarianceStamped"
+          ]
+        ],
+        [
+          "/time_path/wheel_odometry",
+          [
+            "nav_msgs/msg/Odometry"
+          ]
+        ]
+      ],
+      "estimated_xy": [
+        2.9999999815497156,
+        0.9999999429424129
+      ],
+      "correction_mode": "bounded",
+      "initial_seed_x_m": 3.2,
+      "automatic_gap_recovery_checked": false,
+      "gnss_imu_pose_tf_publishers": 0,
+      "vehicle_command_publishers": 0,
+      "checks": [
+        "map_to_wheel_transform",
+        "fixed_mount_alias",
+        "scan_timeout",
+        "bad_scan_frame",
+        "clock_pause",
+        "manual_reinitialize"
+      ]
+    },
+    "simulation_aggressive": {
+      "status": "PASS",
+      "aligned_scans": 34,
+      "subscriptions": [
+        [
+          "/clock",
+          [
+            "rosgraph_msgs/msg/Clock"
+          ]
+        ],
+        [
+          "/sensing/lidar/scan",
+          [
+            "sensor_msgs/msg/LaserScan"
+          ]
+        ],
+        [
+          "/time_path/localization/initialpose",
+          [
+            "geometry_msgs/msg/PoseWithCovarianceStamped"
+          ]
+        ],
+        [
+          "/time_path/wheel_odometry",
+          [
+            "nav_msgs/msg/Odometry"
+          ]
+        ]
+      ],
+      "estimated_xy": [
+        2.999999981549716,
+        0.9999999429424125
+      ],
+      "correction_mode": "simulation_aggressive",
+      "initial_seed_x_m": 5.0,
+      "automatic_gap_recovery_checked": true,
+      "gnss_imu_pose_tf_publishers": 0,
+      "vehicle_command_publishers": 0,
+      "checks": [
+        "map_to_wheel_transform",
+        "fixed_mount_alias",
+        "scan_timeout",
+        "bad_scan_frame",
+        "clock_pause",
+        "manual_reinitialize"
+      ]
+    }
+  },
+  "scope": "Isolated official ROS synthetic smoke; AWSIM driving not performed; default entrypoint unchanged"
+}
