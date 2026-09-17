@@ -20,6 +20,7 @@ import yaml
 from multi_purpose_mpc_ros.boost_logic import update_race_start_gate
 from multi_purpose_mpc_ros.v2x_vehicle_tracker import V2XVehicleTracker
 from .core import Ego, RecoveryAdapter, RecoveryConfig
+from .collection_intent import fresh_forward_speed_mps
 from .geometry import reference_samples, wall_snapshot, yaw_from_quaternion
 from .reference_builder import ReferenceBuilder
 from .real_start import RealVehicleRecoveryGate
@@ -56,6 +57,9 @@ class MppiRecoveryController(Node):
                                        reverse_gear=GearCommand.REVERSE)
         self.own_vehicle_id = self.declare_parameter("own_vehicle_id", "").value
         self.input_timeout = float(self.declare_parameter("input_timeout_sec", 0.25).value)
+        self.collection_planned_stop_gate = bool(
+            self.declare_parameter("collection_planned_stop_gate", False).value)
+        self._last_auto_speed_mps = None
         self.real_start = RealVehicleRecoveryGate(
             self.config.min_forward_command_speed, self.config.stop_speed_threshold,
             int(self.input_timeout * 1e9))
@@ -209,6 +213,7 @@ class MppiRecoveryController(Node):
                 and 0 <= now_ns - command_ns <= self.input_timeout * 1e9):
             self.command_pub.publish(message)
             self._last_auto_ns = command_ns
+            self._last_auto_speed_mps = message.longitudinal.speed
             if not self.simulation:
                 self.real_start.forwarded_command(message.longitudinal.speed, command_ns)
 
@@ -291,6 +296,11 @@ class MppiRecoveryController(Node):
                 recovery_allowed=((self.race_started if self.simulation else self.real_start.armed)
                                   and self.control_enabled
                                   and (self.adapter.active or self.normal_ready)),
+                commanded_forward_speed_mps=(fresh_forward_speed_mps(
+                    now_sec=now.nanoseconds * 1e-9,
+                    command_sec=(self._last_auto_ns * 1e-9 if self._last_auto_ns is not None else None),
+                    speed_mps=self._last_auto_speed_mps, timeout_sec=self.input_timeout)
+                    if self.collection_planned_stop_gate else None),
             )
             if tick.decision is not None:
                 if tick.execution.gear_command is not None:

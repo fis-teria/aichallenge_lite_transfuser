@@ -218,7 +218,7 @@ class RecoveryAdapter:
         return point.upper - point.lower >= cfg.vehicle_width_m + cfg.wall_margin_m
 
     def prepare(self, *, now_sec, ego, reference, opponents=(), recovery_allowed=True,
-                measured_tire_angle_rad=None):
+                measured_tire_angle_rad=None, commanded_forward_speed_mps=None):
         cfg = self.config
         previous = self.recovery.state
         index = reference.nearest(ego.x, ego.y)
@@ -278,6 +278,11 @@ class RecoveryAdapter:
             base_reference_speed=BaseReferenceSpeed(point.speed),
             constrained_speed=ConstrainedSpeed(0.0),
         )
+        if commanded_forward_speed_mps is not None and not self.active:
+            # Collection teacher: an obstacle-induced planned stop is not a
+            # failed forward command. Zero also clears the pending stuck timer.
+            intended = (max(0.0, commanded_forward_speed_mps)
+                        if math.isfinite(commanded_forward_speed_mps) else 0.0)
         policy = self.recovery
         if short_mode:
             # A short stroke intentionally remains below the ordinary stuck

@@ -9,7 +9,7 @@ from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDesc
 from launch.conditions import IfCondition
 from launch.launch_description_sources import AnyLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
-from launch_ros.actions import Node, SetRemap
+from launch_ros.actions import Node, SetParameter, SetRemap
 from launch_ros.substitutions import FindPackageShare
 
 from aic_lidar_v2x.teacher import V44_INPUT_REMAPS
@@ -42,5 +42,8 @@ def generate_launch_description():
         parameters=[{"use_sim_time": True}])
     return LaunchDescription(arguments + [
         SetEnvironmentVariable("ROS_DOMAIN_ID", LaunchConfiguration("domain_id")), adapter,
-        GroupAction(actions=[*[SetRemap(src=src, dst=dst) for src, dst in V44_INPUT_REMAPS], teacher]),
+        GroupAction(actions=[*[SetRemap(src=src, dst=dst) for src, dst in V44_INPUT_REMAPS],
+            SetParameter(name="brain.collection_motion_enabled", value=True),
+            SetParameter(name="brain.collection_avoidance_continuation", value=True),
+            SetParameter(name="collection_planned_stop_gate", value=True), teacher]),
         relay, simulation, rviz])

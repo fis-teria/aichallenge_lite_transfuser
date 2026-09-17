@@ -30,7 +30,9 @@ DrivingPlan DrivingFsm::plan(const DrivingScene &scene) const noexcept {
   // An adopted overtake keeps its mode through continuation or return until release.
   const bool avoid=mode_!=DrivingMode::OVERTAKE &&
       scene.reference_obstructed && scene.leading_speed_mps && scene.leading_body_gap_m &&
-      isAvoidanceEligible(*scene.leading_speed_mps,*scene.leading_body_gap_m,follow_distance_m_);
+      (isAvoidanceEligible(*scene.leading_speed_mps,*scene.leading_body_gap_m,follow_distance_m_) ||
+       (mode_==DrivingMode::AVOID && scene.continue_collection_avoidance &&
+        std::isfinite(*scene.leading_body_gap_m) && slow_leader));
   if(avoid) return {true,false,false,DrivingMode::AVOID};
   const bool overtake=scene.overtake_target_valid && scene.preparation_available &&
       (!scene.reference_obstructed || !slow_leader) &&

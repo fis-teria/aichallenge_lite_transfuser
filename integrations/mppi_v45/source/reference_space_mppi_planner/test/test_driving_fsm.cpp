@@ -5,6 +5,23 @@
 
 namespace reference_space_mppi_planner {
 
+TEST(DrivingFsm, CollectionContinuationKeepsAdoptedAvoidanceButCannotStartOrKeepStaleTarget) {
+  DrivingFsm fsm;
+  DrivingScene scene{true,true,false,18.,7./3.6,false,false,false,true};
+  EXPECT_FALSE(fsm.plan(scene).generate_lateral);
+  fsm.acceptLateral();
+  EXPECT_TRUE(fsm.plan(scene).generate_lateral);
+  scene.continue_collection_avoidance=false;
+  EXPECT_FALSE(fsm.plan(scene).generate_lateral);
+  scene.continue_collection_avoidance=true;
+  scene.reference_obstructed=false;
+  EXPECT_FALSE(fsm.plan(scene).generate_lateral);
+  scene.reference_obstructed=true; scene.leading_speed_mps=21./3.6;
+  EXPECT_FALSE(fsm.plan(scene).generate_lateral);
+  scene.leading_speed_mps=0.; scene.leading_body_gap_m=NAN;
+  EXPECT_FALSE(fsm.plan(scene).generate_lateral);
+}
+
 TEST(DrivingFsm, EarlyAvoidanceUsesFiveKmhBoundaryAndKeepsMovingVehicleGap) {
   DrivingFsm fsm;
   for(double speed:{0.,5./3.6,std::nextafter(5./3.6,INFINITY),

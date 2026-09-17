@@ -76,6 +76,7 @@ if(BUILD_TESTING)
   ament_target_dependencies(test_entry_connector cma_pure_pursuit)
   target_link_libraries(test_entry_connector reference_space_mppi_core)
   ament_add_gtest(test_reference_space_mppi
+    test/test_collection_motion.cpp
     test/test_preparation_boost.cpp
     test/test_longitudinal_planner.cpp
     test/test_ot_lane_entry.cpp

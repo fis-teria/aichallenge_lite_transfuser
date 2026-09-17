@@ -21,6 +21,7 @@
 #include "reference_space_mppi_planner/steering_delay.hpp"
 #include "reference_space_mppi_planner/recent_motion_prediction.hpp"
 #include "reference_space_mppi_planner/online_motion_prediction.hpp"
+#include "reference_space_mppi_planner/collection_motion.hpp"
 #include "reference_space_mppi_planner/leader_lap_prediction.hpp"
 #include "reference_space_mppi_planner/leader_passing_opportunity.hpp"
 #include "reference_space_mppi_planner/passing_opportunity_markers.hpp"
@@ -453,6 +454,10 @@ public:
         declare_parameter<bool>("brain.recent_motion_prediction_enabled", false);
     online_motion_prediction_enabled_ =
         declare_parameter<bool>("brain.online_motion_prediction_enabled", false);
+    collection_motion_enabled_ =
+        declare_parameter<bool>("brain.collection_motion_enabled", false);
+    collection_avoidance_continuation_ =
+        declare_parameter<bool>("brain.collection_avoidance_continuation", false);
     motion_persistence_.acceleration_sec =
         declare_parameter<double>("brain.prediction_acceleration_persistence_sec", 0.6);
     motion_persistence_.yaw_rate_sec =
@@ -1305,7 +1310,7 @@ private:
     std::sort(inputs.opponents.begin(),inputs.opponents.end(),
         [](const ObservedVehicle &a,const ObservedVehicle &b){return a.id<b.id;});
     if ((leader_lap_prediction_enabled_ || prior_lap_prediction_enabled_ || recent_motion_prediction_enabled_ ||
-         online_motion_prediction_enabled_) &&
+         online_motion_prediction_enabled_ || collection_motion_enabled_) &&
         inputs.base_reference && inputs.base_reference->points.size() >= 3U) {
       const auto shared_world = sharedReferencePoseIndex(inputs.base_reference);
       const auto &world = *shared_world;
@@ -1314,6 +1319,24 @@ private:
           config_.dt_sec * config_.horizon_steps);
       for (auto &vehicle : inputs.opponents) {
         if (!vehicle.history) continue;
+        if (collection_motion_enabled_) {
+          // Fit at the observed epoch, then align once to this snapshot.
+          // Do not let the scalar-speed online model overwrite this vector fit.
+          const auto fit = opponent_prediction::fitCollectionMotion(*vehicle.history);
+          vehicle.prediction.reset();
+          vehicle.vx_mps = vehicle.vy_mps = 0.;
+          if (fit && !vehicle.history->empty()) {
+            const double age = vehicle.stamp_sec - vehicle.history->back().stamp;
+            if (age >= 0.) {
+              vehicle.x_m = fit->x_m + age * fit->vx_mps;
+              vehicle.y_m = fit->y_m + age * fit->vy_mps;
+              vehicle.vx_mps = fit->vx_mps; vehicle.vy_mps = fit->vy_mps;
+              vehicle.sigma_x_m = std::max(vehicle.sigma_x_m, fit->sigma_x_m);
+              vehicle.sigma_y_m = std::max(vehicle.sigma_y_m, fit->sigma_y_m);
+            }
+          }
+          continue;
+        }
         auto persistence = motion_persistence_;
         if (!vehicle.prediction && online_motion_prediction_enabled_ && vehicle.online_motion) {
           const auto learned=vehicle.online_motion->summary();
@@ -1397,7 +1420,8 @@ private:
           << " revision=" << inputs.execution_revision
           << " prior_model=" << prior_lap_prediction_enabled_
           << " recent_motion_model=" << recent_motion_prediction_enabled_
-          << " online_motion_model=" << online_motion_prediction_enabled_;
+          << " online_motion_model=" << online_motion_prediction_enabled_
+          << " collection_motion_model=" << collection_motion_enabled_;
       if (inputs.odometry) {
         const auto &o=*inputs.odometry;
         record << " stamp=" << rclcpp::Time(o.header.stamp).seconds()
@@ -1655,7 +1679,8 @@ private:
         passing_preparation_enabled_ && inputs.preparation &&
             mppi::preparationSearchDue(*inputs.preparation,rclcpp::Time(inputs.odometry->header.stamp).seconds(),
                 preparation_planning_delay_sec_.load(std::memory_order_relaxed)),
-        overtakeTargetValid(inputs),inputs.preparation!=nullptr};
+        overtakeTargetValid(inputs),inputs.preparation!=nullptr,
+        continueCollectionAvoidance(inputs)};
     auto decision = inputs.driving_fsm.plan(scene);
     publishReferenceContract(inputs,decision.maneuver);
     if(front_merge_attack_enabled_ && inputs.active_preparation &&
@@ -2192,7 +2217,7 @@ private:
         observed.online_motion = previous->second.online_motion;
       }
       if ((leader_lap_prediction_enabled_ || prior_lap_prediction_enabled_ || recent_motion_prediction_enabled_ ||
-           online_motion_prediction_enabled_) &&
+           online_motion_prediction_enabled_ || collection_motion_enabled_) &&
           base_reference_ && base_reference_->points.size() >= 3U) {
         const auto p = projectOnTrajectory(*base_reference_, observed.x_m, observed.y_m);
         const double length = trajectoryArcLength(*base_reference_);
@@ -2214,7 +2239,7 @@ private:
             if (history->size() > history_capacity)
               history->erase(history->begin(), history->end()-history_capacity);
             observed.history = std::move(history);
-            if (online_motion_prediction_enabled_) {
+            if (online_motion_prediction_enabled_ && !collection_motion_enabled_) {
               auto learner = observed.online_motion ?
                   std::make_shared<opponent_prediction::OnlineMotionLearner>(*observed.online_motion) :
                   std::make_shared<opponent_prediction::OnlineMotionLearner>();
@@ -2765,13 +2790,23 @@ private:
     return delta>0. && delta<=brain_trigger_distance_m_;
   }
 
+  bool continueCollectionAvoidance(const BrainInputs &inputs) const {
+    // Existing freshness, forward selection, and path-conflict tests still
+    // apply. No identity substitution or extension of the stale-track timeout.
+    return collection_avoidance_continuation_ && inputs.leading &&
+        inputs.driving_fsm.mode()==DrivingMode::AVOID &&
+        inputs.active_target_id==inputs.leading->vehicle.id;
+  }
+
   bool maneuverCurrent(const WorkBatch &batch,const BrainInputs &inputs) const {
     if(batch.candidates.empty()) return false;
     if(batch.candidates.front().request.phase==mppi::Phase::MERGE) return true;
     if(batch.maneuver==DrivingMode::AVOID) {
       return inputs.leading && inputs.leading->vehicle.id==batch.maneuver_target_id &&
-          isAvoidanceEligible(std::hypot(inputs.leading->vehicle.vx_mps,inputs.leading->vehicle.vy_mps),
-              inputs.leading->body_gap_m,config_.follow_gap_m);
+          (isAvoidanceEligible(std::hypot(inputs.leading->vehicle.vx_mps,inputs.leading->vehicle.vy_mps),
+              inputs.leading->body_gap_m,config_.follow_gap_m) ||
+           (continueCollectionAvoidance(inputs) && std::isfinite(inputs.leading->body_gap_m) &&
+            isAvoidanceSpeed(std::hypot(inputs.leading->vehicle.vx_mps,inputs.leading->vehicle.vy_mps))));
     }
     return batch.maneuver==DrivingMode::OVERTAKE &&
         (inputs.leader_vehicle_id==batch.maneuver_target_id ||
@@ -5704,6 +5739,8 @@ private:
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr leader_sub_;
   bool recent_motion_prediction_enabled_{false};
   bool online_motion_prediction_enabled_{false};
+  bool collection_motion_enabled_{false};
+  bool collection_avoidance_continuation_{false};
   opponent_prediction::MotionPersistence motion_persistence_{};
   double brain_target_path_conflict_margin_m_{0.15};
   double brain_prediction_horizon_sec_{6.0};

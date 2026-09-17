@@ -104,6 +104,7 @@ def main() -> None:
         assert sha(vendor_root/row['path']) == row['sha256'], row['path']
     assert json.loads((runtime/'build-result.json').read_text())['exit_code']==0
     identity = json.loads((runtime/'runtime-identity.json').read_text())
+    assert identity['source_manifest_sha256'] == sha(vendor_manifest), 'Runtime/source revision mismatch'
     for item in identity['files'].values():
         assert sha(runtime/'install'/item['path']) == item['sha256']
     sys.path.insert(0,str(repo/'scenario_tool'))

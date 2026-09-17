@@ -24,6 +24,8 @@ struct DrivingScene {
   bool preparation_search_due{false};
   bool overtake_target_valid{false};
   bool preparation_available{false};
+  // Collection only: same fresh, still path-conflicting adopted target.
+  bool continue_collection_avoidance{false};
 };
 
 struct DrivingPlan {

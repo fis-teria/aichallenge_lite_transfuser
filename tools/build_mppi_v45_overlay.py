@@ -42,7 +42,9 @@ def main() -> None:
         '-v',f'{source}:/source:ro','-v',f'{args.runtime.resolve()}:/runtime:rw',
         '--entrypoint','bash',image_id,'/source/integrations/mppi_v45/build_overlay.bash']
     (args.runtime/'build-inputs.json').write_text(json.dumps({'command':command,
-        'source_archive_sha256':manifest['source_archive_sha256'],'image_id':image_id},indent=2)+'\n')
+        'source_archive_sha256':manifest['source_archive_sha256'],
+        'source_manifest_sha256':sha(root/'source_manifest.json'),
+        'collection_revision':manifest.get('collection_revision'), 'image_id':image_id},indent=2)+'\n')
     started = time.time()
     with (args.runtime/'build.log').open('x') as stream:
         process = subprocess.Popen(command, stdout=stream, stderr=subprocess.STDOUT)
@@ -57,7 +59,15 @@ def main() -> None:
         files = {'node':'reference_space_mppi_planner/lib/reference_space_mppi_planner/reference_space_mppi_node',
                  'core':'reference_space_mppi_planner/lib/libreference_space_mppi_core.so',
                  'config':'reference_space_mppi_planner/share/reference_space_mppi_planner/config/reference_space_mppi.param.yaml'}
+        for name in ('core', 'node', 'collection_intent'):
+            matches = list((args.runtime/'install/mppi_recovery_controller/lib').glob(
+                'python*/site-packages/mppi_recovery_controller/'+name+'.py'))
+            assert len(matches) == 1, (name, matches)
+            files['recovery_'+name] = matches[0].relative_to(args.runtime/'install').as_posix()
+        files['teacher_launch'] = 'aic_lidar_v2x/share/aic_lidar_v2x/launch/teacher_v45.launch.py'
         identity = {'teacher':'MPPI_SIM_V45','source_archive_sha256':manifest['source_archive_sha256'],
+                    'collection_revision':manifest.get('collection_revision'),
+                    'source_manifest_sha256':sha(root/'source_manifest.json'),
                     'files':{key:{'path':rel,'sha256':sha(args.runtime/'install'/rel)} for key,rel in files.items()}}
         (args.runtime/'runtime-identity.json').write_text(json.dumps(identity,indent=2)+'\n')
     print(json.dumps(receipt),flush=True)

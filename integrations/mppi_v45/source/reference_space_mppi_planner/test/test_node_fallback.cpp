@@ -968,6 +968,44 @@ TEST_F(NodeFallbackTest, FutureOnlySteeringIsNotAnObservedInitialSteering) {
   const auto inputs=node.captureBrainInputs();
   EXPECT_FALSE(inputs.steering_fresh);EXPECT_EQ(inputs.steering_sequence,0U);
 }
+TEST_F(NodeFallbackTest, CollectionFitOwnsTheSnapshotEvenWhenOnlinePredictionIsEnabled) {
+  node.collection_motion_enabled_=true;
+  node.online_motion_prediction_enabled_=true;
+  node.base_reference_=std::make_shared<Trajectory>(desired().trajectory);
+  const double now=node.now().seconds();
+  const rclcpp::Time source_epoch(static_cast<int64_t>((now-.1)*1e9));
+  v2x_msgs::msg::V2XVehiclePositionArray message; message.vehicles.resize(1);
+  auto &v=message.vehicles.front(); v.vehicle_id="lidar_test";
+  for (int i=0;i<=12;++i) {
+    v.header.stamp=source_epoch+rclcpp::Duration::from_seconds(-.6+i*.05);
+    v.position.x=20.+(i%2 ? .05 : -.05);
+    node.receiveVehiclePositions(message);
+  }
+  nav_msgs::msg::Odometry odom;
+  odom.header.stamp=rclcpp::Time(static_cast<int64_t>(now*1e9));
+  odom.pose.pose.orientation.w=1.; node.odometry_=odom;
+  const auto inputs=node.captureBrainInputs(); ASSERT_EQ(inputs.opponents.size(),1U);
+  const auto &opponent=inputs.opponents.front();
+  EXPECT_FALSE(opponent.prediction); EXPECT_DOUBLE_EQ(opponent.vx_mps,0.);
+  EXPECT_NEAR(opponent.x_m,20.,.051);
+  EXPECT_FALSE(node.observed_vehicles_.at("lidar_test").online_motion);
+}
+
+TEST_F(NodeFallbackTest, CollectionContinuationRequiresAdoptedTargetIdentity) {
+  BrainInputs inputs;
+  inputs.leading=FollowVehicle{};
+  inputs.leading->vehicle.id="lidar_a";
+  inputs.active_target_id="lidar_a";
+  inputs.driving_fsm.acceptLateral();
+  EXPECT_FALSE(node.continueCollectionAvoidance(inputs));
+  node.collection_avoidance_continuation_=true;
+  EXPECT_TRUE(node.continueCollectionAvoidance(inputs));
+  inputs.active_target_id="lidar_b";
+  EXPECT_FALSE(node.continueCollectionAvoidance(inputs));
+  inputs.active_target_id="lidar_a"; inputs.leading.reset();
+  EXPECT_FALSE(node.continueCollectionAvoidance(inputs));
+}
+
 TEST_F(NodeFallbackTest, DisabledPriorPredictionDoesNotCollectHistory) {
   EXPECT_FALSE(node.prior_lap_prediction_enabled_);
   node.base_reference_=std::make_shared<Trajectory>(desired().trajectory);
