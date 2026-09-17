@@ -8,7 +8,8 @@ MPPI V44と同じV2Xメッセージ型へ変換する独立ROS 2パッケージ�
 ## 構成と入出力
 
 1. `core.py`: ROS非依存。無効レンジの除去、ビーム時刻でのSE(2)補間、自己車体除去、
-   地図壁の除去、距離クラスタリング、ID付き追跡、V2X形式への変換。
+  地図壁の除去、距離クラスタリング、ID付き追跡、V2X形式への変換。
+   壁除去前にも連結性を調べ、地図上の壁が短い残差へ分断されて車両候補になるのを抑制する。
 2. `io.py`: ROS形式の地図YAML/画像、Reference CSV、平面TFの検証。
 3. `node.py`: LaserScanとtf2を接続し、V2X・検出詳細・状態・通常RViz用MarkerArrayを配信。
 
@@ -47,7 +48,7 @@ E2Eの入力・モデル・制御権限は変更しない。教師用の地図/R
 
 - `surface`（既定）: 観測点のXY外接矩形中心を出す。任意物体の候補を保持できるが、
   **車両の中心位置ではない**。V2X出力は互換性検証用。
-- `known_vehicle`: 寸法既知・コースに沿うNPCという収集条件を明示して使う。
+- `known_vehicle`（実験用・今回の保存走行では採用不可）: 寸法既知・コースに沿うNPCという収集条件を明示して使う。
   既定2.064m × 1.30m、ReferenceのXYから求めた向きで矩形を置き、
   センサから矩形への最初の交点と実測レンジを照合して中心を推定する。
   物体分類器ではないため、任意の箱や壁を車に見立てた正しさは保証しない。
@@ -61,6 +62,7 @@ E2Eの入力・モデル・制御権限は変更しない。教師用の地図/R
 `motion_model=rolling` はLaserScanのtime_incrementに従い、最初と最後のビーム時刻のTFで補間。
 `snapshot` は全ビームをheader時刻の同時観測として扱う。実センサ/シミュレータの仕様に合わせて選ぶ。
 TFがない場合に最新TFや単位変換へ置き換えない。大きいroll/pitchは平面モデルの範囲外として拒否する。
+tf2が「最新」と解釈するstamp=0も拒否する。
 NaN等の不正レンジが20%を超えるscanは、物体ゼロとして配信せず入力異常にする。
 観測欠落時に位置・時刻を捏造して配信せず、再同定用の履歴だけ0.5s残す。
 
@@ -98,6 +100,22 @@ ros2 launch aic_lidar_v2x shadow.launch.py \
 # 既知NPCモデルを比較する場合はreference_csvとobject_model:=known_vehicleを指定。
 ```
 
+隔離したROS環境での有限通信試験は、ビルド済みoverlayをsourceして次を実行する。
+実行ホストのnative V2Xや車両に届かないネットワークで行う。
+
+```bash
+ROS_DOMAIN_ID=97 python3 /path/to/aic_lidar_v2x/test/smoke_ros.py
+```
+
+SI26の既存devイメージでは、既定のCycloneDDS設定が別マウントを参照していた。
+検証は `docker --network none` 内でloopback専用のDDS設定を与えて実施した。
+`ROS_LOCALHOST_ONLY=0` と以下の `CYCLONEDDS_URI` をこの隔離コンテナ内だけで使う。
+ホストや既存のAWSIM/ROS環境の設定は変更しない。
+
+```xml
+<CycloneDDS><Domain><General><Interfaces><NetworkInterface name="lo" multicast="false"/></Interfaces><AllowMulticast>false</AllowMulticast></General><Discovery><Peers><Peer address="127.0.0.1"/></Peers></Discovery></Domain></CycloneDDS>
+```
+
 RVizのFixed Frameを `map` にし、MarkerArrayに `/collection/lidar_v2x/markers` を指定する。
 rosbagには元のCamera/LiDAR/TF/ego/教師軌跡/native V2Xと、上記4出力を収録する。
 学習用future trajectoryは従来どおり観測した将来poseから作り、run/配置シナリオ単位でsplitする。
@@ -109,3 +127,38 @@ rosbagには元のCamera/LiDAR/TF/ego/教師軌跡/native V2Xと、上記4出力
 教師切替にはshape表現と検出欠損時の停止/収集除外の接続が必要。
 `input_valid=true` は変換できた意味であり、走行可能・障害物不存在・教師収集許可を意味しない。
 replayが成功しても、閉ループ回避走行や学習データ採用の証明にはしない。
+
+## 保存走行での結果（2026-09-18）
+
+対象は `static-v44-straight-b-01`、静止NPC 1台、LaserScan 1,642件。
+rolling処理できたのは1,633件。開始時TF不足8件とbag末尾1件を除外した。
+native V2Xは照合専用で、検出器・追跡器への入力には使っていない。
+
+照合母集団は「センサから前方2–15m・方位±1.5rad内にnative V2X位置があり、
+その位置の半径1.5m内にLiDAR点が4個以上ある」472 scan。
+位置差2m以内を対応候補とするため、以下は**人手正解に対する検出再現率ではない**。
+
+| モード | 対応候補 / 母集団 | native V2X位置との差・中央値 / P95 | 処理時間P95 |
+|---|---:|---:|---:|
+| surface・rolling | 461 / 472 | 0.555 / 0.788 m | 14.25 ms |
+| surface・snapshot | 461 / 472 | 0.558 / 0.790 m | 13.77 ms |
+| known_vehicle・rolling | 167 / 472 | 0.954 / 1.136 m | 17.12 ms |
+
+表面候補の検出はできたが、表面中心を車両中心として流用すると約0.55mのずれが残る。
+矩形の既知寸法による中心補正はこのデータでは悪化したため採用しない。
+走査時間モデルを切り替えても、この位置差はほぼ変わらなかった。
+surfaceの対応候補には5個のtrack IDが使われ、静止NPCの見かけの追跡速度P95は0.687m/s。
+**中心の定義とID/速度の安定化を解決するまで、教師V44の走行入力へ切り替えない。**
+
+壁処理の改善前後で、上記母集団における対応先のないtrack出力は234件→26件へ減った。
+これは余計な候補の減少であり、全物体の正解がないため誤検出率とは呼ばない。
+同じ1走行を改善にも使っているため、別の配置・コーナーでの独立評価が必要。
+
+当面は既存V2XでMPPI教師を走らせ、このモジュールを観測専用として同時収録する。
+次の判断材料は、NPCの実際の走査面・位置基準点とTF外部パラメータの整合、
+視点ごとの中心ずれ、遮蔽時のID継続、任意形状をV44へ渡す方法。
+再学習には成功した教師走行を選別して使い、検出結果だけを正解経路にしない。
+
+WSLのraw replay・全scan出力は `/home/thistle/e2e_autonomous/runs/lidar_v2x_20260918/`。
+ROS通信試験はSI26の専用 `ai-work/raw/lidar_v2x_20260918/` で実施し、
+AWSIMを起動せず、native V2X publisherを増やさず、運転指令を配信していない。

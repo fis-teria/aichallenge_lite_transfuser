@@ -290,6 +290,18 @@ class Detection:
     fit_rmse_m: float | None = None
     ambiguity_m: float | None = None
 
+    def __post_init__(self) -> None:
+        points_array(np.array([self.xy_m, self.surface_xy_m, self.observed_size_xy_m]))
+        if any(v < 0 for v in self.observed_size_xy_m) or self.point_count < 1:
+            raise ValueError("Observed size must be nonnegative; detection needs points")
+        if not math.isfinite(self.std_m) or self.std_m <= 0:
+            raise ValueError("Position standard deviation must be positive metres")
+        if self.representation not in {"surface", "known_vehicle"}:
+            raise ValueError("Unknown detection representation")
+        for v in (self.fit_rmse_m, self.ambiguity_m):
+            if v is not None and (not math.isfinite(v) or v < 0):
+                raise ValueError("Fit error and ambiguity must be finite nonnegative metres")
+
 
 @dataclass
 class Track:

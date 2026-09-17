@@ -19,6 +19,7 @@ import time
 
 import numpy as np
 from rosbags.highlevel import AnyReader
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "ros2_ws/src/aic_lidar_v2x"))
@@ -77,10 +78,14 @@ def main() -> None:
     plot_targets = [30., 36., 46., 52.]
     args.output.mkdir(parents=True)
 
-    def process_pending(receipt_s: float, reader) -> None:
+    def process_pending(receipt_s: float) -> None:
         while pending:
             msg, arrived = pending[0]
             stamp = seconds(msg.header.stamp)
+            if stamp <= 0:
+                pending.popleft()
+                counts["rejected_zero_tf_stamp"] += 1
+                continue
             if receipt_s - arrived > .30:
                 pending.popleft()
                 counts["dropped_tf_timeout"] += 1
@@ -168,7 +173,7 @@ def main() -> None:
             else:
                 counts["input_scans"] += 1
                 pending.append((message, receipt * 1e-9))
-            process_pending(receipt * 1e-9, reader)
+            process_pending(receipt * 1e-9)
     counts["unprocessed_at_bag_end"] = len(pending)
     errors = [m["error_m"] for m in matches if m["matched"]]
     ids = sorted({m["track_id"] for m in matches if m["matched"]})
@@ -187,6 +192,10 @@ def main() -> None:
                "Known-vehicle model uses explicit size and route-heading priors; fit ambiguity remains.",
                "No wall-adjacent obstacle guarantee or arbitrary-object geometry support in V44 V2X."])
     provenance = {str(args.map_yaml): hashlib.sha256(args.map_yaml.read_bytes()).hexdigest()}
+    map_image = args.map_yaml.parent / yaml.safe_load(args.map_yaml.read_text())["image"]
+    provenance[str(map_image)] = hashlib.sha256(map_image.read_bytes()).hexdigest()
+    metadata = args.bag / "metadata.yaml"
+    provenance[str(metadata)] = hashlib.sha256(metadata.read_bytes()).hexdigest()
     if args.reference_csv:
         provenance[str(args.reference_csv)] = hashlib.sha256(args.reference_csv.read_bytes()).hexdigest()
     summary["input_sha256"] = provenance

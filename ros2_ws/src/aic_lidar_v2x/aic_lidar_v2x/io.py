@@ -53,6 +53,16 @@ def planar_pose(x: float, y: float, quaternion: tuple[float, float, float, float
     return Pose2(x, y, math.atan2(2 * (qw*qz + qx*qy), 1 - 2 * (qy*qy + qz*qz)))
 
 
+def tf_time_ns(stamp_s: float) -> int:
+    """tf2 treats zero as 'latest', so a zero observation cannot be looked up."""
+    if not math.isfinite(stamp_s) or stamp_s <= 0:
+        raise ValueError("TF lookup needs a positive measurement stamp, never zero/latest")
+    ns = round(stamp_s * 1e9)
+    if ns <= 0:
+        raise ValueError("TF measurement timestamp rounds to zero/latest")
+    return ns
+
+
 class PoseHistory:
     """Replay's timestamped TF interpolation; samples must have already arrived."""
 

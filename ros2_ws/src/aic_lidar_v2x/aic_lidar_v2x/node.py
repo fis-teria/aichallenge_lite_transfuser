@@ -21,7 +21,7 @@ from v2x_msgs.msg import V2XVehiclePosition, V2XVehiclePositionArray
 from visualization_msgs.msg import Marker, MarkerArray
 
 from .core import Config, Detector, Scan, Tracker, v2x_payload
-from .io import load_map, load_reference, planar_pose
+from .io import load_map, load_reference, planar_pose, tf_time_ns
 
 
 def stamp_seconds(stamp) -> float:
@@ -88,7 +88,7 @@ class LidarV2XNode(Node):
 
     def lookup_pose(self, source: str, stamp_s: float):
         # Exact measurement time, never Time() / latest TF.
-        tr = self.tf.lookup_transform(self.map_frame, source, Time(nanoseconds=round(stamp_s * 1e9)))
+        tr = self.tf.lookup_transform(self.map_frame, source, Time(nanoseconds=tf_time_ns(stamp_s)))
         p, q = tr.transform.translation, tr.transform.rotation
         return planar_pose(p.x, p.y, (q.x, q.y, q.z, q.w))
 

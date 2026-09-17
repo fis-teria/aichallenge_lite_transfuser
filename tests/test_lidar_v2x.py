@@ -12,7 +12,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ros2_ws/src/aic_lidar_v2x"))
 from aic_lidar_v2x.core import (Config, Detection, Detector, Pose2, Reference, Scan,
     StaticMap, Tracker, clusters, fit_vehicle_box, interpolate_pose, scan_points, v2x_payload)
-from aic_lidar_v2x.io import PoseHistory, load_map, planar_pose
+from aic_lidar_v2x.io import PoseHistory, load_map, planar_pose, tf_time_ns
 
 
 def detection(x: float, y: float = 0.0) -> Detection:
@@ -172,3 +172,17 @@ def test_pose_history_never_uses_latest_or_future_unreceived_tf():
         history.at(1.5)
     history.add(1.1, Pose2(.2, 0, 0))
     assert history.at(1.1).x_m == .2
+
+
+def test_tf_zero_is_not_accidentally_a_latest_lookup():
+    for value in [0., -1., float('nan'), 1e-12]:
+        with pytest.raises(ValueError):
+            tf_time_ns(value)
+    assert tf_time_ns(1.25) == 1_250_000_000
+
+
+def test_detection_boundary_rejects_nonfinite_or_invalid_units():
+    for kwargs in [dict(xy_m=(np.nan, 1)), dict(std_m=-1), dict(observed_size_xy_m=(-1, 1)),
+                   dict(fit_rmse_m=np.inf), dict(representation='car_truth')]:
+        with pytest.raises(ValueError):
+            replace(detection(1), **kwargs)
