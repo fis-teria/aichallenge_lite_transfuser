@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="use_obstacle_avoidance" default="false"/>
+  <!-- 野口追記：（QP構築/setup/solve時間を計測するため外から切り替えられるようにした。
+       本番で制御が乱れる件の原因切り分け（周期25ms超過の実測）のため再度trueに戻す） -->
+  <arg name="use_stats" default="true"/>
+  <arg name="cpp_cma_shadow_enabled" default="true"/>
+  <arg name="cpp_cma_curve_target_speed_mps" default="10.0"/>
+  <arg name="lateral_longitudinal_shadow_mux_enabled" default="true"/>
+  <!-- Static startup authority switch. false preserves the legacy MPC
+       production publisher; true makes the mux the sole final publisher. -->
+  <arg name="cma_mux_authority_enabled" default="false"/>
+  <let name="cma_runtime_enabled"
+       value="$(eval &quot;'$(var cpp_cma_shadow_enabled)' == 'true' or '$(var cma_mux_authority_enabled)' == 'true'&quot;)"/>
+  <let name="mux_runtime_enabled"
+       value="$(eval &quot;'$(var lateral_longitudinal_shadow_mux_enabled)' == 'true' or '$(var cma_mux_authority_enabled)' == 'true'&quot;)"/>
+  <let name="mpc_control_command_topic" value="/control/command/control_cmd"/>
+  <let name="mpc_control_command_topic" value="/control/internal/mpc/control_cmd"
+       if="$(var cma_mux_authority_enabled)"/>
+  <let name="mpc_control_command_raw_topic" value="/control/command/control_cmd_raw"/>
+  <let name="mpc_control_command_raw_topic" value="/control/internal/mpc/control_cmd_raw"
+       if="$(var cma_mux_authority_enabled)"/>
+  <let name="mux_output_control_command_topic" value="/control/shadow/hybrid_mux/control_cmd"/>
+  <let name="mux_output_control_command_topic" value="/control/command/control_cmd"
+       if="$(var cma_mux_authority_enabled)"/>
+  <let name="mux_output_debug_topic" value="/control/shadow/hybrid_mux/debug"/>
+  <let name="mux_output_debug_topic" value="/control/hybrid_mux/debug"
+       if="$(var cma_mux_authority_enabled)"/>
+  <!-- 野口追記：（本番ではconfig.yaml/ref_vel.yamlの生ファイル内容
+       （コメント込み）をログへ残したくない場合、falseにする） -->
+  <!-- <arg name="log_config_dump" default="true"/> -->
+  <arg name="log_config_dump" default="false"/>
+  <node pkg="multi_purpose_mpc_ros" exec="run_mpc_controller.bash"
+        name="mpc_controller" output="screen"
+        args="--config_path $(find-pkg-share multi_purpose_mpc_ros)/config/config.yaml
+              --ref_vel_path $(find-pkg-share multi_purpose_mpc_ros)/config/ref_vel.yaml">
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="use_boost_acceleration" value="false"/>
+    <param name="use_obstacle_avoidance" value="$(var use_obstacle_avoidance)"/>
+    <param name="use_stats" value="$(var use_stats)"/>
+    <param name="cpp_cma_shadow_enabled" value="$(var cma_runtime_enabled)"/>
+    <param name="cpp_cma_curve_target_speed_mps"
+           value="$(var cpp_cma_curve_target_speed_mps)"/>
+    <param name="control_command_topic" value="$(var mpc_control_command_topic)"/>
+    <param name="control_command_raw_topic" value="$(var mpc_control_command_raw_topic)"/>
+    <param name="cpp_cma_trajectory_topic" value="/control/internal/cma_pp/trajectory"/>
+    <param name="cpp_cma_mode_topic" value="/control/internal/cma_pp/mode"/>
+    <param name="cpp_cma_source_topic" value="/control/internal/cma_pp/source"/>
+    <param name="log_config_dump" value="$(var log_config_dump)"/>
+  </node>
+
+  <group if="$(var cma_runtime_enabled)">
+    <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/cma_pure_pursuit_shadow.launch.xml">
+      <arg name="use_sim_time" value="$(var use_sim_time)"/>
+      <arg name="input_trajectory" value="/control/internal/cma_pp/trajectory"/>
+      <arg name="input_mode" value="/control/internal/cma_pp/mode"/>
+      <arg name="input_path_source" value="/control/internal/cma_pp/source"/>
+      <arg name="output_control_cmd" value="/control/internal/cma_pp/control_cmd"/>
+      <arg name="output_raw_control_cmd" value="/control/internal/cma_pp/control_cmd_raw"/>
+      <arg name="output_debug_root" value="/control/internal/cma_pp"/>
+    </include>
+    <group if="$(var mux_runtime_enabled)">
+      <include file="$(find-pkg-share hybrid_control_mux)/launch/lateral_longitudinal_shadow_mux.launch.xml">
+        <arg name="use_sim_time" value="$(var use_sim_time)"/>
+        <arg name="input_mpc_cmd" value="$(var mpc_control_command_topic)"/>
+        <arg name="input_cma_cmd" value="/control/internal/cma_pp/control_cmd"/>
+        <arg name="input_path_source" value="/control/internal/cma_pp/source"/>
+        <arg name="input_steering_status" value="/vehicle/status/steering_status"/>
+        <arg name="output_control_cmd" value="$(var mux_output_control_command_topic)"/>
+        <arg name="output_debug" value="$(var mux_output_debug_topic)"/>
+        <arg name="authority_enabled" value="$(var cma_mux_authority_enabled)"/>
+      </include>
+    </group>
+  </group>
+</launch>

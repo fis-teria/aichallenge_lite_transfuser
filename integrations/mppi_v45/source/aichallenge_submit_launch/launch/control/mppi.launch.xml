@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <arg name="simulation" default="true"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="pure_pursuit_speed_mps" default="10.0"/>
+  <arg name="mppi_param_file"
+       default="$(find-pkg-share reference_space_mppi_planner)/config/reference_space_mppi.param.yaml"/>
+  <arg name="vehicle_id" default="$(env VEHICLE_ID default)"/>
+  <arg name="vehicle_param_file" default="$(find-pkg-share aichallenge_submit_launch)/config/mppi_vehicle_$(eval &quot;'simulation' if '$(var simulation)' == 'true' else 'real'&quot;).param.yaml"/>
+  <arg name="mppi_trajectory_command_topic"
+       default="/mppi/direct/trajectory_command"/>
+
+  <!-- Standalone MPPI authority path:
+       global Reference + ego + V2X + static wall map -> MPPI -> CMA PP
+       -> MPC recovery adapter -> car. The adapter owns control during recovery.
+       StateLattice/FWM and its recovery supervisor are not started. -->
+  <include file="$(find-pkg-share reference_space_mppi_planner)/launch/reference_space_mppi.launch.xml">
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="param_file" value="$(var mppi_param_file)"/>
+    <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
+    <arg name="execution_speed_cap_mps" value="$(var pure_pursuit_speed_mps)"/>
+    <arg name="enabled" value="true"/>
+    <arg name="shadow_only" value="false"/>
+    <arg name="brain_mode" value="true"/>
+    <arg name="internal_timer_enabled" value="true"/>
+    <arg name="static_wall_map_enabled" value="true"/>
+    <arg name="recovery_service_enabled" value="true"/>
+    <arg name="own_vehicle_id" value="$(var vehicle_id)"/>
+    <arg name="input_trajectory_command"
+         value="/mppi/unused/upstream_trajectory_command"/>
+    <arg name="output_trajectory_command"
+         value="$(var mppi_trajectory_command_topic)"/>
+    <arg name="input_odometry" value="/localization/kinematic_state"/>
+    <arg name="input_base_reference"
+         value="/planning/scenario_planning/trajectory"/>
+    <arg name="input_vehicle_positions" value="/v2x/vehicle_positions"/>
+    <arg name="input_wall_map" value="/mppi/unused/external_wall_map"/>
+    <arg name="input_control_command" value="/control/command/control_cmd"/>
+  </include>
+
+  <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/cma_pure_pursuit.launch.xml">
+    <arg name="vehicle_param_file" value="$(var vehicle_param_file)"/>
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="recovery_service_enabled" value="true"/>
+    <arg name="input_kinematics" value="/localization/kinematic_state"/>
+    <arg name="input_trajectory"
+         value="/planning/scenario_planning/trajectory"/>
+    <arg name="input_direct_trajectory_command"
+         value="$(var mppi_trajectory_command_topic)"/>
+    <arg name="input_gear_status" value="/vehicle/status/gear_status"/>
+    <arg name="output_control_cmd" value="/mppi/internal/cma_control_cmd"/>
+    <arg name="output_raw_control_cmd"
+         value="/mppi/direct/control_cmd_raw"/>
+    <arg name="use_external_target_vel" value="false"/>
+    <!-- Match the physical kart and MPPI rollout model. The previous 2.14 m
+         virtual wheelbase doubled the steering request on the 1.087 m kart. -->
+    <arg name="wheel_base" value="1.087"/>
+    <!-- Keep the fast target speed and improve lateral tracking by selecting
+         an interpolated target 2-4 m ahead along the path arc. -->
+    <arg name="lookahead_gain" value="0.20"/>
+    <arg name="lookahead_min_distance" value="2.0"/>
+    <arg name="curvature_lookahead_min_distance" value="2.0"/>
+    <arg name="continuous_preview_interpolation_enabled" value="true"/>
+    <arg name="actual_lookahead_distance_blend" value="1.0"/>
+    <arg name="gear_relative_reverse_command_enabled" value="false"/>
+    <arg name="use_atomic_direct_trajectory_command" value="true"/>
+    <arg name="hold_last_direct_trajectory_enabled" value="$(var simulation)"/>
+    <arg name="odometry_timeout_sec" value="0.25"/>
+    <arg name="trajectory_timeout_sec" value="0.25"/>
+    <!-- Execute with the same steering angle/rate envelope used by MPPI's
+         rollout model.  Passthrough lets CMA PP request physically
+         unreachable steering and invalidates the selected trajectory. -->
+    <arg name="steering_command_passthrough_enabled" value="false"/>
+    <arg name="steering_command_to_tire_angle_ratio" value="0.60"/>
+    <arg name="steering_tire_angle_gain" value="1.45"/>
+    <arg name="delay_compensation_enabled" value="true"/>
+    <arg name="hard_steering_angle_limit_rad" value="0.5235987755982988"/>
+    <arg name="maximum_tire_steering_angle_rad" value="0.3141592653589793"/>
+    <arg name="hard_steering_rate_limit_radps" value="4.0"/>
+    <arg name="steering_time_constant_sec" value="0.30"/>
+    <!-- Keep the configured speed target, but coast while saturated steering or
+         measured actuator lag means positive throttle would widen the line. -->
+    <arg name="steering_demand_acceleration_hold_enabled" value="true"/>
+    <arg name="steering_acceleration_hold_minimum_speed_mps" value="3.0"/>
+    <arg name="steering_acceleration_hold_minimum_tire_angle_rad" value="0.15"/>
+    <arg name="steering_acceleration_hold_tracking_error_rad" value="0.08"/>
+    <arg name="steering_acceleration_hold_maximum_acceleration_mps2" value="0.6"/>
+    <!-- Longitudinal and tactical constraints are MPPI-owned in this profile. -->
+    <arg name="lateral_error_speed_gate_enabled" value="false"/>
+    <arg name="steering_tracking_speed_gate_enabled" value="false"/>
+    <arg name="wall_edge_tracking_speed_enabled" value="false"/>
+    <!-- Match MPPI's certified longitudinal rollout envelope so the physical
+         kart can reach the configured FREE_RUN target on available straights. -->
+    <arg name="speed_proportional_gain" value="3.0"/>
+    <arg name="longitudinal_acceleration_limit" value="2.0"/>
+    <arg name="curvature_feedforward_enabled" value="true"/>
+    <arg name="curvature_feedforward_gain" value="0.60"/>
+    <arg name="curvature_feedforward_preview_distance_m" value="3.0"/>
+    <arg name="curvature_feedforward_time_constant_sec" value="0.20"/>
+    <!-- Feed-forward is part of the MPPI rollout in every mode, so apply the
+         same curvature term during FREE_RUN corners as well. -->
+    <arg name="curvature_feedforward_maneuver_only" value="false"/>
+    <arg name="maneuver_lookahead_uses_measured_speed" value="true"/>
+    <arg name="maneuver_lookahead_time_constant_sec" value="0.20"/>
+    <!-- Capture yaw-rate/slip evidence before enabling rotation recovery. -->
+    <arg name="diagnostic_trace_enabled" value="true"/>
+    <arg name="diagnostic_trace_maneuver_only" value="false"/>
+    <arg name="diagnostic_trace_period_sec" value="0.02"/>
+    <!-- Predict oversteer through the 0.20 s actuation delay plus a 0.15 s
+         lead. Yaw acceleration, pending steering response, and outward slip
+         can start coasting/countersteer before the reactive 0.30 rad/s limit. -->
+    <arg name="rotation_gate_enabled" value="true"/>
+    <arg name="rotation_gate_countersteer_gain" value="0.35"/>
+    <arg name="rotation_gate_max_countersteer_rad" value="0.12"/>
+    <arg name="rotation_prediction_enabled" value="true"/>
+    <arg name="rotation_prediction_lead_time_sec" value="0.15"/>
+    <arg name="rotation_prediction_yaw_acceleration_filter_time_constant_sec"
+         value="0.08"/>
+    <arg name="rotation_prediction_max_yaw_acceleration_radps2" value="6.0"/>
+    <arg name="rotation_prediction_entry_threshold_radps" value="0.18"/>
+    <arg name="rotation_prediction_min_yaw_acceleration_radps2" value="0.30"/>
+    <arg name="rotation_prediction_slip_angle_threshold_rad" value="0.04"/>
+    <arg name="rotation_prediction_slip_yaw_rate_gain" value="2.0"/>
+    <arg name="input_overtake_mode" value="/mppi/unused/overtake_mode"/>
+  </include>
+
+  <node pkg="mppi_recovery_controller" exec="recovery_controller"
+        name="mppi_recovery_controller" output="screen">
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="simulation" value="$(var simulation)"/>
+    <param name="own_vehicle_id" value="$(var vehicle_id)"/>
+    <param from="$(var vehicle_param_file)"/>
+    <remap from="input/auto_cmd" to="/mppi/internal/cma_control_cmd"/>
+    <remap from="input/odometry" to="/localization/kinematic_state"/>
+    <remap from="input/reference" to="/planning/scenario_planning/trajectory"/>
+    <remap from="input/wall_map" to="/debug/mppi/wall_map"/>
+    <remap from="input/vehicles" to="/v2x/vehicle_positions"/>
+    <remap from="input/race_state" to="/awsim/state"/>
+    <remap from="input/control_mode" to="/vehicle/status/control_mode"/>
+    <remap from="input/gear_status" to="/vehicle/status/gear_status"/>
+    <remap from="input/steering_status" to="/vehicle/status/steering_status"/>
+    <remap from="input/stop_request" to="/control/mpc/stop_request"/>
+    <remap from="planner/set_recovery_active" to="/reference_space_mppi_planner/set_recovery_active"/>
+    <remap from="tracker/set_recovery_active" to="/cma_pure_pursuit_node/set_recovery_active"/>
+    <remap from="output/control_cmd" to="/control/command/control_cmd"/>
+    <remap from="output/gear_cmd" to="/control/command/gear_cmd"/>
+    <remap from="debug/status" to="/debug/mppi/stuck_recovery"/>
+  </node>
+  <node pkg="mppi_recovery_controller" exec="real_actuation_filter"
+        name="mppi_real_actuation_filter" output="screen" unless="$(var simulation)">
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param from="$(var vehicle_param_file)"/>
+    <remap from="input/actuation_cmd" to="/mppi/internal/actuation_cmd"/>
+    <remap from="input/control_cmd" to="/control/command/control_cmd"/>
+    <remap from="input/odometry" to="/localization/kinematic_state"/>
+    <remap from="input/control_mode" to="/vehicle/status/control_mode"/>
+    <remap from="input/gear_status" to="/vehicle/status/gear_status"/>
+    <remap from="output/actuation_cmd" to="/control/command/actuation_cmd"/>
+    <remap from="debug/status" to="/debug/mppi/real_propulsion"/>
+  </node>
+</launch>

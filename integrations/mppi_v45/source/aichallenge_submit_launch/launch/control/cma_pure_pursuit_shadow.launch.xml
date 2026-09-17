@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="input_trajectory" default="/control/shadow/cma_pp/trajectory"/>
+  <arg name="input_baseline_trajectory" default="/planning/scenario_planning/trajectory"/>
+  <arg name="input_mode" default="/control/shadow/cma_pp/mode"/>
+  <arg name="input_path_source" default="/control/shadow/cma_pp/source"/>
+  <arg name="output_control_cmd" default="/control/shadow/cma_pp/control_cmd"/>
+  <arg name="output_raw_control_cmd" default="/control/shadow/cma_pp/control_cmd_raw"/>
+  <arg name="output_debug_root" default="/control/shadow/cma_pp"/>
+
+  <!-- Defaults are observation-only. The staged MPC launch may remap these
+       endpoints below /control/internal after the same configuration has
+       passed shadow validation; the wrapper never publishes directly to the
+       production command topic. -->
+  <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/cma_pure_pursuit.launch.xml">
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="node_name" value="cma_pure_pursuit_shadow"/>
+    <arg name="input_kinematics" value="/localization/kinematic_state"/>
+    <arg name="input_trajectory" value="$(var input_trajectory)"/>
+    <arg name="input_baseline_trajectory" value="$(var input_baseline_trajectory)"/>
+    <arg name="input_path_source" value="$(var input_path_source)"/>
+    <arg name="input_direct_trajectory_command" value="/control/shadow/cma_pp/unused_direct_trajectory_command"/>
+    <arg name="input_steering_status" value="/vehicle/status/steering_status"/>
+    <arg name="input_gear_status" value="/vehicle/status/gear_status"/>
+    <arg name="input_overtake_mode" value="$(var input_mode)"/>
+    <arg name="output_control_cmd" value="$(var output_control_cmd)"/>
+    <arg name="output_raw_control_cmd" value="$(var output_raw_control_cmd)"/>
+    <arg name="output_debug" value="$(var output_debug_root)/debug"/>
+    <arg name="output_lookahead_point" value="$(var output_debug_root)/lookahead_point"/>
+    <arg name="output_near_lookahead_point" value="$(var output_debug_root)/near_lookahead_point"/>
+
+    <arg name="use_external_target_vel" value="false"/>
+    <!-- Match racing_kart_description and the MPC bicycle model. -->
+    <arg name="wheel_base" value="1.087"/>
+    <arg name="use_atomic_direct_trajectory_command" value="false"/>
+    <!-- Curve-only integration consumes one normal reference trajectory.
+         Overtake/maneuver trajectory switching belongs to the removed
+         controller and must not participate in this control path. -->
+    <arg name="split_trajectory_inputs_enabled" value="false"/>
+    <arg name="gear_relative_reverse_command_enabled" value="false"/>
+    <arg name="odometry_timeout_sec" value="0.25"/>
+    <arg name="trajectory_timeout_sec" value="0.25"/>
+    <arg name="path_source_timeout_sec" value="0.25"/>
+    <!-- Curve-only CMA uses a 2-4 m speed-scaled preview.  The former CMA
+         defaults reached 5-9 m in H2H and selected a chord across corners. -->
+    <arg name="lookahead_gain" value="0.20"/>
+    <arg name="lookahead_min_distance" value="2.0"/>
+    <arg name="curvature_lookahead_min_distance" value="2.0"/>
+    <arg name="steering_command_passthrough_enabled" value="false"/>
+    <arg name="steering_tire_angle_gain" value="1.45"/>
+    <!-- Shadow-only A/B evaluation: select near/far targets by forward path
+         arc length and interpolate between samples. Production and the State
+         Lattice direct route retain the discrete selector. -->
+    <arg name="continuous_preview_interpolation_enabled" value="true"/>
+    <!-- The interpolated target lies at the requested path-arc distance, while
+         steering geometry uses the ego-to-target chord actually observed by
+         Pure Pursuit. Keep this A/B option isolated from production routes. -->
+    <arg name="actual_lookahead_distance_blend" value="1.0"/>
+    <arg name="delay_compensation_enabled" value="true"/>
+    <!-- Apply the same physical steering bound here and in the final mux. -->
+    <arg name="hard_steering_angle_limit_rad" value="0.64"/>
+    <arg name="hard_steering_rate_limit_radps" value="4.0"/>
+    <arg name="steering_time_constant_sec" value="0.30"/>
+    <arg name="lateral_error_speed_gate_enabled" value="true"/>
+    <arg name="steering_tracking_speed_gate_enabled" value="false"/>
+    <arg name="wall_edge_tracking_speed_enabled" value="true"/>
+    <arg name="wall_edge_lateral_velocity_preview_sec" value="0.20"/>
+    <arg name="wall_edge_minimum_speed_mps" value="10.0"/>
+    <arg name="wall_edge_tracking_deceleration_mps2" value="3.0"/>
+    <arg name="wall_edge_tracking_release_reserve_ratio" value="0.75"/>
+    <arg name="wall_edge_tracking_release_duration_sec" value="0.15"/>
+    <arg name="curvature_feedforward_enabled" value="true"/>
+    <arg name="curvature_feedforward_gain" value="0.60"/>
+    <arg name="curvature_feedforward_preview_distance_m" value="3.0"/>
+    <arg name="curvature_feedforward_time_constant_sec" value="0.20"/>
+    <arg name="curvature_feedforward_maneuver_only" value="false"/>
+    <arg name="maneuver_lookahead_uses_measured_speed" value="true"/>
+    <arg name="maneuver_lookahead_time_constant_sec" value="0.20"/>
+    <!-- H2H解析用。OVERTAKE/MERGE_BACK中だけ約50 Hzで目標点選択と
+         操舵内訳をautoware.logへ残し、制御topicやauthorityは変えない。 -->
+    <arg name="diagnostic_trace_enabled" value="true"/>
+    <arg name="diagnostic_trace_maneuver_only" value="true"/>
+    <arg name="diagnostic_trace_period_sec" value="0.02"/>
+    <!-- Aggregate wall/CPU/stage timing once per second. This only observes
+         Shadow execution and does not participate in command authority. -->
+    <arg name="runtime_timing_metrics_enabled" value="true"/>
+    <arg name="runtime_timing_report_period_sec" value="1.0"/>
+    <arg name="runtime_timing_deadline_sec" value="0.033333333"/>
+  </include>
+</launch>

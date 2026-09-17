@@ -23,8 +23,11 @@ class InputState:
     startup_timeout_s: float = 15.0
     last_valid_wall_s: float | None = None
     stop_requested: bool = False
+    teacher_version: str = "V44"
 
     def __post_init__(self) -> None:
+        if self.teacher_version not in {"V44", "V45"}:
+            raise ValueError("teacher_version must be V44 or V45")
         if self.mode not in {"shadow", "teacher_existing_margin"}:
             raise ValueError("mode must be shadow or teacher_existing_margin")
         if not math.isfinite(self.started_wall_s):
@@ -52,5 +55,6 @@ class InputState:
         return dict(mode=self.mode, teacher_input_enabled=enabled,
                     teacher_ready=enabled and input_valid and not self.stop_requested,
                     stop_requested=self.stop_requested,
-                    role="TEACHER_INPUT_EXISTING_V44_MARGIN" if enabled else "SHADOW_UNVALIDATED_FOR_CONTROL",
-                    collision_geometry="V44_UNCHANGED" if enabled else "NOT_CONNECTED")
+                    teacher_version=self.teacher_version,
+                    role=f"TEACHER_INPUT_EXISTING_{self.teacher_version}_MARGIN" if enabled else "SHADOW_UNVALIDATED_FOR_CONTROL",
+                    collision_geometry=f"{self.teacher_version}_UNCHANGED" if enabled else "NOT_CONNECTED")

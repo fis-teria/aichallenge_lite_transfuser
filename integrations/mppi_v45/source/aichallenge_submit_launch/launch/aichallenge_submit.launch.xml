@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <arg name="simulation"/>
+  <arg name="use_sim_time"/>
+  <arg name="sensor_model"/>
+  <arg name="launch_vehicle_interface"/>
+  <arg name="control_method" default="mppi"/>
+  <arg name="mppi_vehicle_param_file" default="$(find-pkg-share aichallenge_submit_launch)/config/mppi_vehicle_$(eval &quot;'simulation' if '$(var simulation)' == 'true' else 'real'&quot;).param.yaml"/>
+  <arg name="mpc_cma_mux_authority_enabled" default="true"/>
+  <arg name="mppi_overtake_enabled" default="false"/>
+  <arg name="mppi_reference_profile" default="race"/>
+  <arg name="reference_execution_speed_cap_mps" default="10.0"/>
+  <arg name="c002ay1_prod_measure_enabled" default="false"/>
+  <arg name="c002ay1_prod_measure_socket_path" default=""/>
+  <arg name="c002ay1_prod_measure_run_id" default=""/>
+  <arg name="c002ay1_prod_measure_planner_nonce" default="0"/>
+  <arg name="c002ay1_prod_measure_planner_instance_id" default="0"/>
+  <arg name="c002ay1_prod_measure_pp_nonce" default="0"/>
+  <arg name="c002ay1_prod_measure_pp_instance_id" default="0"/>
+  <arg name="c002ay1_prod_measure_selected_stream" default="legacy"/>
+  <arg name="free_run_live_exact_observe_enabled" default="true"/>
+  <arg name="free_run_live_exact_pre_ack_hold_enabled" default="true"/>
+  <arg name="pp_core_exact_snapshot_enabled" default="false"/>
+  <arg name="overtake_trajectory_backend" default="current"/>
+  <!-- Minimal typed sideband used by the State Lattice V4 live-path PoC. -->
+  <arg name="state_lattice_v2_live_proposal_publish_enabled" default="false"/>
+  <arg name="state_lattice_v2_live_proposal_accept_enabled" default="false"/>
+  <arg name="state_lattice_v2_producer_instance_id" default="0"/>
+  <arg name="state_lattice_v2_pp_producer_instance_id" default=""/>
+  <arg name="state_lattice_v2_session_id" default=""/>
+  <arg name="state_lattice_v4_poc_command_activation_enabled" default="false"/>
+
+  <log message="The arguments for aichallenge_submit_launch."/>
+  <log message=" - simulation: $(var simulation)"/>
+  <log message=" - use_sim_time: $(var use_sim_time)"/>
+  <log message=" - sensor_model: $(var sensor_model)"/>
+  <log message=" - launch_vehicle_interface: $(var launch_vehicle_interface)"/>
+  <log message=" - control_method: $(var control_method)"/>
+  <log message=" - mpc_cma_mux_authority_enabled: $(var mpc_cma_mux_authority_enabled)"/>
+
+  <include file="$(find-pkg-share aichallenge_submit_launch)/launch/reference.launch.xml" >
+    <arg name="vehicle_model" value="racing_kart"/>
+    <arg name="sensor_model" value="$(var sensor_model)"/>
+    <arg name="map_path" value="$(find-pkg-share aichallenge_submit_launch)/map"/>
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="simulation" value="$(var simulation)"/>
+    <arg name="launch_vehicle_interface" value="$(var launch_vehicle_interface)"/>
+    <arg name="control_method" value="$(var control_method)"/>
+    <arg name="mppi_vehicle_param_file" value="$(var mppi_vehicle_param_file)"/>
+    <arg name="mpc_cma_mux_authority_enabled" value="$(var mpc_cma_mux_authority_enabled)"/>
+    <arg name="mppi_overtake_enabled" value="$(var mppi_overtake_enabled)"/>
+    <arg name="mppi_reference_profile" value="$(var mppi_reference_profile)"/>
+    <arg name="reference_execution_speed_cap_mps" value="$(var reference_execution_speed_cap_mps)"/>
+    <arg name="c002ay1_prod_measure_enabled" value="$(var c002ay1_prod_measure_enabled)"/>
+    <arg name="c002ay1_prod_measure_socket_path" value="$(var c002ay1_prod_measure_socket_path)"/>
+    <arg name="c002ay1_prod_measure_run_id" value="$(var c002ay1_prod_measure_run_id)"/>
+    <arg name="c002ay1_prod_measure_planner_nonce" value="$(var c002ay1_prod_measure_planner_nonce)"/>
+    <arg name="c002ay1_prod_measure_planner_instance_id" value="$(var c002ay1_prod_measure_planner_instance_id)"/>
+    <arg name="c002ay1_prod_measure_pp_nonce" value="$(var c002ay1_prod_measure_pp_nonce)"/>
+    <arg name="c002ay1_prod_measure_pp_instance_id" value="$(var c002ay1_prod_measure_pp_instance_id)"/>
+    <arg name="c002ay1_prod_measure_selected_stream" value="$(var c002ay1_prod_measure_selected_stream)"/>
+    <arg name="free_run_live_exact_observe_enabled" value="$(var free_run_live_exact_observe_enabled)"/>
+    <arg name="free_run_live_exact_pre_ack_hold_enabled" value="$(var free_run_live_exact_pre_ack_hold_enabled)"/>
+    <arg name="pp_core_exact_snapshot_enabled" value="$(var pp_core_exact_snapshot_enabled)"/>
+    <arg name="overtake_trajectory_backend" value="$(var overtake_trajectory_backend)"/>
+    <arg name="state_lattice_v2_live_proposal_publish_enabled" value="$(var state_lattice_v2_live_proposal_publish_enabled)"/>
+    <arg name="state_lattice_v2_live_proposal_accept_enabled" value="$(var state_lattice_v2_live_proposal_accept_enabled)"/>
+    <arg name="state_lattice_v2_producer_instance_id" value="$(var state_lattice_v2_producer_instance_id)"/>
+    <arg name="state_lattice_v2_pp_producer_instance_id" value="$(var state_lattice_v2_pp_producer_instance_id)"/>
+    <arg name="state_lattice_v2_session_id" value="$(var state_lattice_v2_session_id)"/>
+    <arg name="state_lattice_v4_poc_command_activation_enabled" value="$(var state_lattice_v4_poc_command_activation_enabled)"/>
+  </include>
+</launch>

@@ -1,0 +1,232 @@
+/**:
+  ros__parameters:
+    enabled: false
+    shadow_only: false
+    collision_only_rejection: true
+    brain_mode: false
+    # Optional 1 Hz immutable decision snapshots; no selection changes.
+    brain.decision_markers_enabled: false
+    brain.decision_marker_slot: -1 # -1: slot choice, or 0..4
+    brain.decision_marker_profile: 1 # 0: slot winner, 1..4: speed pair
+    own_vehicle_id: ""
+    # The legacy/refinement entry uses the full stochastic sample count. Brain
+    # mode uses the bounded per-line count below for each of five lateral seeds.
+    sample_count: 128
+    # Keep the closed-loop vehicle/PP rollout short enough that a future course
+    # bend cannot reject an otherwise executable near-term lane change. Moving
+    # opponents are still projected for six seconds by the brain-specific
+    # prediction horizon below.
+    horizon_steps: 60
+    # Matches the CMA include's forward-curvature window. This controls the
+    # predictor, not an additional vehicle speed limit or rejection guard.
+    prediction.cma_controller_geometry_enabled: true
+    prediction.cma_curvature_preview_distance_m: 21.422826964417297
+    dt_sec: 0.05
+    temperature: 1.0
+    update_gain: 0.7
+    deterministic_seed: 20260902
+    minimum_valid_count: 1
+    minimum_valid_ratio: 0.0
+    # Keep candidate geometry continuity inside MPPI evaluation so an invalid
+    # best-cost sample cannot hide a valid next-best sample at the output gate.
+    # The supplied course Reference is sampled at 0.84--1.14 m. A 0.8 m
+    # threshold rejected normal input geometry; retain only a true
+    # discontinuity check above its measured maximum spacing.
+    maximum_reference_segment_m: 1.5
+    # Match racing_kart_description and the CMA PP executor. A 2.14 m virtual
+    # wheelbase over-commanded the physical 1.087 m kart and saturated steering.
+    wheel_base_m: 1.087
+    # Use the curve-tracking CMA shadow profile: a 2--4 m speed-scaled preview
+    # follows the path arc instead of cutting a 5--9 m chord across a corner.
+    lookahead_gain: 0.20
+    lookahead_min_distance_m: 2.0
+    curvature_lookahead_min_distance_m: 2.0
+    continuous_preview_interpolation_enabled: true
+    actual_lookahead_distance_blend: 1.0
+    steering_gain: 1.45
+    curvature_feedforward_enabled: true
+    curvature_feedforward_gain: 0.60
+    # Plant response and CMA's internal lookahead prediction are independent.
+    steering_control_delay_sec: 0.07
+    steering_time_constant_sec: 0.02
+    prediction.awsim_vehicle_response_enabled: true
+    # Body-yaw response, verified separately from the tire-angle actuator.
+    prediction.yaw_response_time_constant_sec: 0.10
+    prediction.cma_control_delay_sec: 0.20
+    prediction.cma_steering_time_constant_sec: 0.30
+    steering_command_to_tire_angle_ratio: 0.60
+    maximum_steering_command_angle_rad: 0.5235987755982988
+    maximum_tire_steering_angle_rad: 0.3141592653589793
+    maximum_steering_command_rate_radps: 4.0
+    steering_demand_acceleration_hold_enabled: true
+    steering_acceleration_hold_minimum_speed_mps: 3.0
+    steering_acceleration_hold_minimum_tire_angle_rad: 0.15
+    steering_acceleration_hold_tracking_error_rad: 0.08
+    steering_acceleration_hold_maximum_acceleration_mps2: 0.6
+    # Use the same longitudinal envelope in MPPI rollout certification and
+    # the MPPI-specific CMA PP executor.
+    maximum_acceleration_mps2: 2.0
+    maximum_deceleration_mps2: 2.0
+    speed_proportional_gain: 3.0
+    acceleration_time_constant_sec: 0.25
+    tube_max_half_width_m: 0.25
+    tube_min_half_width_m: 0.04
+    nominal_lateral_refinement_m: 0.08
+    base_curvature_limit_1pm: 1.0
+    maximum_lateral_acceleration_mps2: 6.0
+    maximum_cross_track_error_m: 0.8
+    clearance_target_m: 0.35
+    obstacle_longitudinal_inflation_m: 1.10
+    obstacle_lateral_inflation_m: 1.15
+    # Do not penalize deviation from the preferred passing separation.
+    # Geometry generation and collision/wall validation remain independent.
+    cost_pass_separation_weight: 0.0
+    # Trial weight: passing-side wall line, scored only in the shared pass zone.
+    brain.cost_wall_line_weight: 0.2
+    output_reason_prefix: "mppi_refined:"
+    # Commit early enough for CMA PP to complete the gentle 15--22 m lateral
+    # transition before reaching the opponent.
+    brain.trigger_distance_m: 40.0
+    # Experimental: fixed replay reduces misses but H2H adoption is unproven.
+    brain.prior_lap_prediction_enabled: false
+    brain.leader_lap_prediction_enabled: true
+    brain.recent_motion_prediction_enabled: false
+    # Road-following acceleration with race-local lateral-persistence scoring.
+    # No model is saved across node restarts.
+    brain.online_motion_prediction_enabled: true
+    # Durations are measured from the last observation, including its age.
+    brain.prediction_acceleration_persistence_sec: 0.6
+    brain.prediction_yaw_rate_persistence_sec: 0.6
+    # Record the actual execution inputs and trajectories for deterministic replay.
+    brain.cost_spatial_diagnostics_enabled: true
+    # A blocked FREE_RUN path triggers road-relative left/right planning.
+    # Every observed vehicle participates in candidate collision evaluation.
+    brain.target_path_conflict_margin_m: 0.15
+    brain.prediction_horizon_sec: 6.0
+    # Road-relative nominal lateral offset. Five lateral seeds span the
+    # footprint-eroded road width without an opponent-relative shape anchor.
+    brain.pass_offset_m: 2.20
+    # No fixed lateral floor; wall geometry defines the available interval.
+    brain.min_pass_offset_m: 0.0
+    # MPPI costs are normally O(10^2--10^3) on this course. Avoid reversing a
+    # committed lane change for small sample-to-sample noise, while retaining
+    # the ability to switch for a clearly safer/cheaper certified corridor.
+    # Dimensionless batch-normalized cost difference. Zero selects the cheaper
+    # feasible side; exact ties retain the current side. Do not reuse old 100.
+    brain.side_switch_minimum_relative_improvement: 0.0
+    # Each physical lateral line is now a sampling mode rather than a single
+    # fixed path. Ten samples per mode jointly perturb the global maneuver
+    # parameters and the spatial d[k]/v[k] sequence. Staged-speed mode adds
+    # up to 10 proposals per line: transported speed plus short/mid/long
+    # transitions crossed with fast/early/late speed. Duplicates are removed.
+    # Budget up to 100 evaluations plus re-evaluations/optional diagnostics.
+    # Target-CPU deadline compliance must be measured, not inferred from K.
+    brain.samples_per_line: 10
+    # Publish four evenly distributed raw rollouts from each mode in RViz.
+    # This is diagnostic-only and does not alter optimization.
+    brain.visualized_samples_per_line: 4
+    brain.control_sequence_sampling_enabled: true
+    brain.control_knot_count: 8
+    # Temporally correlated Gaussian exploration around each mode's shifted
+    # previous optimum. Mode-local softmax prevents left/right cancellation.
+    brain.control_lateral_std_m: 0.0
+    # Optional spatial noise/smoothness scaling; zero preserves per-knot behavior.
+    # The 8 m experiment regressed in H2H; keep disabled pending retuning.
+    brain.control_lateral_reference_spacing_m: 0.0
+    brain.control_speed_scale_std: 0.04
+    brain.control_noise_correlation: 0.75
+    # Keep modes distinct while allowing paths between the five seed lines.
+    brain.control_maximum_lateral_adjustment_m: 0.45
+    # Permit full matching-speed -> cruise profiles; Gaussian noise stays small.
+    brain.control_maximum_speed_scale_adjustment: 1.0
+    # Fade lateral perturbations in from the measured ego anchored prefix.
+    brain.control_entry_ramp_m: 4.0
+    # Staged execution: spatial speed-gradient cost; geometric smoothness is
+    # already scored by physical curvature. No proposal-knot dependence.
+    brain.cost_control_smoothness_weight: 0.10
+    # Preserve achievable progress when comparing valid slower/faster paths.
+    # Physical overlap and wall rejection are independent of this reward.
+    brain.cost_progress_weight: 1.25
+    # Common physical d/speed field change from the accepted source, used by
+    # new candidates AND continuation. This is not a timed or mandatory lock.
+    brain.cost_control_change_weight: 0.15
+    # Disable history lateral deviation only; retain speed-history cost.
+    brain.history_lateral_cost_scale: 0.0
+    # Tracking error at the achieved station, normalized by maximum_cross_track_error_m.
+    # Passing separation is evaluated separately; collision checks stay hard.
+    brain.cost_terminal_lateral_weight: 2.0
+    # Local fixed-capacity batch boundary: all five line optimizers start on
+    # persistent workers and join before MPPI side selection. Each line keeps
+    # a proposal cache; only the actually published winner commits new warm
+    # state. Published absolute speeds seed all permitted lateral modes.
+    brain.parallel_batch_enabled: true
+    # At 20 Hz, three generations are 0.15 s. This remains inside each
+    # command's snapshot-based 0.20 s lease while allowing a delayed batch to
+    # be applied instead of discarded merely because a newer heartbeat exists.
+    brain.max_result_generation_lag: 3
+    # The H2H start grid can be more than 4 m from the global Reference. The
+    # occupancy-grid footprint test remains the actual wall bound.
+    brain.max_track_offset_m: 5.0
+    # Physical collision body width is 1.30 m (vehicle_info tread 1.12 m plus
+    # 0.09 m body overhang on each side). Wall and opponent intervals use the
+    # actual 0.65 m half-width; no extra comfort margin is added here.
+    brain.footprint_radius_m: 0.65
+    brain.footprint_front_m: 1.06
+    brain.footprint_rear_m: 1.10
+    brain.lateral_sample_step_m: 0.10
+    # MPPI-owned advisory target in normal FREE_RUN. CMA PP may still lower
+    # the physical command on curves to satisfy its lateral-acceleration cap.
+    # Cruise/validated approach target: 10 m/s (36 km/h). This is not a speed floor;
+    # infeasible approaches retain the existing speed-search/braking behavior.
+    brain.cruise_speed_mps: 10.0
+    # Longitudinal free space between projected body extents, not anchor-to-anchor s.
+    # FREE_RUN matches the latest leading speed at or below this body gap.
+    # Beyond it, the cruise proposal still passes the execution validator.
+    brain.follow_gap_m: 5.0
+    # Soft approach target: lead speed + (body gap - follow gap) / time.
+    # Weight multiplies rollout mean squared excess speed in (m/s)^2.
+    brain.approach_time_sec: 2.0
+    brain.approach_at_follow_gap_only: true
+    brain.cost_approach_speed_weight: 0.10
+    brain.cost_passing_progress_weight: 0.5
+    brain.cost_passing_opportunity_weight: 0.25
+    brain.compare_return_continuation: true
+    brain.gentle_lateral_acceleration_mps2: 1.5
+    # Advisory target throughout OVERTAKE/SIDE_BY_SIDE_KEEP/MERGE_BACK.
+    brain.overtake_speed_mps: 10.0
+    # Legacy parameters retained for configuration compatibility.
+    # Zero target is representable; physical collision validation is unchanged.
+    brain.minimum_passing_speed_mps: 6.0
+    brain.minimum_passing_advantage_mps: 0.8
+    # Deprecated compatibility keys: no forced rolling floor and no
+    # post-selection proximity overwrite are applied by the independent entry.
+    brain.minimum_rolling_speed_mps: 0.5
+    brain.minimum_proximity_speed_mps: 10.0
+    # Revalidate a refreshed committed path against the latest opponent pose
+    # independently of SAFE STOP. Disabling stop must not permit an old path to
+    # cross a laterally moving opponent.
+    brain.hold_minimum_opponent_clearance_m: 0.0
+    # Deprecated: hold validation now uses the candidate's execution model and
+    # local horizon, not an independent 1.5 s ideal arrival clock.
+    brain.hold_revalidation_horizon_sec: 1.50
+    brain.input_timeout_sec: 0.5
+    # Use the complete footprint-vs-occupancy check as the wall boundary. Do
+    # not add a second comfort margin after MPPI has found a valid candidate.
+    brain.hard_clearance_m: 0.0
+    # FREE_RUN context only. Passing/holding uses the local horizon below;
+    # the immutable global Reference still supplies opponent projections.
+    brain.reference_horizon_m: 60.0
+    # Keep FREE_RUN/global context long; optimize and validate a local prefix.
+    brain.local_minimum_m: 20.0
+    brain.local_maximum_m: 30.0
+    brain.local_lookahead_sec: 3.0
+    # Generate a reusable tail; physical prediction still uses the local window above.
+    brain.reference_supply_sec: 1.0
+    # The dedicated mppi control method has no upstream StateLattice
+    # heartbeat. MPPI owns its planning clock and static wall input instead.
+    brain.internal_timer_enabled: false
+    brain.update_rate_hz: 20.0
+    brain.static_wall_map_enabled: false
+    brain.wall_map_package: "reference_space_mppi_planner"
+    brain.wall_map_yaml: "config/awsim_wall_map/occupancy_grid_map.yaml"
+    brain.wall_map_frame: "map"

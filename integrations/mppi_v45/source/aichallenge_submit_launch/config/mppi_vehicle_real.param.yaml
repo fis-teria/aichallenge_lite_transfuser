@@ -1,0 +1,34 @@
+# Initial real-kart evaluation values, not a completed vehicle calibration.
+# 22.8 deg/s is provisionally treated as physical tire rate; the reported
+# 0.6 rad/s and the command/tire relationship still require measurement.
+/**:
+  ros__parameters:
+    physical_tire_steering_rate_radps: 0.39793506945470714
+    steering_command_to_tire_angle_ratio: 0.60
+    maximum_tire_steering_angle_rad: 0.3141592653589793
+    steering_time_constant_sec: 0.02
+
+reference_space_mppi_planner:
+  ros__parameters:
+    prediction.awsim_vehicle_response_enabled: false
+    steering_control_delay_sec: 0.07
+    prediction.cma_control_delay_sec: 0.07
+    prediction.cma_steering_time_constant_sec: 0.02
+    maximum_acceleration_mps2: 0.999
+
+cma_pure_pursuit_node:
+  ros__parameters:
+    pp_control_delay_sec: 0.07
+    longitudinal_acceleration_limit: 0.999
+
+mppi_recovery_controller:
+  ros__parameters:
+    maximum_recovery_propulsion_mps2: 0.5
+    recovery_speed_mps: 0.5
+    steering_settle_tolerance_rad: 0.03
+
+mppi_real_actuation_filter:
+  ros__parameters:
+    no_progress_timeout_sec: 0.4
+    minimum_progress_m: 0.02
+    input_timeout_sec: 0.25

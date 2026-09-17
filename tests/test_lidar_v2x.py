@@ -213,6 +213,19 @@ def test_shadow_has_no_teacher_stop_or_input_authority():
         InputState("unknown", 0.)
 
 
+def test_v45_metadata_keeps_the_same_input_failure_latch():
+    state = InputState("teacher_existing_margin", 0., teacher_version="V45")
+    state.mark_valid(1.)
+    assert state.metadata(True)["teacher_version"] == "V45"
+    assert state.metadata(True)["collision_geometry"] == "V45_UNCHANGED"
+    assert state.metadata(True)["teacher_ready"]
+    assert state.check_timeout(2.)
+    state.mark_valid(2.1)
+    assert not state.metadata(True)["teacher_ready"]
+    with pytest.raises(ValueError, match="teacher_version"):
+        InputState("teacher_existing_margin", 0., teacher_version="latest")
+
+
 def test_all_v44_consumers_use_one_synthetic_v2x_topic():
     assert {src for src, _ in V44_INPUT_REMAPS} == {"input/vehicle_positions", "input/vehicles", "/v2x/vehicle_positions"}
     assert {dst for _, dst in V44_INPUT_REMAPS} == {V2X_TOPIC}

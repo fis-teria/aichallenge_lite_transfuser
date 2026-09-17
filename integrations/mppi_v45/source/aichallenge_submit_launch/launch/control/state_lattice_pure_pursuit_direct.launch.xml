@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <arg name="simulation" default="true"/>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="pure_pursuit_speed_mps" default="10.0"/>
+  <arg name="direct_trajectory_topic" default="/state_lattice/direct/trajectory"/>
+  <arg name="direct_trajectory_command_topic" default="/state_lattice/direct/trajectory_command"/>
+  <arg name="mppi_trajectory_command_topic" default="/mppi/direct/trajectory_command"/>
+  <arg name="unboosted_control_topic" default="/state_lattice/direct/control_cmd_unboosted"/>
+  <arg name="boost_intent_topic" default="/state_lattice/boost_intent"/>
+  <arg name="boost_acceleration_mps2" default="10.0"/>
+  <arg name="mppi_overtake_enabled" default="false"/>
+  <arg name="mppi_overtake_shadow_only" default="false"/>
+  <arg name="mppi_brain_mode" default="false"/>
+  <arg name="cma_pure_pursuit_wheel_base_m" default="2.14"/>
+  <arg name="vehicle_id" default="$(env VEHICLE_ID default)"/>
+
+  <!-- Experimental direct path. The State Lattice transport contracts,
+       SafetyConstraint authority and hybrid mux are intentionally absent. -->
+  <include file="$(find-pkg-share state_lattice_overtake_planner)/launch/state_lattice_overtake_planner.launch.xml">
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="input_odom" value="/localization/kinematic_state"/>
+    <!-- Keep environmental trajectory safety during maneuvers. FREE_RUN and
+         FOLLOW_BLOCKED ignore rear traffic and bypass current-pose wall stop
+         authority, while their candidate geometry remains wall checked.
+         OVERTAKE/MERGE/recovery keep all-opponent, wall and trackability
+         checks. -->
+    <arg name="safety_evaluation_enabled" value="true"/>
+    <arg name="ignore_rear_hard_cost_in_free_follow" value="true"/>
+    <arg name="ignore_wall_hard_cost_in_free_run" value="true"/>
+    <arg name="live_control_output_enabled" value="false"/>
+    <arg name="instant_control_enabled" value="false"/>
+    <arg name="state_lattice_v2_live_proposal_publish_enabled" value="false"/>
+    <arg name="state_lattice_authority_publish_enabled" value="false"/>
+    <arg name="c002ay0_state_lattice_shadow_enabled" value="false"/>
+    <arg name="experimental_exact_spatial_follow_shadow_enabled" value="false"/>
+    <arg name="experimental_spatial_reference_override_live_publish_enabled" value="false"/>
+    <!-- This flag controls the legacy live-output contract only. Direct
+         Trajectory publication has its own explicit enable and therefore
+         keeps the non-live-compatible profile here. -->
+    <arg name="controller_trackability_profile" value="pure_pursuit"/>
+    <arg name="direct_trajectory_enabled" value="true"/>
+    <arg name="direct_trajectory_topic" value="$(var direct_trajectory_topic)"/>
+    <arg name="direct_trajectory_command_topic" value="$(var direct_trajectory_command_topic)"/>
+    <arg name="direct_trajectory_speed_mps" value="$(var pure_pursuit_speed_mps)"/>
+    <!-- Direct startup is derived from fresh vehicle data and measured
+         forward motion. It is intentionally independent of race-arm. -->
+    <arg name="direct_runtime_motion_start_speed_mps" value="0.10"/>
+    <arg name="direct_runtime_motion_start_required_samples" value="2"/>
+    <!-- Startup authority is handled by the bounded FOLLOW creep below. The
+         former unconditional one-second straight overlay must stay disabled. -->
+    <arg name="direct_startup_straight_enabled" value="false"/>
+    <arg name="direct_startup_straight_duration_sec" value="1.0"/>
+    <arg name="direct_startup_straight_speed_mps" value="1.0"/>
+    <arg name="direct_startup_straight_horizon_m" value="2.0"/>
+    <arg name="direct_startup_straight_spacing_m" value="0.25"/>
+    <arg name="startup_follow_creep_enabled" value="true"/>
+    <arg name="startup_follow_creep_max_speed_mps" value="0.5"/>
+    <arg name="startup_follow_creep_max_duration_sec" value="30.0"/>
+    <arg name="startup_follow_creep_max_distance_m" value="5.0"/>
+    <arg name="startup_follow_creep_release_speed_mps" value="2.0"/>
+    <arg name="startup_follow_creep_stop_speed_threshold_mps" value="0.15"/>
+    <arg name="startup_follow_creep_min_free_gap_m" value="0.5"/>
+    <arg name="direct_braking_corridor_hold_sec" value="0.5"/>
+    <arg name="direct_braking_corridor_deceleration_mps2" value="3.0"/>
+    <arg name="direct_braking_corridor_max_anchor_distance_m" value="1.5"/>
+    <arg name="direct_braking_corridor_max_anchor_yaw_error_rad" value="0.8"/>
+    <arg name="direct_high_speed_fallback_threshold_mps" value="2.0"/>
+    <!-- Wall contact recovery is direct-route-only. It first retraces the
+         measured approach in REVERSE, stops while R remains confirmed, then
+         switches to DRIVE and follows a validated centerward forward path.
+         PP remains the sole component producing the steering command. -->
+    <arg name="direct_stuck_recovery_enabled" value="true"/>
+    <arg name="direct_stuck_detection_duration_sec" value="1.0"/>
+    <arg name="direct_stuck_speed_threshold_mps" value="0.15"/>
+    <arg name="direct_stuck_forward_speed_mps" value="1.0"/>
+    <arg name="direct_stuck_forward_distance_m" value="1.5"/>
+    <arg name="direct_stuck_forward_clearance_margin_m" value="0.25"/>
+    <arg name="direct_stuck_forward_timeout_sec" value="3.0"/>
+    <arg name="direct_stuck_reverse_speed_mps" value="1.0"/>
+    <arg name="direct_stuck_reverse_distance_m" value="1.5"/>
+    <arg name="direct_stuck_reverse_clearance_margin_m" value="0.25"/>
+    <arg name="direct_stuck_reverse_timeout_sec" value="3.0"/>
+    <arg name="direct_stuck_reverse_stop_hold_sec" value="0.20"/>
+    <arg name="direct_stuck_gear_command_topic" value="/control/command/gear_cmd"/>
+    <arg name="direct_stuck_gear_status_topic" value="/vehicle/status/gear_status"/>
+    <arg name="direct_stuck_actuation_command_topic" value="/control/command/actuation_cmd"/>
+    <!-- H2H does not launch raw_vehicle_cmd_converter. During the gearbox
+         handshake only, publish the positive pedal command AWSIM requires
+         before accepting REVERSE and while settling to zero before DRIVE.
+         No actuation override is published during normal driving or moving
+         portions of recovery. -->
+    <arg name="direct_stuck_reverse_brake_override_enabled" value="true"/>
+    <arg name="direct_stuck_reverse_brake_command" value="1.0"/>
+    <arg name="direct_stuck_reverse_brake_threshold" value="0.01"/>
+    <arg name="direct_stuck_reverse_brake_deceleration_mps2" value="1.0"/>
+    <arg name="direct_stuck_gear_report_freshness_sec" value="0.5"/>
+    <arg name="direct_stuck_gear_shift_timeout_sec" value="2.0"/>
+    <arg name="allow_reverse" value="true"/>
+    <!-- Boost is a maneuver-level resource decision. It is leased by the
+         planner only after an executable OVERTAKE candidate is committed. -->
+    <arg name="boost_intent_enabled" value="true"/>
+    <arg name="boost_intent_topic" value="$(var boost_intent_topic)"/>
+    <arg name="boost_intent_lease_sec" value="0.12"/>
+    <arg name="boost_intent_max_duration_sec" value="8.0"/>
+    <arg name="boost_intent_charge_count" value="1"/>
+    <arg name="direct_route_boost_enabled" value="true"/>
+    <arg name="direct_route_boost_duration_sec" value="8.0"/>
+    <arg name="direct_route_boost_speed_gain_mps" value="3.0"/>
+    <arg name="overtake_boost_acceleration_mps2"
+         value="$(var boost_acceleration_mps2)"/>
+    <!-- D1's final-corner pass in 20260821-110446 required 3.8 to 4.2 s.
+         This remains bounded by the target/candidate full-corridor proof. -->
+    <arg name="overtake_boost_max_predicted_pass_time_sec" value="5.0"/>
+    <arg name="reference_zero_boost_overtake_enabled" value="true"/>
+    <arg name="reference_zero_boost_before_m" value="12.0"/>
+    <arg name="reference_zero_boost_after_m" value="5.0"/>
+    <arg name="reference_zero_boost_max_forward_gap_m" value="12.0"/>
+    <arg name="reference_zero_boost_dynamic_max_forward_gap_m" value="20.0"/>
+    <arg name="reference_zero_boost_required_fresh_samples" value="3"/>
+    <arg name="reference_zero_boost_min_fresh_span_sec" value="0.10"/>
+    <arg name="early_aware_min_distance_m" value="30.0"/>
+    <arg name="early_aware_max_distance_m" value="30.0"/>
+    <!-- Ordinary direct candidates retain the normal hard wall margin. Only
+         a fully tagged stopped-corner wall-edge candidate may use its own
+         0.12 m margin through the candidate validation contract. -->
+    <arg name="wall_hard_margin_m" value="0.25"/>
+    <arg name="lateral_tracking_margin_m" value="0.0"/>
+    <arg name="longitudinal_tracking_margin_m" value="0.0"/>
+    <arg name="free_run_return_required_cycles" value="1"/>
+    <!-- Runtime 20260818-164454 and 20260818-165211 lost every closer
+         connector at 0.61 m and 0.72 m respectively because residual
+         steering made the next center candidate fail curvature validation.
+         Treat the central 1.0 m corridor as MERGE_BACK completion so FREE_RUN
+         takes over before that zero-speed deadlock. -->
+    <arg name="return_lateral_error_m" value="1.00"/>
+    <arg name="multi_vehicle_handoff_rear_gap_m" value="1.0"/>
+    <arg name="direct_free_run_after_pass_enabled" value="false"/>
+    <arg name="direct_handoff_reselect_side_enabled" value="true"/>
+    <arg name="direct_overtake_stabilization_enabled" value="true"/>
+    <arg name="direct_overtake_transition_duration_sec" value="4.0"/>
+    <arg name="direct_overtake_transition_min_distance_m" value="0.0"/>
+    <arg name="direct_overtake_transition_max_distance_m" value="35.0"/>
+    <arg name="direct_transient_hold_cycles" value="10"/>
+    <arg name="direct_outer_speed_limit_start_d_m" value="1.2"/>
+    <!-- Keep overtaking usable at racing speed. Environmental and geometric
+         checks remain active; software steering angle/rate limits do not
+         reject or reshape direct-route candidates. -->
+    <arg name="direct_outer_speed_limit_mps" value="9.0"/>
+    <arg name="normal_speed_mps" value="10.0"/>
+    <arg name="direct_merge_back_speed_limit_mps" value="6.0"/>
+    <arg name="direct_merge_back_distance_m" value="20.0"/>
+    <arg name="direct_merge_back_duration_sec" value="3.0"/>
+    <arg name="direct_merge_back_step_m" value="0.50"/>
+    <arg name="direct_merge_entry_required_fresh_samples" value="3"/>
+    <arg name="direct_merge_entry_min_fresh_span_sec" value="0.10"/>
+    <!-- Retained as diagnostic/non-direct defaults. The direct route enables
+         explicit steering passthrough below. -->
+    <arg name="max_steer_rate_radps" value="4.0"/>
+    <arg name="pure_pursuit_wheel_base_m" value="2.14"/>
+    <arg name="pure_pursuit_steering_gain" value="1.45"/>
+    <arg name="pure_pursuit_curvature_feedforward_gain" value="0.60"/>
+    <arg name="pure_pursuit_control_delay_sec" value="0.20"/>
+    <arg name="pure_pursuit_steering_time_constant_sec" value="0.30"/>
+    <arg name="pure_pursuit_steering_passthrough_enabled" value="true"/>
+    <arg name="pure_pursuit_hard_steering_angle_rad" value="0.3665191429188092"/>
+    <arg name="pure_pursuit_hard_steering_rate_radps" value="4.0"/>
+  </include>
+
+  <!-- MPPI is an independent planning stage. In compatibility mode it refines
+       StateLattice; the dedicated MPPI entry enables brain mode and owns
+       target, side, speed, and complete avoidance trajectory selection. -->
+  <include file="$(find-pkg-share reference_space_mppi_planner)/launch/reference_space_mppi.launch.xml">
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="enabled" value="$(var mppi_overtake_enabled)"/>
+    <arg name="shadow_only" value="$(var mppi_overtake_shadow_only)"/>
+    <arg name="brain_mode" value="$(var mppi_brain_mode)"/>
+    <arg name="own_vehicle_id" value="$(var vehicle_id)"/>
+    <arg name="input_trajectory_command" value="$(var direct_trajectory_command_topic)"/>
+    <arg name="output_trajectory_command" value="$(var mppi_trajectory_command_topic)"/>
+    <arg name="input_odometry" value="/localization/kinematic_state"/>
+  </include>
+
+  <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/cma_pure_pursuit.launch.xml">
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="input_kinematics" value="/localization/kinematic_state"/>
+    <arg name="input_trajectory" value="$(var direct_trajectory_topic)"/>
+    <arg name="input_direct_trajectory_command" value="$(var mppi_trajectory_command_topic)"/>
+    <arg name="input_gear_status" value="/vehicle/status/gear_status"/>
+    <arg name="output_control_cmd" value="$(var unboosted_control_topic)"/>
+    <arg name="output_raw_control_cmd" value="/state_lattice/direct/control_cmd_raw"/>
+    <!-- The complete CMA controller implementation and its frozen parameter
+         vector are owned by cma_pure_pursuit.launch.xml. -->
+    <arg name="use_external_target_vel" value="false"/>
+    <arg name="wheel_base" value="$(var cma_pure_pursuit_wheel_base_m)"/>
+    <!-- The Planner keeps reverse trajectory speed negative for PP geometry.
+         AWSIM expects positive speed/acceleration magnitudes after R is
+         confirmed, so CMA converts only at its vehicle-command boundary. -->
+    <arg name="gear_relative_reverse_command_enabled" value="true"/>
+    <arg name="use_atomic_direct_trajectory_command" value="true"/>
+    <arg name="odometry_timeout_sec" value="0.25"/>
+    <arg name="trajectory_timeout_sec" value="0.25"/>
+    <arg name="steering_command_passthrough_enabled" value="true"/>
+    <arg name="steering_tire_angle_gain" value="1.45"/>
+    <!-- Planner geometry is executed without a software steering clamp. The
+         delay predictor is a separate internal vehicle model: seed it from the
+         measured steering report and bound only that prediction by AWSIM's
+         physical angle/rate and lag. The published command remains unchanged. -->
+    <arg name="delay_compensation_enabled" value="true"/>
+    <arg name="hard_steering_angle_limit_rad" value="0.3665191429188092"/>
+    <arg name="hard_steering_rate_limit_radps" value="4.0"/>
+    <arg name="steering_time_constant_sec" value="0.30"/>
+    <!-- Candidate trackability and waiting-Reference ownership are decided by
+         the Planner. A PP-local sustained-error brake can deadlock at zero
+         speed because steering error cannot clear while the kart is stopped. -->
+    <arg name="lateral_error_speed_gate_enabled" value="true"/>
+    <arg name="steering_tracking_speed_gate_enabled" value="false"/>
+    <arg name="steering_tracking_entry_error_rad" value="0.18"/>
+    <arg name="steering_tracking_release_error_rad" value="0.08"/>
+    <arg name="steering_tracking_entry_duration_sec" value="0.10"/>
+    <arg name="steering_tracking_release_duration_sec" value="0.10"/>
+    <arg name="steering_tracking_deceleration_mps2" value="1.0"/>
+    <!-- Only a wall-edge d(s) trajectory carries this reserve envelope. PP
+         consumes it with delayed lateral error and lateral motion, reducing
+         speed without clamping the Planner's steering request. -->
+    <arg name="wall_edge_tracking_speed_enabled" value="true"/>
+    <arg name="wall_edge_lateral_velocity_preview_sec" value="0.20"/>
+    <arg name="wall_edge_minimum_speed_mps" value="10.0"/>
+    <arg name="wall_edge_tracking_deceleration_mps2" value="3.0"/>
+    <arg name="wall_edge_tracking_release_reserve_ratio" value="0.75"/>
+    <arg name="wall_edge_tracking_release_duration_sec" value="0.15"/>
+    <!-- DPP reacts to the two preview-point position errors. Add the signed
+         trajectory-curvature feed-forward separately so the direct route
+         begins steering before those points enter a sharp lateral departure. -->
+    <arg name="curvature_feedforward_enabled" value="true"/>
+    <arg name="curvature_feedforward_gain" value="0.60"/>
+    <arg name="curvature_feedforward_preview_distance_m" value="3.0"/>
+    <arg name="curvature_feedforward_time_constant_sec" value="0.20"/>
+    <arg name="curvature_feedforward_maneuver_only" value="true"/>
+    <arg name="maneuver_lookahead_uses_measured_speed" value="true"/>
+    <arg name="maneuver_lookahead_time_constant_sec" value="0.20"/>
+    <arg name="input_overtake_mode" value="/debug/overtake/mode"/>
+  </include>
+
+  <!-- The bridge combines the controller command with the planner's short
+       lease. Stale command/intent, target handoff, trajectory loss, SAFE_STOP,
+       and MERGE_BACK all fail closed to boost_mode=false. -->
+  <node pkg="state_lattice_overtake_planner" exec="boost_command_bridge_node"
+        name="state_lattice_boost_command_bridge" output="screen">
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="command_timeout_sec" value="0.15"/>
+    <param name="intent_timeout_sec" value="0.15"/>
+    <param name="boost_acceleration_mps2"
+           value="$(var boost_acceleration_mps2)"/>
+    <remap from="input/control_cmd" to="$(var unboosted_control_topic)"/>
+    <remap from="input/boost_intent" to="$(var boost_intent_topic)"/>
+    <remap from="output/boost_command" to="/boost_commander/command"/>
+    <remap from="output/debug" to="/debug/overtake/boost_bridge"/>
+  </node>
+
+  <node pkg="multi_purpose_mpc_ros" exec="boost_commander"
+        name="boost_commander" output="screen">
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+  </node>
+</launch>

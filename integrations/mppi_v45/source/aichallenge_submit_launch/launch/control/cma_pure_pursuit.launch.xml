@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="node_name" default="cma_pure_pursuit_node"/>
+  <arg name="vehicle_param_file" default="$(find-pkg-share cma_pure_pursuit)/config/vehicle_defaults.param.yaml"/>
+  <arg name="recovery_service_enabled" default="false"/>
+  <arg name="input_kinematics" default="/localization/kinematic_state"/>
+  <arg name="input_trajectory" default="/planning/scenario_planning/trajectory"/>
+  <arg name="input_baseline_trajectory" default="/planning/scenario_planning/trajectory"/>
+  <arg name="input_path_source" default="/control/internal/cma_pp/source"/>
+  <arg name="input_direct_trajectory_command" default="/state_lattice/direct/trajectory_command"/>
+  <arg name="hold_last_direct_trajectory_enabled" default="false"/>
+  <arg name="input_steering_status" default="/vehicle/status/steering_status"/>
+  <arg name="input_gear_status" default="/vehicle/status/gear_status"/>
+  <arg name="input_overtake_mode" default="/debug/overtake/mode"/>
+  <arg name="output_control_cmd" default="/control/command/control_cmd"/>
+  <arg name="output_raw_control_cmd" default="/control/command/control_cmd_raw"/>
+  <arg name="output_debug" default="/pure_pursuit/debug"/>
+  <arg name="output_lookahead_point" default="/control/debug/lookahead_point"/>
+  <arg name="output_near_lookahead_point" default="/control/debug/near_lookahead_point"/>
+
+  <!-- Frozen constrained CMA-ES run 20260804T175800Z, g0065-i0010. -->
+  <arg name="use_external_target_vel" default="false"/>
+  <arg name="external_target_vel" default="9.722222222222"/>
+  <arg name="wheel_base" default="2.14"/>
+  <arg name="lookahead_gain" default="0.9730464856294982"/>
+  <arg name="lookahead_min_distance" default="1.9056789445669908"/>
+  <arg name="actual_lookahead_distance_blend" default="0.0"/>
+  <arg name="dual_preview_near_ratio" default="0.557938018486374"/>
+  <arg name="dual_preview_blend" default="0.22853606092001316"/>
+  <arg name="steering_tire_angle_gain" default="2.2578519967320787"/>
+  <arg name="curvature_lookahead_min_distance" default="1.370599267535113"/>
+  <arg name="curvature_lookahead_sensitivity" default="1.9799676729694742"/>
+  <arg name="curvature_lookahead_smoothing_alpha" default="0.21596381301312476"/>
+  <arg name="max_lateral_acceleration" default="6.0"/>
+  <arg name="minimum_corner_speed" default="5.0"/>
+  <arg name="corner_speed_retention" default="1.0"/>
+  <arg name="lateral_error_speed_gate_enabled" default="false"/>
+  <arg name="curvature_speed_preview_distance" default="21.422826964417297"/>
+  <arg name="speed_proportional_gain" default="1.0"/>
+  <arg name="longitudinal_acceleration_limit" default="1.0"/>
+  <arg name="longitudinal_deceleration_limit" default="2.0"/>
+  <arg name="safe_stop_deceleration" default="3.0"/>
+  <arg name="gear_relative_reverse_command_enabled" default="false"/>
+  <arg name="use_atomic_direct_trajectory_command" default="false"/>
+  <arg name="split_trajectory_inputs_enabled" default="false"/>
+  <arg name="odometry_timeout_sec" default="0.5"/>
+  <arg name="trajectory_timeout_sec" default="0.5"/>
+  <arg name="path_source_timeout_sec" default="0.5"/>
+  <arg name="steering_command_passthrough_enabled" default="false"/>
+  <arg name="steering_command_to_tire_angle_ratio" default="0.60"/>
+  <arg name="hard_steering_angle_limit_rad" default="0.3665191429188092"/>
+  <arg name="maximum_tire_steering_angle_rad" default="0.3141592653589793"/>
+  <arg name="hard_steering_rate_limit_radps" default="4.0"/>
+  <arg name="steering_demand_acceleration_hold_enabled" default="false"/>
+  <arg name="steering_acceleration_hold_minimum_speed_mps" default="3.0"/>
+  <arg name="steering_acceleration_hold_minimum_tire_angle_rad" default="0.15"/>
+  <arg name="steering_acceleration_hold_tracking_error_rad" default="0.08"/>
+  <arg name="steering_acceleration_hold_maximum_acceleration_mps2" default="0.0"/>
+  <arg name="continuous_preview_interpolation_enabled" default="false"/>
+  <arg name="delay_compensation_enabled" default="false"/>
+  <arg name="pp_control_delay_sec" default="0.2"/>
+  <arg name="pp_prediction_dt_sec" default="0.02"/>
+  <arg name="steering_time_constant_sec" default="0.30"/>
+  <arg name="steering_status_timeout_sec" default="0.20"/>
+  <arg name="min_velocity_for_delay_compensation_mps" default="0.20"/>
+  <arg name="curvature_feedforward_enabled" default="false"/>
+  <arg name="curvature_feedforward_gain" default="0.40"/>
+  <arg name="curvature_feedforward_preview_distance_m" default="3.0"/>
+  <arg name="curvature_feedforward_time_constant_sec" default="0.20"/>
+  <arg name="curvature_feedforward_maneuver_only" default="false"/>
+  <arg name="maneuver_lookahead_uses_measured_speed" default="false"/>
+  <arg name="maneuver_lookahead_time_constant_sec" default="0.20"/>
+  <arg name="overtake_mode_timeout_sec" default="0.5"/>
+  <arg name="diagnostic_trace_enabled" default="false"/>
+  <arg name="diagnostic_trace_maneuver_only" default="true"/>
+  <arg name="diagnostic_trace_period_sec" default="0.02"/>
+  <arg name="runtime_timing_metrics_enabled" default="false"/>
+  <arg name="runtime_timing_report_period_sec" default="1.0"/>
+  <arg name="runtime_timing_deadline_sec" default="0.033333333"/>
+  <arg name="exit_unwind_enabled" default="false"/>
+  <arg name="exit_unwind_far_preview_boost" default="0.20"/>
+  <arg name="exit_unwind_curvature_drop_threshold" default="0.02"/>
+  <arg name="rotation_gate_enabled" default="false"/>
+  <arg name="rotation_gate_min_curvature" default="0.06"/>
+  <arg name="rotation_gate_min_steering_angle" default="0.18"/>
+  <arg name="rotation_gate_yaw_rate_error_threshold" default="0.30"/>
+  <arg name="rotation_gate_yaw_rate_error_release_ratio" default="0.60"/>
+  <arg name="rotation_gate_max_lateral_error" default="1.00"/>
+  <arg name="rotation_gate_min_duration_sec" default="0.05"/>
+  <arg name="rotation_gate_max_duration_sec" default="0.20"/>
+  <arg name="rotation_gate_cooldown_sec" default="0.50"/>
+  <arg name="rotation_gate_countersteer_gain" default="0.35"/>
+  <arg name="rotation_gate_max_countersteer_rad" default="0.12"/>
+  <arg name="rotation_prediction_enabled" default="false"/>
+  <arg name="rotation_prediction_lead_time_sec" default="0.15"/>
+  <arg name="rotation_prediction_yaw_acceleration_filter_time_constant_sec" default="0.08"/>
+  <arg name="rotation_prediction_max_yaw_acceleration_radps2" default="6.0"/>
+  <arg name="rotation_prediction_entry_threshold_radps" default="0.18"/>
+  <arg name="rotation_prediction_min_yaw_acceleration_radps2" default="0.30"/>
+  <arg name="rotation_prediction_slip_angle_threshold_rad" default="0.04"/>
+  <arg name="rotation_prediction_slip_yaw_rate_gain" default="2.0"/>
+  <arg name="steering_tracking_speed_gate_enabled" default="false"/>
+  <arg name="steering_tracking_entry_error_rad" default="0.18"/>
+  <arg name="steering_tracking_release_error_rad" default="0.08"/>
+  <arg name="steering_tracking_entry_duration_sec" default="0.10"/>
+  <arg name="steering_tracking_release_duration_sec" default="0.10"/>
+  <arg name="steering_tracking_deceleration_mps2" default="1.0"/>
+  <arg name="wall_edge_tracking_speed_enabled" default="true"/>
+  <arg name="wall_edge_lateral_velocity_preview_sec" default="0.20"/>
+  <arg name="wall_edge_minimum_speed_mps" default="0.50"/>
+  <arg name="wall_edge_tracking_deceleration_mps2" default="3.0"/>
+  <arg name="wall_edge_tracking_release_reserve_ratio" default="0.75"/>
+  <arg name="wall_edge_tracking_release_duration_sec" default="0.15"/>
+
+  <node pkg="cma_pure_pursuit" exec="cma_pure_pursuit" name="$(var node_name)" output="screen">
+    <param name="recovery_service_enabled" value="$(var recovery_service_enabled)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="use_external_target_vel" value="$(var use_external_target_vel)"/>
+    <param name="external_target_vel" value="$(var external_target_vel)"/>
+    <param name="wheel_base" value="$(var wheel_base)"/>
+    <param name="lookahead_gain" value="$(var lookahead_gain)"/>
+    <param name="lookahead_min_distance" value="$(var lookahead_min_distance)"/>
+    <param name="actual_lookahead_distance_blend" value="$(var actual_lookahead_distance_blend)"/>
+    <param name="dual_preview_near_ratio" value="$(var dual_preview_near_ratio)"/>
+    <param name="dual_preview_blend" value="$(var dual_preview_blend)"/>
+    <param name="steering_tire_angle_gain" value="$(var steering_tire_angle_gain)"/>
+    <param name="curvature_lookahead_min_distance" value="$(var curvature_lookahead_min_distance)"/>
+    <param name="curvature_lookahead_sensitivity" value="$(var curvature_lookahead_sensitivity)"/>
+    <param name="curvature_lookahead_smoothing_alpha" value="$(var curvature_lookahead_smoothing_alpha)"/>
+    <param name="max_lateral_acceleration" value="$(var max_lateral_acceleration)"/>
+    <param name="minimum_corner_speed" value="$(var minimum_corner_speed)"/>
+    <param name="corner_speed_retention" value="$(var corner_speed_retention)"/>
+    <param name="lateral_error_speed_gate_enabled" value="$(var lateral_error_speed_gate_enabled)"/>
+    <param name="curvature_speed_preview_distance" value="$(var curvature_speed_preview_distance)"/>
+    <param name="speed_proportional_gain" value="$(var speed_proportional_gain)"/>
+    <param name="longitudinal_acceleration_limit" value="$(var longitudinal_acceleration_limit)"/>
+    <param name="longitudinal_deceleration_limit" value="$(var longitudinal_deceleration_limit)"/>
+    <param name="safe_stop_deceleration" value="$(var safe_stop_deceleration)"/>
+    <param name="gear_relative_reverse_command_enabled" value="$(var gear_relative_reverse_command_enabled)"/>
+    <param name="use_atomic_direct_trajectory_command" value="$(var use_atomic_direct_trajectory_command)"/>
+    <param name="hold_last_direct_trajectory_enabled" value="$(var hold_last_direct_trajectory_enabled)"/>
+    <param name="split_trajectory_inputs_enabled" value="$(var split_trajectory_inputs_enabled)"/>
+    <param name="odometry_timeout_sec" value="$(var odometry_timeout_sec)"/>
+    <param name="trajectory_timeout_sec" value="$(var trajectory_timeout_sec)"/>
+    <param name="path_source_timeout_sec" value="$(var path_source_timeout_sec)"/>
+    <param name="steering_command_passthrough_enabled" value="$(var steering_command_passthrough_enabled)"/>
+    <param name="steering_command_to_tire_angle_ratio" value="$(var steering_command_to_tire_angle_ratio)"/>
+    <param name="hard_steering_angle_limit_rad" value="$(var hard_steering_angle_limit_rad)"/>
+    <param name="maximum_tire_steering_angle_rad" value="$(var maximum_tire_steering_angle_rad)"/>
+    <param name="hard_steering_rate_limit_radps" value="$(var hard_steering_rate_limit_radps)"/>
+    <param name="steering_demand_acceleration_hold_enabled" value="$(var steering_demand_acceleration_hold_enabled)"/>
+    <param name="steering_acceleration_hold_minimum_speed_mps" value="$(var steering_acceleration_hold_minimum_speed_mps)"/>
+    <param name="steering_acceleration_hold_minimum_tire_angle_rad" value="$(var steering_acceleration_hold_minimum_tire_angle_rad)"/>
+    <param name="steering_acceleration_hold_tracking_error_rad" value="$(var steering_acceleration_hold_tracking_error_rad)"/>
+    <param name="steering_acceleration_hold_maximum_acceleration_mps2" value="$(var steering_acceleration_hold_maximum_acceleration_mps2)"/>
+    <param name="continuous_preview_interpolation_enabled" value="$(var continuous_preview_interpolation_enabled)"/>
+    <param name="delay_compensation_enabled" value="$(var delay_compensation_enabled)"/>
+    <param name="pp_control_delay_sec" value="$(var pp_control_delay_sec)"/>
+    <param name="pp_prediction_dt_sec" value="$(var pp_prediction_dt_sec)"/>
+    <param name="steering_time_constant_sec" value="$(var steering_time_constant_sec)"/>
+    <param name="steering_status_timeout_sec" value="$(var steering_status_timeout_sec)"/>
+    <param name="min_velocity_for_delay_compensation_mps" value="$(var min_velocity_for_delay_compensation_mps)"/>
+    <param name="curvature_feedforward_enabled" value="$(var curvature_feedforward_enabled)"/>
+    <param name="curvature_feedforward_gain" value="$(var curvature_feedforward_gain)"/>
+    <param name="curvature_feedforward_preview_distance_m" value="$(var curvature_feedforward_preview_distance_m)"/>
+    <param name="curvature_feedforward_time_constant_sec" value="$(var curvature_feedforward_time_constant_sec)"/>
+    <param name="curvature_feedforward_maneuver_only" value="$(var curvature_feedforward_maneuver_only)"/>
+    <param name="maneuver_lookahead_uses_measured_speed" value="$(var maneuver_lookahead_uses_measured_speed)"/>
+    <param name="maneuver_lookahead_time_constant_sec" value="$(var maneuver_lookahead_time_constant_sec)"/>
+    <param name="overtake_mode_timeout_sec" value="$(var overtake_mode_timeout_sec)"/>
+    <param name="diagnostic_trace_enabled" value="$(var diagnostic_trace_enabled)"/>
+    <param name="diagnostic_trace_maneuver_only" value="$(var diagnostic_trace_maneuver_only)"/>
+    <param name="diagnostic_trace_period_sec" value="$(var diagnostic_trace_period_sec)"/>
+    <param name="runtime_timing_metrics_enabled" value="$(var runtime_timing_metrics_enabled)"/>
+    <param name="runtime_timing_report_period_sec" value="$(var runtime_timing_report_period_sec)"/>
+    <param name="runtime_timing_deadline_sec" value="$(var runtime_timing_deadline_sec)"/>
+    <param name="exit_unwind_enabled" value="$(var exit_unwind_enabled)"/>
+    <param name="exit_unwind_far_preview_boost" value="$(var exit_unwind_far_preview_boost)"/>
+    <param name="exit_unwind_curvature_drop_threshold" value="$(var exit_unwind_curvature_drop_threshold)"/>
+    <param name="rotation_gate_enabled" value="$(var rotation_gate_enabled)"/>
+    <param name="rotation_gate_min_curvature" value="$(var rotation_gate_min_curvature)"/>
+    <param name="rotation_gate_min_steering_angle" value="$(var rotation_gate_min_steering_angle)"/>
+    <param name="rotation_gate_yaw_rate_error_threshold" value="$(var rotation_gate_yaw_rate_error_threshold)"/>
+    <param name="rotation_gate_yaw_rate_error_release_ratio" value="$(var rotation_gate_yaw_rate_error_release_ratio)"/>
+    <param name="rotation_gate_max_lateral_error" value="$(var rotation_gate_max_lateral_error)"/>
+    <param name="rotation_gate_min_duration_sec" value="$(var rotation_gate_min_duration_sec)"/>
+    <param name="rotation_gate_max_duration_sec" value="$(var rotation_gate_max_duration_sec)"/>
+    <param name="rotation_gate_cooldown_sec" value="$(var rotation_gate_cooldown_sec)"/>
+    <param name="rotation_gate_countersteer_gain" value="$(var rotation_gate_countersteer_gain)"/>
+    <param name="rotation_gate_max_countersteer_rad" value="$(var rotation_gate_max_countersteer_rad)"/>
+    <param name="rotation_prediction_enabled" value="$(var rotation_prediction_enabled)"/>
+    <param name="rotation_prediction_lead_time_sec" value="$(var rotation_prediction_lead_time_sec)"/>
+    <param name="rotation_prediction_yaw_acceleration_filter_time_constant_sec" value="$(var rotation_prediction_yaw_acceleration_filter_time_constant_sec)"/>
+    <param name="rotation_prediction_max_yaw_acceleration_radps2" value="$(var rotation_prediction_max_yaw_acceleration_radps2)"/>
+    <param name="rotation_prediction_entry_threshold_radps" value="$(var rotation_prediction_entry_threshold_radps)"/>
+    <param name="rotation_prediction_min_yaw_acceleration_radps2" value="$(var rotation_prediction_min_yaw_acceleration_radps2)"/>
+    <param name="rotation_prediction_slip_angle_threshold_rad" value="$(var rotation_prediction_slip_angle_threshold_rad)"/>
+    <param name="rotation_prediction_slip_yaw_rate_gain" value="$(var rotation_prediction_slip_yaw_rate_gain)"/>
+    <param name="steering_tracking_speed_gate_enabled" value="$(var steering_tracking_speed_gate_enabled)"/>
+    <param name="steering_tracking_entry_error_rad" value="$(var steering_tracking_entry_error_rad)"/>
+    <param name="steering_tracking_release_error_rad" value="$(var steering_tracking_release_error_rad)"/>
+    <param name="steering_tracking_entry_duration_sec" value="$(var steering_tracking_entry_duration_sec)"/>
+    <param name="steering_tracking_release_duration_sec" value="$(var steering_tracking_release_duration_sec)"/>
+    <param name="steering_tracking_deceleration_mps2" value="$(var steering_tracking_deceleration_mps2)"/>
+    <param name="wall_edge_tracking_speed_enabled" value="$(var wall_edge_tracking_speed_enabled)"/>
+    <param name="wall_edge_lateral_velocity_preview_sec" value="$(var wall_edge_lateral_velocity_preview_sec)"/>
+    <param name="wall_edge_minimum_speed_mps" value="$(var wall_edge_minimum_speed_mps)"/>
+    <param name="wall_edge_tracking_deceleration_mps2" value="$(var wall_edge_tracking_deceleration_mps2)"/>
+    <param name="wall_edge_tracking_release_reserve_ratio" value="$(var wall_edge_tracking_release_reserve_ratio)"/>
+    <param name="wall_edge_tracking_release_duration_sec" value="$(var wall_edge_tracking_release_duration_sec)"/>
+
+    <param from="$(var vehicle_param_file)"/>
+    <remap from="input/kinematics" to="$(var input_kinematics)"/>
+    <remap from="input/trajectory" to="$(var input_trajectory)"/>
+    <remap from="input/baseline_trajectory" to="$(var input_baseline_trajectory)"/>
+    <remap from="input/path_source" to="$(var input_path_source)"/>
+    <remap from="input/direct_trajectory_command" to="$(var input_direct_trajectory_command)"/>
+    <remap from="input/steering_status" to="$(var input_steering_status)"/>
+    <remap from="input/gear_status" to="$(var input_gear_status)"/>
+    <remap from="input/overtake_mode" to="$(var input_overtake_mode)"/>
+    <remap from="output/control_cmd" to="$(var output_control_cmd)"/>
+    <remap from="output/raw_control_cmd" to="$(var output_raw_control_cmd)"/>
+    <remap from="/pure_pursuit/debug" to="$(var output_debug)"/>
+    <remap from="/control/debug/lookahead_point" to="$(var output_lookahead_point)"/>
+    <remap from="/control/debug/near_lookahead_point" to="$(var output_near_lookahead_point)"/>
+  </node>
+</launch>

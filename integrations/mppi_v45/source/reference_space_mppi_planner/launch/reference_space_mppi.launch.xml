@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <arg name="use_sim_time" default="true"/>
+  <arg name="param_file"
+       default="$(find-pkg-share reference_space_mppi_planner)/config/reference_space_mppi.param.yaml"/>
+  <arg name="execution_speed_cap_mps" default="10.0"/>
+  <arg name="vehicle_param_file" default="$(find-pkg-share cma_pure_pursuit)/config/vehicle_defaults.param.yaml"/>
+  <arg name="enabled" default="false"/>
+  <arg name="shadow_only" default="false"/>
+  <arg name="brain_mode" default="false"/>
+  <arg name="internal_timer_enabled" default="false"/>
+  <arg name="static_wall_map_enabled" default="false"/>
+  <arg name="recovery_service_enabled" default="false"/>
+  <arg name="own_vehicle_id" default="$(env VEHICLE_ID default)"/>
+  <arg name="input_trajectory_command" default="/state_lattice/direct/trajectory_command"/>
+  <arg name="output_trajectory_command" default="/mppi/direct/trajectory_command"/>
+  <arg name="input_odometry" default="/localization/kinematic_state"/>
+  <arg name="input_base_reference" default="/planning/scenario_planning/trajectory"/>
+  <arg name="input_vehicle_positions" default="/v2x/vehicle_positions"/>
+  <arg name="input_wall_map" default="/debug/overtake/wall_map"/>
+  <arg name="input_steering" default="/vehicle/status/steering_status"/>
+  <arg name="input_control_command" default="/control/command/control_cmd"/>
+
+  <node pkg="reference_space_mppi_planner" exec="reference_space_mppi_node"
+        name="reference_space_mppi_planner" output="screen">
+    <param from="$(var param_file)"/>
+    <param from="$(find-pkg-share reference_space_mppi_planner)/config/awsim_wall_map/footprint.param.yaml"/>
+    <param name="brain.cruise_speed_mps" value="$(var execution_speed_cap_mps)"/>
+    <param name="brain.overtake_speed_mps" value="$(var execution_speed_cap_mps)"/>
+    <param name="brain.minimum_proximity_speed_mps" value="$(var execution_speed_cap_mps)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
+    <param name="enabled" value="$(var enabled)"/>
+    <param name="shadow_only" value="$(var shadow_only)"/>
+    <param name="brain_mode" value="$(var brain_mode)"/>
+    <param name="brain.internal_timer_enabled" value="$(var internal_timer_enabled)"/>
+    <param name="brain.static_wall_map_enabled" value="$(var static_wall_map_enabled)"/>
+    <param name="recovery_service_enabled" value="$(var recovery_service_enabled)"/>
+    <param name="own_vehicle_id" value="$(var own_vehicle_id)"/>
+    <param from="$(var vehicle_param_file)"/>
+    <remap from="input/trajectory_command" to="$(var input_trajectory_command)"/>
+    <remap from="input/odometry" to="$(var input_odometry)"/>
+    <remap from="input/base_reference" to="$(var input_base_reference)"/>
+    <remap from="input/vehicle_positions" to="$(var input_vehicle_positions)"/>
+    <remap from="input/wall_map" to="$(var input_wall_map)"/>
+    <remap from="input/steering" to="$(var input_steering)"/>
+    <remap from="input/control_command" to="$(var input_control_command)"/>
+    <remap from="output/trajectory_command" to="$(var output_trajectory_command)"/>
+    <remap from="debug/baseline" to="/debug/mppi/baseline"/>
+    <remap from="debug/selected" to="/debug/mppi/selected"/>
+    <remap from="debug/candidates" to="/debug/mppi/candidates"/>
+    <remap from="debug/opponent_predictions" to="/debug/mppi/opponent_predictions"/>
+    <remap from="debug/status" to="/debug/mppi/status"/>
+    <remap from="debug/wall_map" to="/debug/mppi/wall_map"/>
+  </node>
+</launch>

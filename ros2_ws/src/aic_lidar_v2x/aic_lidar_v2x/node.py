@@ -42,7 +42,8 @@ class LidarV2XNode(Node):
         self.input_state = InputState(
             self.declare_parameter("mode", "shadow").value, time.monotonic(),
             float(self.declare_parameter("teacher_input_timeout_s", 0.75).value),
-            float(self.declare_parameter("teacher_startup_timeout_s", 15.0).value))
+            float(self.declare_parameter("teacher_startup_timeout_s", 15.0).value),
+            teacher_version=self.declare_parameter("teacher_version", "V44").value)
         if self.input_state.mode == "teacher_existing_margin" and self.config.object_model != "surface":
             raise ValueError("Existing-margin teacher input uses observed surface positions")
         map_path = self.declare_parameter("map_yaml", "").value

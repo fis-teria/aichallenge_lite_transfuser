@@ -1,0 +1,78 @@
+#pragma once
+#include "simple_pure_pursuit/rotation_controller.hpp"
+#include <multi_purpose_mpc_ros_msgs/msg/cma_rotation_prediction_state.hpp>
+
+namespace simple_pure_pursuit {
+using RotationPredictionMessage=multi_purpose_mpc_ros_msgs::msg::CmaRotationPredictionState;
+template<class Parameters>
+RotationPredictionMessage makeRotationPredictionMessage(const Parameters &parameters,
+    const RotationControllerState &state, double slip_angle_rad, bool slip_angle_valid) {
+  RotationPredictionMessage message;
+  message.slip_angle_rad=slip_angle_rad;
+  message.slip_angle_valid=slip_angle_valid;
+  message.rotation_gate_enabled=parameters.rotation_gate_enabled;
+  message.rotation_gate_min_curvature=parameters.rotation_gate_min_curvature;
+  message.rotation_gate_min_steering_angle=parameters.rotation_gate_min_steering_angle;
+  message.rotation_gate_yaw_rate_error_threshold=parameters.rotation_gate_yaw_rate_error_threshold;
+  message.rotation_gate_yaw_rate_error_release_ratio=parameters.rotation_gate_yaw_rate_error_release_ratio;
+  message.rotation_gate_max_lateral_error=parameters.rotation_gate_max_lateral_error;
+  message.rotation_gate_min_duration_sec=parameters.rotation_gate_min_duration_sec;
+  message.rotation_gate_max_duration_sec=parameters.rotation_gate_max_duration_sec;
+  message.rotation_gate_cooldown_sec=parameters.rotation_gate_cooldown_sec;
+  message.rotation_gate_countersteer_gain=parameters.rotation_gate_countersteer_gain;
+  message.rotation_gate_max_countersteer_rad=parameters.rotation_gate_max_countersteer_rad;
+  message.rotation_prediction_enabled=parameters.rotation_prediction_enabled;
+  message.rotation_prediction_lead_time_sec=parameters.rotation_prediction_lead_time_sec;
+  message.rotation_prediction_yaw_acceleration_filter_time_constant_sec=parameters.rotation_prediction_yaw_acceleration_filter_time_constant_sec;
+  message.rotation_prediction_max_yaw_acceleration_radps2=parameters.rotation_prediction_max_yaw_acceleration_radps2;
+  message.rotation_prediction_entry_threshold_radps=parameters.rotation_prediction_entry_threshold_radps;
+  message.rotation_prediction_min_yaw_acceleration_radps2=parameters.rotation_prediction_min_yaw_acceleration_radps2;
+  message.rotation_prediction_slip_angle_threshold_rad=parameters.rotation_prediction_slip_angle_threshold_rad;
+  message.rotation_prediction_slip_yaw_rate_gain=parameters.rotation_prediction_slip_yaw_rate_gain;
+  message.pp_control_delay_sec=parameters.pp_control_delay_sec;
+  message.steering_time_constant_sec=parameters.steering_time_constant_sec;
+  message.active=state.active;
+  message.started_sec=state.started_sec;
+  message.cooldown_until_sec=state.cooldown_until_sec;
+  message.yaw_acceleration_initialized=state.yaw_acceleration_initialized;
+  message.previous_yaw_rate_radps=state.previous_yaw_rate_radps;
+  message.filtered_yaw_acceleration_radps2=state.filtered_yaw_acceleration_radps2;
+  return message;
+}
+inline RotationPredictionSnapshot rotationPredictionSnapshot(const RotationPredictionMessage &message) {
+  RotationPredictionSnapshot snapshot;
+  snapshot.valid=true;
+  snapshot.stamp_sec=message.header.stamp.sec+message.header.stamp.nanosec*1e-9;
+  snapshot.slip_angle_rad=message.slip_angle_rad;
+  snapshot.slip_angle_valid=message.slip_angle_valid;
+  snapshot.parameters.rotation_gate_enabled=message.rotation_gate_enabled;
+  snapshot.parameters.rotation_gate_min_curvature=message.rotation_gate_min_curvature;
+  snapshot.parameters.rotation_gate_min_steering_angle=message.rotation_gate_min_steering_angle;
+  snapshot.parameters.rotation_gate_yaw_rate_error_threshold=message.rotation_gate_yaw_rate_error_threshold;
+  snapshot.parameters.rotation_gate_yaw_rate_error_release_ratio=message.rotation_gate_yaw_rate_error_release_ratio;
+  snapshot.parameters.rotation_gate_max_lateral_error=message.rotation_gate_max_lateral_error;
+  snapshot.parameters.rotation_gate_min_duration_sec=message.rotation_gate_min_duration_sec;
+  snapshot.parameters.rotation_gate_max_duration_sec=message.rotation_gate_max_duration_sec;
+  snapshot.parameters.rotation_gate_cooldown_sec=message.rotation_gate_cooldown_sec;
+  snapshot.parameters.rotation_gate_countersteer_gain=message.rotation_gate_countersteer_gain;
+  snapshot.parameters.rotation_gate_max_countersteer_rad=message.rotation_gate_max_countersteer_rad;
+  snapshot.parameters.rotation_prediction_enabled=message.rotation_prediction_enabled;
+  snapshot.parameters.rotation_prediction_lead_time_sec=message.rotation_prediction_lead_time_sec;
+  snapshot.parameters.rotation_prediction_yaw_acceleration_filter_time_constant_sec=message.rotation_prediction_yaw_acceleration_filter_time_constant_sec;
+  snapshot.parameters.rotation_prediction_max_yaw_acceleration_radps2=message.rotation_prediction_max_yaw_acceleration_radps2;
+  snapshot.parameters.rotation_prediction_entry_threshold_radps=message.rotation_prediction_entry_threshold_radps;
+  snapshot.parameters.rotation_prediction_min_yaw_acceleration_radps2=message.rotation_prediction_min_yaw_acceleration_radps2;
+  snapshot.parameters.rotation_prediction_slip_angle_threshold_rad=message.rotation_prediction_slip_angle_threshold_rad;
+  snapshot.parameters.rotation_prediction_slip_yaw_rate_gain=message.rotation_prediction_slip_yaw_rate_gain;
+  snapshot.parameters.pp_control_delay_sec=message.pp_control_delay_sec;
+  snapshot.parameters.steering_time_constant_sec=message.steering_time_constant_sec;
+  snapshot.state.active=message.active;
+  snapshot.state.started_sec=message.started_sec;
+  snapshot.state.cooldown_until_sec=message.cooldown_until_sec;
+  snapshot.state.yaw_acceleration_initialized=message.yaw_acceleration_initialized;
+  snapshot.state.previous_yaw_rate_radps=message.previous_yaw_rate_radps;
+  snapshot.state.filtered_yaw_acceleration_radps2=message.filtered_yaw_acceleration_radps2;
+  return snapshot;
+}
+} // namespace simple_pure_pursuit
+

@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!-- Essential parameters -->
+  <arg name="vehicle_id" default="$(env VEHICLE_ID default)" description="vehicle specific ID"/>
+  <arg name="simulation" description="used for sensor kit param"/>
+  <arg name="use_sim_time"/>
+  <arg name="map_path" default="$(find-pkg-share aichallenge_submit_launch)/map"/>
+  <arg name="vehicle_model" default="racing_kart"  description="vehicle model name"/>
+  <arg name="sensor_model" default="racing_kart_sensor_kit" description="sensor model name"/>
+  <!-- Optional parameters -->
+  <!-- Map -->
+  <arg name="lanelet2_map_file" default="lanelet2_map.osm" description="lanelet2 map file name"/>
+  <arg name="pointcloud_map_file" default="pointcloud_map.pcd" description="pointcloud map file name"/>
+  <arg name="reference_execution_speed_cap_mps" default="10.0"
+       description="Fail-closed reference execution speed ceiling in m/s"/>
+  <arg name="mppi_overtake_enabled" default="false"
+       description="Run the independent Reference-space MPPI stage before CMA Pure Pursuit"/>
+
+  <!-- Vehicle -->
+  <arg name="launch_vehicle_interface" default="$(eval &quot;'$(var simulation)' == 'false'&quot;)"/>
+  <arg name="mppi_vehicle_param_file" default="$(find-pkg-share aichallenge_submit_launch)/config/mppi_vehicle_$(eval &quot;'simulation' if '$(var simulation)' == 'true' else 'real'&quot;).param.yaml"/>
+  <log message="echo launch param use_sim_time: $(var use_sim_time) launch_vehicle_interface: $(var launch_vehicle_interface) sensor_model: $(var sensor_model)"/>
+
+  <!-- Control method -->
+  <arg name="control_method" default="mppi"
+        description="Select control: mpc, cma_pure_pursuit, delay_aware_mpc, hybrid_delay_aware_mpc, pure_pursuit_mpc_horizon, state_lattice_pure_pursuit, state_lattice_direct_pure_pursuit, mppi, pure_pursuit, tiny_lidar_net, pilot_net, joycon"/>
+  <arg name="mppi_reference_profile" default="race"
+       description="race: lap1 then normal/leader by estimated rank; normal, leader, legacy: fixed reference"/>
+  <!-- Keep the measured reference and execution ceiling together. A lower
+       operator ceiling is still honored; other controllers keep their paths. -->
+  <let name="mppi_reference_filename"
+       value="$(eval &quot;{'race': 'in_corce_line.csv', 'normal': 'mppi_cma_normal35_20260913.csv', 'leader': 'mppi_cma_leader75_20260913.csv', 'legacy': 'in_corce_line_straight_smooth.csv'}['$(var mppi_reference_profile)'] if '$(var control_method)' == 'mppi' else 'in_corce_line_straight_smooth.csv'&quot;)"/>
+  <let name="effective_reference_execution_speed_cap_mps"
+       value="$(eval &quot;min(float('$(var reference_execution_speed_cap_mps)'), {'race': 9.722222222222221, 'normal': 9.722222222222221, 'leader': 7.5, 'legacy': 10.0}['$(var mppi_reference_profile)']) if '$(var control_method)' == 'mppi' else float('$(var reference_execution_speed_cap_mps)')&quot;)"/>
+  <arg name="mpc_cma_mux_authority_enabled" default="false"/>
+  <arg name="c002ay1_prod_measure_enabled" default="false"/>
+  <arg name="c002ay1_prod_measure_socket_path" default=""/>
+  <arg name="c002ay1_prod_measure_run_id" default=""/>
+  <arg name="c002ay1_prod_measure_planner_nonce" default="0"/>
+  <arg name="c002ay1_prod_measure_planner_instance_id" default="0"/>
+  <arg name="c002ay1_prod_measure_pp_nonce" default="0"/>
+  <arg name="c002ay1_prod_measure_pp_instance_id" default="0"/>
+  <arg name="c002ay1_prod_measure_selected_stream" default="legacy"/>
+  <arg name="free_run_live_exact_observe_enabled" default="true"/>
+  <arg name="free_run_live_exact_pre_ack_hold_enabled" default="true"/>
+  <arg name="pp_core_exact_snapshot_enabled" default="false"/>
+  <arg name="overtake_trajectory_backend" default="current"/>
+  <!-- Only the explicit state_lattice_pure_pursuit profile consumes these. -->
+  <arg name="state_lattice_v2_live_proposal_publish_enabled" default="false"/>
+  <arg name="state_lattice_v2_live_proposal_accept_enabled" default="false"/>
+  <arg name="state_lattice_v2_producer_instance_id" default="0"/>
+  <arg name="state_lattice_v2_pp_producer_instance_id" default=""/>
+  <arg name="state_lattice_v2_session_id" default=""/>
+  <arg name="state_lattice_v4_poc_command_activation_enabled" default="false"/>
+  <let name="state_lattice_v4_awsim_poc_enabled"
+       value="$(eval &quot;'$(var state_lattice_v4_poc_command_activation_enabled)' == 'true' and '$(var simulation)' == 'true'&quot;)"/>
+  <log message="V4 LIVE PoC activation is AWSIM-only; request ignored for non-simulation launch"
+       if="$(eval &quot;'$(var state_lattice_v4_poc_command_activation_enabled)' == 'true' and '$(var simulation)' != 'true'&quot;)"/>
+  <let name="overtake_route_required"
+       value="$(eval &quot;'$(var control_method)' in ('hybrid_delay_aware_mpc', 'pure_pursuit_mpc_horizon', 'state_lattice_pure_pursuit')&quot;)"/>
+  <let name="overtake_control_route_config"
+       value="$(find-pkg-share overtake_planner)/config/overtake_planner.param.yaml"
+       if="$(var overtake_route_required)"/>
+  <let name="overtake_control_route_config"
+       value="$(find-pkg-share overtake_planner)/config/v4_live_poc_route.param.yaml"
+       if="$(eval &quot;'$(var overtake_route_required)' == 'true' and '$(var state_lattice_v4_awsim_poc_enabled)' == 'true'&quot;)"/>
+  <let name="overtake_control_route"
+       value="$(command '$(exec-in-pkg resolve_overtake_control_route overtake_planner) $(var overtake_control_route_config)' 'warn')"
+       if="$(var overtake_route_required)"/>
+  <let name="overtake_control_route" value="current"
+       if="$(eval &quot;'$(var overtake_route_required)' != 'true'&quot;)"/>
+  <log message=" - planner config overtake_control_route: $(var overtake_control_route)"/>
+
+  <!-- Global parameters -->
+  <group scoped="false">
+    <include file="$(find-pkg-share global_parameter_loader)/launch/global_params.launch.py">
+      <arg name="use_sim_time" value="$(var use_sim_time)"/>
+      <arg name="vehicle_model" value="$(var vehicle_model)"/>
+    </include>
+  </group>
+
+  <group>
+    <arg name="model_file" default="$(find-pkg-share tier4_vehicle_launch)/urdf/vehicle.xacro" description="path to the file of model settings (*.xacro)"/>
+    <arg name="config_dir" default="$(find-pkg-share racing_kart_sensor_kit_description)/config"/>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" exec="robot_state_publisher">
+      <param name="robot_description" value="$(command 'xacro $(var model_file) vehicle_model:=$(var vehicle_model) sensor_model:=$(var sensor_model) config_dir:=$(var config_dir) simulation:=$(var simulation)' 'warn')"/>
+    </node>
+  </group>
+
+  <!-- Sensing -->
+  <group>
+    <push-ros-namespace namespace="sensing"/>
+    <!-- Vehicle Velocity Converter  -->
+    <include file="$(find-pkg-share vehicle_velocity_converter)/launch/vehicle_velocity_converter.launch.xml">
+      <arg name="input_vehicle_velocity_topic" value="/vehicle/status/velocity_status"/>
+      <arg name="output_twist_with_covariance" value="/sensing/vehicle_velocity_converter/twist_with_covariance"/>
+      <arg name="config_file" value="$(find-pkg-share aichallenge_submit_launch)/config/vehicle_velocity_converter.param.yaml"/>
+    </include>
+    <group>
+      <push-ros-namespace namespace="imu"/>
+      <arg name="imu_corrector_param_file" default="$(find-pkg-share imu_corrector)/config/imu_corrector.param.yaml"/>
+      <include file="$(find-pkg-share imu_corrector)/launch/imu_corrector.launch.xml">
+        <arg name="input_topic" value="imu_raw"/>
+        <arg name="output_topic" value="imu_data"/>
+        <arg name="param_file" value="$(var imu_corrector_param_file)"/>
+      </include>
+    </group>
+    <group>
+      <push-ros-namespace namespace="gnss"/>
+      <include file="$(find-pkg-share racing_kart_gnss_poser)/launch/gnss_poser.launch.xml">
+        <arg name="input_topic_fix" value="nav_sat_fix"/>
+        <arg name="output_topic_gnss_pose" value="pose"/>
+        <arg name="output_topic_gnss_fixed" value="gnss_fixed"/>
+        <arg name="output_topic_gnss_pose_cov" value="pose_with_covariance"/>
+        <arg name="unknown_position_covariance_m2"
+             value="$(eval &quot;0.1 if '$(var simulation)' == 'true' else 10.0&quot;)"/>
+      </include>
+    </group>
+  </group>
+
+    <!-- Localization -->
+  <let name="pose_additional_delay_var" value="0.0" />
+  <group>
+    <push-ros-namespace namespace="localization"/>
+    <include file="$(find-pkg-share gyro_odometer)/launch/gyro_odometer.launch.xml">
+      <arg name="input_vehicle_twist_with_covariance_topic" value="/sensing/vehicle_velocity_converter/twist_with_covariance"/>
+      <arg name="input_imu_topic" value="/sensing/imu/imu_data"/>
+      <arg name="output_twist_with_covariance_topic" value="/localization/twist_estimator/twist_with_covariance"/>
+      <arg name="output_twist_with_covariance_raw_topic" value="/localization/twist_estimator/twist_with_covariance_raw"/>
+    </include>
+
+    <node pkg="imu_gnss_poser" exec="imu_gnss_poser_node" name="imu_gnss_poser" output="screen">
+      <param from="$(find-pkg-share imu_gnss_poser)/config/imu_gnss_poser.param.yaml"/>
+      <param name="heading_csv_path" value="$(find-pkg-share imu_gnss_poser)/data/heading_reference.csv"/>
+    </node>
+
+    <include file="$(find-pkg-share ekf_localizer)/launch/ekf_localizer.launch.xml">
+      <arg name="enable_yaw_bias_estimation" value="false"/>
+      <arg name="tf_rate" value="30.0"/>
+      <arg name="twist_smoothing_steps" value="1"/>
+      <arg name="pose_smoothing_steps" value="1"/>
+      <arg name="input_initial_pose_name" value="/localization/initial_pose3d"/>
+      <arg name="input_pose_with_cov_name" value="/localization/imu_gnss_poser/pose_with_covariance"/>
+      <arg name="input_twist_with_cov_name" value="/localization/twist_estimator/twist_with_covariance"/>
+      <arg name="output_odom_name" value="kinematic_state"/>
+      <arg name="output_pose_name" value="pose"/>
+      <arg name="output_pose_with_covariance_name" value="/localization/pose_with_covariance"/>
+      <arg name="output_biased_pose_name" value="biased_pose"/>
+      <arg name="output_biased_pose_with_covariance_name" value="biased_pose_with_covariance"/>
+      <arg name="output_twist_name" value="twist"/>
+      <arg name="output_twist_with_covariance_name" value="twist_with_covariance"/>
+      <arg name="proc_stddev_vx_c" value="10.0"/>
+      <arg name="proc_stddev_wz_c" value="5.0"/>
+      <arg name="pose_additional_delay" value="$(var pose_additional_delay_var)"/>
+      <arg name="extend_state_step" value="100"/>
+    </include>
+
+    <!-- twist2accel -->
+    <group>
+      <node pkg="twist2accel" exec="twist2accel" name="twist2accel" output="screen">
+        <param name="accel_lowpass_gain" value="0.9"/>
+        <param name="use_odom" value="true"/>
+        <remap from="input/odom" to="/localization/kinematic_state"/>
+        <remap from="input/twist" to="/localization/twist_estimator/twist_with_covariance"/>
+        <remap from="output/accel" to="/localization/acceleration"/>
+      </node>
+    </group>
+
+  </group>
+
+  <!-- Planning -->
+  <group>
+    <push-ros-namespace namespace="planning"/>
+
+    <!-- scenario_planning -->
+    <group>
+      <push-ros-namespace namespace="scenario_planning"/>
+
+      <!-- Customizable -->
+      <node pkg="simple_trajectory_generator" exec="simple_trajectory_generator_node" name="simple_trajectory_generator" output="screen">
+            <!-- In MPC mode, first lap follows the proven baseline. After complete,
+                 forward wrap-aware coverage of that lap, only the CMA-ES
+                 baseline changes; MPC Frenet and safety geometry stay on
+                 their existing reference. -->
+            <!-- MPPI race mode publishes the selected full course directly;
+                 MPC keeps its separate fixed planning and dual execution paths. -->
+            <param name="csv_path" value="$(find-pkg-share multi_purpose_mpc_ros)/env/final_ver3/$(var mppi_reference_filename)"/>
+            <param name="simulation" value="$(var simulation)"/>
+            <param name="dual_reference.enabled" value="$(eval &quot;'$(var control_method)' == 'mpc'&quot;)"/>
+            <param name="dual_reference.lap1_csv_path" value="$(find-pkg-share multi_purpose_mpc_ros)/env/final_ver3/in_corce_line.csv"/>
+            <param name="dual_reference.lap2plus_csv_path" value="$(find-pkg-share multi_purpose_mpc_ros)/env/final_ver3/$(eval &quot;'mppi_cma_normal35_20260913.csv' if '$(var control_method)' == 'mppi' and '$(var mppi_reference_profile)' == 'race' else 'in_corce_line_straight_smooth.csv'&quot;)"/>
+            <param name="race_reference.enabled" value="$(eval &quot;'$(var control_method)' == 'mppi' and '$(var mppi_reference_profile)' == 'race'&quot;)"/>
+            <param name="race_reference.leader_csv_path" value="$(find-pkg-share multi_purpose_mpc_ros)/env/final_ver3/mppi_cma_leader75_20260913.csv"/>
+            <param name="race_reference.own_vehicle_id" value="$(var vehicle_id)"/>
+            <param name="dual_reference.publish_rate_hz" value="50.0"/>
+            <param name="dual_reference.status_rate_hz" value="10.0"/>
+            <param name="dual_reference.local_distance_behind_m" value="2.0"/>
+            <param name="dual_reference.local_forward_distance_m" value="40.0"/>
+            <param name="dual_reference.maximum_projection_distance_m" value="5.0"/>
+            <param name="dual_reference.defer_switch_during_maneuver" value="true"/>
+            <param name="dual_reference.source_timeout_sec" value="0.5"/>
+            <param name="dual_reference.start_window_m" value="5.0"/>
+            <param name="dual_reference.end_window_m" value="8.0"/>
+            <param name="dual_reference.minimum_coverage_ratio" value="0.95"/>
+            <param name="dual_reference.maximum_forward_step_m" value="5.0"/>
+            <param name="dual_reference.reverse_jitter_tolerance_m" value="0.5"/>
+            <param name="z" value="6.5"/>
+            <param name="execution_profile.max_speed_mps" value="$(var effective_reference_execution_speed_cap_mps)"/>
+            <param name="execution_profile.max_arc_spacing_m" value="0.25"/>
+            <param name="execution_profile.max_yaw_step_rad" value="0.05"/>
+            <!-- This additional topic is harmless for non-MPC methods because
+                 they have no subscriber; remap conditions are unsupported by
+                 the ROS 2 XML frontend. -->
+            <remap from="cma_trajectory" to="/control/internal/cma_pp/baseline_trajectory"/>
+            <remap from="input/kinematics" to="/localization/kinematic_state"/>
+            <remap from="input/path_source" to="/control/internal/cma_pp/source"/>
+            <remap from="input/race_status" to="/awsim/status"/>
+            <remap from="input/vehicle_positions" to="/v2x/vehicle_positions"/>
+      </node>
+      
+    </group>
+  </group>
+
+  <!-- Control -->
+  <group if="$(eval &quot;'$(var control_method)' == 'pure_pursuit'&quot;)">
+    <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/pure_pursuit.launch.xml">
+      <arg name="simulation" value="$(var simulation)"/>
+      <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    </include>
+  </group>
+
+  <group if="$(eval &quot;'$(var control_method)' == 'mpc'&quot;)">
+    <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/mpc.launch.xml">
+      <arg name="use_sim_time" value="$(var use_sim_time)"/>
+      <arg name="cma_mux_authority_enabled" value="$(var mpc_cma_mux_authority_enabled)"/>
+    </include>
+  </group>
+
+  <group if="$(eval &quot;'$(var control_method)' == 'cma_pure_pursuit'&quot;)">
+    <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/cma_pure_pursuit.launch.xml">
+      <arg name="use_sim_time" value="$(var use_sim_time)"/>
+      <arg name="wheel_base" value="1.087"/>
+    </include>
+  </group>
+
+  <group if="$(eval &quot;'$(var control_method)' == 'delay_aware_mpc'&quot;)">
+    <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/delay_aware_mpc.launch.xml">
+      <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    </include>
+  </group>
+
+  <group if="$(eval &quot;'$(var control_method)' == 'hybrid_delay_aware_mpc'&quot;)">
+    <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/hybrid_delay_aware_mpc.launch.xml">
+      <arg name="simulation" value="$(var simulation)"/>
+      <arg name="use_sim_time" value="$(var use_sim_time)"/>
+      <arg name="free_run_live_exact_observe_enabled" value="$(var free_run_live_exact_observe_enabled)"/>
+      <arg name="free_run_live_exact_pre_ack_hold_enabled" value="$(var free_run_live_exact_pre_ack_hold_enabled)"/>
+      <arg name="pp_core_exact_snapshot_enabled" value="$(var pp_core_exact_snapshot_enabled)"/>
+      <arg name="overtake_trajectory_backend" value="$(var overtake_trajectory_backend)"/>
+      <arg name="overtake_control_route" value="$(var overtake_control_route)"/>
+    </include>
+  </group>
+
+  <group if="$(eval &quot;'$(var control_method)' == 'pure_pursuit_mpc_horizon'&quot;)">
+    <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/pure_pursuit_mpc_horizon.launch.xml">
+      <arg name="simulation" value="$(var simulation)"/>
+      <arg name="use_sim_time" value="$(var use_sim_time)"/>
+      <arg name="pure_pursuit_speed_mps" value="$(var reference_execution_speed_cap_mps)"/>
+      <arg name="c002ay1_prod_measure_enabled" value="$(var c002ay1_prod_measure_enabled)"/>
+      <arg name="c002ay1_prod_measure_socket_path" value="$(var c002ay1_prod_measure_socket_path)"/>
+      <arg name="c002ay1_prod_measure_run_id" value="$(var c002ay1_prod_measure_run_id)"/>
+      <arg name="c002ay1_prod_measure_planner_nonce" value="$(var c002ay1_prod_measure_planner_nonce)"/>
+      <arg name="c002ay1_prod_measure_planner_instance_id" value="$(var c002ay1_prod_measure_planner_instance_id)"/>
+      <arg name="c002ay1_prod_measure_pp_nonce" value="$(var c002ay1_prod_measure_pp_nonce)"/>
+      <arg name="c002ay1_prod_measure_pp_instance_id" value="$(var c002ay1_prod_measure_pp_instance_id)"/>
+      <arg name="c002ay1_prod_measure_selected_stream" value="$(var c002ay1_prod_measure_selected_stream)"/>
+      <arg name="free_run_live_exact_observe_enabled" value="$(var free_run_live_exact_observe_enabled)"/>
+      <arg name="free_run_live_exact_pre_ack_hold_enabled" value="$(var free_run_live_exact_pre_ack_hold_enabled)"/>
+      <arg name="pp_core_exact_snapshot_enabled" value="$(var pp_core_exact_snapshot_enabled)"/>
+      <arg name="overtake_trajectory_backend" value="$(var overtake_trajectory_backend)"/>
+      <arg name="overtake_control_route" value="$(var overtake_control_route)"/>
+    </include>
+  </group>
+
+  <group if="$(eval &quot;'$(var control_method)' == 'state_lattice_pure_pursuit'&quot;)">
+    <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/state_lattice_pure_pursuit.launch.xml">
+      <arg name="simulation" value="$(var simulation)"/>
+      <arg name="use_sim_time" value="$(var use_sim_time)"/>
+      <arg name="pure_pursuit_speed_mps" value="$(var reference_execution_speed_cap_mps)"/>
+      <arg name="c002ay1_prod_measure_enabled" value="$(var c002ay1_prod_measure_enabled)"/>
+      <arg name="c002ay1_prod_measure_socket_path" value="$(var c002ay1_prod_measure_socket_path)"/>
+      <arg name="c002ay1_prod_measure_run_id" value="$(var c002ay1_prod_measure_run_id)"/>
+      <arg name="c002ay1_prod_measure_planner_nonce" value="$(var c002ay1_prod_measure_planner_nonce)"/>
+      <arg name="c002ay1_prod_measure_planner_instance_id" value="$(var c002ay1_prod_measure_planner_instance_id)"/>
+      <arg name="c002ay1_prod_measure_pp_nonce" value="$(var c002ay1_prod_measure_pp_nonce)"/>
+      <arg name="c002ay1_prod_measure_pp_instance_id" value="$(var c002ay1_prod_measure_pp_instance_id)"/>
+      <arg name="c002ay1_prod_measure_selected_stream" value="$(var c002ay1_prod_measure_selected_stream)"/>
+      <arg name="free_run_live_exact_observe_enabled" value="$(var free_run_live_exact_observe_enabled)"/>
+      <arg name="free_run_live_exact_pre_ack_hold_enabled" value="$(var free_run_live_exact_pre_ack_hold_enabled)"/>
+      <arg name="pp_core_exact_snapshot_enabled" value="$(var pp_core_exact_snapshot_enabled)"/>
+      <arg name="overtake_trajectory_backend" value="state_lattice_shadow"/>
+      <arg name="overtake_control_route" value="state_lattice_pure_pursuit"/>
+      <!-- The dedicated route requires the V2 proposal/base-attestation
+           exchange before it can publish paired Plan/SafetyConstraint. -->
+      <arg name="state_lattice_v2_live_proposal_publish_enabled" value="true"/>
+      <arg name="state_lattice_v2_live_proposal_accept_enabled" value="true"/>
+      <arg name="state_lattice_v2_producer_instance_id" value="$(var state_lattice_v2_producer_instance_id)"/>
+      <arg name="state_lattice_v2_pp_producer_instance_id" value="$(var state_lattice_v2_pp_producer_instance_id)"/>
+      <arg name="state_lattice_v2_session_id" value="$(var state_lattice_v2_session_id)"/>
+      <arg name="state_lattice_v4_poc_command_activation_enabled" value="$(var state_lattice_v4_awsim_poc_enabled)"/>
+    </include>
+  </group>
+
+  <group if="$(eval &quot;'$(var control_method)' == 'state_lattice_direct_pure_pursuit'&quot;)">
+    <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/state_lattice_pure_pursuit_direct.launch.xml">
+      <arg name="simulation" value="$(var simulation)"/>
+      <arg name="use_sim_time" value="$(var use_sim_time)"/>
+      <arg name="pure_pursuit_speed_mps" value="$(var reference_execution_speed_cap_mps)"/>
+      <arg name="mppi_overtake_enabled" value="$(var mppi_overtake_enabled)"/>
+      <arg name="vehicle_id" value="$(var vehicle_id)"/>
+    </include>
+  </group>
+
+  <group if="$(eval &quot;'$(var control_method)' == 'mppi'&quot;)">
+    <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/mppi.launch.xml">
+      <arg name="vehicle_param_file" value="$(var mppi_vehicle_param_file)"/>
+      <arg name="simulation" value="$(var simulation)"/>
+      <arg name="use_sim_time" value="$(var use_sim_time)"/>
+      <arg name="pure_pursuit_speed_mps" value="$(var effective_reference_execution_speed_cap_mps)"/>
+      <arg name="mppi_param_file"
+           value="$(find-pkg-share reference_space_mppi_planner)/config/$(eval &quot;{'race': 'cma_20260913/normal.param.yaml', 'normal': 'cma_20260913/normal.param.yaml', 'leader': 'cma_20260913/leader.param.yaml', 'legacy': 'reference_space_mppi.param.yaml'}['$(var mppi_reference_profile)']&quot;)"/>
+      <arg name="vehicle_id" value="$(var vehicle_id)"/>
+    </include>
+  </group>
+
+  <group if="$(eval &quot;'$(var control_method)' == 'tiny_lidar_net'&quot;)">
+    <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/tiny_lidar_net.launch.xml">
+      <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    </include>
+  </group>
+
+  <group if="$(eval &quot;'$(var control_method)' == 'pilot_net'&quot;)">
+    <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/pilot_net.launch.xml">
+      <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    </include>
+  </group>
+
+  <group if="$(eval &quot;'$(var control_method)' == 'joycon'&quot;)">
+    <include file="$(find-pkg-share aichallenge_submit_launch)/launch/control/joycon.launch.xml"/>
+  </group>
+
+  <!-- Map -->
+  <group>
+    <push-ros-namespace namespace="map"/>
+
+    <!-- map_container -->
+    <node_container pkg="rclcpp_components" exec="component_container" name="map_container" namespace="">
+
+      <!-- map_loader::Lanelet2MapLoaderNode -->
+      <composable_node pkg="map_loader" plugin="Lanelet2MapLoaderNode" name="lanelet2_map_loader" namespace="">
+        <remap from="output/lanelet2_map" to="vector_map" />
+        <param name="lanelet2_map_path" value="$(var map_path)/$(var lanelet2_map_file)" />
+        <param from="$(find-pkg-share aichallenge_submit_launch)/config/map/lanelet2_map_loader.param.yaml" />
+        <extra_arg name="use_intra_process_comms" value="false" />
+      </composable_node>
+
+      <!-- map_loader::Lanelet2MapVisualizationNode -->
+      <composable_node pkg="map_loader" plugin="Lanelet2MapVisualizationNode" name="lanelet2_map_visualization" namespace="">
+        <remap from="input/lanelet2_map" to="vector_map" />
+        <remap from="output/lanelet2_map_marker" to="vector_map_marker" />
+        <param name="lanelet2_map_path" value="$(var map_path)/$(var lanelet2_map_file)" />
+        <param from="$(find-pkg-share aichallenge_submit_launch)/config/map/lanelet2_map_loader.param.yaml" />
+        <extra_arg name="use_intra_process_comms" value="false" />
+      </composable_node>
+
+      <!-- map_tf_generator::VectorMapTFGeneratorNode -->
+      <composable_node pkg="map_tf_generator" plugin="VectorMapTFGeneratorNode" name="vector_map_tf_generator" namespace="">
+        <param name="map_frame" value="map" />
+        <param name="viewer_frame" value="viewer" />
+        <extra_arg name="use_intra_process_comms" value="false" />
+      </composable_node>
+
+    </node_container>
+
+  </group> <!-- map -->
+
+  <!-- vehicle -->
+  <group if="$(var launch_vehicle_interface)">
+    <include file="$(find-pkg-share raw_vehicle_cmd_converter)/launch/raw_vehicle_converter.launch.xml">
+      <arg name="converter_param_path" value="$(find-pkg-share aichallenge_submit_launch)/config/converter.param.yaml"/>
+      <arg name="csv_path_accel_map" value="$(find-pkg-share aichallenge_submit_launch)/data/accel_map.csv"/>
+      <arg name="csv_path_brake_map" value="$(find-pkg-share aichallenge_submit_launch)/data/brake_map.csv"/>
+
+      <arg name="max_throttle" value="1.0"/>
+      <arg name="max_brake" value="1.0"/>
+      <arg name="convert_accel_cmd" value="true"/>
+      <arg name="convert_brake_cmd" value="true"/>
+      <arg name="convert_steer_cmd" value="false"/>
+
+      <arg name="input_control_cmd" value="/control/command/control_cmd"/>
+      <arg name="input_odometry" value="/localization/kinematic_state"/>
+      <arg name="input_steering" value="/vehicle/status/steering_status"/>
+      <arg name="output_actuation_cmd" value="$(eval &quot;'/mppi/internal/actuation_cmd' if '$(var control_method)' == 'mppi' and '$(var simulation)' == 'false' else '/control/command/actuation_cmd'&quot;)"/>
+    </include>
+  </group>
+
+</launch>
