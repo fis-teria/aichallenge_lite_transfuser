@@ -17,6 +17,8 @@ import subprocess
 import sys
 import threading
 import time
+from datetime import datetime, timezone
+from typing import Any
 
 
 def sha(path: Path) -> str:
@@ -38,6 +40,41 @@ def desktop_environment() -> None:
             continue
     os.environ.update(HOST_UID=str(os.getuid()),HOST_GID=str(os.getgid()))
     os.environ.pop('CONTROL_METHOD',None)
+
+
+def finalize_interrupted(context: Any, scenario: Path, run_id: str) -> dict:
+    """Persist an explicitly interrupted verdict after scoped cleanup.
+
+    The external runner raises KeyboardInterrupt before writing result.json.
+    Re-evaluate the closed raw artifacts without claiming a normal exit.
+    """
+    from scenario_tool import report
+    from scenario_tool.cli import _load_and_resolve
+    from scenario_tool.evaluate import evaluate
+    from scenario_tool.occupancy import load as load_occupancy
+    run = context.output_root/run_id
+    if (run/'result.json').exists():
+        return json.loads((run/'result.json').read_text())
+    assert not subprocess.check_output(['docker','ps','-aq','--filter',
+        'label=com.docker.compose.project=codex-'+run_id],text=True).strip()
+    manifest = json.loads((run/'run-manifest.json').read_text())
+    assert sha(scenario) == manifest['scenario']['sha256']
+    resolved, maps, line, _ = _load_and_resolve(context,scenario,False)
+    assert sha(maps.reference_csv) == manifest['environment']['map_reference_csv_sha256']
+    status = json.loads((run/'monitor-status.json').read_text())
+    report.normalize_events(run)
+    evaluation = evaluate(resolved,run,status,line,load_occupancy(maps.occupancy_yaml))
+    now = datetime.now(timezone.utc)
+    started = manifest['timing']['runner_started_at']
+    result = report.build_result(run_id,resolved,evaluation,dict(ok=False,phase='failed',
+        reason='Collection supervisor interrupted the run; see the preserved stop reason',
+        exit_code=130,monitor_status=None),run,started,now.isoformat(),
+        (now-datetime.fromisoformat(started)).total_seconds())
+    errors = report.write_result(context,run,result)
+    assert not errors, errors
+    report.write_report_md(run,result,resolved,resolved.warnings)
+    report.write_junit(run,result)
+    return result
 
 
 def main() -> None:
@@ -173,8 +210,12 @@ def main() -> None:
                 return
     threading.Thread(target=budget,daemon=True).start()
     try:
-        result = run_once(context,args.scenario,dict(run_id=args.run_id,project='codex-'+args.run_id,
-            gpu=True,rviz=False,allow_stale_calibration=False))
+        try:
+            result = run_once(context,args.scenario,dict(run_id=args.run_id,project='codex-'+args.run_id,
+                gpu=True,rviz=False,allow_stale_calibration=False))
+        except KeyboardInterrupt:
+            done.set()
+            result = finalize_interrupted(context,args.scenario,args.run_id)
         (runtime.parent/(args.run_id+'-result.json')).write_text(json.dumps(result,indent=2)+'\n')
         print(json.dumps({'run_id':args.run_id,'exit_code':result.get('exit_code'),
             'verdict':result.get('scenario_verdict')}),flush=True)

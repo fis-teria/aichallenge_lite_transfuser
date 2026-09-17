@@ -144,7 +144,8 @@ def audit(collected: Path, output: Path) -> dict:
     penalties = {k:int(v['count']) for k,v in official['penalty_by_kind'].items()}
     clearance = result['metrics'].get('min_clearance_m',{}).get('value')
     route_clear = result['metrics'].get('max_off_track_depth_m',{}).get('value') == 0
-    run_clean = (monitor['finished'] and not any(penalties.values()) and route_clear
+    run_clean = (result['execution_status']['ok'] and result['execution_status'].get('monitor_status') == 0
+                 and monitor['finished'] and not any(penalties.values()) and route_clear
                  and clearance is not None and clearance >= .30 and not stop_requests)
     cameras = {}
     for e in sorted(events,key=lambda x:(x.available_ns,x.sequence)):
