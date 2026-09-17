@@ -1,0 +1,30 @@
+{
+  "status": "PARTIAL_OR_FAILED",
+  "fault": "STEERING_JOIN_TIMEOUT",
+  "input_topics": [
+    "/clock",
+    "/sensing/lidar/scan",
+    "/vehicle/status/steering_status",
+    "/vehicle/status/velocity_status"
+  ],
+  "gnss_imu_pose_tf_inputs": false,
+  "selected_message_sha256": "ed8b240183c9863bd95af9c176ad7b03a09b0481b83f2507e93ecd801b7b3ac8",
+  "map_sha256": "126a62f2ef21560ace0eb39a0f52a6a5e86ef6b9951b0ead1511e46e4b418dc4",
+  "initial_pose": [
+    89631.0,
+    43128.0,
+    2.12
+  ],
+  "initialization_source": "Explicit fixed approximate start supplied on command line; not read from bag pose",
+  "counts": {
+    "/vehicle/status/velocity_status": 5,
+    "/vehicle/status/steering_status": 4,
+    "/sensing/lidar/scan": 3,
+    "/clock": 18
+  },
+  "scans": 0,
+  "valid_scans": 0,
+  "valid_fraction": 0.0,
+  "valid_mean_boundary_distance_m": null,
+  "scope": "Offline localization only; lane boundaries are not physical-wall truth; no motion authority"
+}

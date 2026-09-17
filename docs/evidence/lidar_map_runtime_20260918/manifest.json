@@ -1,0 +1,56 @@
+{
+  "source_commit": "986cbdbd038196c8c9b1f3978a65342e750812f0",
+  "localization_readiness": "NOT_READY_FOR_DEFAULT_USE",
+  "default_entrypoint_changed": false,
+  "deployment": "/home/graneple/e2e_autonomous/time_lidar_map_20260918_r2",
+  "gnss_imu_runtime_inputs": false,
+  "controller_algorithm_changed": false,
+  "new_controller_output": "/time_path/wheel_odometry",
+  "official_ros_map_smoke": "PASS",
+  "offline_full_route_localization": "FAILED",
+  "awsim_drive": "NOT_RUN",
+  "initial_pose_source": "Explicit approximate map start, not read from bag pose",
+  "notes": [
+    "5kmh full-route replay: 198/2029 valid, later lost",
+    "8kmh bag: initial STEERING_JOIN_TIMEOUT, no alignment samples",
+    "New localizer has no vehicle-command authority"
+  ],
+  "files": [
+    {
+      "path": "full_pytest.log",
+      "bytes": 5649,
+      "sha256": "b03f27dd485aff41011dbdbe91ef35a767fedd78d79feb6b358641ae88b299f7"
+    },
+    {
+      "path": "replay_5kmh.json",
+      "bytes": 1130,
+      "sha256": "cff229c3ac375e51b58c86e331b4f4986225fbd5dd57047d4fa9ec1074033df9"
+    },
+    {
+      "path": "replay_8kmh.json",
+      "bytes": 961,
+      "sha256": "1fc913bff935ad4a4d1db61f6303e122c964292ff15e9aeb0b4987c408a45b18"
+    },
+    {
+      "path": "ros_control_smoke.json",
+      "bytes": 2367,
+      "sha256": "1b1a4d1aaf7c95c79e50db13f0ec9b5c0698ba4ae7314a89da3e96839eb7b353"
+    },
+    {
+      "path": "ros_launch_smoke.json",
+      "bytes": 505,
+      "sha256": "7c8901c1b773e4f4c695ee9c375d851035eb8d923ada7596af4cdde85c025d52"
+    },
+    {
+      "path": "ros_map_smoke.json",
+      "bytes": 771,
+      "sha256": "61e0d136cd935b036484877e5b6527d465258ec6821e7f711ed804b46c304dab"
+    },
+    {
+      "path": "trajectory_partial.png",
+      "bytes": 269047,
+      "sha256": "3b4e08ce6f47dec20ca4e26351d39967ca424718ccec2a337145c994d0f8612e"
+    }
+  ],
+  "full_pytest": "3030 passed, 4 skipped, 84 warnings in 117.52s"
+}

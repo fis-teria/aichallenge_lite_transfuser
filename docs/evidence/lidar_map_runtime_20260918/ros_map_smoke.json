@@ -1,0 +1,44 @@
+{
+  "status": "PASS",
+  "aligned_scans": 29,
+  "subscriptions": [
+    [
+      "/clock",
+      [
+        "rosgraph_msgs/msg/Clock"
+      ]
+    ],
+    [
+      "/sensing/lidar/scan",
+      [
+        "sensor_msgs/msg/LaserScan"
+      ]
+    ],
+    [
+      "/time_path/localization/initialpose",
+      [
+        "geometry_msgs/msg/PoseWithCovarianceStamped"
+      ]
+    ],
+    [
+      "/time_path/wheel_odometry",
+      [
+        "nav_msgs/msg/Odometry"
+      ]
+    ]
+  ],
+  "estimated_xy": [
+    2.999999981549716,
+    0.9999999429424125
+  ],
+  "gnss_imu_pose_tf_publishers": 0,
+  "vehicle_command_publishers": 0,
+  "checks": [
+    "map_to_wheel_transform",
+    "fixed_mount_alias",
+    "scan_timeout",
+    "bad_scan_frame",
+    "clock_pause",
+    "manual_reinitialize"
+  ]
+}
