@@ -100,13 +100,16 @@ class ScanSurface:
 def register(reference: np.ndarray, current: np.ndarray, seed: np.ndarray | None = None) -> Registration:
     """Current scan -> previous scan transform; identity seed is LiDAR-only.
 
-    [N,2] metres, invalid beams may be NaN. Point-to-line ICP with a 0.4 m
+    [N,2] metres, invalid beams may be NaN. Symmetric point-to-line ICP with a 0.4 m
     correspondence bound and robust residuals. No wheel penalty or map input.
     Eigenvalues use a 5 m yaw lever, so weak_ratio is a heuristic, not a
     calibrated uncertainty. A straight corridor can have tiny residuals while
     its longitudinal translation is unobservable.
     """
     surface = ScanSurface(reference)
+    reverse_surface = ScanSurface(current)
+    reference_points = np.asarray(reference,dtype=float)
+    reference_points = reference_points[np.isfinite(reference_points).all(axis=1)]
     pts = np.asarray(current, dtype=float)
     if pts.ndim != 2 or pts.shape[1] != 2 or not 3 <= len(pts) <= 10000:
         raise ValueError('CLOUD_SHAPE')
@@ -125,6 +128,17 @@ def register(reference: np.ndarray, current: np.ndarray, seed: np.ndarray | None
         angle = estimate[2]; c, s = np.cos(angle), np.sin(angle)
         derivative = pts[good] @ np.array([[-s,c],[-c,-s]])
         jac = np.column_stack((normal[good], np.sum(derivative*normal[good],axis=1)/5.))
+        # Include the inverse residual in the SAME optimization. This avoids
+        # selecting one noisy scan as the exact surface and systematically
+        # biasing the estimate differently in each registration direction.
+        reverse_xy=transform(reference_points,inverse(estimate))
+        reverse_distance, reverse_closest, reverse_normal=reverse_surface.nearest(reverse_xy)
+        reverse_good=reverse_distance<.4
+        n=reverse_normal[reverse_good]; z=reverse_xy[reverse_good]
+        reverse_residual=np.sum((z-reverse_closest[reverse_good])*n,axis=1)
+        reverse_jac=np.column_stack((-c*n[:,0]+s*n[:,1],-s*n[:,0]-c*n[:,1],
+                                     (n[:,0]*z[:,1]-n[:,1]*z[:,0])/5.))
+        jac=np.r_[jac,reverse_jac];residual=np.r_[residual,reverse_residual]
         weight = np.minimum(1., .04/np.maximum(np.abs(residual), 1e-12))
         hessian = (jac.T*weight) @ jac
         eigenvalues, basis = np.linalg.eigh(hessian)

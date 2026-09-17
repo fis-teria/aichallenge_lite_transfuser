@@ -44,6 +44,8 @@ def test_centimetre_noise_does_not_create_false_motion() -> None:
     current+=rng.normal(0,.01,current.shape)
     result=module.register(reference,current)
     np.testing.assert_allclose(result.pose,truth,atol=.005)
+    reverse=module.register(current,reference)
+    np.testing.assert_allclose(module.compose(result.pose,reverse.pose),np.zeros(3),atol=.001)
 
 
 def test_corridor_is_not_longitudinal_ground_truth() -> None:
