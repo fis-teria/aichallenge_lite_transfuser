@@ -31,7 +31,7 @@ def main() -> None:
     observer.create_subscription(String, '/time_path/slam/obstacles', lambda m: records.append(json.loads(m.data)), 10)
     observer.create_subscription(String, '/time_path/slam/status', lambda m: statuses.append(json.loads(m.data)), 10)
     observer.create_subscription(MarkerArray, '/time_path/slam/markers', lambda m: None, 10)
-    t = 1.; next_pub = 0.
+    t = 1.000000027; next_pub = 0.  # Exercise non-100-ns AWSIM stamps.
     def cycle(duration: float, box: bool, *, scans: bool = True, clock_running: bool = True) -> None:
         nonlocal t, next_pub
         end = time.monotonic()+duration

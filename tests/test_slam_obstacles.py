@@ -4,8 +4,24 @@ import numpy as np
 import pytest
 
 from aic_transfuser_lite.runtime.slam_obstacles import (
-    RecentOccupancy, SlamObstacleDetector, path_clearance, scan_geometry,
+    RecentOccupancy, SlamObstacleDetector, cartographer_stamp_ns, path_clearance,
+    scan_geometry, slam_scan_pose,
 )
+from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
+
+
+def test_cartographer_scan_timestamp_quantization_is_not_a_pose_age_tolerance():
+    pose = TimedBodyPose(1_000_000_000, 'sim', '0', 'time_slam_map', 'time_slam_lidar', 1., 2., .3)
+    for delta in (-50, -27, 0, 27, 49):
+        original = pose.stamp_ns+delta
+        joined = slam_scan_pose([pose], original)
+        assert joined.stamp_ns == original and joined.x_m == pose.x_m
+    assert cartographer_stamp_ns(1_000_000_050) == 1_000_000_100
+    for delta in (-51, 50, 10_000_000):
+        with pytest.raises(ValueError, match='OBSERVATION_POSE_MISSING'):
+            slam_scan_pose([pose], pose.stamp_ns+delta)
+    with pytest.raises(ValueError, match='STAMP_CONTRACT'):
+        cartographer_stamp_ns(-1)
 
 
 def corridor_scan(box_x=None):

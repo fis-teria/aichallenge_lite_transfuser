@@ -15,7 +15,9 @@ import numpy as np
 from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
 from aic_transfuser_lite.control.time_trial_v1 import interpolate_body_pose
 from aic_transfuser_lite.runtime.lidar_map_localization import transform
-from aic_transfuser_lite.runtime.slam_obstacles import SlamObstacleDetector, scan_geometry
+from aic_transfuser_lite.runtime.slam_obstacles import (
+    SlamObstacleDetector, cartographer_stamp_ns, scan_geometry, slam_scan_pose,
+)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -159,7 +161,7 @@ def main(argv: list[str] | None = None) -> None:
     def process(scan, receipt: int) -> None:
         nonlocal processed, last_process_ns, last_process_wall, state
         stamp = ns(scan.header.stamp)
-        pose = interpolate_body_pose(poses, stamp, tolerance_ns=100_000_000)
+        pose = slam_scan_pose(poses, stamp)
         p = np.array([pose.x_m, pose.y_m, pose.yaw_rad])
         path_world = None
         plan_observation_ns = None
@@ -195,7 +197,9 @@ def main(argv: list[str] | None = None) -> None:
         tr.transform.translation.x = base[0]; tr.transform.translation.y = base[1]
         tr.transform.rotation.z = math.sin(base[2]/2); tr.transform.rotation.w = math.cos(base[2]/2)
         tf.sendTransform(tr)
-        out = copy.deepcopy(scan); out.header.frame_id = 'time_slam_lidar'; pubs['scan'].publish(out)
+        out = copy.deepcopy(scan); out.header.frame_id = 'time_slam_lidar'
+        out.time_increment = 0.  # AWSIM snapshot; RViz must not deskew into future TF.
+        pubs['scan'].publish(out)
         pose_msg = PoseStamped(); pose_msg.header = tr.header
         pose_msg.pose.position.x = base[0]; pose_msg.pose.position.y = base[1]
         pose_msg.pose.orientation = tr.transform.rotation; pubs['pose'].publish(pose_msg)
@@ -265,7 +269,7 @@ def main(argv: list[str] | None = None) -> None:
                 rejected += 1; state = dict(input_valid=False, reason=str(exc), motion_authority=False)
         while waiting and poses:
             scan, receipt = waiting[0]; stamp = ns(scan.header.stamp)
-            if stamp > poses[-1].stamp_ns and now-receipt < 750_000_000: break
+            if cartographer_stamp_ns(stamp) > poses[-1].stamp_ns and now-receipt < 750_000_000: break
             waiting.popleft()
             if not 0 <= clock-stamp <= 500_000_000 or now-receipt > 750_000_000:
                 dropped += 1; continue
@@ -273,6 +277,7 @@ def main(argv: list[str] | None = None) -> None:
                 process(scan, receipt)
             except ValueError as exc:
                 rejected += 1; state = dict(input_valid=False, reason=str(exc), motion_authority=False)
+                journal.write(json.dumps(dict(event='SCAN_REJECTED', stamp_ns=stamp, reason=str(exc)))+'\n')
             break
         if last_process_ns is None or now-last_process_wall > 750_000_000 or clock-last_process_ns > 500_000_000:
             state = dict(input_valid=False, reason='SCAN_OR_SLAM_STALE', motion_authority=False)

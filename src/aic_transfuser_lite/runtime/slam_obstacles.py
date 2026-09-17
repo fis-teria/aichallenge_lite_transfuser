@@ -7,9 +7,33 @@ Poses are [x m, y m, yaw rad]; points/paths have shape [N,2], in metres.
 from __future__ import annotations
 
 import math
+from dataclasses import replace
+from typing import Sequence
 import numpy as np
 
+from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
+from aic_transfuser_lite.control.time_trial_v1 import interpolate_body_pose
 from .lidar_map_localization import inverse, pose_array, transform
+
+
+def cartographer_stamp_ns(stamp_ns: int) -> int:
+    """Cartographer FromRos/ToRos rounds to the nearest 100 ns tick."""
+    if type(stamp_ns) is not int or stamp_ns < 0:
+        raise ValueError('SLAM_STAMP_CONTRACT')
+    return ((stamp_ns+50)//100)*100
+
+
+def slam_scan_pose(poses: Sequence[TimedBodyPose], stamp_ns: int) -> TimedBodyPose:
+    """Join the same scan after Cartographer's <=50 ns representation rounding.
+
+    Preserve the original observation timestamp; do not accept a different scan
+    or extrapolate across an unavailable pose. Interpolation is the fallback.
+    """
+    tick = cartographer_stamp_ns(stamp_ns)
+    for pose in reversed(poses):
+        if pose.stamp_ns == tick:
+            return replace(pose, stamp_ns=stamp_ns)
+    return interpolate_body_pose(poses, stamp_ns, tolerance_ns=100_000_000)
 
 
 def scan_geometry(ranges: np.ndarray, angle_min: float, angle_increment: float,
