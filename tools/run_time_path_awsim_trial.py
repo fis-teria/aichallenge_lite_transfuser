@@ -57,11 +57,14 @@ def main() -> None:
                     help='Run aggressive map correction as display/evaluation sidecar; no control input')
     ap.add_argument('--lidar-map-initial-pose', type=float, nargs=3, metavar=('X_M', 'Y_M', 'YAW_RAD'))
     ap.add_argument('--lidar-map-correction-schedule', choices=('all', 'straight_only'), default='all')
+    ap.add_argument('--slam-obstacles', action='store_true', help='Local Cartographer + scan obstacle diagnostics; no control input')
     args = ap.parse_args()
     if args.lidar_map_comparison != (args.lidar_map_initial_pose is not None):
         raise ValueError('LIDAR_COMPARISON_REQUIRES_EXPLICIT_MANUAL_INITIAL_POSE')
     if args.lidar_map_correction_schedule != 'all' and not args.lidar_map_comparison:
         raise ValueError('CORRECTION_SCHEDULE_REQUIRES_LIDAR_COMPARISON')
+    if args.slam_obstacles and args.lidar_map_comparison:
+        raise ValueError('SLAM_OBSTACLES_DOES_NOT_USE_BASE_MAP_ALIGNMENT')
     if args.lidar_map_comparison:
         from aic_transfuser_lite.runtime.lidar_map_localization import pose_array
         pose_array(args.lidar_map_initial_pose)
@@ -237,6 +240,8 @@ def main() -> None:
             enabled_text = follow_ego_view(enabled_text)
         if args.lidar_map_comparison:
             enabled_text = enable_lidar_map_comparison(enabled_text)
+        if args.slam_obstacles:
+            enabled_text = (source/'ros2_ws/src/aic_e2e_runtime/config/slam_obstacles.rviz').read_text()
         enabled = enabled_text.replace("\n", newline).encode("utf-8")
         if enabled != rviz_bytes:
             rviz.write_bytes(enabled)
@@ -280,6 +285,21 @@ def main() -> None:
         result["commands"] = [probe_command, ["make", "dev", "DEV_AUTO_START=false", *make_args]]
         owned = True
         probe = launch(probe_command, "nodes")
+        if args.slam_obstacles:
+            cartographer = Path('/home/graneple/e2e_autonomous/cartographer_extrap_build_20260910')
+            if not (cartographer/'install/setup.bash').is_file():
+                raise RuntimeError('PREPARED_CARTOGRAPHER_INSTALL_MISSING')
+            observer = probe_command.copy()
+            observer[observer.index('--name')+1] = args.run_id+'-localization'
+            i = observer.index('--entrypoint')
+            observer[i:i] = ['-v', str(cartographer)+':/cartographer_ws:ro']
+            observer[-1] = ('source /aichallenge/workspace/install/setup.bash && '
+                           'source /cartographer_ws/install/setup.bash && source /time/install/setup.bash && exec '
+                           +shlex.join(['python3', str(source_in_container/'tools/run_slam_obstacle_sidecar.py'),
+                                       '--output', str(inside)]))
+            result['commands'].append(observer)
+            result['slam_obstacle_scope'] = 'LOCAL_SLAM_DETECTION_DISPLAY_ONLY_NO_CONTROL_INPUT'
+            localization_process = launch(observer, 'slam_sidecar')
         if args.lidar_map_comparison:
             observer_command = ['python3', str(source_in_container/'tools/observe_lidar_map_trial.py'),
                 '--output', str(inside), '--initial-pose', *map(str, args.lidar_map_initial_pose),
@@ -392,6 +412,13 @@ def main() -> None:
             if ip.exists() and cp.exists() and make.poll() == 0 and not result["official_start_requested"]:
                 inference = json.loads(ip.read_text()); result["last_inference"] = inference
                 if traffic_ready and inference["plans"] >= 5 and control["reason"] == "WAIT_AUTHORIZATION" and control["commands"] >= 5:
+                    if args.slam_obstacles:
+                        ready = output/'slam_obstacles_ready.json'
+                        if not ready.exists():
+                            if time.monotonic()-started > 75:
+                                raise RuntimeError('SLAM_OBSTACLES_DISPLAY_NOT_READY')
+                            time.sleep(.1); continue
+                        result['slam_obstacles_ready'] = json.loads(ready.read_text())
                     if args.lidar_map_comparison:
                         ready = output/'localization_ready.json'
                         if not ready.exists():
@@ -399,7 +426,7 @@ def main() -> None:
                                 raise RuntimeError('LOCALIZATION_DISPLAY_NOT_READY')
                             time.sleep(.1); continue
                         result['localization_ready'] = json.loads(ready.read_text())
-                    if not any(name.startswith("rviz") for name in inference.get("path_subscribers", [])):
+                    if not args.slam_obstacles and not any(name.startswith("rviz") for name in inference.get("path_subscribers", [])):
                         if time.monotonic()-started > 45:
                             raise RuntimeError("RVIZ_PATH_NOT_SUBSCRIBED")
                         time.sleep(.1); continue

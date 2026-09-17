@@ -1,0 +1,88 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Map
+      Name: Recent SLAM occupancy - 2 second history
+      Enabled: true
+      Alpha: 0.7
+      Topic:
+        Value: /time_path/slam/recent_occupancy
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+        Depth: 1
+    - Class: rviz_default_plugins/LaserScan
+      Name: LiDAR in local SLAM - cyan
+      Enabled: true
+      Topic:
+        Value: /time_path/slam/scan
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+        Depth: 5
+      Position Transformer: XYZ
+      Color Transformer: FlatColor
+      Color: 0; 255; 255
+      Style: Points
+      Size (Pixels): 3
+      Decay Time: 0.3
+      Use Fixed Frame: true
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Occupied surfaces - yellow / path overlap red
+      Enabled: true
+      Topic:
+        Value: /time_path/slam/markers
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        Depth: 5
+    - Class: rviz_default_plugins/Path
+      Name: E2E predicted path - magenta
+      Enabled: true
+      Topic:
+        Value: /time_path/slam/path
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        Depth: 1
+      Color: 255; 60; 180
+      Line Style: Billboards
+      Line Width: 0.1
+      Buffer Length: 1
+    - Class: rviz_default_plugins/Pose
+      Name: SLAM vehicle pose
+      Enabled: true
+      Topic:
+        Value: /time_path/slam/pose
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        Depth: 5
+      Color: 0; 255; 0
+      Shape: Arrow
+      Shaft Length: 1.5
+      Shaft Radius: 0.15
+      Head Length: 0.5
+      Head Radius: 0.3
+  Global Options:
+    Background Color: 30; 30; 30
+    Fixed Frame: time_slam_map
+    Frame Rate: 30
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Target Frame: time_slam_base_link
+      Scale: 25
+      Angle: 0
+      X: 5
+      Y: 0
+      Near Clip Distance: 0.01
+    Saved: []
+Window Geometry:
+  Width: 1850
+  Height: 1136
+  X: 70
+  Y: 27

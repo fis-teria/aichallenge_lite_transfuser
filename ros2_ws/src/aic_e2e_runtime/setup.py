@@ -39,6 +39,7 @@ setup(
     license="Apache-2.0",
     entry_points={
         "console_scripts": [
+            "slam_obstacle_node = aic_e2e_runtime.slam_obstacle_node:main",
             "lidar_map_localization_node = aic_e2e_runtime.lidar_map_localization_node:main",
             "time_path_node = aic_e2e_runtime.time_path_node:main",
             "time_trial_controller_node = aic_e2e_runtime.time_trial_controller_node:main",
