@@ -61,8 +61,8 @@ C++と実ノードの回帰試験は上記公式Dockerビルド内で実施す�
 保存入力の改善は走行成功とは別に評価し、再収集結果をPC10運用記録へ残す。
 
 これはAWSIM専用。LiDAR由来V2XをReference生成・MPPI・recoveryの3ノードへ渡す。
-native V2Xや配置座標をE2Eの入力には追加しない。詳細と収集結果は
-[PC10運用記録](../../docs/mppi_v45_pc10_collection.md)を参照。
+native V2Xや配置座標をE2Eの入力には追加しない。詳細と最新の収集結果は
+[収集教師の修正・実走記録](../../docs/mppi_v45_collection_motion_fix_20260918.md)を参照。
 
 ## 有限収集
 

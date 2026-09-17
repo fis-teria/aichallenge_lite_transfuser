@@ -84,7 +84,7 @@ WSL: `/home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/`
 - `collected/<run-id>/`: raw、教師identity、シナリオ、ソースprovenance、転送検証書。
 - `audit/<run-id>/`: `audit.json`、`anchors.jsonl`、`observed_teachers.npz`。
 - 3runの転送対象は計1,221ファイル / 1,144,547,707 bytes。全ファイルSHA256一致。
-- PC10の元rawも保全。今回の専用compose containerは全件終了し、残存0件。
+- 初回収録時点ではPC10の元rawも保全。後続の教師修正時にWSLコピーと全SHA256を再照合し、PC10側の3run分だけ整理した。WSL側は保持。
 - AWSIM本体を含む保護対象7ファイルは実行前後で同一。PC10終了時の空きは約2.53GiB。
 
 監査はWSL native checkoutの共有lock内で実施する。
@@ -108,3 +108,6 @@ Windowsの証跡控え: `tmp/pc10_mppi_v45_collection_20260918/collected-summary
 - 非走行ROS graph: domain97、通信隔離で通過。実収録domain1でもカート・箱の2runで再確認。
   教師3 consumerのみLiDAR専用topicを参照し、native V2X購読なし。既存6マージンと5km/h上限一致。
 - 中断時の診断結果は `exit_code=130` / `not_judged` として残し、教師候補0を確認。
+
+後続の収集用修正版では、元の失敗2配置を通過した。
+最新結果・修正内容は [修正と再試験の記録](mppi_v45_collection_motion_fix_20260918.md) を参照。
