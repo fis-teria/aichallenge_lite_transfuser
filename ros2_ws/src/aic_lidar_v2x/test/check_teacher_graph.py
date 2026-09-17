@@ -19,17 +19,22 @@ def main() -> None:
     try:
         deadline = time.monotonic() + 35.0
         subscriptions = []
+        publishers = []
         while time.monotonic() < deadline:
             rclpy.spin_once(probe, timeout_sec=0.05)
             subscriptions = probe.get_subscriptions_info_by_topic(V2X_TOPIC)
-            if expected.issubset({s.node_name for s in subscriptions}):
+            publishers = probe.get_publishers_info_by_topic(V2X_TOPIC)
+            # DDS discovers endpoints independently: consumers being present
+            # does not imply that the adapter publisher has been discovered.
+            if (expected.issubset({s.node_name for s in subscriptions})
+                    and len(publishers) == 1 and publishers[0].node_name == "lidar_v2x"):
                 break
         actual = {s.node_name for s in subscriptions}
         assert expected.issubset(actual), f"Missing teacher subscriptions: {expected-actual}; got {actual}"
         native_subs = probe.get_subscriptions_info_by_topic("/v2x/vehicle_positions")
         assert not expected.intersection(s.node_name for s in native_subs), "Teacher still subscribes to native V2X"
-        publishers = probe.get_publishers_info_by_topic(V2X_TOPIC)
-        assert len(publishers) == 1 and publishers[0].node_name == "lidar_v2x"
+        assert len(publishers) == 1 and publishers[0].node_name == "lidar_v2x", [
+            (p.node_namespace, p.node_name) for p in publishers]
         planner = next(s for s in subscriptions if s.node_name == "reference_space_mppi_planner")
         service = planner.node_namespace.rstrip("/") + "/" + planner.node_name + "/get_parameters"
         client = probe.create_client(GetParameters, service)
