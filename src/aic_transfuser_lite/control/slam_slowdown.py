@@ -81,8 +81,10 @@ class SlamSlowdown:
             desired = min(desired, self.cap_mps+.5*dt_s)
             if reason == 'CLEAR' and desired < target_mps:
                 reason = 'CLEAR_RELEASE'
-        self.cap_mps = max(0., min(target_mps, desired))
-        target = self.cap_mps
+        target = max(0., min(target_mps, desired))
+        # Only a real restriction creates release state. Do not rate-limit
+        # ordinary E2E target changes when the road has always been clear.
+        self.cap_mps = target if not valid or target < target_mps-1e-9 else None
         acceleration = acceleration_mps2
         if target < target_mps-1e-9 or not valid:
             # Track the falling cap as distance closes, not only its current

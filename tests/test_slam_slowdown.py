@@ -6,6 +6,7 @@ import pytest
 
 from aic_transfuser_lite.control.slam_slowdown import SlamSlowdown
 from aic_transfuser_lite.control.time_trial_v1 import validate_trial_config
+from aic_transfuser_lite.runtime.awsim_trial_session import requested_stop
 
 
 def packet(distance=None, stamp=1_000_000_000):
@@ -34,6 +35,21 @@ def test_clear_and_distant_preserve_command_but_near_obstacle_brakes():
     assert result['acceleration_mps2'] < 0
     result = update(guard, packet(2.8))
     assert result['target_speed_mps'] == 0 and result['acceleration_mps2'] == -1.
+
+
+def test_clear_road_does_not_rate_limit_ordinary_e2e_target_changes():
+    guard = SlamSlowdown()
+    for target in (1., 5., 2., 4., .2, 3.):
+        result = update(guard, packet(), target_mps=target)
+        assert result['target_speed_mps'] == target and result['acceleration_mps2'] == .8
+        assert not result['limited'] and guard.cap_mps is None
+
+
+@pytest.mark.parametrize('reason', ['SLAM_OBSTACLE_STOP_CONFIRMED', 'SLAM_BOX_TEST_TIME_LIMIT'])
+def test_box_trial_completion_is_a_valid_measured_stop_request(reason):
+    assert requested_stop(dict(run_id='test', reason=reason), 'test') == reason
+    with pytest.raises(ValueError, match='STOP_REQUEST_IDENTITY'):
+        requested_stop(dict(run_id='other', reason=reason), 'test')
 
 
 @pytest.mark.parametrize('change', [

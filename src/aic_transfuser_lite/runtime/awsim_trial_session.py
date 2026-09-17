@@ -53,7 +53,8 @@ def encode_scan_values(values: Iterable[float]) -> list[float | str]:
 
 def requested_stop(value: dict[str, Any], run_id: str) -> str:
     """Only a stop request, never an authorization to produce motion."""
-    reasons = {"JUDGE_FIRST_LAP", "JUDGE_LAP_EVIDENCE_INCOMPLETE", "PROGRESS_STALLED", "OPERATOR_STOP"}
+    reasons = {"JUDGE_FIRST_LAP", "JUDGE_LAP_EVIDENCE_INCOMPLETE", "PROGRESS_STALLED", "OPERATOR_STOP",
+               "SLAM_OBSTACLE_STOP_CONFIRMED", "SLAM_BOX_TEST_TIME_LIMIT"}
     if value.get("run_id") != run_id or value.get("reason") not in reasons:
         raise ValueError("STOP_REQUEST_IDENTITY")
     return value["reason"]
