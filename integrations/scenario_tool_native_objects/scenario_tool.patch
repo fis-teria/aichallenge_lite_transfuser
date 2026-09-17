@@ -1,0 +1,753 @@
+--- a/agent/scenario_monitor.py
++++ b/agent/scenario_monitor.py
+@@ -854,8 +854,8 @@
+     # -- lifecycle --------------------------------------------------------
+     def run(self) -> int:
+         self.emit("monitor_started", data={"plan": self.plan.get("scenario_name")})
+-        threads = [threading.Thread(target=executor.spin, daemon=True) for executor in self.executors]
+-        for thread in threads:
++        self.spin_threads = [threading.Thread(target=executor.spin, daemon=True) for executor in self.executors]
++        for thread in self.spin_threads:
+             thread.start()
+ 
+         period = 1.0 / float(self.plan.get("sample_rate_hz") or 20.0)
+@@ -1179,6 +1179,16 @@
+             handle.write("\n")
+ 
+     def shutdown(self) -> None:
++        # Stop callbacks before destroying nodes or closing their log streams.
++        # Destroying a context while another thread is inside wait() can crash
++        # the DDS/rclpy process after it has already written a success status.
++        for executor in getattr(self, 'executors', []):
++            if not executor.shutdown(timeout_sec=5.0):
++                raise RuntimeError('monitor executor did not stop within 5 seconds')
++        for thread in getattr(self, 'spin_threads', []):
++            thread.join(timeout=5.0)
++            if thread.is_alive():
++                raise RuntimeError('monitor spin thread is still running')
+         with self.lock:
+             self.samples.flush()
+             self.samples.close()
+--- a/scenario_tool/calibrate_cmd.py
++++ b/scenario_tool/calibrate_cmd.py
+@@ -87,6 +87,7 @@
+         "services": {
+             SIMULATOR_SERVICE: {
+                 "extends": {"file": "docker-compose.yml", "service": "simulator"},
++                "working_dir": run_dir_container,
+                 "environment": {
+                     "ROS_DOMAIN_ID": "0",
+                     "LOG_DIR": run_dir_container,
+--- a/scenario_tool/compiler.py
++++ b/scenario_tool/compiler.py
+@@ -124,7 +124,8 @@
+         document["success"] = {"pass": {"at": gate}}
+ 
+     document["vehicles"] = vehicles
+-    document["objects"] = {}
++    from .objects import native_objects
++    document["objects"] = native_objects(resolved.objects)
+     return document
+ 
+ 
+@@ -164,6 +165,7 @@
+         "scn-simulator": {
+             "extends": {"file": "docker-compose.yml", "service": "simulator"},
+             "environment": {"ROS_DOMAIN_ID": "0", "LOG_DIR": container_run_dir, **simulator_env},
++            "working_dir": container_run_dir,
+             "volumes": [tool_mount],
+             "command": ["bash", "-lc", f"exec {CONTAINER_TOOL_DIR}/agent/simulator.bash"],
+         }
+@@ -221,7 +223,8 @@
+ 
+     services["scn-monitor"] = {
+         "extends": {"file": "docker-compose.yml", "service": "autoware-command"},
+-        "environment": {"ROS_DOMAIN_ID": "0"},
++        "user": "${HOST_UID}:${HOST_GID}",
++        "environment": {"ROS_DOMAIN_ID": "0", "HOME": "/tmp", "ROS_HOME": "/tmp/ros-monitor"},
+         "volumes": [tool_mount],
+         "command": [
+             "python3",
+--- a/scenario_tool/evaluate.py
++++ b/scenario_tool/evaluate.py
+@@ -406,6 +406,15 @@
+                           at_time=geometric["time"], source="geometric_auxiliary",
+                           reason=f"自車位置: {geometric['position_source']}")
+             )
++        elif resolved.objects:
++            from .objects import official_contacts
++            contacts = official_contacts(run_dir)
++            available = contacts is not None and resolved.simulator.get('collisions', 'on') == 'on'
++            evaluation.assertions.append(Assertion(
++                name='no_collision', passed=(sum(contacts.values()) == 0 if available else None),
++                phase=PHASE_P1, expected='車両・壁・障害物との接触なし', actual=contacts,
++                available=available, source='awsim_official_result_v3',
++                reason=None if available else '物体接触を確認できる公式結果がありません（未判定）'))
+         elif geometric["evaluated"]:
+             evaluation.assertions.append(
+                 Assertion(name="no_collision", passed=True, phase=PHASE_P1,
+@@ -425,6 +434,15 @@
+                                   "衝突の有無は不明です。"),
+                           source="runner")
+             )
++
++    if resolved.objects:
++        from .objects import spawned_count
++        count = spawned_count(run_dir)
++        evaluation.assertions.append(Assertion(
++            name='physical_objects_spawned', passed=(count == len(resolved.objects) if count is not None else None),
++            phase=PHASE_P1, expected=len(resolved.objects), actual=count,
++            available=count is not None, source='awsim_player_log',
++            reason=None if count is not None else 'AWSIMの物体生成ログがありません'))
+ 
+     evaluation.metrics["collision_partner"] = unavailable(
+         "AWSIM は衝突相手を公開していません (§17.4)"
+--- a/scenario_tool/gui/server.py
++++ b/scenario_tool/gui/server.py
+@@ -121,6 +121,7 @@
+         self.transform = calibration.load(context, require=False)
+ 
+     def map_payload(self) -> dict:
++        from ..scenario import shipped_grid
+         line = [
+             [round(self.reference.x[i], 3), round(self.reference.y[i], 3),
+              round(self.reference.s[i], 2)]
+@@ -136,6 +137,7 @@
+             "occupancy": None,
+         }
+         if self.transform is not None:
++            payload['start_grid_map'] = [list(self.transform.to_map(*xy)) for xy in shipped_grid(self.context)]
+             payload["calibration"] = {
+                 "decomposition": self.transform.decomposition,
+                 "validation": self.transform.residual,
+@@ -177,6 +179,8 @@
+             "valid": True,
+             "name": resolved.name,
+             "vehicles": [entity.as_dict() for entity in resolved.entities],
++            "objects": list(resolved.objects),
++            "document": document,
+             "warnings": resolved.warnings,
+         }
+ 
+@@ -276,6 +280,8 @@
+             elif route.path == "/api/run":
+                 path = self.safe_scenario_path(payload["name"])
+                 extra = []
++                if payload.get('gpu', False):
++                    extra.append('--gpu')
+                 # repeat is optional: read it once, defaulting when absent or null.
+                 repeat = int(payload.get("repeat") or 1)
+                 if repeat > 1:
+--- a/scenario_tool/gui/static/index.html
++++ b/scenario_tool/gui/static/index.html
+@@ -56,7 +56,7 @@
+ <div id="map-pane">
+   <canvas id="map"></canvas>
+   <div id="legend">
+-    <div><b>クリック</b>: 選択中の車両を配置 / <b>ドラッグ</b>: 移動 / <b>ホイール</b>: 拡大縮小</div>
++    <div><b>クリック</b>: 選択中の車両・物体を配置 / <b>ドラッグ</b>: 移動 / <b>ホイール</b>: 拡大縮小</div>
+     <div><b>Shift + クリック</b>: レースラインにスナップせず絶対座標で配置</div>
+     <div id="calib-note" class="hint"></div>
+   </div>
+@@ -89,6 +89,14 @@
+     </select>
+     <button id="add">車両を追加</button>
+   </div>
++
++  <h2>カート以外の障害物</h2>
++  <div class="row">
++    <select id="new-object"><option value="cone">コーン</option><option value="box">箱</option><option value="pole">ポール</option></select>
++    <button id="add-object">障害物を追加</button>
++  </div>
++  <div class="hint">AWSIMの標準形状。地図の記号は実寸ではありません。接触時に動く物体もあります。</div>
++  <label><input type="checkbox" id="gpu" checked style="width:auto"> GPUを使用</label>
+ 
+   <h2>判定条件</h2>
+   <label>タイムアウト [s]</label>
+@@ -135,8 +143,10 @@
+ <script>
+ const state = {
+   map: null, image: null, view: {scale: 1, x: 0, y: 0}, vehicles: [],
+-  selected: 0, dragging: null, hover: null,
++  selected: 0, dragging: null, hover: null, loadedDocument: null,
+ };
++const isObject = (vehicle) => vehicle.profile.startsWith('object_');
++const clone = (value) => JSON.parse(JSON.stringify(value));
+ 
+ const $ = (id) => document.getElementById(id);
+ const canvas = $('map');
+@@ -287,6 +297,20 @@
+   const colours = {ego: '#45c07a', static_physical: '#e2604f',
+                    line_trace: '#e0a33a', submission: '#b47cff', v2x_ghost: '#8c9bb0'};
+   const colour = colours[vehicle.profile] || '#8c9bb0';
++  if (isObject(vehicle)) {
++    ctx.strokeStyle = selected ? '#ffffff' : '#ffb14a';
++    ctx.fillStyle = '#ffb14a';
++    ctx.lineWidth = 2;
++    ctx.beginPath();
++    const radius = Math.max(4, scale * 0.3);
++    if (vehicle.profile === 'object_box') ctx.rect(-radius, -radius, radius * 2, radius * 2);
++    else if (vehicle.profile === 'object_cone') {
++      ctx.moveTo(radius, 0); ctx.lineTo(-radius, radius); ctx.lineTo(-radius, -radius); ctx.closePath();
++    } else ctx.arc(0, 0, radius, 0, Math.PI * 2);
++    ctx.fill(); ctx.stroke(); ctx.restore();
++    ctx.fillStyle = '#ffb14a'; ctx.fillText(vehicle.id, cx + 8, cy - 8);
++    return;
++  }
+   ctx.strokeStyle = colour;
+   ctx.fillStyle = colour + (vehicle.profile === 'v2x_ghost' ? '22' : '55');
+   ctx.lineWidth = selected ? 2.5 : 1.2;
+@@ -353,6 +377,7 @@
+ function placeAt(index, x, y, absolute) {
+   const vehicle = state.vehicles[index];
+   if (!vehicle) return;
++  vehicle.originalPose = null;
+   if (absolute) {
+     vehicle.mode = 'absolute'; vehicle.x = x; vehicle.y = y;
+     if (vehicle.yaw === null) vehicle.yaw = nearestOnLine(x, y).yaw;
+@@ -374,7 +399,7 @@
+     const pose = poseOf(vehicle);
+     block.innerHTML = `
+       <header>
+-        <span>${index === 0 ? '自車' : '車両'} <input value="${vehicle.id}" data-field="id"
++        <span>${index === 0 ? '自車' : isObject(vehicle) ? '障害物' : '車両'} <input value="${vehicle.id}" data-field="id"
+               style="width:130px;display:inline-block"></span>
+         <span>
+           <span class="tag ${physical ? 'solid' : 'ghost'}">${physical ? '衝突判定あり' : '衝突判定なし'}</span>
+@@ -389,12 +414,24 @@
+       ${vehicle.profile === 'line_trace' || vehicle.profile === 'v2x_ghost'
+         ? `<label>速度 [m/s]</label><input type="number" step="0.5" value="${vehicle.speed}" data-field="speed">`
+         : ''}
++      ${isObject(vehicle)
++        ? `<label>向き [deg]（空欄は経路方向）</label><input type="number" min="-180" max="180" step="1" value="${vehicle.yaw === null ? '' : round(vehicle.yaw * 180 / Math.PI, 2)}" data-field="yaw">`
++        : ''}
+     `;
+-    block.addEventListener('click', () => { state.selected = index; renderVehicles(); draw(); });
++    block.addEventListener('click', (event) => {
++      state.selected = index;
++      if (!event.target.closest('input,button')) renderVehicles();
++      draw();
++    });
+     block.querySelectorAll('[data-field]').forEach((input) => {
+       input.addEventListener('change', () => {
+         const field = input.dataset.field;
+-        vehicle[field] = field === 'speed' ? parseFloat(input.value) : input.value;
++        if (field === 'yaw') {
++          vehicle.originalPose = null;
++          vehicle.yaw = input.value === '' ? null : Number(input.value) * Math.PI / 180;
++        } else {
++          vehicle[field] = field === 'speed' ? parseFloat(input.value) : input.value;
++        }
+         renderVehicles(); draw(); syncYaml();
+       });
+     });
+@@ -407,30 +444,41 @@
+     container.appendChild(block);
+   });
+   const options = state.vehicles.slice(1)
++    .filter((vehicle) => !isObject(vehicle))
+     .map((vehicle) => `<option value="${vehicle.id}">${vehicle.id}</option>`).join('');
+   $('clearance-actor').innerHTML = '<option value="">（判定しない）</option>' + options;
+   $('passing-actor').innerHTML = '<option value="">（判定しない）</option>' + options;
+ }
+ 
+ function buildScenario() {
+-  const document_ = {
++  const document_ = state.loadedDocument ? clone(state.loadedDocument) : {
+     schema_version: 1,
+     name: $('scenario-title').value || 'scenario',
+     simulator: {start_mode: 'count', render: 'headless', collisions: 'on'},
+     ego: {
+       submission: {type: 'current_workspace', packaging: 'mount'},
+-      pose: poseSpec(state.vehicles[0]),
++      pose: {start_grid: 1},
+     },
+     actors: [],
+     expect: {},
+   };
++  document_.name = $('scenario-title').value || 'scenario';
++  document_.ego.pose = poseSpec(state.vehicles[0]);
++  document_.actors = [];
++  document_.objects = [];
+   state.vehicles.slice(1).forEach((vehicle) => {
+-    const actor = {id: vehicle.id, profile: vehicle.profile, pose: poseSpec(vehicle)};
++    if (isObject(vehicle)) {
++      const pose = poseSpec(vehicle);
++      if ('yaw' in pose) { pose.yaw_deg = pose.yaw; delete pose.yaw; }
++      document_.objects.push({id: vehicle.id, type: vehicle.profile.slice(7), pose});
++      return;
++    }
++    const actor = {...clone(vehicle.sourceSpec || {}), id: vehicle.id, profile: vehicle.profile, pose: poseSpec(vehicle)};
+     if (vehicle.profile === 'line_trace' || vehicle.profile === 'v2x_ghost') {
+       actor.speed_mps = vehicle.speed;
+     }
+     if (vehicle.profile === 'submission') {
+-      actor.submission = {type: 'current_workspace', packaging: 'mount'};
++      actor.submission ||= {type: 'current_workspace', packaging: 'mount'};
+     }
+     document_.actors.push(actor);
+   });
+@@ -449,10 +497,12 @@
+     expect.passing = {actor: $('passing-actor').value, side: $('passing-side').value};
+   }
+   if (!document_.actors.length) delete document_.actors;
++  if (!document_.objects.length) delete document_.objects;
+   return document_;
+ }
+ 
+ function poseSpec(vehicle) {
++  if (vehicle.originalPose) return clone(vehicle.originalPose);
+   if (vehicle.mode === 'absolute') {
+     const pose = {map_xy: [round(vehicle.x), round(vehicle.y)]};
+     if (vehicle.yaw !== null) pose.yaw = round(vehicle.yaw * 180 / Math.PI, 2);
+@@ -460,6 +510,7 @@
+   }
+   const pose = {reference_s: round(vehicle.s, 2)};
+   if (Math.abs(vehicle.d) > 1e-6) pose.lateral_offset = round(vehicle.d, 3);
++  if (vehicle.yaw !== null) pose.yaw = round(vehicle.yaw * 180 / Math.PI, 2);
+   return pose;
+ }
+ 
+@@ -522,6 +573,15 @@
+   renderVehicles(); draw(); syncYaml();
+ });
+ 
++$('add-object').addEventListener('click', () => {
++  const kind = $('new-object').value;
++  const item = defaultVehicle('object_' + kind, state.vehicles.length);
++  item.id = kind + '_' + state.vehicles.length;
++  item.s = (state.vehicles[0].s + 20) % state.map.length;
++  state.vehicles.push(item); state.selected = state.vehicles.length - 1;
++  renderVehicles(); draw(); syncYaml();
++});
++
+ $('from-form').addEventListener('click', syncYaml);
+ 
+ $('validate').addEventListener('click', async () => {
+@@ -558,7 +618,7 @@
+     await save();
+     await api('/api/run', {
+       method: 'POST', headers: {'Content-Type': 'application/json'},
+-      body: JSON.stringify({name: $('scenario-name').value}),
++      body: JSON.stringify({name: $('scenario-name').value, gpu: $('gpu').checked}),
+     });
+     $('status').innerHTML = '<span class="warn">実行中…</span> (CLI: run.bash run --scenario ' +
+       $('scenario-name').value + ' --unattended)';
+@@ -570,12 +630,42 @@
+ $('stop').addEventListener('click', () => api('/api/run/stop', {method: 'POST'}));
+ 
+ $('load').addEventListener('click', async () => {
++  try {
+   const name = $('scenario-list').value;
+   const data = await api(`/api/scenario?name=${encodeURIComponent(name)}`);
+   $('yaml').value = data.text;
+   $('scenario-name').value = data.name;
+-  $('status').innerHTML = `読み込みました: ${data.name}（YAML を正とします。` +
+-    `フォームから作り直す場合は「フォーム → YAML」を押してください）`;
++  const parsed = await api('/api/validate', {method: 'POST', headers: {'Content-Type': 'application/json'},
++    body: JSON.stringify({text: data.text})});
++  state.loadedDocument = parsed.document;
++  const doc = parsed.document;
++  const specs = [doc.ego, ...(doc.actors || []), ...(doc.objects || [])];
++  const poses = [...parsed.vehicles, ...(parsed.objects || [])];
++  state.vehicles = specs.map((spec, index) => {
++    const profile = index === 0 ? 'ego' : spec.type ? 'object_' + spec.type : spec.profile;
++    const item = defaultVehicle(profile, index);
++    item.id = spec.id || 'ego'; item.sourceSpec = clone(spec); item.originalPose = clone(spec.pose || {});
++    item.speed = spec.speed_mps ?? 5;
++    const pose = poses.find((p) => p.id === item.id)?.map_pose;
++    if (pose) {
++      item.mode = 'absolute'; item.x = pose.x; item.y = pose.y; item.yaw = pose.yaw_deg * Math.PI / 180;
++      item.s = nearestOnLine(pose.x, pose.y).s;
++    }
++    return item;
++  });
++  $('scenario-title').value = doc.name;
++  $('timeout').value = doc.expect?.timeout_sec ?? 120;
++  $('no-collision').checked = doc.expect?.no_collision !== false;
++  $('no-off-track').checked = !!doc.expect?.no_off_track;
++  $('finish-distance').value = doc.expect?.finish?.ego_distance_travelled_m ?? '';
++  $('finish-s').value = doc.expect?.finish?.ego_reference_s_greater_than ?? '';
++  state.selected = 0; renderVehicles(); draw();
++  $('clearance-actor').value = doc.expect?.clearance?.actor || '';
++  $('clearance-min').value = doc.expect?.clearance?.min_m ?? '';
++  $('passing-actor').value = doc.expect?.passing?.actor || '';
++  $('passing-side').value = doc.expect?.passing?.side || '';
++  $('status').textContent = `読み込みました: ${data.name}`;
++  } catch (error) { $('status').textContent = `読込エラー: ${error.message}`; }
+ });
+ 
+ async function refreshScenarios() {
+@@ -608,6 +698,11 @@
+   state.vehicles = [defaultVehicle('ego', 0)];
+   state.vehicles[0].profile = 'ego';
+   state.vehicles[0].s = 0;
++  const grid = state.map.start_grid_map?.[0];
++  if (grid) {
++    Object.assign(state.vehicles[0], {mode: 'absolute', x: grid[0], y: grid[1],
++      s: nearestOnLine(...grid).s, yaw: nearestOnLine(...grid).yaw, originalPose: {start_grid: 1}});
++  }
+   renderVehicles();
+   syncYaml();
+   await refreshScenarios();
+--- /dev/null
++++ b/scenario_tool/objects.py
+@@ -0,0 +1,109 @@
++"""Native non-vehicle obstacles. Poses use m and explicit yaw_deg in the YAML.
++
++Objects never receive a vehicle index, ROS domain or synthesized V2X position.
++AWSIM owns their prefab dimensions, physics and ground snapping. Size/scale
++parameters are intentionally unsupported because the installed loader ignores them.
++"""
++from __future__ import annotations
++
++import math
++import re
++import json
++from pathlib import Path
++
++from .exitcodes import InvalidScenario
++
++KINDS = ('cone', 'box', 'pole')
++MAX_OBJECTS = 32
++
++
++def validate_objects(document: dict) -> None:
++    objects = document.get('objects', [])
++    if not isinstance(objects, list) or len(objects) > MAX_OBJECTS:
++        raise InvalidScenario('objects は最大32件の配列で指定してください')
++    ids = {document.get('ego', {}).get('id', 'ego')}
++    ids.update(actor['id'] for actor in document.get('actors', []))
++    for item in objects:
++        if not isinstance(item, dict) or set(item) != {'id', 'type', 'pose'}:
++            raise InvalidScenario('物体は id, type, pose のみ指定できます（サイズ変更未対応）')
++        name = item['id']
++        if not isinstance(name, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,64}', name) or name in ids:
++            raise InvalidScenario(f'物体IDが不正または重複しています: {name!r}')
++        ids.add(name)
++        if item['type'] not in KINDS:
++            raise InvalidScenario(f'物体typeは {KINDS} から選択してください')
++        pose = item['pose']
++        if not isinstance(pose, dict) or set(pose) - {'map_xy', 'awsim_xy', 'reference_s', 'lateral_offset', 'yaw_deg'}:
++            raise InvalidScenario(f'{name}: 物体のposeフィールドが不正です')
++        modes = [key for key in ('map_xy', 'awsim_xy', 'reference_s') if key in pose]
++        if len(modes) != 1 or ('lateral_offset' in pose and modes[0] != 'reference_s'):
++            raise InvalidScenario(f'{name}: 物体位置は map_xy / awsim_xy / reference_s のいずれか1つです')
++        mode = modes[0]
++        values = []
++        if mode.endswith('_xy'):
++            xy = pose[mode]
++            if not isinstance(xy, list) or len(xy) != 2:
++                raise InvalidScenario(f'{name}: {mode} は2要素 [x, y]、単位mです')
++            values.extend(xy)
++        else:
++            values.extend([pose['reference_s'], pose.get('lateral_offset', 0)])
++        values.append(pose.get('yaw_deg', 0))
++        if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) for v in values):
++            raise InvalidScenario(f'{name}: 座標・向きは有限の数値で指定してください')
++        if 'yaw_deg' in pose and not -180 <= pose['yaw_deg'] <= 180:
++            raise InvalidScenario(f'{name}: yaw_deg は -180〜180 度です')
++
++
++def resolve_objects(document: dict, context, reference_line, transform) -> list[dict]:
++    from .scenario import Entity, _resolve_pose
++    validate_objects(document)
++    result = []
++    for item in document.get('objects', []):
++        pose = dict(item['pose'])
++        if 'yaw_deg' in pose:
++            pose['yaw'] = pose.pop('yaw_deg')
++        elif 'awsim_xy' in pose:
++            pose['yaw'] = 0.0
++        entity = Entity(id=item['id'], role='object', profile=item['type'], spec={'pose': pose})
++        _resolve_pose(entity, [], reference_line, transform, context)
++        assert entity.awsim_pose is not None
++        entry = entity.as_dict()
++        entry.update(type=item['type'], physical_body=True,
++                     collision_checked='official_wall_or_obstacle_counter',
++                     clearance_checked=False, v2x_id=None, domain=None)
++        result.append(entry)
++    return result
++
++
++def native_objects(objects: list[dict]) -> dict:
++    result: dict = {}
++    for item in objects:
++        pose = item['awsim_pose']
++        result.setdefault(item['type'], []).append({
++            'name': item['id'], 'at': [pose['x'], pose['y']], 'yaw': pose['yaw_deg'],
++        })
++    return result
++
++
++def official_contacts(run_dir: Path) -> dict[str, int] | None:
++    """Read only this unique run's official v3 result; absence is unknown."""
++    path = run_dir / 'd1-result-details.json'
++    try:
++        data = json.loads(path.read_text(encoding='utf-8'))
++        if data.get('schema_version') != 'v3' or data.get('vehicle_number') != 1:
++            return None
++        counts = {key: data['penalty_by_kind'][key]['count'] for key in ('crash', 'wall')}
++        if any(type(value) is not int or value < 0 for value in counts.values()):
++            return None
++        return counts
++    except (OSError, ValueError, KeyError, TypeError):
++        return None
++
++
++def spawned_count(run_dir: Path) -> int | None:
++    try:
++        log = (run_dir / 'awsim-player.log').read_text(encoding='utf-8', errors='replace')
++    except OSError:
++        return None
++    matches = re.findall(r'Spawned (\d+) object\(s\) from ', log)
++    return int(matches[-1]) if matches else None
+--- a/scenario_tool/probe_cmd.py
++++ b/scenario_tool/probe_cmd.py
+@@ -37,6 +37,7 @@
+         "services": {
+             SIMULATOR_SERVICE: {
+                 "extends": {"file": "docker-compose.yml", "service": "simulator"},
++                "working_dir": container_run_dir,
+                 "environment": {
+                     "ROS_DOMAIN_ID": "0",
+                     "LOG_DIR": container_run_dir,
+--- a/scenario_tool/runner.py
++++ b/scenario_tool/runner.py
+@@ -707,7 +707,11 @@
+                 "awsim_exit_detected": True,
+             }
+         finish_reason = status.get("finish_reason")
+-        if code == 0 or status.get("finished"):
++        if code not in (0, 10, 11, 12, 13, 130):
++            return {'ok': False, 'phase': 'failed',
++                    'reason': f'monitor process failed after writing status (exit {code})',
++                    'exit_code': exitcodes.SIMULATOR_FAILURE}
++        if code == 0:
+             return {"ok": True, "phase": "finished", "reason": finish_reason,
+                     "exit_code": exitcodes.OK}
+         if finish_reason in ("timeout", "timeout_before_start"):
+--- a/scenario_tool/scenario.py
++++ b/scenario_tool/scenario.py
+@@ -134,6 +134,7 @@
+     reference_line: ReferenceLine
+     warnings: list[str] = field(default_factory=list)
+     calibration_used: bool = False
++    objects: list[dict] = field(default_factory=list)
+ 
+     @property
+     def ego(self) -> Entity:
+@@ -157,6 +158,7 @@
+             # with, not today's defaults.
+             "analysis": dict(self.raw.get("analysis") or {}),
+             "vehicles": [entity.as_dict() for entity in self.entities],
++            "objects": list(self.objects),
+             "warnings": list(self.warnings),
+         }
+ 
+@@ -193,6 +195,8 @@
+             f"スキーマ検証に失敗しました ({len(errors)} 件)", "\n".join(f"  - {e}" for e in errors)
+         )
+     warnings = _semantic_checks(document)
++    from .objects import validate_objects
++    validate_objects(document)
+     warnings.extend(_route_map_checks(document, context))
+     return warnings
+ 
+@@ -739,6 +743,10 @@
+         seed = int(sha256[:8], 16) if sha256 else 0
+         warnings.append(f"seed 未指定のためシナリオ内容から決定的に導出しました (seed={seed})")
+ 
++    from .objects import resolve_objects
++    objects = resolve_objects(document, context, reference_line, transform)
++    if objects:
++        warnings.append('物体はAWSIM標準形状です。物体別の離隔・通過判定は未対応で、接触は公式wall/obstacleカウンタで監視します。')
+     resolved = ResolvedScenario(
+         raw=document,
+         path=path,
+@@ -751,7 +759,9 @@
+         seed=seed,
+         reference_line=reference_line,
+         warnings=warnings,
+-        calibration_used=any(entity.pose_source.endswith("+calibration") for entity in entities),
++        calibration_used=(any(entity.pose_source.endswith("+calibration") for entity in entities)
++                          or any(item['pose_source'].endswith('+calibration') for item in objects)),
++        objects=objects,
+     )
+     return resolved
+ 
+--- a/schema/scenario.schema.json
++++ b/schema/scenario.schema.json
+@@ -48,6 +48,20 @@
+       "maxItems": 32,
+       "items": {
+         "$ref": "#/definitions/actor"
++      }
++    },
++    "objects": {
++      "type": "array",
++      "maxItems": 32,
++      "items": {
++        "type": "object",
++        "additionalProperties": false,
++        "required": ["id", "type", "pose"],
++        "properties": {
++          "id": {"type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}$"},
++          "type": {"enum": ["cone", "box", "pole"]},
++          "pose": {"type": "object"}
++        }
+       }
+     },
+     "expect": {
+--- /dev/null
++++ b/tests/test_native_objects.py
+@@ -0,0 +1,138 @@
++"""Native object contract and missing-evidence regressions; no ROS required."""
++from __future__ import annotations
++
++import copy
++import json
++import tempfile
++import unittest
++import threading
++from types import SimpleNamespace
++from unittest.mock import Mock
++from pathlib import Path
++
++from scenario_tool import calibration
++from scenario_tool.compiler import build_awsim_scenario
++from scenario_tool.context import Context
++from scenario_tool.exitcodes import InvalidScenario
++from scenario_tool.objects import official_contacts, spawned_count, validate_objects
++from scenario_tool.scenario import resolve, validate_document
++from tests.test_scenario_tool import square_line, identity_transform
++
++
++def scenario() -> dict:
++    return {'schema_version': 1, 'name': 'objects',
++            'ego': {'submission': {'type': 'current_workspace'},
++                    'pose': {'awsim_xy': [0, 0], 'yaw': 0}},
++            'objects': [{'id': 'box_1', 'type': 'box',
++                         'pose': {'map_xy': [10, 20], 'yaw_deg': 30}}]}
++
++
++class NativeObjectsTest(unittest.TestCase):
++    def test_monitor_joins_callbacks_before_releasing_ros_resources(self):
++        from agent.scenario_monitor import Monitor
++        calls = []
++        monitor = Monitor.__new__(Monitor)
++        monitor.lock = threading.Lock()
++        monitor.executors = [SimpleNamespace(shutdown=lambda **kw: calls.append('stop') or True)]
++        monitor.spin_threads = [SimpleNamespace(join=lambda **kw: calls.append('join'),
++                                               is_alive=lambda: False)]
++        monitor.samples = monitor.events = SimpleNamespace(
++            flush=lambda: calls.append('flush'), close=lambda: calls.append('close'))
++        monitor.node0 = SimpleNamespace(destroy_node=lambda: calls.append('destroy'))
++        monitor.ctx0 = object()
++        monitor.rclpy = SimpleNamespace(shutdown=lambda **kw: calls.append('context'))
++        monitor.shutdown()
++        self.assertEqual(calls[:2], ['stop', 'join'])
++        self.assertLess(calls.index('join'), calls.index('close'))
++        self.assertLess(calls.index('join'), calls.index('destroy'))
++        self.assertEqual(calls[-1], 'context')
++
++    def test_monitor_does_not_destroy_resources_with_a_live_spin_thread(self):
++        from agent.scenario_monitor import Monitor
++        monitor = Monitor.__new__(Monitor)
++        monitor.executors = [SimpleNamespace(shutdown=lambda **kw: True)]
++        monitor.spin_threads = [SimpleNamespace(join=lambda **kw: None, is_alive=lambda: True)]
++        monitor.node0 = SimpleNamespace(destroy_node=Mock())
++        with self.assertRaisesRegex(RuntimeError, 'spin thread'):
++            monitor.shutdown()
++        monitor.node0.destroy_node.assert_not_called()
++
++    def test_finished_file_does_not_hide_monitor_process_crash(self):
++        from scenario_tool.runner import ScenarioRunner
++        status = {'finished': True, 'finish_reason': 'distance_travelled'}
++        self.assertTrue(ScenarioRunner.classify_execution(status, 0)['ok'])
++        for code in (-11, 139, 1, 12, 130):
++            self.assertFalse(ScenarioRunner.classify_execution(status, code)['ok'])
++
++    def test_native_grouping_and_map_to_unity_heading(self):
++        doc = scenario()
++        for kind in ('cone', 'pole'):
++            doc['objects'].append({'id': kind, 'type': kind,
++                                   'pose': {'reference_s': 30, 'lateral_offset': 1}})
++        context = Context()
++        validate_document(doc, context)
++        result = resolve(doc, context, square_line(), identity_transform())
++        native = build_awsim_scenario(result, True)
++        self.assertEqual(set(native['objects']), {'box', 'cone', 'pole'})
++        self.assertEqual(native['objects']['box'][0],
++                         {'name': 'box_1', 'at': [10.0, 20.0], 'yaw': 60.0})
++        self.assertEqual(list(native['vehicles']), ['1'])
++        self.assertEqual(len(result.entities), 1)
++        self.assertTrue(result.calibration_used)
++        self.assertEqual(len(result.to_document()['objects']), 3)
++        self.assertTrue(all(x['v2x_id'] is None and x['domain'] is None for x in result.objects))
++
++    def test_awsim_xy_does_not_require_calibration(self):
++        doc = scenario(); doc['objects'][0]['pose'] = {'awsim_xy': [4, 8], 'yaw_deg': -20}
++        result = resolve(doc, Context(), square_line(), None)
++        self.assertFalse(result.calibration_used)
++        self.assertEqual(build_awsim_scenario(result, False)['objects']['box'][0]['yaw'], -20)
++
++    def test_map_objects_require_calibration_even_with_native_ego(self):
++        with self.assertRaises(InvalidScenario):
++            resolve(scenario(), Context(), square_line(), None)
++
++    def test_ids_types_dimensions_and_finite_values_fail_closed(self):
++        invalid = [
++            {'id': 'ego'}, {'id': 'bad name'}, {'type': 'truck'}, {'size': [1, 1, 1]},
++            {'pose': {'map_xy': [1]}}, {'pose': {'map_xy': [1, 2, 3]}},
++            {'pose': {'map_xy': [float('nan'), 1]}},
++            {'pose': {'awsim_xy': [1, float('inf')]}},
++            {'pose': {'reference_s': True}}, {'pose': {'reference_s': 3, 'yaw_deg': 181}},
++            {'pose': {'reference_s': 3, 'yaw': 1}},
++            {'pose': {'map_xy': [1, 2], 'awsim_xy': [3, 4]}},
++            {'pose': {'map_xy': [1, 2], 'lateral_offset': 1}},
++        ]
++        for change in invalid:
++            with self.subTest(change=change), self.assertRaises(InvalidScenario):
++                doc = scenario(); doc['objects'][0].update(change); validate_document(doc, Context())
++
++    def test_repeated_id_and_limits(self):
++        doc = scenario(); doc['objects'].append(copy.deepcopy(doc['objects'][0]))
++        with self.assertRaises(InvalidScenario): validate_objects(doc)
++        doc['objects'] *= 17
++        with self.assertRaises(InvalidScenario): validate_objects(doc)
++
++    def test_missing_or_bad_official_results_are_unknown(self):
++        with tempfile.TemporaryDirectory() as directory:
++            root = Path(directory)
++            self.assertIsNone(official_contacts(root))
++            self.assertIsNone(spawned_count(root))
++            path = root / 'd1-result-details.json'
++            data = {'schema_version': 'v3', 'vehicle_number': 1,
++                    'penalty_by_kind': {'wall': {'count': 0}, 'crash': {'count': 0}}}
++            path.write_text(json.dumps(data))
++            self.assertEqual(official_contacts(root), {'wall': 0, 'crash': 0})
++            data['penalty_by_kind']['wall']['count'] = 1
++            path.write_text(json.dumps(data))
++            self.assertEqual(official_contacts(root)['wall'], 1)
++            data['penalty_by_kind']['wall']['count'] = -1
++            path.write_text(json.dumps(data)); self.assertIsNone(official_contacts(root))
++            data['vehicle_number'] = 2
++            path.write_text(json.dumps(data)); self.assertIsNone(official_contacts(root))
++            (root / 'awsim-player.log').write_text('Spawned 3 object(s) from /output/scenario.yaml\n')
++            self.assertEqual(spawned_count(root), 3)
++
++
++if __name__ == '__main__':
++    unittest.main()
+--- a/tests/test_scenario_tool.py
++++ b/tests/test_scenario_tool.py
+@@ -1575,6 +1575,8 @@
+             self.skipTest("repository map configuration unavailable")
+         if not map_paths.reference_csv.is_file():
+             self.skipTest("racing line CSV unavailable")
++        if map_paths.reference_csv.name != 'in_corce_line_straight_smooth.csv':
++            self.skipTest('364-point regression is specific to in_corce_line_straight_smooth.csv')
+         mpc = map_paths.reference_line()
+         # Current controller construction for in_corce_line_straight_smooth.csv
+         # produces 364 waypoints after duplicate-end normalization and

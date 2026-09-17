@@ -1,0 +1,47 @@
+schema_version: 1
+name: pc10_tool_smoke
+description: PC10 installation smoke with one cached Autoware ego and one physical parked NPC. Not an E2E performance comparison.
+simulator:
+  start_mode: count
+  laps: unlimited
+  collisions: "on"
+  camera: "cpu"
+  lidar: "cpu"
+  render: window
+runtime:
+  sample_rate_hz: 20
+  ready_timeout_sec: 90
+  rosbag: false
+ego:
+  submission:
+    type: docker_image
+    image: aichallenge-h2h-car2:3b7d20668dc6-b6499e655ed6-dc98adc153f9
+  pose:
+    start_grid: 1
+actors:
+  - id: parked_npc
+    profile: static_physical
+    pose:
+      reference_s: 85
+      lateral_offset: 0
+objects:
+  - id: cone_1
+    type: cone
+    pose:
+      reference_s: 40
+      lateral_offset: 0.4
+  - id: box_1
+    type: box
+    pose:
+      reference_s: 44
+      lateral_offset: -0.4
+  - id: pole_1
+    type: pole
+    pose:
+      reference_s: 48
+      lateral_offset: 0.4
+expect:
+  timeout_sec: 45
+  no_collision: true
+  finish:
+    ego_distance_travelled_m: 5.0
