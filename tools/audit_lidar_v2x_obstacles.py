@@ -11,6 +11,7 @@ from collections import Counter, defaultdict
 from dataclasses import asdict, replace
 import hashlib
 import json
+import math
 from pathlib import Path
 
 import numpy as np
@@ -30,6 +31,28 @@ def ns(stamp) -> int:
 def driving_start_stamps(states: list[tuple[int, str]]) -> list[int]:
     """Installed AWSIM adapters emit either Start or start; never match PlayStart."""
     return [stamp for stamp, state in states if state.strip().casefold() == 'start']
+
+
+def resolve_driving_start(states: list[tuple[int, str]], monitor: dict, samples: list[dict]) -> tuple[int, str]:
+    """Resolve the race state without mistaking vehicle Ready for race Start.
+
+    Some installed adapters publish only Spawned/Grounded/Ready on domain 1's
+    /awsim/state. The monitor separately observes /admin/awsim/state on domain 0.
+    Its synchronized ego stamp maps that observed Start into simulation time.
+    """
+    starts = driving_start_stamps(states)
+    if starts:
+        return min(starts), '/awsim/state'
+    candidates = []
+    if monitor.get('scenario_start_observed') is True:
+        for row in samples:
+            stamp = (row.get('ego') or {}).get('stamp')
+            if (row.get('time', -1) >= 0 and str(row.get('awsim_state', '')).strip().casefold() == 'start'
+                    and stamp is not None and math.isfinite(stamp) and stamp >= 0):
+                candidates.append(round(stamp*1e9))
+    if not candidates:
+        raise ValueError('No verified AWSIM race Start in bag or monitor')
+    return min(candidates), 'monitor:/admin/awsim/state + ego simulation stamp'
 
 
 def windows(values: list[int], max_gap_ns: int = 250_000_000) -> list[tuple[int, int]]:
@@ -136,9 +159,8 @@ def audit(collected: Path, output: Path) -> dict:
     config = TimeDatasetConfig()
     event_windows = EventWindows(events)
     bounds = (epoch.first_sim_stamp_ns,epoch.last_sim_stamp_ns)
-    starts = driving_start_stamps(states)
-    assert starts, 'No AWSIM driving start'
-    drive_start = min(starts)
+    monitor_samples = [json.loads(s) for s in (run/'samples.jsonl').read_text().splitlines()]
+    drive_start, drive_start_source = resolve_driving_start(states, monitor, monitor_samples)
     # Exclude collection termination from the 3 s future, with an additional 2 s guard.
     intervention = bounds[1]-2_000_000_000
     negatives = [e.capture_ns for e in events if e.role=='velocity' and e.payload.longitudinal_mps < -.05]
@@ -226,6 +248,8 @@ def audit(collected: Path, output: Path) -> dict:
                             source='OBSERVED_FUTURE_POSE',freeze_delay_receipt_ns=50_000_000,config=asdict(config)),
         source_bag=str(bag),source_verified_bytes=verified_bytes,training_split_assigned=False,
         duplicate_sim_clock_receipts_coalesced=len(clocks)-len(clock_receipts),
+        driving_start_ns=drive_start, driving_start_source=drive_start_source,
+        vehicle_state_counts=dict(Counter(state for _, state in states)),
         collection_scope='MPPI teacher drive; shadow execution is not inferred by this audit',
         limitations=['V2X-derived footprint clearance is approximate, not a contact mesh oracle.',
                      'Forward candidate mask excludes reverse and unknown stop intent; raw reverse/stops are preserved.',

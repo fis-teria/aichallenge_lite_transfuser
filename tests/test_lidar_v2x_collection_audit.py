@@ -6,6 +6,18 @@ def test_driving_start_is_case_insensitive_but_excludes_playstart():
     assert driving_start_stamps([(1,'PlayStart'),(2,'playstart'),(3,'WaitStart'),
         (4,'Start'),(5,'start'),(6,' finish ')]) == [4,5]
 
+
+def test_monitor_race_start_uses_simulation_stamp_not_wall_time_or_vehicle_ready():
+    from tools.audit_lidar_v2x_obstacles import resolve_driving_start
+    samples=[dict(time=-1,awsim_state='start',ego=dict(stamp=2)),
+             dict(time=100,awsim_state='playstart',ego=dict(stamp=3)),
+             dict(time=101,awsim_state='start',ego=dict(stamp=7.2))]
+    assert resolve_driving_start([(5,'Ready')],{'scenario_start_observed':True},samples) == (
+        7_200_000_000,'monitor:/admin/awsim/state + ego simulation stamp')
+    assert resolve_driving_start([(6,'Start')],{},[]) == (6,'/awsim/state')
+    with pytest.raises(ValueError,match='No verified'):
+        resolve_driving_start([(5,'Ready')],{'scenario_start_observed':False},samples)
+
 import pytest
 
 from aic_transfuser_lite.data.clock_segments import ClockSample, segment_clock_epochs
