@@ -163,6 +163,8 @@ def main(argv: list[str] | None = None) -> None:
                         detail.update(reason=result.reason,rank=result.rank,inliers=result.inliers,
                             fraction=result.fraction,mean_distance_m=result.mean_distance_m if math.isfinite(result.mean_distance_m) else None,
                             p90_distance_m=result.p90_distance_m if math.isfinite(result.p90_distance_m) else None,
+                            all_mean_distance_m=result.all_mean_distance_m if math.isfinite(result.all_mean_distance_m) else None,
+                            all_p90_distance_m=result.all_p90_distance_m if math.isfinite(result.all_p90_distance_m) else None,
                             correction_m=result.correction_m,correction_rad=result.correction_rad)
                     if tracker.valid(clock):
                         tf.sendTransform([tf_message('map','time_wheel_odom',tracker.map_to_odom,ns,course.display_z_m),

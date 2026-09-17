@@ -89,7 +89,8 @@ def main() -> None:
     with (args.output/'records.jsonl').open('x') as stream:
         for row in records: stream.write(json.dumps(row,allow_nan=False)+'\n')
     valid = [r for r in records if r['valid']]
-    summary = dict(status='PASS' if valid and fault is None else 'INCOMPLETE',fault=fault,
+    complete = len(valid)/max(1,len(records)) >= .95 and tracker.valid(clock or 0) and fault is None
+    summary = dict(status='TRACKED_REPLAY' if complete else 'PARTIAL_OR_FAILED',fault=fault,
         input_topics=sorted(topics),gnss_imu_pose_tf_inputs=False,selected_message_sha256=digest.hexdigest(),
         map_sha256=hashlib.sha256(args.map.read_bytes()).hexdigest(),initial_pose=args.initial_pose,
         initialization_source='Explicit fixed approximate start supplied on command line; not read from bag pose',

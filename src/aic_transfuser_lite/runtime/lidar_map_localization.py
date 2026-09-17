@@ -134,6 +134,8 @@ class Match:
     p90_distance_m: float
     correction_m: float
     correction_rad: float
+    all_mean_distance_m: float
+    all_p90_distance_m: float
 
 
 def match_scan(course: BoundaryMap, points_lidar: np.ndarray, predicted: np.ndarray,
@@ -154,7 +156,11 @@ def match_scan(course: BoundaryMap, points_lidar: np.ndarray, predicted: np.ndar
     for _ in range(12):
         world = transform(points, estimate)
         distance, closest, normals = course.nearest(world)
-        good = distance < radius
+        # Search radius is not an inlier declaration. Reject the furthest 25%
+        # of candidates from the solve so unseen corners/objects do not drag a
+        # supported wall fit toward a different boundary.
+        candidate = distance[distance < radius]
+        good = distance <= min(radius, float(np.quantile(candidate,.75))) if len(candidate) else distance < 0
         if good.sum() < 40:
             break
         p = points[good]; n = normals[good]
@@ -178,7 +184,9 @@ def match_scan(course: BoundaryMap, points_lidar: np.ndarray, predicted: np.ndar
             break
     world = transform(points, estimate)
     distance, _, _ = course.nearest(world)
-    good = distance < radius
+    # Independent, stricter final support test against ALL valid scan returns.
+    # Dynamic/out-of-map points are allowed only as an explicit minority.
+    good = distance < .30
     count = int(good.sum()); fraction = count/max(1, len(points))
     mean = float(np.mean(distance[good])) if count else float('inf')
     p90 = float(np.quantile(distance[good], .9)) if count else float('inf')
@@ -191,7 +199,9 @@ def match_scan(course: BoundaryMap, points_lidar: np.ndarray, predicted: np.ndar
               'DEGRADED' if rank == 2 else 'TRACKING')
     estimate[:2] += course.origin; estimate[2] = wrap(estimate[2])
     return Match(reason in ('TRACKING', 'DEGRADED'), reason, estimate, rank, count, fraction,
-                 mean, p90, correction, turn)
+                 mean, p90, correction, turn,
+                 float(np.mean(distance)) if len(distance) else float('inf'),
+                 float(np.quantile(distance,.9)) if len(distance) else float('inf'))
 
 
 class MapLocalizer:

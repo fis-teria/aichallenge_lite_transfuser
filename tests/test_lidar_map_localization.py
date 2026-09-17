@@ -87,6 +87,15 @@ def test_filtering_shapes_units_and_map_validation():
     with pytest.raises(ValueError): BoundaryMap(np.zeros((2,2,2)))
 
 
+def test_minority_wall_support_cannot_validate_a_cluttered_scan():
+    course, world = fixture(); p = np.array([89603.,43101.,.1])
+    cloud = np.r_[observed(world,p),np.full((400,2),50.)]
+    result = match_scan(course,cloud,p)
+    assert not result.accepted and result.reason == 'INSUFFICIENT_SUPPORT'
+    assert result.fraction < .55
+    assert result.all_mean_distance_m > result.mean_distance_m
+
+
 def test_lanelet_loader_uses_only_explicit_boundary_nodes(tmp_path):
     path = tmp_path/'map.osm'
     path.write_text('''<osm><node id="1"><tag k="local_x" v="1"/><tag k="local_y" v="2"/></node>
