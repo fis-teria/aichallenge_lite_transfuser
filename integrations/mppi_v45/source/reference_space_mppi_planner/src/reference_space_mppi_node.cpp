@@ -1379,7 +1379,7 @@ private:
         }
       }
       if (contract_lock.owns_lock()) contract_lock.unlock();
-      if(leader_lap_prediction_enabled_ &&
+      if(leader_lap_prediction_enabled_ && !collection_motion_enabled_ &&
           distance(inputs.base_reference->points.front().pose.position,
                    inputs.base_reference->points.back().pose.position)<5.) {
         const auto world=sharedReferencePoseIndex(inputs.base_reference);
@@ -2232,7 +2232,8 @@ private:
                 std::remainder(p.s_m-history->back().station, length);
             history->push_back({observed.stamp_sec, observed.x_m, observed.y_m, station});
             history->erase(history->begin(), std::find_if(history->begin(), history->end(),
-                [&](const auto &sample) { return (leader_lap_prediction_enabled_ || prior_lap_prediction_enabled_) ?
+                [&](const auto &sample) { return (!collection_motion_enabled_ &&
+                    (leader_lap_prediction_enabled_ || prior_lap_prediction_enabled_)) ?
                     sample.station >= station-2.*length : sample.stamp >= observed.stamp_sec-.65; }));
             // Distance retention alone grows forever for a parked opponent.
             constexpr std::size_t history_capacity = 8192U;
