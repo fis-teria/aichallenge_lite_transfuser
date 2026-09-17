@@ -12,20 +12,22 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'src'))
 from aic_transfuser_lite.control.time_dev_v1 import TimeDevSpeeds
 from aic_transfuser_lite.runtime.awsim_trial_session import validate_npc_count
+from aic_transfuser_lite.runtime.awsim_traffic import traffic_domains
 
 
 def make_command(*, source: Path, deployment: Path, run_id: str, display: str,
-                 speeds: TimeDevSpeeds, record_video: bool, npcs: int = 0) -> list[str]:
+                 speeds: TimeDevSpeeds, record_video: bool, npcs: int = 0, pp_vehicles: int = 0) -> list[str]:
     """Explicit argument vector, no shell interpolation; outer timeout in seconds."""
     if not re.fullmatch(r'codex-time-[a-z0-9-]+', run_id):
         raise ValueError('INVALID_OWNED_RUN_ID')
     if not re.fullmatch(r':[0-9]+', display):
         raise ValueError('EXPLICIT_LOCAL_DISPLAY_REQUIRED')
     validate_npc_count(npcs)
+    traffic_domains(pp_vehicles, npcs)
     return ['timeout', '--signal=TERM', '--kill-after=10s', '710s', sys.executable,
         str(source/'tools/run_time_path_awsim_trial.py'), '--deployment', str(deployment),
         '--run-id', run_id, '--display', display, '--config', 'configs/control/time_path_dev.json',
-        '--npcs', str(npcs), '--ros-launch', '--max-speed-kmh', str(speeds.max_speed_kmh),
+        '--npcs', str(npcs), '--pp-vehicles', str(pp_vehicles), '--ros-launch', '--max-speed-kmh', str(speeds.max_speed_kmh),
         '--corner-max-speed-kmh', str(speeds.corner_max_speed_kmh),
         *(['--record-video'] if record_video else [])]
 
@@ -41,6 +43,8 @@ def main() -> None:
     parser.add_argument('--record-video', action='store_true')
     parser.add_argument('--npcs', type=int, choices=range(4), default=0,
                         help='Built-in AWSIM NPC karts; only ego has an E2E controller')
+    parser.add_argument('--pp-vehicles', type=int, choices=range(4), default=0,
+                        help='Existing PP background cars on domains 2..4; exclusive with built-in NPCs')
     args = parser.parse_args()
     speeds = TimeDevSpeeds(args.max_speed_kmh, args.corner_max_speed_kmh)
     deployment = args.deployment.resolve()
@@ -50,9 +54,9 @@ def main() -> None:
     if not (deployment/'install/setup.bash').is_file() or not (deployment/'command_off_best.pt').is_file():
         raise ValueError('PREPARED_ROS_INSTALL_AND_CHECKPOINT_REQUIRED')
     command = make_command(source=source, deployment=deployment, run_id=args.run_id,
-        display=args.display, speeds=speeds, record_video=args.record_video, npcs=args.npcs)
+        display=args.display, speeds=speeds, record_video=args.record_video, npcs=args.npcs, pp_vehicles=args.pp_vehicles)
     print(f'TimePath: max={speeds.max_speed_kmh:g} km/h, corner={speeds.corner_max_speed_kmh:g} km/h; '
-          f'NPCs={args.npcs}; output={deployment/args.run_id}', flush=True)
+          f'NPCs={args.npcs}; PP cars={args.pp_vehicles}; output={deployment/args.run_id}', flush=True)
     raise SystemExit(subprocess.run(command, cwd=source).returncode)
 
 
