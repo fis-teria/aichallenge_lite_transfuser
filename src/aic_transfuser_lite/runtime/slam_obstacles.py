@@ -155,6 +155,7 @@ class SlamObstacleDetector:
             surfaces.append(dict(id=key, confirmed=age >= 3, consecutive_hits=age,
                 center_xy_m=center.tolist(), min_xy_m=points.min(axis=0).tolist(),
                 max_xy_m=points.max(axis=0).tolist(), point_count=len(group),
+                points_xy_m=points[::max(1, len(points)//100)].tolist(),
                 extent_m=float(np.linalg.norm(np.ptp(points, axis=0))),
                 classification='unclassified_occupied_surface',
                 path_overlap=bool(blocking[group].any()) if path_valid else None,

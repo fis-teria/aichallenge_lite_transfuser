@@ -23,7 +23,7 @@ def main(argv: list[str] | None = None) -> None:
     from rclpy.node import Node
     from rclpy.qos import qos_profile_sensor_data
     from rclpy.utilities import remove_ros_args
-    from geometry_msgs.msg import PoseStamped, TransformStamped
+    from geometry_msgs.msg import Point, PoseStamped, TransformStamped
     from nav_msgs.msg import Odometry, OccupancyGrid, Path as RosPath
     from rosgraph_msgs.msg import Clock
     from sensor_msgs.msg import LaserScan
@@ -137,7 +137,8 @@ def main(argv: list[str] | None = None) -> None:
             packet = json.loads(msg.data)
             xy = np.asarray(packet['raw_xy_m'], dtype=float)
             if (packet['event'] != 'PLAN' or packet['frame'] != 'base_link'
-                    or xy.shape != (30, 2) or not np.isfinite(xy).all()):
+                    or xy.shape != (30, 2) or not np.isfinite(xy).all()
+                    or type(packet.get('observation_ns')) is not int or packet['observation_ns'] < 0):
                 raise ValueError('PLAN_CONTRACT')
             plans.append((packet, time.monotonic_ns()))
         except (ValueError, KeyError, TypeError) as exc:
@@ -207,12 +208,20 @@ def main(argv: list[str] | None = None) -> None:
         for surface in state['surfaces']:
             marker = Marker(); marker.header = tr.header; marker.ns = 'occupied_surface'; marker.id = surface['id']
             marker.type = Marker.CUBE; marker.action = Marker.ADD
-            marker.pose.position.x, marker.pose.position.y = surface['center_xy_m']
+            marker.pose.position.x, marker.pose.position.y = (
+                (surface['min_xy_m'][i]+surface['max_xy_m'][i])/2 for i in range(2))
             marker.pose.position.z = .15; marker.pose.orientation.w = 1.
             marker.scale.x = max(.15, surface['max_xy_m'][0]-surface['min_xy_m'][0])
             marker.scale.y = max(.15, surface['max_xy_m'][1]-surface['min_xy_m'][1]); marker.scale.z = .3
             marker.color.a = .55; marker.color.r = 1.
             marker.color.g = .05 if surface['path_overlap'] else .8; marker.color.b = .05
+            if surface['extent_m'] > 3.:
+                # A long curved wall's bounding rectangle is not occupied solid.
+                # Draw its observed points instead of filling across the road.
+                marker.type = Marker.POINTS; marker.pose.position.x = marker.pose.position.y = 0.
+                marker.scale.x = marker.scale.y = .15
+                for x, y in surface['points_xy_m']:
+                    marker.points.append(Point(x=float(x), y=float(y), z=0.))
             marker.lifetime.nanosec = 400_000_000; markers.append(marker)
         pubs['markers'].publish(MarkerArray(markers=markers))
         path = RosPath(); path.header = tr.header
@@ -274,7 +283,7 @@ def main(argv: list[str] | None = None) -> None:
         for name, namespace in [('time_slam_obstacles', '/'), ('cartographer', '/time_slam'),
                                  ('time_path_controller', '/'), ('time_path_inference', '/')]:
             try:
-                graph[namespace+name] = dict(subscriptions=node.get_subscriber_names_and_types_by_node(name, namespace),
+                graph[namespace.rstrip('/')+'/'+name] = dict(subscriptions=node.get_subscriber_names_and_types_by_node(name, namespace),
                     publishers=node.get_publisher_names_and_types_by_node(name, namespace))
             except rclpy.node.NodeNameNonExistentError:
                 pass
