@@ -7,7 +7,9 @@ dataset、rosbag、動画、`.venv`、ROS build/installはGitに含めない。
 ## 現在のAWSIM実行モデル
 
 機械可読の情報は [current_time_path.json](model_distribution/current_time_path.json)。
-Google Driveへのアップロードはユーザーが実施する。共有URLは受領後に同JSONへ登録する。
+モデルの共有先: [epoch_03.pt（Google Drive）](https://drive.google.com/file/d/16uglo_YKRYllkYQMhO_EblzaiEAlfPY7/view?usp=sharing)。
+共有URLはユーザー提供。下表のサイズとSHA-256は元checkpointで確認済み。
+Google Drive側の公開範囲と、配布ファイルの再ダウンロードによる照合は未確認。
 
 |項目|値|
 |---|---|
