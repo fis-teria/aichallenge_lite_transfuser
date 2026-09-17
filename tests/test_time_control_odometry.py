@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from aic_transfuser_lite.runtime.time_control_odometry import TimeControlOdometry, CONTROL_ODOMETRY_FRAME
+from aic_transfuser_lite.runtime.time_control_odometry import TimeControlOdometry, ClockAlignedControlInputs, CONTROL_ODOMETRY_FRAME
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan
 from aic_transfuser_lite.control.time_trial_v1 import interpolate_body_pose, time_trial_control
 from aic_transfuser_lite.control.turning_scan_guard import scan_pose_in_rear
@@ -140,3 +140,37 @@ def test_control_and_launch_have_no_external_pose_or_imu_subscriptions():
     assert 'time_control_odometry' in controller
     assert '--pose-source' not in (runtime/'launch/time_path_awsim.launch.py').read_text()
     assert '--pose-source' not in (root/'tools/run_time_path_trial_nodes.py').read_text()
+
+
+def test_real_awsim_future_callback_waits_for_clock_without_restamping():
+    queue = ClockAlignedControlInputs()
+    odom = TimeControlOdometry(0.)
+    # Captures/clock values from the failed pre-Start AWSIM run on 2026-09-18.
+    queue.add('velocity', 174999996, .1, 1_000_000_000)
+    queue.add('steering', 174999996, 0., 1_000_000_001)
+    assert queue.ready(149999996, 1_010_000_000) == []
+    assert odom.drain(149999996, '0') == []
+    entries = queue.ready(174999996, 1_020_000_000)
+    for role, stamp, value in entries:
+        (odom.add_speed if role == 'velocity' else odom.add_steering)(stamp, value)
+    pose = odom.drain(174999996, '0')[0][0]
+    assert pose.stamp_ns == 174999996
+    assert len(entries) == 2 and not queue.pending
+
+
+@pytest.mark.parametrize('clock,wall', [(175_000_001, 1_010_000_000), (0, 1_300_000_001)])
+def test_callback_queue_preserves_sim_and_wall_freshness(clock, wall):
+    queue = ClockAlignedControlInputs()
+    queue.add('velocity', 25_000_000, .1, 1_000_000_000)
+    with pytest.raises(ValueError, match='STALE'):
+        queue.ready(clock, wall)
+
+
+def test_callback_queue_is_bounded_and_reset_clears_pending():
+    queue = ClockAlignedControlInputs()
+    for t in range(32):
+        queue.add('velocity', t, .1, 100)
+    with pytest.raises(ValueError, match='OVERFLOW'):
+        queue.add('velocity', 32, .1, 100)
+    queue.clear()
+    assert queue.ready(100, 100) == []

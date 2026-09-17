@@ -7,6 +7,7 @@ vehicle response model is a nominal estimate; slip is not measured by it.
 from __future__ import annotations
 
 import math
+from collections import deque
 
 from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
 from aic_transfuser_lite.control.vehicle_motion_v1 import (
@@ -18,6 +19,45 @@ from .steering_odometry_v4 import SteeringOdometry
 
 CONTROL_ODOMETRY_FRAME = "time_wheel_odom"
 CONTROL_ODOMETRY_POLICY = "wheel_speed_steering_v1"
+
+
+class ClockAlignedControlInputs:
+    """Bounded callback queue; a sensor may arrive before its /clock message.
+
+    Entries retain capture ns and wall receipt ns. No entry is released outside
+    the controller's [-20 ms, +150 ms] capture-age window or after 300 ms wall.
+    A future entry waits, never gets restamped or integrated early.
+    """
+
+    def __init__(self) -> None:
+        self.pending: deque[tuple[str, int, float, int]] = deque()
+
+    def clear(self) -> None:
+        self.pending.clear()
+
+    def add(self, role: str, captured_ns: int, value: float, receipt_ns: int) -> None:
+        if (role not in ('velocity', 'steering') or type(captured_ns) is not int or captured_ns < 0
+                or type(receipt_ns) is not int or receipt_ns < 0 or not math.isfinite(value)):
+            raise ValueError('CONTROL_ODOMETRY_INPUT')
+        if len(self.pending) >= 32:
+            raise ValueError('CONTROL_ODOMETRY_INPUT_OVERFLOW')
+        self.pending.append((role, captured_ns, value, receipt_ns))
+
+    def ready(self, clock_ns: int, wall_ns: int) -> list[tuple[str, int, float]]:
+        if type(clock_ns) is not int or clock_ns < 0 or type(wall_ns) is not int or wall_ns < 0:
+            raise ValueError('CONTROL_ODOMETRY_CLOCK')
+        result = []
+        # Keep arrival order, including within each sensor stream. Reordered or
+        # conflicting captures still reach the odometry's latched-fault checks.
+        while self.pending:
+            role, captured, value, receipt = self.pending[0]
+            if not 0 <= wall_ns-receipt <= 300_000_000 or clock_ns-captured > 150_000_000:
+                raise ValueError('CONTROL_ODOMETRY_INPUT_STALE')
+            if captured-clock_ns > 20_000_000:
+                break
+            self.pending.popleft()
+            result.append((role, captured, value))
+        return result
 
 
 class TimeControlOdometry:

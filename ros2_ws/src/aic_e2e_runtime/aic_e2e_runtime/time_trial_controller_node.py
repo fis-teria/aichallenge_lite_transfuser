@@ -25,7 +25,7 @@ from aic_transfuser_lite.control.time_trial_v1 import (
     SPEED_POLICIES, interpolate_body_pose, time_trial_control, trial_speed_limits, validate_trial_config,
 )
 from aic_transfuser_lite.runtime.awsim_trial_session import requested_stop, trial_duration_limits, trial_brake_reason, encode_scan_values
-from aic_transfuser_lite.runtime.time_control_odometry import TimeControlOdometry, CONTROL_ODOMETRY_POLICY
+from aic_transfuser_lite.runtime.time_control_odometry import TimeControlOdometry, ClockAlignedControlInputs, CONTROL_ODOMETRY_POLICY
 from aic_transfuser_lite.runtime.time_recovery_takeover_v1 import (
     RecoveryTakeoverState, propose_recovery_takeover, validate_recovery_reference,
 )
@@ -138,6 +138,7 @@ def main() -> None:
     cache = {}
     poses: deque[TimedBodyPose] = deque(maxlen=256)
     odometry = TimeControlOdometry(args.rear_axle_forward_m, vehicle_model_policy)
+    odometry_inputs = ClockAlignedControlInputs()
     scans: deque[tuple[LaserScan, int]] = deque(maxlen=4)
     previous = [0., time.monotonic()]
     response_state: SteeringResponseState | None = None
@@ -178,6 +179,7 @@ def main() -> None:
         if clock_ns is not None and t < clock_ns:
             state["fault"] = "CLOCK_RESET"; epoch += 1; poses.clear(); scans.clear(); cache.clear()
             odometry.reset()
+            odometry_inputs.clear()
             response_state = None
         clock_ns = t; clock_receipt = time.monotonic_ns()
 
@@ -202,8 +204,6 @@ def main() -> None:
                 if names(topics[role][0]) != [args.sensor_source]:
                     raise ValueError('SOURCE_'+role)
                 captured = stamp(message.stamp if role == 'steering' else message.header.stamp)
-                if not -20_000_000 <= clock_ns-captured <= 150_000_000:
-                    raise ValueError('STALE_'+role)
                 if role == 'velocity':
                     if message.header.frame_id != 'base_link':
                         raise ValueError('VELOCITY_FRAME')
@@ -211,12 +211,9 @@ def main() -> None:
                     if math.isfinite(speed_value) and not -.03 <= speed_value <= overspeed_limit_mps:
                         state['fault'] = 'OVERSPEED_OR_REVERSE'
                         return
-                    odometry.add_speed(captured, speed_value)
+                    odometry_inputs.add(role, captured, speed_value, cache[role][1])
                 else:
-                    odometry.add_steering(captured, float(message.steering_tire_angle))
-                for pose, trace in odometry.drain(clock_ns, str(epoch)):
-                    poses.append(pose)
-                    record(dict(event='CONTROL_ODOMETRY', pose=pose.__dict__, inputs=trace))
+                    odometry_inputs.add(role, captured, float(message.steering_tire_angle), cache[role][1])
             except ValueError as exc:
                 state['fault'] = 'ODOMETRY_'+str(exc)
 
@@ -233,6 +230,18 @@ def main() -> None:
     def tick() -> None:
         nonlocal publisher, response_state, recovery_state
         wall = time.monotonic(); now = time.monotonic_ns()
+        if clock_ns is not None and not state['fault']:
+            try:
+                for role, captured, value in odometry_inputs.ready(clock_ns, now):
+                    if role == 'velocity':
+                        odometry.add_speed(captured, value)
+                    else:
+                        odometry.add_steering(captured, value)
+                for pose, trace in odometry.drain(clock_ns, str(epoch)):
+                    poses.append(pose)
+                    record(dict(event='CONTROL_ODOMETRY', pose=pose.__dict__, inputs=trace))
+            except ValueError as exc:
+                state['fault'] = 'ODOMETRY_'+str(exc)
         actual = names(topic)
         if publisher is None:
             if actual:
