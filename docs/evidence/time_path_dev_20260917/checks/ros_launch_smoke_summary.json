@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "command": [
+    "ros2",
+    "launch",
+    "aic_e2e_runtime",
+    "time_path_awsim.launch.py",
+    "checkpoint:=/time/command_off_best.pt",
+    "output:=/time/launch_smoke/run",
+    "run_id:=codex-time-launch-smoke",
+    "device:=cpu",
+    "max_speed_kmh:=12.0",
+    "corner_max_speed_kmh:=8.0"
+  ],
+  "parameters": {
+    "max_speed_kmh": 12.0,
+    "corner_max_speed_kmh": 8.0
+  },
+  "hot_changes_rejected": true,
+  "actual_control_publishers": 0,
+  "both_node_heartbeats": true
+}

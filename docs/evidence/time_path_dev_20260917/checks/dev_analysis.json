@@ -1,0 +1,59 @@
+{
+  "status": "LAP_COMPLETED",
+  "source_commit": "f2351125a1b0f17db70f211a8cf7413349aa96cd",
+  "speed_parameters": {
+    "max_speed_kmh": 20.0,
+    "corner_max_speed_kmh": 10.0
+  },
+  "judge_laps": [
+    {
+      "lap_seconds": 133.67,
+      "laps": 1,
+      "line": "Lap completed: 133.67s, total laps: 1",
+      "run_id": "codex-time-dev-lap01",
+      "epoch": 0,
+      "byte_offset": 103113,
+      "lap_increment_valid": true,
+      "ordered_section_evidence": true
+    }
+  ],
+  "moving_speed_median_kmh": 9.571679592132568,
+  "max_measured_speed_kmh": 12.804906177520753,
+  "max_tracking_target_kmh": 13.48116612345985,
+  "tracking_commands": 2817,
+  "full_tracking_corner_commands": 1617,
+  "max_full_tracking_corner_target_kmh": 10.0,
+  "limits": {
+    "prediction_horizon": 363,
+    "preview_corner": 1598,
+    "preview_curvature": 853,
+    "tracking_corner": 3
+  },
+  "active_command_reasons": {
+    "TIME_PATH_TRACKING": 2817,
+    "MOTION_REAR_LATERAL_INVALID": 5,
+    "PLAN_STALE": 5,
+    "TIME_PATH_INITIAL_DIRECTION": 10
+  },
+  "scan_would_stop_commands": 0,
+  "stop_confirmed": true,
+  "control_replay": {
+    "status": "PASS",
+    "matched_commands": 2832,
+    "unavailable_commands": 5,
+    "maximum_absolute_error": 1.0729195309977513e-12,
+    "tolerance": 1e-09,
+    "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+    "post_control_rejections": {
+      "MOTION_REAR_LATERAL_INVALID": 5
+    },
+    "actuator_mapping_matched": 2822,
+    "steering_response_matched": 2822,
+    "vehicle_motion_matched": 2822,
+    "scan_guard_decisions_replayed": false
+  },
+  "normal_rviz_raw_path_subscribers": [
+    "rviz2"
+  ],
+  "geometry_scope": "Curvature is from the predicted path and tracking target, not surveyed road curvature"
+}

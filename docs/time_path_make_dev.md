@@ -6,13 +6,20 @@
 
 ## AWSIMを起動する
 
-実行先は `graneple@192.168.3.10`。準備済みdeploymentのsourceディレクトリで:
+実行先は `graneple@192.168.3.10`。準備済みdeploymentには既定でTimePathを選ぶ
+Makefileを配置済み:
 
 ```bash
-make dev DEV_CONTROLLER=time MAX_SPEED_KMH=20 CORNER_MAX_SPEED_KMH=10
+ssh graneple@192.168.3.10
+cd ~/e2e_autonomous/time_path_dev_20260917
+make dev MAX_SPEED_KMH=20 CORNER_MAX_SPEED_KMH=10
 # 例: 全体15 km/h、コーナー8 km/h、動画も保存
-make dev DEV_CONTROLLER=time MAX_SPEED_KMH=15 CORNER_MAX_SPEED_KMH=8 TIME_RECORD_VIDEO=1
+make dev MAX_SPEED_KMH=15 CORNER_MAX_SPEED_KMH=8 TIME_RECORD_VIDEO=1
 ```
+
+deployment内の `source_f235112` ディレクトリから直接起動する場合は
+`make dev DEV_CONTROLLER=time ...` と指定する。deploymentのMakefileはこの
+検証済みsourceを選び、指定された速度変数をそのまま引き渡す。
 
 `tools/time_dev_runner.py` が既存の有限試験runnerを呼ぶ。通常RVizに
 `/visualization/time_path/raw_path` を表示し、公式Start、1周判定、制動停止、
@@ -89,4 +96,41 @@ python3 /time/source_<commit>/tools/check_time_dev_launch.py \
 
 checkpoint、dataset、rosbag、build成果物はGitに含めない。
 標準設定は `configs/control/time_path_dev.json` に置き、setup.pyがpackage shareへ同じファイルを配置する。
-準備済みdeploymentのパス・検証結果は、本タスクの結果記録に追記する。
+
+## 2026-09-17 実施結果
+
+実行sourceは `f2351125a1b0f17db70f211a8cf7413349aa96cd`。
+checkpointは従来のepoch 3、SHA-256
+`1fe12ca066791d3eb8907c6921120e2cfbb38925c422d5be54940f4acbdd120a`。
+Windowsコミットをnative WSLへ同期し、共有lock下で検証した。
+
+- 全体pytest: **2935 passed, 4 skipped** / 236.06秒。4件は既存の任意依存・環境不足。
+- 旧20 km/h設定の走行replay: **2569件一致**。既存設定に速度パラメータを足さなければ従来挙動を維持。
+- 公式環境colcon build成功、sourceとinstallの246ファイルが一致。launchと標準JSONを含む。
+- 隔離ROS接続smoke成功。合成センサ/経路、曲率減速、経路欠損、clock停止、速度超過の制動を確認。
+- 新ROS launch: 全体12 km/h・コーナー8 km/hを実parameter serviceで読み出し、
+  実効JSONとの一致、read-only、両processのheartbeat、actual-control publisher=0を確認。
+- deploymentルートの `make -n dev MAX_SPEED_KMH=12 CORNER_MAX_SPEED_KMH=8` で両値の引き渡しを確認。
+- **実際のmake devで全体20 km/h・コーナー10 km/hを指定し、AWSIM公式判定で1周133.67秒。**
+  run IDは `codex-time-dev-lap01`。停止確認、所有コンテナ終了、通常RVizの経路表示まで成功。
+
+|この1試行の値|結果|
+|---|---:|
+|走行中の実速度中央値（追従指令時、0.1 m/s超）|9.572 km/h|
+|最大実速度|12.805 km/h|
+|最大追従目標速度|13.481 km/h|
+|PP追従曲率が0.05 /m以上の指令|1617件、全件で目標10 km/h以下|
+|近接監視で停止相当と判定された指令|0件（監視は記録のみ）|
+|実効パラメータ込みの制御replay|2832件一致、最大差1.073e-12|
+
+replay不能5件は既存の `PLAN_STALE`。走行中には後輪横速度検査5件、
+予測の初期方向検査10件の一時制動もあり、検査を外して成功扱いにしていない。
+LiDARの停止判定自体をreplayで再認証したものではない。
+1周完走は確認したが、物理衝突センサによる無接触認証や複数周の安定性評価は未実施。
+速度12/8はROS起動検証であり、AWSIM走行確認した速度設定は20/10のみ。
+
+AWSIMの1089ファイルは前後のSHA一致。既存Git差分、RViz設定、過去コンテナを保全。
+AWSIM/RViz動画は165.1/165.8秒で、転送SHAと全フレームdecodeを確認済み。
+rawと動画はWSLの `/home/thistle/e2e_autonomous/runs/time_path_dev_20260917` に保存。
+小さな検証結果は [evidence](evidence/time_path_dev_20260917/manifest.json)、
+[走行集計](evidence/time_path_dev_20260917/checks/dev_analysis.json) に保存。
