@@ -21,6 +21,7 @@ from aic_transfuser_lite.control.vehicle_motion_v1 import IDEAL_POLICY, AWSIM_PO
 from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, scan_pose_in_rear, select_aligned_scan
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
 from aic_transfuser_lite.control.time_dev_v1 import configured_dev_speeds
+from aic_transfuser_lite.control.slam_slowdown import SlamSlowdown, validate_slam_slowdown_policy
 from aic_transfuser_lite.control.time_trial_v1 import (
     SPEED_POLICIES, interpolate_body_pose, time_trial_control, trial_speed_limits, validate_trial_config,
 )
@@ -62,6 +63,7 @@ def main() -> None:
     clearance_profile = 'standard_v1'
     stopping_distance_policy = 'measured_speed_v1'
     scan_occupancy_policy = 'stop_v1'
+    slam_slowdown_policy = 'off'
     speed_policy = args.speed_policy or "source_capped_0p25"
     dev_speeds = None
     if args.trial_config is not None:
@@ -78,6 +80,7 @@ def main() -> None:
         clearance_profile = config.get('diagnostic_clearance_profile', 'standard_v1')
         stopping_distance_policy = config.get('stopping_distance_policy', 'measured_speed_v1')
         scan_occupancy_policy = config.get('scan_occupancy_policy', 'stop_v1')
+        slam_slowdown_policy = validate_slam_slowdown_policy(config)
         if (config["checkpoint_sha256"] != args.checkpoint_sha256
                 or config["geometry"]["rear_axle_forward_in_base_link_m"] != args.rear_axle_forward_m):
             raise ValueError("TRIAL_CONFIG_IDENTITY")
@@ -144,6 +147,7 @@ def main() -> None:
     scans: deque[tuple[LaserScan, int]] = deque(maxlen=4)
     previous = [0., time.monotonic()]
     response_state: SteeringResponseState | None = None
+    slam_limiter = SlamSlowdown()
     state = {"fault": None, "armed_ns": None, "armed_wall": None, "stop_since_ns": None,
              "stop_confirmed": False, "positive_count": 0, "commands": 0, "max_speed_mps": 0.,
              "requested_stop_reason": None, "speed_mps": None, "current_pose": None,
@@ -190,6 +194,8 @@ def main() -> None:
               "velocity": ("/vehicle/status/velocity_status", VelocityReport, args.sensor_source),
               "steering": ("/vehicle/status/steering_status", SteeringReport, args.sensor_source),
               "scan": ("/sensing/lidar/scan", LaserScan, args.sensor_source)}
+    if slam_slowdown_policy != 'off':
+        topics['slam_obstacles'] = ('/time_path/slam/obstacles', String, '/time_slam_obstacles')
     if recovery_config is not None:
         topics.update(nominal=("/recovery_teacher/nominal_control_cmd", AckermannControlCommand,
                                "/recovery_teacher_pure_pursuit"),
@@ -277,6 +283,7 @@ def main() -> None:
                         "control_odometry_policy": CONTROL_ODOMETRY_POLICY,
                         "stopping_distance_policy": stopping_distance_policy,
                         "scan_occupancy_policy": scan_occupancy_policy,
+                        "slam_slowdown_policy": slam_slowdown_policy,
                         "execution_profile": execution_profile, "drive_limit_sim_s": drive_sim_s,
                         "rear_axle_forward_m": args.rear_axle_forward_m})
         reason = "WAIT_AUTHORIZATION" if live else "SHADOW_ONLY"
@@ -505,6 +512,20 @@ def main() -> None:
                             scan_occupancy_policy=scan_occupancy_policy, obstacle_guard=guard))
                         state['scan_observation_recorded'] = True
                 checking_scan = False
+            if slam_slowdown_policy != 'off':
+                slam_message, slam_receipt = cache.get('slam_obstacles', (None, None))
+                try:
+                    packet = json.loads(slam_message.data) if slam_message is not None else None
+                except (ValueError, TypeError):
+                    packet = None
+                guard = slam_limiter.update(packet, run_id=args.run_id,
+                    source_valid=names(topics['slam_obstacles'][0]) == ['/time_slam_obstacles'],
+                    now_sim_ns=clock_ns, now_wall_ns=now, receipt_ns=slam_receipt,
+                    speed_mps=speed, target_mps=target, acceleration_mps2=accel, dt_s=dt)
+                guard['issued_steer_before_rad'] = steer
+                target, accel = guard['target_speed_mps'], guard['acceleration_mps2']
+                guard['issued_steer_after_rad'] = steer
+                details['slam_slowdown'] = guard
             plan_id = plan.plan_id
             reason = ('RECOVERY_TEACHER_BOOTSTRAP' if control_owner == 'TEACHER_BOOTSTRAP'
                       else "TIME_PATH_TRACKING" if live else "SHADOW_CONTROL")
@@ -566,6 +587,8 @@ def main() -> None:
             if actual and actual != ["/time_path_controller"]:
                 state["fault"] = "COMPETING_CONTROLLER"
         temporary = args.output / "control_heartbeat.pending"
+        if slam_slowdown_policy != 'off':
+            state['slam_slowdown'] = details.get('slam_slowdown')
         if recovery_config is not None:
             state['recovery_state'] = asdict(recovery_state)
             state['control_owner'] = control_owner

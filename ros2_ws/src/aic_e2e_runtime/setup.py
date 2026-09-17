@@ -24,7 +24,8 @@ setup(
         ("share/" + package_name + "/launch", glob("launch/*")),
         ("share/" + package_name + "/config", glob("config/*")),
         ("share/" + package_name + "/config", [os.path.relpath(
-            canonical_source.parent / "configs/control/time_path_dev.json", setup_root)]),
+            canonical_source.parent / "configs/control" / name, setup_root)
+            for name in ('time_path_dev.json', 'time_path_slam_slowdown.json')]),
         ("share/" + package_name + "/schemas", [os.path.relpath(canonical_source.parent / "schemas" / name, setup_root) for name in (
             "spatial_path_v4_shadow_record_v1.schema.json", "spatial_path_v4_runtime_record_v1.schema.json",
             "spatial_path_v4_live_passive_record_v1.schema.json")]),

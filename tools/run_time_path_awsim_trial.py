@@ -57,7 +57,8 @@ def main() -> None:
                     help='Run aggressive map correction as display/evaluation sidecar; no control input')
     ap.add_argument('--lidar-map-initial-pose', type=float, nargs=3, metavar=('X_M', 'Y_M', 'YAW_RAD'))
     ap.add_argument('--lidar-map-correction-schedule', choices=('all', 'straight_only'), default='all')
-    ap.add_argument('--slam-obstacles', action='store_true', help='Local Cartographer + scan obstacle diagnostics; no control input')
+    ap.add_argument('--slam-obstacles', action='store_true', help='Local Cartographer detection; optional longitudinal limiter selected by config')
+    ap.add_argument('--slam-stop-box-test', action='store_true', help='Finite fixed physical-box scenario; stop after confirmed SLAM obstacle braking')
     args = ap.parse_args()
     if args.lidar_map_comparison != (args.lidar_map_initial_pose is not None):
         raise ValueError('LIDAR_COMPARISON_REQUIRES_EXPLICIT_MANUAL_INITIAL_POSE')
@@ -92,12 +93,19 @@ def main() -> None:
     elif args.max_speed_kmh is not None or args.corner_max_speed_kmh is not None:
         raise ValueError('SPEED_PARAMETERS_REQUIRE_ROS_LAUNCH')
     validate_trial_config(config)
+    slam_slowdown = config.get('slam_slowdown_policy', 'off') != 'off'
+    if slam_slowdown and not args.slam_obstacles:
+        raise ValueError('SLAM_SLOWDOWN_REQUIRES_SLAM_SIDECAR')
+    if args.slam_stop_box_test and (not slam_slowdown or args.npcs or args.pp_vehicles):
+        raise ValueError('SLAM_BOX_TEST_REQUIRES_LONGITUDINAL_ONLY_SINGLE_EGO')
     execution_profile = config.get("execution_profile", "bounded_10s")
     if (args.npcs or args.pp_vehicles) and (execution_profile != 'one_lap' or args.recovery_side is not None):
         raise ValueError('NPC_TRIAL_REQUIRES_ONE_LAP_WITHOUT_TEACHER')
     drive_sim_s, drive_wall_s, outer_wall_s = trial_duration_limits(execution_profile)
     output = deployment / args.run_id; output.mkdir(exist_ok=False)
     effective_config = output / 'trial_config.json'
+    if args.slam_stop_box_test:
+        (output/'slam_stop_box.yaml').write_bytes((source/'configs/scenarios/slam_stop_box.yaml').read_bytes())
     effective_config.write_bytes((json.dumps(config, indent=2, allow_nan=False)+'\n').encode()
                                 if args.ros_launch else config_path.read_bytes())
     env = dict(os.environ)
@@ -113,6 +121,7 @@ def main() -> None:
         result.update(scope='ONE_LAP_AFTER_TEACHER_BOOTSTRAP', recovery_side=args.recovery_side)
     streams = []; processes = []; compose = None; owned = False
     started = time.monotonic()
+    obstacle_stop_since_ns = None
     judge = JudgeLog(args.run_id); judge_offset = 0; judge_pending = b""
     if args.pp_vehicles:
         judge = DomainLapJudge(args.run_id)
@@ -275,8 +284,11 @@ def main() -> None:
             # Keep background cars active, with collisions enabled, for the whole ego lap.
             make_args += [f'AWSIM_VEHICLES={len(domains)}', 'AWSIM_READY_DOMAINS='+','.join(map(str, domains))]
         simulator_args = ['--npcs', str(args.npcs)]
-        if args.npcs or args.pp_vehicles:
+        if args.npcs or args.pp_vehicles or args.slam_stop_box_test:
             simulator_args += ['--collisions', 'on']
+        if args.slam_stop_box_test:
+            simulator_args += ['--scenario', '/output/slam_stop_box.yaml']
+            result['stop_box_scenario_sha256'] = sha(output/'slam_stop_box.yaml')
         if execution_profile == "one_lap":
             # Compose mounts this host output directory at /output in AWSIM.
             make_args += ["AWSIM_TIMEOUT=660"]
@@ -298,7 +310,8 @@ def main() -> None:
                            +shlex.join(['python3', str(source_in_container/'tools/run_slam_obstacle_sidecar.py'),
                                        '--output', str(inside)]))
             result['commands'].append(observer)
-            result['slam_obstacle_scope'] = 'LOCAL_SLAM_DETECTION_DISPLAY_ONLY_NO_CONTROL_INPUT'
+            result['slam_obstacle_scope'] = ('LOCAL_SLAM_LONGITUDINAL_ONLY_E2E_STEERING' if slam_slowdown
+                                            else 'LOCAL_SLAM_DETECTION_DISPLAY_ONLY_NO_CONTROL_INPUT')
             localization_process = launch(observer, 'slam_sidecar')
         if args.lidar_map_comparison:
             observer_command = ['python3', str(source_in_container/'tools/observe_lidar_map_trial.py'),
@@ -389,8 +402,25 @@ def main() -> None:
                     raise RuntimeError("CONTROL_"+control["fault"])
                 if time.monotonic_ns() - control["monotonic_ns"] > 1_000_000_000:
                     raise RuntimeError("CONTROLLER_WATCHDOG")
+                if args.slam_stop_box_test and control['armed_ns'] is not None:
+                    g = control.get('slam_slowdown') or {}
+                    stopped_for_box = (g.get('valid') is True and g.get('reason') == 'OBSTACLE_STOP'
+                        and g.get('limited') is True and g.get('target_speed_mps') == 0
+                        and control['positive_count'] > 0 and control.get('speed_mps') is not None
+                        and abs(control['speed_mps']) < .03)
+                    if stopped_for_box:
+                        if obstacle_stop_since_ns is None: obstacle_stop_since_ns = control['sim_ns']
+                        if control['sim_ns']-obstacle_stop_since_ns >= 1_000_000_000:
+                            result['slam_obstacle_stop'] = g
+                            stop_request('SLAM_OBSTACLE_STOP_CONFIRMED')
+                    else:
+                        obstacle_stop_since_ns = None
+                    if (control['sim_ns']-control['armed_ns'])/1e9 > 90:
+                        stop_request('SLAM_BOX_TEST_TIME_LIMIT')
                 if control["stop_confirmed"]:
                     result["status"] = ("COMPLETE_LAP" if judge.completed else "STOPPED_NO_LAP") if execution_profile == "one_lap" else "COMPLETE_BOUNDED_TRIAL"
+                    if args.slam_stop_box_test and control['requested_stop_reason'] == 'SLAM_OBSTACLE_STOP_CONFIRMED':
+                        result['status'] = 'COMPLETE_SLAM_OBSTACLE_STOP'
                     if result['status'] == 'COMPLETE_LAP' and args.recovery_side is not None:
                         if control.get('recovery_state', {}).get('takeover_ns') is None:
                             raise RuntimeError('RECOVERY_TAKEOVER_MISSING')
@@ -571,7 +601,7 @@ def main() -> None:
         (output/"containers_after.jsonl").write_text(run(["docker", "ps", "-a", "--format", "{{json .}}"], check=False).stdout)
         (output/"compose_after.json").write_text(run(["docker", "compose", "ls", "--all", "--format", "json"], check=False).stdout)
         print(json.dumps(result, allow_nan=False))
-    if result["status"] not in ("COMPLETE_BOUNDED_TRIAL", "COMPLETE_LAP", "COMPLETE_LAP_AFTER_TEACHER_BOOTSTRAP"):
+    if result["status"] not in ("COMPLETE_BOUNDED_TRIAL", "COMPLETE_LAP", "COMPLETE_LAP_AFTER_TEACHER_BOOTSTRAP", "COMPLETE_SLAM_OBSTACLE_STOP"):
         raise SystemExit(1)
 
 

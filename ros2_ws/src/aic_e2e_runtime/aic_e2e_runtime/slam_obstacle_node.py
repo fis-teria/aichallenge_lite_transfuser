@@ -184,7 +184,7 @@ def main(argv: list[str] | None = None) -> None:
                 break
         state = detector.update(stamp, scan.ranges, scan.angle_min, scan.angle_increment,
                                 scan.range_min, scan.range_max, p, path_world)
-        state.update(event='OBSTACLES', reason='OK', sim_ns=clock, monotonic_ns=time.monotonic_ns(),
+        state.update(event='OBSTACLES', run_id=args.output.name, reason='OK', sim_ns=clock, monotonic_ns=time.monotonic_ns(),
                      gnss_imu_map_inputs=False, pose_source='Cartographer scan+wheel_odometry',
                      plan_observation_ns=plan_observation_ns,
                      scan_age_s=(clock-stamp)/1e9)
