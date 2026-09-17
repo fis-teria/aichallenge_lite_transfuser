@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+
+def test_driving_start_is_case_insensitive_but_excludes_playstart():
+    from tools.audit_lidar_v2x_obstacles import driving_start_stamps
+    assert driving_start_stamps([(1,'PlayStart'),(2,'playstart'),(3,'WaitStart'),
+        (4,'Start'),(5,'start'),(6,' finish ')]) == [4,5]
+
 import pytest
 
 from aic_transfuser_lite.data.clock_segments import ClockSample, segment_clock_epochs

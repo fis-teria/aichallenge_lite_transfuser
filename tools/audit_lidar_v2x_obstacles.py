@@ -27,6 +27,11 @@ def ns(stamp) -> int:
     return int(stamp.sec)*1_000_000_000+int(stamp.nanosec)
 
 
+def driving_start_stamps(states: list[tuple[int, str]]) -> list[int]:
+    """Installed AWSIM adapters emit either Start or start; never match PlayStart."""
+    return [stamp for stamp, state in states if state.strip().casefold() == 'start']
+
+
 def windows(values: list[int], max_gap_ns: int = 250_000_000) -> list[tuple[int, int]]:
     """Group sorted capture times; endpoints are included, units nanoseconds."""
     output: list[tuple[int, int]] = []
@@ -131,7 +136,7 @@ def audit(collected: Path, output: Path) -> dict:
     config = TimeDatasetConfig()
     event_windows = EventWindows(events)
     bounds = (epoch.first_sim_stamp_ns,epoch.last_sim_stamp_ns)
-    starts = [t for t,state in states if state=='Start']
+    starts = driving_start_stamps(states)
     assert starts, 'No AWSIM driving start'
     drive_start = min(starts)
     # Exclude collection termination from the 3 s future, with an additional 2 s guard.
