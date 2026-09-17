@@ -113,8 +113,10 @@ def prepare(repo: Path, reference: Path, output: Path, prefix: str) -> dict[str,
     native = compiler.build_awsim_scenario(resolved, True)
     if len(native['vehicles']) != 1 or sum(len(v) for v in native.get('objects', {}).values()) != len(selected):
         raise ValueError('compiled native object identity/count mismatch')
-    if resolved.warnings:
-        raise ValueError(f'{name}: placement warnings: {resolved.warnings}')
+    supported_warning = '物体はAWSIM標準形状です。物体別の離隔・通過判定は未対応で、接触は公式wall/obstacleカウンタで監視します。'
+    unexpected = [w for w in resolved.warnings if w != supported_warning]
+    if unexpected:
+        raise ValueError(f'{name}: placement warnings: {unexpected}')
     locations = [dict(p, object_id=o['id'], object_type=o['type']) for p, o in zip(selected, document['objects'], strict=True)]
     metadata = dict(schema_version=1, cases=[name], locations=locations, split='unassigned',
             split_policy='Entire suite remains grouped; no frame split and no automatic training registration.',
@@ -122,7 +124,8 @@ def prepare(repo: Path, reference: Path, output: Path, prefix: str) -> dict[str,
             required_post_actor_m=25., required_min_clearance_m=.3,
             all_object_audit_required=True, teacher_reference_sha256=sha256(reference),
             geometry_sha256=sha256(Path(sys.modules['scenario_tool.geometry'].__file__)),
-            clearance_quality='UNKNOWN_PREFAB_MESH', static_geometry_only=True, awsim_modified=False)
+            clearance_quality='UNKNOWN_PREFAB_MESH', warnings=resolved.warnings,
+            static_geometry_only=True, awsim_modified=False)
     output.mkdir(parents=True)
     yamlio.dump_file(output/(name+'.yaml'), document)
     scenario.validate_document(yamlio.load_file(output/(name+'.yaml')), context)
