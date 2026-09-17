@@ -130,6 +130,14 @@ LiDAR/TFなどの有効入力が0.75s途絶えた場合（初回入力は起動�
 
 ```bash
 ROS_DOMAIN_ID=97 python3 /path/to/aic_lidar_v2x/test/smoke_ros.py
+ROS_DOMAIN_ID=97 python3 /path/to/aic_lidar_v2x/test/smoke_ros.py --teacher-existing-margin
+```
+
+同じ隔離環境で `teacher.launch.py domain_id:=97 ...` を起動中に、接続先と実パラメータを検査する。
+headlessな検証コンテナでは `QT_QPA_PLATFORM=offscreen` を指定する。
+
+```bash
+ROS_DOMAIN_ID=97 python3 /path/to/aic_lidar_v2x/test/check_teacher_graph.py
 ```
 
 SI26の既存devイメージでは、既定のCycloneDDS設定が別マウントを参照していた。
@@ -170,7 +178,7 @@ native V2Xは照合専用で、検出器・追跡器への入力には使って�
 | known_vehicle・rolling | 167 / 472 | 0.954 / 1.136 m | 17.12 ms |
 
 処理時間はWSLでの検出・追跡・payload作成のCPU時間で、DDS通信・TF待ち時間は含まない。
-最終ソースの全体pytestは **3,017 passed / 4 skipped**、追加の数値テストは21件。
+このshadow実装時点の全体pytestは **3,017 passed / 4 skipped**、追加の数値テストは21件。
 skipは既存のOSQP、jsonschema関連、公式Tiny packageの不足によるもの。
 ROSパッケージのビルドと有限通信試験も成功し、型・標準偏差の単位・ID・TF欠損・
 NaN入力・scan timeout・native V2X非配信を確認した。
@@ -194,3 +202,40 @@ shadowでは既存V2Xの教師と比較でき、teacherではLiDAR V2Xを教師�
 WSLのraw replay・全scan出力は `/home/thistle/e2e_autonomous/runs/lidar_v2x_20260918/`。
 ROS通信試験はSI26の専用 `ai-work/raw/lidar_v2x_20260918/` で実施し、
 AWSIMを起動せず、native V2X publisherを増やさず、運転指令を配信していない。
+
+## 既存マージンを使う教師接続の検証（2026-09-18）
+
+`teacher_existing_margin` を追加した。LiDARのsurface位置を既存のV2X型で渡し、
+MPPI V44の衝突包絡・車体寸法・clearance設定をそのまま使用する。
+V44本体の実行ファイル・共有ライブラリのSHA-256も保存済みV44と一致した。
+
+SI26の公式devイメージを `--network none`・domain 97で起動し、次を確認した。
+
+- MPPI planner、基準経路生成、復帰制御の3ノードが
+  `/collection/lidar_v2x/vehicle_positions` を購読し、native V2Xの購読が残っていない。
+- 同topicのpublisherは `lidar_v2x` の1個。V2XのRViz表示も同じ入力を購読する。
+- 実ノードのマージン・車体寸法パラメータ6個は上記の既存値と一致する。
+- 合成scan/TFの有限通信試験で104配信・102非空配信、IDは1個。
+  TF欠損・NaN入力・scan timeoutを検出し、教師モードの入力欠損時に既存停止要求を発行した。
+
+WSLでの回帰試験は **3,030 passed / 4 skipped**。
+LiDAR V2X単体24件も成功した。4件のskip理由は上記と同じ。
+検証commitは `986cbdbd038196c8c9b1f3978a65342e750812f0`、ROS試験のpackage treeは
+`7f23cd8` と同一である。
+並行作業によるcheckout変更を避けるため、同一commitを専用のnative WSL cloneへ同期し、
+既存venv・検証用データを使用した。必要な旧checkpoint 2個はコピー後にSHA-256を照合した。
+
+```bash
+cd /home/thistle/e2e_autonomous/e2e_lite_transfuser_lidar_v2x_margin
+bash tools/with_wsl_training_lock.sh env PYTHONPATH="$PWD/src" \
+  .venv/bin/python -m pytest -q
+```
+
+使用commit、ログSHA-256、ROS接続・実パラメータ・V44バイナリの記録は
+[教師接続の検証記録](lidar_v2x_teacher_validation.json) に保存した。
+従来の [shadow検証記録](lidar_v2x_validation.json) は履歴として保全している。
+
+**今回の新接続でのAWSIM回避走行は未実施。** 接続と設定維持の確認までであり、
+表面位置のずれを既存マージンで常に吸収できる証明ではない。
+次の収集では、この教師接続での無接触・通過・有効なセンサ/将来poseを確認してから
+教師データへ採用する。AWSIM本体・センサ取付TFは変更していない。

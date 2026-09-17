@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "validation_date": "2026-09-18",
+  "mode": "teacher_existing_margin",
+  "implementation_commit": "f5a5513a79056dc7d83deffa32748805c939f691",
+  "git_commit": "986cbdbd038196c8c9b1f3978a65342e750812f0",
+  "module_tree": "2fa0f8257d6f2e83e17d8becb325179986cf2742",
+  "numerical_validation": {
+    "environment": "native WSL",
+    "repository": "/home/thistle/e2e_autonomous/e2e_lite_transfuser_lidar_v2x_margin",
+    "full_pytest_summary": "3030 passed, 4 skipped, 84 warnings in 118.64s (0:01:58)",
+    "full_pytest_log_sha256": "1655ffbebeb30761c37609d7c2426ac3d67c90a9aa905ff2ae62b03c9e6d6e36",
+    "lidar_v2x_tests": 24,
+    "focused_with_localization_tests": 34,
+    "command": "bash tools/with_wsl_training_lock.sh env PYTHONPATH=\"$PWD/src\" .venv/bin/python -m pytest -q",
+    "copied_legacy_test_fixtures": [
+      {
+        "path": "runs/transfuser_lite_v0/best.pt",
+        "size": 47855872,
+        "sha256": "37c90f237fe3c94acf6de7294c15008338889966e86914724cd5e61ae47d5454"
+      },
+      {
+        "path": "runs/diagnostics/e3a_speed_only_ego_seed42_100ep/best.pt",
+        "size": 47854400,
+        "sha256": "bb28517a32df9c6e01e8ff44412376233fd2f5e7a3c5e96025a76b2540128543"
+      }
+    ],
+    "initial_attempt": "Isolated clone first lacked two ignored legacy checkpoint fixtures; five tests failed. Two unrelated localization tests failed in the concurrent development snapshot, then passed after its next committed fixes. Full suite rerun after fixture verification and exact commit synchronization."
+  },
+  "ros_validation": {
+    "returncode": 0,
+    "source_sha256": "73879837b32cc260d95fa070a03afabdfd91fdaa697c8f2ed98cfa8d29feeb08",
+    "records": [
+      {
+        "passed": true,
+        "arrays": 104,
+        "nonempty_arrays": 102,
+        "track_ids": [
+          "lidar_000001"
+        ],
+        "reasons": [
+          "invalid_perception_input",
+          "ok",
+          "scan_queue_overflow",
+          "scan_timeout",
+          "teacher_input_timeout_stop_requested",
+          "waiting_for_timestamped_tf"
+        ],
+        "native_v2x_publishers": 0,
+        "driving_publishers": 0,
+        "mode": "teacher_existing_margin",
+        "sensor_failure_stop_requests": 11
+      },
+      {
+        "passed": true,
+        "teacher_v2x_topic": "/collection/lidar_v2x/vehicle_positions",
+        "consumers": [
+          "mppi_recovery_controller",
+          "reference_space_mppi_planner",
+          "simple_trajectory_generator",
+          "v2x_marker_publisher"
+        ],
+        "native_teacher_consumers": [],
+        "publishers": [
+          "lidar_v2x"
+        ],
+        "unchanged_margin_parameters": {
+          "obstacle_longitudinal_inflation_m": 1.1,
+          "obstacle_lateral_inflation_m": 1.15,
+          "clearance_target_m": 0.35,
+          "brain.footprint_radius_m": 0.65,
+          "brain.footprint_front_m": 1.06,
+          "brain.footprint_rear_m": 1.1
+        },
+        "driving_test": false
+      }
+    ],
+    "awsim_started": false,
+    "network": "none",
+    "source_commit": "7f23cd8"
+  },
+  "ros_smoke_log_sha256": "73d4b9eaa51001f491cbae835b595e59422473b98a689d932a2092934259e36d",
+  "teacher_launch_log_sha256": "90a95c8f33cdfdd302b0ff08d8dd5def020f34637c5ec9b3182261846978e140",
+  "pinned_v44_binary": {
+    "prefix": "/teacher/install/reference_space_mppi_planner",
+    "node_sha256": "149e30cf38527157ac25cfcc1510383861a9b1b813df520c82867a2e17396509",
+    "core_sha256": "2a4c93636643306c867aae7c5627f9bcf43916fcae1d9452a56568d66b229d9a"
+  },
+  "collision_geometry_changed": false,
+  "awsim_modified": false,
+  "sensor_mount_tf_changed": false,
+  "closed_loop_evaluated": false,
+  "new_teacher_data_collected": false,
+  "limits": [
+    "ROS graph and parameter equality do not prove collision-free avoidance.",
+    "Surface-position bias and ID changes measured in the previous replay remain; no claim that existing margin always absorbs them.",
+    "Sensor-loss stop request verified by synthetic ROS transport; physical braking was not tested in this change."
+  ]
+}
