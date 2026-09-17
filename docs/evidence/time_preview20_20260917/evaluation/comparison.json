@@ -1,0 +1,171 @@
+{
+  "scope": "SAME_SCENE_SINGLE_RUN_COMPARISON_NOT_REPEATED_SUCCESS_RATE",
+  "all_proximity_stop_policies": "log_only_awsim_v1",
+  "same_checkpoint_sha256": "1fe12ca066791d3eb8907c6921120e2cfbb38925c422d5be54940f4acbdd120a",
+  "physical_contact_certified": false,
+  "trials": [
+    {
+      "label": "Previous adaptive speed, stopping-distance PP",
+      "source_run": "/home/thistle/e2e_autonomous/runs/time_curvature_response_20260917/raw/codex-time-curve15-response-lap04",
+      "status": "LAP_COMPLETED",
+      "lap_completed": true,
+      "lap_records": [
+        {
+          "lap_seconds": 145.98,
+          "laps": 1,
+          "line": "Lap completed: 145.98s, total laps: 1",
+          "run_id": "codex-time-curve15-response-lap04",
+          "epoch": 0,
+          "byte_offset": 103113,
+          "lap_increment_valid": true,
+          "ordered_section_evidence": true
+        }
+      ],
+      "recorded_distance_m": 371.63944077803313,
+      "moving_actual_kmh": {
+        "min": 0.39213885068893434,
+        "median": 8.987409925460817,
+        "p95": 9.771592998504639,
+        "max": 10.70810022354126
+      },
+      "command_reasons": {
+        "TIME_PATH_TRACKING": 3081,
+        "MOTION_YAW_RATE_INVALID": 2,
+        "TIME_PATH_INITIAL_DIRECTION": 9,
+        "MOTION_REAR_LATERAL_INVALID": 6
+      },
+      "limiting_reasons": {
+        "prediction_horizon": 2624,
+        "preview_curvature": 457
+      },
+      "scan_would_stop_commands": 0,
+      "stop_confirmed": true,
+      "control_replay": {
+        "status": "PASS",
+        "matched_commands": 3098,
+        "unavailable_commands": 0,
+        "maximum_absolute_error": 3.375077994860476e-14,
+        "tolerance": 1e-09,
+        "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+        "post_control_rejections": {
+          "MOTION_YAW_RATE_INVALID": 2,
+          "MOTION_REAR_LATERAL_INVALID": 6
+        },
+        "actuator_mapping_matched": 3089,
+        "steering_response_matched": 3089,
+        "vehicle_motion_matched": 3089,
+        "scan_guard_decisions_replayed": false
+      }
+    },
+    {
+      "label": "Time-scaled PP, ceiling 15 km/h",
+      "source_run": "/home/thistle/e2e_autonomous/runs/time_preview15_20260917/raw/codex-time-timepreview15-lap01",
+      "status": "LAP_COMPLETED",
+      "lap_completed": true,
+      "lap_records": [
+        {
+          "lap_seconds": 120.53,
+          "laps": 1,
+          "line": "Lap completed: 120.53s, total laps: 1",
+          "run_id": "codex-time-timepreview15-lap01",
+          "epoch": 0,
+          "byte_offset": 103113,
+          "lap_increment_valid": true,
+          "ordered_section_evidence": true
+        }
+      ],
+      "recorded_distance_m": 375.6398051516236,
+      "moving_actual_kmh": {
+        "min": 0.4357055962085724,
+        "median": 10.277843856811524,
+        "p95": 14.341941804885865,
+        "max": 14.835233688354492
+      },
+      "command_reasons": {
+        "TIME_PATH_TRACKING": 2543,
+        "PLAN_STALE": 3,
+        "MOTION_YAW_RATE_INVALID": 1,
+        "TIME_PATH_INITIAL_DIRECTION": 13,
+        "MOTION_REAR_LATERAL_INVALID": 13
+      },
+      "limiting_reasons": {
+        "prediction_horizon": 1050,
+        "cruise": 130,
+        "preview_curvature": 1360,
+        "tracking_curvature": 3
+      },
+      "scan_would_stop_commands": 0,
+      "stop_confirmed": true,
+      "control_replay": {
+        "status": "PASS",
+        "matched_commands": 2570,
+        "unavailable_commands": 3,
+        "maximum_absolute_error": 1.5987211554602254e-13,
+        "tolerance": 1e-09,
+        "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+        "post_control_rejections": {
+          "MOTION_YAW_RATE_INVALID": 1,
+          "MOTION_REAR_LATERAL_INVALID": 13
+        },
+        "actuator_mapping_matched": 2557,
+        "steering_response_matched": 2557,
+        "vehicle_motion_matched": 2557,
+        "scan_guard_decisions_replayed": false
+      }
+    },
+    {
+      "label": "Time-scaled PP, ceiling 20 km/h",
+      "source_run": "/home/thistle/e2e_autonomous/runs/time_preview20_20260917/raw/codex-time-timepreview20-lap01",
+      "status": "LAP_COMPLETED",
+      "lap_completed": true,
+      "lap_records": [
+        {
+          "lap_seconds": 120.25,
+          "laps": 1,
+          "line": "Lap completed: 120.25s, total laps: 1",
+          "run_id": "codex-time-timepreview20-lap01",
+          "epoch": 0,
+          "byte_offset": 103113,
+          "lap_increment_valid": true,
+          "ordered_section_evidence": true
+        }
+      ],
+      "recorded_distance_m": 375.8026124830411,
+      "moving_actual_kmh": {
+        "min": 0.4356127917766571,
+        "median": 10.373723602294922,
+        "p95": 14.247317934036255,
+        "max": 15.518581581115724
+      },
+      "command_reasons": {
+        "TIME_PATH_TRACKING": 2540,
+        "MOTION_REAR_LATERAL_INVALID": 15,
+        "TIME_PATH_INITIAL_DIRECTION": 13,
+        "MOTION_YAW_RATE_INVALID": 1
+      },
+      "limiting_reasons": {
+        "prediction_horizon": 1154,
+        "preview_curvature": 1384,
+        "tracking_curvature": 2
+      },
+      "scan_would_stop_commands": 3,
+      "stop_confirmed": true,
+      "control_replay": {
+        "status": "PASS",
+        "matched_commands": 2569,
+        "unavailable_commands": 0,
+        "maximum_absolute_error": 1.474376176702208e-13,
+        "tolerance": 1e-09,
+        "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+        "post_control_rejections": {
+          "MOTION_REAR_LATERAL_INVALID": 15,
+          "MOTION_YAW_RATE_INVALID": 1
+        },
+        "actuator_mapping_matched": 2556,
+        "steering_response_matched": 2556,
+        "vehicle_motion_matched": 2556,
+        "scan_guard_decisions_replayed": false
+      }
+    }
+  ]
+}

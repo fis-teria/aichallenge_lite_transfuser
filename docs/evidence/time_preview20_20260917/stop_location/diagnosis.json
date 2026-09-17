@@ -1,0 +1,118 @@
+{
+  "status": "PASS",
+  "event": "SCAN_GUARD_OBSERVED",
+  "action": "LOG_ONLY_CONTINUED",
+  "first_guard_after_arm_s": 71.09999841,
+  "current_pose": {
+    "stamp_ns": 90149997984,
+    "clock": "sim",
+    "epoch": "0",
+    "world_frame": "map",
+    "body_frame": "base_link",
+    "x_m": 89664.74774539837,
+    "y_m": 43178.867754428946,
+    "yaw_rad": -1.893009832305658
+  },
+  "speed_kmh": 7.736782550811768,
+  "selected_lookahead_m": 3.654085159301758,
+  "minimum_preview_m": 3.6236593961715697,
+  "source_prediction_endpoint_m": [
+    4.941359897825164,
+    -2.6785372579611666
+  ],
+  "source_prediction_endpoint_norm_m": 5.620640486823618,
+  "predicted_source_speed_mps": 2.3074078180133766,
+  "plan_age_s": 0.274999993,
+  "pp_required_tire_rad": -0.2189248994642024,
+  "measured_tire_rad": -0.2125898152589798,
+  "issued_tire_rad": -0.21942725632401863,
+  "stopping_travel_m": 1.0,
+  "scan_replay": {
+    "reason": "STOPPING_SWEEP_OCCUPIED",
+    "minimum_ray_margin_m": -0.028402844079972622
+  },
+  "motion": {
+    "policy": "awsim_understeer_20kmh_trial_v1",
+    "static_wheelbase_m": 1.087,
+    "nominal_response_length_m": 1.294839598050505,
+    "lateral_displacement_bound_m": 0.07947318792343139,
+    "scope": "EXTRAPOLATED_AWSIM_SPEED_LADDER_NOT_CALIBRATED",
+    "gradient_interval_s2_per_m": [
+      0.0,
+      0.2
+    ],
+    "braking_speed_interval_mps": [
+      0.0,
+      2.14910626411438
+    ],
+    "heading_rate_radps": -0.4024036228656769,
+    "reported_lateral_mps": -0.045031607151031494,
+    "rear_lateral_mps": 0.02538903164748696,
+    "measured_curvature_per_m": -0.18724231071538122,
+    "low_speed_full_curvature_interval": false,
+    "calibrated_at_trial_speed": false,
+    "target_trial_speed_kmh": 20,
+    "maximum_trial_speed_mps": 5.833333333333333,
+    "curvature_interval_per_m": [
+      -0.2088922107459533,
+      -0.10734969365609957
+    ]
+  },
+  "monitor_metadata": {
+    "policy": "CURVATURE_INTERVAL_SUPPORT_V2",
+    "support_directions": 64,
+    "sweep_samples": 201,
+    "integration_step_m": 0.005,
+    "maximum_position_integration_error_m": 0.0005222305268648833,
+    "maximum_discretization_padding_m": 0.0806292687185054,
+    "stopping_travel_m": 1.0,
+    "whole_sweep_convex_enclosure": true,
+    "stopping_distance_policy": "awsim_cap_1m_diagnostic_v1",
+    "envelope_speed_mps": 1.3888888888888888,
+    "measured_speed_mps": 2.14910626411438,
+    "lateral_padding_m": 0.056666666666666664,
+    "diagnostic_only": true,
+    "actual_speed_stopping_envelope": false,
+    "stopping_travel_cap_m": 1.0
+  },
+  "lidar_points_inside_envelope_rear_xy_m": [
+    [
+      3.117938843785062,
+      0.6348225626452764
+    ],
+    [
+      3.0836847130819773,
+      0.6497481831007339
+    ],
+    [
+      3.0578166211790676,
+      0.6457435273125063
+    ],
+    [
+      3.062183460621317,
+      0.6622065599779445
+    ]
+  ],
+  "lidar_points_inside_envelope_map_xy_m": [
+    [
+      89664.36223317777,
+      43175.70829883807
+    ],
+    [
+      89664.38723782828,
+      43175.73606369119
+    ],
+    [
+      89664.39163083406,
+      43175.761868670306
+    ],
+    [
+      89664.40586379272,
+      43175.75251326445
+    ]
+  ],
+  "physical_contact_confirmed": false,
+  "zero_speed_stop_confirmed": false,
+  "boundary": "First proximity observation reproduced; LOG_ONLY_CONTINUED is not a stop or physical contact measurement.",
+  "control_sha256": "560b913aad8ceb84608350e99397095eb4166f7ea18d42118e89d5defdec4bc5"
+}

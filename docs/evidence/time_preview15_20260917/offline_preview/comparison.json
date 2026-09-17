@@ -1,0 +1,86 @@
+{
+  "scope": "UNCHANGED_RECORDED_INPUT_COMPARISON_NOT_NEW_DRIVING_RESULT",
+  "sources": {
+    "control.jsonl": "be06cf4cebde3b1407a0935e4345e198574327383dada842668eb38cd04a610f",
+    "inference.jsonl": "e8aaedba489cef478a6e4444b104f4100c790ee01256db2833555d0a5ee2571c",
+    "trial_config.json": "2983915a6c147da07aa802ebcf27afc1524f3eeed74eac839595169745b7907e"
+  },
+  "old_control_replay": {
+    "status": "PASS",
+    "matched_commands": 3098,
+    "unavailable_commands": 0,
+    "maximum_absolute_error": 3.375077994860476e-14,
+    "tolerance": 1e-09,
+    "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+    "post_control_rejections": {
+      "MOTION_YAW_RATE_INVALID": 2,
+      "MOTION_REAR_LATERAL_INVALID": 6
+    },
+    "actuator_mapping_matched": 3089,
+    "steering_response_matched": 3089,
+    "vehicle_motion_matched": 3089,
+    "scan_guard_decisions_replayed": false
+  },
+  "trials": [
+    {
+      "ceiling_kmh": 15,
+      "calculation_counts": {
+        "ADMITTED": 3089,
+        "TIME_PATH_INITIAL_DIRECTION": 9
+      },
+      "limiting_reasons": {
+        "prediction_horizon": 1981,
+        "preview_curvature": 1105,
+        "tracking_curvature": 3
+      },
+      "target_kmh_percentiles": [
+        2.8999377032599885,
+        10.80983581143058,
+        12.508593821874237,
+        14.642532586103647
+      ],
+      "target_delta_kmh_percentiles": [
+        -0.993362277860695,
+        1.4447387980170296,
+        2.333240890281812,
+        3.449095823325932
+      ],
+      "physical_tire_delta_abs_rad_percentiles": [
+        0.0,
+        0.0014130197829876623,
+        0.006267728526071201,
+        0.05707459050587067
+      ]
+    },
+    {
+      "ceiling_kmh": 20,
+      "calculation_counts": {
+        "ADMITTED": 3089,
+        "TIME_PATH_INITIAL_DIRECTION": 9
+      },
+      "limiting_reasons": {
+        "prediction_horizon": 1981,
+        "preview_curvature": 1105,
+        "tracking_curvature": 3
+      },
+      "target_kmh_percentiles": [
+        2.8999377032599885,
+        10.80983581143058,
+        12.508593821874237,
+        14.642532586103647
+      ],
+      "target_delta_kmh_percentiles": [
+        -0.993362277860695,
+        1.4447387980170296,
+        2.333240890281812,
+        3.449095823325932
+      ],
+      "physical_tire_delta_abs_rad_percentiles": [
+        0.0,
+        0.0014130197829876623,
+        0.006267728526071201,
+        0.05707459050587067
+      ]
+    }
+  ]
+}

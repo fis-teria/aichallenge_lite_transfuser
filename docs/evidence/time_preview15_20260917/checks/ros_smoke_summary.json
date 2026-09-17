@@ -1,0 +1,48 @@
+{
+  "status": "PASS",
+  "scope": "ISOLATED_SYNTHETIC_ROS_NOT_AWSIM",
+  "learned_path_matches": 6,
+  "checkpoint_sha256": "1fe12ca066791d3eb8907c6921120e2cfbb38925c422d5be54940f4acbdd120a",
+  "motion_observation_roles": [
+    "imu",
+    "pose",
+    "steering",
+    "velocity"
+  ],
+  "motion_observation_count": 948,
+  "sweep_guard_commands": 103,
+  "sweep_guard_policy": "CURVATURE_INTERVAL_SUPPORT_V2",
+  "scan_ahead_of_pose_ns": 5000000,
+  "calibrated_left_right_shadow_commands": 28,
+  "response_lead_shadow_commands": 10,
+  "actuator_infeasible_brake_commands": 10,
+  "infeasible_curve_reason": "STEERING_FEASIBLE_LOOKAHEAD_MISSING",
+  "vehicle_model_shadow_commands": 28,
+  "invalid_motion_brake_commands": {
+    "MOTION_YAW_RATE_INVALID": 16,
+    "MOTION_REAR_LATERAL_INVALID": 8
+  },
+  "segment_target_shadow_commands": 24,
+  "segment_scope": "RECORDED_GEOMETRY_WITH_SYNTHETIC_STATIONARY_CLEAR_SCAN",
+  "extended_target_shadow_commands": 24,
+  "extended_scope": "RECORDED_GEOMETRY_WITH_SYNTHETIC_STATIONARY_CLEAR_SCAN",
+  "fifteen_kmh_shadow_commands": 24,
+  "fifteen_kmh_minimum_preview_m": 6.649999761581421,
+  "fifteen_kmh_scan_stopping_travel_m": 1.0,
+  "stopping_distance_policy": "awsim_cap_1m_diagnostic_v1",
+  "curvature_preview_braking_commands": 24,
+  "curvature_preview_maximum_acceleration_mps2": 1.0,
+  "log_only_positive_commands_with_obstacle": 16,
+  "oracle_positive_shadow_commands": 103,
+  "stale_plan_brake_commands": 11,
+  "paused_clock_brake_commands": 7,
+  "speed_policy": "curvature_time_preview_15kmh_v1",
+  "expected_target_speed_mps": 4.166666666666667,
+  "overspeed_brake_commands": 12,
+  "vehicle_command_publishers": 0,
+  "wall_s": 31.859009440988302,
+  "child_exit_codes": [
+    0,
+    0
+  ]
+}

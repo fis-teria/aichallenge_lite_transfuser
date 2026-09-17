@@ -1,0 +1,40 @@
+{
+  "scope": "Observed curvature-adaptive model-driven trial with explicitly capped diagnostic stopping horizon",
+  "host_status": "COMPLETE_LAP",
+  "cruise_ceiling_kmh": 20.0,
+  "moving_speed_median_kmh": 10.410378885269164,
+  "moving_speed_max_kmh": 15.518581581115724,
+  "tracking_commands": 2540,
+  "tracking_extended_lookahead": 0,
+  "active_command_reasons": {
+    "TIME_PATH_TRACKING": 2540,
+    "MOTION_REAR_LATERAL_INVALID": 15,
+    "TIME_PATH_INITIAL_DIRECTION": 13,
+    "MOTION_YAW_RATE_INVALID": 1,
+    "REQUESTED_BRAKE": 87,
+    "STALE_velocity": 5,
+    "CLOCK_STALE": 67
+  },
+  "stop_confirmed": true,
+  "raw_path_subscribers": [
+    "rviz2"
+  ],
+  "inference_checkpoint_sha256": [
+    "1fe12ca066791d3eb8907c6921120e2cfbb38925c422d5be54940f4acbdd120a"
+  ],
+  "scan_rejections": [],
+  "scan_log_only_observations": [
+    {
+      "sim_after_arm_s": 71.09999841,
+      "reason": "STOPPING_SWEEP_OCCUPIED",
+      "replay": {
+        "reason": "STOPPING_SWEEP_OCCUPIED",
+        "minimum_ray_margin_m": -0.028402844079972622
+      }
+    }
+  ],
+  "scan_would_stop_commands": 3,
+  "scan_occupancy_policy": "log_only_awsim_v1",
+  "maximum_recorded_stopping_travel_m": 1.0,
+  "stopping_distance_policy": "awsim_cap_1m_diagnostic_v1"
+}
