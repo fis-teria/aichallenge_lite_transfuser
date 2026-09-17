@@ -34,7 +34,7 @@ inline std::optional<CollectionMotion> fitCollectionMotion(
   if (points.empty()) return {};
   // Startup has insufficient evidence of motion. Keep the latest observed
   // position and existing collision covariance; never invent a velocity.
-  if (points.size() < 5 || stamp - points.front().stamp < .2 - 1e-8)
+  if (points.size() < 3 || stamp - points.front().stamp < .2 - 1e-8)
     return CollectionMotion{points.back().x, points.back().y, 0., 0., 0., 0.};
   std::vector<double> slopes_x, slopes_y;
   for (std::size_t i = 0; i < points.size(); ++i) {

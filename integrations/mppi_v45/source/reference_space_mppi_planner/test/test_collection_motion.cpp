@@ -38,15 +38,22 @@ TEST(CollectionMotion, IsolatedOutlierDoesNotLaunchStationaryObstacle) {
   EXPECT_DOUBLE_EQ(fit->vx_mps, 0.); EXPECT_DOUBLE_EQ(fit->vy_mps, 0.);
 }
 
+TEST(CollectionMotion, SparseObservationsStillRecognizeThreeKmhMovement) {
+  const auto fit=fitCollectionMotion({{10.,0.,0.,0.},
+      {10.25,.25*3./3.6,0.,0.},{10.5,.5*3./3.6,0.,0.}});
+  ASSERT_TRUE(fit); EXPECT_NEAR(fit->vx_mps,3./3.6,1e-10);
+  EXPECT_NEAR(fit->x_m,.5*3./3.6,1e-10);
+}
+
 TEST(CollectionMotion, StartsAndStopsWithinTheFiniteHistoryWindow) {
   std::vector<PositionObservation> history;
   for (int i=0; i<=60; ++i) {
     const double t=i*.05;
     history.push_back({10.+t, 20.+std::clamp(t-1.,0.,1.)*3./3.6, 0.,0.});
     const auto fit=fitCollectionMotion(history); ASSERT_TRUE(fit);
-    if (t>.7 && t<1.) EXPECT_DOUBLE_EQ(fit->vx_mps,0.);
-    if (t>1.7 && t<2.) EXPECT_NEAR(fit->vx_mps,3./3.6,1e-8);
-    if (t>2.7) EXPECT_DOUBLE_EQ(fit->vx_mps,0.);
+    if (t>.7 && t<1.) { EXPECT_DOUBLE_EQ(fit->vx_mps,0.); }
+    if (t>1.7 && t<2.) { EXPECT_NEAR(fit->vx_mps,3./3.6,1e-8); }
+    if (t>2.7) { EXPECT_DOUBLE_EQ(fit->vx_mps,0.); }
   }
 }
 

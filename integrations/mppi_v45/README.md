@@ -43,7 +43,7 @@ ros2 launch aic_lidar_v2x teacher_v45.launch.py \
 収集launchだけが `brain.collection_motion_enabled`、`brain.collection_avoidance_continuation`、
 `collection_planned_stop_gate` を有効にする。通常ノードの既定値はfalse。
 位置推定は過去0.6sのベクトル傾きの中央値を使い、最新観測時刻へ位置を合わせる。
-0.2m/s未満は静止扱い、初期0.2s未満は速度未確定として0m/s。3km/h移動は回帰試験対象。
+0.2m/s未満は静止扱い、初期0.2s未満または観測3点未満は速度未確定として0m/s。3km/h移動は回帰試験対象。
 既存の新鮮度条件内で、同じ前方障害物への採用済みAVOIDを速度20km/h以下なら継続する。
 対象喪失時や別IDへの切り替わりに無期限の保持はしない。候補軌道の衝突検証は従来どおり行う。
 後退開始の4sタイマーは新鮮なCMA前進速度要求で判定する。計画停止・指令欠落時はタイマーを解除する。
