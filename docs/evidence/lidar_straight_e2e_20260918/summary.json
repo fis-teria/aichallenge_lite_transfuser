@@ -1,0 +1,134 @@
+{
+  "run_id": "codex-time-lidar-straight01",
+  "status": "COMPLETE_LAP",
+  "judge_laps": [
+    {
+      "lap_seconds": 132.88,
+      "laps": 1,
+      "line": "Lap completed: 132.88s, total laps: 1",
+      "run_id": "codex-time-lidar-straight01",
+      "epoch": 0,
+      "byte_offset": 103111,
+      "lap_increment_valid": true,
+      "ordered_section_evidence": true
+    }
+  ],
+  "last_control": {
+    "fault": null,
+    "armed_ns": 20049999551,
+    "armed_wall": 250214.247642946,
+    "stop_since_ns": 163804996338,
+    "stop_confirmed": true,
+    "positive_count": 2556,
+    "commands": 3479,
+    "max_speed_mps": 3.623042583465576,
+    "requested_stop_reason": "JUDGE_FIRST_LAP",
+    "speed_mps": 0.0,
+    "current_pose": {
+      "stamp_ns": 164849996315,
+      "clock": "sim",
+      "epoch": "0",
+      "world_frame": "time_wheel_odom",
+      "body_frame": "base_link",
+      "x_m": -10.948990337833175,
+      "y_m": -20.80104026795464,
+      "yaw_rad": 0.861902900231894
+    },
+    "scan_rejection_recorded": false,
+    "scan_observation_recorded": false,
+    "scan_would_stop_commands": 0,
+    "reason": "REQUESTED_BRAKE",
+    "monotonic_ns": 250359047597693,
+    "sim_ns": 164849996315,
+    "topic": "/control/command/control_cmd"
+  },
+  "video_status": "PASS",
+  "video_streams": {
+    "awsim": {
+      "file": "awsim.mp4",
+      "ffmpeg_exit": 255,
+      "probe": {
+        "programs": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 960,
+            "avg_frame_rate": "10/1",
+            "nb_frames": "1619"
+          }
+        ],
+        "format": {
+          "duration": "161.900000",
+          "size": "84817236"
+        }
+      }
+    },
+    "rviz": {
+      "file": "rviz.mp4",
+      "ffmpeg_exit": 255,
+      "probe": {
+        "programs": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 786,
+            "avg_frame_rate": "10/1",
+            "nb_frames": "1624"
+          }
+        ],
+        "format": {
+          "duration": "162.400000",
+          "size": "49403416"
+        }
+      }
+    }
+  },
+  "correction_scope": "DISPLAY_AND_EVALUATION_ONLY_NO_CONTROL_INPUT",
+  "ground_truth_samples": 0,
+  "processed_scan_stamps": 712,
+  "published_corrected_scan_stamps": 340,
+  "processed_modes": {
+    "DEGRADED": 82,
+    "ODOMETRY_ONLY": 244,
+    "TRACKING": 14,
+    "REJECTED_INSUFFICIENT_SUPPORT": 46,
+    "WAIT_STRAIGHT": 315,
+    "INITIALIZING": 11
+  },
+  "reference_topic": "/localization/pose (Autoware estimate; NOT AWSIM ground truth)",
+  "reference_conflicting_duplicate_stamps": 14,
+  "matched_valid_pose_samples": 340,
+  "reference_xy_median_m": 16.123441518064723,
+  "reference_xy_p95_m": 32.73279014791632,
+  "reference_xy_max_m": 37.58085424583032,
+  "reference_yaw_median_deg": 23.681564675102088,
+  "reference_within_1m_and_10deg_count": 62,
+  "reference_within_0p5m_and_5deg_count": 13,
+  "cleanup_errors": [],
+  "correction_schedule": "straight_only",
+  "gate_off_scan_stamps": 559,
+  "wheel_prediction_scan_stamps": 244,
+  "match_attempts": 153,
+  "accepted_match_attempts": 107,
+  "matching_while_gate_off": 0,
+  "wheel_prediction_anchor_changes": [],
+  "max_applied_correction_m": 7.082254316119535,
+  "reference_error_by_pose_source": {
+    "fresh_map_match": {
+      "samples": 96,
+      "xy_median_m": 22.285220959446512,
+      "xy_p95_m": 37.53308574839891,
+      "yaw_median_deg": 43.49685032562286,
+      "within_1m_and_10deg": 36
+    },
+    "wheel_prediction": {
+      "samples": 244,
+      "xy_median_m": 15.317025855603578,
+      "xy_p95_m": 24.33873706571005,
+      "yaw_median_deg": 22.2507861097697,
+      "within_1m_and_10deg": 26
+    }
+  }
+}

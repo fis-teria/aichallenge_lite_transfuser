@@ -1,0 +1,510 @@
+{
+  "status": "COMPLETE_LAP",
+  "run_id": "codex-time-lidar-straight01",
+  "start_time_utc": 1789675764.6577065,
+  "scope": "ONE_LAP_MODEL_TRIAL",
+  "official_start_requested": true,
+  "execution_profile": "one_lap",
+  "requested_npcs": 0,
+  "pp_vehicles": 0,
+  "vehicle_domains": [
+    1
+  ],
+  "background_speed_cap_kmh": null,
+  "speed_policy": "curvature_time_preview_20kmh_v1",
+  "trial_config_sha256": "2cba99a7930133cbc93d5c281be7fd33d86ac4eccbe9757d3369f19ba426d252",
+  "gpu": {
+    "returncode": 0,
+    "stdout": "NVIDIA GeForce RTX 4060 Laptop GPU, 595.91.07\n",
+    "stderr": ""
+  },
+  "steering_asset_sha256": {
+    "AWSIM_Data/StreamingAssets/Vehicle/vehicle.yaml": "5b66e58691091c82d5511535ca458d4c89e85f3b59fa0d0c4a2c7eee47887244",
+    "AWSIM_Data/Managed/Assembly-CSharp.dll": "859e5560dbffd7d0833cd1fe5eb1f36b87fa8d22f6e45eb0e1203d04a1ea6d13"
+  },
+  "rviz_config": "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz",
+  "rviz_sha256": "ef2c63cc6b0c45b06e2ef749f71cafd3e2576e1f213e5fba93141d0cfc85785b",
+  "commands": [
+    [
+      "docker",
+      "run",
+      "--rm",
+      "--name",
+      "codex-time-lidar-straight01-nodes",
+      "--gpus",
+      "all",
+      "--network",
+      "host",
+      "-e",
+      "ROS_DOMAIN_ID=1",
+      "-e",
+      "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_lidar_straight_20260918/codex-time-lidar-straight01/cyclonedds.xml:/opt/autoware/cyclonedds.xml:ro",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_lidar_straight_20260918:/time",
+      "-v",
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro",
+      "--entrypoint",
+      "bash",
+      "codex-cartographer-v4-build:20260910",
+      "-lc",
+      "source /aichallenge/workspace/install/setup.bash && source /time/install/setup.bash && exec ros2 launch aic_e2e_runtime time_path_awsim.launch.py output:=/time/codex-time-lidar-straight01 run_id:=codex-time-lidar-straight01 checkpoint:=/time/command_off_best.pt config:=/time/codex-time-lidar-straight01/trial_config.json authorize_awsim_only:=true max_speed_kmh:=20.0 corner_max_speed_kmh:=10.0"
+    ],
+    [
+      "make",
+      "dev",
+      "DEV_AUTO_START=false",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=1",
+      "RUN_ID=codex-time-lidar-straight01",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_lidar_straight_20260918/codex-time-lidar-straight01",
+      "AWSIM_TIMEOUT=660",
+      "AWSIM_EXTRA_ARGS=--npcs 0 -logFile /output/codex-time-lidar-straight01/awsim_unity.log"
+    ],
+    [
+      "docker",
+      "run",
+      "--rm",
+      "--name",
+      "codex-time-lidar-straight01-localization",
+      "--gpus",
+      "all",
+      "--network",
+      "host",
+      "-e",
+      "ROS_DOMAIN_ID=1",
+      "-e",
+      "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_lidar_straight_20260918/codex-time-lidar-straight01/cyclonedds.xml:/opt/autoware/cyclonedds.xml:ro",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_lidar_straight_20260918:/time",
+      "-v",
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro",
+      "--entrypoint",
+      "bash",
+      "codex-cartographer-v4-build:20260910",
+      "-lc",
+      "source /aichallenge/workspace/install/setup.bash && source /time/install/setup.bash && exec python3 /time/source/tools/observe_lidar_map_trial.py --output /time/codex-time-lidar-straight01 --initial-pose 89631.0 43128.0 2.12 --correction-schedule straight_only"
+    ],
+    [
+      "make",
+      "awsim-request-start",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=1",
+      "RUN_ID=codex-time-lidar-straight01",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_lidar_straight_20260918/codex-time-lidar-straight01",
+      "AWSIM_TIMEOUT=660",
+      "AWSIM_EXTRA_ARGS=--npcs 0 -logFile /output/codex-time-lidar-straight01/awsim_unity.log"
+    ]
+  ],
+  "lidar_correction_scope": "DISPLAY_AND_EVALUATION_ONLY_NO_CONTROL_INPUT",
+  "lidar_correction_schedule": "straight_only",
+  "last_control": {
+    "fault": null,
+    "armed_ns": 20049999551,
+    "armed_wall": 250214.247642946,
+    "stop_since_ns": 163804996338,
+    "stop_confirmed": true,
+    "positive_count": 2556,
+    "commands": 3479,
+    "max_speed_mps": 3.623042583465576,
+    "requested_stop_reason": "JUDGE_FIRST_LAP",
+    "speed_mps": 0.0,
+    "current_pose": {
+      "stamp_ns": 164849996315,
+      "clock": "sim",
+      "epoch": "0",
+      "world_frame": "time_wheel_odom",
+      "body_frame": "base_link",
+      "x_m": -10.948990337833175,
+      "y_m": -20.80104026795464,
+      "yaw_rad": 0.861902900231894
+    },
+    "scan_rejection_recorded": false,
+    "scan_observation_recorded": false,
+    "scan_would_stop_commands": 0,
+    "reason": "REQUESTED_BRAKE",
+    "monotonic_ns": 250359047597693,
+    "sim_ns": 164849996315,
+    "topic": "/control/command/control_cmd"
+  },
+  "last_inference": {
+    "plans": 19,
+    "rejected": 2,
+    "fault": null,
+    "sources_ok": true,
+    "sources": {
+      "camera": [
+        "/awsim_d1"
+      ],
+      "lidar": [
+        "/awsim_d1"
+      ],
+      "velocity": [
+        "/awsim_d1"
+      ],
+      "actual_steering": [
+        "/awsim_d1"
+      ]
+    },
+    "path_subscribers": [
+      "rviz2"
+    ],
+    "monotonic_ns": 250196684464395,
+    "sim_ns": 2494999944,
+    "epoch": "0",
+    "dropped_anchors": 0
+  },
+  "localization_ready": {
+    "counts": {
+      "/localization/pose": 112,
+      "corrected_scan": 6,
+      "/time_path/localization/pose": 6
+    },
+    "status": {
+      "valid": true,
+      "mode": "DEGRADED",
+      "map_sha256": "126a62f2ef21560ace0eb39a0f52a6a5e86ef6b9951b0ead1511e46e4b418dc4",
+      "correction_mode": "simulation_aggressive",
+      "correction_schedule": "straight_only",
+      "correction_enabled": true,
+      "wheel_yaw_rate_radps": 0.0,
+      "wheel_curvature_inv_m": 0.0,
+      "pose_source": "scan_map_match",
+      "last_map_match_ns": 2332807444,
+      "map_to_odom": [
+        89630.7119638387,
+        43127.81303677095,
+        2.11398427651731
+      ],
+      "correction_frame": "map->time_wheel_odom",
+      "gnss_imu_inputs": false,
+      "motion_authority": false,
+      "planar_display_z_m": 6.5,
+      "scan_ns": 2332807444,
+      "points": 211,
+      "map_match_attempted": true,
+      "map_match_applied": true,
+      "reason": "DEGRADED",
+      "rank": 2,
+      "inliers": 209,
+      "fraction": 0.990521327014218,
+      "mean_distance_m": 0.03575266837039584,
+      "p90_distance_m": 0.06322866381023186,
+      "all_mean_distance_m": 0.038712124701693974,
+      "all_p90_distance_m": 0.06529923050070242,
+      "correction_m": 0.0008466240678992315,
+      "correction_rad": 6.733580169404618e-05
+    },
+    "graph": {
+      "time_path_controller": {
+        "subscriptions": [
+          [
+            "/clock",
+            [
+              "rosgraph_msgs/msg/Clock"
+            ]
+          ],
+          [
+            "/sensing/lidar/scan",
+            [
+              "sensor_msgs/msg/LaserScan"
+            ]
+          ],
+          [
+            "/time_path/plan",
+            [
+              "std_msgs/msg/String"
+            ]
+          ],
+          [
+            "/vehicle/status/steering_status",
+            [
+              "autoware_auto_vehicle_msgs/msg/SteeringReport"
+            ]
+          ],
+          [
+            "/vehicle/status/velocity_status",
+            [
+              "autoware_auto_vehicle_msgs/msg/VelocityReport"
+            ]
+          ]
+        ],
+        "publishers": [
+          [
+            "/control/command/control_cmd",
+            [
+              "autoware_auto_control_msgs/msg/AckermannControlCommand"
+            ]
+          ],
+          [
+            "/parameter_events",
+            [
+              "rcl_interfaces/msg/ParameterEvent"
+            ]
+          ],
+          [
+            "/time_path/wheel_odometry",
+            [
+              "nav_msgs/msg/Odometry"
+            ]
+          ]
+        ]
+      },
+      "time_path_inference": {
+        "subscriptions": [
+          [
+            "/clock",
+            [
+              "rosgraph_msgs/msg/Clock"
+            ]
+          ],
+          [
+            "/sensing/camera/image_raw",
+            [
+              "sensor_msgs/msg/Image"
+            ]
+          ],
+          [
+            "/sensing/lidar/scan",
+            [
+              "sensor_msgs/msg/LaserScan"
+            ]
+          ],
+          [
+            "/vehicle/status/steering_status",
+            [
+              "autoware_auto_vehicle_msgs/msg/SteeringReport"
+            ]
+          ],
+          [
+            "/vehicle/status/velocity_status",
+            [
+              "autoware_auto_vehicle_msgs/msg/VelocityReport"
+            ]
+          ]
+        ],
+        "publishers": [
+          [
+            "/parameter_events",
+            [
+              "rcl_interfaces/msg/ParameterEvent"
+            ]
+          ],
+          [
+            "/time_path/plan",
+            [
+              "std_msgs/msg/String"
+            ]
+          ],
+          [
+            "/visualization/time_path/raw_path",
+            [
+              "nav_msgs/msg/Path"
+            ]
+          ]
+        ]
+      },
+      "time_lidar_map_localizer": {
+        "subscriptions": [
+          [
+            "/clock",
+            [
+              "rosgraph_msgs/msg/Clock"
+            ]
+          ],
+          [
+            "/sensing/lidar/scan",
+            [
+              "sensor_msgs/msg/LaserScan"
+            ]
+          ],
+          [
+            "/time_path/localization/initialpose",
+            [
+              "geometry_msgs/msg/PoseWithCovarianceStamped"
+            ]
+          ],
+          [
+            "/time_path/wheel_odometry",
+            [
+              "nav_msgs/msg/Odometry"
+            ]
+          ]
+        ],
+        "publishers": [
+          [
+            "/parameter_events",
+            [
+              "rcl_interfaces/msg/ParameterEvent"
+            ]
+          ],
+          [
+            "/rosout",
+            [
+              "rcl_interfaces/msg/Log"
+            ]
+          ],
+          [
+            "/tf",
+            [
+              "tf2_msgs/msg/TFMessage"
+            ]
+          ],
+          [
+            "/tf_static",
+            [
+              "tf2_msgs/msg/TFMessage"
+            ]
+          ],
+          [
+            "/time_path/localization/pose",
+            [
+              "geometry_msgs/msg/PoseStamped"
+            ]
+          ],
+          [
+            "/time_path/localization/scan",
+            [
+              "sensor_msgs/msg/LaserScan"
+            ]
+          ],
+          [
+            "/time_path/localization/status",
+            [
+              "std_msgs/msg/String"
+            ]
+          ]
+        ]
+      }
+    },
+    "rviz_corrected_scan_subscribers": [
+      "rviz2"
+    ],
+    "available_evaluation_topics": {
+      "/time_path/localization/pose": [
+        "geometry_msgs/msg/PoseStamped"
+      ],
+      "/awsim/ground_truth/vehicle/pose": null,
+      "/localization/pose": [
+        "geometry_msgs/msg/PoseStamped"
+      ]
+    },
+    "correction_scope": "DISPLAY_AND_EVALUATION_ONLY_NO_CONTROL_INPUT"
+  },
+  "npc_startup": {
+    "requested_count": 0,
+    "spawned_count": 0,
+    "mode": null
+  },
+  "rviz_path_subscribers": [
+    "rviz2"
+  ],
+  "rviz_window": "0x1800010 \"/aichallenge/workspace/install/aichallenge_system_launch/share/aichallenge_system_launch/config/autoware.rviz* - RViz\": (\"rviz2\" \"rviz2\")  1850x1136+10+45  +70+64",
+  "cleanup_errors": [],
+  "end_time_utc": 1789675960.415122,
+  "wall_s": 195.7573390340258,
+  "judge_lap_confirmed": true,
+  "judge_section_events": [
+    {
+      "current": 0,
+      "next": 0,
+      "started": "False",
+      "line": "Section line hit: current=0, next=0, started=False",
+      "run_id": "codex-time-lidar-straight01",
+      "epoch": 0,
+      "byte_offset": 102660
+    },
+    {
+      "current": 0,
+      "next": 1,
+      "started": "True",
+      "line": "Section line hit: current=0, next=1, started=True",
+      "run_id": "codex-time-lidar-straight01",
+      "epoch": 0,
+      "byte_offset": 102711
+    },
+    {
+      "current": 1,
+      "next": 2,
+      "started": "True",
+      "line": "Section line hit: current=1, next=2, started=True",
+      "run_id": "codex-time-lidar-straight01",
+      "epoch": 0,
+      "byte_offset": 102761
+    },
+    {
+      "current": 2,
+      "next": 3,
+      "started": "True",
+      "line": "Section line hit: current=2, next=3, started=True",
+      "run_id": "codex-time-lidar-straight01",
+      "epoch": 0,
+      "byte_offset": 102811
+    },
+    {
+      "current": 3,
+      "next": 4,
+      "started": "True",
+      "line": "Section line hit: current=3, next=4, started=True",
+      "run_id": "codex-time-lidar-straight01",
+      "epoch": 0,
+      "byte_offset": 102861
+    },
+    {
+      "current": 4,
+      "next": 5,
+      "started": "True",
+      "line": "Section line hit: current=4, next=5, started=True",
+      "run_id": "codex-time-lidar-straight01",
+      "epoch": 0,
+      "byte_offset": 102911
+    },
+    {
+      "current": 5,
+      "next": 6,
+      "started": "True",
+      "line": "Section line hit: current=5, next=6, started=True",
+      "run_id": "codex-time-lidar-straight01",
+      "epoch": 0,
+      "byte_offset": 102961
+    },
+    {
+      "current": 6,
+      "next": 7,
+      "started": "True",
+      "line": "Section line hit: current=6, next=7, started=True",
+      "run_id": "codex-time-lidar-straight01",
+      "epoch": 0,
+      "byte_offset": 103011
+    },
+    {
+      "current": 7,
+      "next": 0,
+      "started": "True",
+      "line": "Section line hit: current=7, next=0, started=True",
+      "run_id": "codex-time-lidar-straight01",
+      "epoch": 0,
+      "byte_offset": 103061
+    }
+  ],
+  "judge_laps": [
+    {
+      "lap_seconds": 132.88,
+      "laps": 1,
+      "line": "Lap completed: 132.88s, total laps: 1",
+      "run_id": "codex-time-lidar-straight01",
+      "epoch": 0,
+      "byte_offset": 103111,
+      "lap_increment_valid": true,
+      "ordered_section_evidence": true
+    }
+  ],
+  "judge_order_invalid": false
+}
