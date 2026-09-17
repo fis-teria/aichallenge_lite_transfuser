@@ -1,4 +1,4 @@
-"""Timestamped TF -> LiDAR detections -> dedicated, non-authoritative V2X stream."""
+"""Timestamped TF -> LiDAR detections -> dedicated V2X stream for shadow/teacher."""
 from __future__ import annotations
 
 from collections import deque
@@ -15,13 +15,14 @@ from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.time import Time
 from sensor_msgs.msg import LaserScan
-from std_msgs.msg import String
+from std_msgs.msg import Empty, String
 from tf2_ros import Buffer, TransformException, TransformListener
 from v2x_msgs.msg import V2XVehiclePosition, V2XVehiclePositionArray
 from visualization_msgs.msg import Marker, MarkerArray
 
 from .core import Config, Detector, Scan, Tracker, v2x_payload
 from .io import load_map, load_reference, planar_pose, tf_time_ns
+from .teacher import InputState
 
 
 def stamp_seconds(stamp) -> float:
@@ -38,6 +39,12 @@ class LidarV2XNode(Node):
         super().__init__("lidar_v2x")
         values = {key: self.declare_parameter(key, value).value for key, value in asdict(Config()).items()}
         self.config = Config(**values)
+        self.input_state = InputState(
+            self.declare_parameter("mode", "shadow").value, time.monotonic(),
+            float(self.declare_parameter("teacher_input_timeout_s", 0.75).value),
+            float(self.declare_parameter("teacher_startup_timeout_s", 15.0).value))
+        if self.input_state.mode == "teacher_existing_margin" and self.config.object_model != "surface":
+            raise ValueError("Existing-margin teacher input uses observed surface positions")
         map_path = self.declare_parameter("map_yaml", "").value
         reference_path = self.declare_parameter("reference_csv", "").value
         if not map_path:
@@ -59,6 +66,9 @@ class LidarV2XNode(Node):
         self.objects_pub = self.create_publisher(String, prefix + "/objects", 10)
         self.status_pub = self.create_publisher(String, prefix + "/status", 10)
         self.markers_pub = self.create_publisher(MarkerArray, prefix + "/markers", 10)
+        self.stop_pub = (self.create_publisher(Empty, "/control/mpc/stop_request", 10)
+                         if self.input_state.mode == "teacher_existing_margin" else None)
+        self.last_stop_wall_s = -math.inf
         self.tf = Buffer(cache_time=Duration(seconds=5.0))
         self.tf_listener = TransformListener(self.tf, self)
         self.pending: deque[tuple[LaserScan, float]] = deque()
@@ -71,12 +81,12 @@ class LidarV2XNode(Node):
         self.publish_status(False, "waiting_for_scan")
 
     def publish_status(self, valid: bool, reason: str, **extra) -> None:
-        status = dict(schema_version=1, input_valid=valid, reason=reason, teacher_ready=False,
-                      role="SHADOW_UNVALIDATED_FOR_CONTROL", object_model=self.config.object_model,
+        status = dict(schema_version=1, input_valid=valid, reason=reason,
+                      **self.input_state.metadata(valid), object_model=self.config.object_model,
                       stamp_s=self.get_clock().now().nanoseconds * 1e-9, **extra)
         self.status_pub.publish(String(data=json.dumps(status, allow_nan=False)))
         if reason != self.last_status:
-            self.get_logger().info(f"LiDAR V2X: {reason}; teacher_ready=false")
+            self.get_logger().info(f"LiDAR V2X: {reason}; mode={self.input_state.mode}")
             self.last_status = reason
 
     def receive_scan(self, msg: LaserScan) -> None:
@@ -95,6 +105,11 @@ class LidarV2XNode(Node):
     def tick(self) -> None:
         now = self.get_clock().now().nanoseconds * 1e-9
         wall = time.monotonic()
+        if self.input_state.check_timeout(wall) and wall - self.last_stop_wall_s >= 0.1:
+            assert self.stop_pub is not None
+            self.stop_pub.publish(Empty())
+            self.last_stop_wall_s = wall
+            self.publish_status(False, "teacher_input_timeout_stop_requested")
         if self.last_clock_s is not None and now < self.last_clock_s - 0.001:
             self.pending.clear()
             self.tracker.reset()
@@ -143,6 +158,7 @@ class LidarV2XNode(Node):
             self.publish_status(False, "invalid_perception_input", detail=str(error))
             return
         self.last_processed_wall = wall
+        self.input_state.mark_valid(wall)
         array = V2XVehiclePositionArray()
         fill_stamp(array.header.stamp, start_s)
         array.header.frame_id = self.map_frame
@@ -157,7 +173,7 @@ class LidarV2XNode(Node):
             array.vehicles.append(vehicle)
         self.v2x_pub.publish(array)
         self.objects_pub.publish(String(data=json.dumps(dict(schema_version=1, stamp_s=start_s,
-            frame_id=self.map_frame, source="lidar", teacher_ready=False,
+            frame_id=self.map_frame, source="lidar", **self.input_state.metadata(True),
             object_model=self.config.object_model, tracks=[asdict(t) for t in tracks], stats=stats), allow_nan=False)))
         markers = MarkerArray()
         for i, track in enumerate(tracks):

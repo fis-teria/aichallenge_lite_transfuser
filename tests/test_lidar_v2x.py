@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ros2_ws/src/aic_li
 from aic_lidar_v2x.core import (Config, Detection, Detector, Pose2, Reference, Scan,
     StaticMap, Tracker, clusters, fit_vehicle_box, interpolate_pose, scan_points, v2x_payload)
 from aic_lidar_v2x.io import PoseHistory, load_map, planar_pose, tf_time_ns
+from aic_lidar_v2x.teacher import InputState, V2X_TOPIC, V44_INPUT_REMAPS
 
 
 def detection(x: float, y: float = 0.0) -> Detection:
@@ -186,3 +187,33 @@ def test_detection_boundary_rejects_nonfinite_or_invalid_units():
                    dict(fit_rmse_m=np.inf), dict(representation='car_truth')]:
         with pytest.raises(ValueError):
             replace(detection(1), **kwargs)
+
+
+def test_teacher_uses_existing_margin_and_keeps_sensor_failure_stop():
+    state = InputState("teacher_existing_margin", 100.)
+    assert not state.check_timeout(110.)
+    state.mark_valid(110.)
+    assert state.metadata(True)["teacher_ready"]
+    assert state.metadata(True)["collision_geometry"] == "V44_UNCHANGED"
+    assert not state.check_timeout(110.5)
+    assert state.check_timeout(111.)
+    state.mark_valid(112.)
+    assert not state.metadata(True)["teacher_ready"]  # Recovery does not silently rearm a stopped run.
+    assert state.check_timeout(112.)
+    assert InputState("teacher_existing_margin", 0.).check_timeout(16.)
+
+
+def test_shadow_has_no_teacher_stop_or_input_authority():
+    state = InputState("shadow", 0.)
+    assert not state.check_timeout(999.)
+    state.mark_valid(1000.)
+    assert not state.metadata(True)["teacher_ready"]
+    assert not state.metadata(True)["teacher_input_enabled"]
+    with pytest.raises(ValueError):
+        InputState("unknown", 0.)
+
+
+def test_all_v44_consumers_use_one_synthetic_v2x_topic():
+    assert {src for src, _ in V44_INPUT_REMAPS} == {"input/vehicle_positions", "input/vehicles", "/v2x/vehicle_positions"}
+    assert {dst for _, dst in V44_INPUT_REMAPS} == {V2X_TOPIC}
+    assert V2X_TOPIC != "/v2x/vehicle_positions"
