@@ -20,6 +20,7 @@ def main() -> None:
     from geometry_msgs.msg import PoseWithCovarianceStamped
     from tf2_msgs.msg import TFMessage
     ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--output',type=Path,required=True)
+    ap.add_argument('--correction-mode',choices=['bounded','unlimited','simulation_aggressive'],default='bounded')
     args=ap.parse_args();args.output.mkdir(exist_ok=False,parents=True)
     nodes=[(0,-3),(12,-3),(12,4),(0,4),(0,-3)]
     xml='<osm>'+''.join(f'<node id="{i}"><tag k="local_x" v="{x}"/><tag k="local_y" v="{y}"/></node>' for i,(x,y) in enumerate(nodes))
@@ -63,13 +64,18 @@ def main() -> None:
                 step+=1
             rclpy.spin_once(wheel,timeout_sec=.005);rclpy.spin_once(sensor,timeout_sec=.001)
     log=(args.output/'node.log').open('x')
+    seed_x='5.0' if args.correction_mode=='simulation_aggressive' else '3.2'
     process=subprocess.Popen(['ros2','run','aic_e2e_runtime','lidar_map_localization_node',
-        '--map',str(mapfile),'--initial-pose','3.2','.8','.02','--output',str(args.output/'status.jsonl')],
+        '--map',str(mapfile),'--initial-pose',seed_x,'.8','.02',
+        '--correction-mode',args.correction_mode,'--output',str(args.output/'status.jsonl')],
         stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
     try:
         cycle(5.)
         assert process.poll() is None,(args.output/'node.log').read_text()
         assert statuses and statuses[-1]['valid'],statuses[-1:] or 'No status'
+        assert statuses[-1]['correction_mode']==args.correction_mode
+        if args.correction_mode=='simulation_aggressive':
+            assert max(s.get('correction_m',0) for s in statuses)>1.
         assert len(aligned)>5 and all(s.header.frame_id=='time_localized_lidar' for s in aligned)
         map_transforms=[m for m in transforms if m.header.frame_id=='map']
         assert map_transforms and all(m.child_frame_id=='time_wheel_odom' for m in map_transforms)
@@ -81,12 +87,16 @@ def main() -> None:
         cycle(1.2,scans=False)
         assert not statuses[-1]['valid']
         count=len(aligned);cycle(.4,scans=False);assert len(aligned)==count
+        if args.correction_mode=='simulation_aggressive':
+            cycle(1.5);assert statuses[-1]['valid'],statuses[-1]
         seed=PoseWithCovarianceStamped();seed.header.frame_id='map';seed.pose.pose.position.x=3.;seed.pose.pose.position.y=1.;seed.pose.pose.orientation.w=1.
         seed_pub.publish(seed);cycle(1.5);assert statuses[-1]['valid'],statuses[-1]
         cycle(.6,bad_frame=True);assert not statuses[-1]['valid']
         seed_pub.publish(seed);cycle(1.5);assert statuses[-1]['valid']
         cycle(.8,clock_running=False);assert not statuses[-1]['valid'] and statuses[-1]['mode']=='CLOCK_STALE'
         result=dict(status='PASS',aligned_scans=len(aligned),subscriptions=subs,estimated_xy=[last.x,last.y],
+                    correction_mode=args.correction_mode,initial_seed_x_m=float(seed_x),
+                    automatic_gap_recovery_checked=args.correction_mode=='simulation_aggressive',
                     gnss_imu_pose_tf_publishers=0,vehicle_command_publishers=0,
                     checks=['map_to_wheel_transform','fixed_mount_alias','scan_timeout','bad_scan_frame','clock_pause','manual_reinitialize'])
         (args.output/'summary.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
