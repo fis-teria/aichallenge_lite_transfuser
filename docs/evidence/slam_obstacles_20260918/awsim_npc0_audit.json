@@ -1,0 +1,67 @@
+{
+  "source_commit": "14a1e113484947a34a7116dc327dad482ffd8c4e",
+  "run_id": "codex-time-slam-obstacles03",
+  "status": "COMPLETE_LAP",
+  "npcs": 0,
+  "judge_lap_confirmed": true,
+  "judge_laps": [
+    {
+      "lap_seconds": 132.19,
+      "laps": 1,
+      "line": "Lap completed: 132.19s, total laps: 1",
+      "run_id": "codex-time-slam-obstacles03",
+      "epoch": 0,
+      "byte_offset": 103113,
+      "lap_increment_valid": true,
+      "ordered_section_evidence": true
+    }
+  ],
+  "driving_interval_definition": "first through last TIME_PATH_TRACKING command; excludes stopping and frozen simulation cleanup",
+  "driving_interval_sim_s": [
+    17.8799996,
+    158.989996446
+  ],
+  "processed_total": 1565,
+  "rejected": 0,
+  "dropped": 0,
+  "driving_processed": 1361,
+  "path_valid_scans": 1359,
+  "path_overlap_scans": 31,
+  "path_valid_fraction": 0.9985304922850845,
+  "scan_age_median_s": 0.081293073,
+  "scan_age_p95_s": 0.102134735,
+  "max_output_sim_gap_s": 0.151988061,
+  "driving_status_samples": 557,
+  "driving_status_reasons": {
+    "OK": 557
+  },
+  "observed_overlap_surface_count": 32,
+  "observed_overlap_long_surface_count": 31,
+  "unexpected_sensor_inputs": [],
+  "slam_motion_publishers": [],
+  "cleanup_errors": [],
+  "limits": [
+    "NPC0 live trial has no vehicle-detection recall measurement",
+    "Path overlap includes walls and phantom returns; not a vehicle classifier",
+    "No ground-truth pose accuracy measurement",
+    "Detection/display only; no obstacle avoidance or stopping control"
+  ],
+  "artifacts": {
+    "rviz.mp4": {
+      "bytes": 11998484,
+      "sha256": "e083a2b7f06938bef1d4bd4c3765bdd0a67049d561fa305b68c360ddbb3784e9"
+    },
+    "awsim.mp4": {
+      "bytes": 84906131,
+      "sha256": "c7429d95a5747f685d97cb38406d63df271692adeec469e61956c6f046826549"
+    },
+    "slam_obstacles.jsonl": {
+      "bytes": 19280232,
+      "sha256": "b8963093be0cad0d8640e0bc9c3ca0887770f633364f4fa2da10a188c43afbf8"
+    },
+    "host_result.json": {
+      "bytes": 44494,
+      "sha256": "62a8927043264784e70edf61bf629898d1214fc3199fbd600d961961872112e1"
+    }
+  }
+}
