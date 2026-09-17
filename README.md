@@ -1,5 +1,8 @@
 # AIC-TransFuserLite 設計・実装スターターバンドル v0.1
 
+時間基準モデルのAWSIM起動と速度設定は [TimePath ROS 2 / make dev](docs/time_path_make_dev.md) を参照。
+`make dev DEV_CONTROLLER=time MAX_SPEED_KMH=20 CORNER_MAX_SPEED_KMH=10` に対応。
+
 自動運転AIチャレンジ E2E 部門を想定した、**Camera + 2D LiDAR + Ego State** の
 TransFuser風マルチモーダルE2Eモデルの設計資料と実装骨格です。
 

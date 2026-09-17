@@ -23,6 +23,8 @@ from integrate_normal_rviz_v4 import ensure_time_path, follow_ego_view
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from aic_transfuser_lite.runtime.awsim_trial_session import JudgeLog, LowSpeedStall, trial_duration_limits
 from aic_transfuser_lite.control.awsim_steering import steering_asset_contract
+from aic_transfuser_lite.control.time_dev_v1 import configure_dev_speeds
+from aic_transfuser_lite.control.time_trial_v1 import validate_trial_config
 
 
 def sha(path: Path) -> str:
@@ -43,6 +45,9 @@ def main() -> None:
     ap.add_argument('--recovery-side', choices=('left', 'right'),
                     help='Teacher bootstrap, finite pulse, then one-way E2E takeover')
     ap.add_argument('--record-video', action='store_true', help='Record only the owned AWSIM and normal RViz windows')
+    ap.add_argument('--ros-launch', action='store_true', help='Use the installed time_path_awsim ROS launch')
+    ap.add_argument('--max-speed-kmh', type=float)
+    ap.add_argument('--corner-max-speed-kmh', type=float)
     args = ap.parse_args()
     if not re.fullmatch(r"codex-time-[a-z0-9-]+", args.run_id):
         raise ValueError("INVALID_OWNED_RUN_ID")
@@ -57,22 +62,33 @@ def main() -> None:
     if config_path.parent != source / "configs/control":
         raise ValueError("CONFIG_MUST_BE_IN_SOURCE_CONTROL_DIRECTORY")
     config = json.loads(config_path.read_text())
+    if args.ros_launch:
+        if args.recovery_side is not None or args.max_speed_kmh is None or args.corner_max_speed_kmh is None:
+            raise ValueError('TIME_DEV_REQUIRES_BOTH_SPEED_PARAMETERS_AND_NO_TEACHER')
+        config = configure_dev_speeds(config, max_speed_kmh=args.max_speed_kmh,
+                                     corner_max_speed_kmh=args.corner_max_speed_kmh)
+    elif args.max_speed_kmh is not None or args.corner_max_speed_kmh is not None:
+        raise ValueError('SPEED_PARAMETERS_REQUIRE_ROS_LAUNCH')
+    validate_trial_config(config)
     execution_profile = config.get("execution_profile", "bounded_10s")
     drive_sim_s, drive_wall_s, outer_wall_s = trial_duration_limits(execution_profile)
     output = deployment / args.run_id; output.mkdir(exist_ok=False)
-    (output / "trial_config.json").write_bytes(config_path.read_bytes())
+    effective_config = output / 'trial_config.json'
+    effective_config.write_bytes((json.dumps(config, indent=2, allow_nan=False)+'\n').encode()
+                                if args.ros_launch else config_path.read_bytes())
     env = dict(os.environ)
     result = {"status": "FAILED", "run_id": args.run_id, "start_time_utc": time.time(),
               "scope": "ONE_LAP_MODEL_TRIAL" if execution_profile == "one_lap" else "10_SIM_SECOND_MODEL_TRIAL",
               "official_start_requested": False, "execution_profile": execution_profile,
               "speed_policy": config.get("speed_policy", "source_capped_0p25"),
-              "trial_config_sha256": sha(config_path)}
+              "trial_config_sha256": sha(effective_config)}
     if args.recovery_side is not None:
         result.update(scope='ONE_LAP_AFTER_TEACHER_BOOTSTRAP', recovery_side=args.recovery_side)
     streams = []; processes = []; compose = None; owned = False
     started = time.monotonic()
     judge = JudgeLog(args.run_id); judge_offset = 0; judge_pending = b""
     stall = LowSpeedStall(); rviz_window = None; next_capture_sim_s = 2.; video = None
+    rviz = None; rviz_bytes = None; enabled = None
 
     def run(command, timeout=8, check=True):
         return subprocess.run(command, cwd=repo, env=env, text=True, capture_output=True, timeout=timeout, check=check)
@@ -179,6 +195,12 @@ def main() -> None:
                         "--config", str(source_in_container / config_path.relative_to(source))]
         if args.recovery_side is not None:
             node_command += ['--recovery-reference', '/time/references/'+args.recovery_side+'.json']
+        if args.ros_launch:
+            node_command = ['ros2', 'launch', 'aic_e2e_runtime', 'time_path_awsim.launch.py',
+                'output:='+str(inside), 'run_id:='+args.run_id, 'checkpoint:=/time/command_off_best.pt',
+                'config:='+str(inside/'trial_config.json'), 'authorize_awsim_only:=true',
+                'max_speed_kmh:='+str(args.max_speed_kmh),
+                'corner_max_speed_kmh:='+str(args.corner_max_speed_kmh)]
         shell = ("source /aichallenge/workspace/install/setup.bash && "
                  + ('source /time/cpp_install/setup.bash && ' if args.recovery_side is not None else '')
                  + "source /time/install/setup.bash && exec " + shlex.join(node_command))
@@ -341,6 +363,14 @@ def main() -> None:
                 cleanup.append(str(exc))
         if video is not None:
             cleanup.extend(video.stop())
+        if rviz is not None and rviz_bytes is not None and enabled is not None and enabled != rviz_bytes:
+            try:
+                if rviz.read_bytes() == enabled:
+                    rviz.write_bytes(rviz_bytes)
+                else:
+                    cleanup.append('RVIZ_CHANGED_DURING_RUN_PRESERVED')
+            except Exception as exc:
+                cleanup.append('RVIZ_RESTORE:'+str(exc))
         for stream in streams:
             stream.close()
         result.update(cleanup_errors=cleanup, end_time_utc=time.time(), wall_s=time.monotonic()-started)

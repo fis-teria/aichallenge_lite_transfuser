@@ -13,6 +13,7 @@ from .awsim_steering import CALIBRATED_POLICIES, steering_asset_contract
 from .vehicle_motion_v1 import IDEAL_POLICY, AWSIM_FIXED_TRIAL_SPEED_POLICIES, AWSIM_TRIAL_SPEED_POLICIES, AWSIM_TRIAL_TARGETS_KMH, WHEELBASE_M, effective_response_length, validate_vehicle_model_config
 from .curvature_speed_v1 import ADAPTIVE_SPEED_POLICIES, TIME_ADAPTIVE_SPEED_POLICIES, preview_speed_limit
 from .time_preview_v1 import TIME_LOOKAHEAD_POLICY, time_preview_distance
+from .time_dev_v1 import configured_dev_speeds
 from .waypoint_controller import ControllerConfig, select_lookahead, control_from_waypoints
 from .polyline_lookahead_v1 import select_polyline_lookahead
 from .curvature_support_v2 import ACTUAL_STOPPING_SPEED, DIAGNOSTIC_STOPPING_POLICIES, STANDARD_CLEARANCE, NEAR_LIMIT_CLEARANCE, ONE_METRE_STOPPING_TRAVEL, SCAN_STOP_POLICY, SCAN_LOG_ONLY_POLICY, clearance_dimensions
@@ -87,6 +88,9 @@ def validate_trial_config(config: dict[str, Any]) -> str:
             or config.get('vehicle_model_policy') != 'awsim_understeer_v1'):
         raise ValueError('NEAR_LIMIT_DIAGNOSTIC_SCOPE_REQUIRED')
     ceiling, overspeed = trial_speed_limits(policy)
+    dev_speeds = configured_dev_speeds(config)
+    if dev_speeds is not None:
+        ceiling, overspeed = dev_speeds.max_mps, dev_speeds.overspeed_mps
     drive_sim_s, drive_wall_s, outer_wall_s = trial_duration_limits(config.get("execution_profile", "bounded_10s"))
     expected = {"speed_cap_mps": ceiling, "overspeed_limit_mps": overspeed,
                 "drive_limit_sim_s": drive_sim_s, "drive_limit_wall_s": drive_wall_s, "outer_limit_wall_s": outer_wall_s,
@@ -123,6 +127,7 @@ def interpolate_body_pose(poses: Sequence[TimedBodyPose], stamp_ns: int,
 
 def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: float,
                        rear_axle_offset_m: tuple[float, float], speed_cap_mps: float | None = None,
+                       corner_max_speed_mps: float | None = None,
                        speed_policy: str = "source_capped_0p25",
                        lookahead_policy: str = "fixed_1m_v1",
                        vehicle_model_policy: str = IDEAL_POLICY) -> dict[str, Any]:
@@ -142,6 +147,8 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
         raise ValueError('TRIAL_TIME_PREVIEW_CONTRACT')
     if speed_cap_mps is None:
         speed_cap_mps = ceiling
+    if corner_max_speed_mps is not None and speed_policy not in TIME_ADAPTIVE_SPEED_POLICIES:
+        raise ValueError('CORNER_SPEED_REQUIRES_TIME_PREVIEW')
     if (not np.isfinite([speed_mps, speed_cap_mps]).all() or not -.03 <= speed_mps <= overspeed
             or not 0 < speed_cap_mps <= ceiling
             or (speed_policy in FIXED_SPEED_POLICIES and speed_cap_mps != ceiling)):
@@ -218,6 +225,7 @@ def time_trial_control(plan: TimePlan, current: TimedBodyPose, *, speed_mps: flo
     if speed_policy in ADAPTIVE_SPEED_POLICIES:
         speed_plan = preview_speed_limit(reference.xy_current_m, measured_speed_mps=max(0., speed_mps),
             cruise_ceiling_mps=speed_cap_mps, policy=speed_policy,
+            corner_max_speed_mps=corner_max_speed_mps,
             tracking_curvature_per_m=2*float(target[1])/max(float(target @ target), 1e-6))
         target_speed = speed_plan['target_speed_mps']
         reference = replace(reference, target_speed_mps=target_speed)

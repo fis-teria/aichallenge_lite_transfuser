@@ -1,5 +1,10 @@
 # AIC TransFuser Lite ROS 2 runtime
 
+Current TimePath inference + Pure Pursuit: `time_path_awsim.launch.py`.
+Launch arguments `max_speed_kmh` and `corner_max_speed_kmh` configure recorded,
+read-only ROS parameters. See [TimePath make dev](../../../docs/time_path_make_dev.md)
+for the supervised AWSIM entry point, speed semantics and validation commands.
+
 This package keeps the legacy v0 runtime intact and adds a separately named,
 strict Dataset-v2 static runtime.  Do not replace `ckpt/best.pt`; v1 uses
 `ckpt/transfuser_lite_v1_best_ade.pt` and verifies its SHA-256 before loading.

@@ -12,6 +12,8 @@ from typing import Any
 
 import numpy as np
 
+from .time_dev_v1 import CORNER_CURVATURE_PER_M, CORNER_TRANSITION_PER_M
+
 from .time_preview_v1 import (TIME_LOOKAHEAD_POLICY, PREVIEW_TIME_S, PREVIEW_OFFSET_M,
                               MINIMUM_PREVIEW_M, time_preview_distance, time_horizon_speed_cap)
 
@@ -48,6 +50,7 @@ class CurvatureSpeedConfig:
 def preview_speed_limit(xy_m: np.ndarray, *, measured_speed_mps: float,
                         cruise_ceiling_mps: float, tracking_curvature_per_m: float,
                         policy: str = ADAPTIVE_SPEED_POLICY,
+                        corner_max_speed_mps: float | None = None,
                         config: CurvatureSpeedConfig = CurvatureSpeedConfig()) -> dict[str, Any]:
     """Return a speed ceiling in m/s from finite [N,2] rear-frame metres.
 
@@ -68,6 +71,12 @@ def preview_speed_limit(xy_m: np.ndarray, *, measured_speed_mps: float,
             or not 0 <= measured_speed_mps <= (ADAPTIVE_SPEED_POLICIES[policy]+1)/3.6
             or not 0 < cruise_ceiling_mps <= ADAPTIVE_SPEED_POLICIES[policy]/3.6):
         raise ValueError("CURVATURE_SPEED_INPUT")
+    if corner_max_speed_mps is not None and (
+            policy not in TIME_ADAPTIVE_SPEED_POLICIES
+            or type(corner_max_speed_mps) not in (int, float)
+            or not math.isfinite(corner_max_speed_mps)
+            or not 0 < corner_max_speed_mps <= cruise_ceiling_mps):
+        raise ValueError('CORNER_SPEED_INPUT')
     lengths = np.linalg.norm(np.diff(points, axis=0), axis=1)
     points = points[np.r_[True, lengths > 1e-9]]
     if len(points) < 2:
@@ -126,6 +135,23 @@ def preview_speed_limit(xy_m: np.ndarray, *, measured_speed_mps: float,
             stopping_distance_used_for_pp=False)
     limits = dict(cruise=cruise_ceiling_mps, preview_curvature=curve_cap,
                   tracking_curvature=tracking_cap, prediction_horizon=horizon_cap)
+    if corner_max_speed_mps is not None:
+        # Blend only the longitudinal ceiling; never change prediction vertices.
+        # Apply the same delay/reserve and braking preview as the physical cap.
+        def corner_cap(curv):
+            weight = np.clip((np.abs(curv)-CORNER_TRANSITION_PER_M)
+                             /(CORNER_CURVATURE_PER_M-CORNER_TRANSITION_PER_M), 0., 1.)
+            return cruise_ceiling_mps + weight*(corner_max_speed_mps-cruise_ceiling_mps)
+
+        corner_local = corner_cap(curvature)
+        corner_upstream = np.sqrt(corner_local**2 + 2*config.planning_deceleration_mps2*usable)
+        corner_index = int(np.argmin(corner_upstream))
+        limits.update(preview_corner=min(cruise_ceiling_mps, float(corner_upstream[corner_index])),
+                      tracking_corner=float(corner_cap(tracking_curvature_per_m)))
+        horizon_details['corner_speed_limit'] = dict(max_speed_mps=corner_max_speed_mps,
+            full_curvature_per_m=CORNER_CURVATURE_PER_M, transition_curvature_per_m=CORNER_TRANSITION_PER_M,
+            support_start_m=float(support_start[corner_index]),
+            local_speed_mps=float(corner_local[corner_index]), usable_distance_m=float(usable[corner_index]))
     limiting_reason = min(limits, key=limits.get)
     target = limits[limiting_reason]
     # Retain the completed fixed-speed trial's P gain and actuator authority.

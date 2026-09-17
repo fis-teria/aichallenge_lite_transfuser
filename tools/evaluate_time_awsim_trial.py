@@ -18,6 +18,7 @@ from aic_transfuser_lite.control.awsim_steering_response import SteeringResponse
 from aic_transfuser_lite.control.vehicle_motion_v1 import IDEAL_POLICY, AWSIM_POLICIES, stopping_motion
 from aic_transfuser_lite.control.curvature_support_v2 import ACTUAL_STOPPING_SPEED, stopping_envelope_parameters, SCAN_STOP_POLICY, SCAN_LOG_ONLY_POLICY
 from aic_transfuser_lite.control.curvature_speed_v1 import ADAPTIVE_SPEED_POLICIES, TIME_ADAPTIVE_SPEED_POLICIES
+from aic_transfuser_lite.control.time_dev_v1 import configured_dev_speeds
 
 
 def response_record_matches(recorded: Any, expected: Any) -> bool:
@@ -40,7 +41,9 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
                             steering_policy: str = "identity_v1", lookahead_policy: str = "fixed_1m_v1",
                             vehicle_model_policy: str = IDEAL_POLICY,
                             stopping_distance_policy: str = ACTUAL_STOPPING_SPEED,
-                            scan_occupancy_policy: str = SCAN_STOP_POLICY) -> dict[str, Any]:
+                            scan_occupancy_policy: str = SCAN_STOP_POLICY,
+                            speed_cap_mps: float | None = None,
+                            corner_max_speed_mps: float | None = None) -> dict[str, Any]:
     """Reproduce decisions from recorded raw predictions, poses, and measured speed.
 
     This covers the calculation before the separate output steering-rate clamp.
@@ -71,6 +74,7 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
         try:
             calculated = time_trial_control(TimePlan(plan["plan_id"], observed, np.array(plan["raw_xy_m"])),
                 current, speed_mps=command["speed_mps"], rear_axle_offset_m=(rear_axle_forward_m, 0.),
+                speed_cap_mps=speed_cap_mps, corner_max_speed_mps=corner_max_speed_mps,
                 speed_policy=speed_policy, lookahead_policy=lookahead_policy, vehicle_model_policy=vehicle_model_policy)
         except ValueError as exc:
             expected_response_state = None
@@ -241,9 +245,14 @@ def main() -> None:
                      if c.get("details", {}).get("current_pose") is not None}
     measured_xy = np.array([[p["x_m"], p["y_m"]] for _, p in sorted(pose_by_stamp.items())])
     speed_policy = publishers[0].get("speed_policy", "source_capped_0p25")
+    dev_speeds = None
     if host["scope"] in ("10_SIM_SECOND_MODEL_TRIAL", "ONE_LAP_MODEL_TRIAL"):
         config_bytes = (args.run/"trial_config.json").read_bytes()
         config_sha = hashlib.sha256(config_bytes).hexdigest()
+        saved_config = json.loads(config_bytes)
+        dev_speeds = configured_dev_speeds(saved_config)
+        if publishers[0].get('speed_parameters') != saved_config.get('speed_parameters'):
+            raise ValueError('recorded speed parameters differ')
         if (config_sha != host["trial_config_sha256"] or config_sha != publishers[0]["trial_config_sha256"]
                 or speed_policy != validate_trial_config(json.loads(config_bytes))
                 or speed_policy != host["speed_policy"]):
@@ -255,6 +264,8 @@ def main() -> None:
             if config.get(key, default) != publishers[0].get(key, default):
                 raise ValueError("recorded runtime/config mismatch: " + key)
     replay = replay_recorded_control(active, plans, publishers[0]["rear_axle_forward_m"], speed_policy=speed_policy,
+        speed_cap_mps=dev_speeds.max_mps if dev_speeds else None,
+        corner_max_speed_mps=dev_speeds.corner_mps if dev_speeds else None,
         obstacle_policy=publishers[0].get("obstacle_policy", "straight_v1"),
         steering_policy=publishers[0].get("steering_policy", "identity_v1"),
         lookahead_policy=publishers[0].get("lookahead_policy", "fixed_1m_v1"),
@@ -268,6 +279,7 @@ def main() -> None:
         "source_host_status": host["status"], "official_start_requested": host["official_start_requested"],
         'stopping_distance_policy': publishers[0].get('stopping_distance_policy', ACTUAL_STOPPING_SPEED),
         'scan_occupancy_policy': publishers[0].get('scan_occupancy_policy', SCAN_STOP_POLICY),
+        **({'speed_parameters': saved_config['speed_parameters']} if dev_speeds else {}),
         'scan_would_stop_commands': sum(bool(c.get('details', {}).get('obstacle_guard', {}).get('would_stop_reason')) for c in active),
         "armed_sim_ns": start, "active_duration_sim_s": duration_s,
         "judge_lap_confirmed": host.get("judge_lap_confirmed", False), "judge_laps": host.get("judge_laps", []),
@@ -285,9 +297,9 @@ def main() -> None:
         "active_target_speed_mps": quantiles([c["target_speed_mps"] for c in active]),
         "final_3s_measured_speed_kmh": quantiles(np.asarray(late_speeds)*3.6) if late_speeds else None,
         "active_samples_within_0p25_kmh_of_5": sum(c["speed_mps"] is not None and abs(c["speed_mps"]*3.6-5.) <= .25 for c in active),
-        "speed_policy_ceiling_kmh": trial_speed_limits(speed_policy)[0]*3.6,
+        "speed_policy_ceiling_kmh": (dev_speeds.max_mps if dev_speeds else trial_speed_limits(speed_policy)[0])*3.6,
         "active_samples_within_0p25_kmh_of_policy_ceiling": sum(c["speed_mps"] is not None
-            and abs(c["speed_mps"]*3.6-trial_speed_limits(speed_policy)[0]*3.6) <= .25 for c in active),
+            and abs(c["speed_mps"]*3.6-(dev_speeds.max_mps if dev_speeds else trial_speed_limits(speed_policy)[0])*3.6) <= .25 for c in active),
         "recorded_pose_count": len(measured_xy),
         "recorded_pose_travel_m": float(np.linalg.norm(np.diff(measured_xy, axis=0), axis=1).sum()) if len(measured_xy) > 1 else None,
         "recorded_pose_net_displacement_m": float(np.linalg.norm(measured_xy[-1] - measured_xy[0])) if len(measured_xy) > 1 else None,

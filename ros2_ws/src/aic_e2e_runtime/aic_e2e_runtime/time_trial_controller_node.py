@@ -20,6 +20,7 @@ from aic_transfuser_lite.control.awsim_steering_response import SteeringResponse
 from aic_transfuser_lite.control.vehicle_motion_v1 import IDEAL_POLICY, AWSIM_POLICY, AWSIM_POLICIES
 from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, scan_pose_in_rear, select_aligned_scan
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
+from aic_transfuser_lite.control.time_dev_v1 import configured_dev_speeds
 from aic_transfuser_lite.control.time_trial_v1 import (
     SPEED_POLICIES, interpolate_body_pose, time_trial_control, trial_speed_limits, validate_trial_config,
 )
@@ -60,10 +61,12 @@ def main() -> None:
     stopping_distance_policy = 'measured_speed_v1'
     scan_occupancy_policy = 'stop_v1'
     speed_policy = args.speed_policy or "source_capped_0p25"
+    dev_speeds = None
     if args.trial_config is not None:
         config_bytes = args.trial_config.read_bytes()
         config = json.loads(config_bytes)
         speed_policy = validate_trial_config(config)
+        dev_speeds = configured_dev_speeds(config)
         execution_profile = config.get("execution_profile", "bounded_10s")
         obstacle_policy = config.get("obstacle_policy", "straight_v1")
         steering_policy = config.get("steering_policy", "identity_v1")
@@ -78,6 +81,8 @@ def main() -> None:
             raise ValueError("TRIAL_CONFIG_IDENTITY")
         config_sha = hashlib.sha256(config_bytes).hexdigest()
     _, overspeed_limit_mps = trial_speed_limits(speed_policy)
+    if dev_speeds is not None:
+        overspeed_limit_mps = dev_speeds.overspeed_mps
     steering_gain = steering_response_gain(steering_policy)
     drive_sim_s, drive_wall_s, _ = trial_duration_limits(execution_profile)
     live = args.authorize_awsim_only
@@ -113,7 +118,17 @@ def main() -> None:
     from autoware_auto_planning_msgs.msg import Trajectory
 
     rclpy.init(args=ros_args)
-    node = Node("time_path_controller", enable_rosout=False, start_parameter_services=False)
+    node = Node("time_path_controller", enable_rosout=False, start_parameter_services=dev_speeds is not None)
+    if dev_speeds is not None:
+        from rcl_interfaces.msg import ParameterDescriptor
+        # The launch compiles these values into the hashed effective config.
+        # Read-only services permit inspection, without unrecorded hot changes.
+        for name in ('max_speed_kmh', 'corner_max_speed_kmh'):
+            expected = float(getattr(dev_speeds, name))
+            value = node.declare_parameter(name, expected,
+                ParameterDescriptor(read_only=True, description='Launch-time speed ceiling in km/h')).value
+            if type(value) is not float or value != expected:
+                raise ValueError('ROS_SPEED_PARAMETER_CONFIG_MISMATCH:'+name)
     topic = "/control/command/control_cmd" if live else "/time_path/shadow/control_cmd"
     publisher = None
     clock_ns = None
@@ -222,6 +237,7 @@ def main() -> None:
                 publisher = node.create_publisher(AckermannControlCommand, topic, 10)
                 record({"event": "PUBLISHER_CREATED", "topic": topic, "live": live,
                         "speed_policy": speed_policy, "overspeed_limit_mps": overspeed_limit_mps,
+                        **({'speed_parameters': asdict(dev_speeds)} if dev_speeds is not None else {}),
                         "trial_config_sha256": config_sha,
                         "obstacle_policy": obstacle_policy,
                         "steering_policy": steering_policy, "steering_response_gain": steering_gain,
@@ -402,6 +418,8 @@ def main() -> None:
                 details['steering_actuator'] = mapping
             else:
                 details.update(time_trial_control(plan, current, speed_mps=speed,
+                                                  speed_cap_mps=dev_speeds.max_mps if dev_speeds is not None else None,
+                                                  corner_max_speed_mps=dev_speeds.corner_mps if dev_speeds is not None else None,
                                                   speed_policy=speed_policy,
                                                   lookahead_policy=lookahead_policy,
                                                   vehicle_model_policy=vehicle_model_policy,
