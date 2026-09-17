@@ -1,0 +1,62 @@
+{
+  "date": "2026-09-18",
+  "target": "Normal RViz VectorMap left_lane_bound and right_lane_bound",
+  "status": "DIAGNOSED_NOT_APPLIED",
+  "lidar_tf_modified": false,
+  "map_modified": false,
+  "driving_performed": false,
+  "diagnostic_map_capture": {
+    "vehicle_command_publishers": 0,
+    "isolated_network": true,
+    "marker_count": 25,
+    "status": "PASS"
+  },
+  "calibration_decision": "No evidence supporting a fixed sensor mounting correction; map/localization alignment gives better held-out results",
+  "normal_rviz_sha256": "981c28955e9bceedb8845ec8d59e57c4f47805040cd84c5e09f2f1430c7bb3f1",
+  "source_lanelet2_map_sha256": "126a62f2ef21560ace0eb39a0f52a6a5e86ef6b9951b0ead1511e46e4b418dc4",
+  "bag_provenance": "Existing laps03/5kmh_run01 and laps03/8kmh_run01; full bag bytes not hashed in this diagnostic",
+  "synthetic_translation_recovery": "PASS",
+  "limitations": [
+    "Recorded GNSS/IMU-derived localization used only as offline diagnostic reference, not independent truth",
+    "Baseline boundary-distance gate excludes points beyond 0.8m",
+    "Lane boundaries are not measured physical wall surfaces",
+    "Correction is around a specified map-local pivot, not a sensor TF"
+  ],
+  "files": [
+    {
+      "bytes": 2585,
+      "path": "capture_map.py",
+      "sha256": "46b17b9efbc60833cdf306c03f4711578986bf174f80ae8e61620a1dfcbdadb0"
+    },
+    {
+      "bytes": 15440,
+      "path": "diagnose.py",
+      "sha256": "98e97cdac607199f6049adb4ff640a7610a7efec6ce9946dda1c6f731f68bdb5"
+    },
+    {
+      "bytes": 129755,
+      "path": "fit_5kmh.json",
+      "sha256": "807bff7b39b74aa68711cefc2e35126ec4a365827b1be527bcec1d1af41acd1d"
+    },
+    {
+      "bytes": 242084,
+      "path": "markers.json",
+      "sha256": "c5f135726dc3cf38ce9b8b3c22ba9f77b9a75be3264a0a335947c1146070e113"
+    },
+    {
+      "bytes": 175599,
+      "path": "overlay.png",
+      "sha256": "5a46bd1681ad42eb37217f929614e76ee9494c243371c0c209277e2ee6cdac53"
+    },
+    {
+      "bytes": 290,
+      "path": "sensors_calibration.yaml",
+      "sha256": "db5528a6f15fbe5a126b9665d90614a806e8fd723d32bbfcde714d58d389ce12"
+    },
+    {
+      "bytes": 76497,
+      "path": "transfer_8kmh.json",
+      "sha256": "e7afaaaabc1a19c164e6c947a5b4b5cc0673654f9e57471411baac691414bb13"
+    }
+  ]
+}
