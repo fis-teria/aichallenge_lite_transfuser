@@ -22,4 +22,4 @@ Path('teacher-runtime-identity.json').write_text(json.dumps(identity,indent=2)+'
 PY
 exec ros2 launch aic_lidar_v2x teacher_v45.launch.py \
   map_yaml:=/source/integrations/mppi_v45/assets/multi_purpose_mpc_ros/env/final_ver3/occupancy_grid_map.yaml \
-  domain_id:=1 speed_cap_mps:="${TEACHER_SPEED_CAP_MPS:?}" run_rviz:=false
+  domain_id:=1 speed_cap_mps:="${TEACHER_SPEED_CAP_MPS:?}" run_rviz:="${TEACHER_RVIZ:-false}"

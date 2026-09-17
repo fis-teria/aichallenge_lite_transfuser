@@ -1,0 +1,88 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Map
+      Name: Course occupancy
+      Enabled: true
+      Alpha: 0.5
+      Topic:
+        Value: /debug/mppi/wall_map
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        Depth: 1
+    - Class: rviz_default_plugins/LaserScan
+      Name: LiDAR - cyan
+      Enabled: true
+      Color: 0; 255; 255
+      Style: Points
+      Size (Pixels): 3
+      Decay Time: 0.15
+      Topic:
+        Value: /sensing/lidar/scan
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+        Depth: 5
+    - Class: rviz_default_plugins/MarkerArray
+      Name: MPPI selected trajectory
+      Enabled: true
+      Topic:
+        Value: /debug/mppi/selected
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        Depth: 1
+    - Class: rviz_default_plugins/MarkerArray
+      Name: MPPI candidate trajectories
+      Enabled: true
+      Topic:
+        Value: /debug/mppi/candidates
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        Depth: 1
+    - Class: rviz_default_plugins/MarkerArray
+      Name: LiDAR detected obstacles
+      Enabled: true
+      Topic:
+        Value: /collection/lidar_v2x/markers
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        Depth: 5
+    - Class: rviz_default_plugins/MarkerArray
+      Name: MPPI decision
+      Enabled: true
+      Topic:
+        Value: /debug/mppi/decision
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        Depth: 1
+    - Class: rviz_default_plugins/Axes
+      Name: Ego base_link
+      Enabled: true
+      Reference Frame: base_link
+      Length: 1.5
+      Radius: 0.08
+  Global Options:
+    Fixed Frame: map
+    Background Color: 35; 35; 35
+    Frame Rate: 20
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Target Frame: base_link
+      Scale: 22
+      Angle: 0
+      X: 7
+      Y: 0
+    Saved: []
+Window Geometry:
+  Width: 1200
+  Height: 900
+  X: 20
+  Y: 30

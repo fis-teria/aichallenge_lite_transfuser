@@ -92,6 +92,7 @@ def main() -> None:
     ap.add_argument('--run-budget-gib', type=float, default=1.)
     ap.add_argument('--free-reserve-gib', type=float, default=2.)
     ap.add_argument('--execute', action='store_true')
+    ap.add_argument('--rviz', action='store_true', help='Show the teacher path and LiDAR in standard RViz')
     args = ap.parse_args()
     if not re.fullmatch(r'lidar-v45-pc10-[a-z0-9-]+',args.run_id):
         raise ValueError('A new lidar-v45-pc10-* run ID is required')
@@ -145,7 +146,11 @@ def main() -> None:
             f'{recovery_config}:/aichallenge/workspace/install/multi_purpose_mpc_ros/share/multi_purpose_mpc_ros/config/config.yaml:ro']
         ego = services['scn-car1']
         ego['volumes'] = [*ego.get('volumes',[]),*volumes]
-        ego['environment'].update(VEHICLE_ID='d1',TEACHER_SPEED_CAP_MPS=str(args.speed_cap_kmh/3.6))
+        ego['environment'].update(VEHICLE_ID='d1',TEACHER_SPEED_CAP_MPS=str(args.speed_cap_kmh/3.6),
+                                  TEACHER_RVIZ='true' if args.rviz else 'false')
+        if args.rviz:
+            ego['volumes'].append(f'{source}/integrations/mppi_v45/teacher_collection.rviz:'
+                '/aichallenge/workspace/install/aichallenge_system_launch/share/aichallenge_system_launch/config/autoware.rviz:ro')
         ego['command'] = ['bash','/source/integrations/mppi_v45/run_teacher.bash']
         recorder = services['scn-rosbag1']
         recorder['volumes'] = [*recorder.get('volumes',[]),*volumes]
@@ -181,6 +186,7 @@ def main() -> None:
             perception='LIDAR_V2X_SURFACE_EXISTING_MARGIN',native_v2x_role='EVALUATION_ONLY',
             student_control=False,student_inference=False,online_training=False,awsim_modified=False,
             source_manifest_sha256=sha(vendor_manifest),
+            rviz_requested=args.rviz,
             scenario_sha256=sha(args.scenario),wall_budget_s=args.wall_timeout_s,
             storage_budget_bytes=int(args.run_budget_gib*2**30)),indent=2)+'\n')
         return compiled
