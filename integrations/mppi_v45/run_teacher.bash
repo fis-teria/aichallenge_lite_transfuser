@@ -2,6 +2,7 @@
 set -eo pipefail
 source /aichallenge/workspace/install/setup.bash
 source /runtime/install/local_setup.bash
+export PYTHONPATH="/source/integrations/mppi_v45/support:${PYTHONPATH:-}"
 test "$(ros2 pkg prefix reference_space_mppi_planner)" = /runtime/install/reference_space_mppi_planner
 test "$(ros2 pkg prefix aic_lidar_v2x)" = /runtime/install/aic_lidar_v2x
 export ROS_HOME="${LOG_DIR:?}/d1/ros"

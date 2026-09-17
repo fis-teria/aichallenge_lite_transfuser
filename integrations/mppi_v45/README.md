@@ -1,7 +1,7 @@
 # MPPI SIM V45 teacher
 
 SI26の採用ソースから必要な6 ROS packageと`final_ver3` Reference/地図資産を取り込んだ。
-311ファイル、5,155,755 bytes。元アーカイブと各ファイルのSHA256は`source_manifest.json`。
+313ファイル、5,167,346 bytes（6 package、地図資産、recovery用Python依存2ファイル）。元アーカイブと各ファイルのSHA256は`source_manifest.json`。
 ソースのアルゴリズム・既存安全判定・パラメータは変更していない。
 元データはSI26に保全し、生成物・学習重み・bag・ビルド出力は本ディレクトリに含めない。
 
@@ -27,7 +27,9 @@ python3 tools/build_mppi_v45_overlay.py \
 別ホストでビルドしたバイナリと同じハッシュになるとは仮定しない。
 
 起動にはコンテナ内の公式underlayとこのruntimeの`install/local_setup.bash`を順にsourceする。
-Reference資産は実行コンテナの`multi_purpose_mpc_ros/env/final_ver3`へread-onlyで接続する。
+Reference資産は実行コンテナのsource/install両方の`multi_purpose_mpc_ros/env/final_ver3`へread-onlyで接続する。
+`support`には採用版の`boost_logic.py`と空の`__init__.py`をそのまま同梱し、
+専用教師プロセスのPYTHONPATHへ追加する。PC10 underlayの古いPython依存は置換しない。
 
 ```bash
 ros2 launch aic_lidar_v2x teacher_v45.launch.py \

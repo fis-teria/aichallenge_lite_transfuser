@@ -3,6 +3,8 @@
 set -eo pipefail
 source /aichallenge/workspace/install/setup.bash
 source /runtime/install/local_setup.bash
+export PYTHONPATH="/source/integrations/mppi_v45/support:${PYTHONPATH:-}"
+export QT_QPA_PLATFORM=offscreen
 export CYCLONEDDS_URI=file:///source/integrations/mppi_v45/cyclonedds.xml
 export ROS_DOMAIN_ID=97
 export TEACHER_SPEED_CAP_MPS=1.3888888888888888
