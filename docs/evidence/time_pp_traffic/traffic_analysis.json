@@ -1,0 +1,84 @@
+{
+  "status": "STOPPED_NO_LAP",
+  "error": null,
+  "judge_replay": "PASS",
+  "ego_lap_confirmed": false,
+  "ego_laps": [],
+  "vehicles": {
+    "1": {
+      "samples": 851,
+      "moving_samples": 517,
+      "speed_kmh_quantiles": [
+        -0.001942334816592094,
+        2.2292780202717615,
+        12.01590649052626,
+        12.538879179921526
+      ],
+      "distance_m": 17.638552341293632,
+      "status_publisher_counts": [
+        1
+      ],
+      "vehicle_states": [
+        "Spawned",
+        "Grounded",
+        "Start",
+        "Ready",
+        "Start"
+      ]
+    },
+    "2": {
+      "samples": 850,
+      "moving_samples": 572,
+      "speed_kmh_quantiles": [
+        0.007813149874897639,
+        3.169500066701623,
+        5.491294183778667,
+        6.89850731000481
+      ],
+      "distance_m": 12.27951816551385,
+      "status_publisher_counts": [
+        1
+      ],
+      "vehicle_states": [
+        "Spawned",
+        "Grounded",
+        "Start",
+        "Ready",
+        "Start"
+      ],
+      "minimum_center_distance_to_ego_m": 1.673480707267704
+    },
+    "3": {
+      "samples": 851,
+      "moving_samples": 851,
+      "speed_kmh_quantiles": [
+        6.074694379142541,
+        6.7632710381517205,
+        6.866540601787248,
+        6.873891137026303
+      ],
+      "distance_m": 31.24398999796671,
+      "status_publisher_counts": [
+        1
+      ],
+      "vehicle_states": [
+        "Spawned",
+        "Grounded",
+        "Start",
+        "Ready",
+        "Start"
+      ],
+      "minimum_center_distance_to_ego_m": 10.640395602170821
+    }
+  },
+  "model_assessed": true,
+  "contact_assessment": "No per-vehicle penalty export available until official race end; center distance is not clearance.",
+  "boundary": "One bounded mixed-controller scene; does not establish general NPC avoidance.",
+  "visual_contact_observation": {
+    "source": "awsim.mp4",
+    "reviewed_frame_video_s": 31,
+    "frame": "awsim_at_31s.png",
+    "description": "P1 front reaches P2 left rear; imagery and abrupt velocity/lateral-motion change are consistent with contact.",
+    "official_penalty_count": null
+  }
+}

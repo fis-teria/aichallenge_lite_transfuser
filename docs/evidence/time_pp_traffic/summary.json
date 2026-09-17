@@ -1,0 +1,131 @@
+{
+  "status": "LAP_NOT_COMPLETED",
+  "evaluator_sha256": "c0b5884f805dc60cabd8614b4ac6e0ba62e0b4853513849692007b4ecadf1dc9",
+  "scope": "BOUNDED_SAME_SCENE_TEST_NOT_LAP_OR_AVOIDANCE_ACCEPTANCE",
+  "source_host_status": "STOPPED_NO_LAP",
+  "official_start_requested": true,
+  "stopping_distance_policy": "awsim_cap_1m_diagnostic_v1",
+  "scan_occupancy_policy": "log_only_awsim_v1",
+  "speed_parameters": {
+    "max_speed_kmh": 20.0,
+    "corner_max_speed_kmh": 10.0
+  },
+  "scan_would_stop_commands": 75,
+  "armed_sim_ns": 33834999243,
+  "active_duration_sim_s": 15.819999647,
+  "judge_lap_confirmed": false,
+  "judge_laps": [],
+  "judge_sections": [
+    0
+  ],
+  "host_error": null,
+  "requested_stop_reason": "PROGRESS_STALLED",
+  "active_commands": 316,
+  "positive_acceleration_commands": 195,
+  "active_command_reasons": {
+    "TIME_PATH_TRACKING": 210,
+    "MOTION_REAR_LATERAL_INVALID": 5,
+    "STEERING_FEASIBLE_LOOKAHEAD_MISSING": 101
+  },
+  "all_predictions": 424,
+  "active_observation_predictions": 137,
+  "foldback_statistics_policy": "legacy_step_heading_v1_not_current_admission",
+  "recorded_geometry_policy_versions": [
+    "distance_resolved_time_geometry_v2"
+  ],
+  "active_new_geometry_reasons": {
+    "RESOLVED": 137
+  },
+  "control_replay": {
+    "status": "PASS",
+    "matched_commands": 316,
+    "unavailable_commands": 0,
+    "maximum_absolute_error": 4.636291350834654e-13,
+    "tolerance": 1e-09,
+    "scope": "geometry_and_PP_plus_recorded_actuator_mapping_not_scan_admission",
+    "post_control_rejections": {
+      "MOTION_REAR_LATERAL_INVALID": 5
+    },
+    "actuator_mapping_matched": 215,
+    "steering_response_matched": 215,
+    "vehicle_motion_matched": 215,
+    "scan_guard_decisions_replayed": false
+  },
+  "speed_policy": "curvature_time_preview_20kmh_v1",
+  "active_target_speed_mps": {
+    "min": 0.0,
+    "median": 1.126240119604415,
+    "p95": 3.5771092939813096,
+    "max": 3.7826784484320086
+  },
+  "final_3s_measured_speed_kmh": {
+    "min": 0.0,
+    "median": 0.0,
+    "p95": 0.0,
+    "max": 0.0
+  },
+  "active_samples_within_0p25_kmh_of_5": 8,
+  "speed_policy_ceiling_kmh": 20.0,
+  "active_samples_within_0p25_kmh_of_policy_ceiling": 0,
+  "recorded_pose_count": 314,
+  "recorded_pose_travel_m": 17.624896570057384,
+  "recorded_pose_net_displacement_m": 17.478420809611833,
+  "active_first_fold_source_segment_indices": {
+    "None": 90,
+    "0": 47
+  },
+  "active_first_turn_abs_rad": {
+    "min": 0.0002559767142410081,
+    "median": 0.0330144293593187,
+    "p95": 2.942597353943116,
+    "max": 2.9454564682510327
+  },
+  "foldback_threshold_rad": 1.2,
+  "active_first_point_x_m": {
+    "min": -0.025632232427597046,
+    "median": 0.0749010443687439,
+    "p95": 0.4017128586769104,
+    "max": 0.42526647448539734
+  },
+  "active_first_point_y_m": {
+    "min": -0.025396641343832016,
+    "median": -0.0051229409873485565,
+    "p95": 0.006704170256853099,
+    "max": 0.01277172937989235
+  },
+  "active_3s_endpoint_norm_m": {
+    "min": 0.29098570189532025,
+    "median": 2.9865733573550624,
+    "p95": 8.672293154779561,
+    "max": 8.963811483399805
+  },
+  "active_source_speed_0_to_0p3s_mps": {
+    "min": 0.0915613218873107,
+    "median": 0.7756903663082614,
+    "p95": 3.357622009563586,
+    "max": 3.5146834347519538
+  },
+  "inference_duration_ms": {
+    "min": 34.569473,
+    "median": 89.3639255,
+    "p95": 116.78500694999993,
+    "max": 308.484743
+  },
+  "max_measured_speed_mps": 3.4841628074645996,
+  "stop_confirmed_before_cleanup": true,
+  "runtime_inference_rejections": {
+    "CURRENT_SENSOR_MISSING": 42
+  },
+  "cleanup_errors": [],
+  "wall_s": 87.11826086699148,
+  "checkpoint_sha256": [
+    "1fe12ca066791d3eb8907c6921120e2cfbb38925c422d5be54940f4acbdd120a"
+  ],
+  "raw_predictions_modified": false,
+  "boundary": "Recorded command and prediction analysis; no measured lane-tracking accuracy or model teacher error.",
+  "source_sha256": {
+    "host_result.json": "9a43f6aecdd3cb573f6982b4bb454dbc2b45ee5ba4d5646e29c21f843ffe987e",
+    "control.jsonl": "bf9cef159753340571665d4497f58cf59a6c11cd3a98d5403fa0b48774504b88",
+    "inference.jsonl": "b5ae6ab0c3209f2d59aa7591af2e4f12ca378c4b727f9651a92bdff27c7c8988"
+  }
+}

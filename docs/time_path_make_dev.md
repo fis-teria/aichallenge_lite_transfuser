@@ -34,6 +34,7 @@ AWSIM本体・scene・センサは変更しない。今回試験中のLiDAR近�
 |`CORNER_MAX_SPEED_KMH`|10|コーナー内の目標速度上限、km/h|
 |`TIME_RECORD_VIDEO`|0|1でAWSIMと通常RVizの動画を保存|
 |`TIME_NPCS`|0|AWSIM内蔵NPC車両の台数、0〜3。自車のE2Eは1台のまま|
+|`TIME_PP_VEHICLES`|0|既存PPで動かす背景車、0〜3。内蔵NPCと同時使用不可。2台構成を実走確認|
 |`TIME_RUN_ID`|UTC時刻から生成|任意指定は `codex-time-...`、既存runの再利用禁止|
 |`TIME_DEPLOYMENT`|sourceの親|installと `command_off_best.pt` を持つ専用deployment|
 |`DISPLAY`|環境値、なければ`:0`|実際のデスクトップdisplay|
@@ -58,6 +59,18 @@ NPC速度と出現位置は既存AWSIMの実装に従う。起動確認だけで
 初期化完了状態が解除され、公式Start待機で時間切れになった。NPCありの走行は未確認。
 同一ドメインへの車両状態publisherの重複生成とカメラ例外が観測されている。
 [NPC追加試験の記録](time_npc2_20260917.md)を参照。
+
+AWSIMを変更しない代替構成は、専用deploymentで利用できる:
+
+```bash
+cd ~/e2e_autonomous/time_traffic2_20260917_r2
+make dev MAX_SPEED_KMH=20 CORNER_MAX_SPEED_KMH=10 TIME_PP_VEHICLES=2 TIME_RECORD_VIDEO=1
+```
+
+自車はdomain 1、既存PPの2台はdomain 2・3。背景車の基準速度上限は10 km/h。
+正式Startと3台の走行を確認したが、先行車に接触して17.6 mで停止し、未完走。
+この構成は混走試験用であり、障害物回避の合格モデルではない。
+[混走試験の結果と再現条件](time_pp_traffic.md)を参照。
 
 コーナー判定は予測経路の1 m以上の区間から測った曲率とPP追従曲率に基づく。
 絶対曲率0.05 /m以上（半径20 m以下）でコーナー上限を全面適用。
