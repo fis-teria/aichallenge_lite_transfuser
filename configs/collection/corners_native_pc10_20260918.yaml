@@ -1,0 +1,120 @@
+schema_version: 1
+name: lidar-v45-pc10-corners-native-a04
+seed: 20260918
+simulator:
+  start_mode: count
+  start_count_seconds: 5
+  laps: unlimited
+  timeout: 780
+  collisions: 'on'
+  render: window
+  camera: gpu
+  lidar: gpu
+  npcs: 0
+  handicap: 'off'
+  ranking: 'off'
+  wall_recovery: 'on'
+runtime:
+  sample_rate_hz: 20
+  ready_timeout_sec: 180
+  playstart_stall_sec: 30
+  rosbag: true
+ego:
+  submission:
+    type: docker_image
+    image: aichallenge-2025-dev:latest
+  pose:
+    start_grid: 1
+objects:
+- id: corner_01_box
+  type: box
+  pose:
+    map_xy:
+    - 89649.94617967463
+    - 43121.8875987091
+    yaw_deg: -168.9711436569199
+- id: corner_02_cone
+  type: cone
+  pose:
+    map_xy:
+    - 89626.30234833229
+    - 43139.56217487976
+    yaw_deg: 120.52227497539121
+- id: corner_03_box
+  type: box
+  pose:
+    map_xy:
+    - 89620.84627327499
+    - 43148.690177117554
+    yaw_deg: 123.10751429435982
+- id: corner_04_cone
+  type: cone
+  pose:
+    map_xy:
+    - 89614.26921426486
+    - 43157.819554259666
+    yaw_deg: 113.93719656673856
+- id: corner_05_box
+  type: box
+  pose:
+    map_xy:
+    - 89631.19096702109
+    - 43151.634823245106
+    yaw_deg: -62.049180300019444
+- id: corner_06_cone
+  type: cone
+  pose:
+    map_xy:
+    - 89638.3222910542
+    - 43140.19239953435
+    yaw_deg: -51.7545886749828
+- id: corner_07_box
+  type: box
+  pose:
+    map_xy:
+    - 89627.49061134101
+    - 43173.4482493905
+    yaw_deg: 134.69608749397335
+- id: corner_08_cone
+  type: cone
+  pose:
+    map_xy:
+    - 89641.15179811684
+    - 43180.77554907519
+    yaw_deg: -2.2448577849863267
+- id: corner_09_box
+  type: box
+  pose:
+    map_xy:
+    - 89652.81742835366
+    - 43187.06562927546
+    yaw_deg: 17.786194577769358
+- id: corner_10_cone
+  type: cone
+  pose:
+    map_xy:
+    - 89649.0569651925
+    - 43171.71510447501
+    yaw_deg: -144.06808635179252
+- id: corner_11_box
+  type: box
+  pose:
+    map_xy:
+    - 89669.4046145327
+    - 43171.788037646715
+    yaw_deg: 3.6330271093964637
+- id: corner_12_cone
+  type: cone
+  pose:
+    map_xy:
+    - 89661.48180675658
+    - 43147.537053329404
+    yaw_deg: -150.00918819181834
+expect:
+  timeout_sec: 780
+  no_collision: true
+  no_off_track: true
+  finish:
+    ego_reference_s_greater_than: 400.547
+description: One native box/cone per corner. Official contacts and per-corner coverage
+  must be audited; mesh clearance is unknown.
