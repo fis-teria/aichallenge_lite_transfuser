@@ -136,3 +136,49 @@ def test_bounded_relocalization_requires_confirmation_before_output():
     assert not tracker.valid(1_800_000_000)
     tracker.update(2_000_000_000,bad_wheel,observed(world,p))
     assert tracker.valid(2_000_000_000)
+
+
+def test_unlimited_accepts_large_correction_without_changing_fit():
+    course,world=fixture(); truth=np.array([89603.,43101.,.1])
+    cloud=observed(world,truth);predicted=truth+[.7,0.,0.]
+    bounded=match_scan(course,cloud,predicted)
+    unlimited=match_scan(course,cloud,predicted,correction_mode='unlimited')
+    assert bounded.reason=='CORRECTION_LIMIT'
+    assert unlimited.accepted and unlimited.correction_m>.45
+    np.testing.assert_allclose(bounded.pose,unlimited.pose)
+
+
+def test_aggressive_large_map_offset_and_insufficient_support():
+    course,world=fixture();truth=np.array([89603.,43101.,.1]);cloud=observed(world,truth)
+    result=match_scan(course,cloud,truth+[1.5,.7,.12],correction_mode='simulation_aggressive')
+    assert result.accepted and result.correction_m>1.
+    np.testing.assert_allclose(result.pose,truth,atol=.03)
+    bad=match_scan(course,np.r_[cloud,np.full((500,2),50.)],truth,correction_mode='simulation_aggressive')
+    assert not bad.accepted and bad.reason=='INSUFFICIENT_SUPPORT'
+
+
+def test_aggressive_auto_recovery_requires_consecutive_matches():
+    course,world=fixture();truth=np.array([89603.,43101.,.1]);cloud=observed(world,truth)
+    tracker=MapLocalizer(course,correction_mode='simulation_aggressive');tracker.initialize(truth)
+    for t in [1_000_000_000,1_200_000_000,1_400_000_000]:
+        tracker.update(t,np.zeros(3),cloud)
+    assert tracker.valid(1_400_000_000)
+    for t in [2_600_000_000,2_800_000_000]:
+        tracker.update(t,np.array([1.5,.1,0.]),cloud)
+        assert not tracker.valid(t)
+    tracker.update(3_000_000_000,np.array([1.5,.1,0.]),np.zeros((2,2)))
+    for t in [3_200_000_000,3_400_000_000]:
+        tracker.update(t,np.array([1.5,.1,0.]),cloud)
+        assert not tracker.valid(t)
+    tracker.update(3_600_000_000,np.array([1.5,.1,0.]),cloud)
+    assert tracker.valid(3_600_000_000)
+    assert tracker.update(1_000_000_000,np.zeros(3),cloud) is None
+    assert tracker.status=='CLOCK_RESET'
+
+
+def test_unknown_correction_mode_is_rejected():
+    course,world=fixture()
+    with pytest.raises(ValueError,match='CORRECTION_MODE'):
+        MapLocalizer(course,correction_mode='anything')
+    with pytest.raises(ValueError,match='CORRECTION_MODE'):
+        match_scan(course,np.zeros((40,2)),np.zeros(3),correction_mode='anything')

@@ -13,6 +13,14 @@ import xml.etree.ElementTree as ET
 import numpy as np
 from scipy.spatial import cKDTree
 
+CORRECTION_MODES = ('bounded', 'unlimited', 'simulation_aggressive')
+
+
+def validate_correction_mode(value: str) -> str:
+    if value not in CORRECTION_MODES:
+        raise ValueError('LOCALIZATION_CORRECTION_MODE')
+    return value
+
 
 def pose_array(value: object) -> np.ndarray:
     out = np.asarray(value, dtype=float)
@@ -140,21 +148,26 @@ class Match:
 
 
 def match_scan(course: BoundaryMap, points_lidar: np.ndarray, predicted: np.ndarray,
-               *, initializing: bool = False) -> Match:
+               *, initializing: bool = False, correction_mode: str = 'bounded') -> Match:
     """Point-to-line registration; wheel prior regularizes weak directions.
 
     Sensor points [N,2] m. Fixed verified mount: forward 1.65 m, zero yaw.
     Thresholds are bounded diagnostic-localization gates, not a safety rating.
+    'unlimited' removes correction-amplitude rejection only (ablation).
+    'simulation_aggressive' also broadens correspondence search and solve budget.
+    Neither mode declares unsupported point matches valid.
     """
+    correction_mode = validate_correction_mode(correction_mode)
+    aggressive = correction_mode == 'simulation_aggressive'
     predicted = pose_array(predicted)
     points = transform(points_lidar, np.array([1.65, 0., 0.]))
     if len(points) > 4000:
         raise ValueError('LOCALIZATION_POINT_BUDGET')
     prior = predicted.copy(); prior[:2] -= course.origin
     estimate = prior.copy()
-    radius = 1.2 if initializing else .8
+    radius = 3.0 if aggressive else 1.2 if initializing else .8
     rank = 0
-    for _ in range(12):
+    for _ in range(40 if aggressive else 12):
         world = transform(points, estimate)
         distance, closest, normals, endpoints = course.nearest(world)
         # Search radius is not an inlier declaration. Reject the furthest 25%
@@ -191,7 +204,8 @@ def match_scan(course: BoundaryMap, points_lidar: np.ndarray, predicted: np.ndar
         vectors = basis[:, observable]
         step = -vectors @ ((vectors.T @ (jac.T @ (weight*residual))) / (eigenvalues[observable]+1.))
         step[2] /= 5.
-        scale = max(1., np.linalg.norm(step[:2])/.2, abs(step[2])/.04)
+        scale = max(1., np.linalg.norm(step[:2])/(.5 if aggressive else .2),
+                    abs(step[2])/(.1 if aggressive else .04))
         estimate += step/scale
         if np.linalg.norm(step[:2]) < .001 and abs(step[2]) < .0002:
             break
@@ -207,7 +221,8 @@ def match_scan(course: BoundaryMap, points_lidar: np.ndarray, predicted: np.ndar
     turn = abs(wrap(estimate[2]-prior[2]))
     reason = ('INSUFFICIENT_SUPPORT' if count < 40 or fraction < .55 else
               'UNOBSERVABLE' if rank < 2 else
-              'CORRECTION_LIMIT' if correction > (.9 if initializing else .45) or turn > (.18 if initializing else .10) else
+              'CORRECTION_LIMIT' if correction_mode == 'bounded' and
+                 (correction > (.9 if initializing else .45) or turn > (.18 if initializing else .10)) else
               'MAP_RESIDUAL' if mean > .25 or p90 > .5 else
               'DEGRADED' if rank == 2 else 'TRACKING')
     estimate[:2] += course.origin; estimate[2] = wrap(estimate[2])
@@ -221,10 +236,14 @@ class MapLocalizer:
     """Track map->wheel_odom using only scans, wheel poses and explicit seeds.
 
     No identity/global-zero fallback. A failed match invalidates output; a gap
-    above 1 second or backwards timestamps requires a new manual initialization.
+    above 1 second requires manual initialization in bounded/unlimited modes.
+    Simulation-aggressive keeps the wheel-anchored map prediction and retries
+    after gaps, requiring three consecutive matches to resume valid output.
+    Backwards timestamps always require a new manual initialization.
     """
-    def __init__(self, course: BoundaryMap) -> None:
+    def __init__(self, course: BoundaryMap, *, correction_mode: str = 'bounded') -> None:
         self.course = course
+        self.correction_mode = validate_correction_mode(correction_mode)
         self.reset()
 
     def reset(self) -> None:
@@ -251,10 +270,14 @@ class MapLocalizer:
         if self.seed is None and self.map_to_odom is None:
             return None
         if self.last_stamp_ns is not None and stamp_ns-self.last_stamp_ns > 1_000_000_000:
-            self.reset(); self.status = 'LOST_REINITIALIZE'
-            return None
+            if self.correction_mode == 'simulation_aggressive':
+                self.matches = 0
+            else:
+                self.reset(); self.status = 'LOST_REINITIALIZE'
+                return None
         prior = self.seed if self.map_to_odom is None else compose(self.map_to_odom, wheel_pose)
-        result = match_scan(self.course, points, prior, initializing=self.matches < 3)
+        result = match_scan(self.course, points, prior, initializing=self.matches < 3,
+                            correction_mode=self.correction_mode)
         if not result.accepted and result.reason == 'CORRECTION_LIMIT' and self.matches >= 3:
             # map->odom may jump when a bend resolves accumulated straight-road
             # drift. Retry only inside the original bounded initialization
@@ -273,6 +296,8 @@ class MapLocalizer:
                 self.status = 'INITIALIZING'
         else:
             self.status = 'REJECTED_'+result.reason
+            if self.correction_mode == 'simulation_aggressive':
+                self.matches = 0
         return result
 
     def valid(self, now_ns: int) -> bool:

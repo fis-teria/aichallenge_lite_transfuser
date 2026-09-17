@@ -15,7 +15,7 @@ prefer_canonical_source()
 import numpy as np
 from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
 from aic_transfuser_lite.control.time_trial_v1 import interpolate_body_pose
-from aic_transfuser_lite.runtime.lidar_map_localization import BoundaryMap, MapLocalizer, scan_points
+from aic_transfuser_lite.runtime.lidar_map_localization import CORRECTION_MODES, BoundaryMap, MapLocalizer, scan_points
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -36,9 +36,10 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument('--wheel-source', default='/time_path_controller')
     parser.add_argument('--scan-source', default='/awsim_d1')
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--correction-mode', choices=CORRECTION_MODES, default='bounded')
     args = parser.parse_args(remove_ros_args(argv)[1:])
     course = BoundaryMap.from_lanelet(args.map)
-    tracker = MapLocalizer(course)
+    tracker = MapLocalizer(course, correction_mode=args.correction_mode)
     if args.initial_pose is not None:
         tracker.initialize(np.asarray(args.initial_pose))
     map_sha = hashlib.sha256(args.map.read_bytes()).hexdigest()
@@ -180,6 +181,7 @@ def main(argv: list[str] | None = None) -> None:
                 break
         valid = clock is not None and tracker.valid(clock) and now-last_processed_wall <= 500_000_000
         status = dict(valid=valid,mode=tracker.status,map_sha256=map_sha,
+                      correction_mode=args.correction_mode,
                       map_to_odom=None if not valid else tracker.map_to_odom.tolist(),
                       correction_frame='map->time_wheel_odom',gnss_imu_inputs=False,
                       motion_authority=False,planar_display_z_m=course.display_z_m,**detail)

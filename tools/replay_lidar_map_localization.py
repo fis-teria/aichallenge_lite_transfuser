@@ -17,7 +17,7 @@ from aic_transfuser_lite.control.time_trial_v1 import interpolate_body_pose
 from aic_transfuser_lite.control.vehicle_motion_v1 import AWSIM_20KMH_POLICY
 from aic_transfuser_lite.data.time_sqlite_reader_v1 import _store
 from aic_transfuser_lite.runtime.time_control_odometry import TimeControlOdometry, ClockAlignedControlInputs
-from aic_transfuser_lite.runtime.lidar_map_localization import BoundaryMap, MapLocalizer, compose, inverse, scan_points
+from aic_transfuser_lite.runtime.lidar_map_localization import CORRECTION_MODES, BoundaryMap, MapLocalizer, compose, inverse, scan_points
 
 
 def ns(stamp) -> int:
@@ -30,8 +30,10 @@ def main() -> None:
     ap.add_argument('--map',type=Path,required=True)
     ap.add_argument('--initial-pose',type=float,nargs=3,required=True,help='Explicit approximate map start: x m, y m, yaw rad')
     ap.add_argument('--output',type=Path,required=True)
+    ap.add_argument('--correction-mode',choices=CORRECTION_MODES,default='bounded')
     args = ap.parse_args(); args.output.mkdir(exist_ok=False,parents=True)
-    course = BoundaryMap.from_lanelet(args.map); tracker = MapLocalizer(course)
+    course = BoundaryMap.from_lanelet(args.map)
+    tracker = MapLocalizer(course,correction_mode=args.correction_mode)
     tracker.initialize(np.array(args.initial_pose))
     odom = TimeControlOdometry(.0010000169277191162,AWSIM_20KMH_POLICY)
     inputs = ClockAlignedControlInputs(); poses = deque(maxlen=512); scans = deque(maxlen=4)
@@ -91,6 +93,7 @@ def main() -> None:
     valid = [r for r in records if r['valid']]
     complete = len(valid)/max(1,len(records)) >= .95 and tracker.valid(clock or 0) and fault is None
     summary = dict(status='TRACKED_REPLAY' if complete else 'PARTIAL_OR_FAILED',fault=fault,
+        correction_mode=args.correction_mode,
         input_topics=sorted(topics),gnss_imu_pose_tf_inputs=False,selected_message_sha256=digest.hexdigest(),
         map_sha256=hashlib.sha256(args.map.read_bytes()).hexdigest(),initial_pose=args.initial_pose,
         initialization_source='Explicit fixed approximate start supplied on command line; not read from bag pose',
