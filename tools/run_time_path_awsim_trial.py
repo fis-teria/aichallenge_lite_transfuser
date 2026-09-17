@@ -56,9 +56,12 @@ def main() -> None:
     ap.add_argument('--lidar-map-comparison', action='store_true',
                     help='Run aggressive map correction as display/evaluation sidecar; no control input')
     ap.add_argument('--lidar-map-initial-pose', type=float, nargs=3, metavar=('X_M', 'Y_M', 'YAW_RAD'))
+    ap.add_argument('--lidar-map-correction-schedule', choices=('all', 'straight_only'), default='all')
     args = ap.parse_args()
     if args.lidar_map_comparison != (args.lidar_map_initial_pose is not None):
         raise ValueError('LIDAR_COMPARISON_REQUIRES_EXPLICIT_MANUAL_INITIAL_POSE')
+    if args.lidar_map_correction_schedule != 'all' and not args.lidar_map_comparison:
+        raise ValueError('CORRECTION_SCHEDULE_REQUIRES_LIDAR_COMPARISON')
     if args.lidar_map_comparison:
         from aic_transfuser_lite.runtime.lidar_map_localization import pose_array
         pose_array(args.lidar_map_initial_pose)
@@ -279,13 +282,15 @@ def main() -> None:
         probe = launch(probe_command, "nodes")
         if args.lidar_map_comparison:
             observer_command = ['python3', str(source_in_container/'tools/observe_lidar_map_trial.py'),
-                '--output', str(inside), '--initial-pose', *map(str, args.lidar_map_initial_pose)]
+                '--output', str(inside), '--initial-pose', *map(str, args.lidar_map_initial_pose),
+                '--correction-schedule', args.lidar_map_correction_schedule]
             observer = probe_command.copy()
             observer[observer.index('--name')+1] = args.run_id+'-localization'
             observer[-1] = ('source /aichallenge/workspace/install/setup.bash && '
                            'source /time/install/setup.bash && exec '+shlex.join(observer_command))
             result['commands'].append(observer)
             result['lidar_correction_scope'] = 'DISPLAY_AND_EVALUATION_ONLY_NO_CONTROL_INPUT'
+            result['lidar_correction_schedule'] = args.lidar_map_correction_schedule
             localization_process = launch(observer, 'localization_observer')
         if args.pp_vehicles:
             observer_command = ['python3', str(source_in_container/'tools/observe_time_traffic.py'),

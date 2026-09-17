@@ -26,11 +26,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--initial-pose', type=float, nargs=3, required=True)
+    parser.add_argument('--correction-schedule', choices=('all', 'straight_only'), default='all')
     args = parser.parse_args()
     course = Path('/aichallenge/workspace/src/aichallenge_submit/aichallenge_submit_launch/map/lanelet2_map.osm')
     command = [sys.executable, '-m', 'aic_e2e_runtime.lidar_map_localization_node',
                '--map', str(course), '--initial-pose', *map(str, args.initial_pose),
                '--correction-mode', 'simulation_aggressive',
+               '--correction-schedule', args.correction_schedule,
                '--output', str(args.output/'localization_status.jsonl')]
     journal = (args.output/'localization_observations.jsonl').open('x', buffering=1)
     localizer_log = (args.output/'localizer.log').open('x')

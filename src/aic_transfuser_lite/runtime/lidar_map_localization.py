@@ -14,6 +14,7 @@ import numpy as np
 from scipy.spatial import cKDTree
 
 CORRECTION_MODES = ('bounded', 'unlimited', 'simulation_aggressive')
+CORRECTION_SCHEDULES = ('all', 'straight_only')
 
 
 def validate_correction_mode(value: str) -> str:
@@ -232,6 +233,48 @@ def match_scan(course: BoundaryMap, points_lidar: np.ndarray, predicted: np.ndar
                  float(np.quantile(distance,.9)) if len(distance) else float('inf'))
 
 
+class StraightCorrectionGate:
+    """Wheel-pose-only straight detection; radians, metres, nanoseconds.
+
+    Enter after 0.6 s at |curvature| <= 0.02 /m AND |yaw rate| <= 0.06 rad/s.
+    Exit immediately above 0.03 /m OR 0.10 rad/s. Hysteresis avoids toggling
+    on minor steering corrections. A >0.5 s observation gap restarts admission.
+    These classify motion; they do not limit the size of map corrections.
+    """
+    def __init__(self) -> None:
+        self.previous: tuple[int, np.ndarray] | None = None
+        self.straight_since_ns: int | None = None
+        self.allowed = False
+        self.yaw_rate_radps: float | None = None
+        self.curvature_inv_m: float | None = None
+
+    def update(self, stamp_ns: int, wheel_pose: np.ndarray) -> bool:
+        pose = pose_array(wheel_pose)
+        if type(stamp_ns) is not int or stamp_ns < 0:
+            raise ValueError('LOCALIZATION_STAMP')
+        previous = self.previous
+        self.previous = (stamp_ns, pose)
+        if previous is None or not 0 < stamp_ns-previous[0] <= 500_000_000:
+            self.allowed = False; self.straight_since_ns = None
+            self.yaw_rate_radps = None; self.curvature_inv_m = None
+            return False
+        dt = (stamp_ns-previous[0])/1e9
+        angle = abs(wrap(pose[2]-previous[1][2]))
+        distance = float(np.linalg.norm(pose[:2]-previous[1][:2]))
+        self.yaw_rate_radps = angle/dt
+        self.curvature_inv_m = angle/max(distance, .01*dt)
+        if self.curvature_inv_m > .03 or self.yaw_rate_radps > .10:
+            self.allowed = False; self.straight_since_ns = None
+        elif not self.allowed:
+            if self.curvature_inv_m <= .02 and self.yaw_rate_radps <= .06:
+                if self.straight_since_ns is None:
+                    self.straight_since_ns = stamp_ns
+                self.allowed = stamp_ns-self.straight_since_ns >= 600_000_000
+            else:
+                self.straight_since_ns = None
+        return self.allowed
+
+
 class MapLocalizer:
     """Track map->wheel_odom using only scans, wheel poses and explicit seeds.
 
@@ -241,9 +284,13 @@ class MapLocalizer:
     after gaps, requiring three consecutive matches to resume valid output.
     Backwards timestamps always require a new manual initialization.
     """
-    def __init__(self, course: BoundaryMap, *, correction_mode: str = 'bounded') -> None:
+    def __init__(self, course: BoundaryMap, *, correction_mode: str = 'bounded',
+                 correction_schedule: str = 'all') -> None:
         self.course = course
         self.correction_mode = validate_correction_mode(correction_mode)
+        if correction_schedule not in CORRECTION_SCHEDULES:
+            raise ValueError('LOCALIZATION_CORRECTION_SCHEDULE')
+        self.correction_schedule = correction_schedule
         self.reset()
 
     def reset(self) -> None:
@@ -253,6 +300,8 @@ class MapLocalizer:
         self.last_attempt_ns: int | None = None
         self.status = 'UNINITIALIZED'
         self.matches = 0
+        self.straight_gate = StraightCorrectionGate()
+        self.anchor_confirmed = False
 
     def initialize(self, pose: np.ndarray) -> None:
         self.reset()
@@ -266,10 +315,23 @@ class MapLocalizer:
         if self.last_attempt_ns is not None and stamp_ns <= self.last_attempt_ns:
             self.reset(); self.status = 'CLOCK_RESET'
             return None
+        previous_attempt = self.last_attempt_ns
+        previous_status = self.status
         self.last_attempt_ns = stamp_ns
+        if self.correction_schedule == 'straight_only':
+            allowed = self.straight_gate.update(stamp_ns, wheel_pose)
+            if previous_attempt is not None and stamp_ns-previous_attempt > 500_000_000:
+                self.anchor_confirmed = False; self.matches = 0
+            if not allowed:
+                self.status = ('ODOMETRY_ONLY' if self.anchor_confirmed and self.map_to_odom is not None
+                               else 'WAIT_STRAIGHT')
+                return None
         if self.seed is None and self.map_to_odom is None:
             return None
-        if self.last_stamp_ns is not None and stamp_ns-self.last_stamp_ns > 1_000_000_000:
+        continuous_prediction = (self.correction_schedule == 'straight_only' and self.anchor_confirmed
+                                 and previous_status == 'ODOMETRY_ONLY')
+        if (self.last_stamp_ns is not None and stamp_ns-self.last_stamp_ns > 1_000_000_000
+                and not continuous_prediction):
             if self.correction_mode == 'simulation_aggressive':
                 self.matches = 0
             else:
@@ -294,12 +356,17 @@ class MapLocalizer:
             self.matches += 1
             if self.matches < 3:
                 self.status = 'INITIALIZING'
+            self.anchor_confirmed = self.matches >= 3
         else:
             self.status = 'REJECTED_'+result.reason
+            self.anchor_confirmed = False
             if self.correction_mode == 'simulation_aggressive':
                 self.matches = 0
         return result
 
     def valid(self, now_ns: int) -> bool:
+        if self.status == 'ODOMETRY_ONLY':
+            return (self.anchor_confirmed and self.last_attempt_ns is not None
+                    and 0 <= now_ns-self.last_attempt_ns <= 500_000_000)
         return (self.status in ('TRACKING', 'DEGRADED') and self.last_stamp_ns is not None
                 and 0 <= now_ns-self.last_stamp_ns <= 500_000_000)

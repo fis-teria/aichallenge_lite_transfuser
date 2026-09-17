@@ -15,7 +15,9 @@ prefer_canonical_source()
 import numpy as np
 from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
 from aic_transfuser_lite.control.time_trial_v1 import interpolate_body_pose
-from aic_transfuser_lite.runtime.lidar_map_localization import CORRECTION_MODES, BoundaryMap, MapLocalizer, scan_points
+from aic_transfuser_lite.runtime.lidar_map_localization import (
+    CORRECTION_MODES, CORRECTION_SCHEDULES, BoundaryMap, MapLocalizer, compose, scan_points,
+)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -37,9 +39,11 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument('--scan-source', default='/awsim_d1')
     parser.add_argument('--output', type=Path)
     parser.add_argument('--correction-mode', choices=CORRECTION_MODES, default='bounded')
+    parser.add_argument('--correction-schedule', choices=CORRECTION_SCHEDULES, default='all')
     args = parser.parse_args(remove_ros_args(argv)[1:])
     course = BoundaryMap.from_lanelet(args.map)
-    tracker = MapLocalizer(course, correction_mode=args.correction_mode)
+    tracker = MapLocalizer(course, correction_mode=args.correction_mode,
+                           correction_schedule=args.correction_schedule)
     if args.initial_pose is not None:
         tracker.initialize(np.asarray(args.initial_pose))
     map_sha = hashlib.sha256(args.map.read_bytes()).hexdigest()
@@ -159,7 +163,8 @@ def main(argv: list[str] | None = None) -> None:
                                          scan.range_min,scan.range_max)
                     result = tracker.update(ns,xy,points)
                     last_scan_ns = ns; last_processed_wall = now
-                    detail = dict(scan_ns=ns,points=len(points))
+                    detail = dict(scan_ns=ns,points=len(points),map_match_attempted=result is not None,
+                                  map_match_applied=result is not None and result.accepted)
                     if result is not None:
                         detail.update(reason=result.reason,rank=result.rank,inliers=result.inliers,
                             fraction=result.fraction,mean_distance_m=result.mean_distance_m if math.isfinite(result.mean_distance_m) else None,
@@ -168,13 +173,14 @@ def main(argv: list[str] | None = None) -> None:
                             all_p90_distance_m=result.all_p90_distance_m if math.isfinite(result.all_p90_distance_m) else None,
                             correction_m=result.correction_m,correction_rad=result.correction_rad)
                     if tracker.valid(clock):
+                        estimated_pose = compose(tracker.map_to_odom, xy)
                         tf.sendTransform([tf_message('map','time_wheel_odom',tracker.map_to_odom,ns,course.display_z_m),
                                           tf_message('time_wheel_odom','time_localized_base_link',xy,ns)])
                         out = copy.deepcopy(scan); out.header.frame_id = 'time_localized_lidar'; scan_pub.publish(out)
                         pose_msg = PoseStamped(); pose_msg.header = out.header; pose_msg.header.frame_id = 'map'
-                        pose_msg.pose.position.x = float(result.pose[0]); pose_msg.pose.position.y = float(result.pose[1])
+                        pose_msg.pose.position.x = float(estimated_pose[0]); pose_msg.pose.position.y = float(estimated_pose[1])
                         pose_msg.pose.position.z = course.display_z_m
-                        pose_msg.pose.orientation.z = math.sin(result.pose[2]/2); pose_msg.pose.orientation.w = math.cos(result.pose[2]/2)
+                        pose_msg.pose.orientation.z = math.sin(estimated_pose[2]/2); pose_msg.pose.orientation.w = math.cos(estimated_pose[2]/2)
                         pose_pub.publish(pose_msg)
                 except ValueError as exc:
                     invalidate('INPUT_'+str(exc))
@@ -182,6 +188,12 @@ def main(argv: list[str] | None = None) -> None:
         valid = clock is not None and tracker.valid(clock) and now-last_processed_wall <= 500_000_000
         status = dict(valid=valid,mode=tracker.status,map_sha256=map_sha,
                       correction_mode=args.correction_mode,
+                      correction_schedule=args.correction_schedule,
+                      correction_enabled=(args.correction_schedule == 'all' or tracker.straight_gate.allowed),
+                      wheel_yaw_rate_radps=tracker.straight_gate.yaw_rate_radps,
+                      wheel_curvature_inv_m=tracker.straight_gate.curvature_inv_m,
+                      pose_source='wheel_prediction' if tracker.status == 'ODOMETRY_ONLY' else 'scan_map_match',
+                      last_map_match_ns=tracker.last_stamp_ns,
                       map_to_odom=None if not valid else tracker.map_to_odom.tolist(),
                       correction_frame='map->time_wheel_odom',gnss_imu_inputs=False,
                       motion_authority=False,planar_display_z_m=course.display_z_m,**detail)

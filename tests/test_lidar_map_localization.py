@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from aic_transfuser_lite.runtime.lidar_map_localization import (
-    BoundaryMap, MapLocalizer, compose, inverse, match_scan, scan_points, transform,
+    BoundaryMap, MapLocalizer, StraightCorrectionGate, compose, inverse, match_scan, scan_points, transform,
 )
 
 
@@ -182,3 +182,70 @@ def test_unknown_correction_mode_is_rejected():
         MapLocalizer(course,correction_mode='anything')
     with pytest.raises(ValueError,match='CORRECTION_MODE'):
         match_scan(course,np.zeros((40,2)),np.zeros(3),correction_mode='anything')
+
+
+def test_straight_gate_dwell_hysteresis_units_and_gap():
+    gate = StraightCorrectionGate()
+    for i in range(4):
+        assert not gate.update(i*200_000_000, np.array([i*.4, 0., 0.]))
+    assert gate.update(800_000_000, np.array([1.6, 0., 0.]))
+    # 0.01 rad over 0.4 m and 0.2 s: between entry and exit thresholds.
+    assert gate.update(1_000_000_000, np.array([2., 0., .01]))
+    assert gate.curvature_inv_m == pytest.approx(.025)
+    assert gate.yaw_rate_radps == pytest.approx(.05)
+    assert not gate.update(1_200_000_000, np.array([2.4, 0., .04]))
+    for i in range(3):
+        assert not gate.update(1_400_000_000+i*200_000_000, np.array([2.8+i*.4, 0., .04]))
+    assert gate.update(2_000_000_000, np.array([4., 0., .04]))
+    assert not gate.update(2_600_000_000, np.array([4., 0., .04]))
+    assert gate.yaw_rate_radps is None
+    with pytest.raises(ValueError): gate.update(-1, np.zeros(3))
+    with pytest.raises(ValueError): gate.update(3_000_000_000, np.array([0., 0., np.nan]))
+
+
+def test_straight_schedule_freezes_map_transform_but_predicts_through_corner(monkeypatch):
+    import aic_transfuser_lite.runtime.lidar_map_localization as module
+    course, world = fixture(); start = np.array([89603., 43101., 0.])
+    tracker = MapLocalizer(course, correction_mode='simulation_aggressive', correction_schedule='straight_only')
+    tracker.initialize(start)
+    for i in range(9): tracker.update(1_000_000_000+i*200_000_000, np.zeros(3), observed(world, start))
+    assert tracker.valid(2_600_000_000)
+    anchor = tracker.map_to_odom.copy(); last_match = tracker.last_stamp_ns
+    def forbidden(*args, **kwargs):
+        pytest.fail('Map matching must not run in a corner')
+    with monkeypatch.context() as patch:
+        patch.setattr(module, 'match_scan', forbidden)
+        for i in range(1, 21):
+            wheel = np.array([i*.15, i*.05, i*.04])
+            t = 2_600_000_000+i*200_000_000
+            assert tracker.update(t, wheel, np.zeros((2, 2))) is None
+            assert tracker.status == 'ODOMETRY_ONLY' and tracker.valid(t)
+            np.testing.assert_array_equal(tracker.map_to_odom, anchor)
+            assert tracker.last_stamp_ns == last_match
+        assert not tracker.valid(t+500_000_001)
+    # Returning straight must dwell; matching then resumes at the propagated pose.
+    truth = compose(anchor, wheel)
+    for i in range(1, 4):
+        assert tracker.update(t+i*200_000_000, wheel, observed(world, truth)) is None
+    result = tracker.update(t+800_000_000, wheel, observed(world, truth))
+    assert result is not None and result.accepted and tracker.valid(t+800_000_000)
+    np.testing.assert_allclose(result.pose, truth, atol=.01)
+
+
+def test_straight_schedule_never_publishes_an_unconfirmed_seed_or_gap_prediction():
+    course, world = fixture(); p = np.array([89603., 43101., 0.])
+    tracker = MapLocalizer(course, correction_mode='simulation_aggressive', correction_schedule='straight_only')
+    tracker.initialize(p)
+    for i in range(8):
+        t = 1_000_000_000+i*200_000_000
+        assert tracker.update(t, np.array([i*.1, 0., i*.1]), observed(world, p)) is None
+        assert not tracker.valid(t) and tracker.map_to_odom is None
+    tracker.initialize(p)
+    for i in range(9): tracker.update(3_000_000_000+i*200_000_000, np.zeros(3), observed(world, p))
+    assert tracker.valid(4_600_000_000)
+    assert tracker.update(6_000_000_000, np.array([1., 0., .5]), observed(world, p)) is None
+    assert tracker.status == 'WAIT_STRAIGHT' and not tracker.valid(6_000_000_000)
+    assert tracker.update(1_000_000_000, np.zeros(3), observed(world, p)) is None
+    assert tracker.status == 'CLOCK_RESET' and tracker.map_to_odom is None
+    with pytest.raises(ValueError, match='CORRECTION_SCHEDULE'):
+        MapLocalizer(course, correction_schedule='unknown')

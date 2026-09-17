@@ -21,6 +21,7 @@ def main() -> None:
     from tf2_msgs.msg import TFMessage
     ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--output',type=Path,required=True)
     ap.add_argument('--correction-mode',choices=['bounded','unlimited','simulation_aggressive'],default='bounded')
+    ap.add_argument('--correction-schedule',choices=['all','straight_only'],default='all')
     args=ap.parse_args();args.output.mkdir(exist_ok=False,parents=True)
     nodes=[(0,-3),(12,-3),(12,4),(0,4),(0,-3)]
     xml='<osm>'+''.join(f'<node id="{i}"><tag k="local_x" v="{x}"/><tag k="local_y" v="{y}"/></node>' for i,(x,y) in enumerate(nodes))
@@ -35,9 +36,10 @@ def main() -> None:
     wheel.create_subscription(String,'/time_path/localization/status',lambda m:statuses.append(json.loads(m.data)),10)
     wheel.create_subscription(LaserScan,'/time_path/localization/scan',aligned.append,qos_profile_sensor_data)
     wheel.create_subscription(TFMessage,'/tf',lambda m:transforms.extend(m.transforms),10)
-    t=1.; step=0; next_pub=0.
-    def cycle(duration: float, *, scans: bool = True, clock_running: bool = True, bad_frame: bool = False) -> None:
-        nonlocal t,step,next_pub
+    t=1.; step=0; next_pub=0.; wheel_yaw=0.
+    def cycle(duration: float, *, scans: bool = True, clock_running: bool = True,
+              bad_frame: bool = False, wheel_yaw_rate: float = 0.) -> None:
+        nonlocal t,step,next_pub,wheel_yaw
         end=time.monotonic()+duration
         while time.monotonic()<end:
             now=time.monotonic()
@@ -47,7 +49,9 @@ def main() -> None:
                 seconds=int(t);nanos=round((t-seconds)*1e9)
                 clock=Clock();clock.clock.sec=seconds;clock.clock.nanosec=nanos;clock_pub.publish(clock)
                 odom=Odometry();odom.header.frame_id='time_wheel_odom';odom.child_frame_id='base_link'
-                odom.header.stamp=clock.clock;odom.pose.pose.orientation.w=1.
+                if clock_running: wheel_yaw += .05*wheel_yaw_rate
+                odom.header.stamp=clock.clock;odom.pose.pose.orientation.w=math.cos(wheel_yaw/2)
+                odom.pose.pose.orientation.z=math.sin(wheel_yaw/2)
                 if clock_running:wheel_pub.publish(odom)
                 if scans and clock_running:
                     scan=LaserScan();scan.header.stamp=clock.clock;scan.header.frame_id='incorrect' if bad_frame else 'lidar'
@@ -67,7 +71,8 @@ def main() -> None:
     seed_x='5.0' if args.correction_mode=='simulation_aggressive' else '3.2'
     process=subprocess.Popen(['ros2','run','aic_e2e_runtime','lidar_map_localization_node',
         '--map',str(mapfile),'--initial-pose',seed_x,'.8','.02',
-        '--correction-mode',args.correction_mode,'--output',str(args.output/'status.jsonl')],
+        '--correction-mode',args.correction_mode,'--correction-schedule',args.correction_schedule,
+        '--output',str(args.output/'status.jsonl')],
         stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
     try:
         cycle(5.)
@@ -81,6 +86,17 @@ def main() -> None:
         assert map_transforms and all(m.child_frame_id=='time_wheel_odom' for m in map_transforms)
         last=map_transforms[-1].transform.translation
         assert abs(last.x-3)<.04 and abs(last.y-1)<.04,(last.x,last.y)
+        if args.correction_schedule == 'straight_only':
+            frozen = map_transforms[-1].transform
+            cycle(1.5, wheel_yaw_rate=.4)
+            assert statuses[-1]['valid'] and statuses[-1]['mode']=='ODOMETRY_ONLY',statuses[-1]
+            assert not statuses[-1]['map_match_attempted'] and not statuses[-1]['map_match_applied']
+            assert statuses[-1]['pose_source']=='wheel_prediction'
+            actual = [m for m in transforms if m.header.frame_id=='map'][-1].transform
+            assert actual == frozen, (actual, frozen)
+            wheel_yaw = 0.
+            cycle(2.5)
+            assert statuses[-1]['valid'] and statuses[-1]['mode'] in ('TRACKING','DEGRADED'),statuses[-1]
         subs=wheel.get_subscriber_names_and_types_by_node('time_lidar_map_localizer','/')
         assert {name for name,_ in subs}=={'/clock','/sensing/lidar/scan','/time_path/wheel_odometry','/time_path/localization/initialpose'},subs
         assert not wheel.get_publishers_info_by_topic('/control/command/control_cmd')
@@ -88,14 +104,16 @@ def main() -> None:
         assert not statuses[-1]['valid']
         count=len(aligned);cycle(.4,scans=False);assert len(aligned)==count
         if args.correction_mode=='simulation_aggressive':
-            cycle(1.5);assert statuses[-1]['valid'],statuses[-1]
+            cycle(2.0);assert statuses[-1]['valid'],statuses[-1]
         seed=PoseWithCovarianceStamped();seed.header.frame_id='map';seed.pose.pose.position.x=3.;seed.pose.pose.position.y=1.;seed.pose.pose.orientation.w=1.
-        seed_pub.publish(seed);cycle(1.5);assert statuses[-1]['valid'],statuses[-1]
+        seed_pub.publish(seed);cycle(2.0);assert statuses[-1]['valid'],statuses[-1]
         cycle(.6,bad_frame=True);assert not statuses[-1]['valid']
-        seed_pub.publish(seed);cycle(1.5);assert statuses[-1]['valid']
+        seed_pub.publish(seed);cycle(2.0);assert statuses[-1]['valid']
         cycle(.8,clock_running=False);assert not statuses[-1]['valid'] and statuses[-1]['mode']=='CLOCK_STALE'
         result=dict(status='PASS',aligned_scans=len(aligned),subscriptions=subs,estimated_xy=[last.x,last.y],
                     correction_mode=args.correction_mode,initial_seed_x_m=float(seed_x),
+                    correction_schedule=args.correction_schedule,
+                    frozen_corner_transform_checked=args.correction_schedule=='straight_only',
                     automatic_gap_recovery_checked=args.correction_mode=='simulation_aggressive',
                     gnss_imu_pose_tf_publishers=0,vehicle_command_publishers=0,
                     checks=['map_to_wheel_transform','fixed_mount_alias','scan_timeout','bad_scan_frame','clock_pause','manual_reinitialize'])

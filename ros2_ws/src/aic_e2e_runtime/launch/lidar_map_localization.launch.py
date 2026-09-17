@@ -10,7 +10,9 @@ def generate_launch_description():
         DeclareLaunchArgument('map', description='Verified Lanelet2 OSM with local_x/local_y in map frame'),
         DeclareLaunchArgument('correction_mode', default_value='bounded',
                               choices=['bounded','unlimited','simulation_aggressive']),
+        DeclareLaunchArgument('correction_schedule', default_value='all', choices=['all','straight_only']),
         Node(package='aic_e2e_runtime',executable='lidar_map_localization_node',output='screen',
              arguments=['--map',LaunchConfiguration('map'),
-                        '--correction-mode',LaunchConfiguration('correction_mode')]),
+                        '--correction-mode',LaunchConfiguration('correction_mode'),
+                        '--correction-schedule',LaunchConfiguration('correction_schedule')]),
     ])
