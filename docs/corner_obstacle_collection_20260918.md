@@ -134,6 +134,17 @@ RViz実画面と5 topicのpublisher/subscriberを最終runでも確認した。
 候補軌道Displayにはエラー表示が残るため、全候補の正常描画までは確認済みとしない。
 採用軌道と壁地図の描画は確認済み。RVizは教師containerに付随し、収録終了時に閉じる。
 
+今回の「RVizも出しておく」依頼に合わせ、収録終了後はPC10ホストの標準RVizを別起動した。
+domain 1、同じ表示設定、simulation clock使用で、現在はlive topic受信待ち。
+走行nodeやAWSIMは再起動していない。閉じる場合は通常どおりRVizウィンドウを閉じる。
+
+```bash
+source /opt/ros/humble/setup.bash
+DISPLAY=:1 XAUTHORITY=/run/user/1000/gdm/Xauthority ROS_DOMAIN_ID=1 \
+  rviz2 -d /home/graneple/e2e_autonomous/mppi_v45_collection_fix_20260918/teacher_collection_standalone.rviz \
+  --ros-args -p use_sim_time:=true
+```
+
 終了後にAWSIM等の保護対象7ファイル、教師vendor source 323ファイル、
 実行runtimeのhash一致を確認した。収集用containerは残存せず、PC10の空きは
 2,793,189,376 bytes。最終runのPC10 rawコピーは保全している。
