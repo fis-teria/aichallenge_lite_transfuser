@@ -61,6 +61,10 @@ def main() -> None:
     repo = args.awsim_repo.resolve()
     source = Path(__file__).resolve().parents[1]
     runtime = args.runtime.resolve()
+    vendor_root = source/'integrations/mppi_v45'
+    vendor_manifest = vendor_root/'source_manifest.json'
+    for row in json.loads(vendor_manifest.read_text())['files']:
+        assert sha(vendor_root/row['path']) == row['sha256'], row['path']
     assert json.loads((runtime/'build-result.json').read_text())['exit_code']==0
     identity = json.loads((runtime/'runtime-identity.json').read_text())
     for item in identity['files'].values():
@@ -133,7 +137,8 @@ def main() -> None:
         (compiled.run_dir/'teacher-contract.json').write_text(json.dumps(dict(
             teacher='MPPI_SIM_V45',runtime_identity=identity,cap_mps=args.speed_cap_kmh/3.6,
             perception='LIDAR_V2X_SURFACE_EXISTING_MARGIN',native_v2x_role='EVALUATION_ONLY',
-            student_control=False,online_training=False,awsim_modified=False,
+            student_control=False,student_inference=False,online_training=False,awsim_modified=False,
+            source_manifest_sha256=sha(vendor_manifest),
             scenario_sha256=sha(args.scenario),wall_budget_s=args.wall_timeout_s,
             storage_budget_bytes=int(args.run_budget_gib*2**30)),indent=2)+'\n')
         return compiled

@@ -19,7 +19,11 @@ try:
         publishers=probe.get_publishers_info_by_topic(topic)
         if expected.issubset({s.node_name for s in subscriptions}) and len(publishers)==1:
             break
-    assert expected.issubset({s.node_name for s in subscriptions})
+    assert expected.issubset({s.node_name for s in subscriptions}), json.dumps({
+        'nodes': probe.get_node_names_and_namespaces(),
+        'dedicated_consumers': [s.node_name for s in subscriptions],
+        'dedicated_publishers': [p.node_name for p in publishers],
+        'native_consumers': [s.node_name for s in probe.get_subscriptions_info_by_topic('/v2x/vehicle_positions')]})
     assert len(publishers)==1 and publishers[0].node_name=='lidar_v2x'
     assert not expected.intersection(s.node_name for s in probe.get_subscriptions_info_by_topic('/v2x/vehicle_positions'))
     checked={}

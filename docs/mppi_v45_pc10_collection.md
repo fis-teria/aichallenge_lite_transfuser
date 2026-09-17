@@ -5,7 +5,9 @@
 
 現在: 採用V45アーカイブのSHA256確認済み。PC10専用overlayをビルド済み。
 C++回帰試験は383 tests / 0 errors / 0 failures / 0 skipped。
-最初の未達条件: 非走行のROS接続・速度上限検証と収録pilot。
+非走行のROS接続・速度上限検証が通過（runtime-smoke-r5、domain97、通信隔離）。
+教師3 consumerのみLiDAR専用topicを参照。native V2X購読なし、既存6マージン一致。
+最初の未達条件: 停止カート1件の収録とWSL教師監査。
 
 ## 範囲と方針
 
@@ -50,3 +52,7 @@ AVOID候補を探索する変更。旧V44のfollowing gapや衝突マージン�
 初回pilotは5km/h、各シミュレータ360s / wall480s、run容量1GiB、空き2GiBを下限。
 停止・後退反復・衝突は記録したうえで不成功として扱い、収集成功と区別する。
 PC10用の既存較正とReferenceに合わせシナリオを再生成し、SI26のs座標を流用しない。
+`straight_b_s0_center` の実配置probeはPlayStartを確認し正常終了。
+PC10の別SLAM試験の実行中は待機し、そのコンテナ・出力には操作しない。
+移管時に不足していたrecoveryのPython依存と設定も採用アーカイブから同梱済み。
+採用320ファイルはGit archive経由でも原本SHA256と一致する。

@@ -220,7 +220,7 @@ def audit(collected: Path, output: Path) -> dict:
                             source='OBSERVED_FUTURE_POSE',freeze_delay_receipt_ns=50_000_000,config=asdict(config)),
         source_bag=str(bag),source_verified_bytes=verified_bytes,training_split_assigned=False,
         duplicate_sim_clock_receipts_coalesced=len(clocks)-len(clock_receipts),
-        collection_scope='MPPI teacher drive; E2E inference shadow only',
+        collection_scope='MPPI teacher drive; shadow execution is not inferred by this audit',
         limitations=['V2X-derived footprint clearance is approximate, not a contact mesh oracle.',
                      'Forward candidate mask excludes reverse and unknown stop intent; raw reverse/stops are preserved.',
                      'No optimizer run or automatic merge into an existing training split.'])
