@@ -100,7 +100,7 @@ def test_gentle_bend_retains_weak_longitudinal_evidence():
     xs=np.linspace(0,18,19)
     segments=[]
     for y in [-3.,3.]:
-        line=np.column_stack((xs,y+.012*(xs-9)**2))
+        line=np.column_stack((xs,y+.001*(xs-9)**3))
         segments.extend(zip(line[:-1],line[1:]))
     course=BoundaryMap(np.array(segments))
     world=np.concatenate([a+np.linspace(.1,.9,8)[:,None]*(b-a) for a,b in segments])

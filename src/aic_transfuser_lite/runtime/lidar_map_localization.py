@@ -107,8 +107,8 @@ class BoundaryMap:
             segments.extend([[a, b] for a, b in zip(points[:-1], points[1:]) if a != b])
         return cls(np.asarray(segments), display_z_m=float(np.median(elevations)))
 
-    def nearest(self, xy: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Local-map [N,2] -> distances [N], projections [N,2], normals [N,2]."""
+    def nearest(self, xy: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Local-map [N,2] -> distance, projection, normal and endpoint mask."""
         _, samples = self.tree.query(xy, k=8)
         segments = self.segments[self.indices[samples]]
         a, v = segments[:, :, 0], segments[:, :, 1]-segments[:, :, 0]
@@ -119,7 +119,8 @@ class BoundaryMap:
         direction = v[rows, best]
         normal = np.column_stack((-direction[:, 1], direction[:, 0]))
         normal /= np.linalg.norm(normal, axis=1)[:, None]
-        return distance[rows, best], projection[rows, best], normal
+        at_end = (fraction[rows,best] <= 1e-9) | (fraction[rows,best] >= 1-1e-9)
+        return distance[rows, best], projection[rows, best], normal, at_end
 
 
 @dataclass(frozen=True)
@@ -155,12 +156,12 @@ def match_scan(course: BoundaryMap, points_lidar: np.ndarray, predicted: np.ndar
     rank = 0
     for _ in range(12):
         world = transform(points, estimate)
-        distance, closest, normals = course.nearest(world)
+        distance, closest, normals, endpoints = course.nearest(world)
         # Search radius is not an inlier declaration. Reject the furthest 25%
         # of candidates from the solve so unseen corners/objects do not drag a
         # supported wall fit toward a different boundary.
         candidate = distance[distance < radius]
-        good = distance <= min(radius, float(np.quantile(candidate,.75))) if len(candidate) else distance < 0
+        good = distance <= min(radius, max(.05,float(np.quantile(candidate,.75)))) if len(candidate) else distance < 0
         if good.sum() < 40:
             break
         p = points[good]; n = normals[good]
@@ -168,6 +169,13 @@ def match_scan(course: BoundaryMap, points_lidar: np.ndarray, predicted: np.ndar
         derivative = p @ np.array([[-s, c], [-c, -s]])
         residual = np.sum((world[good]-closest[good])*n, axis=1)
         jac = np.column_stack((n, np.sum(derivative*n, axis=1)/5.))
+        # At a segment endpoint the distance also constrains its tangent.
+        # Treating a finite polyline as infinite lines discards corner evidence
+        # and can make a real bend look like an unobservable straight corridor.
+        end = endpoints[good]
+        tangent = np.column_stack((-n[end,1],n[end,0]))
+        jac = np.r_[jac,np.column_stack((tangent,np.sum(derivative[end]*tangent,axis=1)/5.))]
+        residual = np.r_[residual,np.sum((world[good][end]-closest[good][end])*tangent,axis=1)]
         weight = np.minimum(1., .12/np.maximum(np.abs(residual), 1e-12))
         hessian = (jac.T*weight) @ jac
         eigenvalues, basis = np.linalg.eigh(hessian)
@@ -188,7 +196,7 @@ def match_scan(course: BoundaryMap, points_lidar: np.ndarray, predicted: np.ndar
         if np.linalg.norm(step[:2]) < .001 and abs(step[2]) < .0002:
             break
     world = transform(points, estimate)
-    distance, _, _ = course.nearest(world)
+    distance, _, _, _ = course.nearest(world)
     # Independent, stricter final support test against ALL valid scan returns.
     # Dynamic/out-of-map points are allowed only as an explicit minority.
     good = distance < .30
