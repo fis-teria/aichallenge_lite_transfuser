@@ -1,0 +1,167 @@
+{
+  "reference_topic": "/localization/pose",
+  "reference_kind": "recorded localization estimate; NOT simulator ground truth",
+  "independent_ground_truth_topic_present": false,
+  "reference_messages": 20481,
+  "reference_frames": [
+    "map"
+  ],
+  "reference_messages_sha256": "b3ed32a005b03a6992fab1b55b199ac63ed4f7b460aee4ee15e7d32479c6e56e",
+  "input_estimate_hashes": {
+    "bounded": "cacd9640dd199d899bbb09e1735a3ee1cb94d5c96bdf204fc53cb45c5f3fa0b6",
+    "unlimited": "f3b98b4897a6b9fc7c4d98af7e6753947697c30a39e8c0a771e9f0ae77d72299",
+    "simulation_aggressive": "56527748c9f2515f0936293deb50ea4437894c9a6aea7f018701e50f6001e8ad"
+  },
+  "alignment_fitted": false,
+  "used_for_localization_input": false,
+  "duplicate_reference_messages": 21,
+  "ambiguous_reference_stamps_removed": 12,
+  "max_duplicate_position_difference_m": 0.021806189129895476,
+  "max_duplicate_yaw_difference_rad": 0.0038329330102577774,
+  "scope": "Reference agreement only; missing estimates count against all-attempt denominator",
+  "reports": {
+    "bounded": {
+      "attempts": 2029,
+      "valid_output": 198,
+      "paired_valid": 198,
+      "missing_reference": 0,
+      "xy_error_m": {
+        "mean": 1.1264713261942014,
+        "median": 1.1151098849766914,
+        "p95": 1.685700758396897,
+        "max": 1.7734352743684818
+      },
+      "yaw_error_deg": {
+        "mean": 2.3349760092030523,
+        "median": 1.860358739409706,
+        "p95": 5.7048680678370225,
+        "max": 5.740934763701206
+      },
+      "thresholds": [
+        {
+          "position_limit_m": 0.25,
+          "yaw_limit_deg": 5,
+          "count": 0,
+          "percent_of_paired_valid": 0.0,
+          "percent_of_all_attempts": 0.0
+        },
+        {
+          "position_limit_m": 0.5,
+          "yaw_limit_deg": 5,
+          "count": 0,
+          "percent_of_paired_valid": 0.0,
+          "percent_of_all_attempts": 0.0
+        },
+        {
+          "position_limit_m": 1.0,
+          "yaw_limit_deg": 10,
+          "count": 89,
+          "percent_of_paired_valid": 44.94949494949495,
+          "percent_of_all_attempts": 4.386397240019714
+        }
+      ]
+    },
+    "unlimited": {
+      "attempts": 2029,
+      "valid_output": 292,
+      "paired_valid": 292,
+      "missing_reference": 0,
+      "xy_error_m": {
+        "mean": 2.1675805896488223,
+        "median": 1.564399494425249,
+        "p95": 5.640664191827859,
+        "max": 6.6067714885465465
+      },
+      "yaw_error_deg": {
+        "mean": 18.23242154558548,
+        "median": 2.8608457320829093,
+        "p95": 71.99972886863354,
+        "max": 78.65613673439309
+      },
+      "thresholds": [
+        {
+          "position_limit_m": 0.25,
+          "yaw_limit_deg": 5,
+          "count": 0,
+          "percent_of_paired_valid": 0.0,
+          "percent_of_all_attempts": 0.0
+        },
+        {
+          "position_limit_m": 0.5,
+          "yaw_limit_deg": 5,
+          "count": 0,
+          "percent_of_paired_valid": 0.0,
+          "percent_of_all_attempts": 0.0
+        },
+        {
+          "position_limit_m": 1.0,
+          "yaw_limit_deg": 10,
+          "count": 90,
+          "percent_of_paired_valid": 30.82191780821918,
+          "percent_of_all_attempts": 4.435682602267127
+        }
+      ]
+    },
+    "simulation_aggressive": {
+      "attempts": 2029,
+      "valid_output": 706,
+      "paired_valid": 706,
+      "missing_reference": 0,
+      "xy_error_m": {
+        "mean": 26.976994630931998,
+        "median": 41.54527010177998,
+        "p95": 51.371712434770515,
+        "max": 52.14002868700198
+      },
+      "yaw_error_deg": {
+        "mean": 67.47464014624586,
+        "median": 95.30089160795121,
+        "p95": 112.78066426414253,
+        "max": 136.2974153375522
+      },
+      "thresholds": [
+        {
+          "position_limit_m": 0.25,
+          "yaw_limit_deg": 5,
+          "count": 0,
+          "percent_of_paired_valid": 0.0,
+          "percent_of_all_attempts": 0.0
+        },
+        {
+          "position_limit_m": 0.5,
+          "yaw_limit_deg": 5,
+          "count": 0,
+          "percent_of_paired_valid": 0.0,
+          "percent_of_all_attempts": 0.0
+        },
+        {
+          "position_limit_m": 1.0,
+          "yaw_limit_deg": 10,
+          "count": 92,
+          "percent_of_paired_valid": 13.031161473087819,
+          "percent_of_all_attempts": 4.534253326761951
+        }
+      ]
+    }
+  },
+  "bag_topics": {
+    "/vehicle/status/velocity_status": 11722,
+    "/sensing/camera/image_raw": 3907,
+    "/sensing/camera/camera_info": 3908,
+    "/sensing/gnss/nav_sat_fix": 8197,
+    "/vehicle/status/steering_status": 11724,
+    "/tf_static": 2,
+    "/sensing/lidar/scan": 8207,
+    "/sensing/imu/imu_raw": 8207,
+    "/localization/kinematic_state": 20516,
+    "/control/command/control_cmd_raw": 40221,
+    "/control/command/control_cmd": 58329,
+    "/tf": 20508,
+    "/clock": 82067,
+    "/awsim/status": 4103,
+    "/planning/scenario_planning/trajectory": 411,
+    "/localization/pose": 20514,
+    "/pure_pursuit/debug": 1576,
+    "/awsim/state": 4
+  }
+}
