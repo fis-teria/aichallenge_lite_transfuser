@@ -30,7 +30,11 @@ def desktop_environment() -> None:
         if not entry.name.isdigit():
             continue
         try:
-            if entry.stat().st_uid != os.getuid() or (entry/'comm').read_text().strip() != 'Xwayland':
+            # GNOME on Xorg has no Xwayland process. Its session still carries
+            # the authoritative DISPLAY/XAUTHORITY required by Docker mounts.
+            if entry.stat().st_uid != os.getuid() or (entry/'comm').read_text().strip() not in {
+                'Xwayland', 'gnome-shell', 'gnome-session-b', 'Xorg',
+            }:
                 continue
             values = dict(item.split('=',1) for item in (entry/'environ').read_text().split('\0') if '=' in item)
             for key in ('DISPLAY','XAUTHORITY','XDG_RUNTIME_DIR'):
