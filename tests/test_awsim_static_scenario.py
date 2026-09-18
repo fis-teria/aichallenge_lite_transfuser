@@ -23,6 +23,15 @@ def test_fixed_fixture_preserves_native_pose_units_and_spawn_checks(kind):
     # are valid. Missing or mismatched actual creation must not authorize Start.
     log = block * 2 + 'Applied race settings: ranking=True, collisions=True, wallRecovery=True\n'
     assert static_scenario_startup(log, meta)['spawn_passes'] == 2
+    if kind == 'cone':
+        aggregate_only = ('Spawned 1 object(s) from /output/static_obstacles.yaml\n' * 2
+                          + 'Applied race settings: collisions=True, wallRecovery=True\n')
+        result = static_scenario_startup(aggregate_only, meta)
+        assert result['named_renderer_evidence'] == []
+        assert result['names_not_logged_by_simulator'] == [('cone', 'avoidance_cone')]
+    else:
+        with pytest.raises(ValueError, match='STATIC_SCENARIO_RENDER_IDENTITIES'):
+            static_scenario_startup(log.replace(block, 'Spawned 1 object(s) from /output/static_obstacles.yaml\n'), meta)
     for bad in (log.replace('Spawned 1', 'Spawned 2'), log.replace('collisions=True', 'collisions=False'),
                 log.replace('enabled=True', 'enabled=False'), log.replace(f"'avoidance_{kind}'", "'other'")):
         with pytest.raises(ValueError, match='STATIC_SCENARIO'):

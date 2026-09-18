@@ -53,17 +53,27 @@ def load_static_scenario(path: Path) -> tuple[bytes, dict[str, Any]]:
 
 
 def static_scenario_startup(log_text: str, expected: dict[str, Any]) -> dict[str, Any]:
-    """Require visible named objects and collisions in the actual Unity log."""
+    """Verify count/collisions and named box renderers in the actual Unity log.
+
+    Existing AWSIM logs native cone creation only in the aggregate spawn count;
+    the box material diagnostic emits named renderer lines. Cone visibility and
+    encounter still require the recorded sensor/video evidence, not this gate.
+    """
     spawns = re.findall(r'^Spawned (\d+) object\(s\) from /output/static_obstacles.yaml\s*$',
                         log_text, re.MULTILINE)
     if not spawns or any(int(count) != expected['object_count'] for count in spawns):
         raise ValueError('STATIC_SCENARIO_SPAWN_COUNT')
     objects = set(re.findall(r"^\[Scenario\] (box|cone) '([^']+)':.*enabled=True off=False.*supported=True",
                              log_text, re.MULTILINE))
-    if objects != {tuple(identity) for identity in expected['identities']}:
+    renderer_records = set(re.findall(r"^\[Scenario\] (box|cone) '([^']+)': renderer=", log_text, re.MULTILINE))
+    requested = {tuple(identity) for identity in expected['identities']}
+    required_box_records = {identity for identity in requested if identity[0] == 'box'}
+    if objects != renderer_records or not required_box_records <= objects <= requested:
         raise ValueError('STATIC_SCENARIO_RENDER_IDENTITIES')
     settings = re.findall(r'^Applied race settings:.*$', log_text, re.MULTILINE)
     if not settings or not re.search(r'\bcollisions=True(?:,|\s|$)', settings[-1]):
         raise ValueError('STATIC_SCENARIO_COLLISIONS_DISABLED')
     return {**expected, 'spawn_passes': len(spawns), 'collisions_enabled': True,
+            'named_renderer_evidence': sorted(objects),
+            'names_not_logged_by_simulator': sorted(requested - objects),
             'scope': 'SPAWN_CHECK_ONLY_NOT_AVOIDANCE_ACCEPTANCE'}

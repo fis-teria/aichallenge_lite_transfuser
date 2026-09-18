@@ -2,8 +2,10 @@
 
 The finite AWSIM runner accepts `--static-obstacle-scenario` for native box/cone
 YAML in `configs/scenarios`. It copies the fixture to the run output, enables
-existing AWSIM collisions, records its SHA-256, and checks named object creation
-before official Start. Simulator assets and the normal ego spawn are unchanged.
+existing AWSIM collisions, records its SHA-256, and checks object counts and
+named box renderer logs before official Start. Native cones have only aggregate
+spawn logs; their actual visibility/encounter also needs video/sensor inspection.
+Simulator assets and the normal ego spawn are unchanged.
 The scenario is setup/evaluation information and is never a model/control input.
 
 On a prepared PC10 deployment with its matching candidate checkpoint/config:
