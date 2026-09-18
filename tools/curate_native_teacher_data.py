@@ -12,6 +12,7 @@ import json
 import math
 from pathlib import Path
 import subprocess
+import sys
 from typing import Any
 
 import numpy as np
@@ -25,6 +26,9 @@ from aic_transfuser_lite.data.native_teacher_curation import (
     NativeCurationConfig, classify_anchor, convex_point_distance, spaced_indices, window_indices,
 )
 from aic_transfuser_lite.runtime.lidar_map_localization import transform
+
+# Direct `python tools/...py` places tools/ rather than the repository on sys.path.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools.filter_teacher_pose_prefix import sha, verified_bag, write_json
 
 

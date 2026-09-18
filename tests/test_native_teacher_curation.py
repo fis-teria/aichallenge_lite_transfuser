@@ -133,3 +133,16 @@ def test_thinning_keeps_source_indices_and_retains_eligibility_of_skipped_frames
     {'minimum_scan_span_rad':7.},{'minimum_wall_points':True}])
 def test_curation_units_and_configuration_are_explicit(changes):
     with pytest.raises(ValueError):replace(NativeCurationConfig(),**changes)
+
+
+def test_documented_direct_cli_entrypoint_imports_with_only_src_on_pythonpath():
+    import os
+    from pathlib import Path
+    import subprocess
+    import sys
+    root=Path(__file__).resolve().parents[1]
+    env=dict(os.environ,PYTHONPATH=str(root/'src'))
+    result=subprocess.run([sys.executable,str(root/'tools/curate_native_teacher_data.py'),'--help'],
+                          cwd=root,env=env,text=True,capture_output=True,timeout=30)
+    assert result.returncode==0,result.stderr
+    assert '--root' in result.stdout and '--output' in result.stdout
