@@ -1,0 +1,194 @@
+{
+  "status": "STOPPED_NO_LAP",
+  "run_id": "codex-time-native10-cone-01",
+  "start_time_utc": 1789760742.344736,
+  "scope": "ONE_LAP_MODEL_TRIAL",
+  "official_start_requested": true,
+  "execution_profile": "one_lap",
+  "requested_npcs": 0,
+  "pp_vehicles": 0,
+  "vehicle_domains": [
+    1
+  ],
+  "background_speed_cap_kmh": null,
+  "speed_policy": "curvature_time_preview_20kmh_v1",
+  "trial_config_sha256": "dd44a7afda0dc9b78dceba41fb755131a00485c8922109956298aa390f60c2f9",
+  "static_scenario": {
+    "name": "time_avoidance_single_cone",
+    "object_count": 1,
+    "identities": [
+      [
+        "cone",
+        "avoidance_cone"
+      ]
+    ],
+    "scope": "SETUP_ONLY_NOT_MODEL_INPUT"
+  },
+  "static_scenario_sha256": "4dc7438cb8b1d668a516b1437878a43335a17a8bba76ea54667d071dc8efaac0",
+  "gpu": {
+    "returncode": 0,
+    "stdout": "NVIDIA GeForce RTX 4060 Laptop GPU, 595.91.07\n",
+    "stderr": ""
+  },
+  "steering_asset_sha256": {
+    "AWSIM_Data/StreamingAssets/Vehicle/vehicle.yaml": "5b66e58691091c82d5511535ca458d4c89e85f3b59fa0d0c4a2c7eee47887244",
+    "AWSIM_Data/Managed/Assembly-CSharp.dll": "859e5560dbffd7d0833cd1fe5eb1f36b87fa8d22f6e45eb0e1203d04a1ea6d13"
+  },
+  "rviz_config": "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz",
+  "rviz_sha256": "981c28955e9bceedb8845ec8d59e57c4f47805040cd84c5e09f2f1430c7bb3f1",
+  "commands": [
+    [
+      "docker",
+      "run",
+      "--rm",
+      "--name",
+      "codex-time-native10-cone-01-nodes",
+      "--gpus",
+      "all",
+      "--network",
+      "host",
+      "-e",
+      "ROS_DOMAIN_ID=1",
+      "-e",
+      "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_native10_awsim_20260919/codex-time-native10-cone-01/cyclonedds.xml:/opt/autoware/cyclonedds.xml:ro",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_native10_awsim_20260919:/time",
+      "-v",
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro",
+      "--entrypoint",
+      "bash",
+      "codex-cartographer-v4-build:20260910",
+      "-lc",
+      "source /aichallenge/workspace/install/setup.bash && source /time/install/setup.bash && exec ros2 launch aic_e2e_runtime time_path_awsim.launch.py output:=/time/codex-time-native10-cone-01 run_id:=codex-time-native10-cone-01 checkpoint:=/time/command_off_best.pt config:=/time/codex-time-native10-cone-01/trial_config.json authorize_awsim_only:=true max_speed_kmh:=10.0 corner_max_speed_kmh:=10.0"
+    ],
+    [
+      "make",
+      "dev",
+      "DEV_AUTO_START=false",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=1",
+      "RUN_ID=codex-time-native10-cone-01",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_native10_awsim_20260919/codex-time-native10-cone-01",
+      "AWSIM_TIMEOUT=660",
+      "AWSIM_EXTRA_ARGS=--npcs 0 --collisions on --scenario /output/static_obstacles.yaml -logFile /output/codex-time-native10-cone-01/awsim_unity.log"
+    ],
+    [
+      "make",
+      "awsim-request-start",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=1",
+      "RUN_ID=codex-time-native10-cone-01",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_native10_awsim_20260919/codex-time-native10-cone-01",
+      "AWSIM_TIMEOUT=660",
+      "AWSIM_EXTRA_ARGS=--npcs 0 --collisions on --scenario /output/static_obstacles.yaml -logFile /output/codex-time-native10-cone-01/awsim_unity.log"
+    ]
+  ],
+  "last_control": {
+    "fault": null,
+    "armed_ns": 17514999608,
+    "armed_wall": 75340.20553205,
+    "stop_since_ns": 33764999245,
+    "stop_confirmed": true,
+    "positive_count": 208,
+    "commands": 877,
+    "max_speed_mps": 2.675419330596924,
+    "requested_stop_reason": "PROGRESS_STALLED",
+    "speed_mps": 0.0,
+    "current_pose": {
+      "stamp_ns": 34754999223,
+      "clock": "sim",
+      "epoch": "0",
+      "world_frame": "time_wheel_odom",
+      "body_frame": "base_link",
+      "x_m": 18.351199190295915,
+      "y_m": -1.6661660432464198,
+      "yaw_rad": -0.11725359926461651
+    },
+    "scan_rejection_recorded": false,
+    "scan_observation_recorded": true,
+    "scan_would_stop_commands": 13,
+    "reason": "REQUESTED_BRAKE",
+    "monotonic_ns": 75357455029682,
+    "sim_ns": 34769999222,
+    "topic": "/control/command/control_cmd"
+  },
+  "last_inference": {
+    "plans": 6,
+    "rejected": 2,
+    "fault": null,
+    "sources_ok": true,
+    "sources": {
+      "camera": [
+        "/awsim_d1"
+      ],
+      "lidar": [
+        "/awsim_d1"
+      ],
+      "velocity": [
+        "/awsim_d1"
+      ],
+      "actual_steering": [
+        "/awsim_d1"
+      ]
+    },
+    "path_subscribers": [
+      "rviz2"
+    ],
+    "monotonic_ns": 75323637501782,
+    "sim_ns": 954999978,
+    "epoch": "0",
+    "dropped_anchors": 0
+  },
+  "npc_startup": {
+    "requested_count": 0,
+    "spawned_count": 0,
+    "mode": null
+  },
+  "static_scenario_startup": {
+    "name": "time_avoidance_single_cone",
+    "object_count": 1,
+    "identities": [
+      [
+        "cone",
+        "avoidance_cone"
+      ]
+    ],
+    "scope": "SPAWN_CHECK_ONLY_NOT_AVOIDANCE_ACCEPTANCE",
+    "spawn_passes": 2,
+    "collisions_enabled": true,
+    "named_renderer_evidence": [],
+    "names_not_logged_by_simulator": [
+      [
+        "cone",
+        "avoidance_cone"
+      ]
+    ]
+  },
+  "rviz_path_subscribers": [
+    "rviz2"
+  ],
+  "rviz_window": "0x3a00010 \"/aichallenge/workspace/install/aichallenge_system_launch/share/aichallenge_system_launch/config/autoware.rviz* - RViz\": (\"rviz2\" \"rviz2\")  1850x1136+10+45  +70+64",
+  "cleanup_errors": [],
+  "end_time_utc": 1789760805.5372536,
+  "wall_s": 63.1924272269971,
+  "judge_lap_confirmed": false,
+  "judge_section_events": [
+    {
+      "current": 0,
+      "next": 0,
+      "started": "False",
+      "line": "Section line hit: current=0, next=0, started=False",
+      "run_id": "codex-time-native10-cone-01",
+      "epoch": 0,
+      "byte_offset": 102670
+    }
+  ],
+  "judge_laps": [],
+  "judge_order_invalid": false
+}
