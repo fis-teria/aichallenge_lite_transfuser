@@ -19,6 +19,7 @@ from .polyline_lookahead_v1 import select_polyline_lookahead
 from .curvature_support_v2 import ACTUAL_STOPPING_SPEED, DIAGNOSTIC_STOPPING_POLICIES, STANDARD_CLEARANCE, NEAR_LIMIT_CLEARANCE, ONE_METRE_STOPPING_TRAVEL, SCAN_STOP_POLICY, SCAN_LOG_ONLY_POLICY, clearance_dimensions
 from ..runtime.awsim_trial_session import trial_duration_limits
 from .slam_slowdown import validate_slam_slowdown_policy
+from .slam_mppi import validate_slam_mppi_policy
 
 
 FIXED_SPEED_POLICIES = ("fixed_5kmh", *AWSIM_FIXED_TRIAL_SPEED_POLICIES)
@@ -44,6 +45,7 @@ def trial_speed_limits(speed_policy: str) -> tuple[float, float]:
 def validate_trial_config(config: dict[str, Any]) -> str:
     """Reject descriptive JSON settings that disagree with this bounded runtime."""
     validate_slam_slowdown_policy(config)
+    validate_slam_mppi_policy(config)
     policy = config.get("speed_policy", "source_capped_0p25")
     if type(config.get("record_vehicle_motion", False)) is not bool:
         raise ValueError("TRIAL_MOTION_RECORDING_FLAG")

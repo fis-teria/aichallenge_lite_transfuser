@@ -97,6 +97,9 @@ def main() -> None:
         raise ValueError('SPEED_PARAMETERS_REQUIRE_ROS_LAUNCH')
     validate_trial_config(config)
     slam_slowdown = config.get('slam_slowdown_policy', 'off') != 'off'
+    slam_mppi = config.get('slam_mppi_policy', 'off') != 'off'
+    if slam_mppi and (not args.slam_obstacles or args.slam_stop_box_test or args.npcs or args.pp_vehicles):
+        raise ValueError('SLAM_MPPI_REQUIRES_AVOIDANCE_SIDECAR')
     if slam_slowdown and not args.slam_obstacles:
         raise ValueError('SLAM_SLOWDOWN_REQUIRES_SLAM_SIDECAR')
     if args.slam_stop_box_test and (not slam_slowdown or args.npcs or args.pp_vehicles):
@@ -326,10 +329,12 @@ def main() -> None:
             observer[-1] = ('source /aichallenge/workspace/install/setup.bash && '
                            'source /cartographer_ws/install/setup.bash && source /time/install/setup.bash && exec '
                            +shlex.join(['python3', str(source_in_container/'tools/run_slam_obstacle_sidecar.py'),
-                                       '--output', str(inside)]))
+                                       '--output', str(inside), *(['--mppi'] if slam_mppi else [])]))
             result['commands'].append(observer)
             result['slam_obstacle_scope'] = ('LOCAL_SLAM_LONGITUDINAL_ONLY_E2E_STEERING' if slam_slowdown
                                             else 'LOCAL_SLAM_DETECTION_DISPLAY_ONLY_NO_CONTROL_INPUT')
+            if slam_mppi:
+                result['slam_obstacle_scope'] = 'LOCAL_SLAM_MPPI_STATIC_OCCUPANCY_LOW_SPEED'
             localization_process = launch(observer, 'slam_sidecar')
         if args.lidar_map_comparison:
             observer_command = ['python3', str(source_in_container/'tools/observe_lidar_map_trial.py'),

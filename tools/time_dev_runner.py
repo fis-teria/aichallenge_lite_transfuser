@@ -16,7 +16,8 @@ from aic_transfuser_lite.runtime.awsim_traffic import traffic_domains
 
 
 def make_command(*, source: Path, deployment: Path, run_id: str, display: str,
-                 speeds: TimeDevSpeeds, record_video: bool, npcs: int = 0, pp_vehicles: int = 0) -> list[str]:
+                 speeds: TimeDevSpeeds, record_video: bool, npcs: int = 0, pp_vehicles: int = 0,
+                 slam_mppi: bool = False) -> list[str]:
     """Explicit argument vector, no shell interpolation; outer timeout in seconds."""
     if not re.fullmatch(r'codex-time-[a-z0-9-]+', run_id):
         raise ValueError('INVALID_OWNED_RUN_ID')
@@ -24,6 +25,13 @@ def make_command(*, source: Path, deployment: Path, run_id: str, display: str,
         raise ValueError('EXPLICIT_LOCAL_DISPLAY_REQUIRED')
     validate_npc_count(npcs)
     traffic_domains(pp_vehicles, npcs)
+    if slam_mppi:
+        if speeds.max_speed_kmh != 5. or speeds.corner_max_speed_kmh != 5. or npcs or pp_vehicles:
+            raise ValueError('SLAM_MPPI_INITIAL_PROFILE_REQUIRES_5_KMH_STATIC_SINGLE_EGO')
+        return ['timeout', '--signal=TERM', '--kill-after=10s', '710s', sys.executable,
+            str(source/'tools/run_time_path_awsim_trial.py'), '--deployment', str(deployment),
+            '--run-id', run_id, '--display', display, '--config', 'configs/control/time_path_slam_mppi.json',
+            '--slam-obstacles', *(['--record-video'] if record_video else [])]
     return ['timeout', '--signal=TERM', '--kill-after=10s', '710s', sys.executable,
         str(source/'tools/run_time_path_awsim_trial.py'), '--deployment', str(deployment),
         '--run-id', run_id, '--display', display, '--config', 'configs/control/time_path_dev.json',
@@ -41,6 +49,7 @@ def main() -> None:
     parser.add_argument('--max-speed-kmh', type=float, default=20.)
     parser.add_argument('--corner-max-speed-kmh', type=float, default=10.)
     parser.add_argument('--record-video', action='store_true')
+    parser.add_argument('--slam-mppi', action='store_true', help='5 km/h static-obstacle avoidance trial')
     parser.add_argument('--npcs', type=int, choices=range(4), default=0,
                         help='Built-in AWSIM NPC karts; only ego has an E2E controller')
     parser.add_argument('--pp-vehicles', type=int, choices=range(4), default=0,
@@ -54,7 +63,8 @@ def main() -> None:
     if not (deployment/'install/setup.bash').is_file() or not (deployment/'command_off_best.pt').is_file():
         raise ValueError('PREPARED_ROS_INSTALL_AND_CHECKPOINT_REQUIRED')
     command = make_command(source=source, deployment=deployment, run_id=args.run_id,
-        display=args.display, speeds=speeds, record_video=args.record_video, npcs=args.npcs, pp_vehicles=args.pp_vehicles)
+        display=args.display, speeds=speeds, record_video=args.record_video, npcs=args.npcs,
+        pp_vehicles=args.pp_vehicles, slam_mppi=args.slam_mppi)
     print(f'TimePath: max={speeds.max_speed_kmh:g} km/h, corner={speeds.corner_max_speed_kmh:g} km/h; '
           f'NPCs={args.npcs}; PP cars={args.pp_vehicles}; output={deployment/args.run_id}', flush=True)
     raise SystemExit(subprocess.run(command, cwd=source).returncode)

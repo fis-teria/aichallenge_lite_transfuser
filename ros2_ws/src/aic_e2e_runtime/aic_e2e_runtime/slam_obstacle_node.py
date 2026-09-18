@@ -13,6 +13,7 @@ from .canonical_source import prefer_canonical_source
 prefer_canonical_source()
 import numpy as np
 from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
+from aic_transfuser_lite.control.slam_mppi import AvoidancePlanner, validate_slam_mppi_policy
 from aic_transfuser_lite.control.time_trial_v1 import interpolate_body_pose
 from aic_transfuser_lite.runtime.lidar_map_localization import transform
 from aic_transfuser_lite.runtime.slam_obstacles import (
@@ -35,11 +36,16 @@ def main(argv: list[str] | None = None) -> None:
 
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--output', type=Path, required=True)
+    ap.add_argument('--mppi', action='store_true', help='Plan low-speed local avoidance for TimePath')
     args = ap.parse_args(remove_ros_args(argv)[1:])
     args.output.mkdir(exist_ok=True, parents=True)
     journal = (args.output/'slam_obstacles.jsonl').open('x', buffering=1)
     rclpy.init(args=argv); node = Node('time_slam_obstacles')
     detector = SlamObstacleDetector()
+    avoidance = AvoidancePlanner() if args.mppi else None
+    mppi_config = json.loads((args.output/'trial_config.json').read_text()) if args.mppi else None
+    if args.mppi and validate_slam_mppi_policy(mppi_config) == 'off':
+        raise ValueError('MPPI_SIDECAR_CONFIG_REQUIRED')
     clock = None; clock_wall = 0; wheel_ns = None; wheel_wall = 0
     fatal = None; last_feed = -1; last_process_wall = 0; last_process_ns = None
     poses: deque[TimedBodyPose] = deque(maxlen=1024)
@@ -142,6 +148,11 @@ def main(argv: list[str] | None = None) -> None:
                     or xy.shape != (30, 2) or not np.isfinite(xy).all()
                     or type(packet.get('observation_ns')) is not int or packet['observation_ns'] < 0):
                 raise ValueError('PLAN_CONTRACT')
+            if args.mppi and (packet.get('run_id') != args.output.name or packet.get('epoch') != '0'
+                    or packet.get('checkpoint_sha256') != mppi_config['checkpoint_sha256']
+                    or packet.get('producer_kind') != 'LEARNED_TIME_MODEL'
+                    or packet.get('clock') != 'sim' or packet.get('dt_s') != .1):
+                raise ValueError('MPPI_MODEL_IDENTITY')
             plans.append((packet, time.monotonic_ns()))
         except (ValueError, KeyError, TypeError) as exc:
             plans.clear()
@@ -188,6 +199,13 @@ def main(argv: list[str] | None = None) -> None:
                      gnss_imu_map_inputs=False, pose_source='Cartographer scan+wheel_odometry',
                      plan_observation_ns=plan_observation_ns,
                      scan_age_s=(clock-stamp)/1e9)
+        if avoidance is not None:
+            started = time.monotonic()
+            state['mppi'] = avoidance.update(state, path_world, detector.grid)
+            state['mppi']['compute_wall_s'] = time.monotonic()-started
+            if state['mppi']['compute_wall_s'] > .15:
+                state['mppi'].update(mode='STOP', reason='MPPI_COMPUTE_TIMEOUT', target_speed_mps=0.)
+            state.update(epoch='0', checkpoint_sha256=mppi_config['checkpoint_sha256'])
         processed += 1; last_process_ns = stamp; last_process_wall = time.monotonic_ns()
         journal.write(json.dumps(state, allow_nan=False)+'\n')
         pubs['objects'].publish(String(data=json.dumps(state, allow_nan=False)))
@@ -230,7 +248,9 @@ def main(argv: list[str] | None = None) -> None:
         pubs['markers'].publish(MarkerArray(markers=markers))
         path = RosPath(); path.header = tr.header
         if path_world is not None:
-            for x, y in path_world:
+            displayed = (state['mppi']['path_world_xy_m'] if avoidance is not None
+                         and state['mppi']['mode'] == 'AVOID' else path_world)
+            for x, y in displayed:
                 point = PoseStamped(); point.header = tr.header
                 point.pose.position.x = float(x); point.pose.position.y = float(y); point.pose.orientation.w = 1.
                 path.poses.append(point)

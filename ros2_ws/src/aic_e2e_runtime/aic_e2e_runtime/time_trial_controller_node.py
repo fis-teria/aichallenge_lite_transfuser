@@ -22,6 +22,7 @@ from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, s
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
 from aic_transfuser_lite.control.time_dev_v1 import configured_dev_speeds
 from aic_transfuser_lite.control.slam_slowdown import SlamSlowdown, validate_slam_slowdown_policy
+from aic_transfuser_lite.control.slam_mppi import avoidance_command, validate_slam_mppi_policy
 from aic_transfuser_lite.control.time_trial_v1 import (
     SPEED_POLICIES, interpolate_body_pose, time_trial_control, trial_speed_limits, validate_trial_config,
 )
@@ -64,6 +65,7 @@ def main() -> None:
     stopping_distance_policy = 'measured_speed_v1'
     scan_occupancy_policy = 'stop_v1'
     slam_slowdown_policy = 'off'
+    slam_mppi_policy = 'off'
     speed_policy = args.speed_policy or "source_capped_0p25"
     dev_speeds = None
     if args.trial_config is not None:
@@ -81,6 +83,7 @@ def main() -> None:
         stopping_distance_policy = config.get('stopping_distance_policy', 'measured_speed_v1')
         scan_occupancy_policy = config.get('scan_occupancy_policy', 'stop_v1')
         slam_slowdown_policy = validate_slam_slowdown_policy(config)
+        slam_mppi_policy = validate_slam_mppi_policy(config)
         if (config["checkpoint_sha256"] != args.checkpoint_sha256
                 or config["geometry"]["rear_axle_forward_in_base_link_m"] != args.rear_axle_forward_m):
             raise ValueError("TRIAL_CONFIG_IDENTITY")
@@ -194,7 +197,7 @@ def main() -> None:
               "velocity": ("/vehicle/status/velocity_status", VelocityReport, args.sensor_source),
               "steering": ("/vehicle/status/steering_status", SteeringReport, args.sensor_source),
               "scan": ("/sensing/lidar/scan", LaserScan, args.sensor_source)}
-    if slam_slowdown_policy != 'off':
+    if slam_slowdown_policy != 'off' or slam_mppi_policy != 'off':
         topics['slam_obstacles'] = ('/time_path/slam/obstacles', String, '/time_slam_obstacles')
     if recovery_config is not None:
         topics.update(nominal=("/recovery_teacher/nominal_control_cmd", AckermannControlCommand,
@@ -466,6 +469,36 @@ def main() -> None:
                                                   vehicle_model_policy=vehicle_model_policy,
                                                   rear_axle_offset_m=(args.rear_axle_forward_m, 0.)))
                 steer = details["steer_rad"]; accel = details["acceleration_mps2"]; target = details["target_speed_mps"]
+                if slam_mppi_policy != 'off':
+                    slam_message, slam_receipt = cache.get('slam_obstacles', (None, None))
+                    try:
+                        packet = json.loads(slam_message.data) if slam_message is not None else None
+                    except (ValueError, TypeError):
+                        packet = None
+                    scan_wheel = None
+                    if isinstance(packet, dict):
+                        if (packet.get('epoch') != str(epoch)
+                                or packet.get('checkpoint_sha256') != args.checkpoint_sha256):
+                            packet = None
+                        elif type(packet.get('stamp_ns')) is int:
+                            try:
+                                at_scan = interpolate_body_pose(poses, packet['stamp_ns'])
+                                scan_wheel = np.array([at_scan.x_m, at_scan.y_m, at_scan.yaw_rad])
+                            except ValueError:
+                                pass  # Admission requests a stop if the exact scan pose is unavailable.
+                    mppi = avoidance_command(packet, run_id=args.run_id,
+                        source_valid=names(topics['slam_obstacles'][0]) == ['/time_slam_obstacles'],
+                        now_sim_ns=clock_ns, now_wall_ns=now, receipt_ns=slam_receipt,
+                        speed_mps=speed, target_mps=target, acceleration_mps2=accel, dt_s=dt,
+                        scan_wheel_pose=scan_wheel,
+                        current_wheel_pose=np.array([current.x_m, current.y_m, current.yaw_rad]),
+                        vehicle_model_policy=vehicle_model_policy)
+                    details['slam_mppi'] = mppi
+                    target, accel = mppi['target_speed_mps'], mppi['acceleration_mps2']
+                    if mppi['mode'] == 'STOP':
+                        raise ValueError('SLAM_MPPI_STOP:'+mppi['reason'])
+                    if mppi['mode'] == 'AVOID':
+                        steer = mppi['steer_rad']; control_owner = 'SLAM_MPPI'
                 response_target, candidate_response_state, response = compensate_steering_response(
                     steer, clock_ns, response_state, policy=steering_policy)
                 details["steering_response"] = response
@@ -529,6 +562,8 @@ def main() -> None:
             plan_id = plan.plan_id
             reason = ('RECOVERY_TEACHER_BOOTSTRAP' if control_owner == 'TEACHER_BOOTSTRAP'
                       else "TIME_PATH_TRACKING" if live else "SHADOW_CONTROL")
+            if details.get('slam_mppi', {}).get('mode') in ('AVOID', 'STOP'):
+                reason = 'SLAM_MPPI_'+details['slam_mppi']['mode']+':'+details['slam_mppi']['reason']
         except (ValueError, KeyError, TypeError) as exc:
             if checking_scan and str(exc) in ("STOPPING_CORRIDOR_OCCUPIED", "STOPPING_SWEEP_OCCUPIED") and not state["scan_rejection_recorded"]:
                 scalar_names = ("angle_min", "angle_increment", "range_min", "range_max")
@@ -550,7 +585,8 @@ def main() -> None:
                 state["scan_rejection_recorded"] = True
             reason = str(exc); accel = -1.; target = 0.; steer = previous[0]
             response_state = candidate_response_state = None
-            if reason in ("STOPPING_CORRIDOR_OCCUPIED", "STOPPING_SWEEP_OCCUPIED") and state["positive_count"]:
+            if (reason in ("STOPPING_CORRIDOR_OCCUPIED", "STOPPING_SWEEP_OCCUPIED")
+                    and state["positive_count"] and slam_mppi_policy == 'off'):
                 state["fault"] = reason
             if reason.startswith('RECOVERY_'):
                 state['fault'] = reason
@@ -588,7 +624,8 @@ def main() -> None:
                 state["fault"] = "COMPETING_CONTROLLER"
         temporary = args.output / "control_heartbeat.pending"
         if slam_slowdown_policy != 'off':
-            state['slam_slowdown'] = details.get('slam_slowdown')
+        state['slam_slowdown'] = details.get('slam_slowdown')
+        state['slam_mppi'] = details.get('slam_mppi')
         if recovery_config is not None:
             state['recovery_state'] = asdict(recovery_state)
             state['control_owner'] = control_owner

@@ -13,6 +13,7 @@ def main() -> None:
     from ament_index_python.packages import get_package_prefix, get_package_share_directory
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--mppi', action='store_true')
     args = parser.parse_args(); args.output.mkdir(exist_ok=True, parents=True)
     config = Path(get_package_share_directory('aic_e2e_runtime'))/'config'
     binary = Path(get_package_prefix('cartographer_ros'))/'lib/cartographer_ros/cartographer_node'
@@ -25,7 +26,8 @@ def main() -> None:
          '--ros-args', '-r', '__node:=cartographer', '-r', '__ns:=/time_slam', '-p', 'use_sim_time:=true',
          '-r', 'scan:=/time_path/slam/input_scan', '-r', 'odom:=/time_path/slam/input_odom',
          '-r', '/tf:=/time_path/slam/input_tf', '-r', '/tf_static:=/time_path/slam/input_tf_static'],
-        ['ros2', 'run', 'aic_e2e_runtime', 'slam_obstacle_node', '--output', str(args.output)],
+        ['ros2', 'run', 'aic_e2e_runtime', 'slam_obstacle_node', '--output', str(args.output),
+         *(['--mppi'] if args.mppi else [])],
     ]
     processes = []; logs = []
     def stop(signum, frame):

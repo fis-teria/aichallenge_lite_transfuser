@@ -49,6 +49,10 @@ def replay_recorded_control(commands: list[dict[str, Any]], plans: list[dict[str
     This covers the calculation before the separate output steering-rate clamp.
     Older records without pose/plan identity are explicitly outside the replay.
     """
+    if any(command.get('details', {}).get('slam_mppi') for command in commands):
+        return dict(status='UNSUPPORTED_SLAM_MPPI', matched_commands=0,
+                    unavailable_commands=len(commands), scan_guard_decisions_replayed=False,
+                    scope='SLAM_map_and_avoidance_replay_not_implemented')
     by_id = {p["plan_id"]: p for p in plans}
     matched = skipped = 0
     maximum_error = 0.
