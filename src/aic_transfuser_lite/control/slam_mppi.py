@@ -81,7 +81,7 @@ class ReferenceMppi:
         route = route[np.r_[True, np.linalg.norm(np.diff(route, axis=0), axis=1) > .01]]
         arc = np.r_[0., np.cumsum(np.linalg.norm(np.diff(route, axis=0), axis=1))]
         length = min(16., float(arc[-1]))
-        if length < 3.:
+        if length < 1.5:
             raise ValueError('MPPI_REFERENCE_TOO_SHORT')
         stations = np.linspace(0., length, math.ceil(length/.10)+1)
         guide = np.column_stack([np.interp(stations, arc, route[:, j]) for j in range(2)])
@@ -95,6 +95,9 @@ class ReferenceMppi:
         # and heading during a manoeuvre; reconnecting immediately to the nominal
         # line would create an impossible sideways jump on the next update.
         d0 = float(-guide[0]@normals[0])
+        start_correction = -guide[0]-d0*normals[0]
+        if np.linalg.norm(start_correction) > .3:
+            raise ValueError('MPPI_REFERENCE_START_AHEAD')
         slope0 = math.tan(-headings[0])
         boundary = d0*(1-3*u**2+2*u**3)+length*slope0*(u-2*u**2+u**3)
         # Keep the original bypass family; terminal displacement AND heading
@@ -109,6 +112,10 @@ class ReferenceMppi:
         def evaluate(coefficients: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
             offset = boundary+coefficients @ basis.T
             paths = guide[None]+offset[:, :, None]*normals
+            # The prediction's first point may be centimetres ahead of ego.
+            # Join from the actual pose with zero endpoint derivative; retain
+            # the original reference endpoint and recheck all geometry.
+            paths += (1-3*u**2+2*u**3)[None, :, None]*start_correction
             segments = np.diff(paths, axis=1)
             distances = np.linalg.norm(segments, axis=2)
             yaw = np.unwrap(np.arctan2(segments[:, :, 1], segments[:, :, 0]), axis=1)
@@ -149,8 +156,10 @@ class ReferenceMppi:
             samples[0] = mean
             samples[1:9] = [[-2.4, 0., 0., 0.], [2.4, 0., 0., 0.], [-1.8, 0., 0., 0.], [1.8, 0., 0., 0.],
                             [0., 0., -1.2, 0.], [0., 0., 1.2, 0.], [0., 0., -.5, 0.], [0., 0., .5, 0.]]
-            for j, k in enumerate((-.18, -.12, -.06, .06, .12, .18), start=9):
-                samples[j] = [0., 0., .5*k*length**2, k*length]
+            for j, k in enumerate(np.linspace(-.24, .24, 25), start=9):
+                # Seed continuations from the CURRENT offset/heading, rather
+                # than restarting a turn from the original zero-heading pose.
+                samples[j] = [0., 0., d0+slope0*length+.5*k*length**2, slope0+k*length]
             costs, paths = evaluate(samples)
             finite = np.isfinite(costs)
             if not finite.any():
@@ -356,11 +365,13 @@ def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_vali
         candidates = np.flatnonzero((local[:, 0] > 0) & (distances >= 1.) & (distances <= 1.5))
         if not len(candidates):
             raise ValueError('MPPI_TRACKING_LOOKAHEAD')
-        point = local[candidates[0]]
-        tire = math.atan(effective_response_length(max(0., speed_mps), vehicle_model_policy)
-                         *2*point[1]/float(point@point))
-        if abs(tire) > .3:
+        points = local[candidates]
+        tires = np.arctan(effective_response_length(max(0., speed_mps), vehicle_model_policy)
+                          *2*points[:, 1]/np.sum(points**2, axis=1))
+        feasible = np.flatnonzero(np.abs(tires) <= .3)
+        if not len(feasible):
             raise ValueError('MPPI_TRACKING_STEERING')
+        tire = float(tires[feasible[0]])
         target = min(target_mps, SPEED_MPS)
         return dict(result, mode='AVOID', reason='MPPI_TRACKING', steer_rad=tire,
                     target_speed_mps=target, acceleration_mps2=min(acceleration_mps2,

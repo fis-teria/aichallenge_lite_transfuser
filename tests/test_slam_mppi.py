@@ -269,6 +269,20 @@ def test_reference_refresh_does_not_create_a_splice_curvature_spike():
     assert np.max(np.abs(np.diff(angle)/(.5*(ds[:-1]+ds[1:])))) <= np.tan(.3)/1.2
 
 
+def test_prediction_start_ahead_joins_actual_pose_and_short_remaining_path_is_usable():
+    ref, grid, origin = scene(False)
+    ref[:, 0] = np.linspace(.025, 2.5, len(ref))
+    out = ReferenceMppi().solve(ref, np.zeros(3), grid, origin, .2)
+    np.testing.assert_allclose(out['path_world_xy_m'][0], [0., 0.], atol=1e-9)
+    assert out['path_world_xy_m'][-1][0] == pytest.approx(2.5)
+    p = packet()
+    p['mppi'] = dict(out, policy=POLICY, mode='AVOID', reason='MPPI_FEASIBLE',
+                     stamp_ns=p['stamp_ns'], frame='time_slam_map')
+    assert command(p, speed_mps=0.)['mode'] == 'AVOID'
+    # Sensor-time path consumption still enforces actual stopping distance.
+    assert command(p, current_wheel_pose=np.array([1.8,0.,0.]), speed_mps=1.3)['mode'] == 'STOP'
+
+
 def test_short_nominal_fallback_requires_fresh_feasible_mppi_and_keeps_admission():
     from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
     pose = TimedBodyPose(1_000_000_000, 'sim', '0', 'map', 'base_link', 0., 0., 0.)
