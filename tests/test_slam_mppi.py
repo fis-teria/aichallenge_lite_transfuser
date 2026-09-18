@@ -302,3 +302,61 @@ def test_short_nominal_fallback_requires_fresh_feasible_mppi_and_keeps_admission
     bad = plan.xy_m.copy(); bad[15] += [4., 0.]
     with pytest.raises(ValueError, match='DISCONTINUITY'):
         mppi_nominal_control(TimePlan('bad', pose, bad), pose, **kwargs)
+
+
+def test_first_feasible_path_is_used_without_a_second_blockage_confirmation():
+    p = planned()
+    p.update(path_blocked=False, nearest_path_obstacle_m=None)
+    assert command(p)['mode'] == 'AVOID'
+
+
+def test_recorded_failure_has_a_physical_rollout_and_obstacle_updates_still_stop():
+    fixture = Path(__file__).parent/'fixtures/slam_mppi/partial05_first_failure.npz'
+    with np.load(fixture) as d:
+        solver = ReferenceMppi()
+        out = solver.solve(d['reference_world'], d['base_pose'], d['values'], d['origin_xy_m'], float(d['resolution_m']))
+        assert out['trajectory_family'] == 'curvature_rollout'
+        path = np.asarray(out['path_world_xy_m'])
+        np.testing.assert_allclose(path[0], d['base_pose'][:2], atol=1e-9)
+        segments = np.diff(path, axis=0)
+        lengths = np.linalg.norm(segments, axis=1)
+        yaw = np.unwrap(np.arctan2(segments[:, 1], segments[:, 0]))
+        assert np.max(np.abs(np.diff(yaw)/(.5*(lengths[:-1]+lengths[1:])))) <= np.tan(.3)/1.2
+        blocked = np.full_like(d['values'], -1)
+        with pytest.raises(ValueError, match='NO_FEASIBLE_PATH'):
+            solver.solve(d['reference_world'], d['base_pose'], blocked, d['origin_xy_m'], float(d['resolution_m']))
+
+
+def test_short_rolling_timepath_continues_avoidance_and_rejoins_in_ideal_plant():
+    _, grid, origin = scene(False)
+    grid[79:, :] = 100; grid[:45, :] = 100; grid[65:68, 71:74] = 100
+    g = SimpleNamespace(values=grid, origin=origin/.2, resolution_m=.2)
+    planner = AvoidancePlanner(); pose = np.zeros(3); used_rollout = False
+    for i in range(220):
+        # A moving 3.8 m prediction, rather than the old 25 m ideal fixture.
+        ref = np.column_stack((np.linspace(pose[0], pose[0]+3.8, 30), np.zeros(30)))
+        stamp = 1_000_000_000+i*100_000_000
+        p = packet(bool(pose[0] < 8.), stamp); p['base_pose_xyyaw'] = pose.tolist()
+        p['mppi'] = planner.update(p, ref, g)
+        used_rollout |= p['mppi'].get('trajectory_family') == 'curvature_rollout'
+        out = command(p, now_sim_ns=stamp, now_wall_ns=stamp, receipt_ns=stamp,
+                      scan_wheel_pose=pose, current_wheel_pose=pose, target_mps=1., acceleration_mps2=0.)
+        assert out['mode'] != 'STOP', (i, pose, out['reason'])
+        if out['mode'] == 'NOMINAL':
+            assert used_rollout and pose[0] > 8. and abs(pose[1]) <= .25
+            break
+        k = np.tan(out['steer_rad'])/effective_response_length(1., 'awsim_understeer_v1')
+        pose[:2] += .1*np.array([np.cos(pose[2]+.05*k), np.sin(pose[2]+.05*k)])
+        pose[2] += .1*k
+        body = np.array([[-.6,-.7],[-.6,.7],[1.8,-.7],[1.8,.7]])
+        corners = transform(body, pose)
+        assert corners[:, 1].min() > -5. and corners[:, 1].max() < 1.8
+        box = np.array([[6.2,-1.], [6.8,-1.], [6.8,-.4], [6.2,-.4]])
+        axes = np.array([[1.,0.], [0.,1.], [np.cos(pose[2]),np.sin(pose[2])],
+                         [-np.sin(pose[2]),np.cos(pose[2])]])
+        vehicle_projection, box_projection = corners@axes.T, box@axes.T
+        separated = ((vehicle_projection.max(axis=0) < box_projection.min(axis=0))
+                     | (box_projection.max(axis=0) < vehicle_projection.min(axis=0)))
+        assert separated.any(), 'vehicle rectangle intersects the box'
+    else:
+        pytest.fail('short-horizon avoidance did not rejoin in 22 simulated seconds')

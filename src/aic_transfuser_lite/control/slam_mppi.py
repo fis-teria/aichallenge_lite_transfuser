@@ -57,6 +57,8 @@ class ReferenceMppi:
         self.side = 0
         self.diagnostics: list[dict[str, int]] = []
         self.mean = np.zeros(4)
+        self.rollout_mean = np.zeros(4)
+        self.rollout_active = False
 
     def solve(self, reference_world: np.ndarray, base_pose: np.ndarray,
               values: np.ndarray, origin_xy_m: np.ndarray, resolution_m: float) -> dict[str, Any]:
@@ -116,6 +118,10 @@ class ReferenceMppi:
             # Join from the actual pose with zero endpoint derivative; retain
             # the original reference endpoint and recheck all geometry.
             paths += (1-3*u**2+2*u**3)[None, :, None]*start_correction
+            return evaluate_paths(paths)
+
+        def evaluate_paths(paths: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+            offset = np.sum((paths-guide[None])*normals[None], axis=2)
             segments = np.diff(paths, axis=1)
             distances = np.linalg.norm(segments, axis=2)
             yaw = np.unwrap(np.arctan2(segments[:, :, 1], segments[:, :, 0]), axis=1)
@@ -124,6 +130,7 @@ class ReferenceMppi:
                      & (np.abs(curvature).max(axis=1) <= math.tan(.3)/1.2)
                      & (distances.min(axis=1) > .01) & (distances.max(axis=1) <= .2)
                      & (np.abs(np.diff(yaw, axis=1)).max(axis=1) < .1))
+            valid &= np.all(np.cos(yaw-headings[:-1]) > 0., axis=1)
             if self.side:
                 valid &= np.mean(offset, axis=1)*self.side >= -.05
             geometric_valid = valid.copy()
@@ -149,7 +156,7 @@ class ReferenceMppi:
 
         mean = self.mean.copy()
         best = None
-        for iteration in range(3):
+        for iteration in range(0 if self.rollout_active else 3):
             noise = self.rng.normal(size=(256, 4))*[1.8/(1+iteration*.3), 1., 1.2, .25]
             samples = mean+noise
             samples[128:, 2:] = 0.  # Preserve explicit rejoining candidates.
@@ -171,7 +178,60 @@ class ReferenceMppi:
             weights /= weights.sum()
             mean += np.sum(weights[:, None]*(samples[finite]-mean), axis=0)
         if best is None:
-            raise ValueError('MPPI_NO_FEASIBLE_PATH')
+            # A noisy model polyline can inject curvature into every lateral
+            # perturbation. Generate physical curvature rollouts from ego pose
+            # instead, using the model only as a spatial tracking cost.
+            mean_k = self.rollout_mean.copy()
+            limit = .999*math.tan(.3)/1.2
+            ds = float(stations[1]-stations[0])
+            knot_s = np.linspace(0., length, 4)
+            mid_s = .5*(stations[1:]+stations[:-1])
+            weights_k = np.column_stack([np.interp(mid_s, knot_s, np.eye(4)[j]) for j in range(4)])
+
+            def rollout(controls: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+                curvature = controls @ weights_k.T
+                angle = np.cumsum(curvature*ds, axis=1)
+                midpoint = angle-.5*curvature*ds
+                steps = ds*np.stack((np.cos(midpoint), np.sin(midpoint)), axis=2)
+                paths = np.concatenate((np.zeros((len(controls), 1, 2)), np.cumsum(steps, axis=1)), axis=1)
+                return evaluate_paths(paths)
+
+            fallback = None
+            for iteration in range(3):
+                controls = np.clip(mean_k+self.rng.normal(0., .16/(1+.3*iteration), (256, 4)), -limit, limit)
+                controls[0] = mean_k
+                for j, k in enumerate(np.linspace(-limit, limit, 21), start=1):
+                    controls[j] = k
+                # Include transitions from turning to straight / countersteer.
+                for j, k in enumerate(np.linspace(-limit, limit, 9), start=22):
+                    controls[j] = [k, k, 0., 0.]
+                    controls[j+9] = [k, k, -k, -k]
+                costs, paths = rollout(controls)
+                finite = np.isfinite(costs)
+                if not finite.any():
+                    continue
+                i = int(np.argmin(costs))
+                if fallback is None or costs[i] < fallback[0]:
+                    fallback = (float(costs[i]), paths[i], controls[i].copy())
+                w = np.exp(-(costs[finite]-costs[finite].min())/.35); w /= w.sum()
+                mean_k = np.sum(w[:, None]*controls[finite], axis=0)
+            if fallback is None:
+                raise ValueError('MPPI_NO_FEASIBLE_PATH')
+            costs, paths = rollout(mean_k[None])
+            if np.isfinite(costs[0]) and costs[0] < fallback[0]:
+                fallback = (float(costs[0]), paths[0], mean_k.copy())
+            self.rollout_mean = fallback[2].copy()
+            self.rollout_active = True
+            selected_local = inverse_transform(fallback[1], base)
+            selected_offsets = np.sum((selected_local-guide)*normals, axis=1)
+            largest = selected_offsets[np.argmax(np.abs(selected_offsets))]
+            if abs(largest) > .3:
+                self.side = 1 if largest > 0 else -1
+            return dict(path_world_xy_m=fallback[1].tolist(), target_speed_mps=SPEED_MPS,
+                cost=fallback[0], weighted_path_rechecked=True,
+                samples=sum(d['samples'] for d in self.diagnostics if d['samples'] > 1),
+                reference_horizon_m=length, terminal_offset_m=float(selected_offsets[-1]),
+                candidate_diagnostics=self.diagnostics, trajectory_family='curvature_rollout')
         costs, paths = evaluate(mean[None])
         if np.isfinite(costs[0]) and costs[0] < best[0]:
             best = (float(costs[0]), paths[0], mean.copy())
@@ -184,7 +244,7 @@ class ReferenceMppi:
         return dict(path_world_xy_m=best[1].tolist(), target_speed_mps=SPEED_MPS,
                     cost=best[0], weighted_path_rechecked=True, samples=768,
                     reference_horizon_m=length, terminal_offset_m=float(selected_offsets[-1]),
-                    candidate_diagnostics=self.diagnostics)
+                    trajectory_family='reference_offset', candidate_diagnostics=self.diagnostics)
 
 
 class AvoidancePlanner:
@@ -276,7 +336,8 @@ class AvoidancePlanner:
             fi = int(np.argmin(fresh_distance))
             fresh_aligned = fresh_distance[fi] <= .25 and abs(math.atan2(fresh_delta[fi, 1], fresh_delta[fi, 0])) <= .15
             if stamp-self.clear_since_ns >= 500_000_000 and aligned and fresh_aligned and fresh_length >= 3.:
-                self.active = False; self.solver.side = 0; self.solver.mean.fill(0.)
+                self.active = False; self.solver.side = 0; self.solver.mean.fill(0.); self.solver.rollout_mean.fill(0.)
+                self.solver.rollout_active = False
         if not self.active:
             return dict(result, mode='NOMINAL', reason='CLEAR')
         try:
