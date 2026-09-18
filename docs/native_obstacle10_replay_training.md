@@ -52,3 +52,19 @@ WSLの全pytestは3,262 passed / 4 skipped（128.37秒）。初回起動はソ�
 使用する`training/native_fit_v1.py`の新規追加だけで、今回の学習経路からは参照しない。
 モデル・入力・既存損失・旧設定が同一であることを確認して、今回のソースガード基準を
 `dfe2cfa89417d84c87343522f3694bee4246cd3d`に更新した。ガード自体は維持する。
+
+## 統合・学習開始確認
+
+実行ソースcommitは`66f6b84890230ac4e6fa85ba9bf1611ccc0fb66b`。
+全442窓の原本履歴・教師再現が成功し、`PREPARATION_PASS`を確認。
+旧60,608提示（うち復帰20,930提示）を維持し、合計65,028提示/epochになった。
+WSL GPUでepoch 1の50 optimizer steps以上が進行したことを確認した。
+この記録は開始時点であり、学習完了・保持判定・回避性能改善の証拠ではない。
+
+プロセスは専用shellで切断後も継続し、3 epochの学習後に既存の比較評価を実行する。
+標準ログは`/home/thistle/e2e_autonomous/runs/native_obstacle10_replay_20260918.log`、
+終了コードは同じprefixの`.exit`。最大実行時間10,800秒。
+
+[準備証跡](evidence/native_obstacle10_replay_20260918/preparation-proof.json)、
+[開始時status](evidence/native_obstacle10_replay_20260918/start-status.json)、
+[pytest結果](evidence/native_obstacle10_replay_20260918/pytest.log)。
