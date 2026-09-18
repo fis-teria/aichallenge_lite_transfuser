@@ -1,0 +1,12 @@
+# Scenario setup only; this pose is never provided to TimePath or SLAM.
+schemaVersion: 2
+name: slam_mppi_single_box
+description: Low-speed TimePath local SLAM MPPI single static box trial
+fail:
+  collision: 1
+  timeoutSeconds: 120
+objects:
+  box:
+    - name: mppi_box_center
+      at: [359.3672, -15.9015]
+      yaw: -126.5927
