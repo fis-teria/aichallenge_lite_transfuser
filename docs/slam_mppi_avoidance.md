@@ -232,3 +232,13 @@ make dev DEV_CONTROLLER=time MAX_SPEED_KMH=20 CORNER_MAX_SPEED_KMH=15 TIME_SLAM_
 ```
 
 試験結果は同日のartifactへ別記する。5 km/hでの通過実績を15 km/h回避成功と解釈しない。
+
+`speed15-01`実測結果（code `ef076e824323453da6af704609d337bf194b4ba0`）:
+WSL全体3310 passed / 4 skipped、公式ROS source/install 257ファイル一致。
+箱通過と通常追従復帰を確認。全体最大15.116 km/h、全MPPI区間最大12.158 km/h、
+最初の箱の回避区間は最大6.588 km/hであり、15 km/hでの箱回避は未達。
+箱回避参照は3.579〜6.566 mで、15 km/h停止条件（1 m予備含む約12.16 m）には不足。
+後半は通常TimePathの予測範囲が3.741 mから1.203 mへ縮み、目標速度0へ低下。
+追従点不足・予測の後退/形状異常が続いて`PROGRESS_STALLED / STOPPED_NO_LAP`で終了した。
+予測縮小の学習・入力上の根本原因は未確定。RViz 115.6秒、AWSIM 115.1秒を保存し、
+全デコード・SHA-256一致を確認。詳細は`artifacts/slam_mppi_awsim_20260919/speed15-01/README.md`。
