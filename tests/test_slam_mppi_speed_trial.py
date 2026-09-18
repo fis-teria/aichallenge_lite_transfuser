@@ -31,7 +31,7 @@ def test_configuration_and_launcher_keep_real_stop_guard():
     validate_trial_config(c)
     args = make_command(source=Path('/src'), deployment=Path('/runtime'), run_id='codex-time-fast',
                         display=':1', speeds=TimeDevSpeeds(20., 15.), record_video=True, slam_mppi=True)
-    assert 'configs/control/time_path_slam_mppi_20_15_15.json' in args
+    assert 'configs/control/time_path_slam_mppi_20_15_15_recovery.json' in args
     assert '--record-video' in args
     for key, value in [('scan_occupancy_policy', 'log_only_awsim_v1'),
                        ('stopping_distance_policy', 'awsim_cap_1m_diagnostic_v1'),

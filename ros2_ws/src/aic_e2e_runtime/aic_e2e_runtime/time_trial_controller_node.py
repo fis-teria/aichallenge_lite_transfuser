@@ -23,6 +23,7 @@ from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPos
 from aic_transfuser_lite.control.time_dev_v1 import configured_dev_speeds
 from aic_transfuser_lite.control.slam_slowdown import SlamSlowdown, validate_slam_slowdown_policy
 from aic_transfuser_lite.control.slam_mppi import avoidance_command, validate_slam_mppi_policy, mppi_nominal_control
+from aic_transfuser_lite.control.time_path_recovery import validate_recovery_policy
 from aic_transfuser_lite.control.time_trial_v1 import (
     SPEED_POLICIES, interpolate_body_pose, time_trial_control, trial_speed_limits, validate_trial_config,
 )
@@ -66,6 +67,7 @@ def main() -> None:
     scan_occupancy_policy = 'stop_v1'
     slam_slowdown_policy = 'off'
     slam_mppi_policy = 'off'
+    runtime_recovery_enabled = False
     speed_policy = args.speed_policy or "source_capped_0p25"
     dev_speeds = None
     if args.trial_config is not None:
@@ -84,6 +86,7 @@ def main() -> None:
         scan_occupancy_policy = config.get('scan_occupancy_policy', 'stop_v1')
         slam_slowdown_policy = validate_slam_slowdown_policy(config)
         slam_mppi_policy = validate_slam_mppi_policy(config)
+        runtime_recovery_enabled = validate_recovery_policy(config) != 'off'
         if (config["checkpoint_sha256"] != args.checkpoint_sha256
                 or config["geometry"]["rear_axle_forward_in_base_link_m"] != args.rear_axle_forward_m):
             raise ValueError("TRIAL_CONFIG_IDENTITY")
@@ -468,7 +471,8 @@ def main() -> None:
                                                   speed_policy=speed_policy,
                                                   lookahead_policy=lookahead_policy,
                                                   vehicle_model_policy=vehicle_model_policy,
-                                                  **({'mppi_policy': slam_mppi_policy} if slam_mppi_policy != 'off' else {}),
+                                                  **({'mppi_policy': slam_mppi_policy, 'recovery_enabled': runtime_recovery_enabled}
+                                                     if slam_mppi_policy != 'off' else {}),
                                                   rear_axle_offset_m=(args.rear_axle_forward_m, 0.)))
                 steer = details["steer_rad"]; accel = details["acceleration_mps2"]; target = details["target_speed_mps"]
                 if slam_mppi_policy != 'off':
@@ -496,12 +500,14 @@ def main() -> None:
                         current_wheel_pose=np.array([current.x_m, current.y_m, current.yaw_rad]),
                         vehicle_model_policy=vehicle_model_policy,
                         mppi_policy=slam_mppi_policy,
+                        recovery_enabled=runtime_recovery_enabled,
+                        recovery_only=details.get('recovery_only', False),
                         nominal_tracking_unavailable=details.get('nominal_tracking_unavailable'))
                     details['slam_mppi'] = mppi
                     target, accel = mppi['target_speed_mps'], mppi['acceleration_mps2']
                     if mppi['mode'] == 'STOP':
                         raise ValueError('SLAM_MPPI_STOP:'+mppi['reason'])
-                    if mppi['mode'] == 'AVOID':
+                    if mppi['mode'] in ('AVOID', 'RECOVER'):
                         steer = mppi['steer_rad']; control_owner = 'SLAM_MPPI'
                 response_target, candidate_response_state, response = compensate_steering_response(
                     steer, clock_ns, response_state, policy=steering_policy)
@@ -566,7 +572,7 @@ def main() -> None:
             plan_id = plan.plan_id
             reason = ('RECOVERY_TEACHER_BOOTSTRAP' if control_owner == 'TEACHER_BOOTSTRAP'
                       else "TIME_PATH_TRACKING" if live else "SHADOW_CONTROL")
-            if details.get('slam_mppi', {}).get('mode') in ('AVOID', 'STOP'):
+            if details.get('slam_mppi', {}).get('mode') in ('AVOID', 'RECOVER', 'STOP'):
                 reason = 'SLAM_MPPI_'+details['slam_mppi']['mode']+':'+details['slam_mppi']['reason']
         except (ValueError, KeyError, TypeError) as exc:
             if checking_scan and str(exc) in ("STOPPING_CORRIDOR_OCCUPIED", "STOPPING_SWEEP_OCCUPIED") and not state["scan_rejection_recorded"]:

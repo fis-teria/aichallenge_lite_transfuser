@@ -29,7 +29,7 @@ def make_command(*, source: Path, deployment: Path, run_id: str, display: str,
         selected = (speeds.max_speed_kmh, speeds.corner_max_speed_kmh)
         if selected not in ((5., 5.), (20., 15.)) or npcs or pp_vehicles:
             raise ValueError('SLAM_MPPI_REQUIRES_5_5_OR_20_15_STATIC_SINGLE_EGO')
-        config = 'time_path_slam_mppi_20_15_15.json' if selected == (20., 15.) else 'time_path_slam_mppi.json'
+        config = 'time_path_slam_mppi_20_15_15_recovery.json' if selected == (20., 15.) else 'time_path_slam_mppi.json'
         return ['timeout', '--signal=TERM', '--kill-after=10s', '710s', sys.executable,
             str(source/'tools/run_time_path_awsim_trial.py'), '--deployment', str(deployment),
             '--run-id', run_id, '--display', display, '--config', 'configs/control/'+config,

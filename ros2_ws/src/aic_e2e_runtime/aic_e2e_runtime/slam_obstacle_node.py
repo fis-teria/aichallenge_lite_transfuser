@@ -14,6 +14,7 @@ prefer_canonical_source()
 import numpy as np
 from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
 from aic_transfuser_lite.control.slam_mppi import AvoidancePlanner, validate_slam_mppi_policy
+from aic_transfuser_lite.control.time_path_recovery import recoverable_geometry, validate_recovery_policy
 from aic_transfuser_lite.control.time_geometry_v2 import validate_time_geometry
 from aic_transfuser_lite.control.time_trial_v1 import interpolate_body_pose
 from aic_transfuser_lite.runtime.lidar_map_localization import transform
@@ -48,7 +49,9 @@ def main(argv: list[str] | None = None) -> None:
     mppi_config = json.loads((args.output/'trial_config.json').read_text()) if args.mppi else None
     if args.mppi and validate_slam_mppi_policy(mppi_config) == 'off':
         raise ValueError('MPPI_SIDECAR_CONFIG_REQUIRED')
-    avoidance = AvoidancePlanner(policy=mppi_config['slam_mppi_policy']) if args.mppi else None
+    recovery_enabled = args.mppi and validate_recovery_policy(mppi_config) != 'off'
+    avoidance = AvoidancePlanner(policy=mppi_config['slam_mppi_policy'], recovery_enabled=recovery_enabled) if args.mppi else None
+    wheel_speed_mps = 0.
     clock = None; clock_wall = 0; wheel_ns = None; wheel_wall = 0
     fatal = None; last_feed = -1; last_process_wall = 0; last_process_ns = None
     poses: deque[TimedBodyPose] = deque(maxlen=1024)
@@ -98,7 +101,7 @@ def main(argv: list[str] | None = None) -> None:
         clock = stamp
 
     def on_wheel(msg) -> None:
-        nonlocal wheel_ns, wheel_wall, fatal
+        nonlocal wheel_ns, wheel_wall, fatal, wheel_speed_mps
         if fatal or names('/time_path/wheel_odometry') != ['/time_path_controller']:
             return
         try:
@@ -110,6 +113,9 @@ def main(argv: list[str] | None = None) -> None:
             if not np.isfinite([msg.pose.pose.position.x, msg.pose.pose.position.y]).all():
                 raise ValueError('WHEEL_POSITION')
             wheel_ns = stamp; wheel_wall = time.monotonic_ns()
+            wheel_speed_mps = float(msg.twist.twist.linear.x)
+            if not math.isfinite(wheel_speed_mps):
+                raise ValueError('WHEEL_SPEED_NONFINITE')
             out = copy.deepcopy(msg); out.header.frame_id = 'time_slam_wheel_origin'
             out.child_frame_id = 'time_slam_lidar'
             out.pose.pose.position.x += 1.65*math.cos(angle)
@@ -158,7 +164,11 @@ def main(argv: list[str] | None = None) -> None:
                     or packet.get('clock') != 'sim' or packet.get('dt_s') != .1):
                 raise ValueError('MPPI_MODEL_IDENTITY')
             if args.mppi:
-                validate_time_geometry(xy)
+                try:
+                    validate_time_geometry(xy)
+                except ValueError as exc:
+                    if not recovery_enabled or not recoverable_geometry(xy, str(exc)):
+                        raise
             plans.append((packet, time.monotonic_ns()))
         except (ValueError, KeyError, TypeError) as exc:
             plans.clear()
@@ -200,10 +210,15 @@ def main(argv: list[str] | None = None) -> None:
                     path_world = transform(xy, body_pose); plan_observation_ns = plan['observation_ns']
                 break
         detection_path = path_world
+        if avoidance is not None and recovery_enabled:
+            base_pose = np.array([p[0]-1.65*math.cos(p[2]), p[1]-1.65*math.sin(p[2]), p[2]])
+            detection_path = avoidance.prepare_reference(path_world, base_pose, stamp, wheel_speed_mps,
+                                                          source_stamp_ns=plan_observation_ns)
         if path_world is not None and avoidance is not None:
-            if avoidance.active and avoidance.reference_world is not None:
+            recovering = recovery_enabled and avoidance.recovery_decision['mode'] != 'NOMINAL'
+            if not recovering and avoidance.active and avoidance.reference_world is not None:
                 detection_path = avoidance.reference_world
-            elif np.linalg.norm(np.diff(path_world, axis=0), axis=1).max() <= .01:
+            elif not recovering and np.linalg.norm(np.diff(path_world, axis=0), axis=1).max() <= .01:
                 detection_path = None
         state = detector.update(stamp, scan.ranges, scan.angle_min, scan.angle_increment,
                                 scan.range_min, scan.range_max, p, detection_path)
@@ -273,7 +288,7 @@ def main(argv: list[str] | None = None) -> None:
         path = RosPath(); path.header = tr.header
         if path_world is not None:
             displayed = (state['mppi']['path_world_xy_m'] if avoidance is not None
-                         and state['mppi']['mode'] == 'AVOID' else path_world)
+                         and state['mppi']['mode'] in ('AVOID', 'RECOVER') else path_world)
             for x, y in displayed:
                 point = PoseStamped(); point.header = tr.header
                 point.pose.position.x = float(x); point.pose.position.y = float(y); point.pose.orientation.w = 1.

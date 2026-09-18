@@ -12,6 +12,8 @@ import numpy as np
 
 from .slam_slowdown import SlamSlowdown
 from .vehicle_motion_v1 import effective_response_length
+from .time_path_recovery import (RECOVERY_POLICY, RECOVERY_SPEED_MPS, RetainedPathRecovery,
+                                 recoverable_geometry, validate_recovery_policy)
 
 POLICY = 'slam_reference_mppi_v1'
 FAST_POLICY = 'slam_reference_mppi_15kmh_trial_v1'
@@ -19,6 +21,7 @@ SPEED_MPS = 5. / 3.6
 
 
 def validate_slam_mppi_policy(config: dict[str, Any]) -> str:
+    validate_recovery_policy(config)
     policy = config.get('slam_mppi_policy', 'off')
     if policy not in ('off', POLICY, FAST_POLICY):
         raise ValueError('SLAM_MPPI_POLICY')
@@ -281,9 +284,12 @@ class ReferenceMppi:
 
 class AvoidancePlanner:
     """Hold side until fresh clearance, never reuse a path without rechecking."""
-    def __init__(self, *, policy: str = POLICY) -> None:
+    def __init__(self, *, policy: str = POLICY, recovery_enabled: bool = False) -> None:
         self.policy = policy
         self.solver = ReferenceMppi(policy=policy)
+        self.recovery = RetainedPathRecovery() if recovery_enabled else None
+        self.recovery_solver = ReferenceMppi(policy=policy) if recovery_enabled else None
+        self.recovery_decision: dict[str, Any] | None = None
         self.active = False
         self.clear_since_ns: int | None = None
         self.last_stamp_ns: int | None = None
@@ -291,6 +297,15 @@ class AvoidancePlanner:
         self.reference_updated_ns: int | None = None
         self.last_reference_world: np.ndarray | None = None
         self.blocking_world: np.ndarray | None = None
+
+    def prepare_reference(self, fresh: np.ndarray | None, pose: np.ndarray, stamp_ns: int,
+                          speed_mps: float, *, source_stamp_ns: int | None = None) -> np.ndarray | None:
+        """Select detection reference; update() still checks the current grid."""
+        if self.recovery is None:
+            return fresh
+        self.recovery_decision = self.recovery.select(fresh, pose, stamp_ns, speed_mps,
+                                                      avoidance_active=self.active, source_stamp_ns=source_stamp_ns)
+        return self.recovery_decision['reference_world']
 
     def _reference(self, fresh: np.ndarray, stamp: int, base_pose: np.ndarray | None = None) -> np.ndarray:
         """Retain observed spatial intent for at most 10 s without extension.
@@ -353,6 +368,25 @@ class AvoidancePlanner:
         if self.last_stamp_ns is not None and stamp-self.last_stamp_ns > 350_000_000:
             self.clear_since_ns = None
         self.last_stamp_ns = stamp
+        decision = self.recovery_decision
+        if self.recovery is not None:
+            if decision is None or decision['stamp_ns'] != stamp:
+                return dict(result, reason='RECOVERY_PREPARATION_REQUIRED')
+            result['recovery'] = {k: v for k, v in decision.items() if k != 'reference_world'}
+        if self.recovery is not None and decision is not None and decision['mode'] != 'NOMINAL':
+            meta = {k: v for k, v in decision.items() if k != 'reference_world'}
+            if decision['mode'] == 'STOP':
+                return dict(result, reason=decision['reason'], recovery=meta)
+            if (observation.get('input_valid') is not True or observation.get('path_valid') is not True
+                    or observation.get('path_blocked') is not False):
+                return dict(result, reason='RECOVERY_OBSERVATION_OR_OCCUPANCY', recovery=meta)
+            try:
+                plan = self.recovery_solver.solve(decision['reference_world'], np.asarray(observation['base_pose_xyyaw']),
+                    grid.values, grid.origin*grid.resolution_m, grid.resolution_m)
+            except ValueError as exc:
+                return dict(result, reason=str(exc), recovery=meta)
+            plan['target_speed_mps'] = min(RECOVERY_SPEED_MPS, plan['target_speed_mps'])
+            return dict(result, **plan, mode='RECOVER', reason='RETAINED_PATH_RECOVERY', recovery=meta)
         if reference_world is None or observation.get('path_valid') is not True:
             self.clear_since_ns = None
             return result
@@ -405,7 +439,8 @@ class AvoidancePlanner:
         return result
 
 
-def mppi_nominal_control(plan: Any, current: Any, *, mppi_policy: str = POLICY, **kwargs: Any) -> dict[str, Any]:
+def mppi_nominal_control(plan: Any, current: Any, *, mppi_policy: str = POLICY,
+                         recovery_enabled: bool = False, **kwargs: Any) -> dict[str, Any]:
     """Permit fresh validated MPPI to replace an unavailable nominal lookahead.
 
     This produces no authority by itself: avoidance_command must reject NOMINAL
@@ -419,10 +454,12 @@ def mppi_nominal_control(plan: Any, current: Any, *, mppi_policy: str = POLICY, 
     try:
         return time_trial_control(plan, current, **kwargs)
     except ValueError as exc:
-        if str(exc) not in ('STEERING_FEASIBLE_LOOKAHEAD_MISSING', 'TIME_PATH_MOTION_UNRESOLVED',
+        recovery_only = recovery_enabled and recoverable_geometry(plan.xy_m, str(exc))
+        if not recovery_only and str(exc) not in ('STEERING_FEASIBLE_LOOKAHEAD_MISSING', 'TIME_PATH_MOTION_UNRESOLVED',
                             'NO_FORWARD_REFERENCE', 'REFERENCE_STOPPING_DISTANCE', 'REFERENCE_TIME_PREVIEW_DISTANCE'):
             raise
-        return dict(nominal_tracking_unavailable=str(exc), steer_rad=0., target_speed_mps=SPEED_MPS,
+        return dict(nominal_tracking_unavailable=str(exc), recovery_only=recovery_only,
+                    steer_rad=0., target_speed_mps=SPEED_MPS,
                     acceleration_mps2=float(np.clip(2*(SPEED_MPS-kwargs['speed_mps']), -1., .5)))
 
 
@@ -431,7 +468,8 @@ def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_vali
                       speed_mps: float, target_mps: float, acceleration_mps2: float, dt_s: float,
                       scan_wheel_pose: np.ndarray | None, current_wheel_pose: np.ndarray,
                       vehicle_model_policy: str, nominal_tracking_unavailable: str | None = None,
-                      mppi_policy: str = POLICY) -> dict[str, Any]:
+                      mppi_policy: str = POLICY, recovery_enabled: bool = False,
+                      recovery_only: bool = False) -> dict[str, Any]:
     """Admit atomic SLAM+MPPI packet; PP physical tire rad, no actuator authority.
 
     Poses are [x m,y m,yaw rad]. scan_wheel_pose MUST be interpolated at the
@@ -450,10 +488,23 @@ def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_vali
     try:
         plan = packet['mppi']
         if (plan['policy'] != mppi_policy or plan['stamp_ns'] != packet['stamp_ns']
-                or plan['frame'] != 'time_slam_map' or plan['mode'] not in ('STOP', 'NOMINAL', 'AVOID')):
+                or plan['frame'] != 'time_slam_map' or plan['mode'] not in ('STOP', 'NOMINAL', 'AVOID', 'RECOVER')):
             raise ValueError('MPPI_PLAN_IDENTITY')
         if plan['mode'] == 'STOP':
             return dict(result, reason=plan['reason'])
+        recovering = plan['mode'] == 'RECOVER'
+        if recovery_only and not recovering:
+            raise ValueError('RECOVERY_PLAN_REQUIRED')
+        if recovering:
+            meta = plan['recovery']
+            if (not recovery_enabled or meta['policy'] != RECOVERY_POLICY
+                    or type(meta['attempts']) is not int or not 1 <= meta['attempts'] <= 2
+                    or type(meta['started_ns']) is not int or not 0 <= now_sim_ns-meta['started_ns'] < 6_000_000_000
+                    or type(meta['reference_source_stamp_ns']) is not int
+                    or not 0 <= now_sim_ns-meta['reference_source_stamp_ns'] <= 10_000_000_000
+                    or not math.isfinite(meta['travelled_m']) or not 0 <= meta['travelled_m'] < 2.5
+                    or packet['path_blocked']):
+                raise ValueError('RECOVERY_PACKET_CONTRACT')
         if plan['mode'] == 'NOMINAL':
             if nominal_tracking_unavailable is not None:
                 raise ValueError('MPPI_NOMINAL_UNAVAILABLE:'+nominal_tracking_unavailable)
@@ -462,13 +513,13 @@ def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_vali
             return dict(result, mode='NOMINAL', reason='CLEAR', target_speed_mps=target_mps,
                         acceleration_mps2=acceleration_mps2)
         planned_speed = plan.get('target_speed_mps')
-        ceiling = 15/3.6 if mppi_policy == FAST_POLICY else SPEED_MPS
+        ceiling = RECOVERY_SPEED_MPS if recovering else 15/3.6 if mppi_policy == FAST_POLICY else SPEED_MPS
         if (type(planned_speed) not in (int, float) or not math.isfinite(planned_speed)
                 or not 0 < planned_speed <= ceiling):
             raise ValueError('MPPI_TARGET_SPEED')
         if speed_mps > planned_speed+1/3.6:
             return dict(result, reason='MPPI_DECELERATE_BEFORE_AVOIDANCE')
-        if target_mps <= .05:
+        if not recovering and target_mps <= .05:
             return dict(result, reason='MPPI_MODEL_STOP')
         base, scan, current = (np.asarray(p, dtype=float) for p in
                               (packet['base_pose_xyyaw'], scan_wheel_pose, current_wheel_pose))
@@ -476,7 +527,7 @@ def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_vali
         if (any(p.shape != (3,) or not np.isfinite(p).all() for p in (base, scan, current))
                 or path.ndim != 2 or path.shape[1:] != (2,) or not 3 <= len(path) <= 170
                 or not np.isfinite(path).all() or plan['weighted_path_rechecked'] is not True
-                or (mppi_policy == POLICY and planned_speed != SPEED_MPS)
+                or (not recovering and mppi_policy == POLICY and planned_speed != SPEED_MPS)
                 or np.linalg.norm(path[0]-base[:2]) > .01):
             raise ValueError('MPPI_PATH_CONTRACT')
         if planned_speed > path_speed_limit(path, mppi_policy)+1e-9:
@@ -488,7 +539,7 @@ def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_vali
         if available < .4+.5*max(0., speed_mps)+max(0., speed_mps)**2/2:
             raise ValueError('MPPI_REFERENCE_STOPPING_DISTANCE')
         distances = np.linalg.norm(local, axis=1)
-        preview = max(1., .4+1.5*max(0., speed_mps)) if mppi_policy == FAST_POLICY else 1.
+        preview = max(1., .4+1.5*max(0., speed_mps)) if mppi_policy == FAST_POLICY and not recovering else 1.
         candidates = np.flatnonzero((local[:, 0] > 0) & (distances >= preview) & (distances <= preview+1.5))
         if not len(candidates):
             raise ValueError('MPPI_TRACKING_LOOKAHEAD')
@@ -499,7 +550,11 @@ def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_vali
         if not len(feasible):
             raise ValueError('MPPI_TRACKING_STEERING')
         tire = float(tires[feasible[0]])
-        target = min(target_mps, planned_speed)
+        target = planned_speed if recovering else min(target_mps, planned_speed)
+        if recovering:
+            return dict(result, mode='RECOVER', reason='RETAINED_PATH_TRACKING', steer_rad=tire,
+                        target_speed_mps=target, acceleration_mps2=float(np.clip(2*(target-max(0., speed_mps)), -1., .5)),
+                        recovery=plan['recovery'])
         return dict(result, mode='AVOID', reason='MPPI_TRACKING', steer_rad=tire,
                     target_speed_mps=target, acceleration_mps2=min(acceleration_mps2,
                         max(-1., min(.5, 2*(target-max(0., speed_mps))))))
