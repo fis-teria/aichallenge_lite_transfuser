@@ -34,3 +34,21 @@ Use the existing `collect_mppi_v45.py` with `--rviz --wall-timeout-s 480
 scenario and runtime identity, transfer with all-file hash verification, and reject
 collision, drift or incomplete approach/pass/recovery events before adding labels.
 AWSIM binaries/assets are unchanged. New collection does not enter this comparison.
+
+The curation tool also supports verified single-object collection without changing
+the original twelve-object default. Run/scenario split membership is preserved;
+validation/test placements cannot be admitted by the train curation path.
+
+```bash
+bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python tools/curate_native_teacher_data.py \
+  --root /home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918 \
+  --output /home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/front_curated_v1 \
+  --run-pattern 'lidar-v45-pc10-front-*' \
+  --prefix-directory front_pose_prefix_v1 --clearance-directory front_prefix_clearance_v1
+```
+
+This command requires prior pose-prefix and clearance audits. An absent object
+kind uses a finite 1e6 m sentinel; it does not bypass dynamic-box exclusion, the
+0.30 m clearance screen, the additional 0.30 m cone projection margin, or the
+full-history/future scan/map and teacher-command checks. Native box pose during
+motion remains unverified, so nearby box windows remain held.

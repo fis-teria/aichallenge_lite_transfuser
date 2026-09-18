@@ -67,6 +67,33 @@ def unique_series(rows: dict[int, Any]) -> tuple[np.ndarray, np.ndarray]:
     return times, np.asarray([rows[int(t)] for t in times])
 
 
+def placement_distances(placements: list[dict[str, Any]], pose: np.ndarray,
+                        hull: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Known native placements and [N,3] map poses -> box/cone/gap metres.
+
+    An absent object kind has the explicit finite sentinel 1e6 m, avoiding NaN
+    in downstream audit JSON. This is initial-placement geometry only; existing
+    dynamic-box exclusion and scan/map checks remain required.
+    """
+    pose = np.asarray(pose, float)
+    if (not placements or pose.ndim != 2 or pose.shape[1] != 3 or not np.isfinite(pose).all()
+            or any(p['object_type'] not in {'box', 'cone'} for p in placements)):
+        raise ValueError('native box/cone placements and finite [N,3] map poses required')
+    objects = {kind: np.asarray([p['map_pose'][:2] for p in placements if p['object_type'] == kind],
+                              float).reshape(-1, 2) for kind in ('box', 'cone')}
+    if any(not np.isfinite(v).all() for v in objects.values()):
+        raise ValueError('finite object map XY required')
+    values = np.full((len(pose), 3), 1e6, float)
+    for i, p in enumerate(pose):
+        body = transform(hull, p)
+        if len(objects['box']):
+            values[i, 0] = np.linalg.norm(objects['box'] - p[:2], axis=1).min()
+        if len(objects['cone']):
+            values[i, 1] = np.linalg.norm(objects['cone'] - p[:2], axis=1).min()
+            values[i, 2] = max(0., float(convex_point_distance(objects['cone'], body).min()) - .175)
+    return tuple(values[:, i] for i in range(3))
+
+
 def extract_evidence(bag: Path, low: int, high: int, placements: list[dict[str, Any]],
                      wall: cKDTree, hull: np.ndarray, config: NativeCurationConfig) -> dict[str, np.ndarray]:
     """Recorded pose/scan consistency; no pose correction or label regeneration."""
@@ -113,16 +140,7 @@ def extract_evidence(bag: Path, low: int, high: int, placements: list[dict[str, 
     if pose.shape != (len(pose_t), 3) or len(pose_t) < 2 or not np.isfinite(pose).all():
         raise ValueError('invalid recorded pose support')
     pose[:, 2] = np.unwrap(pose[:, 2])
-    objects = {kind: np.asarray([x['map_pose'][:2] for x in placements if x['object_type'] == kind], float)
-               for kind in ('box', 'cone')}
-    if any(v.shape != (6, 2) for v in objects.values()):
-        raise ValueError('expected six boxes and six static cones')
-    box_distance, cone_distance, cone_gap = [], [], []
-    for p in pose:
-        body = transform(hull, p)
-        box_distance.append(float(np.linalg.norm(objects['box'] - p[:2], axis=1).min()))
-        cone_distance.append(float(np.linalg.norm(objects['cone'] - p[:2], axis=1).min()))
-        cone_gap.append(max(0., float(convex_point_distance(objects['cone'], body).min()) - .175))
+    box_distance, cone_distance, cone_gap = placement_distances(placements, pose, hull)
     scan_t, registration = [], []
     for t, (ranges, amin, inc, rmin, rmax) in sorted(scans.items()):
         metrics = [0., 1e6, 0., 0., 0.]
@@ -165,14 +183,21 @@ def summarize_window(series: dict[str, np.ndarray], low: int, high: int,
                 wall_points_min=int(r[:, 3].min()), scan_span_min_rad=float(r[:, 4].min()))
 
 
-def curate(root: Path, output: Path, config: NativeCurationConfig = NativeCurationConfig()) -> dict[str, Any]:
+def curate(root: Path, output: Path, config: NativeCurationConfig = NativeCurationConfig(), *,
+           run_pattern: str = 'lidar-v45-pc10-corners-native-*',
+           prefix_directory: str = 'pose_prefix_v2',
+           clearance_directory: str = 'native_prefix_clearance_v2') -> dict[str, Any]:
     root, output = root.resolve(), output.resolve()
-    if output.exists() or output.is_relative_to(root / 'collected') or output.is_relative_to(root / 'pose_prefix_v2'):
+    if any('/' in s or '\\' in s or s in {'', '.', '..'} for s in
+           (run_pattern, prefix_directory, clearance_directory)):
+        raise ValueError('single relative directory names and basename glob required')
+    if output.exists() or any(output.is_relative_to(root / p) for p in
+                             ('collected', prefix_directory, clearance_directory)):
         raise ValueError('new output directory outside original data required')
     tree, hull, map_hashes = load_wall_map(root)
     output.mkdir(parents=True)
     summaries: list[dict[str, Any]] = []
-    for prefix in sorted((root / 'pose_prefix_v2').glob('lidar-v45-pc10-corners-native-*')):
+    for prefix in sorted((root / prefix_directory).glob(run_pattern)):
         run = prefix.name; collected = root / 'collected' / run; target = output / run; target.mkdir()
         quality = json.loads((prefix / 'pose_prefix.json').read_text())
         for file, digest in quality['output_sha256'].items():
@@ -183,7 +208,7 @@ def curate(root: Path, output: Path, config: NativeCurationConfig = NativeCurati
                 or quality['interpolation_endpoint_guard_ns'] > config.endpoint_guard_ns
                 or any(r['epoch'] != quality['epoch'] for r in rows)):
             raise ValueError('prefix time horizon, support or epoch contract mismatch')
-        clearance = root / 'native_prefix_clearance_v2' / run
+        clearance = root / clearance_directory / run
         prior = json.loads((clearance / 'summary.json').read_text())
         identity = dict(pose_prefix_sha256=sha(prefix / 'pose_prefix.json'), clearance_summary_sha256=sha(clearance / 'summary.json'))
         if not rows:
@@ -199,8 +224,10 @@ def curate(root: Path, output: Path, config: NativeCurationConfig = NativeCurati
             raise ValueError('scenario metadata checksum mismatch')
         placements = json.loads((collected / metadata_path).read_text())['locations']
         groups = sorted({p['split_group'] for p in placements})
-        if len(groups) != 1 or any(p['split'] != 'unassigned' for p in placements):
+        source_splits = {p['split'] for p in placements}
+        if len(groups) != 1 or len(source_splits) != 1 or not source_splits.issubset({'unassigned', 'train'}):
             raise ValueError('respect existing scenario split before curation')
+        source_split = next(iter(source_splits))
         if any(x['count'] for x in prior['official_penalties'].values()):
             raise ValueError('nonzero official penalties require time-local contact review')
         bag, bag_hashes = verified_bag(collected, run)
@@ -229,7 +256,7 @@ def curate(root: Path, output: Path, config: NativeCurationConfig = NativeCurati
                 findings=check['findings'],evidence=evidence,config=config)
             decisions.append(dict(anchor_id=row['anchor_id'],run_id=run,epoch=row['epoch'],
                 source_prefix_index=i,source_label_index=row['source_label_index'],observation_ns=t,
-                split_group=groups[0],split='unassigned',window_ns=[lo,hi],evidence=evidence,**decision))
+                split_group=groups[0],split=source_split,window_ns=[lo,hi],evidence=evidence,**decision))
         eligible = np.asarray([r['selected'] for r in decisions],dtype=bool)
         indices = spaced_indices(arrays['observation_ns'],eligible,config.minimum_anchor_spacing_ns)
         chosen = set(indices.tolist())
@@ -240,7 +267,7 @@ def curate(root: Path, output: Path, config: NativeCurationConfig = NativeCurati
                     row['disposition'] = 'eligible_thinned';row['reasons'] = ['TEMPORAL_THINNING_ONLY']
                 stream.write(json.dumps(row,allow_nan=False,separators=(',',':'))+'\n')
         selected_rows = [dict(rows[i],label_index=j,source_prefix_index=int(i),
-            selection_use=decisions[i]['use'],split_group=groups[0],split='unassigned',
+            selection_use=decisions[i]['use'],split_group=groups[0],split=source_split,
             allowed_targets=['xy_m','velocity_mps'],stop_label_valid=False,mode_label_valid=False,
             curation_evidence=decisions[i]['evidence']) for j,i in enumerate(indices)]
         with (target / 'selected_anchors.jsonl').open('x') as stream:
@@ -253,7 +280,7 @@ def curate(root: Path, output: Path, config: NativeCurationConfig = NativeCurati
         summary = dict(run_id=run,source_camera_anchors=quality['camera_anchors'],prefix_candidates=len(rows),
             eligible=int(eligible.sum()),selected=len(indices),hold=count['hold'],exclude=count['exclude'],
             eligible_thinned=count['eligible_thinned'],uses=dict(Counter(r['selection_use'] for r in selected_rows)),
-            reasons=dict(reasons),split_group=groups[0],split='unassigned',identity=identity,
+            reasons=dict(reasons),split_group=groups[0],split=source_split,identity=identity,
             output_sha256={p.name:sha(p) for p in target.iterdir() if p.is_file()})
         write_json(target / 'summary.json', summary); summaries.append(summary)
         print(json.dumps({k:summary[k] for k in ('run_id','prefix_candidates','eligible','selected','hold','exclude','uses')},separators=(',',':')),flush=True)
@@ -273,7 +300,7 @@ def curate(root: Path, output: Path, config: NativeCurationConfig = NativeCurati
             'Additional 0.30 m projected margin is an audit screen, not a statistical pose uncertainty bound.',
             'Initial box proximity is only an exclusion screen; no box position is invented.',
             'Scan/map agreement uses visible wall points only, with recorded EKF pose; it does not repair teacher poses.',
-            'All runs share a scenario group; do not frame-split or distribute this group across train/validation/test.',
+            'Respect each source scenario group; never distribute the same group across train/validation/test.',
             'Only moving futures are selected. Stop intent requires separately verified data.'])
     report['output_sha256'] = {str(p.relative_to(output)):sha(p) for p in output.rglob('*') if p.is_file()}
     write_json(output / 'selection_manifest.json',report)
@@ -285,8 +312,12 @@ def main() -> None:
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
+    parser.add_argument('--run-pattern',default='lidar-v45-pc10-corners-native-*')
+    parser.add_argument('--prefix-directory',default='pose_prefix_v2')
+    parser.add_argument('--clearance-directory',default='native_prefix_clearance_v2')
     args=parser.parse_args()
-    curate(args.root,args.output)
+    curate(args.root,args.output,run_pattern=args.run_pattern,prefix_directory=args.prefix_directory,
+           clearance_directory=args.clearance_directory)
 
 
 if __name__=='__main__':
