@@ -15,16 +15,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--selection', default='collect10_curated_v1')
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     tree, _, map_hashes = load_wall_map(args.root)
-    manifest_path = args.root/'collect10_curated_v1/selection_manifest.json'
+    if Path(args.selection).name != args.selection:raise ValueError('selection basename required')
+    manifest_path = args.root/args.selection/'selection_manifest.json'
     manifest = json.loads(manifest_path.read_text())
     reports = []
     for entry in manifest['runs']:
         run = entry['run_id']
         bag, hashes = verified_bag(args.root/'collected'/run, run)
-        decisions = read_rows(args.root/'collect10_curated_v1'/run/'decisions.jsonl')
+        decisions = read_rows(args.root/args.selection/run/'decisions.jsonl')
         poses = {}; scans = {}; static = {}
         with AnyReader([bag]) as reader:
             topics = {'/sensing/lidar/scan', '/localization/kinematic_state', '/tf_static'}
@@ -65,6 +67,14 @@ def main() -> None:
             fit = least_squares(distances,np.zeros(3),bounds=([-1.,-1.,-.15],[1.,1.,.15]),
                                 diff_step=1e-3,loss='soft_l1',f_scale=.1,max_nfev=80)
             corrected = distances(fit.x)
+            timing = []
+            for dt in (-.3,-.2,-.1,0.,.1,.2,.3):
+                shifted = t+round(dt*1e9)
+                if ts[0] <= shifted <= ts[-1]:
+                    at = np.array([np.interp(shifted,ts,ps[:,j]) for j in range(3)])
+                    residual = tree.query(transform(body,at))[0]
+                    timing.append(dict(pose_time_offset_s=dt,median_m=float(np.median(residual)),
+                                       inlier_fraction=float(np.mean(residual<=.25))))
             placement = json.loads((args.root/'collected'/run/'provenance/scenarios'/f'{run}.json').read_text())['locations'][0]
             delta = np.array(placement['map_pose'][:2])-pose[:2]
             c,s = np.cos(pose[2]),np.sin(pose[2])
@@ -73,7 +83,7 @@ def main() -> None:
                 original_inlier_fraction=float(np.mean(original<=.25)),
                 fitted_median_m=float(np.median(corrected)),fitted_inlier_fraction=float(np.mean(corrected<=.25)),
                 fitted_delta_map_x_y_yaw=fit.x.tolist(),object_body_xy_m=ob.tolist(),
-                points=len(body),fit_success=bool(fit.success)))
+                points=len(body),fit_success=bool(fit.success),time_offset_sweep=timing))
         bad = [r for r in details if r['original_median_m']>.15 or r['original_inlier_fraction']<.7]
         improved = [r for r in bad if r['fitted_median_m']<=.15 and r['fitted_inlier_fraction']>=.7]
         report = dict(run_id=run,scans_sampled=len(details),bad_scans=len(bad),
