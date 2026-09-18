@@ -1,0 +1,272 @@
+{
+  "format": "native_observed_xy_speed_selection_v1",
+  "config": {
+    "history_ns": 1000000000,
+    "horizon_ns": 3000000000,
+    "endpoint_guard_ns": 50000000,
+    "max_evidence_gap_ns": 150000000,
+    "minimum_anchor_spacing_ns": 200000000,
+    "minimum_future_speed_mps": 0.2,
+    "box_exclusion_radius_m": 6.0,
+    "cone_context_radius_m": 6.0,
+    "minimum_clearance_m": 0.3,
+    "additional_projection_margin_m": 0.3,
+    "maximum_map_median_m": 0.15,
+    "map_inlier_distance_m": 0.25,
+    "minimum_map_inlier_fraction": 0.7,
+    "minimum_wall_points": 80,
+    "minimum_scan_span_rad": 1.0471975511965976,
+    "require_scan_map_alignment": false
+  },
+  "runs": [
+    {
+      "run_id": "lidar-v45-pc10-expand-aleft-a01",
+      "source_camera_anchors": 222,
+      "prefix_candidates": 61,
+      "eligible": 56,
+      "selected": 32,
+      "hold": 5,
+      "exclude": 0,
+      "eligible_thinned": 24,
+      "uses": {
+        "static_cone_xy_speed": 23,
+        "nominal_xy_speed": 9
+      },
+      "reasons": {
+        "MONITOR_POSE_COVERAGE_UNKNOWN": 1,
+        "TEMPORAL_THINNING_ONLY": 24,
+        "NONFREE_MODE_WITHOUT_STATIC_CONE_CONTEXT": 4
+      },
+      "split_group": "failed_e2e_cone_location",
+      "split": "train",
+      "identity": {
+        "pose_prefix_sha256": "ea7958f8c55080568fc3be81617da118d6f1ff606adc97a77fb53d4b9245a8a8",
+        "clearance_summary_sha256": "db674793b0c08a9ba93de4c94a9be728d7c1f790154598db5b1baec5517d7341",
+        "source_bag": "/home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/collected/lidar-v45-pc10-expand-aleft-a01/raw/lidar-v45-pc10-expand-aleft-a01/d1/rosbag2_autoware",
+        "source_bag_sha256": {
+          "raw/lidar-v45-pc10-expand-aleft-a01/d1/rosbag2_autoware/metadata.yaml": "0848ba7a7ca1e90dd05b684a73ae3aa617d79f1af7abd6cd0794d0657d99e26d",
+          "raw/lidar-v45-pc10-expand-aleft-a01/d1/rosbag2_autoware/rosbag2_autoware_0.mcap.zstd": "451804d5bb056e8c70f22e3080b572e4545cd0f5b83f46975569cda5a274a862"
+        },
+        "scenario_sha256": "81aad73cf673a46f11de81d02cc6ca8effa8537a34f8252487a9af53a2a88ce8"
+      },
+      "output_sha256": {
+        "decisions.jsonl": "ddfc9bd2746a72f81c2caee09acba334d0148740ff4db4294e9538749f73abeb",
+        "selected_teachers.npz": "883575126cb7c1ff05df02104dfabf4761bcd0f2817d6e48fb66c850fd24bae5",
+        "selected_anchors.jsonl": "18936e696aec164ddce8a4d0061abc646e981d4cd1b78fe8cf70f9beb8f624d8",
+        "window_evidence.npz": "b333d6bc634bf52940a208de0bff216169c3648fda018b9d8bca1224caba1cc4"
+      }
+    },
+    {
+      "run_id": "lidar-v45-pc10-expand-aright-a01",
+      "source_camera_anchors": 222,
+      "prefix_candidates": 68,
+      "eligible": 33,
+      "selected": 20,
+      "hold": 35,
+      "exclude": 0,
+      "eligible_thinned": 13,
+      "uses": {
+        "static_cone_xy_speed": 14,
+        "nominal_xy_speed": 6
+      },
+      "reasons": {
+        "WINDOW_TEACHER_OK": 27,
+        "MONITOR_POSE_COVERAGE_UNKNOWN": 1,
+        "TEMPORAL_THINNING_ONLY": 13,
+        "NONFREE_MODE_WITHOUT_STATIC_CONE_CONTEXT": 8
+      },
+      "split_group": "failed_e2e_cone_location",
+      "split": "train",
+      "identity": {
+        "pose_prefix_sha256": "ff7c7d7bae7cc42dac16a02fdb58935ff4f4fe05b6bcd33b4bd69ebb82337ccc",
+        "clearance_summary_sha256": "05d0b7b1607130306440e68358f54d0e28af2819a1916e1c94ce6927b4cde1d7",
+        "source_bag": "/home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/collected/lidar-v45-pc10-expand-aright-a01/raw/lidar-v45-pc10-expand-aright-a01/d1/rosbag2_autoware",
+        "source_bag_sha256": {
+          "raw/lidar-v45-pc10-expand-aright-a01/d1/rosbag2_autoware/metadata.yaml": "389605af8941ee87ad82d0e56311bc9e864c0231992e767f51e08a0276d2abc8",
+          "raw/lidar-v45-pc10-expand-aright-a01/d1/rosbag2_autoware/rosbag2_autoware_0.mcap.zstd": "a333e4a07825a88b003e5448024562a45bdff2221bd8ff6d0530f03a604550c3"
+        },
+        "scenario_sha256": "1d79ea634475c6b02fdfbc81c275f1bbd88d8ac76898bcd3b3f4796609636f29"
+      },
+      "output_sha256": {
+        "decisions.jsonl": "3415217fbd019dedc5498504692c0099e115ccb14019bb545654492e67c9b4c2",
+        "selected_teachers.npz": "8989197823cd915d6c8b61d5fcef571499cf8c16b9b59a6a3092fe87d17ef392",
+        "selected_anchors.jsonl": "4eefbfb65494c5a06f9c22d3fb97b3d064f34a3c0f26e0e9909e0037ed169eed",
+        "window_evidence.npz": "0c0e67b182b822b2c22e2100ef36a3c1fe4d3d688c4d57906e47054deac38081"
+      }
+    },
+    {
+      "run_id": "lidar-v45-pc10-expand-left-a01",
+      "source_camera_anchors": 209,
+      "prefix_candidates": 48,
+      "eligible": 48,
+      "selected": 26,
+      "hold": 0,
+      "exclude": 0,
+      "eligible_thinned": 22,
+      "uses": {
+        "static_cone_xy_speed": 17,
+        "nominal_xy_speed": 9
+      },
+      "reasons": {
+        "TEMPORAL_THINNING_ONLY": 22
+      },
+      "split_group": "straight_b_center",
+      "split": "train",
+      "identity": {
+        "pose_prefix_sha256": "b7e5d50cc7fc3749e2a0f71ce449afcfc427c760449ad4e7e4d6f8d2e583d941",
+        "clearance_summary_sha256": "2419113590d58d336710cd66bfb9473ba12470c658fa649f8fbca8f686f7f3f4",
+        "source_bag": "/home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/collected/lidar-v45-pc10-expand-left-a01/raw/lidar-v45-pc10-expand-left-a01/d1/rosbag2_autoware",
+        "source_bag_sha256": {
+          "raw/lidar-v45-pc10-expand-left-a01/d1/rosbag2_autoware/metadata.yaml": "aae7d9188b27c18758e2bb5f15de4fc9b399d196772c7f8a91f9a6420bb244c4",
+          "raw/lidar-v45-pc10-expand-left-a01/d1/rosbag2_autoware/rosbag2_autoware_0.mcap.zstd": "d567281166d901bb843dc37fe7e33a1a409118087de0b6e04be61d549be38012"
+        },
+        "scenario_sha256": "e938d5ef27ef227907092f728e1f8f8cafb3c55a2c16f2b0e1a25141cfea93a7"
+      },
+      "output_sha256": {
+        "decisions.jsonl": "786e78954ed55dc3f928b5d7f111a2276dc14875f6da017be2d4606ce6cfc1ed",
+        "selected_teachers.npz": "fd148f2cbe3c2ba25f8bee48c5dab7e37600d7692e47c5b31d541c70ab8dec29",
+        "selected_anchors.jsonl": "372770407eafce0e1df48b9d3c07c9ea6c8a48e99807057d54e64df07e3a68d2",
+        "window_evidence.npz": "015dfde5c8455f5a81da49d7f72184c388057cbc10532cfedb0fc23439317fbe"
+      }
+    },
+    {
+      "run_id": "lidar-v45-pc10-expand-left-a02",
+      "source_camera_anchors": 213,
+      "prefix_candidates": 100,
+      "eligible": 99,
+      "selected": 50,
+      "hold": 1,
+      "exclude": 0,
+      "eligible_thinned": 49,
+      "uses": {
+        "static_cone_xy_speed": 38,
+        "nominal_xy_speed": 12
+      },
+      "reasons": {
+        "TEMPORAL_THINNING_ONLY": 49,
+        "NONFREE_MODE_WITHOUT_STATIC_CONE_CONTEXT": 1
+      },
+      "split_group": "straight_b_center",
+      "split": "train",
+      "identity": {
+        "pose_prefix_sha256": "0b869fba2d4f5ba6e2f12f02a9d0b275e1ab511c55350816d9eae2e2bdf3760f",
+        "clearance_summary_sha256": "ae7e9527cf627927f5e89a75226950cd6ad231c5ead6b08d5cd2d0c0fae39516",
+        "source_bag": "/home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/collected/lidar-v45-pc10-expand-left-a02/raw/lidar-v45-pc10-expand-left-a02/d1/rosbag2_autoware",
+        "source_bag_sha256": {
+          "raw/lidar-v45-pc10-expand-left-a02/d1/rosbag2_autoware/metadata.yaml": "22888cf72687d2af5d2c3e197dca5e2799a4e5e6dc156fe7fba45ecc9f3290ee",
+          "raw/lidar-v45-pc10-expand-left-a02/d1/rosbag2_autoware/rosbag2_autoware_0.mcap.zstd": "19c464348a3b54b65b7202c275ac27bcedb2765de02dfb83a291e563b2383509"
+        },
+        "scenario_sha256": "c5f6f3acefedbd40f709ffa7e43ced0dab1fbe7f0a9a0720b8d7ba9e53f5e745"
+      },
+      "output_sha256": {
+        "decisions.jsonl": "5d8bdc81ff0e63fcb35796cfe119dbeced8b8b43ac258d758a0840d654bacc5f",
+        "selected_teachers.npz": "7b8119ac5ab7ac371d2910dffa98c7f945caf28a22f2cc7d92cf7f46356fa7b3",
+        "selected_anchors.jsonl": "1a0e47c830dcd0276b23131f40cfff2c0b2e087aa1ee3b40ee0bb0af0804101c",
+        "window_evidence.npz": "738b2f07dbe0d4eccea48ec164ee6a2ea0d53ff64f10160dd08fe841ade8e2a2"
+      }
+    },
+    {
+      "run_id": "lidar-v45-pc10-expand-right-a01",
+      "source_camera_anchors": 212,
+      "prefix_candidates": 33,
+      "eligible": 19,
+      "selected": 12,
+      "hold": 14,
+      "exclude": 0,
+      "eligible_thinned": 7,
+      "uses": {
+        "static_cone_xy_speed": 6,
+        "nominal_xy_speed": 6
+      },
+      "reasons": {
+        "WINDOW_TEACHER_OK": 14,
+        "TEMPORAL_THINNING_ONLY": 7
+      },
+      "split_group": "straight_b_center",
+      "split": "train",
+      "identity": {
+        "pose_prefix_sha256": "4047c09db3b2bc49147b427e256ec45388feb5829fd1e3b6e44ff40864abd84a",
+        "clearance_summary_sha256": "9173abcb304c61f317174dd8a7f447b91b71dfe46a73d662e2f5ed8978333a51",
+        "source_bag": "/home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/collected/lidar-v45-pc10-expand-right-a01/raw/lidar-v45-pc10-expand-right-a01/d1/rosbag2_autoware",
+        "source_bag_sha256": {
+          "raw/lidar-v45-pc10-expand-right-a01/d1/rosbag2_autoware/metadata.yaml": "8e8a9066359b7bcec71c41b309fbec47688f3b391de2b4be18aa593532df3d57",
+          "raw/lidar-v45-pc10-expand-right-a01/d1/rosbag2_autoware/rosbag2_autoware_0.mcap.zstd": "ff9f5ffa238656fde58f5820e4e33e8a782b3e86267e6a93f099132a66509b88"
+        },
+        "scenario_sha256": "a59980b231058c19f0a0788b9b98b380f1a4342e9a067afe47a8d16b7422f277"
+      },
+      "output_sha256": {
+        "decisions.jsonl": "a0af12f7eaf892cb4ef256445fa1d663e629d65eff12730736075333561aa937",
+        "selected_teachers.npz": "0ee94dd54e29fba55b769d54586e7ce4c62bac4041475f1dfab643e140982f93",
+        "selected_anchors.jsonl": "e4790c59d4c13d2ed49e64cad0714922042262363d70a108c2cfd2f49b7a90e1",
+        "window_evidence.npz": "1f6788338718129ed43ead1aa02904759ef863e2b8196105ab12cb833833a49f"
+      }
+    }
+  ],
+  "totals": {
+    "source_camera_anchors": 1078,
+    "prefix_candidates": 310,
+    "eligible": 255,
+    "selected": 140,
+    "hold": 55,
+    "exclude": 0,
+    "eligible_thinned": 115
+  },
+  "source_commit": "7a3245d63011b112998c34dc25a2b1959b4a3f9a",
+  "map_sha256": {
+    "occupancy_grid_map.yaml": "39d5aba44234c1e09fc57421d467d64c1769259cd3c3656032f008d2db4e6a79",
+    "occupancy_grid_map.pgm": "f7aa23da81c626b8e7457628744f25600f4ff8afee9d2f37d06bc390889903a3",
+    "provenance.json": "05360526fdc4637c4d85254e8701c867b5b2e3e6637166ca8db58e86e4c2cdef"
+  },
+  "training_performed": false,
+  "split_assigned": false,
+  "allowed_targets": [
+    "xy_m",
+    "velocity_mps"
+  ],
+  "stop_mode_supervision": false,
+  "strict_avoidance_certification": false,
+  "teacher_command_quality": {
+    "require_nonempty_reason": true,
+    "reject_reason_tokens": [
+      "infeasible_braking_fallback"
+    ],
+    "duplicate_capture_stamps": "all_publications_must_pass",
+    "inspect_full_history_and_future": true
+  },
+  "scan_map_alignment_policy": "diagnostic_only",
+  "limitations": [
+    "Observed-motion quality selection, not a physical contact oracle or certified avoidance-success set.",
+    "Additional 0.30 m projected margin is an audit screen, not a statistical pose uncertainty bound.",
+    "Initial box proximity is only an exclusion screen; no box position is invented.",
+    "Scan/map agreement uses visible wall points only, with recorded EKF pose; it does not repair teacher poses.",
+    "Respect each source scenario group; never distribute the same group across train/validation/test.",
+    "Only moving futures are selected. Stop intent requires separately verified data."
+  ],
+  "output_sha256": {
+    "lidar-v45-pc10-expand-aleft-a01/decisions.jsonl": "ddfc9bd2746a72f81c2caee09acba334d0148740ff4db4294e9538749f73abeb",
+    "lidar-v45-pc10-expand-aleft-a01/summary.json": "92b6dab7d2a594d8c06559d8189cb85f7f2b257844e581a7f3fa8c82d6403077",
+    "lidar-v45-pc10-expand-aleft-a01/selected_teachers.npz": "883575126cb7c1ff05df02104dfabf4761bcd0f2817d6e48fb66c850fd24bae5",
+    "lidar-v45-pc10-expand-aleft-a01/selected_anchors.jsonl": "18936e696aec164ddce8a4d0061abc646e981d4cd1b78fe8cf70f9beb8f624d8",
+    "lidar-v45-pc10-expand-aleft-a01/window_evidence.npz": "b333d6bc634bf52940a208de0bff216169c3648fda018b9d8bca1224caba1cc4",
+    "lidar-v45-pc10-expand-left-a02/decisions.jsonl": "5d8bdc81ff0e63fcb35796cfe119dbeced8b8b43ac258d758a0840d654bacc5f",
+    "lidar-v45-pc10-expand-left-a02/summary.json": "c4b34c628e0427450e5c67a1374ed036ae4e36e1ec204c745e760e0b7371273e",
+    "lidar-v45-pc10-expand-left-a02/selected_teachers.npz": "7b8119ac5ab7ac371d2910dffa98c7f945caf28a22f2cc7d92cf7f46356fa7b3",
+    "lidar-v45-pc10-expand-left-a02/selected_anchors.jsonl": "1a0e47c830dcd0276b23131f40cfff2c0b2e087aa1ee3b40ee0bb0af0804101c",
+    "lidar-v45-pc10-expand-left-a02/window_evidence.npz": "738b2f07dbe0d4eccea48ec164ee6a2ea0d53ff64f10160dd08fe841ade8e2a2",
+    "lidar-v45-pc10-expand-right-a01/decisions.jsonl": "a0af12f7eaf892cb4ef256445fa1d663e629d65eff12730736075333561aa937",
+    "lidar-v45-pc10-expand-right-a01/summary.json": "a89ebfeb158abde2365cc39017e5d777b970189f0ffb3b225fb08b6b54643fae",
+    "lidar-v45-pc10-expand-right-a01/selected_teachers.npz": "0ee94dd54e29fba55b769d54586e7ce4c62bac4041475f1dfab643e140982f93",
+    "lidar-v45-pc10-expand-right-a01/selected_anchors.jsonl": "e4790c59d4c13d2ed49e64cad0714922042262363d70a108c2cfd2f49b7a90e1",
+    "lidar-v45-pc10-expand-right-a01/window_evidence.npz": "1f6788338718129ed43ead1aa02904759ef863e2b8196105ab12cb833833a49f",
+    "lidar-v45-pc10-expand-left-a01/decisions.jsonl": "786e78954ed55dc3f928b5d7f111a2276dc14875f6da017be2d4606ce6cfc1ed",
+    "lidar-v45-pc10-expand-left-a01/summary.json": "2f254660b35f6c10f7eebfbfcb56bed20068be5b266105249fca6ad940c2f39b",
+    "lidar-v45-pc10-expand-left-a01/selected_teachers.npz": "fd148f2cbe3c2ba25f8bee48c5dab7e37600d7692e47c5b31d541c70ab8dec29",
+    "lidar-v45-pc10-expand-left-a01/selected_anchors.jsonl": "372770407eafce0e1df48b9d3c07c9ea6c8a48e99807057d54e64df07e3a68d2",
+    "lidar-v45-pc10-expand-left-a01/window_evidence.npz": "015dfde5c8455f5a81da49d7f72184c388057cbc10532cfedb0fc23439317fbe",
+    "lidar-v45-pc10-expand-aright-a01/decisions.jsonl": "3415217fbd019dedc5498504692c0099e115ccb14019bb545654492e67c9b4c2",
+    "lidar-v45-pc10-expand-aright-a01/summary.json": "010b3fcd50a237b48db29073e07b259def7027103df54e0c7332918033f769a1",
+    "lidar-v45-pc10-expand-aright-a01/selected_teachers.npz": "8989197823cd915d6c8b61d5fcef571499cf8c16b9b59a6a3092fe87d17ef392",
+    "lidar-v45-pc10-expand-aright-a01/selected_anchors.jsonl": "4eefbfb65494c5a06f9c22d3fb97b3d064f34a3c0f26e0e9909e0037ed169eed",
+    "lidar-v45-pc10-expand-aright-a01/window_evidence.npz": "0c0e67b182b822b2c22e2100ef36a3c1fe4d3d688c4d57906e47054deac38081"
+  }
+}

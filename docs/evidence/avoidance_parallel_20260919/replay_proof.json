@@ -1,0 +1,79 @@
+{
+  "plan": {
+    "native_collection": "runs/mppi_v45_pc10_20260918",
+    "native_selection": "expand_alignment_tolerant_v2",
+    "selection_manifest_sha256": "5fd8add939f1cc4a0ec09bd46f6fd481ca185cbbf0f84da287c8e91ec0dc3491",
+    "native_anchors": 140,
+    "native_split_group": "expand_train_groups",
+    "native_split_groups": [
+      "straight_b_center",
+      "failed_e2e_cone_location"
+    ],
+    "native_source_split": "train"
+  },
+  "source_commit": "7a3245d63011b112998c34dc25a2b1959b4a3f9a",
+  "additions": [
+    {
+      "run_id": "lidar-v45-pc10-expand-aleft-a01",
+      "speed_cap_kmh": 10,
+      "split": "train",
+      "sources": [
+        {
+          "path": "runs/mppi_v45_pc10_20260918/collected/lidar-v45-pc10-expand-aleft-a01/raw/lidar-v45-pc10-expand-aleft-a01/d1/rosbag2_autoware/rosbag2_autoware_0.mcap.zstd",
+          "sha256": "451804d5bb056e8c70f22e3080b572e4545cd0f5b83f46975569cda5a274a862"
+        }
+      ]
+    },
+    {
+      "run_id": "lidar-v45-pc10-expand-aright-a01",
+      "speed_cap_kmh": 10,
+      "split": "train",
+      "sources": [
+        {
+          "path": "runs/mppi_v45_pc10_20260918/collected/lidar-v45-pc10-expand-aright-a01/raw/lidar-v45-pc10-expand-aright-a01/d1/rosbag2_autoware/rosbag2_autoware_0.mcap.zstd",
+          "sha256": "a333e4a07825a88b003e5448024562a45bdff2221bd8ff6d0530f03a604550c3"
+        }
+      ]
+    },
+    {
+      "run_id": "lidar-v45-pc10-expand-left-a01",
+      "speed_cap_kmh": 10,
+      "split": "train",
+      "sources": [
+        {
+          "path": "runs/mppi_v45_pc10_20260918/collected/lidar-v45-pc10-expand-left-a01/raw/lidar-v45-pc10-expand-left-a01/d1/rosbag2_autoware/rosbag2_autoware_0.mcap.zstd",
+          "sha256": "d567281166d901bb843dc37fe7e33a1a409118087de0b6e04be61d549be38012"
+        }
+      ]
+    },
+    {
+      "run_id": "lidar-v45-pc10-expand-left-a02",
+      "speed_cap_kmh": 10,
+      "split": "train",
+      "sources": [
+        {
+          "path": "runs/mppi_v45_pc10_20260918/collected/lidar-v45-pc10-expand-left-a02/raw/lidar-v45-pc10-expand-left-a02/d1/rosbag2_autoware/rosbag2_autoware_0.mcap.zstd",
+          "sha256": "19c464348a3b54b65b7202c275ac27bcedb2765de02dfb83a291e563b2383509"
+        }
+      ]
+    },
+    {
+      "run_id": "lidar-v45-pc10-expand-right-a01",
+      "speed_cap_kmh": 10,
+      "split": "train",
+      "sources": [
+        {
+          "path": "runs/mppi_v45_pc10_20260918/collected/lidar-v45-pc10-expand-right-a01/raw/lidar-v45-pc10-expand-right-a01/d1/rosbag2_autoware/rosbag2_autoware_0.mcap.zstd",
+          "sha256": "ff9f5ffa238656fde58f5820e4e33e8a782b3e86267e6a93f099132a66509b88"
+        }
+      ]
+    }
+  ],
+  "all_raw_histories_and_30_xy_velocity_targets_reproduced": true,
+  "trained": false,
+  "active_comparison_population_unchanged": true,
+  "heldout_runs": [
+    "lidar-v45-pc10-expand-holdoutcone-a01",
+    "lidar-v45-pc10-expand-holdoutbox-a01"
+  ]
+}

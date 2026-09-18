@@ -1,0 +1,909 @@
+{
+  "runs": [
+    {
+      "run_id": "lidar-v45-pc10-expand-aleft-a01",
+      "selected": 32,
+      "front_cone": 14,
+      "front_0_6m_lateral_1m": 0,
+      "endpoint_abs_y_gt_020": 26,
+      "original_audit": {
+        "run_id": "lidar-v45-pc10-expand-aleft-a01",
+        "cases": [
+          "lidar-v45-pc10-expand-aleft-a01"
+        ],
+        "split_groups": [
+          "failed_e2e_cone_location"
+        ],
+        "official_penalties": {
+          "crash": 0,
+          "wall": 0,
+          "over": 0
+        },
+        "finish_reached": true,
+        "min_footprint_clearance_m": null,
+        "no_off_track": true,
+        "run_clean_for_forward_audit": false,
+        "monitor_process_returncode": 0,
+        "monitor_final_status": 0,
+        "topic_counts": {
+          "/control/command/control_cmd": 2165,
+          "/planning/scenario_planning/trajectory": 23,
+          "/tf_static": 2,
+          "/sensing/gnss/pose_with_covariance": 467,
+          "/debug/mppi/status": 606,
+          "/awsim/cmd": 0,
+          "/mppi/direct/trajectory_command": 568,
+          "/tf": 1130,
+          "/awsim/state": 3,
+          "/awsim/status": 233,
+          "/collection/lidar_v2x/status": 1450,
+          "/clock": 4666,
+          "/collection/lidar_v2x/objects": 460,
+          "/sensing/camera/camera_info": 222,
+          "/v2x/vehicle_positions": 0,
+          "/vehicle/status/velocity_status": 667,
+          "/sensing/lidar/scan": 467,
+          "/collection/lidar_v2x/markers": 460,
+          "/collection/lidar_v2x/vehicle_positions": 460,
+          "/control/command/gear_cmd": 0,
+          "/debug/mppi/stuck_recovery": 0,
+          "/vehicle/status/gear_status": 667,
+          "/control/mpc/stop_request": 0,
+          "/vehicle/status/steering_status": 667,
+          "/sensing/camera/image_raw": 222,
+          "/localization/acceleration": 1132,
+          "/sensing/imu/imu_data": 467,
+          "/localization/kinematic_state": 1148
+        },
+        "sensors": {
+          "camera": {
+            "count": 222,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.104999998
+          },
+          "lidar": {
+            "count": 467,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.049999999
+          },
+          "pose": {
+            "count": 1148,
+            "backward": 0,
+            "duplicate": 208,
+            "max_gap_s": 0.109999997
+          },
+          "velocity": {
+            "count": 667,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.035
+          },
+          "actual_steering": {
+            "count": 667,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.035
+          },
+          "final_command": {
+            "count": 2165,
+            "backward": 0,
+            "duplicate": 808,
+            "max_gap_s": 0.114999998
+          }
+        },
+        "teacher_mode_counts": {
+          "FREE_RUN": 168,
+          "AVOID": 400
+        },
+        "avoid_intervals_ns": [
+          [
+            1044999976,
+            14984999665
+          ]
+        ],
+        "reverse_intervals_ns": [],
+        "perception_status_counts": {
+          "scan_timeout": 318,
+          "waiting_for_timestamped_tf": 667,
+          "stale_scan_or_missing_tf": 5,
+          "ok": 460
+        },
+        "stop_requests": 0,
+        "camera_anchors": 222,
+        "full_future_anchors": 154,
+        "forward_avoidance_eligible_anchors": 0,
+        "rejections": {
+          "RUN_NOT_CLEAN": 222,
+          "STARTUP": 62,
+          "INCOMPLETE_INPUT_OR_FUTURE": 68,
+          "HISTORY_GAP": 88,
+          "TEACHER_UNAVAILABLE_OR_EMERGENCY": 9,
+          "PERCEPTION_UNAVAILABLE": 5,
+          "OUTSIDE_AVOIDANCE_CONTEXT": 51
+        },
+        "tensor_smoke": [],
+        "label_contract": {
+          "shape": [
+            222,
+            30,
+            2
+          ],
+          "units": "m",
+          "dt_s": 0.1,
+          "frame": "base_link_at_observation",
+          "source": "OBSERVED_FUTURE_POSE",
+          "freeze_delay_receipt_ns": 50000000,
+          "config": {
+            "image_shape": [
+              3,
+              224,
+              384
+            ],
+            "lidar_shape": [
+              2,
+              750
+            ],
+            "ego_features": 4,
+            "camera_history_length": 4,
+            "lidar_history_length": 4,
+            "ego_history_length": 10,
+            "command_history_length": 10,
+            "tolerance_ns": 50000000,
+            "teacher_tolerance_ms": 50.0,
+            "lidar_min_range_m": 0.0,
+            "lidar_max_range_m": 25.0,
+            "lidar_angle_min_rad": -3.141592653589793,
+            "capture_clock": "sim",
+            "available_clock": "bag_receipt",
+            "pose_world_frame": "map",
+            "pose_body_frame": "base_link"
+          }
+        },
+        "source_bag": "/home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/collected/lidar-v45-pc10-expand-aleft-a01/raw/lidar-v45-pc10-expand-aleft-a01/d1/rosbag2_autoware",
+        "source_verified_bytes": 23927202,
+        "training_split_assigned": false,
+        "duplicate_sim_clock_receipts_coalesced": 1018,
+        "driving_start_ns": 5594999874,
+        "driving_start_source": "monitor:/admin/awsim/state + ego simulation stamp",
+        "vehicle_state_counts": {
+          "Spawned": 1,
+          "Grounded": 1,
+          "Ready": 1
+        },
+        "collection_scope": "MPPI teacher drive; shadow execution is not inferred by this audit",
+        "limitations": [
+          "V2X-derived footprint clearance is approximate, not a contact mesh oracle.",
+          "Forward candidate mask excludes reverse and unknown stop intent; raw reverse/stops are preserved.",
+          "No optimizer run or automatic merge into an existing training split."
+        ]
+      }
+    },
+    {
+      "run_id": "lidar-v45-pc10-expand-aright-a01",
+      "selected": 20,
+      "front_cone": 0,
+      "front_0_6m_lateral_1m": 0,
+      "endpoint_abs_y_gt_020": 20,
+      "original_audit": {
+        "run_id": "lidar-v45-pc10-expand-aright-a01",
+        "cases": [
+          "lidar-v45-pc10-expand-aright-a01"
+        ],
+        "split_groups": [
+          "failed_e2e_cone_location"
+        ],
+        "official_penalties": {
+          "crash": 0,
+          "wall": 0,
+          "over": 0
+        },
+        "finish_reached": true,
+        "min_footprint_clearance_m": null,
+        "no_off_track": true,
+        "run_clean_for_forward_audit": false,
+        "monitor_process_returncode": 0,
+        "monitor_final_status": 0,
+        "topic_counts": {
+          "/control/command/control_cmd": 2203,
+          "/mppi/direct/trajectory_command": 638,
+          "/planning/scenario_planning/trajectory": 23,
+          "/awsim/cmd": 0,
+          "/debug/mppi/status": 668,
+          "/localization/kinematic_state": 1145,
+          "/sensing/imu/imu_data": 467,
+          "/awsim/state": 3,
+          "/awsim/status": 233,
+          "/collection/lidar_v2x/status": 1494,
+          "/clock": 4669,
+          "/tf": 1112,
+          "/collection/lidar_v2x/objects": 459,
+          "/sensing/camera/camera_info": 222,
+          "/v2x/vehicle_positions": 0,
+          "/localization/acceleration": 1126,
+          "/sensing/camera/image_raw": 222,
+          "/vehicle/status/velocity_status": 667,
+          "/sensing/lidar/scan": 467,
+          "/sensing/gnss/pose_with_covariance": 467,
+          "/tf_static": 2,
+          "/collection/lidar_v2x/markers": 459,
+          "/collection/lidar_v2x/vehicle_positions": 459,
+          "/control/command/gear_cmd": 0,
+          "/debug/mppi/stuck_recovery": 0,
+          "/vehicle/status/gear_status": 667,
+          "/control/mpc/stop_request": 0,
+          "/vehicle/status/steering_status": 667
+        },
+        "sensors": {
+          "camera": {
+            "count": 222,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.104999998
+          },
+          "lidar": {
+            "count": 467,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.049999999
+          },
+          "pose": {
+            "count": 1145,
+            "backward": 0,
+            "duplicate": 229,
+            "max_gap_s": 0.129999997
+          },
+          "velocity": {
+            "count": 667,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.035
+          },
+          "actual_steering": {
+            "count": 667,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.035
+          },
+          "final_command": {
+            "count": 2203,
+            "backward": 0,
+            "duplicate": 888,
+            "max_gap_s": 0.099999998
+          }
+        },
+        "teacher_mode_counts": {
+          "FREE_RUN": 157,
+          "AVOID": 481
+        },
+        "avoid_intervals_ns": [
+          [
+            1044999976,
+            15649999650
+          ]
+        ],
+        "reverse_intervals_ns": [],
+        "perception_status_counts": {
+          "scan_timeout": 336,
+          "waiting_for_timestamped_tf": 693,
+          "stale_scan_or_missing_tf": 6,
+          "ok": 459
+        },
+        "stop_requests": 0,
+        "camera_anchors": 222,
+        "full_future_anchors": 140,
+        "forward_avoidance_eligible_anchors": 0,
+        "rejections": {
+          "RUN_NOT_CLEAN": 222,
+          "STARTUP": 63,
+          "INCOMPLETE_INPUT_OR_FUTURE": 82,
+          "HISTORY_GAP": 70,
+          "TEACHER_UNAVAILABLE_OR_EMERGENCY": 9,
+          "PERCEPTION_UNAVAILABLE": 5,
+          "OUTSIDE_AVOIDANCE_CONTEXT": 45
+        },
+        "tensor_smoke": [],
+        "label_contract": {
+          "shape": [
+            222,
+            30,
+            2
+          ],
+          "units": "m",
+          "dt_s": 0.1,
+          "frame": "base_link_at_observation",
+          "source": "OBSERVED_FUTURE_POSE",
+          "freeze_delay_receipt_ns": 50000000,
+          "config": {
+            "image_shape": [
+              3,
+              224,
+              384
+            ],
+            "lidar_shape": [
+              2,
+              750
+            ],
+            "ego_features": 4,
+            "camera_history_length": 4,
+            "lidar_history_length": 4,
+            "ego_history_length": 10,
+            "command_history_length": 10,
+            "tolerance_ns": 50000000,
+            "teacher_tolerance_ms": 50.0,
+            "lidar_min_range_m": 0.0,
+            "lidar_max_range_m": 25.0,
+            "lidar_angle_min_rad": -3.141592653589793,
+            "capture_clock": "sim",
+            "available_clock": "bag_receipt",
+            "pose_world_frame": "map",
+            "pose_body_frame": "base_link"
+          }
+        },
+        "source_bag": "/home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/collected/lidar-v45-pc10-expand-aright-a01/raw/lidar-v45-pc10-expand-aright-a01/d1/rosbag2_autoware",
+        "source_verified_bytes": 23518407,
+        "training_split_assigned": false,
+        "duplicate_sim_clock_receipts_coalesced": 1063,
+        "driving_start_ns": 5694999872,
+        "driving_start_source": "monitor:/admin/awsim/state + ego simulation stamp",
+        "vehicle_state_counts": {
+          "Spawned": 1,
+          "Grounded": 1,
+          "Ready": 1
+        },
+        "collection_scope": "MPPI teacher drive; shadow execution is not inferred by this audit",
+        "limitations": [
+          "V2X-derived footprint clearance is approximate, not a contact mesh oracle.",
+          "Forward candidate mask excludes reverse and unknown stop intent; raw reverse/stops are preserved.",
+          "No optimizer run or automatic merge into an existing training split."
+        ]
+      }
+    },
+    {
+      "run_id": "lidar-v45-pc10-expand-left-a01",
+      "selected": 26,
+      "front_cone": 7,
+      "front_0_6m_lateral_1m": 1,
+      "endpoint_abs_y_gt_020": 21,
+      "original_audit": {
+        "run_id": "lidar-v45-pc10-expand-left-a01",
+        "cases": [
+          "lidar-v45-pc10-expand-left-a01"
+        ],
+        "split_groups": [
+          "straight_b_center"
+        ],
+        "official_penalties": {
+          "crash": 0,
+          "wall": 0,
+          "over": 0
+        },
+        "finish_reached": true,
+        "min_footprint_clearance_m": null,
+        "no_off_track": true,
+        "run_clean_for_forward_audit": false,
+        "monitor_process_returncode": 0,
+        "monitor_final_status": 0,
+        "topic_counts": {
+          "/control/command/control_cmd": 2031,
+          "/tf_static": 2,
+          "/sensing/gnss/pose_with_covariance": 438,
+          "/tf": 1057,
+          "/debug/mppi/status": 572,
+          "/awsim/cmd": 0,
+          "/mppi/direct/trajectory_command": 516,
+          "/planning/scenario_planning/trajectory": 21,
+          "/awsim/state": 3,
+          "/awsim/status": 219,
+          "/collection/lidar_v2x/status": 1335,
+          "/clock": 4384,
+          "/collection/lidar_v2x/objects": 432,
+          "/sensing/camera/camera_info": 209,
+          "/v2x/vehicle_positions": 0,
+          "/vehicle/status/velocity_status": 626,
+          "/sensing/lidar/scan": 438,
+          "/collection/lidar_v2x/markers": 432,
+          "/collection/lidar_v2x/vehicle_positions": 432,
+          "/control/command/gear_cmd": 0,
+          "/debug/mppi/stuck_recovery": 0,
+          "/vehicle/status/gear_status": 626,
+          "/control/mpc/stop_request": 0,
+          "/vehicle/status/steering_status": 626,
+          "/localization/kinematic_state": 1077,
+          "/sensing/imu/imu_data": 438,
+          "/sensing/camera/image_raw": 209,
+          "/localization/acceleration": 1066
+        },
+        "sensors": {
+          "camera": {
+            "count": 209,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.104999998
+          },
+          "lidar": {
+            "count": 438,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.049999999
+          },
+          "pose": {
+            "count": 1077,
+            "backward": 0,
+            "duplicate": 200,
+            "max_gap_s": 0.109999997
+          },
+          "velocity": {
+            "count": 626,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.035
+          },
+          "actual_steering": {
+            "count": 626,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.035
+          },
+          "final_command": {
+            "count": 2031,
+            "backward": 0,
+            "duplicate": 781,
+            "max_gap_s": 0.144999997
+          }
+        },
+        "teacher_mode_counts": {
+          "FREE_RUN": 169,
+          "AVOID": 347
+        },
+        "avoid_intervals_ns": [
+          [
+            1044999976,
+            13644999695
+          ]
+        ],
+        "reverse_intervals_ns": [],
+        "perception_status_counts": {
+          "scan_timeout": 323,
+          "waiting_for_timestamped_tf": 575,
+          "stale_scan_or_missing_tf": 5,
+          "ok": 432
+        },
+        "stop_requests": 0,
+        "camera_anchors": 209,
+        "full_future_anchors": 139,
+        "forward_avoidance_eligible_anchors": 0,
+        "rejections": {
+          "RUN_NOT_CLEAN": 209,
+          "STARTUP": 62,
+          "INCOMPLETE_INPUT_OR_FUTURE": 70,
+          "HISTORY_GAP": 90,
+          "TEACHER_UNAVAILABLE_OR_EMERGENCY": 9,
+          "PERCEPTION_UNAVAILABLE": 14,
+          "OUTSIDE_AVOIDANCE_CONTEXT": 51
+        },
+        "tensor_smoke": [],
+        "label_contract": {
+          "shape": [
+            209,
+            30,
+            2
+          ],
+          "units": "m",
+          "dt_s": 0.1,
+          "frame": "base_link_at_observation",
+          "source": "OBSERVED_FUTURE_POSE",
+          "freeze_delay_receipt_ns": 50000000,
+          "config": {
+            "image_shape": [
+              3,
+              224,
+              384
+            ],
+            "lidar_shape": [
+              2,
+              750
+            ],
+            "ego_features": 4,
+            "camera_history_length": 4,
+            "lidar_history_length": 4,
+            "ego_history_length": 10,
+            "command_history_length": 10,
+            "tolerance_ns": 50000000,
+            "teacher_tolerance_ms": 50.0,
+            "lidar_min_range_m": 0.0,
+            "lidar_max_range_m": 25.0,
+            "lidar_angle_min_rad": -3.141592653589793,
+            "capture_clock": "sim",
+            "available_clock": "bag_receipt",
+            "pose_world_frame": "map",
+            "pose_body_frame": "base_link"
+          }
+        },
+        "source_bag": "/home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/collected/lidar-v45-pc10-expand-left-a01/raw/lidar-v45-pc10-expand-left-a01/d1/rosbag2_autoware",
+        "source_verified_bytes": 21404097,
+        "training_split_assigned": false,
+        "duplicate_sim_clock_receipts_coalesced": 954,
+        "driving_start_ns": 5544999876,
+        "driving_start_source": "monitor:/admin/awsim/state + ego simulation stamp",
+        "vehicle_state_counts": {
+          "Spawned": 1,
+          "Grounded": 1,
+          "Ready": 1
+        },
+        "collection_scope": "MPPI teacher drive; shadow execution is not inferred by this audit",
+        "limitations": [
+          "V2X-derived footprint clearance is approximate, not a contact mesh oracle.",
+          "Forward candidate mask excludes reverse and unknown stop intent; raw reverse/stops are preserved.",
+          "No optimizer run or automatic merge into an existing training split."
+        ]
+      }
+    },
+    {
+      "run_id": "lidar-v45-pc10-expand-left-a02",
+      "selected": 50,
+      "front_cone": 20,
+      "front_0_6m_lateral_1m": 0,
+      "endpoint_abs_y_gt_020": 44,
+      "original_audit": {
+        "run_id": "lidar-v45-pc10-expand-left-a02",
+        "cases": [
+          "lidar-v45-pc10-expand-left-a02"
+        ],
+        "split_groups": [
+          "straight_b_center"
+        ],
+        "official_penalties": {
+          "crash": 0,
+          "wall": 0,
+          "over": 0
+        },
+        "finish_reached": true,
+        "min_footprint_clearance_m": null,
+        "no_off_track": true,
+        "run_clean_for_forward_audit": false,
+        "monitor_process_returncode": 0,
+        "monitor_final_status": 0,
+        "topic_counts": {
+          "/control/command/control_cmd": 2169,
+          "/tf_static": 2,
+          "/sensing/gnss/pose_with_covariance": 449,
+          "/tf": 1113,
+          "/mppi/direct/trajectory_command": 680,
+          "/planning/scenario_planning/trajectory": 22,
+          "/awsim/cmd": 0,
+          "/debug/mppi/status": 687,
+          "/awsim/state": 3,
+          "/awsim/status": 224,
+          "/collection/lidar_v2x/status": 1441,
+          "/clock": 4487,
+          "/collection/lidar_v2x/objects": 442,
+          "/sensing/camera/camera_info": 213,
+          "/v2x/vehicle_positions": 0,
+          "/vehicle/status/velocity_status": 641,
+          "/sensing/lidar/scan": 449,
+          "/collection/lidar_v2x/markers": 442,
+          "/collection/lidar_v2x/vehicle_positions": 442,
+          "/control/command/gear_cmd": 0,
+          "/debug/mppi/stuck_recovery": 0,
+          "/vehicle/status/gear_status": 641,
+          "/control/mpc/stop_request": 0,
+          "/vehicle/status/steering_status": 641,
+          "/sensing/camera/image_raw": 213,
+          "/localization/acceleration": 1106,
+          "/sensing/imu/imu_data": 449,
+          "/localization/kinematic_state": 1106
+        },
+        "sensors": {
+          "camera": {
+            "count": 213,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.104999998
+          },
+          "lidar": {
+            "count": 449,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.049999999
+          },
+          "pose": {
+            "count": 1106,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.099999997
+          },
+          "velocity": {
+            "count": 641,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.035
+          },
+          "actual_steering": {
+            "count": 641,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.035
+          },
+          "final_command": {
+            "count": 2169,
+            "backward": 0,
+            "duplicate": 727,
+            "max_gap_s": 0.084999998
+          }
+        },
+        "teacher_mode_counts": {
+          "FREE_RUN": 174,
+          "AVOID": 506
+        },
+        "avoid_intervals_ns": [
+          [
+            1244999972,
+            14029999686
+          ]
+        ],
+        "reverse_intervals_ns": [],
+        "perception_status_counts": {
+          "scan_timeout": 323,
+          "waiting_for_timestamped_tf": 671,
+          "stale_scan_or_missing_tf": 5,
+          "ok": 442
+        },
+        "stop_requests": 0,
+        "camera_anchors": 213,
+        "full_future_anchors": 157,
+        "forward_avoidance_eligible_anchors": 0,
+        "rejections": {
+          "RUN_NOT_CLEAN": 213,
+          "STARTUP": 66,
+          "INCOMPLETE_INPUT_OR_FUTURE": 56,
+          "HISTORY_GAP": 10,
+          "TEACHER_UNAVAILABLE_OR_EMERGENCY": 9,
+          "PERCEPTION_UNAVAILABLE": 5,
+          "OUTSIDE_AVOIDANCE_CONTEXT": 51
+        },
+        "tensor_smoke": [],
+        "label_contract": {
+          "shape": [
+            213,
+            30,
+            2
+          ],
+          "units": "m",
+          "dt_s": 0.1,
+          "frame": "base_link_at_observation",
+          "source": "OBSERVED_FUTURE_POSE",
+          "freeze_delay_receipt_ns": 50000000,
+          "config": {
+            "image_shape": [
+              3,
+              224,
+              384
+            ],
+            "lidar_shape": [
+              2,
+              750
+            ],
+            "ego_features": 4,
+            "camera_history_length": 4,
+            "lidar_history_length": 4,
+            "ego_history_length": 10,
+            "command_history_length": 10,
+            "tolerance_ns": 50000000,
+            "teacher_tolerance_ms": 50.0,
+            "lidar_min_range_m": 0.0,
+            "lidar_max_range_m": 25.0,
+            "lidar_angle_min_rad": -3.141592653589793,
+            "capture_clock": "sim",
+            "available_clock": "bag_receipt",
+            "pose_world_frame": "map",
+            "pose_body_frame": "base_link"
+          }
+        },
+        "source_bag": "/home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/collected/lidar-v45-pc10-expand-left-a02/raw/lidar-v45-pc10-expand-left-a02/d1/rosbag2_autoware",
+        "source_verified_bytes": 25589993,
+        "training_split_assigned": false,
+        "duplicate_sim_clock_receipts_coalesced": 888,
+        "driving_start_ns": 5924999867,
+        "driving_start_source": "monitor:/admin/awsim/state + ego simulation stamp",
+        "vehicle_state_counts": {
+          "Spawned": 1,
+          "Grounded": 1,
+          "Ready": 1
+        },
+        "collection_scope": "MPPI teacher drive; shadow execution is not inferred by this audit",
+        "limitations": [
+          "V2X-derived footprint clearance is approximate, not a contact mesh oracle.",
+          "Forward candidate mask excludes reverse and unknown stop intent; raw reverse/stops are preserved.",
+          "No optimizer run or automatic merge into an existing training split."
+        ]
+      }
+    },
+    {
+      "run_id": "lidar-v45-pc10-expand-right-a01",
+      "selected": 12,
+      "front_cone": 1,
+      "front_0_6m_lateral_1m": 0,
+      "endpoint_abs_y_gt_020": 10,
+      "original_audit": {
+        "run_id": "lidar-v45-pc10-expand-right-a01",
+        "cases": [
+          "lidar-v45-pc10-expand-right-a01"
+        ],
+        "split_groups": [
+          "straight_b_center"
+        ],
+        "official_penalties": {
+          "crash": 0,
+          "wall": 0,
+          "over": 0
+        },
+        "finish_reached": true,
+        "min_footprint_clearance_m": null,
+        "no_off_track": true,
+        "run_clean_for_forward_audit": false,
+        "monitor_process_returncode": 0,
+        "monitor_final_status": 0,
+        "topic_counts": {
+          "/control/command/control_cmd": 2072,
+          "/tf_static": 2,
+          "/sensing/gnss/pose_with_covariance": 445,
+          "/tf": 1070,
+          "/mppi/direct/trajectory_command": 549,
+          "/planning/scenario_planning/trajectory": 22,
+          "/awsim/cmd": 0,
+          "/debug/mppi/status": 578,
+          "/awsim/state": 3,
+          "/awsim/status": 222,
+          "/collection/lidar_v2x/status": 1429,
+          "/clock": 4451,
+          "/collection/lidar_v2x/objects": 438,
+          "/sensing/camera/camera_info": 212,
+          "/v2x/vehicle_positions": 0,
+          "/vehicle/status/velocity_status": 636,
+          "/sensing/lidar/scan": 445,
+          "/collection/lidar_v2x/markers": 438,
+          "/collection/lidar_v2x/vehicle_positions": 438,
+          "/control/command/gear_cmd": 0,
+          "/debug/mppi/stuck_recovery": 0,
+          "/vehicle/status/gear_status": 636,
+          "/control/mpc/stop_request": 0,
+          "/vehicle/status/steering_status": 636,
+          "/sensing/camera/image_raw": 212,
+          "/localization/acceleration": 1057,
+          "/sensing/imu/imu_data": 445,
+          "/localization/kinematic_state": 1084
+        },
+        "sensors": {
+          "camera": {
+            "count": 212,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.104999998
+          },
+          "lidar": {
+            "count": 445,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.049999999
+          },
+          "pose": {
+            "count": 1084,
+            "backward": 0,
+            "duplicate": 188,
+            "max_gap_s": 0.119999998
+          },
+          "velocity": {
+            "count": 636,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.035
+          },
+          "actual_steering": {
+            "count": 636,
+            "backward": 0,
+            "duplicate": 0,
+            "max_gap_s": 0.035
+          },
+          "final_command": {
+            "count": 2072,
+            "backward": 0,
+            "duplicate": 793,
+            "max_gap_s": 0.149999997
+          }
+        },
+        "teacher_mode_counts": {
+          "FREE_RUN": 165,
+          "AVOID": 384
+        },
+        "avoid_intervals_ns": [
+          [
+            1089999975,
+            14084999685
+          ]
+        ],
+        "reverse_intervals_ns": [],
+        "perception_status_counts": {
+          "scan_timeout": 348,
+          "waiting_for_timestamped_tf": 638,
+          "stale_scan_or_missing_tf": 5,
+          "ok": 438
+        },
+        "stop_requests": 0,
+        "camera_anchors": 212,
+        "full_future_anchors": 125,
+        "forward_avoidance_eligible_anchors": 0,
+        "rejections": {
+          "RUN_NOT_CLEAN": 212,
+          "STARTUP": 64,
+          "INCOMPLETE_INPUT_OR_FUTURE": 87,
+          "HISTORY_GAP": 88,
+          "TEACHER_UNAVAILABLE_OR_EMERGENCY": 10,
+          "PERCEPTION_UNAVAILABLE": 6,
+          "OUTSIDE_AVOIDANCE_CONTEXT": 50
+        },
+        "tensor_smoke": [],
+        "label_contract": {
+          "shape": [
+            212,
+            30,
+            2
+          ],
+          "units": "m",
+          "dt_s": 0.1,
+          "frame": "base_link_at_observation",
+          "source": "OBSERVED_FUTURE_POSE",
+          "freeze_delay_receipt_ns": 50000000,
+          "config": {
+            "image_shape": [
+              3,
+              224,
+              384
+            ],
+            "lidar_shape": [
+              2,
+              750
+            ],
+            "ego_features": 4,
+            "camera_history_length": 4,
+            "lidar_history_length": 4,
+            "ego_history_length": 10,
+            "command_history_length": 10,
+            "tolerance_ns": 50000000,
+            "teacher_tolerance_ms": 50.0,
+            "lidar_min_range_m": 0.0,
+            "lidar_max_range_m": 25.0,
+            "lidar_angle_min_rad": -3.141592653589793,
+            "capture_clock": "sim",
+            "available_clock": "bag_receipt",
+            "pose_world_frame": "map",
+            "pose_body_frame": "base_link"
+          }
+        },
+        "source_bag": "/home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/collected/lidar-v45-pc10-expand-right-a01/raw/lidar-v45-pc10-expand-right-a01/d1/rosbag2_autoware",
+        "source_verified_bytes": 20809856,
+        "training_split_assigned": false,
+        "duplicate_sim_clock_receipts_coalesced": 1053,
+        "driving_start_ns": 5749999871,
+        "driving_start_source": "monitor:/admin/awsim/state + ego simulation stamp",
+        "vehicle_state_counts": {
+          "Spawned": 1,
+          "Grounded": 1,
+          "Ready": 1
+        },
+        "collection_scope": "MPPI teacher drive; shadow execution is not inferred by this audit",
+        "limitations": [
+          "V2X-derived footprint clearance is approximate, not a contact mesh oracle.",
+          "Forward candidate mask excludes reverse and unknown stop intent; raw reverse/stops are preserved.",
+          "No optimizer run or automatic merge into an existing training split."
+        ]
+      }
+    }
+  ],
+  "selected": 140,
+  "front_cone": 42,
+  "front_0_6m_lateral_1m": 1,
+  "pose_source": "recorded EKF, allowed map residual; not physical truth",
+  "counts_are_windows_not_independent_avoidance_events": true
+}

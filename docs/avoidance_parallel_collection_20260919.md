@@ -40,10 +40,12 @@ tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -u \
 - 最大2AWSIM、各実験480秒、0.75GiB、空き下限2GiB。目標10km/h、通常RVizあり。
 - AWSIMバイナリ・assetsは改変しない。生成した外部起動設定で既存CLIのbase domainを指定。
 
-実行済みは左右開始コーン2本、未学習配置コーン／箱2本、単独環境対照1本。
-5本ともシナリオの終了条件に到達し、公式crash/wall/overは0。
+実行済みは左右開始コーン4本（2配置）、未学習配置コーン／箱2本、単独環境対照1本。
+7本ともシナリオの終了条件に到達し、公式crash/wall/overは0。
 全原本はWSL `runs/mppi_v45_pc10_20260918/collected/` にSHA256照合して保存。
-二つの並列pairでAWSIM 1,089ファイルの前後ハッシュ一致を確認した。
+三つの並列pairでAWSIM 1,089ファイルの前後ハッシュ一致を確認した。
+全収集後にも最初のpair前のハッシュと一致を確認し、専用holder 2個を削除した。
+収集終了時の空きは7,079,858,176 bytes（約6.59GiB）。
 終了条件到達は、すべてのrunで障害物通過後25mの観測が検証できた意味ではない。
 
 ## 厳格選別時の結果
@@ -75,4 +77,55 @@ train 3runのカメラanchorは634、prefix候補181窓。地図照合を必須�
 tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python -m pytest -q
 ```
 
-最終の許容選別件数・回帰テスト・比較結果は追記する。
+許容オプションの回帰テストを含め、WSL source `7a3245d63011b112998c34dc25a2b1959b4a3f9a`
+で **3,282 passed / 4 skipped / 84 warnings**、146.54秒。
+skipは既存の任意OSQP・jsonschema・公式パッケージ不足によるもの。
+
+## 許容後の追加教師
+
+`expand_alignment_tolerant_v1`は最初のtrain 3runで88窓。
+追加の2並列収集も含む最終束`expand_alignment_tolerant_v2`は次のとおり。
+
+| run suffix | prefix候補 | 適格（間引き前） | 採用 | 保留 |
+|---|---:|---:|---:|---:|
+| aleft-a01 | 61 | 56 | 32 | 5 |
+| aright-a01 | 68 | 33 | 20 | 35 |
+| left-a01 | 48 | 48 | 26 | 0 |
+| left-a02（単独対照） | 100 | 99 | 50 | 1 |
+| right-a01 | 33 | 19 | 12 | 14 |
+| 合計 | 310 | 255 | **140** | 55 |
+
+元のカメラanchorは1,078、適格255から時刻200ms間隔の間引きで115窓を外した。
+採用140はコーン周辺98・通常42。残る保留は教師不成立、観測時刻支持の不足、
+静止コーン文脈外でFREE_RUNではない教師など。地図照合を理由とする保留は0。
+
+140窓は全て原本からcamera/LiDAR/ego履歴と未来30点XY・速度を再生成して照合した。
+保存先は `/home/thistle/e2e_autonomous/runs/avoidance_expand_replay_20260919`。
+元の絶対地図照合の許容と、原本から同じ教師を再現できることは別の確認である。
+
+窓数は独立した回避イベント数ではない（新trainは5run）。
+記録EKFに基づく配置診断では、前方コーン文脈42窓、前方0〜6m・横±1mは1窓。
+この位置診断にも許容した地図ズレが含まれる。追加140窓で正面接近分布が十分に
+埋まったとは判断しない。未学習配置のコーン／箱2runはvalidationとして別保存し、
+このtrain束には含めない。
+
+[選別manifest](evidence/avoidance_parallel_20260919/selection_manifest.json)、
+[原本再現proof](evidence/avoidance_parallel_20260919/replay_proof.json)、
+[配置診断](evidence/avoidance_parallel_20260919/coverage_summary.json)、
+[容量確保の照合記録](evidence/avoidance_parallel_20260919/storage_cleanup.json)。
+
+841窓の統合準備（学習の途中投入ではない）:
+
+```bash
+tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 \
+  .venv/bin/python -u tools/train_time_native_replay.py prepare \
+  --root /home/thistle/e2e_autonomous \
+  --plan configs/time_path_p1/native841_prepare_20260919.json
+```
+
+このコマンドはprepareのみ。841窓を使った新しい学習の実行結果ではない。
+source `3ab9ad3565857933750b43c1b66d586264bf52f4`で`PREPARATION_PASS`を確認。
+22runの841窓を再現し、旧60,608提示の順序SHA256と既存validationを維持した。
+準備済み総提示数は69,018（native 841窓×10回を追加）。
+[統合準備proof](evidence/avoidance_parallel_20260919/native841_preparation_proof.json)。
+701窓の4条件比較は有限予算の既存pipelineをWSLで継続する。
