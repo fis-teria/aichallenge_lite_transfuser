@@ -44,3 +44,11 @@ tools/with_wsl_training_lock.sh timeout --signal=INT --kill-after=60s 10800s \
 完了時の更新数と重みハッシュ、`evaluation/selection.json`に保持判定を記録する。
 学習中断時のみ同じソース・設定で`train --resume`し、その後`evaluate`する。
 `run`や`prepare`で既存出力を上書きしない。
+
+## 起動前検証
+
+WSLの全pytestは3,262 passed / 4 skipped（128.37秒）。初回起動はソースガードで
+停止し、学習出力は未作成。旧基準commit以降の保護対象差分は、別診断ツールのみが
+使用する`training/native_fit_v1.py`の新規追加だけで、今回の学習経路からは参照しない。
+モデル・入力・既存損失・旧設定が同一であることを確認して、今回のソースガード基準を
+`dfe2cfa89417d84c87343522f3694bee4246cd3d`に更新した。ガード自体は維持する。
