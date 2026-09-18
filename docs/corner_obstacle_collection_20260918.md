@@ -311,6 +311,39 @@ bash tools/with_wsl_training_lock.sh .venv/bin/python \
   /home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/verify_native_prefix_clearance.py
 ```
 
+### 軌道・速度教師の選別
+
+`tools/curate_native_teacher_data.py`は、正常な前半の候補を対象に、
+観測された未来軌道・速度の学習用selectionを別directoryへ保存する。
+物理離隔を保証した回避成功データの判定と、通常の観測軌道の品質選別は分ける。
+既存の`forward_avoidance_eligible`を昇格せず、停止意図・行動クラスの教師は付与しない。
+
+既定条件は、未来30点のXY・速度が有効、未来速度が全点0.2m/sを超えること。
+注意フラグの291窓は除外し、箱の初期位置から6m以内を含む窓は保留する。
+静止コーンは投影外形距離0.30mに監査余裕0.30mを加え、0.60m以上を要求する。
+この追加余裕は統計的な自己位置誤差の上限ではなく、品質選別の条件である。
+コーンが6m以内にない区間では、検査窓全体で教師modeがFREE_RUNであることも要求する。
+
+各anchorの過去1秒・未来3秒に50msの補間余裕を加え、全区間で以下を確認する。
+教師の非常停止なし、perception ready、pose/scan/command/perceptionに150ms超の欠測なし。
+記録EKF姿勢で点群を物理壁地図へ投影し、各scanの壁残差中央値0.15m以下、
+0.25m内の壁inlier率70%以上を要求する。距離1〜12mの有効点を3本おきに取り、
+80点以上、角度幅60°以上を必要とする。地図へ合うように姿勢や教師を修正しない。
+
+選別済みindexは最大5Hz（200ms以上の間隔）に間引く。間引き前の適格indexも
+`decisions.jsonl`に保持する。`selected_teachers.npz`は元の教師と同一値の抜粋で、
+`selected_anchors.jsonl`に元run/epoch/source_label_index・入力履歴参照を残す。
+同じ`all_corners_20260918`シナリオ群をtrain/validation/testへ分散させず、split未割当で保存する。
+
+```bash
+cd /home/thistle/e2e_autonomous/e2e_lite_transfuser_lidar_v2x_margin
+bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
+  tools/curate_native_teacher_data.py \
+  --root /home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918 \
+  --output /home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/curated_xy_speed_v1
+bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q
+```
+
 ### 有限の追加収録キュー
 
 Windows側の`tmp/native_collection_resume_20260918/continue_10kmh_batch.py`は、
