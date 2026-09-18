@@ -36,6 +36,30 @@ def write_json(path: Path, value: Any) -> None:
         stream.write('\n')
 
 
+def verified_race_start(collected: Path, run_id: str, report: dict[str, Any]) -> tuple[int, str, dict[str, str]]:
+    """Reapply the existing race-Start fix to older audits with delayed vehicle Start."""
+    from tools.audit_lidar_v2x_obstacles import resolve_driving_start
+    manifest = json.loads((collected/'export_manifest.json').read_text())
+    inputs = {}
+    hashes = {}
+    for filename in ('monitor-status.json','samples.jsonl'):
+        name = f'raw/{run_id}/{filename}'
+        path = collected/name
+        item = manifest['files'][name]
+        if path.is_symlink() or not path.resolve().is_relative_to(collected.resolve()):
+            raise ValueError('race evidence path escapes collection')
+        digest = sha(path)
+        if path.stat().st_size != item['bytes'] or digest != item['sha256']:
+            raise ValueError('race evidence checksum mismatch')
+        inputs[filename] = path.read_text()
+        hashes[name] = digest
+    monitor = json.loads(inputs['monitor-status.json'])
+    samples = [json.loads(line) for line in inputs['samples.jsonl'].splitlines() if line.strip()]
+    states = [(report['driving_start_ns'],'Start')] if report.get('driving_start_source') == '/awsim/state' else []
+    stamp, source = resolve_driving_start(states,monitor,samples)
+    return stamp,source,hashes
+
+
 def verified_bag(collected: Path, run_id: str) -> tuple[Path, dict[str, str]]:
     receipt = json.loads((collected/'transfer_verified.json').read_text())
     manifest = json.loads((collected/'export_manifest.json').read_text())
@@ -145,8 +169,9 @@ def filter_audit(collected: Path, audit: Path, output: Path,
         raise ValueError('inconsistent epoch bounds')
     bounds = next(iter(epoch_bounds))
     bag, source_bags = verified_bag(collected,run_id)
+    drive_start, drive_source, race_hashes = verified_race_start(collected,run_id,report)
     pairs, sensor_report = paired_heading_samples(bag,config.max_gap_ns,config.max_error_rad)
-    quality = heading_prefix(pairs,drive_start_ns=report['driving_start_ns'],observed_end_ns=bounds[1],config=config)
+    quality = heading_prefix(pairs,drive_start_ns=drive_start,observed_end_ns=bounds[1],config=config)
     trace = quality.pop('trace')
     with np.load(audit/'observed_teachers.npz',allow_pickle=False) as bundle:
         arrays = {name:bundle[name].copy() for name in bundle.files}
@@ -168,6 +193,11 @@ def filter_audit(collected: Path, audit: Path, output: Path,
         row = dict(source_row)
         row['rejection_reasons'] = list(source_row['rejection_reasons'])
         row['teacher_reasons'] = list(source_row['teacher_reasons'])
+        if (drive_start != report['driving_start_ns'] and 'STARTUP' in row['rejection_reasons']
+                and row['observation_ns'] >= drive_start+1_000_000_000):
+            row['source_rejection_reasons'] = list(source_row['rejection_reasons'])
+            row['rejection_reasons'].remove('STARTUP')
+            row['startup_reason_refined_from_verified_race_start'] = True
         row['teacher_pose_prefix_eligible'] = bool(keep[i])
         if not keep[i]:
             row['rejection_reasons'].append('OUTSIDE_VERIFIED_TEACHER_POSE_PREFIX')
@@ -196,6 +226,8 @@ def filter_audit(collected: Path, audit: Path, output: Path,
         first_candidate_ns=rows[candidates[0]]['observation_ns'] if candidates else None,
         last_candidate_ns=rows[candidates[-1]]['observation_ns'] if candidates else None,
         future_horizon_ns=3_000_000_000,interpolation_endpoint_guard_ns=tolerance_ns,
+        source_driving_start_ns=report['driving_start_ns'],driving_start_ns=drive_start,
+        driving_start_source=drive_source,source_race_evidence_sha256=race_hashes,
         source_collected=str(collected.resolve()),source_audit=str(audit.resolve()),
         source_bag_sha256=source_bags,source_audit_sha256=source_files,
         training_split_assigned=False,automatic_training_admission=False,

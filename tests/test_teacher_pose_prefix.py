@@ -146,6 +146,7 @@ def test_artifact_filter_retains_source_identity_and_existing_clearance_rejectio
         label_contract=dict(dt_s=.1,shape=[4,30,2],config=dict(teacher_tolerance_ms=50.)))))
     original = {p.name:p.read_bytes() for p in audit.iterdir()}
     monkeypatch.setattr(module,'verified_bag',lambda *_: (tmp_path/'bag',{'raw/r/bag':'sha'}))
+    monkeypatch.setattr(module,'verified_race_start',lambda *_: (0,'test',{}))
     monkeypatch.setattr(module,'paired_heading_samples',lambda *_: ([],{}))
     monkeypatch.setattr(module,'heading_prefix',lambda *_,**kw: dict(valid_from_ns=0,
         valid_until_ns=10_000_000_000,invalid_from_ns=10_000_000_000,reason='HEADING_DRIFT',trace=[]))
@@ -162,3 +163,17 @@ def test_artifact_filter_retains_source_identity_and_existing_clearance_rejectio
     assert actual[2]['usable_full'] is False and actual[2]['stop_reason'] == 'UNKNOWN'
     assert all((audit/name).read_bytes() == value for name,value in original.items())
     with pytest.raises(FileExistsError): module.filter_audit(tmp_path/'collected',audit,out)
+
+
+def test_quality_baseline_uses_verified_race_start_instead_of_old_delayed_vehicle_start(tmp_path):
+    from tools.filter_teacher_pose_prefix import verified_race_start, sha
+    raw = tmp_path/'raw/r'; raw.mkdir(parents=True)
+    (raw/'monitor-status.json').write_text(json.dumps(dict(scenario_start_observed=True)))
+    (raw/'samples.jsonl').write_text(json.dumps(dict(time=.1,awsim_state='Start',ego=dict(stamp=7.17)))+'\n')
+    files = {str(p.relative_to(tmp_path)):dict(bytes=p.stat().st_size,sha256=sha(p)) for p in raw.iterdir()}
+    (tmp_path/'export_manifest.json').write_text(json.dumps(dict(files=files)))
+    result = verified_race_start(tmp_path,'r',dict(driving_start_ns=84_309_998_115,driving_start_source='/awsim/state'))
+    assert result[0] == 7_170_000_000
+    assert len(result[2]) == 2
+    (raw/'samples.jsonl').write_text('modified source')
+    with pytest.raises(ValueError,match='checksum'): verified_race_start(tmp_path,'r',{})
