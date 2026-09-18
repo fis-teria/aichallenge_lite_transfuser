@@ -148,3 +148,36 @@ DISPLAY=:1 XAUTHORITY=/run/user/1000/gdm/Xauthority ROS_DOMAIN_ID=1 \
 終了後にAWSIM等の保護対象7ファイル、教師vendor source 323ファイル、
 実行runtimeのhash一致を確認した。収集用containerは残存せず、PC10の空きは
 2,793,189,376 bytes。最終runのPC10 rawコピーは保全している。
+
+## 収集継続と判定の再確認
+
+12地点を一度通過したことは、必要な教師データの収集完了ではない。
+`a07`（seed 20260919、同じ12配置・5km/h）で追加収録を再開した。
+収録前にa06のWSL raw全57ファイルを再度SHA256照合し、PC10側の同一コピーだけ
+整理して空き5,457,133,568 bytesを確保した。WSL原本は保全している。
+
+PC10の実AWSIM資産を読み取り専用でコピーし、WSLで物理壁地図を再生成した。
+level1のSHA256は`9ab2e1e8865c02885594e0bbdde372302530f047b5a2e89c455be6a18f3e090b`。
+生成PGMはMPPIの使用物と完全一致
+（`f7aa23da81c626b8e7457628744f25600f4ff8afee9d2f37d06bc390889903a3`）。
+これは旧監査地図の境界と実物理壁を区別する根拠であり、AWSIMの改変ではない。
+
+a06の13,702サンプルを、記録されたbase_link姿勢と実MeshColliderのXY外形で
+再確認すると物理地図との重なりは0件だった。旧地図での最大0.50mの判定は
+corner_10の入口、進捗231.421mに対応する。
+ただしcorner_08のコーンへの最小離隔は約0.182mで、0.30m条件を満たさない。
+箱は標準形状が0.5m立方体と分かったが、生成後に動的物理へ移るため、
+設定上の初期位置だけで実走中の離隔を認定しない。
+既存の厳格maskはこの再確認だけで書き換えず、区間ごとの採否を別に検証する。
+
+次の収録から、解決済みスタートグリッド位置・全物体station・必要な後続25mから
+終了進捗を計算する。現配置では約373.125mとなり、以前の400.547mまで走って
+2周目の別障害物に遭遇する必要はない。通過後25mの観測条件は維持する。
+また、`/awsim/state`の遅れて届くStartより、監視側が確認したレースStartの
+simulation stampを優先し、最初の回避区間を誤ってSTARTUPへ落とさない。
+両変更の回帰確認は上記のWSL `pytest -q`で実施する。
+
+再確認の出力はWSL `runs/mppi_v45_pc10_20260918/` の
+`pc10_physical_wall_map/provenance.json`、`native-offtrack-a06.png`、
+`lidar-v45-pc10-corners-native-a06-physical-inspection.json` と
+同名prefixの`physical-samples.jsonl`。従来の監査結果・rawは保全している。

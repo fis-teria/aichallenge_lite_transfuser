@@ -39,10 +39,9 @@ def resolve_driving_start(states: list[tuple[int, str]], monitor: dict, samples:
     Some installed adapters publish only Spawned/Grounded/Ready on domain 1's
     /awsim/state. The monitor separately observes /admin/awsim/state on domain 0.
     Its synchronized ego stamp maps that observed Start into simulation time.
+    Prefer that race observation even if the vehicle adapter later emits Start:
+    its delayed message is not a new start of the recording or the race.
     """
-    starts = driving_start_stamps(states)
-    if starts:
-        return min(starts), '/awsim/state'
     candidates = []
     if monitor.get('scenario_start_observed') is True:
         for row in samples:
@@ -50,9 +49,12 @@ def resolve_driving_start(states: list[tuple[int, str]], monitor: dict, samples:
             if (row.get('time', -1) >= 0 and str(row.get('awsim_state', '')).strip().casefold() == 'start'
                     and stamp is not None and math.isfinite(stamp) and stamp >= 0):
                 candidates.append(round(stamp*1e9))
-    if not candidates:
-        raise ValueError('No verified AWSIM race Start in bag or monitor')
-    return min(candidates), 'monitor:/admin/awsim/state + ego simulation stamp'
+    if candidates:
+        return min(candidates), 'monitor:/admin/awsim/state + ego simulation stamp'
+    starts = driving_start_stamps(states)
+    if starts:
+        return min(starts), '/awsim/state'
+    raise ValueError('No verified AWSIM race Start in bag or monitor')
 
 
 def windows(values: list[int], max_gap_ns: int = 250_000_000) -> list[tuple[int, int]]:

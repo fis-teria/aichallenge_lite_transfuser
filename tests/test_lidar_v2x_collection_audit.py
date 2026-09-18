@@ -18,6 +18,17 @@ def test_monitor_race_start_uses_simulation_stamp_not_wall_time_or_vehicle_ready
     with pytest.raises(ValueError,match='No verified'):
         resolve_driving_start([(5,'Ready')],{'scenario_start_observed':False},samples)
 
+
+def test_delayed_vehicle_start_does_not_discard_the_first_recovery_event():
+    from tools.audit_lidar_v2x_obstacles import resolve_driving_start
+    vehicle_states = [(3_000_000_000, 'Ready'), (84_309_998_115, 'Start')]
+    samples = [dict(time=.01, awsim_state='start', ego=dict(stamp=7.17)),
+               dict(time=77.2, awsim_state='start', ego=dict(stamp=84.36))]
+    assert resolve_driving_start(vehicle_states, {'scenario_start_observed': True}, samples) == (
+        7_170_000_000, 'monitor:/admin/awsim/state + ego simulation stamp')
+    assert resolve_driving_start(vehicle_states, {'scenario_start_observed': False}, samples) == (
+        84_309_998_115, '/awsim/state')
+
 import pytest
 
 from aic_transfuser_lite.data.clock_segments import ClockSample, segment_clock_epochs

@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from tools.prepare_corner_obstacle_collection import collection_document
+from tools.prepare_corner_obstacle_collection import collection_document, required_finish_progress
 from tools.audit_native_corner_collection import corner_coverage
 
 
@@ -65,3 +65,28 @@ def test_native_coverage_does_not_infer_pass_from_endpoint_or_teleport():
         assert not corner_coverage(rows,[location()],100)[0]['passed']
     with pytest.raises(ValueError):
         corner_coverage([],[location(-1)],100)
+
+
+def test_finish_covers_wrapped_first_corner_without_requiring_the_next_obstacle():
+    length = 340.5467525855492
+    stations = [7.578035117890783, 38.45644825210893, 319.1095321865732]
+    finish = required_finish_progress(24., stations, length, 25.)
+    assert finish == pytest.approx(373.125)
+    assert finish >= length + stations[0] + 25.
+    assert finish < length + stations[1]
+    members = [dict(point(i), monitor_s_m=s) for i, s in enumerate(stations, 1)]
+    document = collection_document(dict(plan(), initial_progress_m=24.), 'case', members, length)
+    assert document['expect']['finish']['ego_reference_s_greater_than'] == finish
+
+
+def test_finish_without_wrap_preserves_full_post_distance():
+    assert required_finish_progress(1., [10., 40.0001], 100., 25.) == pytest.approx(65.001)
+
+
+@pytest.mark.parametrize('start,stations,length,post', [
+    (24., [], 100., 25.), (24., [float('nan')], 100., 25.),
+    (100., [10.], 100., 25.), (0., [-1.], 100., 25.),
+    (0., [100.], 100., 25.), (0., [10.], 100., -1.), (0., [0.], 0., 25.)])
+def test_finish_rejects_invalid_station_units_and_nonfinite_inputs(start, stations, length, post):
+    with pytest.raises(ValueError):
+        required_finish_progress(start, stations, length, post)

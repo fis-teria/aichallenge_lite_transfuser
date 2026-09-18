@@ -18,6 +18,21 @@ if __package__ in {None, ""}:
 from tools.prepare_avoidance_scenarios import sha256, write_json
 
 
+def required_finish_progress(initial_s_m: float, stations_m: list[float],
+                             length_m: float, post_m: float = 25.) -> float:
+    """Unwrapped finish [m] after every first encounter and its post observation.
+
+    Stations and the resolved grid position are in [0, length_m). Round upward
+    to the monitor's millimetre precision; never require an unrelated encounter.
+    """
+    if (not stations_m or not all(math.isfinite(v) for v in [initial_s_m, length_m, post_m, *stations_m])
+            or length_m <= 0 or not 0 <= initial_s_m < length_m or post_m < 0
+            or any(not 0 <= s < length_m for s in stations_m)):
+        raise ValueError('finite canonical stations, positive length and nonnegative post distance required [m]')
+    targets = [s + max(0, math.ceil((initial_s_m-s)/length_m))*length_m for s in stations_m]
+    return math.ceil((max(targets)+post_m)*1000.)/1000.
+
+
 def collection_document(plan: dict[str, Any], name: str, members: list[dict[str, Any]],
                         length_m: float) -> dict[str, Any]:
     if not math.isfinite(length_m) or length_m <= 60:
@@ -40,9 +55,13 @@ def collection_document(plan: dict[str, Any], name: str, members: list[dict[str,
         ego=dict(submission=dict(type='docker_image', image=plan['image']), pose=dict(start_grid=1)),
         objects=objects,
         expect=dict(timeout_sec=plan['sim_timeout_s'], no_collision=True, no_off_track=True))
-    # The grid begins around s=24 m; a lap-counter finish would miss corner 01.
-    # Scenario Tool compares this field against UNWRAPPED progress.
-    document['expect']['finish'] = {'ego_reference_s_greater_than': round(length_m + 60., 3)}
+    # Initial resolution obtains the actual map position of grid 1. The final
+    # document then stops after the last first encounter plus its post window.
+    finish = round(length_m + 60., 3)
+    if 'initial_progress_m' in plan:
+        finish = required_finish_progress(plan['initial_progress_m'],
+            [p['monitor_s_m'] for p in members], length_m, plan.get('finish_after_actor_m', 25.))
+    document['expect']['finish'] = {'ego_reference_s_greater_than': finish}
     document['description'] = 'One native box/cone per corner. Official contacts and per-corner coverage must be audited; mesh clearance is unknown.'
     return document
 
@@ -110,6 +129,12 @@ def prepare(repo: Path, reference: Path, output: Path, prefix: str) -> dict[str,
     document = collection_document(plan, name, selected, monitor.length)
     warnings = scenario.validate_document(document, context)
     resolved = scenario.resolve(document, context, monitor, transform, warnings=warnings)
+    if resolved.ego.map_pose is None:
+        raise ValueError('resolved grid map pose is required for collection finish')
+    plan['initial_progress_m'] = monitor.project(resolved.ego.map_pose.x, resolved.ego.map_pose.y)[0]
+    document = collection_document(plan, name, selected, monitor.length)
+    warnings = scenario.validate_document(document, context)
+    resolved = scenario.resolve(document, context, monitor, transform, warnings=warnings)
     native = compiler.build_awsim_scenario(resolved, True)
     if len(native['vehicles']) != 1 or sum(len(v) for v in native.get('objects', {}).values()) != len(selected):
         raise ValueError('compiled native object identity/count mismatch')
@@ -122,6 +147,8 @@ def prepare(repo: Path, reference: Path, output: Path, prefix: str) -> dict[str,
             split_policy='Entire suite remains grouped; no frame split and no automatic training registration.',
             teacher_revision='lidar-motion-intent-r2', monitor_length_m=monitor.length,
             required_post_actor_m=25., required_min_clearance_m=.3,
+            initial_progress_m=plan['initial_progress_m'],
+            finish_progress_m=document['expect']['finish']['ego_reference_s_greater_than'],
             all_object_audit_required=True, teacher_reference_sha256=sha256(reference),
             geometry_sha256=sha256(Path(sys.modules['scenario_tool.geometry'].__file__)),
             clearance_quality='UNKNOWN_PREFAB_MESH', warnings=resolved.warnings,
@@ -134,7 +161,7 @@ def prepare(repo: Path, reference: Path, output: Path, prefix: str) -> dict[str,
     summary = dict(corners=len(selected), runs=[dict(run_id=name, corners=[p['site'] for p in locations])],
         native_types=[o['type'] for o in document['objects']],
         reference_length_m=line.length, monitor_length_m=monitor.length,
-        finish_progress_m=round(monitor.length+60, 3), speed_cap_kmh=5,
+        finish_progress_m=document['expect']['finish']['ego_reference_s_greater_than'], speed_cap_kmh=5,
         teacher_reference_sha256=sha256(reference), training_split_assigned=False,
         limitations=['Static cross-section feasibility does not prove dynamic avoidance.',
                      'Native prefab mesh dimensions are unknown; no 0.30 m clearance claim.'])
