@@ -1,0 +1,14 @@
+# Unity x/z [m], yaw [degrees]. Same s=44 m centre as the prior box-stop fixture,
+# with only one object so the neighbouring pavement remains available.
+# Setup/evaluation only: no object pose is given to E2E or Pure Pursuit.
+schemaVersion: 2
+name: time_avoidance_single_cone
+description: Single cone at the previously exercised s44 route centre
+fail:
+  collision: 1
+  timeoutSeconds: 600
+objects:
+  cone:
+    - name: avoidance_cone
+      at: [359.3672, -15.9015]
+      yaw: -126.5927

@@ -25,6 +25,7 @@ from aic_transfuser_lite.runtime.awsim_trial_session import (
     JudgeLog, LowSpeedStall, npc_startup_evidence, trial_duration_limits,
 )
 from aic_transfuser_lite.runtime.awsim_traffic import DomainLapJudge, background_launch, traffic_domains
+from aic_transfuser_lite.runtime.awsim_static_scenario import load_static_scenario, static_scenario_startup
 from aic_transfuser_lite.control.awsim_steering import steering_asset_contract
 from aic_transfuser_lite.control.time_dev_v1 import configure_dev_speeds
 from aic_transfuser_lite.control.time_trial_v1 import validate_trial_config
@@ -59,6 +60,8 @@ def main() -> None:
     ap.add_argument('--lidar-map-correction-schedule', choices=('all', 'straight_only'), default='all')
     ap.add_argument('--slam-obstacles', action='store_true', help='Local Cartographer detection; optional longitudinal limiter selected by config')
     ap.add_argument('--slam-stop-box-test', action='store_true', help='Finite fixed physical-box scenario; stop after confirmed SLAM obstacle braking')
+    ap.add_argument('--static-obstacle-scenario', type=Path,
+                    help='Native box/cone YAML under source configs/scenarios; normal ego spawn')
     args = ap.parse_args()
     if args.lidar_map_comparison != (args.lidar_map_initial_pose is not None):
         raise ValueError('LIDAR_COMPARISON_REQUIRES_EXPLICIT_MANUAL_INITIAL_POSE')
@@ -99,6 +102,14 @@ def main() -> None:
     if args.slam_stop_box_test and (not slam_slowdown or args.npcs or args.pp_vehicles):
         raise ValueError('SLAM_BOX_TEST_REQUIRES_LONGITUDINAL_ONLY_SINGLE_EGO')
     execution_profile = config.get("execution_profile", "bounded_10s")
+    static_scenario = None
+    if args.static_obstacle_scenario is not None:
+        if args.slam_stop_box_test or args.npcs or args.pp_vehicles or execution_profile != 'one_lap':
+            raise ValueError('STATIC_SCENARIO_REQUIRES_SINGLE_EGO_LAP')
+        scenario_path = (source / args.static_obstacle_scenario).resolve()
+        if scenario_path.parent != source / 'configs/scenarios':
+            raise ValueError('STATIC_SCENARIO_MUST_BE_IN_SOURCE_SCENARIOS_DIRECTORY')
+        static_bytes, static_scenario = load_static_scenario(scenario_path)
     if (args.npcs or args.pp_vehicles) and (execution_profile != 'one_lap' or args.recovery_side is not None):
         raise ValueError('NPC_TRIAL_REQUIRES_ONE_LAP_WITHOUT_TEACHER')
     drive_sim_s, drive_wall_s, outer_wall_s = trial_duration_limits(execution_profile)
@@ -106,6 +117,8 @@ def main() -> None:
     effective_config = output / 'trial_config.json'
     if args.slam_stop_box_test:
         (output/'slam_stop_box.yaml').write_bytes((source/'configs/scenarios/slam_stop_box.yaml').read_bytes())
+    if static_scenario is not None:
+        (output/'static_obstacles.yaml').write_bytes(static_bytes)
     effective_config.write_bytes((json.dumps(config, indent=2, allow_nan=False)+'\n').encode()
                                 if args.ros_launch else config_path.read_bytes())
     env = dict(os.environ)
@@ -119,6 +132,9 @@ def main() -> None:
               "trial_config_sha256": sha(effective_config)}
     if args.recovery_side is not None:
         result.update(scope='ONE_LAP_AFTER_TEACHER_BOOTSTRAP', recovery_side=args.recovery_side)
+    if static_scenario is not None:
+        result.update(static_scenario=static_scenario,
+                      static_scenario_sha256=sha(output/'static_obstacles.yaml'))
     streams = []; processes = []; compose = None; owned = False
     started = time.monotonic()
     obstacle_stop_since_ns = None
@@ -284,8 +300,10 @@ def main() -> None:
             # Keep background cars active, with collisions enabled, for the whole ego lap.
             make_args += [f'AWSIM_VEHICLES={len(domains)}', 'AWSIM_READY_DOMAINS='+','.join(map(str, domains))]
         simulator_args = ['--npcs', str(args.npcs)]
-        if args.npcs or args.pp_vehicles or args.slam_stop_box_test:
+        if args.npcs or args.pp_vehicles or args.slam_stop_box_test or static_scenario is not None:
             simulator_args += ['--collisions', 'on']
+        if static_scenario is not None:
+            simulator_args += ['--scenario', '/output/static_obstacles.yaml']
         if args.slam_stop_box_test:
             simulator_args += ['--scenario', '/output/slam_stop_box.yaml']
             result['stop_box_scenario_sha256'] = sha(output/'slam_stop_box.yaml')
@@ -465,6 +483,11 @@ def main() -> None:
                     if execution_profile == 'one_lap':
                         result['npc_startup'] = npc_startup_evidence(unity.read_text(errors='replace'), args.npcs)
                         (output/'npc_startup.json').write_text(json.dumps(result['npc_startup'], indent=2))
+                        if static_scenario is not None:
+                            result['static_scenario_startup'] = static_scenario_startup(
+                                unity.read_text(errors='replace'), static_scenario)
+                            (output/'static_scenario_startup.json').write_text(
+                                json.dumps(result['static_scenario_startup'], indent=2))
                     result["rviz_path_subscribers"] = inference["path_subscribers"]
                     inspections = []
                     for service in ("simulator", "autoware", *traffic_services):
