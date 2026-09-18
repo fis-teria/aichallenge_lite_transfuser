@@ -71,3 +71,8 @@ ROS2のinstallには5 km/h、20/15/15 km/h、復帰付き20/15/15 km/hの3設定
 モデル重み、データセット、rosbag、RViz動画はこの変更に追加しない。
 試験ログ・動画の`artifacts/`リンクはローカル保存先であり、Git公開物には含まれない。
 起動と依存環境の構築は[SLAM MPPI手順](slam_mppi_avoidance.md)を参照する。
+
+公開前の設定同梱修正`b4ed6b11fded1cb9b533d9e7dd2e0dda9ceb89a3`は、
+native WSLで3324 passed / 4 skipped（159.01秒）。3設定と回避・復帰コードの
+ROS install対象を検査するテストを含む。4 skipは既存の任意依存・環境不足。
+この同梱修正後の公式環境colcon再ビルドと、最新版でのAWSIM復帰完了は未確認。
