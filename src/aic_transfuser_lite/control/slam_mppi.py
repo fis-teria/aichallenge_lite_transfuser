@@ -56,7 +56,7 @@ class ReferenceMppi:
         self.rng = np.random.default_rng(seed)
         self.side = 0
         self.diagnostics: list[dict[str, int]] = []
-        self.mean = np.zeros(3)
+        self.mean = np.zeros(4)
 
     def solve(self, reference_world: np.ndarray, base_pose: np.ndarray,
               values: np.ndarray, origin_xy_m: np.ndarray, resolution_m: float) -> dict[str, Any]:
@@ -97,10 +97,11 @@ class ReferenceMppi:
         d0 = float(-guide[0]@normals[0])
         slope0 = math.tan(-headings[0])
         boundary = d0*(1-3*u**2+2*u**3)+length*slope0*(u-2*u**2+u**3)
-        # Keep the original bypass family and add an independent terminal offset.
-        # All three basis derivatives vanish at both endpoints.
+        # Keep the original bypass family; terminal displacement AND heading
+        # are free so a short horizon can finish while still turning.
         basis = np.column_stack((np.sin(np.pi*u)**2,
-                                 np.sin(np.pi*u)**2*(2*u-1), 3*u**2-2*u**3))
+                                 np.sin(np.pi*u)**2*(2*u-1), 3*u**2-2*u**3,
+                                 length*(u**3-u**2)))
         field = self._distance_transform(np.pad(grid == 0, 1, constant_values=False))[1:-1, 1:-1]*resolution_m
         # Two cell-center errors, plus max half-step displacement of any circle.
         required = .95+math.sqrt(2)*resolution_m+.15
@@ -142,12 +143,14 @@ class ReferenceMppi:
         mean = self.mean.copy()
         best = None
         for iteration in range(3):
-            noise = self.rng.normal(size=(256, 3))*[1.8/(1+iteration*.3), 1., 1.2]
+            noise = self.rng.normal(size=(256, 4))*[1.8/(1+iteration*.3), 1., 1.2, .25]
             samples = mean+noise
-            samples[128:, 2] = 0.  # Preserve explicit rejoining candidates.
+            samples[128:, 2:] = 0.  # Preserve explicit rejoining candidates.
             samples[0] = mean
-            samples[1:9] = [[-2.4, 0., 0.], [2.4, 0., 0.], [-1.8, 0., 0.], [1.8, 0., 0.],
-                            [0., 0., -1.2], [0., 0., 1.2], [0., 0., -.5], [0., 0., .5]]
+            samples[1:9] = [[-2.4, 0., 0., 0.], [2.4, 0., 0., 0.], [-1.8, 0., 0., 0.], [1.8, 0., 0., 0.],
+                            [0., 0., -1.2, 0.], [0., 0., 1.2, 0.], [0., 0., -.5, 0.], [0., 0., .5, 0.]]
+            for j, k in enumerate((-.18, -.12, -.06, .06, .12, .18), start=9):
+                samples[j] = [0., 0., .5*k*length**2, k*length]
             costs, paths = evaluate(samples)
             finite = np.isfinite(costs)
             if not finite.any():

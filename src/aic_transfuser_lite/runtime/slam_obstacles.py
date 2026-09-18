@@ -90,7 +90,10 @@ class RecentOccupancy:
     size = 250
     ttl_s = 2.
 
-    def __init__(self) -> None:
+    def __init__(self, *, ttl_s: float = 2.) -> None:
+        if not math.isfinite(ttl_s) or not 2. <= ttl_s <= 10.:
+            raise ValueError('OCCUPANCY_TTL_SECONDS')
+        self.ttl_s = float(ttl_s)
         self.origin: np.ndarray | None = None
         self.values = np.full((self.size, self.size), -1, dtype=np.int8)
         self.seen = np.full((self.size, self.size), -np.inf)
@@ -132,8 +135,8 @@ class SlamObstacleDetector:
     Surface centroid velocity changes with visibility: it is NOT object speed.
     No stationary/slow-vehicle semantic claims or motion commands are produced.
     """
-    def __init__(self) -> None:
-        self.grid = RecentOccupancy()
+    def __init__(self, *, occupancy_ttl_s: float = 2.) -> None:
+        self.grid = RecentOccupancy(ttl_s=occupancy_ttl_s)
         self.last_ns: int | None = None
         self.tracks: dict[int, dict] = {}
         self.sequence = 0

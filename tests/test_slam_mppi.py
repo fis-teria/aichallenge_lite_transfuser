@@ -210,6 +210,19 @@ def test_short_reference_can_end_beside_box_without_early_rejoin():
     assert sum(d['feasible'] for d in out['candidate_diagnostics']) > 0
 
 
+def test_partial_terminal_can_still_be_turning_in_narrow_asymmetric_corridor():
+    ref, grid, origin = scene(False)
+    ref[:, 0] = np.linspace(0., 3.806, len(ref))
+    grid[79:, :] = 100  # Left wall at y=1.8 m.
+    grid[:45, :] = 100  # Right wall at y=-5 m.
+    grid[65:68, 71:74] = 100
+    out = ReferenceMppi().solve(ref, np.zeros(3), grid, origin, .2)
+    path = np.asarray(out['path_world_xy_m'])
+    final_delta = path[-1]-path[-2]
+    assert path[-1, 1] < -.5
+    assert np.arctan2(final_delta[1], final_delta[0]) < -.1
+
+
 @pytest.mark.parametrize('scale', [.01, 0.])
 def test_stopped_short_prediction_retains_spatial_reference_but_rechecks_grid(scale):
     ref, grid, origin = scene()

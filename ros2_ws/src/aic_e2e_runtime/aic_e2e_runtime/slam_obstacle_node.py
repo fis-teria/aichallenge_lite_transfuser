@@ -42,7 +42,9 @@ def main(argv: list[str] | None = None) -> None:
     args.output.mkdir(exist_ok=True, parents=True)
     journal = (args.output/'slam_obstacles.jsonl').open('x', buffering=1)
     rclpy.init(args=argv); node = Node('time_slam_obstacles')
-    detector = SlamObstacleDetector()
+    # Static-only MPPI must retain the corridor behind the front-mounted LiDAR
+    # while slowing/stopping. Current rays still clear/update observed cells.
+    detector = SlamObstacleDetector(occupancy_ttl_s=10. if args.mppi else 2.)
     avoidance = AvoidancePlanner() if args.mppi else None
     mppi_config = json.loads((args.output/'trial_config.json').read_text()) if args.mppi else None
     if args.mppi and validate_slam_mppi_policy(mppi_config) == 'off':

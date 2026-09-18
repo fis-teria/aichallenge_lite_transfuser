@@ -88,6 +88,20 @@ def test_occupancy_ray_clear_ttl_and_rolling_origin():
     assert np.all(grid.values == -1)
 
 
+def test_static_mppi_retains_observed_cells_for_bounded_ten_seconds():
+    for ttl, expected in [(2., -1), (10., 100)]:
+        grid = RecentOccupancy(ttl_s=ttl)
+        grid.update(1., np.zeros(2), np.array([[3., 0.]]), np.array([True]))
+        cell = np.floor(np.array([3., 0.])/.2).astype(int)-grid.origin
+        grid.update(4., np.zeros(2), np.empty((0, 2)), np.empty(0, dtype=bool))
+        assert grid.values[cell[1], cell[0]] == expected
+        grid.update(11.1, np.zeros(2), np.empty((0, 2)), np.empty(0, dtype=bool))
+        assert np.all(grid.values == -1)
+    for invalid in [float('nan'), float('inf'), 0., 11.]:
+        with pytest.raises(ValueError, match='TTL_SECONDS'):
+            RecentOccupancy(ttl_s=invalid)
+
+
 def test_pose_transform_and_path_geometry_are_metric_and_stamp_reset_is_explicit():
     point = np.array([[0., 5.], [4., 0.]])
     distance, arc = path_clearance(point, np.array([[0., 3.], [0., 6.]]))
