@@ -22,7 +22,7 @@ from aic_transfuser_lite.control.turning_scan_guard import check_turning_scan, s
 from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
 from aic_transfuser_lite.control.time_dev_v1 import configured_dev_speeds
 from aic_transfuser_lite.control.slam_slowdown import SlamSlowdown, validate_slam_slowdown_policy
-from aic_transfuser_lite.control.slam_mppi import avoidance_command, validate_slam_mppi_policy
+from aic_transfuser_lite.control.slam_mppi import avoidance_command, validate_slam_mppi_policy, mppi_nominal_control
 from aic_transfuser_lite.control.time_trial_v1 import (
     SPEED_POLICIES, interpolate_body_pose, time_trial_control, trial_speed_limits, validate_trial_config,
 )
@@ -461,7 +461,8 @@ def main() -> None:
                     acceleration_mps2=float(nominal.longitudinal.acceleration))
                 details['steering_actuator'] = mapping
             else:
-                details.update(time_trial_control(plan, current, speed_mps=speed,
+                nominal_control = mppi_nominal_control if slam_mppi_policy != 'off' else time_trial_control
+                details.update(nominal_control(plan, current, speed_mps=speed,
                                                   speed_cap_mps=dev_speeds.max_mps if dev_speeds is not None else None,
                                                   corner_max_speed_mps=dev_speeds.corner_mps if dev_speeds is not None else None,
                                                   speed_policy=speed_policy,
@@ -492,7 +493,8 @@ def main() -> None:
                         speed_mps=speed, target_mps=target, acceleration_mps2=accel, dt_s=dt,
                         scan_wheel_pose=scan_wheel,
                         current_wheel_pose=np.array([current.x_m, current.y_m, current.yaw_rad]),
-                        vehicle_model_policy=vehicle_model_policy)
+                        vehicle_model_policy=vehicle_model_policy,
+                        nominal_tracking_unavailable=details.get('nominal_tracking_unavailable'))
                     details['slam_mppi'] = mppi
                     target, accel = mppi['target_speed_mps'], mppi['acceleration_mps2']
                     if mppi['mode'] == 'STOP':

@@ -14,6 +14,7 @@ prefer_canonical_source()
 import numpy as np
 from aic_transfuser_lite.control.time_reference_v1 import TimedBodyPose
 from aic_transfuser_lite.control.slam_mppi import AvoidancePlanner, validate_slam_mppi_policy
+from aic_transfuser_lite.control.time_geometry_v2 import validate_time_geometry
 from aic_transfuser_lite.control.time_trial_v1 import interpolate_body_pose
 from aic_transfuser_lite.runtime.lidar_map_localization import transform
 from aic_transfuser_lite.runtime.slam_obstacles import (
@@ -153,6 +154,8 @@ def main(argv: list[str] | None = None) -> None:
                     or packet.get('producer_kind') != 'LEARNED_TIME_MODEL'
                     or packet.get('clock') != 'sim' or packet.get('dt_s') != .1):
                 raise ValueError('MPPI_MODEL_IDENTITY')
+            if args.mppi:
+                validate_time_geometry(xy)
             plans.append((packet, time.monotonic_ns()))
         except (ValueError, KeyError, TypeError) as exc:
             plans.clear()

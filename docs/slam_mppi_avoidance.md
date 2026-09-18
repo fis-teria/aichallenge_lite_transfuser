@@ -11,7 +11,8 @@ TimePathの予測経路を通常追従し、進路上の障害物がある間は
 - `slam_obstacle_node --mppi`: 観測と同じ時刻・座標で障害物と回避経路をまとめて配信。
   `/time_path/slam/obstacles`のJSONに`mppi`を追加。制御指令は発行しない。
 - `time_trial_controller_node`: 最新モデル経路を従来どおり検査し、正常な場合に限り
-  MPPIの経路へ切り替える。scan時刻の車輪オドメトリで現在座標へ移し、PPで追従。
+  MPPIの経路へ切り替える。MPPI中は通常追従の先読み不足を代替できるが、
+  元予測の鮮度・識別・幾何異常は拒否する。scan時刻の車輪オドメトリで現在座標へ移し、PPで追従。
   物理操舵角から既存の操舵応答補償・レート制限へ接続する。
 - 独立LiDAR guard: `stop_v1`と`measured_speed_v1`を必須とし、実速度で停止領域を検査。
   既存の1 m制限・記録のみの監視をこのプロファイルに使わない。
@@ -28,9 +29,10 @@ ROS非依存実装は`src/aic_transfuser_lite/control/slam_mppi.py`。
 256候補×3反復で横方向オフセットをサンプルし、コストの指数重みで更新する。
 これは局所的なreference-space MPPIで、同梱V45教師C++ノードそのものの再利用ではない。
 [MPPIの指数重み更新](https://acdslab.github.io/mppi-generic-website/docs/mppi.html)を
-参照し、横方向の2係数に制限した探索を行う。
+参照し、横方向の回避形状2係数と終端オフセット1係数を探索する。
 
-オフセットは現在の横ずれ・向きから滑らかに始まり、予測経路へ合流する。
+オフセットは現在の横ずれ・向きから滑らかに始まり、回避途中の終端を許容する。
+元経路への合流はコストで促し、予測終端での合流を強制しない。
 経路は最大16 m、元モデルが予測している範囲に限定し、外挿しない。
 基準経路からの横ずれ上限2.5 m、操舵角上限0.3 rad、回避速度上限5/3.6 m/s。
 全候補と重み付き平均の候補に、曲率と車体寸法を含む占有地図検査を行う。
@@ -43,6 +45,13 @@ RVizの`/time_path/slam/path`には採用した回避経路を表示する。
 移動物予測は未実装で、NPC/背景車付きの起動をこの初期版では拒否する。
 予測経路が短い・遮蔽が大きい・車体余裕が不足する場合は、回避できず停止する。
 安全余裕を減らして回避成功に見せない。
+
+停止で予測が縮む場合、回避開始時の参照経路をSLAM座標で保持する。
+新しい予測に重なる連続部分だけを追加し、モデル未予測の先へ外挿しない。
+延長または終端の再確認が10秒なければ失効。最新のモデルパケットとSLAM観測は必須で、
+保持した参照から候補を毎回生成し、最新地図で全車体を再検査する。
+新旧参照への位置・向きの整合、最新予測長3 m以上、クリア0.5秒を満たして通常追従へ戻る。
+候補の幾何条件・占有条件の通過数を`candidate_diagnostics`に記録する。
 
 ## 起動
 
@@ -59,7 +68,7 @@ python3 tools/run_time_path_awsim_trial.py \
   --deployment /home/graneple/e2e_autonomous/NEW_MPPI_DEPLOYMENT \
   --run-id codex-time-slam-mppi-box01 --display :0 \
   --config configs/control/time_path_slam_mppi.json --slam-obstacles \
-  --static-obstacle-scenario configs/scenarios/slam_stop_box.yaml
+  --static-obstacle-scenario configs/scenarios/slam_mppi_single_box.yaml --record-video
 ```
 
 通常入口へ戻す場合は`TIME_SLAM_MPPI=0`。異なる速度や交通条件を暗黙に採用しない。
@@ -82,5 +91,38 @@ AWSIMの操舵遅れ・タイヤ・SLAM誤差・未知の障害物運動を再�
 実際の指令・停止理由を照合する。回避/停止の指令理由を通常追従と区別して記録する。
 従来のPP replayは地図とMPPIを再現しないため、この構成は`UNSUPPORTED_SLAM_MPPI`を返す。
 
-現時点では公式ROS/AWSIMでの起動・衝突なし回避・周回は未確認。
-配置先の旧source/installは自動的には更新されない。
+公式ROS/AWSIMでの起動と単体箱への接近・停止は下記試験で確認。
+回避・周回は未達。配置先の旧source/installは自動的には更新されない。
+
+### 2026-09-18 検証結果
+
+- 今回の変更だけをWindowsの分離checkoutでcommitし、既定syncスクリプトで
+  native WSLの専用cloneへ同期した。元の作業中のステージ済み文書整理は保全。
+- 検証コードcommit: `3f8a435a43703efb0faf843699595ed3e4328721`。
+  `tools/with_wsl_training_lock.sh`下の全体pytestは **3288 passed / 4 skipped**、131.19秒。
+  スキップは既存のOSQP、JSON Schema validator、任意の公式パッケージ不足によるもの。
+- Windowsの関連テストは **57 passed**。ROS入口を含む変更Pythonファイルの構文も確認。
+- 箱の回避から合流までの連続再計画は理想運動モデル上の試験。
+  AWSIMへの配置・ROS起動・実際の回避走行成功は、この結果には含めない。
+
+### AWSIM単体箱シナリオと録画（2026-09-18）
+
+- 専用deployment: `/home/graneple/e2e_autonomous/time_slam_mppi_20260918`。
+  公式ROS環境でビルドし、source/installのPython 257ファイル一致と
+  Cartographer接続smokeを確認。シナリオ追加commitは分離Windows checkoutの`14de88c`。
+- 上記runnerを`--display :1 --run-id codex-time-slam-mppi-box01`で実行。
+  箱1個、NPCなし、5 km/h上限、公式Start要求あり。最大実測速度4.67 km/h。
+- 結果は`STOPPED_NO_LAP`、終了要求`PROGRESS_STALLED`。
+  MPPI回避指令は0件。`MPPI_NO_FEASIBLE_PATH`による停止9指令、
+  `MPPI_REFERENCE_TOO_SHORT`による停止12指令、その後
+  `STEERING_FEASIBLE_LOOKAHEAD_MISSING`が101指令続いた。
+  箱手前で停止した映像はあるが、回避成功・周回成功とは扱わない。
+- 最初の候補不成立時、現在座標へ変換したTimePath参照終端は前方約3.63 m。
+  減速後は約2.59 mへ短くなり、停止後は追従先を選べなくなった。
+  短い予測範囲と回避・停止後の再発進の関係は未解決。
+  候補不成立の内訳（曲率・未知領域・占有）はこのログだけでは確定しない。
+- `artifacts/slam_mppi_awsim_20260918/box01/`へ映像と判定ログを保存。
+  RVizは35.0秒、AWSIMは34.5秒、H.264/10 fps/音声なし。
+  両動画の全フレームデコード成功、リモートとローカルのSHA-256一致、
+  RVizのSLAM地図・点群・経路表示とAWSIMの箱への接近・停止を静止画で確認。
+  所有する試験コンテナは終了し、cleanup errorsは0。

@@ -45,8 +45,8 @@ def inverse_transform(points: np.ndarray, pose: np.ndarray) -> np.ndarray:
 class ReferenceMppi:
     """256 samples x 3 exponential-weighted updates; recheck the mean path.
 
-    Smooth lateral offsets vanish with their slope at both endpoints. The whole
-    path rejoins the predicted reference. No extrapolation beyond that reference.
+    Smooth lateral offsets preserve the initial state but may end beside the
+    reference. Rejoining is a cost, not a terminal constraint. No extrapolation.
     Three overlapping radius-0.95 m circles cover the 2.4 x 1.4 m body with margin.
     Additional clearance covers cell discretization and between-sample motion.
     """
@@ -55,10 +55,13 @@ class ReferenceMppi:
         self._distance_transform = distance_transform_edt
         self.rng = np.random.default_rng(seed)
         self.side = 0
+        self.diagnostics: list[dict[str, int]] = []
+        self.mean = np.zeros(3)
 
     def solve(self, reference_world: np.ndarray, base_pose: np.ndarray,
               values: np.ndarray, origin_xy_m: np.ndarray, resolution_m: float) -> dict[str, Any]:
         ref, base = np.asarray(reference_world, dtype=float), np.asarray(base_pose, dtype=float)
+        self.diagnostics = []
         grid, origin = np.asarray(values), np.asarray(origin_xy_m, dtype=float)
         if (ref.ndim != 2 or ref.shape[1:] != (2,) or not 2 <= len(ref) <= 200
                 or not np.isfinite(ref).all() or base.shape != (3,) or not np.isfinite(base).all()
@@ -94,7 +97,10 @@ class ReferenceMppi:
         d0 = float(-guide[0]@normals[0])
         slope0 = math.tan(-headings[0])
         boundary = d0*(1-3*u**2+2*u**3)+length*slope0*(u-2*u**2+u**3)
-        basis = np.column_stack((np.sin(np.pi*u)**2, np.sin(np.pi*u)**2*(2*u-1)))
+        # Keep the original bypass family and add an independent terminal offset.
+        # All three basis derivatives vanish at both endpoints.
+        basis = np.column_stack((np.sin(np.pi*u)**2,
+                                 np.sin(np.pi*u)**2*(2*u-1), 3*u**2-2*u**3))
         field = self._distance_transform(np.pad(grid == 0, 1, constant_values=False))[1:-1, 1:-1]*resolution_m
         # Two cell-center errors, plus max half-step displacement of any circle.
         required = .95+math.sqrt(2)*resolution_m+.15
@@ -111,7 +117,9 @@ class ReferenceMppi:
                      & (distances.min(axis=1) > .01) & (distances.max(axis=1) <= .2)
                      & (np.abs(np.diff(yaw, axis=1)).max(axis=1) < .1))
             if self.side:
-                valid &= coefficients[:, 0]*self.side >= -.05
+                valid &= np.mean(offset, axis=1)*self.side >= -.05
+            geometric_valid = valid.copy()
+            occupied_valid = np.ones(len(paths), dtype=bool)
             heading = np.concatenate((yaw, yaw[:, -1:]), axis=1)+base[2]
             world = transform(paths.reshape(-1, 2), base).reshape(paths.shape)
             clearance_cost = np.zeros(len(paths))
@@ -121,27 +129,32 @@ class ReferenceMppi:
                 ix, iy = cells[:, :, 0], cells[:, :, 1]
                 inside = (ix >= 0) & (ix < grid.shape[1]) & (iy >= 0) & (iy < grid.shape[0])
                 clearance = field[np.clip(iy, 0, grid.shape[0]-1), np.clip(ix, 0, grid.shape[1]-1)]
-                valid &= np.all(inside & (clearance > required), axis=1)
+                occupied_valid &= np.all(inside & (clearance > required), axis=1)
                 clearance_cost += np.mean(np.maximum(0., required+.5-clearance)**2, axis=1)
-            cost = np.mean(offset**2, axis=1)+4*np.mean(curvature**2, axis=1)
+            valid &= occupied_valid
+            self.diagnostics.append(dict(samples=len(paths), geometry_pass=int(geometric_valid.sum()),
+                occupancy_pass=int(occupied_valid.sum()), feasible=int(valid.sum())))
+            cost = np.mean(offset**2, axis=1)+4*np.mean(curvature**2, axis=1)+.5*offset[:, -1]**2
             cost += 80*clearance_cost
             cost[~valid] = np.inf
             return cost, world
 
-        mean = np.zeros(2)
+        mean = self.mean.copy()
         best = None
         for iteration in range(3):
-            noise = self.rng.normal(size=(256, 2))*[1.8/(1+iteration*.3), 1.]
+            noise = self.rng.normal(size=(256, 3))*[1.8/(1+iteration*.3), 1., 1.2]
             samples = mean+noise
+            samples[128:, 2] = 0.  # Preserve explicit rejoining candidates.
             samples[0] = mean
-            samples[1:5] = [[-2.4, 0.], [2.4, 0.], [-1.8, 0.], [1.8, 0.]]
+            samples[1:9] = [[-2.4, 0., 0.], [2.4, 0., 0.], [-1.8, 0., 0.], [1.8, 0., 0.],
+                            [0., 0., -1.2], [0., 0., 1.2], [0., 0., -.5], [0., 0., .5]]
             costs, paths = evaluate(samples)
             finite = np.isfinite(costs)
             if not finite.any():
                 continue
             i = int(np.argmin(costs))
             if best is None or costs[i] < best[0]:
-                best = (float(costs[i]), paths[i], float(samples[i, 0]))
+                best = (float(costs[i]), paths[i], samples[i].copy())
             weights = np.exp(-(costs[finite]-costs[finite].min())/.35)
             weights /= weights.sum()
             mean += np.sum(weights[:, None]*(samples[finite]-mean), axis=0)
@@ -149,12 +162,17 @@ class ReferenceMppi:
             raise ValueError('MPPI_NO_FEASIBLE_PATH')
         costs, paths = evaluate(mean[None])
         if np.isfinite(costs[0]) and costs[0] < best[0]:
-            best = (float(costs[0]), paths[0], float(mean[0]))
-        if abs(best[2]) > .3:
-            self.side = 1 if best[2] > 0 else -1
+            best = (float(costs[0]), paths[0], mean.copy())
+        self.mean = best[2].copy()
+        selected_local = inverse_transform(best[1], base)
+        selected_offsets = np.sum((selected_local-guide)*normals, axis=1)
+        largest = selected_offsets[np.argmax(np.abs(selected_offsets))]
+        if abs(largest) > .3:
+            self.side = 1 if largest > 0 else -1
         return dict(path_world_xy_m=best[1].tolist(), target_speed_mps=SPEED_MPS,
                     cost=best[0], weighted_path_rechecked=True, samples=768,
-                    reference_horizon_m=length)
+                    reference_horizon_m=length, terminal_offset_m=float(selected_offsets[-1]),
+                    candidate_diagnostics=self.diagnostics)
 
 
 class AvoidancePlanner:
@@ -164,6 +182,49 @@ class AvoidancePlanner:
         self.active = False
         self.clear_since_ns: int | None = None
         self.last_stamp_ns: int | None = None
+        self.reference_world: np.ndarray | None = None
+        self.reference_updated_ns: int | None = None
+
+    def _reference(self, fresh: np.ndarray, stamp: int) -> np.ndarray:
+        """Retain observed spatial intent for at most 10 s without extension.
+
+        Fresh source packets are still mandatory. Never extend past a model
+        prediction: append only a geometrically overlapping fresh continuation.
+        Stored points are SLAM-world metres, not stale body-relative waypoints.
+        """
+        if (fresh.ndim != 2 or fresh.shape[1:] != (2,) or not 2 <= len(fresh) <= 200
+                or not np.isfinite(fresh).all()):
+            raise ValueError('MPPI_REFERENCE_SHAPE_OR_FINITE')
+        if not self.active or self.reference_world is None:
+            if np.linalg.norm(np.diff(fresh, axis=0), axis=1).sum() >= 3.:
+                self.reference_world = fresh.copy()
+                self.reference_updated_ns = stamp
+            return fresh
+        held = self.reference_world
+        delta = np.diff(fresh, axis=0)
+        lengths = np.linalg.norm(delta, axis=1)
+        fraction = np.clip(np.sum((held[-1]-fresh[:-1])*delta, axis=1)
+                           /np.maximum(lengths**2, 1e-12), 0., 1.)
+        projection = fresh[:-1]+fraction[:, None]*delta
+        i = int(np.argmin(np.linalg.norm(projection-held[-1], axis=1)))
+        previous = held[-1]-held[-2]
+        aligned = float(previous@delta[i])/(max(1e-12, np.linalg.norm(previous)*lengths[i])) > math.cos(.35)
+        remaining = (1-fraction[i])*lengths[i]+lengths[i+1:].sum()
+        if np.linalg.norm(projection[i]-held[-1]) <= .5 and aligned and remaining > .15:
+            joined = np.vstack((held, fresh[i+1:]))
+            joined = joined[np.r_[True, np.linalg.norm(np.diff(joined, axis=0), axis=1) > .01]]
+            # Keep a bounded polyline without fabricating an extrapolated endpoint.
+            arc = np.r_[0., np.cumsum(np.linalg.norm(np.diff(joined, axis=0), axis=1))]
+            stations = np.linspace(max(0., arc[-1]-20.), arc[-1], min(200, len(joined)))
+            self.reference_world = np.column_stack([np.interp(stations, arc, joined[:, j]) for j in range(2)])
+            self.reference_updated_ns = stamp
+        elif (np.linalg.norm(fresh[-1]-held[-1]) <= .15 and aligned
+              and lengths.sum() >= 3.):
+            self.reference_updated_ns = stamp
+        if self.reference_updated_ns is None or stamp-self.reference_updated_ns > 10_000_000_000:
+            self.reference_world = None
+            raise ValueError('MPPI_RETAINED_REFERENCE_EXPIRED')
+        return self.reference_world
 
     def update(self, observation: dict[str, Any], reference_world: np.ndarray | None,
                grid: Any) -> dict[str, Any]:
@@ -178,35 +239,71 @@ class AvoidancePlanner:
         if reference_world is None or observation.get('path_valid') is not True:
             self.clear_since_ns = None
             return result
+        fresh = np.asarray(reference_world, dtype=float)
+        try:
+            reference_world = self._reference(fresh, stamp)
+        except ValueError as exc:
+            return dict(result, reason=str(exc))
         if observation.get('path_blocked'):
             self.active = True; self.clear_since_ns = None
         elif self.active:
             if self.clear_since_ns is None:
                 self.clear_since_ns = stamp
+            # A shrinking fresh prediction alone cannot clear a bypass.
             local = inverse_transform(np.asarray(reference_world), np.asarray(observation['base_pose_xyyaw']))
             delta = np.diff(local, axis=0)
             fraction = np.clip(-np.sum(local[:-1]*delta, axis=1)/np.maximum(1e-12, np.sum(delta**2, axis=1)), 0., 1.)
             distance = np.linalg.norm(local[:-1]+fraction[:, None]*delta, axis=1)
             i = int(np.argmin(distance))
             aligned = distance[i] <= .25 and abs(math.atan2(delta[i, 1], delta[i, 0])) <= .15
-            if stamp-self.clear_since_ns >= 500_000_000 and aligned:
-                self.active = False; self.solver.side = 0
+            fresh_local = inverse_transform(fresh, np.asarray(observation['base_pose_xyyaw']))
+            fresh_length = np.linalg.norm(np.diff(fresh_local, axis=0), axis=1).sum()
+            fresh_delta = np.diff(fresh_local, axis=0)
+            fresh_t = np.clip(-np.sum(fresh_local[:-1]*fresh_delta, axis=1)
+                             /np.maximum(1e-12, np.sum(fresh_delta**2, axis=1)), 0., 1.)
+            fresh_distance = np.linalg.norm(fresh_local[:-1]+fresh_t[:, None]*fresh_delta, axis=1)
+            fi = int(np.argmin(fresh_distance))
+            fresh_aligned = fresh_distance[fi] <= .25 and abs(math.atan2(fresh_delta[fi, 1], fresh_delta[fi, 0])) <= .15
+            if stamp-self.clear_since_ns >= 500_000_000 and aligned and fresh_aligned and fresh_length >= 3.:
+                self.active = False; self.solver.side = 0; self.solver.mean.fill(0.)
         if not self.active:
             return dict(result, mode='NOMINAL', reason='CLEAR')
         try:
             plan = self.solver.solve(reference_world, np.asarray(observation['base_pose_xyyaw']),
                 grid.values, grid.origin*grid.resolution_m, grid.resolution_m)
         except ValueError as exc:
-            return dict(result, reason=str(exc))
+            return dict(result, reason=str(exc), candidate_diagnostics=self.solver.diagnostics)
         result.update(plan, mode='AVOID', reason='MPPI_FEASIBLE')
+        result.update(reference_retained=not np.array_equal(reference_world, fresh),
+                      reference_updated_ns=self.reference_updated_ns)
         return result
+
+
+def mppi_nominal_control(plan: Any, current: Any, **kwargs: Any) -> dict[str, Any]:
+    """Permit fresh validated MPPI to replace an unavailable nominal lookahead.
+
+    This produces no authority by itself: avoidance_command must reject NOMINAL
+    for this result. Sensor, identity, age, geometry and speed errors still stop.
+    Only the fixed 5 km/h static-obstacle profile may use this arbitration.
+    """
+    from .time_trial_v1 import time_trial_control
+    if kwargs.get('speed_policy') != 'fixed_5kmh':
+        raise ValueError('MPPI_NOMINAL_SPEED_POLICY')
+    try:
+        return time_trial_control(plan, current, **kwargs)
+    except ValueError as exc:
+        if str(exc) not in ('STEERING_FEASIBLE_LOOKAHEAD_MISSING', 'TIME_PATH_MOTION_UNRESOLVED',
+                            'NO_FORWARD_REFERENCE', 'REFERENCE_STOPPING_DISTANCE'):
+            raise
+        return dict(nominal_tracking_unavailable=str(exc), steer_rad=0., target_speed_mps=SPEED_MPS,
+                    acceleration_mps2=float(np.clip(2*(SPEED_MPS-kwargs['speed_mps']), -1., .5)))
 
 
 def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_valid: bool,
                       now_sim_ns: int, now_wall_ns: int, receipt_ns: int | None,
                       speed_mps: float, target_mps: float, acceleration_mps2: float, dt_s: float,
                       scan_wheel_pose: np.ndarray | None, current_wheel_pose: np.ndarray,
-                      vehicle_model_policy: str) -> dict[str, Any]:
+                      vehicle_model_policy: str, nominal_tracking_unavailable: str | None = None) -> dict[str, Any]:
     """Admit atomic SLAM+MPPI packet; PP physical tire rad, no actuator authority.
 
     Poses are [x m,y m,yaw rad]. scan_wheel_pose MUST be interpolated at the
@@ -228,6 +325,8 @@ def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_vali
         if plan['mode'] == 'STOP':
             return dict(result, reason=plan['reason'])
         if plan['mode'] == 'NOMINAL':
+            if nominal_tracking_unavailable is not None:
+                raise ValueError('MPPI_NOMINAL_UNAVAILABLE:'+nominal_tracking_unavailable)
             if packet['path_blocked']:
                 raise ValueError('MPPI_BLOCKED_NOMINAL')
             return dict(result, mode='NOMINAL', reason='CLEAR', target_speed_mps=target_mps,
@@ -245,6 +344,11 @@ def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_vali
                 or plan['target_speed_mps'] != SPEED_MPS or np.linalg.norm(path[0]-base[:2]) > .01):
             raise ValueError('MPPI_PATH_CONTRACT')
         local = inverse_transform(transform(inverse_transform(path, base), scan), current)
+        remaining = np.linalg.norm(np.diff(local, axis=0), axis=1)
+        nearest = int(np.argmin(np.linalg.norm(local, axis=1)))
+        available = float(remaining[nearest:].sum())
+        if available < .4+.5*max(0., speed_mps)+max(0., speed_mps)**2/2:
+            raise ValueError('MPPI_REFERENCE_STOPPING_DISTANCE')
         distances = np.linalg.norm(local, axis=1)
         candidates = np.flatnonzero((local[:, 0] > 0) & (distances >= 1.) & (distances <= 1.5))
         if not len(candidates):

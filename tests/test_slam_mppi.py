@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from aic_transfuser_lite.control.slam_mppi import (
-    POLICY, SPEED_MPS, AvoidancePlanner, ReferenceMppi, avoidance_command, transform,
+    POLICY, SPEED_MPS, AvoidancePlanner, ReferenceMppi, avoidance_command, transform, mppi_nominal_control,
 )
 from aic_transfuser_lite.control.time_trial_v1 import validate_trial_config
 from aic_transfuser_lite.control.time_dev_v1 import TimeDevSpeeds
@@ -50,12 +50,14 @@ def planned(block=True):
     return p
 
 
-def test_box_bypass_rejoins_reference_and_keeps_side():
+def test_box_bypass_allows_partial_terminal_and_keeps_side():
     ref, grid, origin = scene()
     solver = ReferenceMppi()
     path = np.asarray(solver.solve(ref, np.zeros(3), grid, origin, .2)['path_world_xy_m'])
     assert np.max(np.abs(path[:, 1])) > 1.5
-    np.testing.assert_allclose(path[[0, -1]], ref[[0, -1]], atol=1e-8)
+    np.testing.assert_allclose(path[0], ref[0], atol=1e-8)
+    assert path[-1, 0] == pytest.approx(ref[-1, 0])
+    assert abs(path[-1, 1]) <= 2.5
     # Independently check the path centers stay away from the box.
     assert np.min(np.linalg.norm(path-np.array([6., 0.]), axis=1)) > 1.5
     side = solver.side
@@ -195,3 +197,63 @@ def test_replanning_follows_around_box_and_rejoins_in_ideal_plant():
         assert not np.any((body[:,0] >= -.6) & (body[:,0] <= 1.8) & (np.abs(body[:,1]) <= .7))
     else:
         pytest.fail('did not return to the reference within 24 simulated seconds')
+
+
+def test_short_reference_can_end_beside_box_without_early_rejoin():
+    ref, grid, origin = scene(False)
+    ref[:, 0] = np.linspace(0., 3.806, len(ref))
+    # Approximate first box01 failure: box ahead/right and short 3 s TimePath.
+    grid[65:68, 71:74] = 100
+    out = ReferenceMppi().solve(ref, np.zeros(3), grid, origin, .2)
+    assert out['terminal_offset_m'] > .2
+    assert out['reference_horizon_m'] == pytest.approx(3.806)
+    assert sum(d['feasible'] for d in out['candidate_diagnostics']) > 0
+
+
+def test_stopped_short_prediction_retains_spatial_reference_but_rechecks_grid():
+    ref, grid, origin = scene()
+    g = SimpleNamespace(values=grid, origin=origin/.2, resolution_m=.2)
+    planner = AvoidancePlanner()
+    assert planner.update(packet(), ref, g)['mode'] == 'AVOID'
+    short = ref*.01
+    out = planner.update(packet(True, 1_100_000_000), short, g)
+    assert out['mode'] == 'AVOID' and out['reference_retained']
+    assert out['reference_horizon_m'] == pytest.approx(12.)
+    g.values[:, 65:75] = 100
+    assert planner.update(packet(True, 1_200_000_000), short, g)['reason'] == 'MPPI_NO_FEASIBLE_PATH'
+    assert planner.update(packet(True, 1_300_000_000), None, g)['reason'] == 'MPPI_NO_REFERENCE'
+    assert planner.update(packet(True, 11_100_000_000), short, g)['reason'] == 'MPPI_RETAINED_REFERENCE_EXPIRED'
+
+
+def test_only_overlapping_fresh_prediction_can_extend_retained_reference():
+    ref, grid, origin = scene()
+    g = SimpleNamespace(values=grid, origin=origin/.2, resolution_m=.2)
+    planner = AvoidancePlanner()
+    planner.update(packet(), ref, g)
+    planner.update(packet(True, 1_100_000_000), ref+[1., 0.], g)
+    np.testing.assert_allclose(planner.reference_world[-1], [13., 0.])
+    planner.update(packet(True, 1_200_000_000), ref+[10., 8.], g)
+    np.testing.assert_allclose(planner.reference_world[-1], [13., 0.])
+    with pytest.raises(ValueError, match='FINITE'):
+        planner._reference(np.full((30, 2), np.nan), 1_300_000_000)
+
+
+def test_short_nominal_fallback_requires_fresh_feasible_mppi_and_keeps_admission():
+    from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
+    pose = TimedBodyPose(1_000_000_000, 'sim', '0', 'map', 'base_link', 0., 0., 0.)
+    plan = TimePlan('test', pose, np.column_stack((np.linspace(.01, .2, 30), np.zeros(30))))
+    kwargs = dict(speed_mps=0., rear_axle_offset_m=(.001, 0.), speed_policy='fixed_5kmh',
+                  lookahead_policy='stopping_preview_segment_v1', vehicle_model_policy='awsim_understeer_v1')
+    nominal = mppi_nominal_control(plan, pose, **kwargs)
+    reason = nominal['nominal_tracking_unavailable']
+    assert command(planned(False), nominal_tracking_unavailable=reason)['mode'] == 'STOP'
+    assert command(planned(), nominal_tracking_unavailable=reason)['mode'] == 'AVOID'
+    assert command(planned(), nominal_tracking_unavailable=reason, source_valid=False)['mode'] == 'STOP'
+    from dataclasses import replace
+    with pytest.raises(ValueError, match='STALE'):
+        mppi_nominal_control(plan, replace(pose, stamp_ns=1_600_000_000), **kwargs)
+    with pytest.raises(ValueError, match='SPEED'):
+        mppi_nominal_control(plan, pose, **dict(kwargs, speed_mps=2.))
+    bad = plan.xy_m.copy(); bad[15] += [4., 0.]
+    with pytest.raises(ValueError, match='DISCONTINUITY'):
+        mppi_nominal_control(TimePlan('bad', pose, bad), pose, **kwargs)
