@@ -12,6 +12,19 @@ from typing import Any
 import numpy as np
 
 
+def teacher_command_is_usable(mode: str, emergency_stop: bool, reason: str) -> bool:
+    """Check planner command semantics, independently of measured motion.
+
+    V45 can publish zero-speed infeasible braking with emergency_stop=False and
+    mode AVOID or FREE_RUN. Nested ordinary-hold reason prefixes retain that
+    failure. Such a command is not an accepted expert demonstration.
+    """
+    if not isinstance(mode, str) or type(emergency_stop) is not bool or not isinstance(reason, str):
+        raise ValueError('TEACHER_COMMAND_TYPES')
+    return (mode in {'FREE_RUN', 'AVOID', 'OVERTAKE'} and not emergency_stop
+            and bool(reason.strip()) and 'infeasible_braking_fallback' not in reason.split(':'))
+
+
 @dataclass(frozen=True)
 class NativeCurationConfig:
     history_ns: int = 1_000_000_000

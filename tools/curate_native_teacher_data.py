@@ -23,7 +23,8 @@ from scipy.spatial import cKDTree
 import yaml
 
 from aic_transfuser_lite.data.native_teacher_curation import (
-    NativeCurationConfig, classify_anchor, convex_point_distance, spaced_indices, window_indices,
+    NativeCurationConfig, classify_anchor, convex_point_distance, spaced_indices,
+    teacher_command_is_usable, window_indices,
 )
 from aic_transfuser_lite.runtime.lidar_map_localization import transform
 
@@ -102,7 +103,8 @@ def extract_evidence(bag: Path, low: int, high: int, placements: list[dict[str, 
                 p = m.pose.pose
                 poses[t] = [p.position.x, p.position.y, yaw_of(p.orientation)]
             elif conn.topic.endswith('/trajectory_command'):
-                commands[t] = [int(m.mode in {'FREE_RUN', 'AVOID', 'OVERTAKE'} and not m.emergency_stop), int(m.mode == 'FREE_RUN')]
+                commands[t] = [int(teacher_command_is_usable(m.mode, m.emergency_stop, m.reason)),
+                               int(m.mode == 'FREE_RUN')]
             else:
                 if m.header.frame_id != 'lidar' or len(m.ranges) != 750:
                     raise ValueError('unexpected native LiDAR contract')
@@ -264,6 +266,9 @@ def curate(root: Path, output: Path, config: NativeCurationConfig = NativeCurati
         source_commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
         map_sha256=map_hashes,training_performed=False,split_assigned=False,
         allowed_targets=['xy_m','velocity_mps'],stop_mode_supervision=False,strict_avoidance_certification=False,
+        teacher_command_quality=dict(require_nonempty_reason=True,
+            reject_reason_tokens=['infeasible_braking_fallback'],
+            inspect_full_history_and_future=True),
         limitations=['Observed-motion quality selection, not a physical contact oracle or certified avoidance-success set.',
             'Additional 0.30 m projected margin is an audit screen, not a statistical pose uncertainty bound.',
             'Initial box proximity is only an exclusion screen; no box position is invented.',
