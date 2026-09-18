@@ -95,6 +95,8 @@ def main() -> None:
     ap.add_argument('--free-reserve-gib', type=float, default=2.)
     ap.add_argument('--execute', action='store_true')
     ap.add_argument('--rviz', action='store_true', help='Show the teacher path and LiDAR in standard RViz')
+    ap.add_argument('--parallel-plan', type=Path, help='Explicit two-namespace collection plan')
+    ap.add_argument('--ros-domain-id', type=int, default=1)
     args = ap.parse_args()
     if not re.fullmatch(r'lidar-v45-pc10-[a-z0-9-]+',args.run_id):
         raise ValueError('A new lidar-v45-pc10-* run ID is required')
@@ -121,6 +123,12 @@ def main() -> None:
     from scenario_tool.runner import run_once
     from scenario_tool.submission import Submission
     context = Context(repo)
+    isolation = None
+    if args.parallel_plan:
+        from mppi_collection_isolation import install_runner_isolation
+        isolation = install_runner_isolation(json.loads(args.parallel_plan.read_text()),args.ros_domain_id,runtime.parent)
+    elif args.ros_domain_id != 1:
+        raise ValueError('nondefault domain requires isolated parallel plan')
     desktop_environment()
     original_compile = compiler.compile_run
     scenario = yamlio.load_file(args.scenario)
@@ -182,6 +190,25 @@ def main() -> None:
         topics_file = compiled.run_dir/'e2e-rosbag-topics.txt'
         topics = topics_file.read_text().splitlines()
         topics_file.write_text('\n'.join(dict.fromkeys([*topics,*extra_topics]))+'\n')
+        if isolation:
+            from mppi_collection_isolation import patch_generated
+            monitor = json.loads(compiled.monitor_plan.read_text())
+            patch_generated(services,monitor,domain=args.ros_domain_id,holder=isolation['holder'],cpus=isolation['cpus'])
+            compiled.monitor_plan.write_text(json.dumps(monitor,indent=2)+'\n')
+            simulator_script=(context.tool_dir/'agent/simulator.bash').read_text()
+            hook='args=(\n'
+            assert simulator_script.count(hook)==1
+            simulator_script=simulator_script.replace(hook,hook+f'  --ros2-base-domain {args.ros_domain_id}\n',1)
+            (compiled.run_dir/'isolated_simulator.bash').write_text(simulator_script)
+            services['scn-simulator']['command']=['bash',f'{run}/isolated_simulator.bash']
+            teacher_script=(source/'integrations/mppi_v45/run_teacher.bash').read_text()
+            assert teacher_script.count('domain_id:=1 ')==1
+            (compiled.run_dir/'isolated_teacher.bash').write_text(teacher_script.replace('domain_id:=1 ',f'domain_id:={args.ros_domain_id} '))
+            services['scn-car1']['command']=['bash',f'{run}/isolated_teacher.bash']
+            dds='<CycloneDDS><Domain><General><Interfaces><NetworkInterface name="lo"/></Interfaces><AllowMulticast>false</AllowMulticast></General><Discovery><ParticipantIndex>auto</ParticipantIndex><MaxAutoParticipantIndex>120</MaxAutoParticipantIndex><Peers><Peer Address="127.0.0.1"/></Peers></Discovery></Domain></CycloneDDS>'
+            dds_path=compiled.run_dir/'isolated_cyclonedds.xml';dds_path.write_text(dds)
+            for service in services.values():
+                service['volumes']=[*service.get('volumes',[]),f'{dds_path}:/opt/autoware/cyclonedds.xml:ro']
         yamlio.dump_file(compiled.compose_file,document)
         compiled.services = services
         (compiled.run_dir/'teacher-contract.json').write_text(json.dumps(dict(
@@ -190,6 +217,7 @@ def main() -> None:
             student_control=False,student_inference=False,online_training=False,awsim_modified=False,
             source_manifest_sha256=sha(vendor_manifest),
             rviz_requested=args.rviz,
+            ros_domain_id=args.ros_domain_id,network_isolation=isolation,
             scenario_sha256=sha(args.scenario),wall_budget_s=args.wall_timeout_s,
             storage_budget_bytes=int(args.run_budget_gib*2**30)),indent=2)+'\n')
         return compiled
@@ -209,7 +237,8 @@ def main() -> None:
         return
     output = context.output_root/args.run_id
     assert not output.exists(), 'Preserve previous recordings'
-    assert subprocess.run(['pgrep','-x','AWSIM.x86_64'],capture_output=True).returncode==1
+    if not isolation:
+        assert subprocess.run(['pgrep','-x','AWSIM.x86_64'],capture_output=True).returncode==1
     assert shutil.disk_usage(repo).free > (args.free_reserve_gib+args.run_budget_gib)*2**30
     done = threading.Event()
     started = time.monotonic()
