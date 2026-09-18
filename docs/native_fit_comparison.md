@@ -52,3 +52,8 @@ kind uses a finite 1e6 m sentinel; it does not bypass dynamic-box exclusion, the
 0.30 m clearance screen, the additional 0.30 m cone projection margin, or the
 full-history/future scan/map and teacher-command checks. Native box pose during
 motion remains unverified, so nearby box windows remain held.
+
+Replay verification accepts a new scenario only through explicit `expected_split`
+and `expected_group` arguments. The original unassigned/all-corners defaults are
+preserved; validation/test, wrong groups, changed histories and target mismatches
+remain errors. New run metadata must be hash-verified before supplying its group.

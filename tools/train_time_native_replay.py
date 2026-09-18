@@ -95,7 +95,9 @@ def decode(role: str, message: Any, receipt_ns: int) -> Any:
         steering_rad=message.lateral.steering_tire_angle, **common)
 
 
-def replay_run(bag: Path, rows: list[dict[str, Any]], labels: dict[str, np.ndarray]) -> list[Any]:
+def replay_run(bag: Path, rows: list[dict[str, Any]], labels: dict[str, np.ndarray], *,
+               expected_split: str = 'unassigned',
+               expected_group: str = 'all_corners_20260918') -> list[Any]:
     """Replay every selected window using the original all-topic message sequence."""
     intervals: list[list[int]] = []
     for row in sorted(rows, key=lambda r: r['observation_ns']):
@@ -132,7 +134,8 @@ def replay_run(bag: Path, rows: list[dict[str, Any]], labels: dict[str, np.ndarr
                       intervention_ns=bounds[1] - 2_000_000_000)
         _, replay = audit_anchor(window, anchor, bounds=bounds, **kwargs)
         sample = assemble_time_sample(window, anchor, epoch_start_ns=bounds[0], epoch_end_ns=bounds[1], **kwargs)
-        check_native_replay(row, replay, sample, labels['xy_m'][i], labels['velocity_mps'][i])
+        check_native_replay(row, replay, sample, labels['xy_m'][i], labels['velocity_mps'][i],
+                            expected_split=expected_split, expected_group=expected_group)
         samples.append(sample)
     return samples
 

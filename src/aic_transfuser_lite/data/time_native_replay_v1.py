@@ -33,9 +33,13 @@ def extend_train_split(base: dict[str, Any], additions: list[dict[str, Any]], *,
 
 
 def check_native_replay(row: dict[str, Any], replay: dict[str, Any], sample: TimeSample,
-                        xy_m: np.ndarray, velocity_mps: np.ndarray) -> None:
+                        xy_m: np.ndarray, velocity_mps: np.ndarray, *,
+                        expected_split: str = 'unassigned',
+                        expected_group: str = 'all_corners_20260918') -> None:
     """Require unchanged causal histories and all 30 observed metre/m/s targets."""
-    if (row.get('split') != 'unassigned' or row.get('split_group') != 'all_corners_20260918'
+    if expected_split not in {'unassigned', 'train'} or not isinstance(expected_group, str) or not expected_group.strip():
+        raise ValueError('explicit native train/unassigned scenario group required')
+    if (row.get('split') != expected_split or row.get('split_group') != expected_group
             or row.get('allowed_targets') != ['xy_m', 'velocity_mps']
             or row.get('stop_label_valid') is not False or row.get('mode_label_valid') is not False
             or row.get('forward_avoidance_eligible') is not False

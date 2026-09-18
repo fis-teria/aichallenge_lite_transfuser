@@ -106,6 +106,27 @@ def test_native_import_keeps_metre_targets_history_and_unknown_stop():
     np.testing.assert_allclose(sample.teacher.xy_m[-1], [6., 0.], atol=1e-6)
 
 
+def test_explicit_single_object_train_group_preserves_identity_checks():
+    row, replay, sample = native_fixture()
+    row.update(split='train', split_group='single_cone_approach')
+    check_native_replay(row, replay, sample, sample.teacher.xy_m, sample.teacher.velocity_mps,
+                        expected_split='train', expected_group='single_cone_approach')
+    with pytest.raises(ValueError, match='identity'):
+        check_native_replay(row, replay, sample, sample.teacher.xy_m, sample.teacher.velocity_mps)
+    with pytest.raises(ValueError, match='identity'):
+        check_native_replay(row, replay, sample, sample.teacher.xy_m, sample.teacher.velocity_mps,
+                            expected_split='train', expected_group='other_scenario')
+
+
+@pytest.mark.parametrize('split,group', [('validation','g'),('test','g'),('train',''),('train',' ')])
+def test_explicit_replay_context_cannot_allow_holdout_or_missing_group(split, group):
+    row, replay, sample = native_fixture()
+    row.update(split=split, split_group=group)
+    with pytest.raises(ValueError, match='explicit native'):
+        check_native_replay(row, replay, sample, sample.teacher.xy_m, sample.teacher.velocity_mps,
+                            expected_split=split, expected_group=group)
+
+
 @pytest.mark.parametrize('mutation', ['history', 'target', 'shape', 'stop', 'split', 'freeze'])
 def test_native_import_rejects_replay_label_or_split_drift(mutation):
     row, replay, sample = native_fixture()
