@@ -145,6 +145,27 @@ DISPLAY=:1 XAUTHORITY=/run/user/1000/gdm/Xauthority ROS_DOMAIN_ID=1 \
   --ros-args -p use_sim_time:=true
 ```
 
+### 有限の追加収録キュー
+
+Windows側の`tmp/native_collection_resume_20260918/continue_10kmh_batch.py`は、
+実行中のa09が閉じるのを待ち、a10・a11を最大2回だけ追加する。
+各runは10km/h上限、780s simulation / 900s wall / 3GiB記録 / 2GiB空き予約。
+各終了後に、PC10からWSLへの全ファイルSHA256照合、時間教師と地点coverageの監査、
+物理壁地図での再確認、raw再照合、PC10の検証済みコピーだけの整理を順に行う。
+接触カウンタまたは物理壁重なりを検出した場合と処理エラー時は、保存して次の開始を保留する。
+自動で学習データへ採用する処理は含めない。
+
+```powershell
+# Windows。二重起動はstateファイルで拒否する。
+python tmp/native_collection_resume_20260918/continue_10kmh_batch.py --check-only
+python tmp/native_collection_resume_20260918/continue_10kmh_batch.py
+Get-Content tmp/native_collection_resume_20260918/10kmh-batch-state.json
+```
+
+現在状態・完了run・保存量・採否未確定は上記stateに逐次保存される。
+キュー準備時のPC10読み取り確認ではAWSIM等の保護対象7ファイル、教師vendor323ファイル、
+runtimeのhashが一致した。標準RVizだけを通信設定付きで再起動している。
+
 終了後にAWSIM等の保護対象7ファイル、教師vendor source 323ファイル、
 実行runtimeのhash一致を確認した。収集用containerは残存せず、PC10の空きは
 2,793,189,376 bytes。最終runのPC10 rawコピーは保全している。
@@ -181,3 +202,65 @@ simulation stampを優先し、最初の回避区間を誤ってSTARTUPへ落と
 `pc10_physical_wall_map/provenance.json`、`native-offtrack-a06.png`、
 `lidar-v45-pc10-corners-native-a06-physical-inspection.json` と
 同名prefixの`physical-samples.jsonl`。従来の監査結果・rawは保全している。
+
+## 上限10km/hへの変更と追加収録
+
+ユーザー指示により、a08以降は速度上限を10km/h（2.7777777778m/s）とした。
+障害物に対する教師の減速・停止判断は残す。a08、a09のlive ROSパラメータで
+`execution_profile.max_speed_mps`を確認し、既存の離隔・車体マージンも一致した。
+教師binaryとAWSIM binaryは、この速度変更では更新していない。
+
+変更コミット`71657aad691c6059dae82854557aea519d06c604`のWSL全テストは
+3,146 passed / 4 skipped（115.55s）。ログはWSLの
+`runs/mppi_v45_pc10_20260918/native_collection_71657aa_pytest.log`。
+
+| run | 上限 | 終了条件到達 | 通過地点 / 12 | 通過後25mを確認 / 12 | カメラ観測 | 未来30点が揃う窓 |
+|---|---:|---|---:|---:|---:|---:|
+| a07 | 5km/h | いいえ・時間切れ | 12 | 12 | 7,506 | 7,432 |
+| a08 | 10km/h | はい・148.906s | 12 | 11 | 1,499 | 1,430 |
+
+両runの公式crash / wall / overカウンタは0。a08の実測最高速度は
+2.795m/s（約10.06km/h）、移動距離353.8m。
+設定した進捗への到達とシナリオ全体のPASSは区別する。旧監査地図の逸脱判定が残り、
+rawのシナリオ判定はfailed。採用maskを自動変更したわけではない。
+
+a07は419ファイル / 2,899,640,589 bytes、a08は417ファイル / 706,359,054 bytesを
+PC10からWSLへ転送し、全ファイルSHA256を照合した。さらにrawのSHA256を再検証してから、
+PC10の同一rawコピーだけを削除した。WSLの原本・教師出力・provenanceは保持している。
+
+a08ではcorner_08のコーンをteacher reference横位置-1.2mから-0.9mへ移動した。
+a07記録姿勢での事前離隔は約0.472m、a08実走記録での離隔は約0.391m。
+後者の全2,936姿勢では、実AWSIM由来の物理壁地図への車体重なりは0件だった。
+箱は初期位置に置いた0.5m外形による参考計算でcorner_09約0.169m、corner_11約0.154m。
+実際の箱の移動・姿勢を未検証のため、これを確定した実離隔として採用しない。
+全てのカメラ窓を訓練可能と数えない。従来の厳格maskではa07、a08とも採用0で、
+箱の位置検証およびnative物体に対応した区間ごとの採否確認が引き続き必要。
+
+a08の最終GNSS進捗は373.097mで、最後のcorner_01通過後は約24.972mだった。
+監視の終了条件は推定自己位置を使うため、a09では必要後続25mに終了余裕0.5mを加え、
+終了進捗を373.625mとした。a08の過去判定・不足2.8cmは書き換えていない。
+a09（seed 20260921）は同じ配置・10km/hで追加収録し、箱の手前で前進候補の
+`execution_sweep`衝突棄却による停止を確認した。停止中も記録し、最終結果は別途監査する。
+
+標準ホストRVizは、最初の起動がFast DDS、教師側がloopbackのCycloneDDSであったため、
+受信できていなかった。ホストRVizのみを同じCycloneDDS/domain 1へ再起動した。
+a09で採用軌道・候補・壁地図・LiDAR物体marker・LaserScanの5 topicすべてに
+`rviz`購読を確認した。候補Marker Displayのエラーは残るため、全候補の正常描画は未確認。
+
+```bash
+# 保存済みのa09シナリオを使った実行コマンド。別の実行には新しいrun IDを使う。
+python3 /home/graneple/e2e_autonomous/mppi_v45_collection_fix_20260918/source/tools/collect_mppi_v45.py \
+  --awsim-repo /home/graneple/git/autononous_ai/aichallenge-racingkart \
+  --runtime /home/graneple/e2e_autonomous/mppi_v45_collection_fix_20260918/runtime \
+  --scenario /home/graneple/e2e_autonomous/mppi_v45_collection_fix_20260918/scenarios/lidar-v45-pc10-corners-native-a09.yaml \
+  --run-id lidar-v45-pc10-corners-native-a09 --speed-cap-kmh 10 \
+  --wall-timeout-s 900 --run-budget-gib 3 --free-reserve-gib 2 --execute
+
+# 収録とは独立した標準RViz。走行nodeは起動しない。
+source /opt/ros/humble/setup.bash
+DISPLAY=:1 XAUTHORITY=/run/user/1000/gdm/Xauthority ROS_DOMAIN_ID=1 \
+  RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
+  CYCLONEDDS_URI=file:///home/graneple/git/autononous_ai/aichallenge-racingkart/vehicle/cyclonedds.xml \
+  rviz2 -d /home/graneple/e2e_autonomous/mppi_v45_collection_fix_20260918/teacher_collection_standalone.rviz \
+  --ros-args -p use_sim_time:=true
+```
