@@ -269,6 +269,32 @@ def test_reference_refresh_does_not_create_a_splice_curvature_spike():
     assert np.max(np.abs(np.diff(angle)/(.5*(ds[:-1]+ds[1:])))) <= np.tan(.3)/1.2
 
 
+def test_fresh_prediction_from_turned_ego_refreshes_without_crossing_old_endpoint():
+    ref, grid, origin = scene(False)
+    ref[:, 0] = np.linspace(0., 3.8, len(ref))
+    g = SimpleNamespace(values=grid, origin=origin/.2, resolution_m=.2)
+    planner = AvoidancePlanner()
+    planner.update(packet(), ref, g)
+    turned = np.array([1.5, -.3, -.5])
+    fresh = transform(ref, turned)
+    assert np.linalg.norm(fresh[-1]-ref[-1]) > .5
+    p = packet(True, 1_100_000_000); p['base_pose_xyyaw'] = turned.tolist()
+    assert planner.update(p, fresh, g)['mode'] == 'AVOID'
+    np.testing.assert_allclose(planner.reference_world, fresh)
+
+
+def test_avoidance_does_not_release_just_because_turned_prediction_misses_box():
+    ref, grid, origin = scene(False)
+    g = SimpleNamespace(values=grid, origin=origin/.2, resolution_m=.2)
+    planner = AvoidancePlanner()
+    first = packet(); first['surfaces'] = [dict(path_overlap=True, points_xy_m=[[6.,0.], [6.4,0.]])]
+    assert planner.update(first, ref, g)['mode'] == 'AVOID'
+    for i in range(1, 8):
+        assert planner.update(packet(False, 1_000_000_000+i*100_000_000), ref, g)['mode'] == 'AVOID'
+    passed = packet(False, 1_800_000_000); passed['base_pose_xyyaw'] = [7.5, 0., 0.]
+    assert planner.update(passed, ref, g)['mode'] == 'NOMINAL'
+
+
 def test_prediction_start_ahead_joins_actual_pose_and_short_remaining_path_is_usable():
     ref, grid, origin = scene(False)
     ref[:, 0] = np.linspace(.025, 2.5, len(ref))

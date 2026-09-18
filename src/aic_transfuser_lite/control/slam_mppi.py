@@ -257,8 +257,9 @@ class AvoidancePlanner:
         self.reference_world: np.ndarray | None = None
         self.reference_updated_ns: int | None = None
         self.last_reference_world: np.ndarray | None = None
+        self.blocking_world: np.ndarray | None = None
 
-    def _reference(self, fresh: np.ndarray, stamp: int) -> np.ndarray:
+    def _reference(self, fresh: np.ndarray, stamp: int, base_pose: np.ndarray | None = None) -> np.ndarray:
         """Retain observed spatial intent for at most 10 s without extension.
 
         Fresh source packets are still mandatory. Never extend past a model
@@ -283,7 +284,18 @@ class AvoidancePlanner:
         previous = held[-1]-held[-2]
         aligned = float(previous@delta[i])/(max(1e-12, np.linalg.norm(previous)*lengths[i])) > math.cos(.35)
         remaining = (1-fraction[i])*lengths[i]+lengths[i+1:].sum()
-        if np.linalg.norm(projection[i]-held[-1]) <= .5 and aligned and remaining > .15:
+        # During a turn a fresh ego-aligned prediction need not cross the old
+        # terminal point. Requiring that crossing strands the car at a finite
+        # retained endpoint even though new valid predictions keep arriving.
+        fresh_from_ego = False
+        if base_pose is not None and lengths.sum() >= 3.:
+            local = inverse_transform(fresh, base_pose)
+            heading_indices = np.flatnonzero(np.linalg.norm(local-local[0], axis=1) >= .5)
+            if len(heading_indices):
+                start_delta = local[int(heading_indices[0])]-local[0]
+                fresh_from_ego = (np.linalg.norm(local[0]) <= .5
+                                  and abs(math.atan2(start_delta[1], start_delta[0])) <= .7)
+        if fresh_from_ego or (np.linalg.norm(projection[i]-held[-1]) <= .5 and aligned and remaining > .15):
             # Never splice two predictions: even a centimetre lateral mismatch
             # creates a curvature spike at the join. Adopt the whole fresh
             # polyline after overlap confirmation, preserving its geometry.
@@ -312,10 +324,14 @@ class AvoidancePlanner:
             return result
         fresh = np.asarray(reference_world, dtype=float)
         try:
-            reference_world = self._reference(fresh, stamp)
+            reference_world = self._reference(fresh, stamp, np.asarray(observation['base_pose_xyyaw']))
         except ValueError as exc:
             return dict(result, reason=str(exc))
         if observation.get('path_blocked'):
+            if not self.active:
+                points = [p for surface in observation.get('surfaces', []) if surface.get('path_overlap')
+                          for p in surface.get('points_xy_m', [])]
+                self.blocking_world = np.asarray(points[:500], dtype=float).reshape(-1, 2) if points else None
             self.active = True; self.clear_since_ns = None
         elif self.active:
             if self.clear_since_ns is None:
@@ -335,9 +351,12 @@ class AvoidancePlanner:
             fresh_distance = np.linalg.norm(fresh_local[:-1]+fresh_t[:, None]*fresh_delta, axis=1)
             fi = int(np.argmin(fresh_distance))
             fresh_aligned = fresh_distance[fi] <= .25 and abs(math.atan2(fresh_delta[fi, 1], fresh_delta[fi, 0])) <= .15
-            if stamp-self.clear_since_ns >= 500_000_000 and aligned and fresh_aligned and fresh_length >= 3.:
+            passed = (self.blocking_world is None or np.all(inverse_transform(self.blocking_world,
+                np.asarray(observation['base_pose_xyyaw']))[:, 0] < -.8))
+            if stamp-self.clear_since_ns >= 500_000_000 and aligned and fresh_aligned and fresh_length >= 3. and passed:
                 self.active = False; self.solver.side = 0; self.solver.mean.fill(0.); self.solver.rollout_mean.fill(0.)
                 self.solver.rollout_active = False
+                self.blocking_world = None
         if not self.active:
             return dict(result, mode='NOMINAL', reason='CLEAR')
         try:
@@ -423,7 +442,7 @@ def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_vali
         if available < .4+.5*max(0., speed_mps)+max(0., speed_mps)**2/2:
             raise ValueError('MPPI_REFERENCE_STOPPING_DISTANCE')
         distances = np.linalg.norm(local, axis=1)
-        candidates = np.flatnonzero((local[:, 0] > 0) & (distances >= 1.) & (distances <= 1.5))
+        candidates = np.flatnonzero((local[:, 0] > 0) & (distances >= 1.) & (distances <= 2.5))
         if not len(candidates):
             raise ValueError('MPPI_TRACKING_LOOKAHEAD')
         points = local[candidates]
