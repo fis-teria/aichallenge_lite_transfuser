@@ -468,6 +468,7 @@ def main() -> None:
                                                   speed_policy=speed_policy,
                                                   lookahead_policy=lookahead_policy,
                                                   vehicle_model_policy=vehicle_model_policy,
+                                                  **({'mppi_policy': slam_mppi_policy} if slam_mppi_policy != 'off' else {}),
                                                   rear_axle_offset_m=(args.rear_axle_forward_m, 0.)))
                 steer = details["steer_rad"]; accel = details["acceleration_mps2"]; target = details["target_speed_mps"]
                 if slam_mppi_policy != 'off':
@@ -494,6 +495,7 @@ def main() -> None:
                         scan_wheel_pose=scan_wheel,
                         current_wheel_pose=np.array([current.x_m, current.y_m, current.yaw_rad]),
                         vehicle_model_policy=vehicle_model_policy,
+                        mppi_policy=slam_mppi_policy,
                         nominal_tracking_unavailable=details.get('nominal_tracking_unavailable'))
                     details['slam_mppi'] = mppi
                     target, accel = mppi['target_speed_mps'], mppi['acceleration_mps2']

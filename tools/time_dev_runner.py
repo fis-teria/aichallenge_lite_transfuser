@@ -26,11 +26,13 @@ def make_command(*, source: Path, deployment: Path, run_id: str, display: str,
     validate_npc_count(npcs)
     traffic_domains(pp_vehicles, npcs)
     if slam_mppi:
-        if speeds.max_speed_kmh != 5. or speeds.corner_max_speed_kmh != 5. or npcs or pp_vehicles:
-            raise ValueError('SLAM_MPPI_INITIAL_PROFILE_REQUIRES_5_KMH_STATIC_SINGLE_EGO')
+        selected = (speeds.max_speed_kmh, speeds.corner_max_speed_kmh)
+        if selected not in ((5., 5.), (20., 15.)) or npcs or pp_vehicles:
+            raise ValueError('SLAM_MPPI_REQUIRES_5_5_OR_20_15_STATIC_SINGLE_EGO')
+        config = 'time_path_slam_mppi_20_15_15.json' if selected == (20., 15.) else 'time_path_slam_mppi.json'
         return ['timeout', '--signal=TERM', '--kill-after=10s', '710s', sys.executable,
             str(source/'tools/run_time_path_awsim_trial.py'), '--deployment', str(deployment),
-            '--run-id', run_id, '--display', display, '--config', 'configs/control/time_path_slam_mppi.json',
+            '--run-id', run_id, '--display', display, '--config', 'configs/control/'+config,
             '--slam-obstacles', *(['--record-video'] if record_video else [])]
     return ['timeout', '--signal=TERM', '--kill-after=10s', '710s', sys.executable,
         str(source/'tools/run_time_path_awsim_trial.py'), '--deployment', str(deployment),
@@ -49,7 +51,7 @@ def main() -> None:
     parser.add_argument('--max-speed-kmh', type=float, default=20.)
     parser.add_argument('--corner-max-speed-kmh', type=float, default=10.)
     parser.add_argument('--record-video', action='store_true')
-    parser.add_argument('--slam-mppi', action='store_true', help='5 km/h static-obstacle avoidance trial')
+    parser.add_argument('--slam-mppi', action='store_true', help='Static-obstacle MPPI trial: 5/5 or 20/15 km/h, latter avoidance cap 15')
     parser.add_argument('--npcs', type=int, choices=range(4), default=0,
                         help='Built-in AWSIM NPC karts; only ego has an E2E controller')
     parser.add_argument('--pp-vehicles', type=int, choices=range(4), default=0,

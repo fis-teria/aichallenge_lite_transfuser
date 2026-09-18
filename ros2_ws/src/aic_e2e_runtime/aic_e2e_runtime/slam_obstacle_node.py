@@ -45,10 +45,10 @@ def main(argv: list[str] | None = None) -> None:
     # Static-only MPPI must retain the corridor behind the front-mounted LiDAR
     # while slowing/stopping. Current rays still clear/update observed cells.
     detector = SlamObstacleDetector(occupancy_ttl_s=10. if args.mppi else 2.)
-    avoidance = AvoidancePlanner() if args.mppi else None
     mppi_config = json.loads((args.output/'trial_config.json').read_text()) if args.mppi else None
     if args.mppi and validate_slam_mppi_policy(mppi_config) == 'off':
         raise ValueError('MPPI_SIDECAR_CONFIG_REQUIRED')
+    avoidance = AvoidancePlanner(policy=mppi_config['slam_mppi_policy']) if args.mppi else None
     clock = None; clock_wall = 0; wheel_ns = None; wheel_wall = 0
     fatal = None; last_feed = -1; last_process_wall = 0; last_process_ns = None
     poses: deque[TimedBodyPose] = deque(maxlen=1024)

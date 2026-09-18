@@ -94,7 +94,11 @@ def validate_vehicle_model_config(config: dict[str, Any]) -> str:
             or config.get("record_vehicle_motion") is not True):
         raise ValueError("VEHICLE_MODEL_10KMH_TRIAL_SCOPE")
     if policy in (AWSIM_15KMH_POLICY, AWSIM_20KMH_POLICY) and (
-            config.get('stopping_distance_policy') != 'awsim_cap_1m_diagnostic_v1'
+            (config.get('stopping_distance_policy') != 'awsim_cap_1m_diagnostic_v1'
+             and not (policy == AWSIM_20KMH_POLICY
+                      and config.get('slam_mppi_policy') == 'slam_reference_mppi_15kmh_trial_v1'
+                      and config.get('stopping_distance_policy') == 'measured_speed_v1'
+                      and config.get('scan_occupancy_policy') == 'stop_v1'))
             or config.get('lookahead_policy') != (TIME_LOOKAHEAD_POLICY
                 if config.get('speed_policy') in TIME_ADAPTIVE_SPEED_POLICIES else 'stopping_preview_extended_v1')
             or config.get('diagnostic_only') is not True):

@@ -14,21 +14,50 @@ from .slam_slowdown import SlamSlowdown
 from .vehicle_motion_v1 import effective_response_length
 
 POLICY = 'slam_reference_mppi_v1'
+FAST_POLICY = 'slam_reference_mppi_15kmh_trial_v1'
 SPEED_MPS = 5. / 3.6
 
 
 def validate_slam_mppi_policy(config: dict[str, Any]) -> str:
     policy = config.get('slam_mppi_policy', 'off')
-    if policy not in ('off', POLICY):
+    if policy not in ('off', POLICY, FAST_POLICY):
         raise ValueError('SLAM_MPPI_POLICY')
+    fast = policy == FAST_POLICY
     if policy != 'off' and (config.get('slam_slowdown_policy', 'off') != 'off'
             or config.get('obstacle_policy') != 'steering_support_v2'
             or config.get('scan_occupancy_policy') != 'stop_v1'
             or config.get('stopping_distance_policy') != 'measured_speed_v1'
-            or config.get('vehicle_model_policy') != 'awsim_understeer_v1'
-            or config.get('speed_policy') != 'fixed_5kmh'):
+            or config.get('vehicle_model_policy') != ('awsim_understeer_20kmh_trial_v1' if fast else 'awsim_understeer_v1')
+            or config.get('speed_policy') != ('curvature_time_preview_20kmh_v1' if fast else 'fixed_5kmh')):
         raise ValueError('SLAM_MPPI_REQUIRES_LOW_SPEED_AND_SCAN_STOP')
+    if fast and (config.get('speed_parameters') != {'max_speed_kmh': 20., 'corner_max_speed_kmh': 15.}
+                 or config.get('mppi_max_speed_kmh') != 15.):
+        raise ValueError('SLAM_MPPI_20_15_15_TRIAL_CONTRACT')
     return policy
+
+
+def path_speed_limit(path: np.ndarray, policy: str) -> float:
+    """Target ceiling in m/s, including 1 m endpoint reserve for the 15 km/h trial.
+
+    Braking uses .4 + .5*v + v*v/2 metres. Lateral acceleration is limited to
+    2.5 m/s^2 and physical tire demand to .3 rad with the empirical response.
+    """
+    if policy == POLICY:
+        return SPEED_MPS
+    if policy != FAST_POLICY:
+        raise ValueError('SLAM_MPPI_POLICY')
+    path = np.asarray(path, dtype=float)
+    if (path.ndim != 2 or path.shape[1:] != (2,) or not 3 <= len(path) <= 170
+            or not np.isfinite(path).all()):
+        raise ValueError('MPPI_PATH_SPEED_SHAPE_OR_FINITE')
+    delta = np.diff(path, axis=0)
+    ds = np.linalg.norm(delta, axis=1)
+    yaw = np.unwrap(np.arctan2(delta[:, 1], delta[:, 0]))
+    curvature = float(np.max(np.abs(np.diff(yaw)/np.maximum(.01, .5*(ds[:-1]+ds[1:])))))
+    k = max(curvature, 1e-9)
+    tire_cap = math.sqrt(max(0., (math.tan(.3)/k-1.087)/.045))
+    horizon_cap = max(0., math.sqrt(.25+2*max(0., float(ds.sum())-1.-.4))-.5)
+    return min(15./3.6, math.sqrt(2.5/k), tire_cap, horizon_cap)
 
 
 def transform(points: np.ndarray, pose: np.ndarray) -> np.ndarray:
@@ -50,7 +79,10 @@ class ReferenceMppi:
     Three overlapping radius-0.95 m circles cover the 2.4 x 1.4 m body with margin.
     Additional clearance covers cell discretization and between-sample motion.
     """
-    def __init__(self, seed: int = 19) -> None:
+    def __init__(self, seed: int = 19, *, policy: str = POLICY) -> None:
+        if policy not in (POLICY, FAST_POLICY):
+            raise ValueError('SLAM_MPPI_POLICY')
+        self.policy = policy
         from scipy.ndimage import distance_transform_edt
         self._distance_transform = distance_transform_edt
         self.rng = np.random.default_rng(seed)
@@ -227,7 +259,7 @@ class ReferenceMppi:
             largest = selected_offsets[np.argmax(np.abs(selected_offsets))]
             if abs(largest) > .3:
                 self.side = 1 if largest > 0 else -1
-            return dict(path_world_xy_m=fallback[1].tolist(), target_speed_mps=SPEED_MPS,
+            return dict(path_world_xy_m=fallback[1].tolist(), target_speed_mps=path_speed_limit(fallback[1], self.policy),
                 cost=fallback[0], weighted_path_rechecked=True,
                 samples=sum(d['samples'] for d in self.diagnostics if d['samples'] > 1),
                 reference_horizon_m=length, terminal_offset_m=float(selected_offsets[-1]),
@@ -241,7 +273,7 @@ class ReferenceMppi:
         largest = selected_offsets[np.argmax(np.abs(selected_offsets))]
         if abs(largest) > .3:
             self.side = 1 if largest > 0 else -1
-        return dict(path_world_xy_m=best[1].tolist(), target_speed_mps=SPEED_MPS,
+        return dict(path_world_xy_m=best[1].tolist(), target_speed_mps=path_speed_limit(best[1], self.policy),
                     cost=best[0], weighted_path_rechecked=True, samples=768,
                     reference_horizon_m=length, terminal_offset_m=float(selected_offsets[-1]),
                     trajectory_family='reference_offset', candidate_diagnostics=self.diagnostics)
@@ -249,8 +281,9 @@ class ReferenceMppi:
 
 class AvoidancePlanner:
     """Hold side until fresh clearance, never reuse a path without rechecking."""
-    def __init__(self) -> None:
-        self.solver = ReferenceMppi()
+    def __init__(self, *, policy: str = POLICY) -> None:
+        self.policy = policy
+        self.solver = ReferenceMppi(policy=policy)
         self.active = False
         self.clear_since_ns: int | None = None
         self.last_stamp_ns: int | None = None
@@ -313,7 +346,7 @@ class AvoidancePlanner:
     def update(self, observation: dict[str, Any], reference_world: np.ndarray | None,
                grid: Any) -> dict[str, Any]:
         stamp = observation['stamp_ns']
-        result = dict(policy=POLICY, mode='STOP', reason='MPPI_NO_REFERENCE', stamp_ns=stamp,
+        result = dict(policy=self.policy, mode='STOP', reason='MPPI_NO_REFERENCE', stamp_ns=stamp,
                       frame='time_slam_map', target_speed_mps=0.)
         if type(stamp) is not int or (self.last_stamp_ns is not None and stamp <= self.last_stamp_ns):
             raise ValueError('MPPI_CLOCK_RESET_OR_REPLAY')
@@ -372,21 +405,22 @@ class AvoidancePlanner:
         return result
 
 
-def mppi_nominal_control(plan: Any, current: Any, **kwargs: Any) -> dict[str, Any]:
+def mppi_nominal_control(plan: Any, current: Any, *, mppi_policy: str = POLICY, **kwargs: Any) -> dict[str, Any]:
     """Permit fresh validated MPPI to replace an unavailable nominal lookahead.
 
     This produces no authority by itself: avoidance_command must reject NOMINAL
     for this result. Sensor, identity, age, geometry and speed errors still stop.
-    Only the fixed 5 km/h static-obstacle profile may use this arbitration.
+    Only the explicit static-obstacle profiles may use this arbitration.
     """
     from .time_trial_v1 import time_trial_control
-    if kwargs.get('speed_policy') != 'fixed_5kmh':
+    expected = 'curvature_time_preview_20kmh_v1' if mppi_policy == FAST_POLICY else 'fixed_5kmh'
+    if mppi_policy not in (POLICY, FAST_POLICY) or kwargs.get('speed_policy') != expected:
         raise ValueError('MPPI_NOMINAL_SPEED_POLICY')
     try:
         return time_trial_control(plan, current, **kwargs)
     except ValueError as exc:
         if str(exc) not in ('STEERING_FEASIBLE_LOOKAHEAD_MISSING', 'TIME_PATH_MOTION_UNRESOLVED',
-                            'NO_FORWARD_REFERENCE', 'REFERENCE_STOPPING_DISTANCE'):
+                            'NO_FORWARD_REFERENCE', 'REFERENCE_STOPPING_DISTANCE', 'REFERENCE_TIME_PREVIEW_DISTANCE'):
             raise
         return dict(nominal_tracking_unavailable=str(exc), steer_rad=0., target_speed_mps=SPEED_MPS,
                     acceleration_mps2=float(np.clip(2*(SPEED_MPS-kwargs['speed_mps']), -1., .5)))
@@ -396,7 +430,8 @@ def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_vali
                       now_sim_ns: int, now_wall_ns: int, receipt_ns: int | None,
                       speed_mps: float, target_mps: float, acceleration_mps2: float, dt_s: float,
                       scan_wheel_pose: np.ndarray | None, current_wheel_pose: np.ndarray,
-                      vehicle_model_policy: str, nominal_tracking_unavailable: str | None = None) -> dict[str, Any]:
+                      vehicle_model_policy: str, nominal_tracking_unavailable: str | None = None,
+                      mppi_policy: str = POLICY) -> dict[str, Any]:
     """Admit atomic SLAM+MPPI packet; PP physical tire rad, no actuator authority.
 
     Poses are [x m,y m,yaw rad]. scan_wheel_pose MUST be interpolated at the
@@ -405,14 +440,16 @@ def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_vali
     admission = SlamSlowdown().update(packet, run_id=run_id, source_valid=source_valid,
         now_sim_ns=now_sim_ns, now_wall_ns=now_wall_ns, receipt_ns=receipt_ns,
         speed_mps=speed_mps, target_mps=target_mps, acceleration_mps2=acceleration_mps2, dt_s=dt_s)
-    result = dict(policy=POLICY, mode='STOP', reason=admission['reason'], steer_rad=None,
+    if mppi_policy not in (POLICY, FAST_POLICY):
+        raise ValueError('SLAM_MPPI_POLICY')
+    result = dict(policy=mppi_policy, mode='STOP', reason=admission['reason'], steer_rad=None,
                   target_speed_mps=0., acceleration_mps2=-1.)
     if not admission['valid']:
         return result
     assert packet is not None
     try:
         plan = packet['mppi']
-        if (plan['policy'] != POLICY or plan['stamp_ns'] != packet['stamp_ns']
+        if (plan['policy'] != mppi_policy or plan['stamp_ns'] != packet['stamp_ns']
                 or plan['frame'] != 'time_slam_map' or plan['mode'] not in ('STOP', 'NOMINAL', 'AVOID')):
             raise ValueError('MPPI_PLAN_IDENTITY')
         if plan['mode'] == 'STOP':
@@ -424,7 +461,12 @@ def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_vali
                 raise ValueError('MPPI_BLOCKED_NOMINAL')
             return dict(result, mode='NOMINAL', reason='CLEAR', target_speed_mps=target_mps,
                         acceleration_mps2=acceleration_mps2)
-        if speed_mps > 6/3.6:
+        planned_speed = plan.get('target_speed_mps')
+        ceiling = 15/3.6 if mppi_policy == FAST_POLICY else SPEED_MPS
+        if (type(planned_speed) not in (int, float) or not math.isfinite(planned_speed)
+                or not 0 < planned_speed <= ceiling):
+            raise ValueError('MPPI_TARGET_SPEED')
+        if speed_mps > planned_speed+1/3.6:
             return dict(result, reason='MPPI_DECELERATE_BEFORE_AVOIDANCE')
         if target_mps <= .05:
             return dict(result, reason='MPPI_MODEL_STOP')
@@ -434,8 +476,11 @@ def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_vali
         if (any(p.shape != (3,) or not np.isfinite(p).all() for p in (base, scan, current))
                 or path.ndim != 2 or path.shape[1:] != (2,) or not 3 <= len(path) <= 170
                 or not np.isfinite(path).all() or plan['weighted_path_rechecked'] is not True
-                or plan['target_speed_mps'] != SPEED_MPS or np.linalg.norm(path[0]-base[:2]) > .01):
+                or (mppi_policy == POLICY and planned_speed != SPEED_MPS)
+                or np.linalg.norm(path[0]-base[:2]) > .01):
             raise ValueError('MPPI_PATH_CONTRACT')
+        if planned_speed > path_speed_limit(path, mppi_policy)+1e-9:
+            raise ValueError('MPPI_PATH_SPEED_LIMIT')
         local = inverse_transform(transform(inverse_transform(path, base), scan), current)
         remaining = np.linalg.norm(np.diff(local, axis=0), axis=1)
         nearest = int(np.argmin(np.linalg.norm(local, axis=1)))
@@ -443,7 +488,8 @@ def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_vali
         if available < .4+.5*max(0., speed_mps)+max(0., speed_mps)**2/2:
             raise ValueError('MPPI_REFERENCE_STOPPING_DISTANCE')
         distances = np.linalg.norm(local, axis=1)
-        candidates = np.flatnonzero((local[:, 0] > 0) & (distances >= 1.) & (distances <= 2.5))
+        preview = max(1., .4+1.5*max(0., speed_mps)) if mppi_policy == FAST_POLICY else 1.
+        candidates = np.flatnonzero((local[:, 0] > 0) & (distances >= preview) & (distances <= preview+1.5))
         if not len(candidates):
             raise ValueError('MPPI_TRACKING_LOOKAHEAD')
         points = local[candidates]
@@ -453,7 +499,7 @@ def avoidance_command(packet: dict[str, Any] | None, *, run_id: str, source_vali
         if not len(feasible):
             raise ValueError('MPPI_TRACKING_STEERING')
         tire = float(tires[feasible[0]])
-        target = min(target_mps, SPEED_MPS)
+        target = min(target_mps, planned_speed)
         return dict(result, mode='AVOID', reason='MPPI_TRACKING', steer_rad=tire,
                     target_speed_mps=target, acceleration_mps2=min(acceleration_mps2,
                         max(-1., min(.5, 2*(target-max(0., speed_mps))))))

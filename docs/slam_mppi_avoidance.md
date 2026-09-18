@@ -206,3 +206,29 @@ AWSIMの操舵遅れ・タイヤ・SLAM誤差・未知の障害物運動を再�
 
 実行コマンドは上記の専用runnerを使用し、`--run-id`に未使用の識別子を指定する。
 最新検証は外部supervisorで壁時計210秒、空き容量1.5 GiB以上、出力768 MiB以下に制限した。
+
+### 20 / 15 / 15 km/hの追加試験プロファイル
+
+`configs/control/time_path_slam_mppi_20_15_15.json`は直線20、コーナー15、
+MPPI回避15 km/hを上限とする明示的な試験設定。
+`slam_reference_mppi_15kmh_trial_v1`で従来5 km/h設定と区別する。
+回避目標は経路の曲率、横加速度2.5 m/s²、物理操舵0.3 rad、
+有限参照終端までの停止距離（1 m予備を含む）で低下する。
+15 km/hを常に維持する指定ではない。
+
+20 km/h試験用の経験的車両モデルを用いるが、この速度での新しい実測較正ではない。
+独立LiDAR停止と実測速度による停止距離は有効。
+現在速度が回避経路の上限を1 km/hより大きく超える間は減速し、
+追従点を速度に応じて先へ移す（0.4 m + 1.5秒×速度、最低1 m）。
+
+```bash
+python3 source/tools/run_time_path_awsim_trial.py \
+  --deployment /home/graneple/e2e_autonomous/time_slam_mppi_20260919 \
+  --run-id codex-time-slam-mppi-speed15-01 --display :1 \
+  --config configs/control/time_path_slam_mppi_20_15_15.json --slam-obstacles \
+  --static-obstacle-scenario configs/scenarios/slam_mppi_single_box.yaml --record-video
+# 専用deploymentのsource内からの通常入口:
+make dev DEV_CONTROLLER=time MAX_SPEED_KMH=20 CORNER_MAX_SPEED_KMH=15 TIME_SLAM_MPPI=1 TIME_RECORD_VIDEO=1
+```
+
+試験結果は同日のartifactへ別記する。5 km/hでの通過実績を15 km/h回避成功と解釈しない。
