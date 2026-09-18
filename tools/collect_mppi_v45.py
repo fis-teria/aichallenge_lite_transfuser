@@ -136,7 +136,8 @@ def main() -> None:
     assert scenario['simulator']['collisions']=='on'
     assert scenario['expect']['timeout_sec'] < args.wall_timeout_s
     assert scenario['ego']['submission']['type']=='docker_image'
-    assert all(actor['profile']=='static_physical' for actor in scenario.get('actors',[]))
+    from mppi_collection_isolation import validate_teacher_actors
+    validate_teacher_actors(scenario.get('actors',[]))
     assert scenario['ego'].get('id','ego')=='ego'
     image = scenario['ego']['submission']['image']
 

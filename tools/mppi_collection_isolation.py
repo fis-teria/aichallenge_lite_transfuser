@@ -6,10 +6,21 @@ network namespace. The official AWSIM executable and scene are never modified.
 from __future__ import annotations
 import fcntl
 import json
+import math
 from pathlib import Path
 import re
 import subprocess
 from typing import Any
+
+
+def validate_teacher_actors(actors: list[dict[str, Any]]) -> None:
+    """Physical static actors or physical line followers at <=3 km/h."""
+    for actor in actors:
+        if actor.get('profile') == 'static_physical':continue
+        speed = actor.get('speed_mps')
+        if (actor.get('profile') != 'line_trace' or type(speed) not in (float,int)
+                or not math.isfinite(speed) or not 0 < speed <= 3/3.6):
+            raise ValueError('physical static or line_trace actor at (0,3] km/h required')
 
 
 def validate_plan(plan: dict[str, Any], domain: int) -> dict[str, Any]:

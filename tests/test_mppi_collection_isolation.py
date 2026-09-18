@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 import pytest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
-from mppi_collection_isolation import validate_plan, validate_holder, patch_generated
+from mppi_collection_isolation import validate_plan, validate_holder, patch_generated, validate_teacher_actors
 
 
 def test_domains_services_and_vehicle_identity():
@@ -27,3 +27,10 @@ def test_reject_shared_or_unowned_namespaces():
     for key,value in [('NetworkMode','host'),('Privileged',True)]:
         bad=deepcopy(holder);bad['HostConfig'][key]=value
         with pytest.raises(ValueError):validate_holder(bad,'codex-avoidance-a')
+
+
+def test_physical_slow_actor_only():
+    validate_teacher_actors([dict(profile='static_physical'),dict(profile='line_trace',speed_mps=3/3.6)])
+    for actor in [dict(profile='v2x_ghost'),dict(profile='line_trace',speed_mps=float('nan')),
+                  dict(profile='line_trace',speed_mps=3.),dict(profile='line_trace',speed_mps=0)]:
+        with pytest.raises(ValueError):validate_teacher_actors([actor])
