@@ -83,4 +83,4 @@ AWSIMの操舵遅れ・タイヤ・SLAM誤差・未知の障害物運動を再�
 従来のPP replayは地図とMPPIを再現しないため、この構成は`UNSUPPORTED_SLAM_MPPI`を返す。
 
 現時点では公式ROS/AWSIMでの起動・衝突なし回避・周回は未確認。
-部署先の旧source/installは自動的には更新されない。
+配置先の旧source/installは自動的には更新されない。

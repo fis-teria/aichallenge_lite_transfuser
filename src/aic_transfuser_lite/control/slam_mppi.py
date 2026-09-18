@@ -51,6 +51,8 @@ class ReferenceMppi:
     Additional clearance covers cell discretization and between-sample motion.
     """
     def __init__(self, seed: int = 19) -> None:
+        from scipy.ndimage import distance_transform_edt
+        self._distance_transform = distance_transform_edt
         self.rng = np.random.default_rng(seed)
         self.side = 0
 
@@ -93,8 +95,7 @@ class ReferenceMppi:
         slope0 = math.tan(-headings[0])
         boundary = d0*(1-3*u**2+2*u**3)+length*slope0*(u-2*u**2+u**3)
         basis = np.column_stack((np.sin(np.pi*u)**2, np.sin(np.pi*u)**2*(2*u-1)))
-        from scipy.ndimage import distance_transform_edt
-        field = distance_transform_edt(np.pad(grid == 0, 1, constant_values=False))[1:-1, 1:-1]*resolution_m
+        field = self._distance_transform(np.pad(grid == 0, 1, constant_values=False))[1:-1, 1:-1]*resolution_m
         # Two cell-center errors, plus max half-step displacement of any circle.
         required = .95+math.sqrt(2)*resolution_m+.15
 
@@ -105,7 +106,7 @@ class ReferenceMppi:
             distances = np.linalg.norm(segments, axis=2)
             yaw = np.unwrap(np.arctan2(segments[:, :, 1], segments[:, :, 0]), axis=1)
             curvature = np.diff(yaw, axis=1)/np.maximum(.01, .5*(distances[:, :-1]+distances[:, 1:]))
-            valid = ((np.abs(offset).max(axis=1) <= 2.5) & (np.abs(yaw[:, 0]) <= .25)
+            valid = ((np.abs(offset).max(axis=1) <= 2.5) & (np.abs(yaw[:, 0]) <= .05)
                      & (np.abs(curvature).max(axis=1) <= math.tan(.3)/1.2)
                      & (distances.min(axis=1) > .01) & (distances.max(axis=1) <= .2)
                      & (np.abs(np.diff(yaw, axis=1)).max(axis=1) < .1))

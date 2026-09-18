@@ -111,6 +111,25 @@ def test_malformed_plan_is_rejected(field, value):
     assert command(p)['mode'] == 'STOP'
 
 
+@pytest.mark.parametrize('kind', ['shape', 'nan', 'resolution', 'short'])
+def test_invalid_geometry_is_explicitly_rejected(kind):
+    ref, grid, origin = scene(False)
+    if kind == 'shape':
+        ref = np.zeros((30, 3))
+    elif kind == 'nan':
+        ref[5, 0] = np.nan
+    elif kind == 'short':
+        ref = ref[:3]
+    with pytest.raises(ValueError, match='MPPI_'):
+        ReferenceMppi().solve(ref, np.zeros(3), grid, origin, .1 if kind == 'resolution' else .2)
+
+
+def test_legacy_replay_does_not_certify_modified_mppi_commands():
+    from tools.evaluate_time_awsim_trial import replay_recorded_control
+    replay = replay_recorded_control([{'details': {'slam_mppi': {'mode': 'AVOID'}}}], [], 0.)
+    assert replay['status'] == 'UNSUPPORTED_SLAM_MPPI' and replay['matched_commands'] == 0
+
+
 def test_release_needs_multiple_fresh_observations_and_clock_reset_rejected():
     ref, grid, origin = scene()
     g = SimpleNamespace(values=grid, origin=origin/.2, resolution_m=.2)
