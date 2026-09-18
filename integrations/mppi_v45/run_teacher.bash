@@ -18,8 +18,10 @@ assert identity['teacher']=='MPPI_SIM_V45'
 for entry in identity['files'].values():
     assert hashlib.sha256((root/'install'/entry['path']).read_bytes()).hexdigest()==entry['sha256']
 identity.update(speed_cap_mps=float(os.environ['TEACHER_SPEED_CAP_MPS']),perception='LIDAR_V2X_SURFACE',student_control=False)
+identity['early_entry_search']=os.environ.get('TEACHER_EARLY_ENTRY_SEARCH','false')=='true'
 Path('teacher-runtime-identity.json').write_text(json.dumps(identity,indent=2)+'\n')
 PY
 exec ros2 launch aic_lidar_v2x teacher_v45.launch.py \
   map_yaml:=/source/integrations/mppi_v45/assets/multi_purpose_mpc_ros/env/final_ver3/occupancy_grid_map.yaml \
-  domain_id:=1 speed_cap_mps:="${TEACHER_SPEED_CAP_MPS:?}" run_rviz:="${TEACHER_RVIZ:-false}"
+  domain_id:=1 speed_cap_mps:="${TEACHER_SPEED_CAP_MPS:?}" run_rviz:="${TEACHER_RVIZ:-false}" \
+  early_entry_search:="${TEACHER_EARLY_ENTRY_SEARCH:-false}"

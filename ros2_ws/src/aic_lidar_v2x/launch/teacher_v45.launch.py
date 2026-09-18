@@ -11,6 +11,7 @@ from launch.launch_description_sources import AnyLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node, SetParameter, SetRemap
 from launch_ros.substitutions import FindPackageShare
+from launch_ros.parameter_descriptions import ParameterValue
 
 from aic_lidar_v2x.teacher import V44_INPUT_REMAPS
 
@@ -24,6 +25,7 @@ def generate_launch_description():
     arguments = [DeclareLaunchArgument("map_yaml"),
         DeclareLaunchArgument("domain_id", default_value="1"),
         DeclareLaunchArgument("speed_cap_mps", default_value="1.3888888888888888"),
+        DeclareLaunchArgument("early_entry_search", default_value="false"),
         DeclareLaunchArgument("run_rviz", default_value="false")]
     teacher = include("aichallenge_submit_launch", ["launch", "aichallenge_submit.launch.xml"], {
         "simulation": "true", "use_sim_time": "true", "sensor_model": "racing_kart_sensor_kit",
@@ -45,5 +47,6 @@ def generate_launch_description():
         GroupAction(actions=[*[SetRemap(src=src, dst=dst) for src, dst in V44_INPUT_REMAPS],
             SetParameter(name="brain.collection_motion_enabled", value=True),
             SetParameter(name="brain.collection_avoidance_continuation", value=True),
+            SetParameter(name="brain.collection_early_entry_search", value=ParameterValue(LaunchConfiguration("early_entry_search"), value_type=bool)),
             SetParameter(name="collection_planned_stop_gate", value=True), teacher]),
         relay, simulation, rviz])

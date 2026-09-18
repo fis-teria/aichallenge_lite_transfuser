@@ -458,6 +458,8 @@ public:
         declare_parameter<bool>("brain.collection_motion_enabled", false);
     collection_avoidance_continuation_ =
         declare_parameter<bool>("brain.collection_avoidance_continuation", false);
+    collection_early_entry_search_ =
+        declare_parameter<bool>("brain.collection_early_entry_search", false);
     motion_persistence_.acceleration_sec =
         declare_parameter<double>("brain.prediction_acceleration_persistence_sec", 0.6);
     motion_persistence_.yaw_rate_sec =
@@ -1808,6 +1810,7 @@ private:
       work.request.bounds.minimum.d_pass_m = signed_separation_m;
       work.request.bounds.maximum.d_pass_m = signed_separation_m;
       applyGentleLateralEntry(work.request);
+      applyCollectionEntrySearch(work.request, batch.maneuver);
       // A prepared front merge uses one existing wall line per side. Its
       // geometry and timed speed proposal are fixed, so do not resample copies.
       work.request.nominal_only = work.request.front_merge_attack;
@@ -2167,6 +2170,21 @@ private:
     request.nominal.lateral_control_far_scale =
         request.bounds.minimum.lateral_control_far_scale =
         request.bounds.maximum.lateral_control_far_scale = 5.0/7.0;
+  }
+
+  void applyCollectionEntrySearch(mppi::PlanRequest &request, DrivingMode maneuver) const {
+    // Expand geometry proposals only. Every candidate still passes the same
+    // delayed PP rollout, wall/obstacle sweep and longitudinal speed planner.
+    if (!collection_early_entry_search_ || maneuver != DrivingMode::AVOID ||
+        request.phase != mppi::Phase::OVERTAKE || request.front_merge_attack ||
+        !std::isfinite(request.ego.speed_mps) || request.ego.speed_mps < 0.0 ||
+        request.ego.speed_mps > 10.0 / 3.6) return;
+    request.bounds.minimum.lateral_control_near_scale = 0.0;
+    request.bounds.maximum.lateral_control_near_scale = 0.45;
+    request.bounds.minimum.lateral_control_far_scale = 0.55;
+    request.bounds.maximum.lateral_control_far_scale = 1.0;
+    request.nominal.lateral_control_near_scale = 0.45;
+    request.nominal.lateral_control_far_scale = 1.0;
   }
 
   void receiveVehiclePositions(
@@ -5749,6 +5767,7 @@ private:
   bool online_motion_prediction_enabled_{false};
   bool collection_motion_enabled_{false};
   bool collection_avoidance_continuation_{false};
+  bool collection_early_entry_search_{false};
   opponent_prediction::MotionPersistence motion_persistence_{};
   double brain_target_path_conflict_margin_m_{0.15};
   double brain_prediction_horizon_sec_{6.0};

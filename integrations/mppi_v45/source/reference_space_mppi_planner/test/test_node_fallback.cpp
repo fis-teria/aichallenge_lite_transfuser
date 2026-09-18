@@ -1797,6 +1797,47 @@ TEST_F(NodeFallbackTest, CrossingReferenceDoesNotFinishAnUnreturnedLateralExecut
   EXPECT_EQ(node.driving_fsm_.mode(),DrivingMode::FREE_RUN);
 }
 
+TEST_F(NodeFallbackTest, CollectionEntrySearchIsBoundedAndPreservesSafetyInputs) {
+  mppi::PlanRequest original;
+  original.phase=mppi::Phase::OVERTAKE;
+  original.ego.speed_mps=5.0/3.6;
+  original.nominal.l_out_m=4.;
+  original.bounds.minimum.l_out_m=4.;
+  original.bounds.maximum.l_out_m=9.;
+  original.nominal.lateral_control_near_scale=2./7.;
+  original.nominal.lateral_control_far_scale=5./7.;
+  original.bounds.minimum=original.nominal;
+  original.bounds.maximum=original.nominal;
+  auto disabled=original;
+  node.applyCollectionEntrySearch(disabled,DrivingMode::AVOID);
+  EXPECT_DOUBLE_EQ(disabled.nominal.lateral_control_near_scale,2./7.);
+  node.collection_early_entry_search_=true;
+  for (double speed : {0.,5./3.6,10./3.6}) {
+    auto r=original;r.ego.speed_mps=speed;
+    node.applyCollectionEntrySearch(r,DrivingMode::AVOID);
+    EXPECT_DOUBLE_EQ(r.nominal.lateral_control_near_scale,.45);
+    EXPECT_DOUBLE_EQ(r.bounds.minimum.lateral_control_near_scale,0.);
+    EXPECT_DOUBLE_EQ(r.bounds.maximum.lateral_control_far_scale,1.);
+    EXPECT_DOUBLE_EQ(r.nominal.l_out_m,original.nominal.l_out_m);
+    EXPECT_DOUBLE_EQ(r.bounds.minimum.speed_scale,original.bounds.minimum.speed_scale);
+    EXPECT_EQ(r.path_constraint_execution_prefix,original.path_constraint_execution_prefix);
+  }
+  for (double speed : {-0.1,10./3.6+.001,std::numeric_limits<double>::quiet_NaN()}) {
+    auto r=original;r.ego.speed_mps=speed;
+    node.applyCollectionEntrySearch(r,DrivingMode::AVOID);
+    EXPECT_DOUBLE_EQ(r.nominal.lateral_control_near_scale,2./7.);
+  }
+  auto passing=original;
+  node.applyCollectionEntrySearch(passing,DrivingMode::OVERTAKE);
+  EXPECT_DOUBLE_EQ(passing.nominal.lateral_control_near_scale,2./7.);
+  auto merge=original;merge.phase=mppi::Phase::MERGE;
+  node.applyCollectionEntrySearch(merge,DrivingMode::AVOID);
+  EXPECT_DOUBLE_EQ(merge.nominal.lateral_control_near_scale,2./7.);
+  auto prepared=original;prepared.front_merge_attack=true;
+  node.applyCollectionEntrySearch(prepared,DrivingMode::AVOID);
+  EXPECT_DOUBLE_EQ(prepared.nominal.lateral_control_near_scale,2./7.);
+}
+
 TEST_F(NodeFallbackTest, WorkerCommitsAvoidOnlyWithAcceptedLateralExecution) {
   const auto command = prepareBrainScene();
   ObservedVehicle lead;

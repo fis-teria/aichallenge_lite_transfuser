@@ -88,6 +88,8 @@ def main() -> None:
     ap.add_argument('--scenario', type=Path, required=True)
     ap.add_argument('--run-id', required=True)
     ap.add_argument('--speed-cap-kmh', type=float, default=5.)
+    ap.add_argument('--early-entry-search', action='store_true',
+                    help='Explore earlier lateral entry for collection AVOID at <=10 km/h')
     ap.add_argument('--wall-timeout-s', type=int, default=480)
     ap.add_argument('--run-budget-gib', type=float, default=1.)
     ap.add_argument('--free-reserve-gib', type=float, default=2.)
@@ -147,7 +149,8 @@ def main() -> None:
         ego = services['scn-car1']
         ego['volumes'] = [*ego.get('volumes',[]),*volumes]
         ego['environment'].update(VEHICLE_ID='d1',TEACHER_SPEED_CAP_MPS=str(args.speed_cap_kmh/3.6),
-                                  TEACHER_RVIZ='true' if args.rviz else 'false')
+                                  TEACHER_RVIZ='true' if args.rviz else 'false',
+                                  TEACHER_EARLY_ENTRY_SEARCH='true' if args.early_entry_search else 'false')
         if args.rviz:
             ego['volumes'].append(f'{source}/integrations/mppi_v45/teacher_collection.rviz:'
                 '/aichallenge/workspace/install/aichallenge_system_launch/share/aichallenge_system_launch/config/autoware.rviz:ro')
