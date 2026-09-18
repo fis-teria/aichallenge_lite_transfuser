@@ -61,3 +61,13 @@ bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q
 復帰状態へ入る。占有地図・車両応答の再現ではなく、実際の復帰完了の証拠ではない。
 最新版のAWSIM試験は共有ホストの別試験使用で起動前に停止しており、復帰実走は未確認。
 詳細は`artifacts/slam_mppi_awsim_20260919/recovery_report.md`。
+
+## Git公開とROS2パッケージ
+
+`codex/slam-mppi-recovery`ブランチには、ROS2パッケージに加えて、ビルドに必要な
+ルートの`src/`・`configs/`・`schemas/`と起動ツールを含む検証用ソースを公開する。
+リポジトリ全体をcheckoutして使用する。`aic_e2e_runtime`単体のコピーではビルドできない。
+ROS2のinstallには5 km/h、20/15/15 km/h、復帰付き20/15/15 km/hの3設定を同梱する。
+モデル重み、データセット、rosbag、RViz動画はこの変更に追加しない。
+試験ログ・動画の`artifacts/`リンクはローカル保存先であり、Git公開物には含まれない。
+起動と依存環境の構築は[SLAM MPPI手順](slam_mppi_avoidance.md)を参照する。
