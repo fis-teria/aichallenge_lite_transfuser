@@ -242,3 +242,11 @@ WSL全体3310 passed / 4 skipped、公式ROS source/install 257ファイル一�
 追従点不足・予測の後退/形状異常が続いて`PROGRESS_STALLED / STOPPED_NO_LAP`で終了した。
 予測縮小の学習・入力上の根本原因は未確定。RViz 115.6秒、AWSIM 115.1秒を保存し、
 全デコード・SHA-256一致を確認。詳細は`artifacts/slam_mppi_awsim_20260919/speed15-01/README.md`。
+
+### ランタイム復帰の追加
+
+20/15 km/hのMake入口は復帰付き`time_path_slam_mppi_20_15_15_recovery.json`を選択する。
+最新の有効な予測をSLAM上で保持し、最大3 km/h・1試行6秒/2.5 m・1ラン2試行に限定して
+TimePath短縮からの復帰を試みる。元の復帰なし設定は比較用に残す。
+仕様、例外条件、起動方法は[time_path_runtime_recovery.md](time_path_runtime_recovery.md)。
+停止要求・入力異常・新たな占有/未知領域を復帰のために無効化しない。

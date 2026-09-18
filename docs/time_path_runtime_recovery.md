@@ -50,3 +50,14 @@ bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q
 `slam_obstacles.jsonl`の`mppi.recovery`に状態・試行回数・元観測時刻・走行距離、
 `control.jsonl`に`SLAM_MPPI_RECOVER:RETAINED_PATH_TRACKING`を記録する。
 復帰指令の発行と、実際の前進・通常追従への復帰・周回完了は別々に判定する。
+
+## 2026-09-19 検証結果
+
+最新コード`0e21e9a322817b4099d84c282fbcc51ce0f665e6`はnative WSL全体
+3321 passed / 4 skipped（158.48秒）。公式ROSのsource/install 258ファイル一致を確認。
+初版のAWSIM2試験は復帰指令0件で停止。箱あり試験はMPPI候補不成立、箱なし試験は
+保持条件が4 m以上に限定されており、復帰開始前に保持経路を使い切った。
+最新版は3 m台の有効な最新経路も保持し、同じ記録入力の選択器再現では残り2.286 mで
+復帰状態へ入る。占有地図・車両応答の再現ではなく、実際の復帰完了の証拠ではない。
+最新版のAWSIM試験は共有ホストの別試験使用で起動前に停止しており、復帰実走は未確認。
+詳細は`artifacts/slam_mppi_awsim_20260919/recovery_report.md`。
