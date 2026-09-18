@@ -235,6 +235,82 @@ a09の最後の候補観測はsimulation 95.334997869sで、3秒の未来と50ms
 従って15,518を「学習投入済み」や「回避に成功した教師数」とは数えない。
 元rosbagを削除せず、split割当・再学習は行っていない。
 
+### ずれ前候補の接触・物体離隔の確認
+
+保存済み9runの公式結果、候補のある7runの記録車体姿勢、35,312 LaserScan、
+LiDAR→V2Xの表面検出をWSLで追加照合した。入力bag、samples、公式結果、
+生成時YAML、配置metadataはexport manifestのSHA256と再照合した。
+各camera候補について、過去1秒と未来3秒に補間support各50msを加えた窓を検査した。
+
+公式crash / wall / overは9runすべて0。検査した記録EKF姿勢に車体のMeshColliderの
+XY外形を置いた場合、実AWSIM由来の物理壁地図への重なりは0件。
+この結果は記録姿勢に基づく確認であり、絶対姿勢の誤差や3次元の接触を保証しない。
+
+| run・物体 | 最接近のsimulation時刻 [s] | 記録姿勢での投影外形間距離 [m] | その場面を含む候補窓数 |
+|---|---:|---:|---:|
+| a06 / corner_08 cone | 214.885 | 0.182 | 46 |
+| a07 / corner_08 cone | 194.235 | 0.172 | 52 |
+| a08 / corner_09 box | 89.135 | 0.169 | a08の箱2か所で計96 |
+| a08 / corner_11 box | 118.145 | 0.154 | 同上 |
+| a10 / corner_08 cone | 83.175 | 0.149 | 48 |
+| a10 / corner_09 box | 88.895 | 0.143 | 49 |
+
+コーンの0.30m未満に該当する候補146、箱の初期配置による参考計算に該当する候補145、
+重複を除く計291窓に注意フラグを付けた。いずれもcamera anchor数で、291回の
+接触・回避イベントを意味しない。元の教師・採用maskは変更していない。
+4窓にはmonitor姿勢の履歴端の不足もあり、別の保留理由として保存した。
+
+コーンの形状について、配備DLLの読み取り専用再確認では、fallbackは半径0.175m、
+高さ0.7m、24分割の円錐MeshCollider（convex）だった。以前の診断メモの
+「CapsuleCollider」という説明は訂正する。今回の計算はXY投影を覆う外接円を使う。
+円錐の高さ方向と車体形状を含めた3次元最短距離ではなく、保守的な投影距離である。
+別実装の24角形距離との比較も行い、外接円との差が理論上限約1.50mm以内と確認した。
+箱は初期位置の0.5m立方体の投影による参考値。生成6固定更新後にRigidbodyがdynamicに
+なり得るため、この値から実際の箱の移動・接触を断定しない。
+
+記録されたLaserScanは750本、角度-1.566607〜1.570796radで、センサの取付位置は
+base_linkから前方1.65m。車体側面と後方は直接観測範囲外になる。
+実際の最接近位置を車体座標で図示すると、上表のコーンや箱は側方にあり、
+前方scanに30cm未満の点が無いことでは側面の離隔を確認できなかった。
+検査した35,312 scanの観測点と車体投影外形の最短距離は約0.353mだったが、
+これを車体全周の離隔として用いない。
+
+LiDAR→V2Xの記録は`object_model=surface`で、`surface_xy_m`と`observed_size_xy_m`。
+native物体の固有ID、実中心、隠れた面を含む外形の正解ではない。native物体の全身poseや
+全接触を記録したtopicは無く、native `/v2x/vehicle_positions`も0件。
+7,735候補窓では箱の初期位置が車体付近6m内にあり、実位置の確認が必要と記録した。
+6mは監査対象を検索する半径で、教師の回避開始距離や安全閾値の変更ではない。
+
+現時点では、15,518候補は保全したまま厳格採用0を維持する。
+291窓の注意フラグがない候補も、物理離隔を確認できた成功教師とは認定していない。
+採用を進めるには、箱の実位置・姿勢を追跡し、側方通過中も自己位置の不確かさを
+含めて0.30mを満たす区間を確認する必要がある。未観測範囲を離隔良好として補完しない。
+AWSIM本体、教師制御、自己位置推定、学習splitはこの診断では変更していない。
+
+最新成果物はWSL
+`/home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/native_prefix_clearance_v2/`。
+全体`summary.json`、`verification.json`、各runの`input_sha256.json`、
+`candidate_checks.jsonl`に、元run/epoch/source_label_indexとsimulation時刻を保持した。
+図は`side_visibility.png`。`native_prefix_clearance_v1/`は形状説明の訂正前の診断記録。
+
+Windows側の診断元・結果コピーは`tmp/lidar_alignment_20260918/`。
+実行済み診断scriptは
+`check_native_prefix_clearance.py`（SHA256 `a1c17752ea27e26cdaaf7544f9848848bcfaedcb2461074972295acd9edda483`）、
+照合scriptは`verify_native_prefix_clearance.py`。
+全15,518窓の元ID、epoch、source index、時間境界、原本mask/hash保持を照合してPASS。
+距離計算の既知形状・非有限値・shape拒否、窓端包含のsmoke assertionもWSLでPASS。
+製品コードの変更はなく、全体pytestは再実行していない。前節の3,166 passedは
+同じ製品実装8159415での既存結果で、今回の離隔を保証するテストではない。
+
+```bash
+cd /home/thistle/e2e_autonomous/e2e_lite_transfuser_lidar_v2x_margin
+# 原本は保持する。再実行時はscriptの出力directoryを新しい名前に変更する。
+bash tools/with_wsl_training_lock.sh .venv/bin/python \
+  /home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/check_native_prefix_clearance_v2.py
+bash tools/with_wsl_training_lock.sh .venv/bin/python \
+  /home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/verify_native_prefix_clearance.py
+```
+
 ### 有限の追加収録キュー
 
 Windows側の`tmp/native_collection_resume_20260918/continue_10kmh_batch.py`は、
