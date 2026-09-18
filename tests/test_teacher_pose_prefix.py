@@ -78,6 +78,20 @@ def test_unordered_clock_or_duplicate_capture_is_rejected():
         with pytest.raises(ValueError): evaluate(samples)
 
 
+def test_repeated_ekf_update_matches_last_receipt_without_hiding_large_conflict():
+    from tools.filter_teacher_pose_prefix import append_heading_capture
+    samples = [(100,1.)]
+    change = math.radians(.0170207)  # Same-stamp update measured in PC10 a09.
+    assert append_heading_capture(samples,100,1.+change,math.radians(5)) == pytest.approx(change)
+    assert samples == [(100,1.+change)]
+    append_heading_capture(samples,100,1.5,math.radians(5))
+    assert math.isnan(samples[0][1])
+    append_heading_capture(samples,100,1.,math.radians(5))
+    assert math.isnan(samples[0][1])
+    with pytest.raises(ValueError,match='reversal'):
+        append_heading_capture(samples,99,1.,math.radians(5))
+
+
 def test_full_horizon_and_right_interpolation_endpoint_must_be_strictly_before_cutoff():
     times = np.array([0,6_949_999_999,6_950_000_000,6_990_000_000,7_000_000_000,10_000_000_000],np.int64)
     keep = prefix_anchor_mask(times,valid_from_ns=1,valid_until_ns=10_000_000_000)

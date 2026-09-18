@@ -59,12 +59,33 @@ def verified_bag(collected: Path, run_id: str) -> tuple[Path, dict[str, str]]:
     return bag, checked
 
 
-def paired_heading_samples(bag: Path, max_gap_ns: int) -> tuple[list[tuple[int, float]], dict[str, Any]]:
+def append_heading_capture(rows: list[tuple[int, float]], stamp: int, angle: float,
+                           conflict_limit_rad: float) -> float | None:
+    """Last received update wins at equal capture time, as in the teacher audit.
+
+    Return duplicate disagreement [rad]. A large or invalid same-stamp conflict
+    remains NaN, making the prefix stop at missing evidence rather than hiding it.
+    """
+    previous = rows[-1] if rows else None
+    if previous and stamp < previous[0]:
+        raise ValueError('capture clock reversal needs a separate epoch')
+    if previous and stamp == previous[0]:
+        delta = abs(float(wrap_rad(angle-previous[1])))
+        rows[-1] = (stamp,angle if math.isfinite(delta) and delta < conflict_limit_rad else math.nan)
+        return delta
+    rows.append((stamp,angle))
+    return None
+
+
+def paired_heading_samples(bag: Path, max_gap_ns: int,
+                           conflict_limit_rad: float = math.radians(5.)) -> tuple[list[tuple[int, float]], dict[str, Any]]:
     """Compare timestamped EKF and corrected IMU yaw; no wall/map fitting."""
     topics = {'/sensing/imu/imu_data': 'imu', '/localization/kinematic_state': 'odom'}
     streams: dict[str, list[tuple[int, float]]] = {'imu': [], 'odom': []}
     frames: dict[str, set[str]] = {'imu': set(), 'odom': set()}
     duplicates = {'imu': 0, 'odom': 0}
+    duplicate_delta = {'imu': 0., 'odom': 0.}
+    invalid_duplicates = {'imu': 0, 'odom': 0}
     with AnyReader([bag]) as reader:
         for connection, _, raw in reader.messages(connections=[c for c in reader.connections if c.topic in topics]):
             m = reader.deserialize(raw, connection.msgtype)
@@ -79,15 +100,13 @@ def paired_heading_samples(bag: Path, max_gap_ns: int) -> tuple[list[tuple[int, 
                 valid = False
             angle = math.atan2(2*(q.w*q.z+q.x*q.y), 1-2*(q.y*q.y+q.z*q.z)) if valid else math.nan
             stamp = int(m.header.stamp.sec)*1_000_000_000+int(m.header.stamp.nanosec)
-            previous = streams[role][-1] if streams[role] else None
-            if previous and stamp < previous[0]:
-                raise ValueError('capture clock reversal needs a separate epoch')
-            if previous and stamp == previous[0]:
+            disagreement = append_heading_capture(streams[role],stamp,angle,conflict_limit_rad)
+            if disagreement is not None:
                 duplicates[role] += 1
-                if not math.isfinite(angle) or not math.isfinite(previous[1]) or abs(float(wrap_rad(angle-previous[1]))) > 1e-8:
-                    raise ValueError('conflicting heading at duplicate capture stamp')
-                continue
-            streams[role].append((stamp,angle))
+                if math.isfinite(disagreement):
+                    duplicate_delta[role] = max(duplicate_delta[role],disagreement)
+                if not math.isfinite(streams[role][-1][1]):
+                    invalid_duplicates[role] += 1
     if frames != {'imu': {'base_link'}, 'odom': {'map'}} or any(len(v) < 2 for v in streams.values()):
         raise ValueError('required map/base_link EKF and corrected IMU heading streams unavailable')
     ot = [t for t,_ in streams['odom']]
@@ -103,7 +122,10 @@ def paired_heading_samples(bag: Path, max_gap_ns: int) -> tuple[list[tuple[int, 
             estimate = oa[i-1]+float(wrap_rad(oa[i]-oa[i-1]))*(stamp-ot[i-1])/(ot[i]-ot[i-1])
         pairs.append((stamp,float(wrap_rad(estimate-angle))))
     return pairs, dict(topics=topics,counts={k:len(v) for k,v in streams.items()},
-                      duplicate_identical_captures=duplicates,frames={k:sorted(v) for k,v in frames.items()})
+                      duplicate_captures=duplicates,duplicate_max_delta_rad=duplicate_delta,
+                      invalid_duplicate_captures=invalid_duplicates,
+                      duplicate_policy='last receipt at same capture; large conflicts remain invalid',
+                      frames={k:sorted(v) for k,v in frames.items()})
 
 
 def filter_audit(collected: Path, audit: Path, output: Path,
@@ -123,7 +145,7 @@ def filter_audit(collected: Path, audit: Path, output: Path,
         raise ValueError('inconsistent epoch bounds')
     bounds = next(iter(epoch_bounds))
     bag, source_bags = verified_bag(collected,run_id)
-    pairs, sensor_report = paired_heading_samples(bag,config.max_gap_ns)
+    pairs, sensor_report = paired_heading_samples(bag,config.max_gap_ns,config.max_error_rad)
     quality = heading_prefix(pairs,drive_start_ns=report['driving_start_ns'],observed_end_ns=bounds[1],config=config)
     trace = quality.pop('trace')
     with np.load(audit/'observed_teachers.npz',allow_pickle=False) as bundle:
