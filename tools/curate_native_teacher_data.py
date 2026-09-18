@@ -178,6 +178,10 @@ def curate(root: Path, output: Path, config: NativeCurationConfig = NativeCurati
             if sha(prefix / file) != digest:
                 raise ValueError('prefix source checksum mismatch')
         rows = read_rows(prefix / 'prefix_candidates.jsonl')
+        if (quality['future_horizon_ns'] != config.horizon_ns
+                or quality['interpolation_endpoint_guard_ns'] > config.endpoint_guard_ns
+                or any(r['epoch'] != quality['epoch'] for r in rows)):
+            raise ValueError('prefix time horizon, support or epoch contract mismatch')
         clearance = root / 'native_prefix_clearance_v2' / run
         prior = json.loads((clearance / 'summary.json').read_text())
         identity = dict(pose_prefix_sha256=sha(prefix / 'pose_prefix.json'), clearance_summary_sha256=sha(clearance / 'summary.json'))

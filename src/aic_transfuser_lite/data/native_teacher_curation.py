@@ -41,6 +41,10 @@ class NativeCurationConfig:
                     raise ValueError(f'{name} must be finite and positive')
         if self.minimum_map_inlier_fraction > 1 or self.minimum_scan_span_rad > 2 * math.pi:
             raise ValueError('invalid fraction or radians')
+        if self.history_ns != 1_000_000_000 or self.horizon_ns != 3_000_000_000 or self.endpoint_guard_ns < 50_000_000:
+            raise ValueError('fixed 1 s history / 30 x 0.1 s future with at least 50 ms support required')
+        if self.minimum_clearance_m < .30:
+            raise ValueError('existing 0.30 m clearance requirement must be preserved')
 
 
 def convex_point_distance(points: np.ndarray, polygon: np.ndarray) -> np.ndarray:

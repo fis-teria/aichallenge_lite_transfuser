@@ -130,7 +130,9 @@ def test_thinning_keeps_source_indices_and_retains_eligibility_of_skipped_frames
 @pytest.mark.parametrize('changes',[
     {'max_evidence_gap_ns':0},{'minimum_future_speed_mps':float('nan')},
     {'minimum_anchor_spacing_ns':.2},{'minimum_map_inlier_fraction':1.1},
-    {'minimum_scan_span_rad':7.},{'minimum_wall_points':True}])
+    {'minimum_scan_span_rad':7.},{'minimum_wall_points':True},
+    {'horizon_ns':1_000_000_000},{'history_ns':100_000_000},{'endpoint_guard_ns':1},
+    {'minimum_clearance_m':.1}])
 def test_curation_units_and_configuration_are_explicit(changes):
     with pytest.raises(ValueError):replace(NativeCurationConfig(),**changes)
 
