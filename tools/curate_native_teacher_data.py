@@ -24,7 +24,7 @@ import yaml
 
 from aic_transfuser_lite.data.native_teacher_curation import (
     NativeCurationConfig, classify_anchor, convex_point_distance, spaced_indices,
-    teacher_command_is_usable, window_indices,
+    teacher_command_evidence, window_indices,
 )
 from aic_transfuser_lite.runtime.lidar_map_localization import transform
 
@@ -103,8 +103,7 @@ def extract_evidence(bag: Path, low: int, high: int, placements: list[dict[str, 
                 p = m.pose.pose
                 poses[t] = [p.position.x, p.position.y, yaw_of(p.orientation)]
             elif conn.topic.endswith('/trajectory_command'):
-                commands[t] = [int(teacher_command_is_usable(m.mode, m.emergency_stop, m.reason)),
-                               int(m.mode == 'FREE_RUN')]
+                commands.setdefault(t, []).append((m.mode, m.emergency_stop, m.reason))
             else:
                 if m.header.frame_id != 'lidar' or len(m.ranges) != 750:
                     raise ValueError('unexpected native LiDAR contract')
@@ -138,7 +137,7 @@ def extract_evidence(bag: Path, low: int, high: int, placements: list[dict[str, 
             metrics = [1., float(np.median(distances)), float(np.mean(distances <= config.map_inlier_distance_m)),
                        float(len(valid)), float(np.ptp(angles))]
         scan_t.append(t); registration.append(metrics)
-    command_t, command = unique_series(commands)
+    command_t, command = unique_series({t: teacher_command_evidence(group) for t, group in commands.items()})
     perception_t, ready = unique_series(perception)
     if not len(command_t) or not len(perception_t) or not len(scan_t):
         raise ValueError('missing curation evidence stream')
@@ -268,6 +267,7 @@ def curate(root: Path, output: Path, config: NativeCurationConfig = NativeCurati
         allowed_targets=['xy_m','velocity_mps'],stop_mode_supervision=False,strict_avoidance_certification=False,
         teacher_command_quality=dict(require_nonempty_reason=True,
             reject_reason_tokens=['infeasible_braking_fallback'],
+            duplicate_capture_stamps='all_publications_must_pass',
             inspect_full_history_and_future=True),
         limitations=['Observed-motion quality selection, not a physical contact oracle or certified avoidance-success set.',
             'Additional 0.30 m projected margin is an audit screen, not a statistical pose uncertainty bound.',

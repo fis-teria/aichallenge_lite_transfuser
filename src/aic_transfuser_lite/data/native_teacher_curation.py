@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import math
-from typing import Any
+from typing import Any, Sequence
 
 import numpy as np
 
@@ -23,6 +23,14 @@ def teacher_command_is_usable(mode: str, emergency_stop: bool, reason: str) -> b
         raise ValueError('TEACHER_COMMAND_TYPES')
     return (mode in {'FREE_RUN', 'AVOID', 'OVERTAKE'} and not emergency_stop
             and bool(reason.strip()) and 'infeasible_braking_fallback' not in reason.split(':'))
+
+
+def teacher_command_evidence(commands: Sequence[tuple[str, bool, str]]) -> tuple[bool, bool]:
+    """All publications at one captured stamp must pass; later ones cannot erase failures."""
+    if not commands:
+        raise ValueError('EMPTY_TEACHER_COMMAND_GROUP')
+    usable = [teacher_command_is_usable(*command) for command in commands]
+    return all(usable), all(command[0] == 'FREE_RUN' for command in commands)
 
 
 @dataclass(frozen=True)

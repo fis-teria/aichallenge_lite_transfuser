@@ -6,7 +6,7 @@ import pytest
 
 from aic_transfuser_lite.data.native_teacher_curation import (
     NativeCurationConfig, classify_anchor, convex_point_distance, spaced_indices,
-    teacher_command_is_usable, window_indices,
+    teacher_command_evidence, teacher_command_is_usable, window_indices,
 )
 
 
@@ -38,6 +38,18 @@ def test_command_validation_keeps_valid_motion_and_does_not_infer_stop_intent():
         teacher_command_is_usable('AVOID',False,None)
     with pytest.raises(ValueError,match='TEACHER_COMMAND_TYPES'):
         teacher_command_is_usable('AVOID',0,'mppi_brain:avoid_left')
+
+
+def test_duplicate_capture_stamp_keeps_failure_and_nonfree_mode_in_either_publication_order():
+    bad=('FREE_RUN',False,'mppi_brain:ordinary_hold:mppi_brain:infeasible_braking_fallback')
+    good=('AVOID',False,'mppi_brain:hold_last_valid')
+    assert teacher_command_evidence([bad,good]) == (False,False)
+    assert teacher_command_evidence([good,bad]) == (False,False)
+    free=('FREE_RUN',False,'mppi_brain:longitudinal_follow')
+    assert teacher_command_evidence([free,good]) == (True,False)
+    assert teacher_command_evidence([free,free]) == (True,True)
+    with pytest.raises(ValueError,match='EMPTY_TEACHER_COMMAND_GROUP'):
+        teacher_command_evidence([])
 
 
 def decide(**changes):

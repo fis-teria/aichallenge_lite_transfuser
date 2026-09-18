@@ -407,23 +407,27 @@ bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
 # 上記照合結果は上書きしない。再実行時は照合出力名を変更する。
 ```
 
-### 有限の追加収録キュー
+### 保留窓再検査と選別の修正
 
 選別の追補: 保存済みcommandを再検査し、上記v1採用392窓のうち53窓で、
 履歴・未来の検査区間に`infeasible_braking_fallback`が含まれることを確認した。
 V45はこの不成立制動でも`emergency_stop=false`を保持するため、modeと同フラグだけの
 従来チェックでは検出できなかった。reasonの非空・不成立tokenの拒否を追加した。
-`ordinary_hold`等のprefixも検査対象とし、再選別は原v1を保存したまま次で実行する。
+`ordinary_hold`等のprefixも検査対象とする。同じcapture stampの複数指令は全件を検査し、
+後の正常指令で先の不成立を消さない。実記録にはこの衝突が6stampあった。
+中間版v2は339窓。同一stamp集約も含めた再選別は原v1/v2を保存し次で実行する。
 
 ```bash
 bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
   tools/curate_native_teacher_data.py \
   --root /home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918 \
-  --output /home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/curated_xy_speed_v2
+  --output /home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/curated_xy_speed_v3
 ```
 
 保留窓の追加調査記録は同run rootの`unresolved_review_v1/`。
 詳しいローカル作業報告は`docs/native_teacher_hold_review_20260918.md`。
+
+### 有限の追加収録キュー
 
 Windows側の`tmp/native_collection_resume_20260918/continue_10kmh_batch.py`は、
 実行中のa09が閉じるのを待ち、a10・a11を最大2回だけ追加する。
