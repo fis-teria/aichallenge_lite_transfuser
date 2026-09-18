@@ -145,6 +145,56 @@ DISPLAY=:1 XAUTHORITY=/run/user/1000/gdm/Xauthority ROS_DOMAIN_ID=1 \
   --ros-args -p use_sim_time:=true
 ```
 
+## a10・a11の完了と点群整合の診断
+
+10km/hの有限キューはa10・a11まで完了し、現在の収録は終了している。
+両runとも12/12地点の通過と通過後25mを確認した。
+a10は413ファイル / 718,259,223 bytes、未来30点が揃う窓1465。
+a11は414ファイル / 681,161,334 bytes、同1427。
+全SHA256を照合してWSLへ保全し、PC10の検証済みrawコピーは整理済み。
+両runの公式crash / wall / overは0、記録姿勢で計算した物理壁重なり0、厳格採用0。
+物体実姿勢などの採否検証を通過したことにはしない。
+
+ユーザーからの点群ずれの指摘を受け、a09とa10をWSLで再解析した。
+a09の長時間停止中にyawの変化がIMUとEKFで約35°乖離し、
+同じ点群をIMUの相対yawで再投影すると壁距離中央値が1.225mから0.052mへ改善した。
+したがって、記録EKF姿勢に依存する車体離隔計算も真値保証として扱わない。
+診断・修正対象・未確認範囲は[lidar_alignment_diagnosis_20260918.md](lidar_alignment_diagnosis_20260918.md)に記録した。
+AWSIM本体・稼働ROS設定・既存教師maskの変更や追加学習は行っていない。
+
+## 自己位置のずれが起きる前までの教師を残す
+
+ユーザー指定により、同じrunの正常な前半を残し、最初の自己位置品質低下以降を除外する。
+`audit_native_corner_collection.py`は元の監査を保全したうえで、`pose_prefix/`へ
+この追加条件を適用した教師と候補indexを保存する。既存監査への適用は次で行う。
+
+```bash
+bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
+  tools/filter_teacher_pose_prefix.py \
+  --collected /absolute/verified/collected/run-id \
+  --audit /absolute/original/audit/run-id \
+  --output /absolute/new/pose_prefix/run-id
+```
+
+既定の判定は、EKF yawとIMU yawの相対差を開始後1〜3秒の基準差に対して比較し、
+0.5秒の中央値フィルタ後、5°以上の差が1秒継続した最初の時刻を検出する。
+フィルタの0.5秒と追加0.5秒をさかのぼって除外境界とする。
+欠測・未検証の初期基準・末尾の未解消のずれも正常扱いしない。
+閾値は`--max-heading-error-deg`で指定でき、使用した値は成果物へ記録する。
+固定の取り付け座標差を除いた変化量の検査であり、初期の絶対姿勢や並進精度を保証しない。
+
+教師は未来3秒・30点で、補間endpointの最大50msも境界より前にあることを要求する。
+したがってcamera観測時刻は除外境界より3.05秒以上前でなければ候補にしない。
+境界と一致するサンプルも除外し、途中で姿勢が戻っても同run内では採用を再開しない。
+除外したXY・速度教師はNaN、maskはfalseとし、停止教師へ置き換えない。
+
+`pose_prefix.json`は採否境界、入力・出力SHA256、件数、元run/epochを記録する。
+`observed_teachers.npz`と`anchors.jsonl`は全anchorの追加mask、
+`prefix_candidates.npz`と同名JSONLは正常な前半かつ入力・未来が揃う候補の抜粋。
+候補には元の`source_label_index`を残す。元の接触・離隔の棄却を解除せず、
+train/validationは元run/scenario単位を維持し、自動で学習へ追加しない。
+この変更は教師採否だけに適用し、AWSIM・MPPI・E2E実行時の自己位置推定は変更しない。
+
 ### 有限の追加収録キュー
 
 Windows側の`tmp/native_collection_resume_20260918/continue_10kmh_batch.py`は、

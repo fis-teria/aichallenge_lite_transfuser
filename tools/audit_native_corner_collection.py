@@ -111,6 +111,13 @@ def audit(collected: Path, output: Path) -> dict[str, Any]:
         limitations=['Station crossing and centre distance are not footprint clearance.',
                      'Official contact counters do not guarantee detection of every physical contact.',
                      'All strict training masks remain subject to the existing 0.30 m clearance requirement.'])
+    # Preserve the original audit and materialize the pre-localization-drift
+    # prefix separately. No whole-run clearance failure is silently overridden.
+    from tools.filter_teacher_pose_prefix import filter_audit
+    prefix = filter_audit(collected, output, output/'pose_prefix')
+    result['teacher_pose_prefix'] = dict(path='pose_prefix',quality=prefix['quality'],
+        candidate_anchors=prefix['prefix_candidate_anchors'],
+        strict_forward_eligible_anchors=prefix['strict_forward_eligible_anchors'])
     (output/'corner_coverage.json').write_text(json.dumps(result, indent=2)+'\n')
     return result
 
