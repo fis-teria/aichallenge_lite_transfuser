@@ -110,6 +110,36 @@ def test_missing_or_bad_window_evidence_cannot_be_treated_as_clear(field,value):
     assert not decide(evidence={})['selected']
 
 
+def test_explicit_alignment_tolerance_accepts_recorded_mismatch_without_changing_teacher():
+    e=good_evidence();e.update(map_median_max_m=.4813,map_inlier_fraction_min=0.)
+    xy=np.column_stack([np.arange(1,31)*.1,np.zeros(30)])
+    original=xy.copy()
+    assert 'SCAN_MAP_ALIGNMENT_OR_SUPPORT' in decide(evidence=e)['reasons']
+    config=NativeCurationConfig(require_scan_map_alignment=False)
+    assert decide(evidence=e,xy_m=xy,config=config)['selected']
+    np.testing.assert_array_equal(xy,original)
+    assert e['map_median_max_m']==.4813 and e['map_inlier_fraction_min']==0.
+
+
+@pytest.mark.parametrize('field,value',[
+    ('coverage_ok',False),('teacher_ok',False),('perception_ok',False),('pose_geometry_ok',False),
+    ('wall_points_min',79),('scan_span_min_rad',1.),('map_median_max_m',float('nan')),
+    ('map_inlier_fraction_min',1.1),('cone_gap_m',.59),('box_distance_m',5.)])
+def test_alignment_tolerance_keeps_other_quality_gates(field,value):
+    e=good_evidence();e[field]=value
+    assert not decide(evidence=e,config=NativeCurationConfig(require_scan_map_alignment=False))['selected']
+
+
+def test_alignment_tolerance_keeps_contact_reverse_and_stop_exclusions():
+    cfg=NativeCurationConfig(require_scan_map_alignment=False)
+    for changes in [dict(findings=['LIDAR_OBSERVED_POINT_GAP_BELOW_030']),
+                    dict(velocity_mps=-np.ones(30)),dict(velocity_mps=np.zeros(30)),
+                    dict(xy_mask=np.zeros(30,bool))]:
+        assert not decide(config=cfg,**changes)['selected']
+    with pytest.raises(ValueError,match='require_scan_map_alignment'):
+        NativeCurationConfig(require_scan_map_alignment=0)
+
+
 def test_nonfinite_incomplete_reverse_and_wrong_unit_shapes_are_rejected():
     assert decide(velocity_mask=np.zeros(30,bool))['disposition']=='exclude'
     assert decide(velocity_mps=-np.ones(30))['disposition']=='exclude'
@@ -188,3 +218,4 @@ def test_documented_direct_cli_entrypoint_imports_with_only_src_on_pythonpath():
                           cwd=root,env=env,text=True,capture_output=True,timeout=30)
     assert result.returncode==0,result.stderr
     assert '--root' in result.stdout and '--output' in result.stdout
+    assert '--allow-scan-map-misalignment' in result.stdout

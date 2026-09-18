@@ -50,8 +50,11 @@ class NativeCurationConfig:
     minimum_map_inlier_fraction: float = .70
     minimum_wall_points: int = 80
     minimum_scan_span_rad: float = math.pi / 3
+    require_scan_map_alignment: bool = True
 
     def __post_init__(self) -> None:
+        if type(self.require_scan_map_alignment) is not bool:
+            raise ValueError('require_scan_map_alignment must be bool')
         for name in ('history_ns', 'horizon_ns', 'endpoint_guard_ns', 'max_evidence_gap_ns',
                      'minimum_anchor_spacing_ns', 'minimum_wall_points'):
             if type(getattr(self, name)) is not int or getattr(self, name) <= 0:
@@ -157,8 +160,9 @@ def classify_anchor(*, xy_m: np.ndarray, xy_mask: np.ndarray, velocity_mps: np.n
                 reasons.append('DYNAMIC_BOX_PROXIMITY_UNVERIFIED')
             if evidence['cone_gap_m'] < config.minimum_clearance_m + config.additional_projection_margin_m:
                 reasons.append('STATIC_CONE_PROJECTION_MARGIN')
-            if (evidence['map_median_max_m'] > config.maximum_map_median_m
-                    or evidence['map_inlier_fraction_min'] < config.minimum_map_inlier_fraction
+            alignment_bad = (evidence['map_median_max_m'] > config.maximum_map_median_m
+                             or evidence['map_inlier_fraction_min'] < config.minimum_map_inlier_fraction)
+            if ((config.require_scan_map_alignment and alignment_bad)
                     or evidence['wall_points_min'] < config.minimum_wall_points
                     or evidence['scan_span_min_rad'] < config.minimum_scan_span_rad):
                 reasons.append('SCAN_MAP_ALIGNMENT_OR_SUPPORT')

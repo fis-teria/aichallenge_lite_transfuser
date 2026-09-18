@@ -296,6 +296,7 @@ def curate(root: Path, output: Path, config: NativeCurationConfig = NativeCurati
             reject_reason_tokens=['infeasible_braking_fallback'],
             duplicate_capture_stamps='all_publications_must_pass',
             inspect_full_history_and_future=True),
+        scan_map_alignment_policy=('required' if config.require_scan_map_alignment else 'diagnostic_only'),
         limitations=['Observed-motion quality selection, not a physical contact oracle or certified avoidance-success set.',
             'Additional 0.30 m projected margin is an audit screen, not a statistical pose uncertainty bound.',
             'Initial box proximity is only an exclusion screen; no box position is invented.',
@@ -315,8 +316,11 @@ def main() -> None:
     parser.add_argument('--run-pattern',default='lidar-v45-pc10-corners-native-*')
     parser.add_argument('--prefix-directory',default='pose_prefix_v2')
     parser.add_argument('--clearance-directory',default='native_prefix_clearance_v2')
+    parser.add_argument('--allow-scan-map-misalignment',action='store_true',
+                        help='Record map residuals without rejecting on them; retain scan support and all other gates.')
     args=parser.parse_args()
-    curate(args.root,args.output,run_pattern=args.run_pattern,prefix_directory=args.prefix_directory,
+    config=NativeCurationConfig(require_scan_map_alignment=not args.allow_scan_map_misalignment)
+    curate(args.root,args.output,config,run_pattern=args.run_pattern,prefix_directory=args.prefix_directory,
            clearance_directory=args.clearance_directory)
 
 
