@@ -624,8 +624,9 @@ def main() -> None:
                 state["fault"] = "COMPETING_CONTROLLER"
         temporary = args.output / "control_heartbeat.pending"
         if slam_slowdown_policy != 'off':
-        state['slam_slowdown'] = details.get('slam_slowdown')
-        state['slam_mppi'] = details.get('slam_mppi')
+            state['slam_slowdown'] = details.get('slam_slowdown')
+        if slam_mppi_policy != 'off':
+            state['slam_mppi'] = details.get('slam_mppi')
         if recovery_config is not None:
             state['recovery_state'] = asdict(recovery_state)
             state['control_owner'] = control_owner

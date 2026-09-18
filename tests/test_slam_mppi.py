@@ -130,6 +130,13 @@ def test_legacy_replay_does_not_certify_modified_mppi_commands():
     assert replay['status'] == 'UNSUPPORTED_SLAM_MPPI' and replay['matched_commands'] == 0
 
 
+def test_ros_entrypoints_compile_without_ros_installed():
+    import ast
+    for name in ('slam_obstacle_node.py', 'time_trial_controller_node.py'):
+        path = Path('ros2_ws/src/aic_e2e_runtime/aic_e2e_runtime')/name
+        ast.parse(path.read_text(), filename=str(path))
+
+
 def test_release_needs_multiple_fresh_observations_and_clock_reset_rejected():
     ref, grid, origin = scene()
     g = SimpleNamespace(values=grid, origin=origin/.2, resolution_m=.2)
