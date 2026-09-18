@@ -1,5 +1,7 @@
 # MPPI V45 近接開始の教師調整
 
+追記: [目標10km/hでの比較・教師収集・選別](mppi_v45_teacher10_collection_selection_20260918.md)では近接ON/OFFとも通過した。以下は目標5km/hでの記録を保持している。
+
 対象は `front-cone-close6-a02` の停止。ログでは5候補が `execution_sweep` で衝突棄却され、速度0のretimeが採用された。物理衝突は記録されていない。近接開始時に前進回避可能かは別途実走で判定する。
 
 `--early-entry-search` は収集専用の比較スイッチ（既定off）。AVOID、前進0～10km/h、非MERGE・非prepared front mergeの場合だけ、固定されていたBezierの横移動タイミングを near=[0,0.45]、far=[0.55,1] で探索する。nominalは(0.45,1)。移動距離下限4m、操舵遅延、壁・物体の衝突判定、速度計画は既存のまま。一般の追越し・復帰・高速走行には適用しない。

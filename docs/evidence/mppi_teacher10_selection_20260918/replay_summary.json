@@ -1,0 +1,500 @@
+{
+  "runs": [
+    {
+      "run_id": "lidar-v45-pc10-front-close10-control-a01",
+      "selected": 2,
+      "uses": {
+        "static_cone_xy_speed": 2
+      },
+      "coverage": {
+        "run_id": "lidar-v45-pc10-front-close10-control-a01",
+        "configured_objects": 1,
+        "spawned_objects": 1,
+        "spawn_count_matches": true,
+        "covered_corners": 1,
+        "corners_with_25m_post_observation": 1,
+        "corners": [
+          {
+            "corner": "straight_b_center",
+            "object_id": "cone_1",
+            "object_type": "cone",
+            "configured_station_m": 82.6578802151303,
+            "passed": true,
+            "post_distance_observed": true,
+            "crossing_sim_s": 11.627135458730582,
+            "closest_gnss_to_configured_center_m": 2.188686063183101,
+            "first_encounter_progress_m": 82.6578802151303,
+            "nearby_camera_anchors_20s": 191,
+            "nearby_avoid_mode_anchors_20s": 131
+          }
+        ],
+        "official_penalties": {
+          "crash": 0,
+          "wall": 0,
+          "over": 0
+        },
+        "finish_reached": true,
+        "camera_anchors": 224,
+        "full_future_anchors": 168,
+        "strict_forward_eligible_anchors": 0,
+        "clearance_quality": "UNKNOWN_PREFAB_MESH",
+        "training_split_assigned": false,
+        "limitations": [
+          "Station crossing and centre distance are not footprint clearance.",
+          "Official contact counters do not guarantee detection of every physical contact.",
+          "All strict training masks remain subject to the existing 0.30 m clearance requirement."
+        ],
+        "teacher_pose_prefix": {
+          "path": "pose_prefix",
+          "quality": {
+            "policy": "teacher_pose_prefix_v1",
+            "config": {
+              "max_error_rad": 0.08726646259971647,
+              "baseline_spread_rad": 0.05235987755982989,
+              "warmup_ns": 1000000000,
+              "baseline_ns": 2000000000,
+              "smoothing_ns": 500000000,
+              "persistence_ns": 1000000000,
+              "backoff_ns": 500000000,
+              "max_gap_ns": 150000000
+            },
+            "valid_from_ns": 6989999866,
+            "valid_until_ns": 23589999472,
+            "invalid_from_ns": null,
+            "reason": "NO_DRIFT_DETECTED",
+            "baseline_offset_rad": -3.106102573076392,
+            "baseline_spread_rad": 0.014054928731468493,
+            "first_violation_ns": null,
+            "confirmed_at_ns": null
+          },
+          "candidate_anchors": 104,
+          "strict_forward_eligible_anchors": 0
+        }
+      },
+      "split": "train",
+      "split_group": "straight_b_center",
+      "replay_verified": 2,
+      "front_0to6m_abs_y_le1m": 0,
+      "front_0to6m": 0,
+      "front_0to12m": 0,
+      "side_or_behind": 2,
+      "labels": "observed XY and velocity only; stop and mode invalid",
+      "independent_drives": 1,
+      "shard_sha256": "96fe94f01add97b06cfcc5fc21e3de94b481450f053a696f4a9cd074924b8771"
+    },
+    {
+      "run_id": "lidar-v45-pc10-front-collect10-a6-a01",
+      "selected": 14,
+      "uses": {
+        "static_cone_xy_speed": 14
+      },
+      "coverage": {
+        "run_id": "lidar-v45-pc10-front-collect10-a6-a01",
+        "configured_objects": 1,
+        "spawned_objects": 1,
+        "spawn_count_matches": true,
+        "covered_corners": 1,
+        "corners_with_25m_post_observation": 0,
+        "corners": [
+          {
+            "corner": "failed_e2e_cone_location",
+            "object_id": "cone_1",
+            "object_type": "cone",
+            "configured_station_m": 43.99997426814184,
+            "passed": true,
+            "post_distance_observed": false,
+            "crossing_sim_s": 11.36913681890245,
+            "closest_gnss_to_configured_center_m": 2.924718729672729,
+            "first_encounter_progress_m": 43.99997426814184,
+            "nearby_camera_anchors_20s": 190,
+            "nearby_avoid_mode_anchors_20s": 18
+          }
+        ],
+        "official_penalties": {
+          "crash": 0,
+          "wall": 0,
+          "over": 0
+        },
+        "finish_reached": true,
+        "camera_anchors": 211,
+        "full_future_anchors": 144,
+        "strict_forward_eligible_anchors": 0,
+        "clearance_quality": "UNKNOWN_PREFAB_MESH",
+        "training_split_assigned": false,
+        "limitations": [
+          "Station crossing and centre distance are not footprint clearance.",
+          "Official contact counters do not guarantee detection of every physical contact.",
+          "All strict training masks remain subject to the existing 0.30 m clearance requirement."
+        ],
+        "teacher_pose_prefix": {
+          "path": "pose_prefix",
+          "quality": {
+            "policy": "teacher_pose_prefix_v1",
+            "config": {
+              "max_error_rad": 0.08726646259971647,
+              "baseline_spread_rad": 0.05235987755982989,
+              "warmup_ns": 1000000000,
+              "baseline_ns": 2000000000,
+              "smoothing_ns": 500000000,
+              "persistence_ns": 1000000000,
+              "backoff_ns": 500000000,
+              "max_gap_ns": 150000000
+            },
+            "valid_from_ns": 8044999842,
+            "valid_until_ns": 22204999503,
+            "invalid_from_ns": null,
+            "reason": "NO_DRIFT_DETECTED",
+            "baseline_offset_rad": -3.133324761571031,
+            "baseline_spread_rad": 0.014873209233462683,
+            "first_violation_ns": null,
+            "confirmed_at_ns": null
+          },
+          "candidate_anchors": 82,
+          "strict_forward_eligible_anchors": 0
+        }
+      },
+      "split": "train",
+      "split_group": "failed_e2e_cone_location",
+      "replay_verified": 14,
+      "front_0to6m_abs_y_le1m": 0,
+      "front_0to6m": 14,
+      "front_0to12m": 14,
+      "side_or_behind": 0,
+      "labels": "observed XY and velocity only; stop and mode invalid",
+      "independent_drives": 1,
+      "shard_sha256": "233511a683cf74ebccb5236025b375347d4790d5cd9ac86b768bd46613d93510"
+    },
+    {
+      "run_id": "lidar-v45-pc10-front-collect10-a8-a01",
+      "selected": 17,
+      "uses": {
+        "static_cone_xy_speed": 17
+      },
+      "coverage": {
+        "run_id": "lidar-v45-pc10-front-collect10-a8-a01",
+        "configured_objects": 1,
+        "spawned_objects": 1,
+        "spawn_count_matches": true,
+        "covered_corners": 1,
+        "corners_with_25m_post_observation": 0,
+        "corners": [
+          {
+            "corner": "failed_e2e_cone_location",
+            "object_id": "cone_1",
+            "object_type": "cone",
+            "configured_station_m": 43.99997426814184,
+            "passed": true,
+            "post_distance_observed": false,
+            "crossing_sim_s": 11.683986872255932,
+            "closest_gnss_to_configured_center_m": 2.9303645056435337,
+            "first_encounter_progress_m": 43.99997426814184,
+            "nearby_camera_anchors_20s": 190,
+            "nearby_avoid_mode_anchors_20s": 5
+          }
+        ],
+        "official_penalties": {
+          "crash": 0,
+          "wall": 0,
+          "over": 0
+        },
+        "finish_reached": true,
+        "camera_anchors": 214,
+        "full_future_anchors": 147,
+        "strict_forward_eligible_anchors": 0,
+        "clearance_quality": "UNKNOWN_PREFAB_MESH",
+        "training_split_assigned": false,
+        "limitations": [
+          "Station crossing and centre distance are not footprint clearance.",
+          "Official contact counters do not guarantee detection of every physical contact.",
+          "All strict training masks remain subject to the existing 0.30 m clearance requirement."
+        ],
+        "teacher_pose_prefix": {
+          "path": "pose_prefix",
+          "quality": {
+            "policy": "teacher_pose_prefix_v1",
+            "config": {
+              "max_error_rad": 0.08726646259971647,
+              "baseline_spread_rad": 0.05235987755982989,
+              "warmup_ns": 1000000000,
+              "baseline_ns": 2000000000,
+              "smoothing_ns": 500000000,
+              "persistence_ns": 1000000000,
+              "backoff_ns": 500000000,
+              "max_gap_ns": 150000000
+            },
+            "valid_from_ns": 7984999843,
+            "valid_until_ns": 22484999497,
+            "invalid_from_ns": null,
+            "reason": "NO_DRIFT_DETECTED",
+            "baseline_offset_rad": -3.1358714986898373,
+            "baseline_spread_rad": 0.0017289565034268148,
+            "first_violation_ns": null,
+            "confirmed_at_ns": null
+          },
+          "candidate_anchors": 86,
+          "strict_forward_eligible_anchors": 0
+        }
+      },
+      "split": "train",
+      "split_group": "failed_e2e_cone_location",
+      "replay_verified": 17,
+      "front_0to6m_abs_y_le1m": 0,
+      "front_0to6m": 11,
+      "front_0to12m": 17,
+      "side_or_behind": 0,
+      "labels": "observed XY and velocity only; stop and mode invalid",
+      "independent_drives": 1,
+      "shard_sha256": "6295916378075183c58b3b5325d1a3f7fe9ce60e36024129ba358d97f42e02e3"
+    },
+    {
+      "run_id": "lidar-v45-pc10-front-collect10-an-a01",
+      "selected": 25,
+      "uses": {
+        "static_cone_xy_speed": 25
+      },
+      "coverage": {
+        "run_id": "lidar-v45-pc10-front-collect10-an-a01",
+        "configured_objects": 1,
+        "spawned_objects": 1,
+        "spawn_count_matches": true,
+        "covered_corners": 1,
+        "corners_with_25m_post_observation": 0,
+        "corners": [
+          {
+            "corner": "failed_e2e_cone_location",
+            "object_id": "cone_1",
+            "object_type": "cone",
+            "configured_station_m": 43.99997426814184,
+            "passed": true,
+            "post_distance_observed": false,
+            "crossing_sim_s": 17.041983628700127,
+            "closest_gnss_to_configured_center_m": 2.8107949422490113,
+            "first_encounter_progress_m": 43.99997426814184,
+            "nearby_camera_anchors_20s": 190,
+            "nearby_avoid_mode_anchors_20s": 60
+          }
+        ],
+        "official_penalties": {
+          "crash": 0,
+          "wall": 0,
+          "over": 0
+        },
+        "finish_reached": true,
+        "camera_anchors": 265,
+        "full_future_anchors": 196,
+        "strict_forward_eligible_anchors": 0,
+        "clearance_quality": "UNKNOWN_PREFAB_MESH",
+        "training_split_assigned": false,
+        "limitations": [
+          "Station crossing and centre distance are not footprint clearance.",
+          "Official contact counters do not guarantee detection of every physical contact.",
+          "All strict training masks remain subject to the existing 0.30 m clearance requirement."
+        ],
+        "teacher_pose_prefix": {
+          "path": "pose_prefix",
+          "quality": {
+            "policy": "teacher_pose_prefix_v1",
+            "config": {
+              "max_error_rad": 0.08726646259971647,
+              "baseline_spread_rad": 0.05235987755982989,
+              "warmup_ns": 1000000000,
+              "baseline_ns": 2000000000,
+              "smoothing_ns": 500000000,
+              "persistence_ns": 1000000000,
+              "backoff_ns": 500000000,
+              "max_gap_ns": 150000000
+            },
+            "valid_from_ns": 8174999839,
+            "valid_until_ns": 27829999377,
+            "invalid_from_ns": null,
+            "reason": "NO_DRIFT_DETECTED",
+            "baseline_offset_rad": -3.0963860085120998,
+            "baseline_spread_rad": 0.03722763247165404,
+            "first_violation_ns": null,
+            "confirmed_at_ns": null
+          },
+          "candidate_anchors": 125,
+          "strict_forward_eligible_anchors": 0
+        }
+      },
+      "split": "train",
+      "split_group": "failed_e2e_cone_location",
+      "replay_verified": 25,
+      "front_0to6m_abs_y_le1m": 0,
+      "front_0to6m": 13,
+      "front_0to12m": 25,
+      "side_or_behind": 0,
+      "labels": "observed XY and velocity only; stop and mode invalid",
+      "independent_drives": 1,
+      "shard_sha256": "8f77773596c6b9c4ad2a99dc77123b625a33302f81a4286ce6a3626b9be10975"
+    },
+    {
+      "run_id": "lidar-v45-pc10-front-collect10-b8-a01",
+      "selected": 16,
+      "uses": {
+        "static_cone_xy_speed": 16
+      },
+      "coverage": {
+        "run_id": "lidar-v45-pc10-front-collect10-b8-a01",
+        "configured_objects": 1,
+        "spawned_objects": 1,
+        "spawn_count_matches": true,
+        "covered_corners": 1,
+        "corners_with_25m_post_observation": 0,
+        "corners": [
+          {
+            "corner": "straight_b_center",
+            "object_id": "cone_1",
+            "object_type": "cone",
+            "configured_station_m": 82.6578802151303,
+            "passed": true,
+            "post_distance_observed": false,
+            "crossing_sim_s": 13.194953633397192,
+            "closest_gnss_to_configured_center_m": 1.9123073591011814,
+            "first_encounter_progress_m": 82.6578802151303,
+            "nearby_camera_anchors_20s": 190,
+            "nearby_avoid_mode_anchors_20s": 129
+          }
+        ],
+        "official_penalties": {
+          "crash": 0,
+          "wall": 0,
+          "over": 0
+        },
+        "finish_reached": true,
+        "camera_anchors": 230,
+        "full_future_anchors": 174,
+        "strict_forward_eligible_anchors": 0,
+        "clearance_quality": "UNKNOWN_PREFAB_MESH",
+        "training_split_assigned": false,
+        "limitations": [
+          "Station crossing and centre distance are not footprint clearance.",
+          "Official contact counters do not guarantee detection of every physical contact.",
+          "All strict training masks remain subject to the existing 0.30 m clearance requirement."
+        ],
+        "teacher_pose_prefix": {
+          "path": "pose_prefix",
+          "quality": {
+            "policy": "teacher_pose_prefix_v1",
+            "config": {
+              "max_error_rad": 0.08726646259971647,
+              "baseline_spread_rad": 0.05235987755982989,
+              "warmup_ns": 1000000000,
+              "baseline_ns": 2000000000,
+              "smoothing_ns": 500000000,
+              "persistence_ns": 1000000000,
+              "backoff_ns": 500000000,
+              "max_gap_ns": 150000000
+            },
+            "valid_from_ns": 6949999867,
+            "valid_until_ns": 24189999459,
+            "invalid_from_ns": null,
+            "reason": "NO_DRIFT_DETECTED",
+            "baseline_offset_rad": 3.1063423473596132,
+            "baseline_spread_rad": 0.011774289408512438,
+            "first_violation_ns": null,
+            "confirmed_at_ns": null
+          },
+          "candidate_anchors": 112,
+          "strict_forward_eligible_anchors": 0
+        }
+      },
+      "split": "train",
+      "split_group": "straight_b_center",
+      "replay_verified": 16,
+      "front_0to6m_abs_y_le1m": 0,
+      "front_0to6m": 9,
+      "front_0to12m": 16,
+      "side_or_behind": 0,
+      "labels": "observed XY and velocity only; stop and mode invalid",
+      "independent_drives": 1,
+      "shard_sha256": "bc0ac5bfe986a6bfec27eb256d3d1fefe2efd5a2e141c6da28da8513796eef32"
+    },
+    {
+      "run_id": "lidar-v45-pc10-front-normal10-control-a01",
+      "selected": 30,
+      "uses": {
+        "nominal_xy_speed": 30
+      },
+      "coverage": {
+        "run_id": "lidar-v45-pc10-front-normal10-control-a01",
+        "configured_objects": 1,
+        "spawned_objects": 1,
+        "spawn_count_matches": true,
+        "covered_corners": 1,
+        "corners_with_25m_post_observation": 1,
+        "corners": [
+          {
+            "corner": "straight_b_center",
+            "object_id": "cone_1",
+            "object_type": "cone",
+            "configured_station_m": 82.6578802151303,
+            "passed": true,
+            "post_distance_observed": true,
+            "crossing_sim_s": 30.732607472841988,
+            "closest_gnss_to_configured_center_m": 2.225909672679112,
+            "first_encounter_progress_m": 82.6578802151303,
+            "nearby_camera_anchors_20s": 190,
+            "nearby_avoid_mode_anchors_20s": 84
+          }
+        ],
+        "official_penalties": {
+          "crash": 0,
+          "wall": 0,
+          "over": 0
+        },
+        "finish_reached": true,
+        "camera_anchors": 400,
+        "full_future_anchors": 331,
+        "strict_forward_eligible_anchors": 0,
+        "clearance_quality": "UNKNOWN_PREFAB_MESH",
+        "training_split_assigned": false,
+        "limitations": [
+          "Station crossing and centre distance are not footprint clearance.",
+          "Official contact counters do not guarantee detection of every physical contact.",
+          "All strict training masks remain subject to the existing 0.30 m clearance requirement."
+        ],
+        "teacher_pose_prefix": {
+          "path": "pose_prefix",
+          "quality": {
+            "policy": "teacher_pose_prefix_v1",
+            "config": {
+              "max_error_rad": 0.08726646259971647,
+              "baseline_spread_rad": 0.05235987755982989,
+              "warmup_ns": 1000000000,
+              "baseline_ns": 2000000000,
+              "smoothing_ns": 500000000,
+              "persistence_ns": 1000000000,
+              "backoff_ns": 500000000,
+              "max_gap_ns": 150000000
+            },
+            "valid_from_ns": 8184999839,
+            "valid_until_ns": 41549999060,
+            "invalid_from_ns": 41549999060,
+            "reason": "HEADING_EVIDENCE_GAP",
+            "baseline_offset_rad": -3.1105572164803963,
+            "baseline_spread_rad": 0.03774652652112244,
+            "first_violation_ns": 42049999060,
+            "confirmed_at_ns": 42049999060
+          },
+          "candidate_anchors": 261,
+          "strict_forward_eligible_anchors": 0
+        }
+      },
+      "split": "train",
+      "split_group": "straight_b_center",
+      "replay_verified": 30,
+      "front_0to6m_abs_y_le1m": 0,
+      "front_0to6m": 0,
+      "front_0to12m": 3,
+      "side_or_behind": 0,
+      "labels": "observed XY and velocity only; stop and mode invalid",
+      "independent_drives": 1,
+      "shard_sha256": "35b45a2de7010be60f672e3706d50b79aa9606ae4a657998b1037287d89fb13f"
+    }
+  ],
+  "selection_manifest_sha256": "4bd3608544e7b4d607e11088a4edc2fb5d56d4b6cee1b131645c689dcf8fdf8b",
+  "source_commit": "dfe2cfa89417d84c87343522f3694bee4246cd3d",
+  "operator_sha256": "e5a2961fb60d3b54e2a7bf33cbc571c3b339aa7b5da7baec94febe6324b0c13b",
+  "note": "No new training or heldout avoidance claim. Same placement groups stay train-only; raw preserved."
+}

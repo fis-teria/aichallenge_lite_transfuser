@@ -1,0 +1,518 @@
+{
+  "runs": [
+    {
+      "run_id": "lidar-v45-pc10-front-close10-control-a01",
+      "verdict": "passed",
+      "official_penalties": {
+        "crash": 0,
+        "wall": 0,
+        "over": 0
+      },
+      "pose_quality": {
+        "policy": "teacher_pose_prefix_v1",
+        "config": {
+          "max_error_rad": 0.08726646259971647,
+          "baseline_spread_rad": 0.05235987755982989,
+          "warmup_ns": 1000000000,
+          "baseline_ns": 2000000000,
+          "smoothing_ns": 500000000,
+          "persistence_ns": 1000000000,
+          "backoff_ns": 500000000,
+          "max_gap_ns": 150000000
+        },
+        "valid_from_ns": 6989999866,
+        "valid_until_ns": 23589999472,
+        "invalid_from_ns": null,
+        "reason": "NO_DRIFT_DETECTED",
+        "baseline_offset_rad": -3.106102573076392,
+        "baseline_spread_rad": 0.014054928731468493,
+        "first_violation_ns": null,
+        "confirmed_at_ns": null
+      },
+      "source_camera_anchors": 224,
+      "prefix_candidates": 104,
+      "selected": 2,
+      "hold": 100,
+      "exclude": 1,
+      "thinned": 1,
+      "uses": {
+        "static_cone_xy_speed": 2
+      },
+      "split_group": "straight_b_center",
+      "split": "train",
+      "replay_verified": 2,
+      "front_0to6m_abs_y_le1m": 0,
+      "front_0to6m": 0,
+      "front_0to12m": 0,
+      "projected_clearance": [
+        {
+          "object_id": "cone_1",
+          "object_type": "cone",
+          "pose_source": "recorded EKF",
+          "object_pose_source": "scenario initial placement",
+          "shape_method": "circumscribed circle of convex cone mesh XY projection",
+          "dynamic_pose_verified": null,
+          "minimum_gap_m": 1.1371507104230962,
+          "minimum_sim_s": 11.429999744,
+          "minimum_recorded_pose": {
+            "x": 89624.7692,
+            "y": 43157.3448,
+            "yaw": -1.09591,
+            "speed_mps": 2.2344,
+            "s": 82.369,
+            "d": -3.3496,
+            "progress_m": 82.369,
+            "laps_completed": 0,
+            "stamp": 11.429999744
+          },
+          "initial_object_pose": [
+            89626.701118734,
+            43158.136368101,
+            -1.078331349098635
+          ],
+          "samples_below_030": 0,
+          "sampled_nearby": 145
+        }
+      ],
+      "wall_overlap_samples": 0,
+      "shard_sha256": "96fe94f01add97b06cfcc5fc21e3de94b481450f053a696f4a9cd074924b8771"
+    },
+    {
+      "run_id": "lidar-v45-pc10-front-collect10-a6-a01",
+      "verdict": "passed",
+      "official_penalties": {
+        "crash": 0,
+        "wall": 0,
+        "over": 0
+      },
+      "pose_quality": {
+        "policy": "teacher_pose_prefix_v1",
+        "config": {
+          "max_error_rad": 0.08726646259971647,
+          "baseline_spread_rad": 0.05235987755982989,
+          "warmup_ns": 1000000000,
+          "baseline_ns": 2000000000,
+          "smoothing_ns": 500000000,
+          "persistence_ns": 1000000000,
+          "backoff_ns": 500000000,
+          "max_gap_ns": 150000000
+        },
+        "valid_from_ns": 8044999842,
+        "valid_until_ns": 22204999503,
+        "invalid_from_ns": null,
+        "reason": "NO_DRIFT_DETECTED",
+        "baseline_offset_rad": -3.133324761571031,
+        "baseline_spread_rad": 0.014873209233462683,
+        "first_violation_ns": null,
+        "confirmed_at_ns": null
+      },
+      "source_camera_anchors": 211,
+      "prefix_candidates": 82,
+      "selected": 14,
+      "hold": 54,
+      "exclude": 0,
+      "thinned": 14,
+      "uses": {
+        "static_cone_xy_speed": 14
+      },
+      "split_group": "failed_e2e_cone_location",
+      "split": "train",
+      "replay_verified": 14,
+      "front_0to6m_abs_y_le1m": 0,
+      "front_0to6m": 14,
+      "front_0to12m": 14,
+      "projected_clearance": [
+        {
+          "object_id": "cone_1",
+          "object_type": "cone",
+          "pose_source": "recorded EKF",
+          "object_pose_source": "scenario initial placement",
+          "shape_method": "circumscribed circle of convex cone mesh XY projection",
+          "dynamic_pose_verified": null,
+          "minimum_gap_m": 1.9796184176203082,
+          "minimum_sim_s": 11.224999749,
+          "minimum_recorded_pose": {
+            "x": 89624.7303,
+            "y": 43144.9563,
+            "yaw": 2.13023,
+            "speed_mps": 2.611,
+            "s": 43.647,
+            "d": -2.9022,
+            "progress_m": 43.647,
+            "laps_completed": 0,
+            "stamp": 11.224999749
+          },
+          "initial_object_pose": [
+            89622.19528190594,
+            43143.500031103176,
+            2.2094897550860186
+          ],
+          "samples_below_030": 0,
+          "sampled_nearby": 116
+        }
+      ],
+      "wall_overlap_samples": 0,
+      "shard_sha256": "233511a683cf74ebccb5236025b375347d4790d5cd9ac86b768bd46613d93510"
+    },
+    {
+      "run_id": "lidar-v45-pc10-front-collect10-a8-a01",
+      "verdict": "passed",
+      "official_penalties": {
+        "crash": 0,
+        "wall": 0,
+        "over": 0
+      },
+      "pose_quality": {
+        "policy": "teacher_pose_prefix_v1",
+        "config": {
+          "max_error_rad": 0.08726646259971647,
+          "baseline_spread_rad": 0.05235987755982989,
+          "warmup_ns": 1000000000,
+          "baseline_ns": 2000000000,
+          "smoothing_ns": 500000000,
+          "persistence_ns": 1000000000,
+          "backoff_ns": 500000000,
+          "max_gap_ns": 150000000
+        },
+        "valid_from_ns": 7984999843,
+        "valid_until_ns": 22484999497,
+        "invalid_from_ns": null,
+        "reason": "NO_DRIFT_DETECTED",
+        "baseline_offset_rad": -3.1358714986898373,
+        "baseline_spread_rad": 0.0017289565034268148,
+        "first_violation_ns": null,
+        "confirmed_at_ns": null
+      },
+      "source_camera_anchors": 214,
+      "prefix_candidates": 86,
+      "selected": 17,
+      "hold": 52,
+      "exclude": 0,
+      "thinned": 17,
+      "uses": {
+        "static_cone_xy_speed": 17
+      },
+      "split_group": "failed_e2e_cone_location",
+      "split": "train",
+      "replay_verified": 17,
+      "front_0to6m_abs_y_le1m": 0,
+      "front_0to6m": 11,
+      "front_0to12m": 17,
+      "projected_clearance": [
+        {
+          "object_id": "cone_1",
+          "object_type": "cone",
+          "pose_source": "recorded EKF",
+          "object_pose_source": "scenario initial placement",
+          "shape_method": "circumscribed circle of convex cone mesh XY projection",
+          "dynamic_pose_verified": null,
+          "minimum_gap_m": 1.982094228222144,
+          "minimum_sim_s": 11.489999743,
+          "minimum_recorded_pose": {
+            "x": 89624.7673,
+            "y": 43144.904,
+            "yaw": 2.13029,
+            "speed_mps": 2.6075,
+            "s": 43.583,
+            "d": -2.9005,
+            "progress_m": 43.583,
+            "laps_completed": 0,
+            "stamp": 11.489999743
+          },
+          "initial_object_pose": [
+            89622.19528190594,
+            43143.500031103176,
+            2.2094897550860186
+          ],
+          "samples_below_030": 0,
+          "sampled_nearby": 81
+        }
+      ],
+      "wall_overlap_samples": 0,
+      "shard_sha256": "6295916378075183c58b3b5325d1a3f7fe9ce60e36024129ba358d97f42e02e3"
+    },
+    {
+      "run_id": "lidar-v45-pc10-front-collect10-an-a01",
+      "verdict": "passed",
+      "official_penalties": {
+        "crash": 0,
+        "wall": 0,
+        "over": 0
+      },
+      "pose_quality": {
+        "policy": "teacher_pose_prefix_v1",
+        "config": {
+          "max_error_rad": 0.08726646259971647,
+          "baseline_spread_rad": 0.05235987755982989,
+          "warmup_ns": 1000000000,
+          "baseline_ns": 2000000000,
+          "smoothing_ns": 500000000,
+          "persistence_ns": 1000000000,
+          "backoff_ns": 500000000,
+          "max_gap_ns": 150000000
+        },
+        "valid_from_ns": 8174999839,
+        "valid_until_ns": 27829999377,
+        "invalid_from_ns": null,
+        "reason": "NO_DRIFT_DETECTED",
+        "baseline_offset_rad": -3.0963860085120998,
+        "baseline_spread_rad": 0.03722763247165404,
+        "first_violation_ns": null,
+        "confirmed_at_ns": null
+      },
+      "source_camera_anchors": 265,
+      "prefix_candidates": 125,
+      "selected": 25,
+      "hold": 77,
+      "exclude": 0,
+      "thinned": 23,
+      "uses": {
+        "static_cone_xy_speed": 25
+      },
+      "split_group": "failed_e2e_cone_location",
+      "split": "train",
+      "replay_verified": 25,
+      "front_0to6m_abs_y_le1m": 0,
+      "front_0to6m": 13,
+      "front_0to12m": 25,
+      "projected_clearance": [
+        {
+          "object_id": "cone_1",
+          "object_type": "cone",
+          "pose_source": "recorded EKF",
+          "object_pose_source": "scenario initial placement",
+          "shape_method": "circumscribed circle of convex cone mesh XY projection",
+          "dynamic_pose_verified": null,
+          "minimum_gap_m": 1.8799729980500557,
+          "minimum_sim_s": 16.829999623,
+          "minimum_recorded_pose": {
+            "x": 89624.7057,
+            "y": 43144.8043,
+            "yaw": 2.11575,
+            "speed_mps": 2.6103,
+            "s": 43.541,
+            "d": -2.7915,
+            "progress_m": 43.541,
+            "laps_completed": 0,
+            "stamp": 16.829999623
+          },
+          "initial_object_pose": [
+            89622.19528190594,
+            43143.500031103176,
+            2.2094897550860186
+          ],
+          "samples_below_030": 0,
+          "sampled_nearby": 86
+        }
+      ],
+      "wall_overlap_samples": 0,
+      "shard_sha256": "8f77773596c6b9c4ad2a99dc77123b625a33302f81a4286ce6a3626b9be10975"
+    },
+    {
+      "run_id": "lidar-v45-pc10-front-collect10-b8-a01",
+      "verdict": "passed",
+      "official_penalties": {
+        "crash": 0,
+        "wall": 0,
+        "over": 0
+      },
+      "pose_quality": {
+        "policy": "teacher_pose_prefix_v1",
+        "config": {
+          "max_error_rad": 0.08726646259971647,
+          "baseline_spread_rad": 0.05235987755982989,
+          "warmup_ns": 1000000000,
+          "baseline_ns": 2000000000,
+          "smoothing_ns": 500000000,
+          "persistence_ns": 1000000000,
+          "backoff_ns": 500000000,
+          "max_gap_ns": 150000000
+        },
+        "valid_from_ns": 6949999867,
+        "valid_until_ns": 24189999459,
+        "invalid_from_ns": null,
+        "reason": "NO_DRIFT_DETECTED",
+        "baseline_offset_rad": 3.1063423473596132,
+        "baseline_spread_rad": 0.011774289408512438,
+        "first_violation_ns": null,
+        "confirmed_at_ns": null
+      },
+      "source_camera_anchors": 230,
+      "prefix_candidates": 112,
+      "selected": 16,
+      "hold": 82,
+      "exclude": 0,
+      "thinned": 14,
+      "uses": {
+        "static_cone_xy_speed": 16
+      },
+      "split_group": "straight_b_center",
+      "split": "train",
+      "replay_verified": 16,
+      "front_0to6m_abs_y_le1m": 0,
+      "front_0to6m": 9,
+      "front_0to12m": 16,
+      "projected_clearance": [
+        {
+          "object_id": "cone_1",
+          "object_type": "cone",
+          "pose_source": "recorded EKF",
+          "object_pose_source": "scenario initial placement",
+          "shape_method": "circumscribed circle of convex cone mesh XY projection",
+          "dynamic_pose_verified": null,
+          "minimum_gap_m": 0.969759332293477,
+          "minimum_sim_s": 13.114999706,
+          "minimum_recorded_pose": {
+            "x": 89628.2556,
+            "y": 43159.2675,
+            "yaw": -1.04764,
+            "speed_mps": 2.5808,
+            "s": 82.464,
+            "d": 0.6308,
+            "progress_m": 82.464,
+            "laps_completed": 0,
+            "stamp": 13.114999706
+          },
+          "initial_object_pose": [
+            89626.701118734,
+            43158.136368101,
+            -1.078331349098635
+          ],
+          "samples_below_030": 0,
+          "sampled_nearby": 129
+        }
+      ],
+      "wall_overlap_samples": 0,
+      "shard_sha256": "bc0ac5bfe986a6bfec27eb256d3d1fefe2efd5a2e141c6da28da8513796eef32"
+    },
+    {
+      "run_id": "lidar-v45-pc10-front-normal10-control-a01",
+      "verdict": "passed",
+      "official_penalties": {
+        "crash": 0,
+        "wall": 0,
+        "over": 0
+      },
+      "pose_quality": {
+        "policy": "teacher_pose_prefix_v1",
+        "config": {
+          "max_error_rad": 0.08726646259971647,
+          "baseline_spread_rad": 0.05235987755982989,
+          "warmup_ns": 1000000000,
+          "baseline_ns": 2000000000,
+          "smoothing_ns": 500000000,
+          "persistence_ns": 1000000000,
+          "backoff_ns": 500000000,
+          "max_gap_ns": 150000000
+        },
+        "valid_from_ns": 8184999839,
+        "valid_until_ns": 41549999060,
+        "invalid_from_ns": 41549999060,
+        "reason": "HEADING_EVIDENCE_GAP",
+        "baseline_offset_rad": -3.1105572164803963,
+        "baseline_spread_rad": 0.03774652652112244,
+        "first_violation_ns": 42049999060,
+        "confirmed_at_ns": 42049999060
+      },
+      "source_camera_anchors": 400,
+      "prefix_candidates": 261,
+      "selected": 30,
+      "hold": 203,
+      "exclude": 0,
+      "thinned": 28,
+      "uses": {
+        "nominal_xy_speed": 30
+      },
+      "split_group": "straight_b_center",
+      "split": "train",
+      "replay_verified": 30,
+      "front_0to6m_abs_y_le1m": 0,
+      "front_0to6m": 0,
+      "front_0to12m": 3,
+      "projected_clearance": [
+        {
+          "object_id": "cone_1",
+          "object_type": "cone",
+          "pose_source": "recorded EKF",
+          "object_pose_source": "scenario initial placement",
+          "shape_method": "circumscribed circle of convex cone mesh XY projection",
+          "dynamic_pose_verified": null,
+          "minimum_gap_m": 1.1550382496025786,
+          "minimum_sim_s": 30.729999313,
+          "minimum_recorded_pose": {
+            "x": 89624.9296,
+            "y": 43156.9947,
+            "yaw": -0.90213,
+            "speed_mps": 2.6026,
+            "s": 82.752,
+            "d": -3.3874,
+            "progress_m": 82.752,
+            "laps_completed": 0,
+            "stamp": 30.729999313
+          },
+          "initial_object_pose": [
+            89626.701118734,
+            43158.136368101,
+            -1.078331349098635
+          ],
+          "samples_below_030": 0,
+          "sampled_nearby": 98
+        }
+      ],
+      "wall_overlap_samples": 0,
+      "shard_sha256": "35b45a2de7010be60f672e3706d50b79aa9606ae4a657998b1037287d89fb13f"
+    }
+  ],
+  "totals": {
+    "source_camera_anchors": 1544,
+    "prefix_candidates": 770,
+    "eligible": 201,
+    "selected": 104,
+    "hold": 568,
+    "exclude": 1,
+    "eligible_thinned": 97
+  },
+  "uses": {
+    "static_cone_xy_speed": 74,
+    "nominal_xy_speed": 30
+  },
+  "hold_exclude_reason_occurrences": {
+    "SCAN_MAP_ALIGNMENT_OR_SUPPORT": 547,
+    "MONITOR_POSE_COVERAGE_UNKNOWN": 3,
+    "TEMPORAL_THINNING_ONLY": 97,
+    "NONFREE_MODE_WITHOUT_STATIC_CONE_CONTEXT": 86,
+    "INCOMPLETE_OR_NONFINITE_TEACHER": 1
+  },
+  "selected_replay_verified": 104,
+  "frontal_close_selected": 0,
+  "config": {
+    "history_ns": 1000000000,
+    "horizon_ns": 3000000000,
+    "endpoint_guard_ns": 50000000,
+    "max_evidence_gap_ns": 150000000,
+    "minimum_anchor_spacing_ns": 200000000,
+    "minimum_future_speed_mps": 0.2,
+    "box_exclusion_radius_m": 6.0,
+    "cone_context_radius_m": 6.0,
+    "minimum_clearance_m": 0.3,
+    "additional_projection_margin_m": 0.3,
+    "maximum_map_median_m": 0.15,
+    "map_inlier_distance_m": 0.25,
+    "minimum_map_inlier_fraction": 0.7,
+    "minimum_wall_points": 80,
+    "minimum_scan_span_rad": 1.0471975511965976
+  },
+  "selection_manifest_sha256": "4bd3608544e7b4d607e11088a4edc2fb5d56d4b6cee1b131645c689dcf8fdf8b",
+  "replay_summary_sha256": "509b0b62a9d9a3fa1b09fd670fd7231d3e817a6923c20f9ad4203b24aef81747",
+  "source_commit": "dfe2cfa89417d84c87343522f3694bee4246cd3d",
+  "verified_transfer_bytes": 508180516,
+  "verified_transfer_files": 2448,
+  "training_performed": false,
+  "allowed_targets": [
+    "xy_m",
+    "velocity_mps"
+  ],
+  "stop_mode_supervision": false,
+  "split_note": "Existing two placement groups remain train-only; no heldout creation or frame split.",
+  "limitations": "Six independently recorded drives, not independent frames/events. Selection screens observed motion and map agreement; it does not certify full 3D clearance. No E2E model promotion."
+}
