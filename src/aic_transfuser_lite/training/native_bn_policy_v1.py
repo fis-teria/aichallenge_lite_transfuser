@@ -5,6 +5,34 @@ import torch
 from torch import nn
 
 
+def gradient_alignment(left: list[torch.Tensor | None],
+                       right: list[torch.Tensor | None]) -> dict[str, float | None]:
+    """Cosine and L2 norms of two gradients; absent gradients mean zero.
+
+    Norm units depend on the loss and parameter units. Zero vectors have an
+    undefined cosine (None), not a fabricated positive or negative alignment.
+    """
+    if not left or len(left) != len(right):
+        raise ValueError("matching nonempty gradient lists required")
+    dot, a2, b2 = 0.0, 0.0, 0.0
+    for a, b in zip(left, right):
+        if a is not None and b is not None and a.shape != b.shape:
+            raise ValueError("gradient shapes differ")
+        for value in (a, b):
+            if value is not None and not torch.isfinite(value).all():
+                raise ValueError("finite gradients required")
+        if a is not None:
+            a2 += float(a.detach().double().square().sum())
+        if b is not None:
+            b2 += float(b.detach().double().square().sum())
+        if a is not None and b is not None:
+            dot += float((a.detach().double() * b.detach().double()).sum())
+    an, bn = a2 ** 0.5, b2 ** 0.5
+    return {"old_norm": an, "native_norm": bn,
+            "cosine": max(-1.0, min(1.0, dot / (an * bn))) if an and bn else None,
+            "native_to_old_norm": bn / an if an else None}
+
+
 def freeze_batchnorm_statistics(model: nn.Module) -> list[str]:
     """Call AFTER model.train(); freeze running statistics, keep affine gradients.
 

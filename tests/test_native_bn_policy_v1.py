@@ -3,7 +3,7 @@ import torch
 from torch import nn
 
 from aic_transfuser_lite.training.native_bn_policy_v1 import (
-    copy_batchnorm_statistics, freeze_batchnorm_statistics,
+    copy_batchnorm_statistics, freeze_batchnorm_statistics, gradient_alignment,
 )
 
 
@@ -48,3 +48,15 @@ def test_invalid_statistics_cannot_partially_copy() -> None:
 def test_freeze_rejects_missing_statistics(model: nn.Module) -> None:
     with pytest.raises(ValueError):
         freeze_batchnorm_statistics(model)
+
+
+def test_gradient_conflict_and_missing_components() -> None:
+    result = gradient_alignment([torch.tensor([1., 0.]), None],
+                                [torch.tensor([-2., 0.]), torch.tensor([2.])])
+    assert result["cosine"] == pytest.approx(-2 / (8 ** 0.5))
+    assert result["native_to_old_norm"] == pytest.approx(8 ** 0.5)
+    assert gradient_alignment([None], [torch.zeros(2)])["cosine"] is None
+    with pytest.raises(ValueError):
+        gradient_alignment([torch.ones(2)], [torch.ones(3)])
+    with pytest.raises(ValueError):
+        gradient_alignment([torch.ones(2)], [torch.tensor([float("nan"), 0.])])

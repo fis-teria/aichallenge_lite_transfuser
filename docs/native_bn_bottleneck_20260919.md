@@ -27,3 +27,20 @@ tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q
 `freeze_batchnorm_statistics`は次の学習用の明示的な補助関数で、まだ既定学習へ
 適用していない。`model.train()`の後に呼び、統計のみ固定してaffineの勾配は残す。
 既存予測保持の蒸留や勾配干渉対策は、この診断結果を見て独立に比較する。
+
+## 学習勾配の診断
+
+```bash
+tools/with_wsl_training_lock.sh env PYTHONPATH=src OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=4 \
+  timeout --signal=TERM --kill-after=15s 900s .venv/bin/python -u tools/diagnose_native_gradients.py \
+  --root /home/thistle/e2e_autonomous \
+  --output /home/thistle/e2e_autonomous/runs/native_gradient_diagnostic_20260919 --batches 8
+```
+
+focusedの既存スケジュール先頭8バッチ（旧32+新8）を使用。
+各バッチ前に初期重みと統計を復元し、旧データの既存損失と、新データXY/XY+補助損失の
+勾配のcosine、ノルムを測る。BatchNorm更新/固定の2条件で同じ入力・乱数を使う。
+両損失はそれぞれ支持窓数で平均するため、実際の混合勾配では旧32/40、新8/40の
+係数が掛かる。勾配ノルム比の解釈ではこの係数を掛ける必要がある。
+負のcosineは局所的な勾配干渉を示し、未学習配置の性能や唯一の失敗原因を証明しない。
+optimizer更新0、validation/test不使用、モデル保存なし。最大15分。
