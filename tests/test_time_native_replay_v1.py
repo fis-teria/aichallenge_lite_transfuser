@@ -17,7 +17,7 @@ from test_time_recovery_training_v1 import extension
 from test_time_stage_selection_v1 import report
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-from train_time_native_replay import select_retained_native
+from train_time_native_replay import select_retained_native, native_row_context, prepare_native
 
 
 class Samples:
@@ -55,6 +55,38 @@ def test_every_previous_slot_and_all_old_split_assignments_are_preserved():
     assert combined.audit['native_unique'] == 2
     with pytest.raises(IndexError):
         combined[-1]
+
+
+def test_multiple_frozen_native_groups_keep_original_source_split():
+    plan = dict(native_split_group='legacy', native_split_groups=['a', 'b'], native_source_split='train')
+    assert native_row_context([dict(split='train', split_group='b')], plan) == ('train', 'b')
+    for rows in ([], [dict(split='test', split_group='a')],
+                 [dict(split='train', split_group='unknown')],
+                 [dict(split='train', split_group='a'), dict(split='train', split_group='b')]):
+        with pytest.raises(ValueError, match='scenario group'):
+            native_row_context(rows, plan)
+
+
+@pytest.mark.parametrize('duplicate,expected_count', [(False, 2), (True, 2), (False, 3)])
+def test_combined_selections_keep_both_shards_and_reject_population_drift(tmp_path, monkeypatch, duplicate, expected_count):
+    import train_time_native_replay as runner
+    def fake_selection(root, plan, output):
+        run = plan['run']
+        (output / 'native_manifest.json').write_text(json.dumps(dict(shards=[dict(
+            path=run + '.pt', run_id=run, anchors=[dict(anchor_id=run + ':1')])])) )
+        return [dict(run_id=run)]
+    monkeypatch.setattr(runner, 'prepare_native_selection', fake_selection)
+    plan = dict(native_sources=[dict(run='old'), dict(run='old' if duplicate else 'new')],
+                native_anchors=expected_count)
+    if duplicate or expected_count != 2:
+        with pytest.raises(ValueError):
+            prepare_native(tmp_path, plan, tmp_path)
+    else:
+        added = prepare_native(tmp_path, plan, tmp_path)
+        manifest = json.loads((tmp_path / 'native_manifest.json').read_text())
+        assert [r['run_id'] for r in added] == ['old', 'new']
+        assert [s['path'] for s in manifest['shards']] == ['source_00/old.pt', 'source_01/new.pt']
+        assert len(manifest['selections']) == 2
 
 
 @pytest.mark.parametrize('mutation', ['validation', 'duplicate_hash', 'duplicate_run', 'unverified'])

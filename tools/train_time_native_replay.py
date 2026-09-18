@@ -140,7 +140,19 @@ def replay_run(bag: Path, rows: list[dict[str, Any]], labels: dict[str, np.ndarr
     return samples
 
 
-def prepare_native(root: Path, plan: dict[str, Any], output: Path) -> list[dict[str, Any]]:
+def native_row_context(rows: list[dict[str, Any]], plan: dict[str, Any]) -> tuple[str, str]:
+    """Require one frozen scenario group and source split per recorded drive."""
+    expected_split = plan.get('native_source_split', 'unassigned')
+    allowed = plan.get('native_split_groups', [plan['native_split_group']])
+    groups = {row['split_group'] for row in rows}
+    if (expected_split not in {'train', 'unassigned'} or not rows or len(groups) != 1
+            or not groups.issubset(set(allowed))
+            or any(row['split'] != expected_split for row in rows)):
+        raise ValueError('frozen native scenario group or source split changed')
+    return expected_split, next(iter(groups))
+
+
+def prepare_native_selection(root: Path, plan: dict[str, Any], output: Path) -> list[dict[str, Any]]:
     collection = root / plan['native_collection']
     selection = collection / plan['native_selection']
     if _sha(selection / 'selection_manifest.json') != plan['selection_manifest_sha256']:
@@ -155,8 +167,9 @@ def prepare_native(root: Path, plan: dict[str, Any], output: Path) -> list[dict[
             continue
         run = summary['run_id']
         rows = records(selection / run / 'selected_anchors.jsonl')
-        if len(rows) != summary['selected'] or {r['split_group'] for r in rows} != {plan['native_split_group']}:
+        if len(rows) != summary['selected']:
             raise ValueError('selected count or common scenario group changed')
+        expected_split, group = native_row_context(rows, plan)
         collected = collection / 'collected' / run
         bag, checked = verified_bag(collected, run)
         if checked != summary['identity']['source_bag_sha256'] or str(bag) != summary['identity']['source_bag']:
@@ -177,13 +190,13 @@ def prepare_native(root: Path, plan: dict[str, Any], output: Path) -> list[dict[
                 or any(labels[k].any() for k in ('stop_mask', 'mode_mask', 'forward_avoidance_eligible'))):
             raise ValueError('selected label masks changed')
         np.testing.assert_array_equal(labels['observation_ns'], [r['observation_ns'] for r in rows])
-        samples = replay_run(bag, rows, labels)
+        samples = replay_run(bag, rows, labels, expected_split=expected_split, expected_group=group)
         path = output / (run + '.pt')
         torch.save(samples, path)
         shards.append(dict(path=path.name, sha256=_sha(path), run_id=run,
             anchors=[dict(anchor_id=r['anchor_id'], selection_use=r['selection_use']) for r in rows],
             all_raw_histories_and_30_xy_velocity_targets_reproduced=True,
-            contract_sha256=item['sha256']))
+            contract_sha256=item['sha256'], split_group=group))
         print('NATIVE_REPLAY_VERIFIED', run, len(samples), flush=True)
         del samples
         gc.collect()
@@ -192,6 +205,34 @@ def prepare_native(root: Path, plan: dict[str, Any], output: Path) -> list[dict[
     write(output / 'native_manifest.json', dict(format='native_time_sample_replay_v1',
         selection_manifest_sha256=plan['selection_manifest_sha256'], shards=shards,
         split_group=plan['native_split_group'], split='train', stop_mode_training=False))
+    return additions
+
+
+def prepare_native(root: Path, plan: dict[str, Any], output: Path) -> list[dict[str, Any]]:
+    """Combine independently frozen selections; never replace earlier native windows."""
+    if 'native_sources' not in plan:
+        return prepare_native_selection(root, plan, output)
+    additions, shards, identities = [], [], []
+    seen_runs: set[str] = set()
+    for i, source in enumerate(plan['native_sources']):
+        subplan = {**plan, **source}
+        subdir = output / f'source_{i:02d}'
+        subdir.mkdir(exist_ok=False)
+        new = prepare_native_selection(root, subplan, subdir)
+        runs = {r['run_id'] for r in new}
+        if len(runs) != len(new) or runs & seen_runs:
+            raise ValueError('native selections contain duplicate runs')
+        seen_runs.update(runs)
+        additions.extend(new)
+        manifest = read(subdir / 'native_manifest.json')
+        identities.append(dict(path=f'{subdir.name}/native_manifest.json',
+                               sha256=_sha(subdir / 'native_manifest.json')))
+        for shard in manifest['shards']:
+            shards.append({**shard, 'path': f"{subdir.name}/{shard['path']}"})
+    if sum(len(s['anchors']) for s in shards) != plan['native_anchors']:
+        raise ValueError('combined native population changed')
+    write(output / 'native_manifest.json', dict(format='native_time_sample_replay_v1',
+        selections=identities, shards=shards, split='train', stop_mode_training=False))
     return additions
 
 
@@ -396,6 +437,8 @@ def evaluate(root: Path, repo: Path, plan: dict[str, Any]) -> None:
     native.targets = np.stack([native[i].teacher.xy_m for i in range(len(native))])
     native_stages = {'all': list(range(len(native)))}
     native_stages.update({use: [i for i, value in enumerate(native.uses) if value == use] for use in sorted(set(native.uses))})
+    native_stages.update({f'run:{run}': [i for i, value in enumerate(native.run_ids) if value == run]
+                          for run in sorted(set(native.run_ids))})
     reports = []
     for name, path in candidates.items():
         payload = torch.load(path, map_location='cpu', weights_only=False)

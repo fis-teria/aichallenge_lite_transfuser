@@ -1,0 +1,69 @@
+{
+  "experiment": "time_native_obstacle10_replay_20260918",
+  "output": "runs/time_native_obstacle10_replay_20260918",
+  "previous_plan": "configs/time_path_p1/launch_protection_20260916.json",
+  "previous_experiment": "runs/time_launch_protection_v2_20260916",
+  "native_collection": "runs/mppi_v45_pc10_20260918",
+  "native_selection": "curated_xy_speed_v3",
+  "selection_manifest_sha256": "560d923e9404d3ae475331e72a0ab04da480e08523db4510d52eb8554169a812",
+  "native_anchors": 442,
+  "native_repeats": 10,
+  "native_split_group": "all_corners_20260918",
+  "native_split": "train",
+  "initialization": "runs/time_launch_protection_v2_20260916/launch_balanced/epoch_03.pt",
+  "initialization_sha256": "1fe12ca066791d3eb8907c6921120e2cfbb38925c422d5be54940f4acbdd120a",
+  "source_guard_commit": "80f38d3faca92827243f42426ec18d07c138d043",
+  "training": {
+    "epochs": 3,
+    "batch_size": 32,
+    "workers": 0,
+    "seed": 42,
+    "learning_rate": 1E-05,
+    "weight_decay": 0.0001,
+    "max_grad_norm": 1.0,
+    "precision": "float32"
+  },
+  "presentations_per_epoch": 65028,
+  "optimizer_steps": 6099,
+  "outer_timeout_seconds": 10800,
+  "retention_gate": {
+    "relative_error_tolerance": 0.05,
+    "ade_tolerance_m": 0.001,
+    "endpoint_tolerance_m": 0.002,
+    "launch_margin_tolerance_rad": 0.001
+  },
+  "per_recovery_run_relative_tolerance": 0.2,
+  "per_recovery_run_ade_tolerance_m": 0.005,
+  "per_recovery_run_endpoint_tolerance_m": 0.01,
+  "minimum_native_fit_relative_improvement": 0.01,
+  "selection_rule": "best_native_cone_training_fit_among_retention_eligible_epochs_else_baseline",
+  "validation_role": "existing_development_validation_for_nominal_launch_and_recovery_retention",
+  "native_fit_role": "training_fit_only_not_heldout_avoidance_performance",
+  "test_usage": "sealed",
+  "loss_changes": false,
+  "model_input_changes": false,
+  "awsim_modifications": false,
+  "automatic_runtime_promotion": false,
+  "native_sources": [
+    {
+      "native_collection": "runs/mppi_v45_pc10_20260918",
+      "native_selection": "curated_xy_speed_v3",
+      "selection_manifest_sha256": "560d923e9404d3ae475331e72a0ab04da480e08523db4510d52eb8554169a812",
+      "native_anchors": 338,
+      "native_split_group": "all_corners_20260918",
+      "native_source_split": "unassigned"
+    },
+    {
+      "native_collection": "runs/mppi_v45_pc10_20260918",
+      "native_selection": "collect10_curated_v1",
+      "selection_manifest_sha256": "4bd3608544e7b4d607e11088a4edc2fb5d56d4b6cee1b131645c689dcf8fdf8b",
+      "native_anchors": 104,
+      "native_split_group": "collect10_train_groups",
+      "native_split_groups": [
+        "failed_e2e_cone_location",
+        "straight_b_center"
+      ],
+      "native_source_split": "train"
+    }
+  ]
+}
