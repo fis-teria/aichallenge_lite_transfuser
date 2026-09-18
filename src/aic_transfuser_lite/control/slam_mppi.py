@@ -193,7 +193,7 @@ class AvoidancePlanner:
         """Retain observed spatial intent for at most 10 s without extension.
 
         Fresh source packets are still mandatory. Never extend past a model
-        prediction: append only a geometrically overlapping fresh continuation.
+        prediction: replace only with a geometrically overlapping continuation.
         Stored points are SLAM-world metres, not stale body-relative waypoints.
         """
         if (fresh.ndim != 2 or fresh.shape[1:] != (2,) or not 2 <= len(fresh) <= 200
@@ -215,12 +215,10 @@ class AvoidancePlanner:
         aligned = float(previous@delta[i])/(max(1e-12, np.linalg.norm(previous)*lengths[i])) > math.cos(.35)
         remaining = (1-fraction[i])*lengths[i]+lengths[i+1:].sum()
         if np.linalg.norm(projection[i]-held[-1]) <= .5 and aligned and remaining > .15:
-            joined = np.vstack((held, fresh[i+1:]))
-            joined = joined[np.r_[True, np.linalg.norm(np.diff(joined, axis=0), axis=1) > .01]]
-            # Keep a bounded polyline without fabricating an extrapolated endpoint.
-            arc = np.r_[0., np.cumsum(np.linalg.norm(np.diff(joined, axis=0), axis=1))]
-            stations = np.linspace(max(0., arc[-1]-20.), arc[-1], min(200, len(joined)))
-            self.reference_world = np.column_stack([np.interp(stations, arc, joined[:, j]) for j in range(2)])
+            # Never splice two predictions: even a centimetre lateral mismatch
+            # creates a curvature spike at the join. Adopt the whole fresh
+            # polyline after overlap confirmation, preserving its geometry.
+            self.reference_world = fresh.copy()
             self.reference_updated_ns = stamp
         elif (np.linalg.norm(fresh[-1]-held[-1]) <= .15 and aligned
               and lengths.sum() >= 3.):

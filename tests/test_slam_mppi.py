@@ -252,6 +252,23 @@ def test_only_overlapping_fresh_prediction_can_extend_retained_reference():
         planner._reference(np.full((30, 2), np.nan), 1_300_000_000)
 
 
+def test_reference_refresh_does_not_create_a_splice_curvature_spike():
+    ref, grid, origin = scene(False)
+    ref[:, 0] = np.linspace(0., 3.8, len(ref))
+    g = SimpleNamespace(values=grid, origin=origin/.2, resolution_m=.2)
+    planner = AvoidancePlanner()
+    assert planner.update(packet(), ref, g)['mode'] == 'AVOID'
+    updated = packet(True, 1_100_000_000)
+    updated['base_pose_xyyaw'] = [.2, 0., 0.]
+    out = planner.update(updated, ref+[.2, .015], g)
+    assert out['mode'] == 'AVOID'
+    path = np.asarray(out['path_world_xy_m'])
+    segment = np.diff(path, axis=0)
+    angle = np.unwrap(np.arctan2(segment[:, 1], segment[:, 0]))
+    ds = np.linalg.norm(segment, axis=1)
+    assert np.max(np.abs(np.diff(angle)/(.5*(ds[:-1]+ds[1:])))) <= np.tan(.3)/1.2
+
+
 def test_short_nominal_fallback_requires_fresh_feasible_mppi_and_keeps_admission():
     from aic_transfuser_lite.control.time_reference_v1 import TimePlan, TimedBodyPose
     pose = TimedBodyPose(1_000_000_000, 'sim', '0', 'map', 'base_link', 0., 0., 0.)
