@@ -427,6 +427,15 @@ bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
 保留窓の追加調査記録は同run rootの`unresolved_review_v1/`。
 詳しいローカル作業報告は`docs/native_teacher_hold_review_20260918.md`。
 
+最終v3は338窓（通常走行86、コーン周辺252）。適格・間引き前651窓、間引き313窓、
+保留14,576窓、離隔条件の除外291窓。v1採用から55窓を保留へ変更し、間引きも再計算した。
+原本およびv1/v2を保全し、以後の取込元はv3とする。保留から追加採用した窓は0。
+全338窓のsource/teacher/mask/指令整合と、元bagからの21窓のsensor/教師再構築がPASS。
+実装commit `80f38d3faca92827243f42426ec18d07c138d043`、
+WSL全体pytestは3,208 passed / 4 skipped / 84 warnings、110.89s。
+v3目録SHA256は`560d923e9404d3ae475331e72a0ab04da480e08523db4510d52eb8554169a812`。
+結果のWindows確認用コピーは`tmp/curated_teacher_20260918_v3/`。
+
 ### 有限の追加収録キュー
 
 Windows側の`tmp/native_collection_resume_20260918/continue_10kmh_batch.py`は、
