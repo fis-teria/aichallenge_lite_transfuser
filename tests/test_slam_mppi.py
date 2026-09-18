@@ -210,12 +210,13 @@ def test_short_reference_can_end_beside_box_without_early_rejoin():
     assert sum(d['feasible'] for d in out['candidate_diagnostics']) > 0
 
 
-def test_stopped_short_prediction_retains_spatial_reference_but_rechecks_grid():
+@pytest.mark.parametrize('scale', [.01, 0.])
+def test_stopped_short_prediction_retains_spatial_reference_but_rechecks_grid(scale):
     ref, grid, origin = scene()
     g = SimpleNamespace(values=grid, origin=origin/.2, resolution_m=.2)
     planner = AvoidancePlanner()
     assert planner.update(packet(), ref, g)['mode'] == 'AVOID'
-    short = ref*.01
+    short = ref*scale
     out = planner.update(packet(True, 1_100_000_000), short, g)
     assert out['mode'] == 'AVOID' and out['reference_retained']
     assert out['reference_horizon_m'] == pytest.approx(12.)

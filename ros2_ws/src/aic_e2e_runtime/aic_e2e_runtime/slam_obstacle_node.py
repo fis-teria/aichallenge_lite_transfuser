@@ -193,11 +193,17 @@ def main(argv: list[str] | None = None) -> None:
                 body_pose = np.array([anchor.x_m-1.65*math.cos(anchor.yaw_rad),
                                       anchor.y_m-1.65*math.sin(anchor.yaw_rad), anchor.yaw_rad])
                 xy = np.asarray(plan['raw_xy_m'])
-                if np.linalg.norm(np.diff(np.vstack(([0., 0.], xy)), axis=0), axis=1).max() > .01:
+                if args.mppi or np.linalg.norm(np.diff(np.vstack(([0., 0.], xy)), axis=0), axis=1).max() > .01:
                     path_world = transform(xy, body_pose); plan_observation_ns = plan['observation_ns']
                 break
+        detection_path = path_world
+        if path_world is not None and avoidance is not None:
+            if avoidance.active and avoidance.reference_world is not None:
+                detection_path = avoidance.reference_world
+            elif np.linalg.norm(np.diff(path_world, axis=0), axis=1).max() <= .01:
+                detection_path = None
         state = detector.update(stamp, scan.ranges, scan.angle_min, scan.angle_increment,
-                                scan.range_min, scan.range_max, p, path_world)
+                                scan.range_min, scan.range_max, p, detection_path)
         state.update(event='OBSTACLES', run_id=args.output.name, reason='OK', sim_ns=clock, monotonic_ns=time.monotonic_ns(),
                      gnss_imu_map_inputs=False, pose_source='Cartographer scan+wheel_odometry',
                      plan_observation_ns=plan_observation_ns,
