@@ -88,9 +88,13 @@ class RetainedPathRecovery:
 
         def result(mode: str, reason: str, route: np.ndarray | None) -> dict[str, Any]:
             self.last_reason = reason
+            support = route_support(self.route, pose) if self.route is not None else None
             return dict(mode=mode, reason=reason, reference_world=route,
                         policy=RECOVERY_POLICY, stamp_ns=stamp_ns, attempts=self.attempts, travelled_m=self.travel_m,
-                        started_ns=self.started_ns, reference_source_stamp_ns=self.route_stamp_ns)
+                        started_ns=self.started_ns, reference_source_stamp_ns=self.route_stamp_ns,
+                        retained_remaining_m=support[0] if support is not None else None,
+                        retained_lateral_m=support[1] if support is not None else None,
+                        retained_heading_rad=support[2] if support is not None else None)
 
         if explicit_stop or fresh is None:
             self.good_since_ns = self.bad_since_ns = None
@@ -122,7 +126,10 @@ class RetainedPathRecovery:
                 self.exhausted = False
             else:
                 return result('STOP', 'RECOVERY_EXHAUSTED_WAIT_HEALTHY_MODEL', None)
-        if remaining >= 4. and lateral <= .3 and heading <= .4:
+        # A newer 3 m route can extend farther ahead of the current car than an
+        # older 4 m route already partly consumed. Keep this usable continuation
+        # before the short-reference trigger, without splicing or extrapolation.
+        if remaining >= 3. and lateral <= .3 and heading <= .4:
             self.route = fresh.copy(); self.route_stamp_ns = source_stamp_ns
         if avoidance_active or remaining >= 2.5:
             self.bad_since_ns = None

@@ -129,3 +129,28 @@ def test_recovery_only_admission_cannot_accept_nominal_or_avoid_mode():
         out=command(q,now_sim_ns=1_400_000_000,mppi_policy=FAST_POLICY,recovery_enabled=True,
                     recovery_only=True,vehicle_model_policy='awsim_understeer_20kmh_trial_v1')
         assert out['mode']=='STOP' and out['reason']=='MPPI_REJECTED:RECOVERY_PLAN_REQUIRED'
+
+
+def test_new_three_metre_reference_replaces_consumed_four_metre_reference():
+    r=RetainedPathRecovery()
+    r.select(route(4.),np.zeros(3),1_000_000_000,1.)
+    pose=np.array([3.,0,0])
+    r.select(route(3.2,3.),pose,1_100_000_000,1.)
+    r.select(route(1.,3.),pose,1_200_000_000,0.)
+    out=r.select(route(1.,3.),pose,1_500_000_000,0.)
+    assert out['mode']=='RECOVER'
+    assert out['reference_source_stamp_ns']==1_100_000_000
+    assert out['retained_remaining_m']>3.
+
+
+def test_each_recovery_attempt_resets_sampling_side():
+    _,planner,_=recovery_packet()
+    assert planner.recovery_decision['reason']=='RECOVERY_ENTER'
+    # End the first attempt with a healthy model, then enter a second episode.
+    planner.recovery_solver.side=1
+    for i in range(6):
+        planner.prepare_reference(route(),np.zeros(3),1_500_000_000+i*100_000_000,0.)
+    for i in range(4):
+        planner.prepare_reference(route(1.),np.zeros(3),2_100_000_000+i*100_000_000,0.)
+    assert planner.recovery_decision['reason']=='RECOVERY_ENTER'
+    assert planner.recovery_solver.side==0

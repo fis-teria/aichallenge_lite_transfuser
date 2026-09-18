@@ -305,6 +305,8 @@ class AvoidancePlanner:
             return fresh
         self.recovery_decision = self.recovery.select(fresh, pose, stamp_ns, speed_mps,
                                                       avoidance_active=self.active, source_stamp_ns=source_stamp_ns)
+        if self.recovery_decision['reason'] == 'RECOVERY_ENTER':
+            self.recovery_solver = ReferenceMppi(policy=self.policy)
         return self.recovery_decision['reference_world']
 
     def _reference(self, fresh: np.ndarray, stamp: int, base_pose: np.ndarray | None = None) -> np.ndarray:
