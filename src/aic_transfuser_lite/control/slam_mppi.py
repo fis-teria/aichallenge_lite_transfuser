@@ -263,7 +263,8 @@ class AvoidancePlanner:
         """Retain observed spatial intent for at most 10 s without extension.
 
         Fresh source packets are still mandatory. Never extend past a model
-        prediction: replace only with a geometrically overlapping continuation.
+        prediction: accept an overlapping continuation or a fresh ego-aligned
+        prediction of at least 3 m, then check occupancy again in solve().
         Stored points are SLAM-world metres, not stale body-relative waypoints.
         """
         if (fresh.ndim != 2 or fresh.shape[1:] != (2,) or not 2 <= len(fresh) <= 200
@@ -298,7 +299,7 @@ class AvoidancePlanner:
         if fresh_from_ego or (np.linalg.norm(projection[i]-held[-1]) <= .5 and aligned and remaining > .15):
             # Never splice two predictions: even a centimetre lateral mismatch
             # creates a curvature spike at the join. Adopt the whole fresh
-            # polyline after overlap confirmation, preserving its geometry.
+            # polyline after continuation/ego alignment checks, preserving its geometry.
             self.reference_world = fresh.copy()
             self.reference_updated_ns = stamp
         elif (np.linalg.norm(fresh[-1]-held[-1]) <= .15 and aligned
