@@ -18,7 +18,7 @@ def test_pinned_mppi_v45_source_and_runtime_dependency() -> None:
         assert hashlib.sha256(data).hexdigest() == row["sha256"], row["path"]
     assert "support/multi_purpose_mpc_ros/boost_logic.py" in paths
     assert manifest["teacher"] == "MPPI_SIM_V45"
-    assert manifest["collection_revision"] == "lidar-motion-intent-r2"
+    assert manifest["collection_revision"] == "lidar-motion-early-entry-r3"
     changes = {r["path"] for r in manifest["files"] if "upstream_sha256" in r}
     assert changes == set(manifest["collection_changed_files"])
     assert "source/reference_space_mppi_planner/src/reference_space_mppi_node.cpp" in changes
