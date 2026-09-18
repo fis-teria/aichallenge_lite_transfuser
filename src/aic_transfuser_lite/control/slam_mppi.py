@@ -184,6 +184,7 @@ class AvoidancePlanner:
         self.last_stamp_ns: int | None = None
         self.reference_world: np.ndarray | None = None
         self.reference_updated_ns: int | None = None
+        self.last_reference_world: np.ndarray | None = None
 
     def _reference(self, fresh: np.ndarray, stamp: int) -> np.ndarray:
         """Retain observed spatial intent for at most 10 s without extension.
@@ -269,6 +270,7 @@ class AvoidancePlanner:
         if not self.active:
             return dict(result, mode='NOMINAL', reason='CLEAR')
         try:
+            self.last_reference_world = np.asarray(reference_world).copy()
             plan = self.solver.solve(reference_world, np.asarray(observation['base_pose_xyyaw']),
                 grid.values, grid.origin*grid.resolution_m, grid.resolution_m)
         except ValueError as exc:

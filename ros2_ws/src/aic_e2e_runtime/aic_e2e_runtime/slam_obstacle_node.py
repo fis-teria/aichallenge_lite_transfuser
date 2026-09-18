@@ -54,6 +54,7 @@ def main(argv: list[str] | None = None) -> None:
     waiting: deque = deque(maxlen=24)
     plans: deque = deque(maxlen=32)
     processed = 0; rejected = 0; dropped = 0
+    mppi_snapshots: set[str] = set()
     state = dict(input_valid=False, reason='WAIT_INPUT', motion_authority=False)
     pubs = {
         'scan_input': node.create_publisher(LaserScan, '/time_path/slam/input_scan', qos_profile_sensor_data),
@@ -215,6 +216,18 @@ def main(argv: list[str] | None = None) -> None:
             if state['mppi']['compute_wall_s'] > .15:
                 state['mppi'].update(mode='STOP', reason='MPPI_COMPUTE_TIMEOUT', target_speed_mps=0.)
             state.update(epoch='0', checkpoint_sha256=mppi_config['checkpoint_sha256'])
+            failure = state['mppi']['reason']
+            if (failure in ('MPPI_NO_FEASIBLE_PATH', 'MPPI_REFERENCE_TOO_SHORT')
+                    and failure not in mppi_snapshots and avoidance.last_reference_world is not None):
+                # At most two small replay snapshots per finite trial. Preserve
+                # unknown cells and the exact reference used, not just surfaces.
+                snapshot = args.output/('mppi_'+failure+'.npz')
+                np.savez_compressed(snapshot, reference_world=avoidance.last_reference_world,
+                    base_pose=np.asarray(state['base_pose_xyyaw']), values=detector.grid.values,
+                    origin_xy_m=detector.grid.origin*detector.grid.resolution_m,
+                    resolution_m=detector.grid.resolution_m, stamp_ns=stamp)
+                state['mppi']['snapshot_file'] = snapshot.name
+                mppi_snapshots.add(failure)
         processed += 1; last_process_ns = stamp; last_process_wall = time.monotonic_ns()
         journal.write(json.dumps(state, allow_nan=False)+'\n')
         pubs['objects'].publish(String(data=json.dumps(state, allow_nan=False)))
