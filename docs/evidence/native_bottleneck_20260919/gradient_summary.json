@@ -1,0 +1,1711 @@
+{
+  "identity": {
+    "source_git_commit": "8b7ca46ea3d7e0f675f1ea1cae8d4592c1c2e860",
+    "initializer_sha256": "1fe12ca066791d3eb8907c6921120e2cfbb38925c422d5be54940f4acbdd120a",
+    "schedule_sha256": "404247be30ae07c97f435e83e6b0dce893f5dec7eecc91e6ed58cf0d28faec3b",
+    "native_manifest_sha256": "5691762f647ecfd72a476d809edf2759fb6566c651cb27d09fdea8c928a95de1",
+    "batches": 8,
+    "optimizer_steps": 0,
+    "validation_used": false,
+    "test_used": false,
+    "scope": "initial-weight train-gradient diagnostic, no capacity or closed-loop claim"
+  },
+  "reports": [
+    {
+      "policy": "dynamic_bn",
+      "batch": 0,
+      "native_objective": "xy",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.012562250718474388,
+      "native_loss": 0.12888173758983612,
+      "groups": {
+        "all": {
+          "old_norm": 4.882506717640967,
+          "native_norm": 10.74071919428336,
+          "cosine": -0.7712161538981722,
+          "native_to_old_norm": 2.199837054084556
+        },
+        "backbone.camera": {
+          "old_norm": 0.0967668714437929,
+          "native_norm": 0.2185952428528586,
+          "cosine": -0.2773741674723167,
+          "native_to_old_norm": 2.258988428491561
+        },
+        "backbone.lidar": {
+          "old_norm": 0.03868539644997189,
+          "native_norm": 0.14953399654393518,
+          "cosine": -0.7338322238719392,
+          "native_to_old_norm": 3.8653861732375714
+        },
+        "backbone.ego": {
+          "old_norm": 0.19669323377680034,
+          "native_norm": 0.4063107025996173,
+          "cosine": -0.8082992457096086,
+          "native_to_old_norm": 2.065707573147547
+        },
+        "backbone.fusion": {
+          "old_norm": 0.11022284726964098,
+          "native_norm": 0.30149271720920856,
+          "cosine": -0.5198615463198074,
+          "native_to_old_norm": 2.735301479480558
+        },
+        "decoder": {
+          "old_norm": 2.3893059384488917,
+          "native_norm": 5.155396237806761,
+          "cosine": -0.763125341651655,
+          "native_to_old_norm": 2.1576961555428023
+        },
+        "delta_head": {
+          "old_norm": 4.2390173307262655,
+          "native_norm": 9.387826401341082,
+          "cosine": -0.7739490853680032,
+          "native_to_old_norm": 2.214623264994455
+        }
+      }
+    },
+    {
+      "policy": "dynamic_bn",
+      "batch": 0,
+      "native_objective": "xy_geometry",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.012562250718474388,
+      "native_loss": 0.2789914906024933,
+      "groups": {
+        "all": {
+          "old_norm": 4.882506717640967,
+          "native_norm": 33.324494484014274,
+          "cosine": -0.562255979402339,
+          "native_to_old_norm": 6.825283898455206
+        },
+        "backbone.camera": {
+          "old_norm": 0.0967668714437929,
+          "native_norm": 0.7265615393577681,
+          "cosine": -0.26622407191168473,
+          "native_to_old_norm": 7.5083706698091595
+        },
+        "backbone.lidar": {
+          "old_norm": 0.03868539644997189,
+          "native_norm": 0.5219645252787887,
+          "cosine": -0.7114323890144194,
+          "native_to_old_norm": 13.49254688274412
+        },
+        "backbone.ego": {
+          "old_norm": 0.19669323377680034,
+          "native_norm": 1.1256963095877826,
+          "cosine": -0.6819216591058417,
+          "native_to_old_norm": 5.723106422995607
+        },
+        "backbone.fusion": {
+          "old_norm": 0.11022284726964098,
+          "native_norm": 0.8799051965381901,
+          "cosine": -0.4336591888663784,
+          "native_to_old_norm": 7.982965585942953
+        },
+        "decoder": {
+          "old_norm": 2.3893059384488917,
+          "native_norm": 16.50929731264122,
+          "cosine": -0.5248505299524866,
+          "native_to_old_norm": 6.90966236134618
+        },
+        "delta_head": {
+          "old_norm": 4.2390173307262655,
+          "native_norm": 28.862803911275066,
+          "cosine": -0.5741283817775766,
+          "native_to_old_norm": 6.808843101929484
+        }
+      }
+    },
+    {
+      "policy": "dynamic_bn",
+      "batch": 1,
+      "native_objective": "xy",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.013446006923913956,
+      "native_loss": 0.19238156080245972,
+      "groups": {
+        "all": {
+          "old_norm": 6.618638514092469,
+          "native_norm": 19.416733362700967,
+          "cosine": -0.664664630040124,
+          "native_to_old_norm": 2.9336446342187554
+        },
+        "backbone.camera": {
+          "old_norm": 0.12484981048151965,
+          "native_norm": 0.4892494982676465,
+          "cosine": -0.2569731364808959,
+          "native_to_old_norm": 3.9187043727236217
+        },
+        "backbone.lidar": {
+          "old_norm": 0.033485301797143534,
+          "native_norm": 0.237369605726738,
+          "cosine": -0.18702696095781132,
+          "native_to_old_norm": 7.088770086790343
+        },
+        "backbone.ego": {
+          "old_norm": 0.20761075313895316,
+          "native_norm": 0.6511875831728583,
+          "cosine": -0.5629590330515706,
+          "native_to_old_norm": 3.136579263488441
+        },
+        "backbone.fusion": {
+          "old_norm": 0.14441469053619058,
+          "native_norm": 0.6025250931975982,
+          "cosine": -0.4519067430535861,
+          "native_to_old_norm": 4.172186991229983
+        },
+        "decoder": {
+          "old_norm": 3.0666739566477834,
+          "native_norm": 8.69839104471702,
+          "cosine": -0.7528386658523768,
+          "native_to_old_norm": 2.8364251197493884
+        },
+        "delta_head": {
+          "old_norm": 5.852678695686374,
+          "native_norm": 17.29553528044775,
+          "cosine": -0.6431783822437491,
+          "native_to_old_norm": 2.955148604551819
+        }
+      }
+    },
+    {
+      "policy": "dynamic_bn",
+      "batch": 1,
+      "native_objective": "xy_geometry",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.013446006923913956,
+      "native_loss": 0.37034502625465393,
+      "groups": {
+        "all": {
+          "old_norm": 6.618638514092469,
+          "native_norm": 38.46870468623307,
+          "cosine": -0.8639039498631131,
+          "native_to_old_norm": 5.812177928183437
+        },
+        "backbone.camera": {
+          "old_norm": 0.12484981048151965,
+          "native_norm": 1.2476440452872997,
+          "cosine": -0.32470799020447905,
+          "native_to_old_norm": 9.993159304570804
+        },
+        "backbone.lidar": {
+          "old_norm": 0.033485301797143534,
+          "native_norm": 0.7667254767531181,
+          "cosine": -0.2165421681764161,
+          "native_to_old_norm": 22.897373940303673
+        },
+        "backbone.ego": {
+          "old_norm": 0.20761075313895316,
+          "native_norm": 1.4289445720607357,
+          "cosine": -0.7912753597206889,
+          "native_to_old_norm": 6.882806167098425
+        },
+        "backbone.fusion": {
+          "old_norm": 0.14441469053619058,
+          "native_norm": 1.4433753365831172,
+          "cosine": -0.6268957563236699,
+          "native_to_old_norm": 9.99465726945144
+        },
+        "decoder": {
+          "old_norm": 3.0666739566477834,
+          "native_norm": 18.54479895133053,
+          "cosine": -0.90048607175114,
+          "native_to_old_norm": 6.047202674131705
+        },
+        "delta_head": {
+          "old_norm": 5.852678695686374,
+          "native_norm": 33.55075185129399,
+          "cosine": -0.8554255797360604,
+          "native_to_old_norm": 5.732546342587036
+        }
+      }
+    },
+    {
+      "policy": "dynamic_bn",
+      "batch": 2,
+      "native_objective": "xy",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.024312928318977356,
+      "native_loss": 0.1808398813009262,
+      "groups": {
+        "all": {
+          "old_norm": 18.44635326672842,
+          "native_norm": 12.13738667188297,
+          "cosine": -0.6899280809656796,
+          "native_to_old_norm": 0.6579829897205267
+        },
+        "backbone.camera": {
+          "old_norm": 0.25235304698624184,
+          "native_norm": 0.26754181874228533,
+          "cosine": -0.41462290830423254,
+          "native_to_old_norm": 1.060188580789641
+        },
+        "backbone.lidar": {
+          "old_norm": 0.08572214118940366,
+          "native_norm": 0.0916986934054832,
+          "cosine": -0.6820807362901729,
+          "native_to_old_norm": 1.0697200528726214
+        },
+        "backbone.ego": {
+          "old_norm": 0.6122755588205472,
+          "native_norm": 0.3942939095214412,
+          "cosine": -0.5897131735096844,
+          "native_to_old_norm": 0.6439811353583779
+        },
+        "backbone.fusion": {
+          "old_norm": 0.3599510670645132,
+          "native_norm": 0.2871489032323267,
+          "cosine": -0.5582069420242084,
+          "native_to_old_norm": 0.7977442755597157
+        },
+        "decoder": {
+          "old_norm": 8.888952223575856,
+          "native_norm": 6.1164772343502145,
+          "cosine": -0.7033001758815398,
+          "native_to_old_norm": 0.6880987860557621
+        },
+        "delta_head": {
+          "old_norm": 16.128046346353905,
+          "native_norm": 10.45250502114781,
+          "cosine": -0.6875512830551684,
+          "native_to_old_norm": 0.6480949271026137
+        }
+      }
+    },
+    {
+      "policy": "dynamic_bn",
+      "batch": 2,
+      "native_objective": "xy_geometry",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.024312928318977356,
+      "native_loss": 0.23969441652297974,
+      "groups": {
+        "all": {
+          "old_norm": 18.44635326672842,
+          "native_norm": 29.273938163385004,
+          "cosine": -0.8736869322735576,
+          "native_to_old_norm": 1.5869769888981926
+        },
+        "backbone.camera": {
+          "old_norm": 0.25235304698624184,
+          "native_norm": 0.6419333127460749,
+          "cosine": -0.507716825541178,
+          "native_to_old_norm": 2.5437906156174637
+        },
+        "backbone.lidar": {
+          "old_norm": 0.08572214118940366,
+          "native_norm": 0.25537479561952114,
+          "cosine": -0.8302353982374032,
+          "native_to_old_norm": 2.9790995893962653
+        },
+        "backbone.ego": {
+          "old_norm": 0.6122755588205472,
+          "native_norm": 0.9291848742672709,
+          "cosine": -0.8524470967761223,
+          "native_to_old_norm": 1.5175926278311678
+        },
+        "backbone.fusion": {
+          "old_norm": 0.3599510670645132,
+          "native_norm": 0.6170006829690483,
+          "cosine": -0.8023925468348083,
+          "native_to_old_norm": 1.7141237779924812
+        },
+        "decoder": {
+          "old_norm": 8.888952223575856,
+          "native_norm": 14.745059519005894,
+          "cosine": -0.8689618771197366,
+          "native_to_old_norm": 1.658807376632995
+        },
+        "delta_head": {
+          "old_norm": 16.128046346353905,
+          "native_norm": 25.230219723077774,
+          "cosine": -0.8762643544694753,
+          "native_to_old_norm": 1.5643692472883806
+        }
+      }
+    },
+    {
+      "policy": "dynamic_bn",
+      "batch": 3,
+      "native_objective": "xy",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.02240484207868576,
+      "native_loss": 0.2220693975687027,
+      "groups": {
+        "all": {
+          "old_norm": 3.290936721550549,
+          "native_norm": 16.00229388297451,
+          "cosine": -0.8809388570473955,
+          "native_to_old_norm": 4.862534663211304
+        },
+        "backbone.camera": {
+          "old_norm": 0.13240456005266657,
+          "native_norm": 0.35582699273351587,
+          "cosine": -0.3104196221721499,
+          "native_to_old_norm": 2.6874224920348553
+        },
+        "backbone.lidar": {
+          "old_norm": 0.024887652409955562,
+          "native_norm": 0.1519727687168324,
+          "cosine": -0.42405589565136725,
+          "native_to_old_norm": 6.10635210639796
+        },
+        "backbone.ego": {
+          "old_norm": 0.12272620428155386,
+          "native_norm": 0.5439144508702383,
+          "cosine": -0.8534316177148827,
+          "native_to_old_norm": 4.431934109380667
+        },
+        "backbone.fusion": {
+          "old_norm": 0.1009329425975644,
+          "native_norm": 0.4663222609765236,
+          "cosine": -0.6742045400164701,
+          "native_to_old_norm": 4.62011954645793
+        },
+        "decoder": {
+          "old_norm": 1.6407759153150725,
+          "native_norm": 7.640617500895419,
+          "cosine": -0.9311838205006474,
+          "native_to_old_norm": 4.656709931915485
+        },
+        "delta_head": {
+          "old_norm": 2.8405314079609205,
+          "native_norm": 14.015868289040345,
+          "cosine": -0.8671383373839754,
+          "native_to_old_norm": 4.934241617522425
+        }
+      }
+    },
+    {
+      "policy": "dynamic_bn",
+      "batch": 3,
+      "native_objective": "xy_geometry",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.02240484207868576,
+      "native_loss": 0.34439656138420105,
+      "groups": {
+        "all": {
+          "old_norm": 3.290936721550549,
+          "native_norm": 38.93047966813165,
+          "cosine": -0.9664351165556114,
+          "native_to_old_norm": 11.829604444593901
+        },
+        "backbone.camera": {
+          "old_norm": 0.13240456005266657,
+          "native_norm": 0.9283587883328451,
+          "cosine": -0.31561296459537336,
+          "native_to_old_norm": 7.011531838205359
+        },
+        "backbone.lidar": {
+          "old_norm": 0.024887652409955562,
+          "native_norm": 0.4685122733847435,
+          "cosine": -0.30290573221998934,
+          "native_to_old_norm": 18.825089070969554
+        },
+        "backbone.ego": {
+          "old_norm": 0.12272620428155386,
+          "native_norm": 1.319363302807539,
+          "cosine": -0.9534320393321518,
+          "native_to_old_norm": 10.750461244451962
+        },
+        "backbone.fusion": {
+          "old_norm": 0.1009329425975644,
+          "native_norm": 1.1010070923539628,
+          "cosine": -0.7557769099685275,
+          "native_to_old_norm": 10.908302720786137
+        },
+        "decoder": {
+          "old_norm": 1.6407759153150725,
+          "native_norm": 19.24651013324475,
+          "cosine": -0.9874264138201598,
+          "native_to_old_norm": 11.730127163372526
+        },
+        "delta_head": {
+          "old_norm": 2.8405314079609205,
+          "native_norm": 33.739059534254466,
+          "cosine": -0.9612019516550325,
+          "native_to_old_norm": 11.87772803345769
+        }
+      }
+    },
+    {
+      "policy": "dynamic_bn",
+      "batch": 4,
+      "native_objective": "xy",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.018160805106163025,
+      "native_loss": 0.36684978008270264,
+      "groups": {
+        "all": {
+          "old_norm": 6.393157133353736,
+          "native_norm": 4.404526669181825,
+          "cosine": -0.27292278285117616,
+          "native_to_old_norm": 0.6889439094501483
+        },
+        "backbone.camera": {
+          "old_norm": 0.11049514264832846,
+          "native_norm": 0.18286701799362234,
+          "cosine": 0.09131823593799426,
+          "native_to_old_norm": 1.6549778896220892
+        },
+        "backbone.lidar": {
+          "old_norm": 0.03519342665863435,
+          "native_norm": 0.07311927713077795,
+          "cosine": -0.5387898473768183,
+          "native_to_old_norm": 2.0776401752524114
+        },
+        "backbone.ego": {
+          "old_norm": 0.23604419991675427,
+          "native_norm": 0.1405170383284012,
+          "cosine": -0.43250712998587143,
+          "native_to_old_norm": 0.5952996869991186
+        },
+        "backbone.fusion": {
+          "old_norm": 0.14685297861142652,
+          "native_norm": 0.18793234562942238,
+          "cosine": -0.16558706486664226,
+          "native_to_old_norm": 1.2797312482621956
+        },
+        "decoder": {
+          "old_norm": 3.264950254043258,
+          "native_norm": 1.5189001751487294,
+          "cosine": -0.5216451427142277,
+          "native_to_old_norm": 0.4652138798340801
+        },
+        "delta_head": {
+          "old_norm": 5.476213235004486,
+          "native_norm": 4.115473082520787,
+          "cosine": -0.22354092997390637,
+          "native_to_old_norm": 0.7515180483138028
+        }
+      }
+    },
+    {
+      "policy": "dynamic_bn",
+      "batch": 4,
+      "native_objective": "xy_geometry",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.018160805106163025,
+      "native_loss": 0.5599702596664429,
+      "groups": {
+        "all": {
+          "old_norm": 6.393157133353736,
+          "native_norm": 5.064274453530443,
+          "cosine": 0.1257811443535689,
+          "native_to_old_norm": 0.7921398376257045
+        },
+        "backbone.camera": {
+          "old_norm": 0.11049514264832846,
+          "native_norm": 0.46898293333813473,
+          "cosine": 0.14982405303311053,
+          "native_to_old_norm": 4.244376015973489
+        },
+        "backbone.lidar": {
+          "old_norm": 0.03519342665863435,
+          "native_norm": 0.2132002706902203,
+          "cosine": -0.5310164383351649,
+          "native_to_old_norm": 6.057957150867939
+        },
+        "backbone.ego": {
+          "old_norm": 0.23604419991675427,
+          "native_norm": 0.23714320989163362,
+          "cosine": 0.06536619665152285,
+          "native_to_old_norm": 1.0046559499249164
+        },
+        "backbone.fusion": {
+          "old_norm": 0.14685297861142652,
+          "native_norm": 0.36028483846884624,
+          "cosine": 0.0582304493494739,
+          "native_to_old_norm": 2.453370996458718
+        },
+        "decoder": {
+          "old_norm": 3.264950254043258,
+          "native_norm": 1.8494268500834026,
+          "cosine": 0.09412844342213765,
+          "native_to_old_norm": 0.566448707080025
+        },
+        "delta_head": {
+          "old_norm": 5.476213235004486,
+          "native_norm": 4.652918878423072,
+          "cosine": 0.13763267372838714,
+          "native_to_old_norm": 0.8496599162138471
+        }
+      }
+    },
+    {
+      "policy": "dynamic_bn",
+      "batch": 5,
+      "native_objective": "xy",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.03247437998652458,
+      "native_loss": 0.22421994805335999,
+      "groups": {
+        "all": {
+          "old_norm": 14.971169945888395,
+          "native_norm": 20.579059696272104,
+          "cosine": -0.5023260411924575,
+          "native_to_old_norm": 1.374579259380048
+        },
+        "backbone.camera": {
+          "old_norm": 0.2590413230531531,
+          "native_norm": 0.4485581784566462,
+          "cosine": -0.32404233962792905,
+          "native_to_old_norm": 1.731608583409705
+        },
+        "backbone.lidar": {
+          "old_norm": 0.06691919726339311,
+          "native_norm": 0.1935250672641835,
+          "cosine": -0.6037088996730585,
+          "native_to_old_norm": 2.8919215289219817
+        },
+        "backbone.ego": {
+          "old_norm": 0.5267426723684158,
+          "native_norm": 0.6742556403212163,
+          "cosine": -0.4955868929267592,
+          "native_to_old_norm": 1.280047498885047
+        },
+        "backbone.fusion": {
+          "old_norm": 0.3137470501517047,
+          "native_norm": 0.5998478104887555,
+          "cosine": -0.40342340953372957,
+          "native_to_old_norm": 1.911883506789032
+        },
+        "decoder": {
+          "old_norm": 7.16777394486485,
+          "native_norm": 10.031971867157818,
+          "cosine": -0.5150528576955306,
+          "native_to_old_norm": 1.3995937852288076
+        },
+        "delta_head": {
+          "old_norm": 13.101924726431259,
+          "native_norm": 17.914588266121104,
+          "cosine": -0.5000017213245809,
+          "native_to_old_norm": 1.3673249266942424
+        }
+      }
+    },
+    {
+      "policy": "dynamic_bn",
+      "batch": 5,
+      "native_objective": "xy_geometry",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.03247437998652458,
+      "native_loss": 0.4673691987991333,
+      "groups": {
+        "all": {
+          "old_norm": 14.971169945888395,
+          "native_norm": 53.5631947427151,
+          "cosine": -0.7097203043478918,
+          "native_to_old_norm": 3.577756109663655
+        },
+        "backbone.camera": {
+          "old_norm": 0.2590413230531531,
+          "native_norm": 1.302746420868598,
+          "cosine": -0.36766948388699744,
+          "native_to_old_norm": 5.02910657463437
+        },
+        "backbone.lidar": {
+          "old_norm": 0.06691919726339311,
+          "native_norm": 0.6708298500253187,
+          "cosine": -0.6423727729928841,
+          "native_to_old_norm": 10.024475448875169
+        },
+        "backbone.ego": {
+          "old_norm": 0.5267426723684158,
+          "native_norm": 1.8195094895062456,
+          "cosine": -0.7170600301986233,
+          "native_to_old_norm": 3.4542663523445074
+        },
+        "backbone.fusion": {
+          "old_norm": 0.3137470501517047,
+          "native_norm": 1.6116571418906307,
+          "cosine": -0.5576669754860942,
+          "native_to_old_norm": 5.136804126481359
+        },
+        "decoder": {
+          "old_norm": 7.16777394486485,
+          "native_norm": 26.66525024917548,
+          "cosine": -0.7183219002137444,
+          "native_to_old_norm": 3.720157813888515
+        },
+        "delta_head": {
+          "old_norm": 13.101924726431259,
+          "native_norm": 46.310618187167705,
+          "cosine": -0.7083150435644312,
+          "native_to_old_norm": 3.53464236393777
+        }
+      }
+    },
+    {
+      "policy": "dynamic_bn",
+      "batch": 6,
+      "native_objective": "xy",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.02492835745215416,
+      "native_loss": 0.2186654508113861,
+      "groups": {
+        "all": {
+          "old_norm": 13.069851317000541,
+          "native_norm": 12.827998989340749,
+          "cosine": -0.49764448446293613,
+          "native_to_old_norm": 0.9814954032916041
+        },
+        "backbone.camera": {
+          "old_norm": 0.1696652984161977,
+          "native_norm": 0.2943885048421013,
+          "cosine": -0.2996665484423952,
+          "native_to_old_norm": 1.735113235235358
+        },
+        "backbone.lidar": {
+          "old_norm": 0.047228680919356184,
+          "native_norm": 0.1643712103832618,
+          "cosine": -0.33432842522464407,
+          "native_to_old_norm": 3.4803260896472756
+        },
+        "backbone.ego": {
+          "old_norm": 0.4517013501573808,
+          "native_norm": 0.3938535897700304,
+          "cosine": -0.4806545106113038,
+          "native_to_old_norm": 0.8719336119602139
+        },
+        "backbone.fusion": {
+          "old_norm": 0.2513572786105704,
+          "native_norm": 0.33176876798189814,
+          "cosine": -0.4104329492944274,
+          "native_to_old_norm": 1.3199091341846911
+        },
+        "decoder": {
+          "old_norm": 6.054245444285008,
+          "native_norm": 6.302643803976178,
+          "cosine": -0.46254063069626566,
+          "native_to_old_norm": 1.0410287891326986
+        },
+        "delta_head": {
+          "old_norm": 11.550638192329023,
+          "native_norm": 11.144172039534855,
+          "cosine": -0.5094636027907075,
+          "native_to_old_norm": 0.9648100697099049
+        }
+      }
+    },
+    {
+      "policy": "dynamic_bn",
+      "batch": 6,
+      "native_objective": "xy_geometry",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.02492835745215416,
+      "native_loss": 0.33243435621261597,
+      "groups": {
+        "all": {
+          "old_norm": 13.069851317000541,
+          "native_norm": 35.776650512432546,
+          "cosine": -0.7015386921854784,
+          "native_to_old_norm": 2.7373418139727614
+        },
+        "backbone.camera": {
+          "old_norm": 0.1696652984161977,
+          "native_norm": 0.8842003812141402,
+          "cosine": -0.37824254862059964,
+          "native_to_old_norm": 5.211439165628031
+        },
+        "backbone.lidar": {
+          "old_norm": 0.047228680919356184,
+          "native_norm": 0.5236864476150563,
+          "cosine": -0.4216786601442323,
+          "native_to_old_norm": 11.08831407993927
+        },
+        "backbone.ego": {
+          "old_norm": 0.4517013501573808,
+          "native_norm": 1.19064441649926,
+          "cosine": -0.6892963038408333,
+          "native_to_old_norm": 2.635910687635577
+        },
+        "backbone.fusion": {
+          "old_norm": 0.2513572786105704,
+          "native_norm": 0.9343276552898112,
+          "cosine": -0.5568535543722531,
+          "native_to_old_norm": 3.717129897548627
+        },
+        "decoder": {
+          "old_norm": 6.054245444285008,
+          "native_norm": 17.7084614819785,
+          "cosine": -0.6725967496239711,
+          "native_to_old_norm": 2.9249659011916433
+        },
+        "delta_head": {
+          "old_norm": 11.550638192329023,
+          "native_norm": 30.997849252082563,
+          "cosine": -0.7115546694924978,
+          "native_to_old_norm": 2.6836481877398572
+        }
+      }
+    },
+    {
+      "policy": "dynamic_bn",
+      "batch": 7,
+      "native_objective": "xy",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.024902934208512306,
+      "native_loss": 0.2594667673110962,
+      "groups": {
+        "all": {
+          "old_norm": 8.935282474526716,
+          "native_norm": 10.883619838119362,
+          "cosine": -0.30543373472303437,
+          "native_to_old_norm": 1.2180498903249106
+        },
+        "backbone.camera": {
+          "old_norm": 0.14801097905264965,
+          "native_norm": 0.27994792022826614,
+          "cosine": -0.224273333967485,
+          "native_to_old_norm": 1.8913996922396183
+        },
+        "backbone.lidar": {
+          "old_norm": 0.034467751705953446,
+          "native_norm": 0.18929101451229827,
+          "cosine": -0.12072753196229481,
+          "native_to_old_norm": 5.491829467937213
+        },
+        "backbone.ego": {
+          "old_norm": 0.31580563655859323,
+          "native_norm": 0.31164329242839184,
+          "cosine": -0.3504074167768589,
+          "native_to_old_norm": 0.986819918176384
+        },
+        "backbone.fusion": {
+          "old_norm": 0.18920449898947445,
+          "native_norm": 0.34793957464359604,
+          "cosine": -0.22556911099542085,
+          "native_to_old_norm": 1.8389603656462319
+        },
+        "decoder": {
+          "old_norm": 4.126035594944994,
+          "native_norm": 5.106787718111455,
+          "cosine": -0.3650325153100397,
+          "native_to_old_norm": 1.23769841548823
+        },
+        "delta_head": {
+          "old_norm": 7.901384242997006,
+          "native_norm": 9.5836581698724,
+          "cosine": -0.2897610492771346,
+          "native_to_old_norm": 1.212908760685369
+        }
+      }
+    },
+    {
+      "policy": "dynamic_bn",
+      "batch": 7,
+      "native_objective": "xy_geometry",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.024902934208512306,
+      "native_loss": 0.4574386775493622,
+      "groups": {
+        "all": {
+          "old_norm": 8.935282474526716,
+          "native_norm": 25.55546001901841,
+          "cosine": -0.4087762044963877,
+          "native_to_old_norm": 2.8600617934434167
+        },
+        "backbone.camera": {
+          "old_norm": 0.14801097905264965,
+          "native_norm": 0.826310080159087,
+          "cosine": -0.23977609842656328,
+          "native_to_old_norm": 5.582762072434887
+        },
+        "backbone.lidar": {
+          "old_norm": 0.034467751705953446,
+          "native_norm": 0.5295781140409235,
+          "cosine": -0.15281823788187748,
+          "native_to_old_norm": 15.364451924766884
+        },
+        "backbone.ego": {
+          "old_norm": 0.31580563655859323,
+          "native_norm": 1.0255083522285227,
+          "cosine": -0.5620936735815864,
+          "native_to_old_norm": 3.2472769118490836
+        },
+        "backbone.fusion": {
+          "old_norm": 0.18920449898947445,
+          "native_norm": 0.9480873046969108,
+          "cosine": -0.3894851416326951,
+          "native_to_old_norm": 5.010913111266205
+        },
+        "decoder": {
+          "old_norm": 4.126035594944994,
+          "native_norm": 13.099157496408276,
+          "cosine": -0.508331932936945,
+          "native_to_old_norm": 3.174756299353474
+        },
+        "delta_head": {
+          "old_norm": 7.901384242997006,
+          "native_norm": 21.83635826708582,
+          "cosine": -0.37852206667571564,
+          "native_to_old_norm": 2.763611741378022
+        }
+      }
+    },
+    {
+      "policy": "frozen_bn",
+      "batch": 0,
+      "native_objective": "xy",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.011271389201283455,
+      "native_loss": 0.1262255609035492,
+      "groups": {
+        "all": {
+          "old_norm": 5.553304459623942,
+          "native_norm": 10.643783603558848,
+          "cosine": -0.9070988728435644,
+          "native_to_old_norm": 1.9166576730928278
+        },
+        "backbone.camera": {
+          "old_norm": 0.16168581672328763,
+          "native_norm": 0.3619410993828093,
+          "cosine": -0.4925472701221239,
+          "native_to_old_norm": 2.2385457594109357
+        },
+        "backbone.lidar": {
+          "old_norm": 0.20220704047479138,
+          "native_norm": 0.5083694424900058,
+          "cosine": -0.7427240463579231,
+          "native_to_old_norm": 2.514103570757631
+        },
+        "backbone.ego": {
+          "old_norm": 0.19871964727567032,
+          "native_norm": 0.40036707623622747,
+          "cosine": -0.8521166540592072,
+          "native_to_old_norm": 2.0147332270614657
+        },
+        "backbone.fusion": {
+          "old_norm": 0.11666461252082773,
+          "native_norm": 0.29360397993808673,
+          "cosine": -0.6089879447259634,
+          "native_to_old_norm": 2.5166498528906582
+        },
+        "decoder": {
+          "old_norm": 2.569812580461933,
+          "native_norm": 5.117836215193966,
+          "cosine": -0.9555138896244637,
+          "native_to_old_norm": 1.9915211926754663
+        },
+        "delta_head": {
+          "old_norm": 4.901032806668773,
+          "native_norm": 9.281267500037918,
+          "cosine": -0.8948106646740068,
+          "native_to_old_norm": 1.8937370685233967
+        }
+      }
+    },
+    {
+      "policy": "frozen_bn",
+      "batch": 0,
+      "native_objective": "xy_geometry",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.011271389201283455,
+      "native_loss": 0.2699725329875946,
+      "groups": {
+        "all": {
+          "old_norm": 5.553304459623942,
+          "native_norm": 33.26164817392677,
+          "cosine": -0.8756168638507077,
+          "native_to_old_norm": 5.989523609908321
+        },
+        "backbone.camera": {
+          "old_norm": 0.16168581672328763,
+          "native_norm": 1.2828597697882427,
+          "cosine": -0.5388379501666142,
+          "native_to_old_norm": 7.934275224547091
+        },
+        "backbone.lidar": {
+          "old_norm": 0.20220704047479138,
+          "native_norm": 1.7236022623435803,
+          "cosine": -0.722454228288879,
+          "native_to_old_norm": 8.523947822471875
+        },
+        "backbone.ego": {
+          "old_norm": 0.19871964727567032,
+          "native_norm": 1.1192981289683732,
+          "cosine": -0.8246979499764507,
+          "native_to_old_norm": 5.632548891432193
+        },
+        "backbone.fusion": {
+          "old_norm": 0.11666461252082773,
+          "native_norm": 0.8651997772316237,
+          "cosine": -0.6319057013615196,
+          "native_to_old_norm": 7.416128666069692
+        },
+        "decoder": {
+          "old_norm": 2.569812580461933,
+          "native_norm": 16.485695191140525,
+          "cosine": -0.8705731391517045,
+          "native_to_old_norm": 6.415135218996073
+        },
+        "delta_head": {
+          "old_norm": 4.901032806668773,
+          "native_norm": 28.73778080880579,
+          "cosine": -0.8795961064496044,
+          "native_to_old_norm": 5.863617311376218
+        }
+      }
+    },
+    {
+      "policy": "frozen_bn",
+      "batch": 1,
+      "native_objective": "xy",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.012874970212578773,
+      "native_loss": 0.1863689124584198,
+      "groups": {
+        "all": {
+          "old_norm": 2.9396406428420025,
+          "native_norm": 19.273475728394402,
+          "cosine": 0.4095942237704128,
+          "native_to_old_norm": 6.556405380815895
+        },
+        "backbone.camera": {
+          "old_norm": 0.19566430134092996,
+          "native_norm": 0.7750879903342475,
+          "cosine": -0.018343096558364653,
+          "native_to_old_norm": 3.9613152988174187
+        },
+        "backbone.lidar": {
+          "old_norm": 0.12453256753209786,
+          "native_norm": 0.7971323173081056,
+          "cosine": 0.3565228206435576,
+          "native_to_old_norm": 6.400994800839125
+        },
+        "backbone.ego": {
+          "old_norm": 0.09638568908339852,
+          "native_norm": 0.6480914875383296,
+          "cosine": 0.5780089835887385,
+          "native_to_old_norm": 6.723938934311742
+        },
+        "backbone.fusion": {
+          "old_norm": 0.07924837342837894,
+          "native_norm": 0.5903437212185378,
+          "cosine": 0.04779564995175101,
+          "native_to_old_norm": 7.449285022260596
+        },
+        "decoder": {
+          "old_norm": 1.2749245725447758,
+          "native_norm": 8.692610317354033,
+          "cosine": 0.6281997313171401,
+          "native_to_old_norm": 6.818136934958751
+        },
+        "delta_head": {
+          "old_norm": 2.6321230488292167,
+          "native_norm": 17.110543490316736,
+          "cosine": 0.35748887500994836,
+          "native_to_old_norm": 6.500662458743182
+        }
+      }
+    },
+    {
+      "policy": "frozen_bn",
+      "batch": 1,
+      "native_objective": "xy_geometry",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.012874970212578773,
+      "native_loss": 0.3580411672592163,
+      "groups": {
+        "all": {
+          "old_norm": 2.9396406428420025,
+          "native_norm": 38.29775371918746,
+          "cosine": 0.5053119102954189,
+          "native_to_old_norm": 13.028039264745551
+        },
+        "backbone.camera": {
+          "old_norm": 0.19566430134092996,
+          "native_norm": 1.956109099189557,
+          "cosine": -0.048196478646339184,
+          "native_to_old_norm": 9.997271274238154
+        },
+        "backbone.lidar": {
+          "old_norm": 0.12453256753209786,
+          "native_norm": 2.2636883616961696,
+          "cosine": 0.2665774312980672,
+          "native_to_old_norm": 18.17748085144644
+        },
+        "backbone.ego": {
+          "old_norm": 0.09638568908339852,
+          "native_norm": 1.4301604088362225,
+          "cosine": 0.5520729327973394,
+          "native_to_old_norm": 14.837891625164024
+        },
+        "backbone.fusion": {
+          "old_norm": 0.07924837342837894,
+          "native_norm": 1.4247187149299585,
+          "cosine": -0.12090181618956974,
+          "native_to_old_norm": 17.977892205163734
+        },
+        "decoder": {
+          "old_norm": 1.2749245725447758,
+          "native_norm": 18.54178467779196,
+          "cosine": 0.7801099682412493,
+          "native_to_old_norm": 14.543436589964044
+        },
+        "delta_head": {
+          "old_norm": 2.6321230488292167,
+          "native_norm": 33.25410626795439,
+          "cosine": 0.4372573734341165,
+          "native_to_old_norm": 12.633948204946575
+        }
+      }
+    },
+    {
+      "policy": "frozen_bn",
+      "batch": 2,
+      "native_objective": "xy",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.020058609545230865,
+      "native_loss": 0.18147853016853333,
+      "groups": {
+        "all": {
+          "old_norm": 9.639238157602191,
+          "native_norm": 11.964572386467674,
+          "cosine": -0.6363181910779804,
+          "native_to_old_norm": 1.2412363083934759
+        },
+        "backbone.camera": {
+          "old_norm": 0.24062553884508878,
+          "native_norm": 0.4337983357493822,
+          "cosine": -0.48390170894338236,
+          "native_to_old_norm": 1.8027942413405056
+        },
+        "backbone.lidar": {
+          "old_norm": 0.3867881353381961,
+          "native_norm": 0.48862435559744316,
+          "cosine": -0.6376491832891047,
+          "native_to_old_norm": 1.263286825409483
+        },
+        "backbone.ego": {
+          "old_norm": 0.33674532038781624,
+          "native_norm": 0.3871674094842509,
+          "cosine": -0.5052055603609124,
+          "native_to_old_norm": 1.1497335999750955
+        },
+        "backbone.fusion": {
+          "old_norm": 0.19861881813333926,
+          "native_norm": 0.28183003988163957,
+          "cosine": -0.49725742229778586,
+          "native_to_old_norm": 1.4189493348633155
+        },
+        "decoder": {
+          "old_norm": 4.385585088147296,
+          "native_norm": 6.018857226840311,
+          "cosine": -0.6313449878913813,
+          "native_to_old_norm": 1.3724182990103597
+        },
+        "delta_head": {
+          "old_norm": 8.55024782780072,
+          "native_norm": 10.293534025818525,
+          "cosine": -0.641210737848881,
+          "native_to_old_norm": 1.203887212760032
+        }
+      }
+    },
+    {
+      "policy": "frozen_bn",
+      "batch": 2,
+      "native_objective": "xy_geometry",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.020058609545230865,
+      "native_loss": 0.24355068802833557,
+      "groups": {
+        "all": {
+          "old_norm": 9.639238157602191,
+          "native_norm": 29.31441666978863,
+          "cosine": -0.8221461031928902,
+          "native_to_old_norm": 3.0411549326301466
+        },
+        "backbone.camera": {
+          "old_norm": 0.24062553884508878,
+          "native_norm": 1.1667258365637847,
+          "cosine": -0.5843821199961952,
+          "native_to_old_norm": 4.848719891344974
+        },
+        "backbone.lidar": {
+          "old_norm": 0.3867881353381961,
+          "native_norm": 1.4543346803427526,
+          "cosine": -0.7981950055858044,
+          "native_to_old_norm": 3.7600291929097702
+        },
+        "backbone.ego": {
+          "old_norm": 0.33674532038781624,
+          "native_norm": 0.9301053487235583,
+          "cosine": -0.7781274766591537,
+          "native_to_old_norm": 2.7620438723614416
+        },
+        "backbone.fusion": {
+          "old_norm": 0.19861881813333926,
+          "native_norm": 0.6149298962138806,
+          "cosine": -0.7349363501952649,
+          "native_to_old_norm": 3.0960303862097205
+        },
+        "decoder": {
+          "old_norm": 4.385585088147296,
+          "native_norm": 14.703175192151386,
+          "cosine": -0.8059792158684309,
+          "native_to_old_norm": 3.3526142798799934
+        },
+        "delta_head": {
+          "old_norm": 8.55024782780072,
+          "native_norm": 25.24178311416149,
+          "cosine": -0.829847095986773,
+          "native_to_old_norm": 2.9521697642598204
+        }
+      }
+    },
+    {
+      "policy": "frozen_bn",
+      "batch": 3,
+      "native_objective": "xy",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.022292912006378174,
+      "native_loss": 0.22429078817367554,
+      "groups": {
+        "all": {
+          "old_norm": 3.2289161071230836,
+          "native_norm": 16.11804679566401,
+          "cosine": 0.5755937822704703,
+          "native_to_old_norm": 4.991782462265627
+        },
+        "backbone.camera": {
+          "old_norm": 0.15304844796165895,
+          "native_norm": 0.5422607160413488,
+          "cosine": -0.06846599126960369,
+          "native_to_old_norm": 3.543065762922298
+        },
+        "backbone.lidar": {
+          "old_norm": 0.10695825056392891,
+          "native_norm": 0.6356065099339913,
+          "cosine": 0.3818917674929748,
+          "native_to_old_norm": 5.942566436743367
+        },
+        "backbone.ego": {
+          "old_norm": 0.11210209628822637,
+          "native_norm": 0.5467319810868337,
+          "cosine": 0.3916252532012648,
+          "native_to_old_norm": 4.87708971722641
+        },
+        "backbone.fusion": {
+          "old_norm": 0.07715154897524495,
+          "native_norm": 0.4568907654968883,
+          "cosine": 0.09519245782102005,
+          "native_to_old_norm": 5.921990829289603
+        },
+        "decoder": {
+          "old_norm": 1.6522706203619755,
+          "native_norm": 7.672094430325597,
+          "cosine": 0.7196659549333302,
+          "native_to_old_norm": 4.643364310771811
+        },
+        "delta_head": {
+          "old_norm": 2.755948066663587,
+          "native_norm": 14.111046716196,
+          "cosine": 0.5329734479881536,
+          "native_to_old_norm": 5.1202150312212344
+        }
+      }
+    },
+    {
+      "policy": "frozen_bn",
+      "batch": 3,
+      "native_objective": "xy_geometry",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.022292912006378174,
+      "native_loss": 0.34433645009994507,
+      "groups": {
+        "all": {
+          "old_norm": 3.2289161071230836,
+          "native_norm": 39.02252439012585,
+          "cosine": 0.4724975000836888,
+          "native_to_old_norm": 12.085332382603877
+        },
+        "backbone.camera": {
+          "old_norm": 0.15304844796165895,
+          "native_norm": 1.5450612894168578,
+          "cosine": -0.07691768247601345,
+          "native_to_old_norm": 10.095243107619883
+        },
+        "backbone.lidar": {
+          "old_norm": 0.10695825056392891,
+          "native_norm": 1.9811934677562413,
+          "cosine": 0.3683386524860932,
+          "native_to_old_norm": 18.523054157211394
+        },
+        "backbone.ego": {
+          "old_norm": 0.11210209628822637,
+          "native_norm": 1.3152806930545393,
+          "cosine": 0.20052028020803303,
+          "native_to_old_norm": 11.73288222615225
+        },
+        "backbone.fusion": {
+          "old_norm": 0.07715154897524495,
+          "native_norm": 1.081182037478122,
+          "cosine": 0.03862180775797664,
+          "native_to_old_norm": 14.013743752896431
+        },
+        "decoder": {
+          "old_norm": 1.6522706203619755,
+          "native_norm": 19.261002705391952,
+          "cosine": 0.5795434350106322,
+          "native_to_old_norm": 11.657292980959921
+        },
+        "delta_head": {
+          "old_norm": 2.755948066663587,
+          "native_norm": 33.760041623437694,
+          "cosine": 0.4406188271550308,
+          "native_to_old_norm": 12.249883091704396
+        }
+      }
+    },
+    {
+      "policy": "frozen_bn",
+      "batch": 4,
+      "native_objective": "xy",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.018566299229860306,
+      "native_loss": 0.3657417297363281,
+      "groups": {
+        "all": {
+          "old_norm": 7.116911544175203,
+          "native_norm": 4.452399407300583,
+          "cosine": -0.33011321089364337,
+          "native_to_old_norm": 0.6256083667282089
+        },
+        "backbone.camera": {
+          "old_norm": 0.18985540212736232,
+          "native_norm": 0.27189071344840166,
+          "cosine": -0.01589540509515328,
+          "native_to_old_norm": 1.4320936375884996
+        },
+        "backbone.lidar": {
+          "old_norm": 0.25892710907520194,
+          "native_norm": 0.2515006909042047,
+          "cosine": -0.26082063249620074,
+          "native_to_old_norm": 0.9713184988720499
+        },
+        "backbone.ego": {
+          "old_norm": 0.24966491756327586,
+          "native_norm": 0.1438213081288966,
+          "cosine": -0.31800074143989615,
+          "native_to_old_norm": 0.5760573393033728
+        },
+        "backbone.fusion": {
+          "old_norm": 0.15846703045617916,
+          "native_norm": 0.1850980317328152,
+          "cosine": -0.16911206696142406,
+          "native_to_old_norm": 1.1680538923457664
+        },
+        "decoder": {
+          "old_norm": 3.513042870693038,
+          "native_norm": 1.548420619716979,
+          "cosine": -0.34574900558654026,
+          "native_to_old_norm": 0.44076337144485606
+        },
+        "delta_head": {
+          "old_norm": 6.1651268453092785,
+          "native_norm": 4.143647642756174,
+          "cosine": -0.3331930221895995,
+          "native_to_old_norm": 0.6721106875374119
+        }
+      }
+    },
+    {
+      "policy": "frozen_bn",
+      "batch": 4,
+      "native_objective": "xy_geometry",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.018566299229860306,
+      "native_loss": 0.5562324523925781,
+      "groups": {
+        "all": {
+          "old_norm": 7.116911544175203,
+          "native_norm": 5.084442590442301,
+          "cosine": 0.16344715444120206,
+          "native_to_old_norm": 0.7144169994080699
+        },
+        "backbone.camera": {
+          "old_norm": 0.18985540212736232,
+          "native_norm": 0.7481158859638911,
+          "cosine": 0.11829990075617258,
+          "native_to_old_norm": 3.940450877779217
+        },
+        "backbone.lidar": {
+          "old_norm": 0.25892710907520194,
+          "native_norm": 0.5453915735183532,
+          "cosine": -0.06844700960010024,
+          "native_to_old_norm": 2.106351766202864
+        },
+        "backbone.ego": {
+          "old_norm": 0.24966491756327586,
+          "native_norm": 0.23777647216617778,
+          "cosine": 0.24548548877570736,
+          "native_to_old_norm": 0.9523823951193101
+        },
+        "backbone.fusion": {
+          "old_norm": 0.15846703045617916,
+          "native_norm": 0.35494911418005837,
+          "cosine": 0.07839956824936962,
+          "native_to_old_norm": 2.23989250734532
+        },
+        "decoder": {
+          "old_norm": 3.513042870693038,
+          "native_norm": 1.8660171088546331,
+          "cosine": 0.3654715754589983,
+          "native_to_old_norm": 0.5311683282949842
+        },
+        "delta_head": {
+          "old_norm": 6.1651268453092785,
+          "native_norm": 4.604859725689266,
+          "cosine": 0.12309695752821362,
+          "native_to_old_norm": 0.7469205161922763
+        }
+      }
+    },
+    {
+      "policy": "frozen_bn",
+      "batch": 5,
+      "native_objective": "xy",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.028242047876119614,
+      "native_loss": 0.2233000248670578,
+      "groups": {
+        "all": {
+          "old_norm": 5.2499538401017505,
+          "native_norm": 20.398013856520464,
+          "cosine": -0.5919851242196706,
+          "native_to_old_norm": 3.8853701342496234
+        },
+        "backbone.camera": {
+          "old_norm": 0.32003957301059544,
+          "native_norm": 0.6714850630521823,
+          "cosine": -0.1752024819769779,
+          "native_to_old_norm": 2.0981313552432206
+        },
+        "backbone.lidar": {
+          "old_norm": 0.1906711811094581,
+          "native_norm": 0.699742391692253,
+          "cosine": -0.49835223321337063,
+          "native_to_old_norm": 3.669890686262408
+        },
+        "backbone.ego": {
+          "old_norm": 0.18036536191436936,
+          "native_norm": 0.671774720332674,
+          "cosine": -0.46666389462792585,
+          "native_to_old_norm": 3.724521788455187
+        },
+        "backbone.fusion": {
+          "old_norm": 0.16297377071962063,
+          "native_norm": 0.612671423380749,
+          "cosine": -0.3203855935907029,
+          "native_to_old_norm": 3.7593253237957307
+        },
+        "decoder": {
+          "old_norm": 2.4575396021875577,
+          "native_norm": 9.829385384900037,
+          "cosine": -0.6049813603208676,
+          "native_to_old_norm": 3.999685448059716
+        },
+        "delta_head": {
+          "old_norm": 4.608561783868556,
+          "native_norm": 17.800153322303427,
+          "cosine": -0.5919677247318569,
+          "native_to_old_norm": 3.862409610002338
+        }
+      }
+    },
+    {
+      "policy": "frozen_bn",
+      "batch": 5,
+      "native_objective": "xy_geometry",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.028242047876119614,
+      "native_loss": 0.47335708141326904,
+      "groups": {
+        "all": {
+          "old_norm": 5.2499538401017505,
+          "native_norm": 53.66347096855889,
+          "cosine": -0.7629460129703035,
+          "native_to_old_norm": 10.221703390732827
+        },
+        "backbone.camera": {
+          "old_norm": 0.32003957301059544,
+          "native_norm": 2.1204566366068067,
+          "cosine": -0.2548457228411902,
+          "native_to_old_norm": 6.625607629268414
+        },
+        "backbone.lidar": {
+          "old_norm": 0.1906711811094581,
+          "native_norm": 2.423821316619353,
+          "cosine": -0.6590719384136458,
+          "native_to_old_norm": 12.712048577639619
+        },
+        "backbone.ego": {
+          "old_norm": 0.18036536191436936,
+          "native_norm": 1.8203025632225658,
+          "cosine": -0.6940565954819453,
+          "native_to_old_norm": 10.092306770558176
+        },
+        "backbone.fusion": {
+          "old_norm": 0.16297377071962063,
+          "native_norm": 1.6453180875098394,
+          "cosine": -0.4542676519765379,
+          "native_to_old_norm": 10.095600538938488
+        },
+        "decoder": {
+          "old_norm": 2.4575396021875577,
+          "native_norm": 26.542181857662086,
+          "cosine": -0.7815482953021097,
+          "native_to_old_norm": 10.800306873604718
+        },
+        "delta_head": {
+          "old_norm": 4.608561783868556,
+          "native_norm": 46.407194493555124,
+          "cosine": -0.7611638672379898,
+          "native_to_old_norm": 10.069778093459696
+        }
+      }
+    },
+    {
+      "policy": "frozen_bn",
+      "batch": 6,
+      "native_objective": "xy",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.022112131118774414,
+      "native_loss": 0.21722063422203064,
+      "groups": {
+        "all": {
+          "old_norm": 3.371942581142176,
+          "native_norm": 12.569236887746488,
+          "cosine": -0.4291708256790264,
+          "native_to_old_norm": 3.7275951725989707
+        },
+        "backbone.camera": {
+          "old_norm": 0.18890725509163422,
+          "native_norm": 0.5100561460919374,
+          "cosine": -0.2314407470580571,
+          "native_to_old_norm": 2.7000347119782235
+        },
+        "backbone.lidar": {
+          "old_norm": 0.17381867211257693,
+          "native_norm": 0.6384009313638033,
+          "cosine": 0.15951957164488192,
+          "native_to_old_norm": 3.672798345567448
+        },
+        "backbone.ego": {
+          "old_norm": 0.1215120562544676,
+          "native_norm": 0.3890008345715458,
+          "cosine": -0.19632419454158778,
+          "native_to_old_norm": 3.2013352959554044
+        },
+        "backbone.fusion": {
+          "old_norm": 0.08856722951298594,
+          "native_norm": 0.3207970906883155,
+          "cosine": -0.04946799012276379,
+          "native_to_old_norm": 3.622074354728229
+        },
+        "decoder": {
+          "old_norm": 1.347954962380569,
+          "native_norm": 6.168038546252956,
+          "cosine": -0.22047251177013225,
+          "native_to_old_norm": 4.575849133237976
+        },
+        "delta_head": {
+          "old_norm": 3.0698751634647485,
+          "native_norm": 10.898179502103963,
+          "cosine": -0.48816460052863647,
+          "native_to_old_norm": 3.5500399598672825
+        }
+      }
+    },
+    {
+      "policy": "frozen_bn",
+      "batch": 6,
+      "native_objective": "xy_geometry",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.022112131118774414,
+      "native_loss": 0.3315812051296234,
+      "groups": {
+        "all": {
+          "old_norm": 3.371942581142176,
+          "native_norm": 35.830597039529884,
+          "cosine": -0.6162629571107774,
+          "native_to_old_norm": 10.626099400361975
+        },
+        "backbone.camera": {
+          "old_norm": 0.18890725509163422,
+          "native_norm": 1.5698278741932798,
+          "cosine": -0.30146064191525757,
+          "native_to_old_norm": 8.310045442308688
+        },
+        "backbone.lidar": {
+          "old_norm": 0.17381867211257693,
+          "native_norm": 2.1699530076545233,
+          "cosine": 0.09216753280913326,
+          "native_to_old_norm": 12.484004055957305
+        },
+        "backbone.ego": {
+          "old_norm": 0.1215120562544676,
+          "native_norm": 1.1953607512132778,
+          "cosine": -0.3524665851964978,
+          "native_to_old_norm": 9.837383944108248
+        },
+        "backbone.fusion": {
+          "old_norm": 0.08856722951298594,
+          "native_norm": 0.9265966933746694,
+          "cosine": -0.10254549842302792,
+          "native_to_old_norm": 10.462071563826093
+        },
+        "decoder": {
+          "old_norm": 1.347954962380569,
+          "native_norm": 17.676759890407858,
+          "cosine": -0.40279497039091106,
+          "native_to_old_norm": 13.113761500747504
+        },
+        "delta_head": {
+          "old_norm": 3.0698751634647485,
+          "native_norm": 30.978401764409753,
+          "cosine": -0.6794404141721597,
+          "native_to_old_norm": 10.091094951706976
+        }
+      }
+    },
+    {
+      "policy": "frozen_bn",
+      "batch": 7,
+      "native_objective": "xy",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.02385592646896839,
+      "native_loss": 0.25887659192085266,
+      "groups": {
+        "all": {
+          "old_norm": 3.0001017324800654,
+          "native_norm": 10.969024481849267,
+          "cosine": -0.03320736901616102,
+          "native_to_old_norm": 3.6562175085914865
+        },
+        "backbone.camera": {
+          "old_norm": 0.16818153824979618,
+          "native_norm": 0.40197991357856555,
+          "cosine": -0.1066937791245377,
+          "native_to_old_norm": 2.390154815812863
+        },
+        "backbone.lidar": {
+          "old_norm": 0.11878590857979598,
+          "native_norm": 0.6501170622525136,
+          "cosine": 0.10447756594818686,
+          "native_to_old_norm": 5.4730150236279
+        },
+        "backbone.ego": {
+          "old_norm": 0.08726607860195132,
+          "native_norm": 0.3130446711842854,
+          "cosine": 0.02416594455876672,
+          "native_to_old_norm": 3.587243476496554
+        },
+        "backbone.fusion": {
+          "old_norm": 0.08203650047538782,
+          "native_norm": 0.3485329729448191,
+          "cosine": -0.06273900642227126,
+          "native_to_old_norm": 4.248510978956059
+        },
+        "decoder": {
+          "old_norm": 0.8853725438155154,
+          "native_norm": 5.131171436090115,
+          "cosine": -0.03345177201541305,
+          "native_to_old_norm": 5.795494192735317
+        },
+        "delta_head": {
+          "old_norm": 2.8513295144971114,
+          "native_norm": 9.643063845754025,
+          "cosine": -0.03461364130019954,
+          "native_to_old_norm": 3.381953505101907
+        }
+      }
+    },
+    {
+      "policy": "frozen_bn",
+      "batch": 7,
+      "native_objective": "xy_geometry",
+      "old_supported": 32,
+      "native_supported": 8,
+      "old_loss": 0.02385592646896839,
+      "native_loss": 0.45605993270874023,
+      "groups": {
+        "all": {
+          "old_norm": 3.0001017324800654,
+          "native_norm": 25.76472033208834,
+          "cosine": -0.20092410195898583,
+          "native_to_old_norm": 8.587948886249823
+        },
+        "backbone.camera": {
+          "old_norm": 0.16818153824979618,
+          "native_norm": 1.3272285093717588,
+          "cosine": -0.08169929810924083,
+          "native_to_old_norm": 7.891642109970816
+        },
+        "backbone.lidar": {
+          "old_norm": 0.11878590857979598,
+          "native_norm": 2.0904712592676735,
+          "cosine": 0.006893784304019738,
+          "native_to_old_norm": 17.598646878753065
+        },
+        "backbone.ego": {
+          "old_norm": 0.08726607860195132,
+          "native_norm": 1.026876662922537,
+          "cosine": -0.1016353266442315,
+          "native_to_old_norm": 11.76719155224623
+        },
+        "backbone.fusion": {
+          "old_norm": 0.08203650047538782,
+          "native_norm": 0.9491691430501348,
+          "cosine": -0.12313949896934416,
+          "native_to_old_norm": 11.570083286706016
+        },
+        "decoder": {
+          "old_norm": 0.8853725438155154,
+          "native_norm": 13.177814931735286,
+          "cosine": -0.15345530365306237,
+          "native_to_old_norm": 14.88392092547331
+        },
+        "delta_head": {
+          "old_norm": 2.8513295144971114,
+          "native_norm": 21.91537216686705,
+          "cosine": -0.2187487966089434,
+          "native_to_old_norm": 7.686018769644821
+        }
+      }
+    }
+  ]
+}
