@@ -1,0 +1,73 @@
+{"passed": true, "teacher": "MPPI_SIM_V45", "topic": "/collection/lidar_v2x/vehicle_positions", "domain_id": "97", "consumers": ["mppi_recovery_controller", "reference_space_mppi_planner", "simple_trajectory_generator"], "native_teacher_consumers": [], "parameters": {"/reference_space_mppi_planner": {"obstacle_longitudinal_inflation_m": 1.1, "obstacle_lateral_inflation_m": 1.15, "clearance_target_m": 0.35, "brain.footprint_radius_m": 0.65, "brain.footprint_front_m": 1.06, "brain.footprint_rear_m": 1.1, "brain.collection_early_entry_search": true, "brain.collection_motion_enabled": true, "brain.collection_avoidance_continuation": true}, "/mppi_recovery_controller": {"collection_planned_stop_gate": true}, "/planning/scenario_planning/simple_trajectory_generator": {"execution_profile.max_speed_mps": 1.3888888888888888}}}
+[INFO] [launch]: All log files can be found below /tmp/ros/log/2026-09-18-08-52-19-520845-3e594705e8b7-25
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [launch.user]: The arguments for aichallenge_submit_launch.
+[INFO] [launch.user]:  - simulation: true
+[INFO] [launch.user]:  - use_sim_time: true
+[INFO] [launch.user]:  - sensor_model: racing_kart_sensor_kit
+[INFO] [launch.user]:  - launch_vehicle_interface: false
+[INFO] [launch.user]:  - control_method: mppi
+[INFO] [launch.user]:  - mpc_cma_mux_authority_enabled: true
+[INFO] [launch.user]: echo launch param use_sim_time: true launch_vehicle_interface: false sensor_model: racing_kart_sensor_kit
+[INFO] [launch.user]:  - planner config overtake_control_route: current
+[INFO] [lidar_v2x_node-1]: process started with pid [46]
+[INFO] [robot_state_publisher-2]: process started with pid [48]
+[INFO] [vehicle_velocity_converter-3]: process started with pid [50]
+[INFO] [imu_corrector-4]: process started with pid [52]
+[INFO] [gnss_poser-5]: process started with pid [54]
+[INFO] [gyro_odometer-6]: process started with pid [56]
+[INFO] [imu_gnss_poser_node-7]: process started with pid [58]
+[INFO] [ekf_localizer-8]: process started with pid [60]
+[INFO] [twist2accel-9]: process started with pid [62]
+[INFO] [simple_trajectory_generator_node-10]: process started with pid [64]
+[INFO] [reference_space_mppi_node-11]: process started with pid [66]
+[INFO] [cma_pure_pursuit-12]: process started with pid [68]
+[INFO] [recovery_controller-13]: process started with pid [70]
+[INFO] [component_container-14]: process started with pid [72]
+[INFO] [relay-15]: process started with pid [74]
+[INFO] [autostart_orchestrator_node.py-16]: process started with pid [76]
+[imu_gnss_poser_node-7] [0m[INFO] [1789721546.631736341] [localization.imu_gnss_poser]: Loaded 121 heading-reference points from /aichallenge/workspace/install/imu_gnss_poser/share/imu_gnss_poser/data/heading_reference.csv[0m
+[imu_gnss_poser_node-7] [0m[INFO] [1789721546.636546536] [localization.imu_gnss_poser]: imu_gnss_poser ready (raceline=yes, service=/set_initial_pose)[0m
+[reference_space_mppi_node-11] [0m[INFO] [1789721546.679145912] [reference_space_mppi_planner]: MPPI static wall map loaded: 751x759 resolution=0.100[0m
+[reference_space_mppi_node-11] [0m[INFO] [1789721546.681544546] [reference_space_mppi_planner]: Reference-space MPPI ready: enabled=true shadow_only=false brain_mode=true internal_timer=true steering_delay=0.070s; CMA PP receives the atomic output command[0m
+[robot_state_publisher-2] [0m[INFO] [1789721546.691293176] [robot_state_publisher]: got segment base_link[0m
+[robot_state_publisher-2] [0m[INFO] [1789721546.691362174] [robot_state_publisher]: got segment camera_link[0m
+[robot_state_publisher-2] [0m[INFO] [1789721546.691368226] [robot_state_publisher]: got segment camera_optical_link[0m
+[robot_state_publisher-2] [0m[INFO] [1789721546.691371880] [robot_state_publisher]: got segment gnss_link[0m
+[robot_state_publisher-2] [0m[INFO] [1789721546.691375228] [robot_state_publisher]: got segment imu_link[0m
+[robot_state_publisher-2] [0m[INFO] [1789721546.691378932] [robot_state_publisher]: got segment lidar[0m
+[robot_state_publisher-2] [0m[INFO] [1789721546.691382315] [robot_state_publisher]: got segment lidar_base_link[0m
+[robot_state_publisher-2] [0m[INFO] [1789721546.691385702] [robot_state_publisher]: got segment sensor_kit_base_link[0m
+[component_container-14] [0m[INFO] [1789721546.831552310] [map.map_container]: Load Library: /autoware/install/map_loader/lib/liblanelet2_map_loader_node.so[0m
+[component_container-14] [0m[INFO] [1789721546.839354129] [map.map_container]: Found class: rclcpp_components::NodeFactoryTemplate<Lanelet2MapLoaderNode>[0m
+[component_container-14] [0m[INFO] [1789721546.839384336] [map.map_container]: Instantiate class: rclcpp_components::NodeFactoryTemplate<Lanelet2MapLoaderNode>[0m
+[INFO] [launch_ros.actions.load_composable_nodes]: Loaded node '/map/lanelet2_map_loader' in container '/map/map_container'
+[component_container-14] [0m[INFO] [1789721546.854029446] [map.map_container]: Load Library: /autoware/install/map_loader/lib/liblanelet2_map_visualization_node.so[0m
+[component_container-14] [0m[INFO] [1789721546.855306179] [map.map_container]: Found class: rclcpp_components::NodeFactoryTemplate<Lanelet2MapVisualizationNode>[0m
+[component_container-14] [0m[INFO] [1789721546.855338078] [map.map_container]: Instantiate class: rclcpp_components::NodeFactoryTemplate<Lanelet2MapVisualizationNode>[0m
+[INFO] [launch_ros.actions.load_composable_nodes]: Loaded node '/map/lanelet2_map_visualization' in container '/map/map_container'
+[component_container-14] [0m[INFO] [1789721546.861737149] [map.lanelet2_map_visualization]: Map is loaded
+[component_container-14] [0m
+[component_container-14] [0m[INFO] [1789721546.864168244] [map.map_container]: Load Library: /autoware/install/map_tf_generator/lib/libvector_map_tf_generator_node.so[0m
+[component_container-14] [0m[INFO] [1789721546.867077107] [map.map_container]: Found class: rclcpp_components::NodeFactoryTemplate<VectorMapTFGeneratorNode>[0m
+[component_container-14] [0m[INFO] [1789721546.867096340] [map.map_container]: Instantiate class: rclcpp_components::NodeFactoryTemplate<VectorMapTFGeneratorNode>[0m
+[INFO] [launch_ros.actions.load_composable_nodes]: Loaded node '/map/vector_map_tf_generator' in container '/map/map_container'
+[component_container-14] [0m[INFO] [1789721546.873891490] [map.vector_map_tf_generator]: broadcast static tf. map_frame:map, viewer_frame:viewer, x:89648.5, y:43155.8, z:6.5[0m
+[autostart_orchestrator_node.py-16] Exception in thread Thread-1 (_run):
+[autostart_orchestrator_node.py-16] Traceback (most recent call last):
+[autostart_orchestrator_node.py-16]   File "/usr/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+[autostart_orchestrator_node.py-16]     self.run()
+[autostart_orchestrator_node.py-16]   File "/usr/lib/python3.10/threading.py", line 953, in run
+[autostart_orchestrator_node.py-16]     self._target(*self._args, **self._kwargs)
+[autostart_orchestrator_node.py-16]   File "/aichallenge/workspace/install/autostart_orchestrator_py/lib/autostart_orchestrator_py/autostart_orchestrator_node.py", line 693, in _run
+[autostart_orchestrator_node.py-16]     latest = refresh()
+[autostart_orchestrator_node.py-16]   File "/aichallenge/workspace/install/autostart_orchestrator_py/lib/autostart_orchestrator_py/autostart_orchestrator_node.py", line 679, in refresh
+[autostart_orchestrator_node.py-16]     self._capture_started,
+[autostart_orchestrator_node.py-16] AttributeError: 'AutostartOrchestrator' object has no attribute '_capture_started'
+[autostart_orchestrator_node.py-16] [0m[INFO] [1789721546.915421063] [autostart_orchestrator]: overtake race arm=false[0m
+[autostart_orchestrator_node.py-16] [0m[INFO] [1789721546.915752294] [autostart_orchestrator]: race initialization ready=false[0m
+[autostart_orchestrator_node.py-16] [0m[INFO] [1789721546.920266997] [autostart_orchestrator]: wait start: Grounded, Ready on /awsim/state[0m
+[autostart_orchestrator_node.py-16] [0m[INFO] [1789721546.920526698] [autostart_orchestrator]: Subscribing vehicle state: /awsim/state[0m
+[recovery_controller-13] [0m[INFO] [1789721547.042471745] [mppi_recovery_controller]: MPC recovery enabled=True, stop=4.0s, reverse=-2.5m/s for <= 3.0s[0m
+[recovery_controller-13] [0m[INFO] [1789721547.044900645] [mppi_recovery_controller]: [MPPI_REFERENCE_CACHE] map=1 ready=0 submitted=0 completed=0 hits=0 worker=None build_ms=None[0m
+[lidar_v2x_node-1] [0m[INFO] [1789721547.105696125] [lidar_v2x]: LiDAR V2X: waiting_for_scan; mode=teacher_existing_margin[0m

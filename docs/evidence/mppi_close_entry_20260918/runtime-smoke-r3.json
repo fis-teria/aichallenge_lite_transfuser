@@ -1,0 +1,31 @@
+{
+  "exit_code": 0,
+  "seconds": 8.641841888427734,
+  "command": [
+    "docker",
+    "run",
+    "--rm",
+    "--name",
+    "codex-v45-collection-fix-smoke",
+    "--network",
+    "none",
+    "-v",
+    "/home/graneple/e2e_autonomous/mppi_close_adjust_20260918:/operator:ro",
+    "-v",
+    "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro",
+    "-v",
+    "/home/graneple/e2e_autonomous/mppi_close_adjust_20260918/source:/source:ro",
+    "-v",
+    "/home/graneple/e2e_autonomous/mppi_close_adjust_20260918/runtime:/runtime:ro",
+    "-v",
+    "/home/graneple/e2e_autonomous/mppi_close_adjust_20260918/source/integrations/mppi_v45/assets/multi_purpose_mpc_ros/env/final_ver3:/aichallenge/workspace/src/aichallenge_submit/multi_purpose_mpc_ros/env/final_ver3:ro",
+    "-v",
+    "/home/graneple/e2e_autonomous/mppi_close_adjust_20260918/source/integrations/mppi_v45/assets/multi_purpose_mpc_ros/env/final_ver3:/aichallenge/workspace/install/multi_purpose_mpc_ros/share/multi_purpose_mpc_ros/env/final_ver3:ro",
+    "-v",
+    "/home/graneple/e2e_autonomous/mppi_close_adjust_20260918/source/integrations/mppi_v45/assets/multi_purpose_mpc_ros/config/config.yaml:/aichallenge/workspace/install/multi_purpose_mpc_ros/share/multi_purpose_mpc_ros/config/config.yaml:ro",
+    "--entrypoint",
+    "bash",
+    "aichallenge-2025-dev:latest",
+    "/operator/smoke.bash"
+  ]
+}
