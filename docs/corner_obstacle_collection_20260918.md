@@ -344,6 +344,69 @@ bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
 bash tools/with_wsl_training_lock.sh .venv/bin/python -m pytest -q
 ```
 
+#### 保存済みデータへの選別結果
+
+9run・元camera anchor 30,654のうち、前段で残した15,518候補を選別した。
+品質条件を満たした760窓から200ms以上の間隔で392窓を抽出。
+通常走行87窓、静止コーン周辺の走行305窓。間引いた368窓も適格としてindexを保持した。
+離隔の注意条件に当たる291窓は今回の選択から除外し、残り14,467窓は理由付き保留。
+前段の15,136候補外anchorを含め、元rosbag・元教師・既存採用maskは保全している。
+
+| run | 前段候補 | 適格・間引き前 | 選別済み | 通常走行 | コーン周辺 | 保留 | 離隔条件で除外 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| a02 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| a03 | 636 | 71 | 37 | 0 | 37 | 565 | 0 |
+| a04 | 447 | 22 | 12 | 0 | 12 | 425 | 0 |
+| a06 | 6,178 | 196 | 100 | 35 | 65 | 5,936 | 46 |
+| a07 | 5,296 | 198 | 102 | 52 | 50 | 5,046 | 52 |
+| a08 | 1,287 | 127 | 66 | 0 | 66 | 1,064 | 96 |
+| a09 | 763 | 20 | 10 | 0 | 10 | 743 | 0 |
+| a10 | 911 | 126 | 65 | 0 | 65 | 688 | 97 |
+| a11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+
+保留理由は重複し得る。静止コーンの文脈がないAVOID等9,351窓、箱の近接7,728窓、
+停止・微速の意図未確認7,670窓、点群/壁地図の整合または観測support不足6,570窓など。
+元々除外された291窓では追加の保留理由を集計していないため、前回の近接集計とは母集団が異なる。
+
+用途は観測未来XY・速度の追加教師。コーン周辺305窓を305回の回避成功とは数えない。
+物理離隔が全周で証明された成功イベント用の`forward_avoidance_eligible`はfalseのまま。
+一方、今回の用途別選別では、正常な観測軌道として使う392窓に採用indexを付けた。
+停止probability・行動classを推測して補完していない。学習splitへの統合と再学習は未実施。
+
+選別処理の実行commitは`6b11042689e490d69ddc6dd988808729fe67cfa7`。
+出力はWSL
+`/home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/curated_xy_speed_v1/`。
+`selection_manifest.json`が全体目録、各runの`selected_anchors.jsonl`と
+`selected_teachers.npz`が学習用の参照indexと教師。cameraやLiDAR原本は
+目録の`source_bag`を参照し、重複コピーしていない。
+任意のrunをフレーム単位でvalidationへ分割せず、シナリオ群の割当を決めてから
+既存の学習corpus/cacheへ取り込む。
+
+全392窓について、元source index・run/epoch・未来境界・値とmaskの一致・split group保持を
+別scriptで照合してPASS。さらに各runの先頭・中間・末尾の計21anchorを元bagから読み直し、
+カメラ`[1,4,3,224,384]`、LiDAR`[1,4,2,750]`、全履歴参照、
+未来XY/速度`[30,2]`/`[30]`の再構築を確認した。
+`selection_verification.json`と`selected_camera_samples.jpg`へ保存し、画像一覧も目視確認済み。
+選別目録SHA256は`4b67c66a96201131e7be57214a18fb8a583632e127c47b44777ec4c9afcc7c4d`。
+
+最終実装commit `67a2daa2465654f074ae86eccc7ab1d7e743eee2`では、
+1秒履歴・3秒未来・50ms以上の補間supportと、既存0.30m条件を短縮できないようにした。
+選別時の既定条件は同じ。WSLの全体`pytest -q`は3,203 passed / 4 skipped / 84 warnings、113.19s。
+ログはrun rootの`curation_full_pytest.log`。新規テストは、未来側だけの不具合、
+欠測窓の補間禁止、箱の近接、停止意図未確認、shape/非有限値、CLI実行、間引き、
+既存時間・離隔条件の短縮拒否を含む。
+
+Windowsの確認用コピーは`tmp/curated_teacher_20260918/`。
+独立照合scriptは`tmp/lidar_alignment_20260918/verify_curated_xy_speed.py`、
+SHA256 `f34beb8373bfabdcbbccf878db6c31bd17f8e629a141b5dce9ad9d9098573657`。
+WSLでは同じscriptをrunのrootに保存して実行した。
+
+```bash
+bash tools/with_wsl_training_lock.sh env PYTHONPATH=src .venv/bin/python \
+  /home/thistle/e2e_autonomous/runs/mppi_v45_pc10_20260918/verify_curated_xy_speed.py
+# 上記照合結果は上書きしない。再実行時は照合出力名を変更する。
+```
+
 ### 有限の追加収録キュー
 
 Windows側の`tmp/native_collection_resume_20260918/continue_10kmh_batch.py`は、
