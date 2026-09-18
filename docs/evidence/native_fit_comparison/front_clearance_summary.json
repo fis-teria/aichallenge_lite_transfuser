@@ -1,0 +1,408 @@
+{
+  "runs": [
+    {
+      "run_id": "lidar-v45-pc10-front-box-a01",
+      "prefix_candidates": 542,
+      "official_penalties": {
+        "crash": {
+          "count": 0,
+          "total_seconds": 0.0
+        },
+        "wall": {
+          "count": 0,
+          "total_seconds": 0.0
+        },
+        "over": {
+          "count": 0,
+          "total_seconds": 0.0
+        }
+      },
+      "prefix_quality": "NO_DRIFT_DETECTED",
+      "strict_eligible": 0,
+      "training_adoption": false,
+      "sample_interval_sim_s": [
+        7.239999814,
+        73.499998425
+      ],
+      "pose_samples": 1304,
+      "recorded_pose_wall_overlap_samples": 0,
+      "max_recorded_pose_wall_overlap_m": 0.0,
+      "max_monitor_ekf_gnss_xy_difference_m": 0.1043,
+      "objects": [
+        {
+          "object_id": "box_1",
+          "object_type": "box",
+          "pose_source": "recorded EKF",
+          "object_pose_source": "scenario initial placement",
+          "shape_method": "initial upright 0.5 m cube XY projection",
+          "dynamic_pose_verified": false,
+          "minimum_gap_m": 0.9191948275262763,
+          "minimum_sim_s": 53.609998801,
+          "minimum_recorded_pose": {
+            "x": 89624.7411,
+            "y": 43157.7474,
+            "yaw": -1.18321,
+            "speed_mps": 1.2688,
+            "s": 81.833,
+            "d": -3.1534,
+            "progress_m": 81.833,
+            "laps_completed": 0,
+            "stamp": 53.609998801
+          },
+          "initial_object_pose": [
+            89626.701118734,
+            43158.136368101,
+            -1.078331349098635
+          ],
+          "samples_below_030": 0,
+          "sampled_nearby": 197
+        }
+      ],
+      "lidar": {
+        "scans": 1326,
+        "geometry": {
+          "frame_id": "lidar",
+          "beams": 750,
+          "angle_min_rad": -1.5666074752807617,
+          "angle_max_rad": 1.5707963705062866,
+          "scan_time_s": 0.05000000074505806,
+          "range_max_m": 25.0,
+          "base_to_lidar_xyz_m": [
+            1.65,
+            0.0,
+            0.0377
+          ]
+        },
+        "nearest_observed_point_gap_m": 0.8847125127855061,
+        "scans_with_point_below_030": 0,
+        "detected_surface_messages": 1326,
+        "nonempty_surface_messages": 225,
+        "physical_object_pose_or_contact_topics": [],
+        "native_v2x_messages": 0
+      },
+      "candidate_findings": {
+        "NATIVE_PHYSICAL_CLEARANCE_NOT_FULLY_OBSERVED": 542,
+        "DYNAMIC_BOX_NEARBY_UNVERIFIED": 119
+      },
+      "output_sha256": {
+        "candidate_checks.jsonl": "f1796ca2f71d0291df2ed6deee39ba7e263a8c5f603c9d4a785f532cef603bdc"
+      }
+    },
+    {
+      "run_id": "lidar-v45-pc10-front-cone-a01",
+      "prefix_candidates": 282,
+      "official_penalties": {
+        "crash": {
+          "count": 0,
+          "total_seconds": 0.0
+        },
+        "wall": {
+          "count": 0,
+          "total_seconds": 0.0
+        },
+        "over": {
+          "count": 0,
+          "total_seconds": 0.0
+        }
+      },
+      "prefix_quality": "NO_DRIFT_DETECTED",
+      "strict_eligible": 0,
+      "training_adoption": false,
+      "sample_interval_sim_s": [
+        7.239999814,
+        42.41999912
+      ],
+      "pose_samples": 692,
+      "recorded_pose_wall_overlap_samples": 0,
+      "max_recorded_pose_wall_overlap_m": 0.0,
+      "max_monitor_ekf_gnss_xy_difference_m": 0.1244,
+      "objects": [
+        {
+          "object_id": "cone_1",
+          "object_type": "cone",
+          "pose_source": "recorded EKF",
+          "object_pose_source": "scenario initial placement",
+          "shape_method": "circumscribed circle of convex cone mesh XY projection",
+          "dynamic_pose_verified": null,
+          "minimum_gap_m": 1.901939080607469,
+          "minimum_sim_s": 23.029999485,
+          "minimum_recorded_pose": {
+            "x": 89624.6864,
+            "y": 43144.8794,
+            "yaw": 2.12365,
+            "speed_mps": 1.2378,
+            "s": 43.612,
+            "d": -2.821,
+            "progress_m": 43.612,
+            "laps_completed": 0,
+            "stamp": 23.029999485
+          },
+          "initial_object_pose": [
+            89622.19528190594,
+            43143.500031103176,
+            2.2094897550860186
+          ],
+          "samples_below_030": 0,
+          "sampled_nearby": 167
+        }
+      ],
+      "lidar": {
+        "scans": 704,
+        "geometry": {
+          "frame_id": "lidar",
+          "beams": 750,
+          "angle_min_rad": -1.5666074752807617,
+          "angle_max_rad": 1.5707963705062866,
+          "scan_time_s": 0.05000000074505806,
+          "range_max_m": 25.0,
+          "base_to_lidar_xyz_m": [
+            1.65,
+            0.0,
+            0.0377
+          ]
+        },
+        "nearest_observed_point_gap_m": 1.0110587902130175,
+        "scans_with_point_below_030": 0,
+        "detected_surface_messages": 704,
+        "nonempty_surface_messages": 198,
+        "physical_object_pose_or_contact_topics": [],
+        "native_v2x_messages": 0
+      },
+      "candidate_findings": {
+        "NATIVE_PHYSICAL_CLEARANCE_NOT_FULLY_OBSERVED": 282
+      },
+      "output_sha256": {
+        "candidate_checks.jsonl": "d8c6785bc28074dc294135e99b8544385f3c649e2f008d16e3e4388f9f1a2f75"
+      }
+    },
+    {
+      "run_id": "lidar-v45-pc10-front-cone-a02",
+      "prefix_candidates": 128,
+      "official_penalties": {
+        "crash": {
+          "count": 0,
+          "total_seconds": 0.0
+        },
+        "wall": {
+          "count": 0,
+          "total_seconds": 0.0
+        },
+        "over": {
+          "count": 0,
+          "total_seconds": 0.0
+        }
+      },
+      "prefix_quality": "NO_DRIFT_DETECTED",
+      "strict_eligible": 0,
+      "training_adoption": false,
+      "sample_interval_sim_s": [
+        7.239999814,
+        25.724999493
+      ],
+      "pose_samples": 364,
+      "recorded_pose_wall_overlap_samples": 0,
+      "max_recorded_pose_wall_overlap_m": 0.0,
+      "max_monitor_ekf_gnss_xy_difference_m": 0.3646,
+      "objects": [
+        {
+          "object_id": "cone_1",
+          "object_type": "cone",
+          "pose_source": "recorded EKF",
+          "object_pose_source": "scenario initial placement",
+          "shape_method": "circumscribed circle of convex cone mesh XY projection",
+          "dynamic_pose_verified": null,
+          "minimum_gap_m": 1.8670016313461402,
+          "minimum_sim_s": 16.944999621,
+          "minimum_recorded_pose": {
+            "x": 89624.6607,
+            "y": 43144.8508,
+            "yaw": 2.11283,
+            "speed_mps": 2.608,
+            "s": 43.605,
+            "d": -2.7834,
+            "progress_m": 43.605,
+            "laps_completed": 0,
+            "stamp": 16.944999621
+          },
+          "initial_object_pose": [
+            89622.19528190594,
+            43143.500031103176,
+            2.2094897550860186
+          ],
+          "samples_below_030": 0,
+          "sampled_nearby": 80
+        }
+      ],
+      "lidar": {
+        "scans": 370,
+        "geometry": {
+          "frame_id": "lidar",
+          "beams": 750,
+          "angle_min_rad": -1.5666074752807617,
+          "angle_max_rad": 1.5707963705062866,
+          "scan_time_s": 0.05000000074505806,
+          "range_max_m": 25.0,
+          "base_to_lidar_xyz_m": [
+            1.65,
+            0.0,
+            0.0377
+          ]
+        },
+        "nearest_observed_point_gap_m": 0.9967699023619866,
+        "scans_with_point_below_030": 0,
+        "detected_surface_messages": 370,
+        "nonempty_surface_messages": 104,
+        "physical_object_pose_or_contact_topics": [],
+        "native_v2x_messages": 0
+      },
+      "candidate_findings": {
+        "NATIVE_PHYSICAL_CLEARANCE_NOT_FULLY_OBSERVED": 128
+      },
+      "output_sha256": {
+        "candidate_checks.jsonl": "40a14db706161767fd110f3c7e996d8775359ed4bf2744dd5f1b93207a9101ec"
+      }
+    },
+    {
+      "run_id": "lidar-v45-pc10-front-cone-b01",
+      "prefix_candidates": 546,
+      "official_penalties": {
+        "crash": {
+          "count": 0,
+          "total_seconds": 0.0
+        },
+        "wall": {
+          "count": 0,
+          "total_seconds": 0.0
+        },
+        "over": {
+          "count": 0,
+          "total_seconds": 0.0
+        }
+      },
+      "prefix_quality": "NO_DRIFT_DETECTED",
+      "strict_eligible": 0,
+      "training_adoption": false,
+      "sample_interval_sim_s": [
+        7.239999814,
+        72.974998437
+      ],
+      "pose_samples": 1295,
+      "recorded_pose_wall_overlap_samples": 0,
+      "max_recorded_pose_wall_overlap_m": 0.0,
+      "max_monitor_ekf_gnss_xy_difference_m": 0.1246,
+      "objects": [
+        {
+          "object_id": "cone_1",
+          "object_type": "cone",
+          "pose_source": "recorded EKF",
+          "object_pose_source": "scenario initial placement",
+          "shape_method": "circumscribed circle of convex cone mesh XY projection",
+          "dynamic_pose_verified": null,
+          "minimum_gap_m": 0.768701997135165,
+          "minimum_sim_s": 53.544998803,
+          "minimum_recorded_pose": {
+            "x": 89625.1298,
+            "y": 43157.4308,
+            "yaw": -1.03608,
+            "speed_mps": 1.2643,
+            "s": 82.476,
+            "d": -2.9947,
+            "progress_m": 82.476,
+            "laps_completed": 0,
+            "stamp": 53.544998803
+          },
+          "initial_object_pose": [
+            89626.701118734,
+            43158.136368101,
+            -1.078331349098635
+          ],
+          "samples_below_030": 0,
+          "sampled_nearby": 187
+        }
+      ],
+      "lidar": {
+        "scans": 1315,
+        "geometry": {
+          "frame_id": "lidar",
+          "beams": 750,
+          "angle_min_rad": -1.5666074752807617,
+          "angle_max_rad": 1.5707963705062866,
+          "scan_time_s": 0.05000000074505806,
+          "range_max_m": 25.0,
+          "base_to_lidar_xyz_m": [
+            1.65,
+            0.0,
+            0.0377
+          ]
+        },
+        "nearest_observed_point_gap_m": 1.056865684239117,
+        "scans_with_point_below_030": 0,
+        "detected_surface_messages": 1315,
+        "nonempty_surface_messages": 222,
+        "physical_object_pose_or_contact_topics": [],
+        "native_v2x_messages": 0
+      },
+      "candidate_findings": {
+        "NATIVE_PHYSICAL_CLEARANCE_NOT_FULLY_OBSERVED": 546
+      },
+      "output_sha256": {
+        "candidate_checks.jsonl": "d0d1ea41ea76c3b2b7c13fb3719cc958bd5231288d95181d4a4f8ccdd6519075"
+      }
+    }
+  ],
+  "candidates": 1498,
+  "strict_eligible": 0,
+  "training_performed": false,
+  "raw_preserved": true,
+  "operator_sha256": "ef64d14dd9d4d3d3478a7d0c582bd0dcc564b6992161706f78085f5528c63e4a",
+  "map_provenance_sha256": "05360526fdc4637c4d85254e8701c867b5b2e3e6637166ca8db58e86e4c2cdef",
+  "geometry_support_sha256": {
+    "scenario.py": "4dc4599e4dd0cc9ea1de7c4272e0d4cde6b54230fbd4f9b4cbfb28444162e2aa",
+    "probe_cmd.py": "db25ca1e0dee7242d7c819a790db11be451414ac6b253a9004c6de1569b16c07",
+    "schema_lite.py": "4d151580212708a7c9cd8808cb587c151aa6d8b6eed27f67b7144e60ecd54d54",
+    "runner.py": "d593956fa29eba3eac540bdc2dff8aeab002fff2f5a9f0e996b116b00bc289cb",
+    "compiler.py": "17ee3043f97d391f4794abcb6fe30c9e08ee1ec4f0c7e28318c989cfed9c63f7",
+    "geometry.py": "fab2360c2f33ab6c2190f20568421540c659e3b0007c2c950bc871e5c411b8f1",
+    "objects.py": "70fff94ef156c53828e94f7e4b2f656a759d2a4a7a477af6ea1fc0482cb96ee0",
+    "calibration.py": "60d2ff57e05f63632946cffcea6626ecb8a31a168cc0b38dd963c8550c8ae8ff",
+    "occupancy.py": "560f341a5094cfc96394b1aac802911c53eaa17b8eba3adce2027198ae176077",
+    "calibrate_cmd.py": "a467ecb8193d491b541675328d0d0ec7eb037ee8e52f692bf83c2aefc4e0fc84",
+    "build_guard.py": "c3d81054f1c340c78cd65a3426f6681e9b8b9b77cc66bcad1a5114dd48a426c4",
+    "comparison.py": "d78afe05f4d864f9b911d8863c678153c0832672571dabbd308ecfa17b4e56f7",
+    "suite.py": "fe5032bb98e3c113cc42faebf356a019c1202fe79f6a8999d2d9ee1938e52ff9",
+    "release.py": "d7074e6101c54cf06cc7b501aa1c433217b3586cbacb99b6e6704d6cf7e6d8d5",
+    "severity.py": "bbcce7d729e9568ce3c3eff5784ca9034c6402c431f7e19c62c70855ee1cae19",
+    "evaluate.py": "34ca6f3f6929c251d1bb5ec2f460dc422ae0300cc40078b9553bbaf655bca787",
+    "analysis.py": "7f206841d2970361d3d7114e1c2e10378d8630db3ac2fd6349ee4d099bca3dd2",
+    "submission.py": "ed73e6d4e99010f67113befa5aceb75480f1f791b271ce66f78f37a34ba5fbff",
+    "plots.py": "5c91eb23b0a471e48ea7b3cfcebe4a02153c6dd0b71c8211f0f646127071d71a",
+    "route_control.py": "55fc46f2a4911e05ccb1a065de73515920e23e691dc3464e90fbe761a27f8d5b",
+    "anomalies.py": "00863bbb0f4eb50a785e1175bbb8bb02c95e265001115d627d71a57feecb8074",
+    "cli.py": "68a4d5a0e77749d961f1210e7c96bc5baa9da7b498e22daf3ef6879f5a9a876e",
+    "hypotheses.py": "99b80c456339dc3cecdba3996feef5b44e2e28e67f6c36ee17499e52836751fa",
+    "context.py": "9a3702f4e539d2454a8d08839e1410f8280cd1d1b814e39bf9c16cb2424b1200",
+    "regression.py": "6ad3f001f48b4ff09f1b138fbea2b94fa0b2de9d6c49d2b4013684b198394380",
+    "report_html.py": "a1e0a8a63266345129875929a0c2682573ff9b6ec5faecee41335ab4f4666695",
+    "live.py": "c235d24e72f00f1bb451d1522b5c7ceaa21ee1551182fd8106d834f87e678076",
+    "__main__.py": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d",
+    "report.py": "a6c5bdca3305668cd134c5b864258f931ba45143ce0d8fc4389eb0a1296870be",
+    "yamlio.py": "f77f3227d0d07966f62eadd784fcbf89cdd2a9cca9c42fbf5b890896c5bbeeaf",
+    "exitcodes.py": "06501b2690d0aafb8b496533018a12f32fc5933ef77cfd1a7ae35401cab28431",
+    "__init__.py": "a4dcf8c3b45ebda8509de731042dd5514a3b57d42d48c6cd3b6f34f0c9298f1a",
+    "replay.py": "cfa265c364dfab61a91d846d190638716c2104b3fd50820e1ed6299974eed9f3"
+  },
+  "limitations": [
+    "Recorded EKF body pose and initial object placement are estimates, not measured physical separation.",
+    "Cone has a static convex mesh: radius 0.175 m, height 0.7 m, 24 segments. Its circumscribed XY circle is a conservative planar envelope, not 3-D collision truth.",
+    "Box Rigidbody is dynamic after six fixed updates. Initial box poses do not establish their physical pose during a pass.",
+    "Monitor EKF/GNSS distance uses independently received samples, not a synchronized absolute position error.",
+    "Full 1 s history and 3 s future plus 50 ms endpoint supports are checked.",
+    "Front 180 degree LiDAR at x=1.65 m does not observe the full side/rear vehicle perimeter.",
+    "Surface tracks have no native physical object identity, collider centre, or hidden dimensions.",
+    "Zero official penalties is not a 0.30 m clearance certificate."
+  ],
+  "findings_total": {
+    "NATIVE_PHYSICAL_CLEARANCE_NOT_FULLY_OBSERVED": 1498,
+    "DYNAMIC_BOX_NEARBY_UNVERIFIED": 119
+  }
+}

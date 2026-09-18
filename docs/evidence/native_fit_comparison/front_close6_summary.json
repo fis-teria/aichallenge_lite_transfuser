@@ -1,0 +1,86 @@
+{
+  "run_id": "lidar-v45-pc10-front-cone-close6-a02",
+  "status": "HOLD_FAILED_PASS_NOT_TRAINING_TEACHER",
+  "scenario_verdict": "not_judged",
+  "official_penalties": {
+    "crash": {
+      "count": 0,
+      "total_seconds": 0.0
+    },
+    "wall": {
+      "count": 0,
+      "total_seconds": 0.0
+    },
+    "over": {
+      "count": 0,
+      "total_seconds": 0.0
+    }
+  },
+  "progress_start_m": 75.168,
+  "progress_end_m": 77.632,
+  "requested_teacher_route_spawn_difference_m": 6.0,
+  "initial_object_in_recorded_ego_frame_m": [
+    7.278788517506763,
+    -0.9744820547240276
+  ],
+  "final_object_in_recorded_ego_frame_m": [
+    4.82307831609781,
+    -0.6404083827903759
+  ],
+  "max_progress_m": 77.633,
+  "recorded_driving_duration_sim_s": 87.04999805400001,
+  "last_speed_mps": 0.0,
+  "commands": [
+    {
+      "mode": "AVOID",
+      "reason": "mppi_brain:hold_last_valid",
+      "emergency": false,
+      "messages": 1751
+    },
+    {
+      "mode": "AVOID",
+      "reason": "mppi_brain:retimed_continuation",
+      "emergency": false,
+      "messages": 1744
+    },
+    {
+      "mode": "AVOID",
+      "reason": "mppi_brain:avoid_left",
+      "emergency": false,
+      "messages": 6
+    },
+    {
+      "mode": "FREE_RUN",
+      "reason": "mppi_brain:longitudinal_follow",
+      "emergency": false,
+      "messages": 4
+    },
+    {
+      "mode": "AVOID",
+      "reason": "mppi_brain:hold_speed_recovery",
+      "emergency": false,
+      "messages": 2
+    },
+    {
+      "mode": "AVOID",
+      "reason": "mppi_brain:avoid_right",
+      "emergency": false,
+      "messages": 1
+    },
+    {
+      "mode": "AVOID",
+      "reason": "mppi_brain:return_connection:mppi_brain:return_connection",
+      "emergency": false,
+      "messages": 1
+    }
+  ],
+  "execution_sweep_collision_candidate_messages": 111,
+  "zero_first_speed_retime_messages": 111,
+  "limitations": "Counts are messages, not independent failures. Planner collision rejection is not an observed physical collision. One 6 m central-obstacle start condition; no general teacher incapability claim.",
+  "source_bag_sha256": {
+    "raw/lidar-v45-pc10-front-cone-close6-a02/d1/rosbag2_autoware/metadata.yaml": "79d6acc0bf3b246580e7a89787b835fef2df08b4d37e5f16a3f84483cf232abd",
+    "raw/lidar-v45-pc10-front-cone-close6-a02/d1/rosbag2_autoware/rosbag2_autoware_0.mcap.zstd": "9c7c13c14d13c1f9c5ea9919b35cf32b8bb2ffda54ebf99b6cb68a2bb439f4cc",
+    "raw/lidar-v45-pc10-front-cone-close6-a02/d1/rosbag2_autoware/rosbag2_autoware_1.mcap.zstd": "bdcea9d9020fbb25c646712d00fa662c6e68b72dfbc53483e7c0fe53e4562713"
+  },
+  "operator_sha256": "9b685956c9623c6e5b5361ddabebf6baaab24b8a48dc651aa3a3456625c60dd8"
+}
