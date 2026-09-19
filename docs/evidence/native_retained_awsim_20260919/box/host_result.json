@@ -1,0 +1,194 @@
+{
+  "status": "STOPPED_NO_LAP",
+  "run_id": "codex-time-retained-box-01",
+  "start_time_utc": 1789778022.2290123,
+  "scope": "ONE_LAP_MODEL_TRIAL",
+  "official_start_requested": true,
+  "execution_profile": "one_lap",
+  "requested_npcs": 0,
+  "pp_vehicles": 0,
+  "vehicle_domains": [
+    1
+  ],
+  "background_speed_cap_kmh": null,
+  "speed_policy": "curvature_time_preview_20kmh_v1",
+  "trial_config_sha256": "9f19710e600ce48d9d7af36520aa2b84f86a4e9aac69bee4191e2442104d63f6",
+  "static_scenario": {
+    "name": "time_avoidance_single_box",
+    "object_count": 1,
+    "identities": [
+      [
+        "box",
+        "avoidance_box"
+      ]
+    ],
+    "scope": "SETUP_ONLY_NOT_MODEL_INPUT"
+  },
+  "static_scenario_sha256": "6c2aa2a98d58928c374ba05e488e78ae67aab76d54455e5060c8ef6eef34ec4c",
+  "gpu": {
+    "returncode": 0,
+    "stdout": "NVIDIA GeForce RTX 4060 Laptop GPU, 595.91.07\n",
+    "stderr": ""
+  },
+  "steering_asset_sha256": {
+    "AWSIM_Data/StreamingAssets/Vehicle/vehicle.yaml": "5b66e58691091c82d5511535ca458d4c89e85f3b59fa0d0c4a2c7eee47887244",
+    "AWSIM_Data/Managed/Assembly-CSharp.dll": "859e5560dbffd7d0833cd1fe5eb1f36b87fa8d22f6e45eb0e1203d04a1ea6d13"
+  },
+  "rviz_config": "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge/workspace/src/aichallenge_system/aichallenge_system_launch/config/autoware.rviz",
+  "rviz_sha256": "981c28955e9bceedb8845ec8d59e57c4f47805040cd84c5e09f2f1430c7bb3f1",
+  "commands": [
+    [
+      "docker",
+      "run",
+      "--rm",
+      "--name",
+      "codex-time-retained-box-01-nodes",
+      "--gpus",
+      "all",
+      "--network",
+      "host",
+      "-e",
+      "ROS_DOMAIN_ID=1",
+      "-e",
+      "CYCLONEDDS_URI=file:///opt/autoware/cyclonedds.xml",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_native_retained_awsim_20260919/codex-time-retained-box-01/cyclonedds.xml:/opt/autoware/cyclonedds.xml:ro",
+      "-v",
+      "/home/graneple/e2e_autonomous/time_native_retained_awsim_20260919:/time",
+      "-v",
+      "/home/graneple/git/autononous_ai/aichallenge-racingkart/aichallenge:/aichallenge:ro",
+      "--entrypoint",
+      "bash",
+      "codex-cartographer-v4-build:20260910",
+      "-lc",
+      "source /aichallenge/workspace/install/setup.bash && source /time/install/setup.bash && exec ros2 launch aic_e2e_runtime time_path_awsim.launch.py output:=/time/codex-time-retained-box-01 run_id:=codex-time-retained-box-01 checkpoint:=/time/command_off_best.pt config:=/time/codex-time-retained-box-01/trial_config.json authorize_awsim_only:=true max_speed_kmh:=10.0 corner_max_speed_kmh:=10.0"
+    ],
+    [
+      "make",
+      "dev",
+      "DEV_AUTO_START=false",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=1",
+      "RUN_ID=codex-time-retained-box-01",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_native_retained_awsim_20260919/codex-time-retained-box-01",
+      "AWSIM_TIMEOUT=660",
+      "AWSIM_EXTRA_ARGS=--npcs 0 --collisions on --scenario /output/static_obstacles.yaml -logFile /output/codex-time-retained-box-01/awsim_unity.log"
+    ],
+    [
+      "make",
+      "awsim-request-start",
+      "CONTROL_METHOD=v4_20_external",
+      "CAPTURE=false",
+      "ROSBAG=false",
+      "AWSIM_LAPS=1",
+      "RUN_ID=codex-time-retained-box-01",
+      "OUTPUT_HOST_ROOT=/home/graneple/e2e_autonomous/time_native_retained_awsim_20260919/codex-time-retained-box-01",
+      "AWSIM_TIMEOUT=660",
+      "AWSIM_EXTRA_ARGS=--npcs 0 --collisions on --scenario /output/static_obstacles.yaml -logFile /output/codex-time-retained-box-01/awsim_unity.log"
+    ]
+  ],
+  "last_control": {
+    "fault": null,
+    "armed_ns": 17794999602,
+    "armed_wall": 92620.456204843,
+    "stop_since_ns": 33694999246,
+    "stop_confirmed": true,
+    "positive_count": 198,
+    "commands": 878,
+    "max_speed_mps": 2.6751694679260254,
+    "requested_stop_reason": "PROGRESS_STALLED",
+    "speed_mps": 0.0,
+    "current_pose": {
+      "stamp_ns": 34719999223,
+      "clock": "sim",
+      "epoch": "0",
+      "world_frame": "time_wheel_odom",
+      "body_frame": "base_link",
+      "x_m": 17.947193072356153,
+      "y_m": -1.1203065166665205,
+      "yaw_rad": -0.049251737199402304
+    },
+    "scan_rejection_recorded": false,
+    "scan_observation_recorded": true,
+    "scan_would_stop_commands": 12,
+    "reason": "REQUESTED_BRAKE",
+    "monotonic_ns": 92637406265994,
+    "sim_ns": 34739999223,
+    "topic": "/control/command/control_cmd"
+  },
+  "last_inference": {
+    "plans": 5,
+    "rejected": 2,
+    "fault": null,
+    "sources_ok": true,
+    "sources": {
+      "camera": [
+        "/awsim_d1"
+      ],
+      "lidar": [
+        "/awsim_d1"
+      ],
+      "velocity": [
+        "/awsim_d1"
+      ],
+      "actual_steering": [
+        "/awsim_d1"
+      ]
+    },
+    "path_subscribers": [
+      "rviz2"
+    ],
+    "monotonic_ns": 92603499305749,
+    "sim_ns": 834999981,
+    "epoch": "0",
+    "dropped_anchors": 0
+  },
+  "npc_startup": {
+    "requested_count": 0,
+    "spawned_count": 0,
+    "mode": null
+  },
+  "static_scenario_startup": {
+    "name": "time_avoidance_single_box",
+    "object_count": 1,
+    "identities": [
+      [
+        "box",
+        "avoidance_box"
+      ]
+    ],
+    "scope": "SPAWN_CHECK_ONLY_NOT_AVOIDANCE_ACCEPTANCE",
+    "spawn_passes": 2,
+    "collisions_enabled": true,
+    "named_renderer_evidence": [
+      [
+        "box",
+        "avoidance_box"
+      ]
+    ],
+    "names_not_logged_by_simulator": []
+  },
+  "rviz_path_subscribers": [
+    "rviz2"
+  ],
+  "rviz_window": "0x3c00010 \"/aichallenge/workspace/install/aichallenge_system_launch/share/aichallenge_system_launch/config/autoware.rviz* - RViz\": (\"rviz2\" \"rviz2\")  1850x1136+10+45  +70+64",
+  "cleanup_errors": [],
+  "end_time_utc": 1789778085.9465632,
+  "wall_s": 63.717465088004246,
+  "judge_lap_confirmed": false,
+  "judge_section_events": [
+    {
+      "current": 0,
+      "next": 0,
+      "started": "False",
+      "line": "Section line hit: current=0, next=0, started=False",
+      "run_id": "codex-time-retained-box-01",
+      "epoch": 0,
+      "byte_offset": 104287
+    }
+  ],
+  "judge_laps": [],
+  "judge_order_invalid": false
+}

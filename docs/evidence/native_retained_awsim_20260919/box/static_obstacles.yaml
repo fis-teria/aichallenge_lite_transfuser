@@ -1,0 +1,13 @@
+# Unity x/z [m], yaw [degrees]. Single object, ordinary ego start.
+# Setup/evaluation only: no object pose is given to E2E or Pure Pursuit.
+schemaVersion: 2
+name: time_avoidance_single_box
+description: Single box at the previously exercised s44 route centre
+fail:
+  collision: 1
+  timeoutSeconds: 600
+objects:
+  box:
+    - name: avoidance_box
+      at: [359.3672, -15.9015]
+      yaw: -126.5927

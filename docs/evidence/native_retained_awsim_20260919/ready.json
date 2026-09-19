@@ -1,0 +1,109 @@
+{
+  "status": "READY_FOR_BOUNDED_AWSIM_TEST",
+  "checkpoint_sha256": "e7afdab5d05873de0dbed454e1086b32f4d4f1b67f884a9417a349d7db726ad2",
+  "source_commit": "d12bdba09a1be6d0a91a28e18c9127853dfbefa0",
+  "checked_python_files": 258,
+  "connection": {
+    "status": "PASS",
+    "scope": "ISOLATED_SYNTHETIC_ROS_NOT_AWSIM",
+    "learned_path_matches": 6,
+    "checkpoint_sha256": "e7afdab5d05873de0dbed454e1086b32f4d4f1b67f884a9417a349d7db726ad2",
+    "gnss_imu_pose_publishers": 0,
+    "control_subscriptions": [
+      [
+        "/clock",
+        [
+          "rosgraph_msgs/msg/Clock"
+        ]
+      ],
+      [
+        "/sensing/lidar/scan",
+        [
+          "sensor_msgs/msg/LaserScan"
+        ]
+      ],
+      [
+        "/time_path/plan",
+        [
+          "std_msgs/msg/String"
+        ]
+      ],
+      [
+        "/vehicle/status/steering_status",
+        [
+          "autoware_auto_vehicle_msgs/msg/SteeringReport"
+        ]
+      ],
+      [
+        "/vehicle/status/velocity_status",
+        [
+          "autoware_auto_vehicle_msgs/msg/VelocityReport"
+        ]
+      ]
+    ],
+    "local_odometry_samples": 253,
+    "control_odometry_policy": "wheel_speed_steering_v1",
+    "motion_observation_roles": [
+      "steering",
+      "velocity"
+    ],
+    "motion_observation_count": 468,
+    "sweep_guard_commands": 106,
+    "sweep_guard_policy": "CURVATURE_INTERVAL_SUPPORT_V2",
+    "scan_ahead_of_pose_ns": 5000000,
+    "calibrated_left_right_shadow_commands": 28,
+    "response_lead_shadow_commands": 25,
+    "actuator_infeasible_brake_commands": 10,
+    "infeasible_curve_reason": "STEERING_FEASIBLE_LOOKAHEAD_MISSING",
+    "vehicle_model_shadow_commands": 28,
+    "invalid_motion_brake_commands": {
+      "MOTION_YAW_RATE_INVALID": 16,
+      "MOTION_REAR_LATERAL_INVALID": 8
+    },
+    "segment_target_shadow_commands": 24,
+    "segment_scope": "RECORDED_GEOMETRY_WITH_SYNTHETIC_STATIONARY_CLEAR_SCAN",
+    "extended_target_shadow_commands": 25,
+    "extended_scope": "RECORDED_GEOMETRY_WITH_SYNTHETIC_STATIONARY_CLEAR_SCAN",
+    "twenty_kmh_shadow_commands": 14,
+    "twenty_kmh_minimum_preview_m": 8.733333015441895,
+    "twenty_kmh_scan_stopping_travel_m": 1.0,
+    "stopping_distance_policy": "awsim_cap_1m_diagnostic_v1",
+    "curvature_preview_braking_commands": 13,
+    "curvature_preview_maximum_acceleration_mps2": 1.0,
+    "log_only_positive_commands_with_obstacle": 16,
+    "oracle_positive_shadow_commands": 105,
+    "stale_plan_brake_commands": 11,
+    "paused_clock_brake_commands": 7,
+    "speed_policy": "curvature_time_preview_20kmh_v1",
+    "expected_target_speed_mps": 5.555555555555555,
+    "overspeed_brake_commands": 12,
+    "vehicle_command_publishers": 0,
+    "wall_s": 31.788867768002092,
+    "child_exit_codes": [
+      0,
+      0
+    ]
+  },
+  "launch": {
+    "status": "PASS",
+    "command": [
+      "ros2",
+      "launch",
+      "aic_e2e_runtime",
+      "time_path_awsim.launch.py",
+      "checkpoint:=/time/command_off_best.pt",
+      "output:=/time/launch_smoke/run",
+      "run_id:=codex-time-launch-smoke",
+      "device:=cpu",
+      "max_speed_kmh:=12.0",
+      "corner_max_speed_kmh:=8.0"
+    ],
+    "parameters": {
+      "max_speed_kmh": 12.0,
+      "corner_max_speed_kmh": 8.0
+    },
+    "hot_changes_rejected": true,
+    "actual_control_publishers": 0,
+    "both_node_heartbeats": true
+  }
+}
