@@ -144,3 +144,71 @@ Tests cover six-point SI contracts, source/annotation identity, masked-NaN loss,
 AdamW old-momentum/decay isolation, all-unsupported batches, equal common
 initialization across encoders, frozen DINO gradients through a fixture,
 checkpoint replay, legacy TimePath loading and the offline controller boundary.
+
+## Observed diagnostic results (2026-09-27)
+
+Implementation and experiment source: `d5b75590f2b7ac50e982c3c3a2d5b7547dd9f724`.
+The focused Windows suite passed 36 tests. The full native WSL suite passed
+3,348 tests, with four skips and 93 warnings, in 113.84 s. The skips cover
+unavailable OSQP, two existing jsonschema/Draft2020 checks, and an optional
+official LiDAR package; those integrations remain unverified. Native WSL used
+Python 3.10, PyTorch 2.7.1+cu128 and the existing RTX 4080. DINO pretrained
+experiments were not run because official weights are still absent.
+
+The full-suite command, run from the native WSL workspace, was:
+
+```bash
+bash tools/with_wsl_training_lock.sh bash tools/with_workspace_cache.sh \
+  timeout 600 env PYTHONPATH=src .venv/bin/python -m pytest -q \
+  --junitxml=runs/validation/common_il_resnet_pilot_20260927/pytest.xml
+```
+
+The 64-step fixed-feature head fit (`synthetic_fixed_fused_features_v1`) used
+four labelled samples, including two stop positives and two negatives:
+
+| Synthetic head loss | Before | After |
+| --- | ---: | ---: |
+| XY L1, coordinate mean in m | 1.219004 | 0.038731 |
+| Scalar speed L1 in m/s | 0.764807 | 0.063234 |
+| Stop BCE | 0.850513 | 0.000576 |
+
+The ResNet pilot selected 32 uniformly spaced anchors from each of
+`5kmh_run01` and `8kmh_run01`, retaining run-based train membership. This differs
+from Issue #3's boundary-enriched audit selection; counts should not be compared
+as an input-validity improvement. All 64 selected inputs were valid; 61 had
+waypoint/speed support. Three remained unsupported under the source masks.
+The sampler presented 128 anchors over 32 optimizer updates. Losses below are
+evaluation-mode **training-subset** losses on the same selected samples:
+
+| Real-cache head loss | Before | After | Supported anchors |
+| --- | ---: | ---: | ---: |
+| XY L1, coordinate mean in m (not Euclidean ADE) | 1.493029 | 0.362948 | 61 |
+| Scalar speed L1 in m/s | 1.701119 | 0.112004 | 61 |
+| Stop BCE | null | null | 0 |
+
+Stop parameters remained bit-identical, with no stop supervision. Reopening
+`pilot.pt` reproduced all three output tensors exactly. The lower XY/speed
+training loss demonstrates that the training path can optimize these heads;
+it does not establish heldout quality, high-speed driving or closed-loop gains.
+
+Dataset identity:
+`d5b6756a6f26f18539c707efe459f7d30e023b0d9caf23aab78bce27c730457f`.
+`dataset.json` contains the cache manifest identity and all 64 anchor IDs.
+The camera was random-initialized ResNet18; no pretrained-camera claim applies.
+
+Preparation, including a one-time verification of the existing cache inventory,
+took 56.050 s. The 32-update training loop took 3.537 s. Peak allocated CUDA
+memory was 839,936,000 bytes (about 0.782 GiB); this is training on RTX 4080,
+not total device allocation or an RTX 5060/Jetson inference measurement.
+
+Evidence stays inside the native WSL workspace:
+
+- `runs/validation/common_il_head_fit_20260927/{plan,report}.json`
+- `runs/validation/common_il_resnet_pilot_20260927/{plan,dataset,report}.json`
+- `runs/validation/common_il_resnet_pilot_20260927/pilot.pt`
+
+Small report/log copies are in Windows `tmp/common_il_20260927/`. No checkpoint,
+bag, cache or dataset was added to Git. Remaining work is the real pretrained
+DINO pilot, explicit positive/negative stop annotations, then the later matched
+comparison, inference packaging and closed-loop evaluation. The current pilot
+must not replace the retained driving model.
