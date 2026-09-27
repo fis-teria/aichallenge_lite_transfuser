@@ -32,6 +32,44 @@ def main() -> None:
             assert page.title().startswith("AIC TransFuser Lite")
             assert page.locator(".paper:visible").count() == 6
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"), f"Horizontal overflow at {width}px"
+            if width <= 900:
+                assert page.locator(".menu-toggle").is_visible()
+                assert page.locator(".sidebar").is_hidden()
+                page.locator(".menu-toggle").click()
+                assert page.locator(".sidebar[role=dialog]").is_visible()
+                assert page.locator(".menu-toggle").get_attribute("aria-expanded") == "true"
+                assert page.locator("main").evaluate("element => element.inert")
+                positions = page.locator("nav a").evaluate_all("links => links.map(link => ({x: link.getBoundingClientRect().x, y: link.getBoundingClientRect().y}))")
+                assert len({position["x"] for position in positions}) == 1
+                assert positions[0]["y"] < positions[-1]["y"]
+                assert page.locator(".sidebar").bounding_box()["width"] < width
+                if args.screenshots:
+                    args.screenshots.mkdir(parents=True, exist_ok=True)
+                    page.screenshot(path=str(args.screenshots / f"menu-{width}.png"))
+                page.keyboard.press("Shift+Tab")
+                assert page.locator('.sidebar a[href="#sources"]').evaluate("element => element === document.activeElement")
+                page.keyboard.press("Tab")
+                assert page.locator(".menu-close").evaluate("element => element === document.activeElement")
+                page.keyboard.press("Escape")
+                assert page.locator(".sidebar").is_hidden()
+                assert page.locator(".menu-toggle").evaluate("element => element === document.activeElement")
+                page.locator(".menu-toggle").click()
+                page.locator(".menu-backdrop").click(position={"x": width - 10, "y": 100})
+                assert page.locator(".menu-toggle").get_attribute("aria-expanded") == "false"
+                page.locator(".menu-toggle").click()
+                page.locator(".menu-close").click()
+                assert not page.locator("main").evaluate("element => element.inert")
+                page.locator(".menu-toggle").click()
+                page.set_viewport_size({"width": 1200, "height": height})
+                assert page.locator(".sidebar").is_visible()
+                assert page.locator(".menu-backdrop").is_hidden()
+                assert not page.locator("main").evaluate("element => element.inert")
+                assert page.locator(".sidebar").get_attribute("role") is None
+                page.set_viewport_size({"width": width, "height": height})
+                assert page.locator(".sidebar").is_hidden()
+            else:
+                assert page.locator(".sidebar").is_visible()
+                assert page.locator(".menu-toggle").is_hidden()
             page.locator('[data-filter="control"]').click()
             assert page.locator(".paper:visible").count() == 2
             page.locator('[data-filter="all"]').click()
@@ -49,14 +87,21 @@ def main() -> None:
             assert page.locator(".paper details").first.get_attribute("open") is not None
             page.keyboard.press("Enter")
             for target in ("#architecture", "#results", "#stack", "#papers", "#next", "#overview"):
+                if width <= 900:
+                    page.locator(".menu-toggle").click()
                 page.locator(f'nav a[href="{target}"]').click()
                 page.wait_for_function("hash => location.hash === hash", arg=target)
                 page.wait_for_function("hash => document.querySelector('nav a[aria-current]')?.hash === hash", arg=target)
+                if width <= 900:
+                    assert page.locator(".sidebar").is_hidden()
+                    assert not page.locator("main").evaluate("element => element.inert")
+                    assert page.locator(target).evaluate("element => element === document.activeElement")
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1")
             if args.screenshots:
                 args.screenshots.mkdir(parents=True, exist_ok=True)
                 page.screenshot(path=str(args.screenshots / f"site-{width}.png"), full_page=True)
-            print(f"BROWSER_OK: {width}x{height}, filters/search/empty state/keyboard/navigation")
+                page.screenshot(path=str(args.screenshots / f"top-{width}.png"))
+            print(f"BROWSER_OK: {width}x{height}, filters/search/keyboard/sidebar/focus/resize/navigation")
         offline = browser.new_context(java_script_enabled=False, viewport={"width": 390, "height": 844})
         fallback = offline.new_page()
         fallback.goto(args.url, wait_until="networkidle")

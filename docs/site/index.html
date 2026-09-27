@@ -16,6 +16,23 @@
   <body>
     <a class="skip" href="#main">本文へ移動</a>
     <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
       <a class="brand" href="#overview"
         ><img src="assets/mark.svg" alt="" width="32" height="32" /><span
           >AIC <strong>TransFuser Lite</strong></span
@@ -28,9 +45,19 @@
         >
       </div>
     </header>
+    <div class="menu-backdrop" hidden></div>
     <div class="shell">
-      <aside class="sidebar">
-        <p class="eyebrow">PROJECT EXPLORER</p>
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
         <nav aria-label="ページ内ナビゲーション">
           <a href="#overview" aria-current="location"
             ><span>01</span> プロジェクト概要</a
