@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="AIC TransFuser Liteの研究開発ノート。Camera・2D LiDAR・車両状態からの経路予測、検証結果、技術スタック、参考論文を整理。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>AIC TransFuser Lite — Research Notes</title>
+    <link rel="icon" href="assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="assets/style.css" />
+    <script src="assets/site.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <a class="brand" href="#overview"
+        ><img src="assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="shell">
+      <aside class="sidebar">
+        <p class="eyebrow">PROJECT EXPLORER</p>
+        <nav aria-label="ページ内ナビゲーション">
+          <a href="#overview" aria-current="location"
+            ><span>01</span> プロジェクト概要</a
+          >
+          <a href="#architecture"><span>02</span> システムの仕組み</a>
+          <a href="#results"><span>03</span> 検証結果と現在地</a>
+          <a href="#stack"><span>04</span> 技術スタック</a>
+          <a href="#papers"><span>05</span> 参考論文ノート</a>
+          <a href="#next"><span>06</span> 次に取り組むこと</a>
+        </nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main">
+        <section id="overview" class="section first">
+          <div class="section-top">
+            <p class="eyebrow">AUTONOMOUS DRIVING / PROJECT NOTEBOOK</p>
+            <span class="date"
+              >更新 <time datetime="2026-09-27">2026.09.27</time></span
+            >
+          </div>
+          <div class="hero">
+            <div class="hero-copy">
+              <span class="tag light">Camera × 2D LiDAR × Ego State</span>
+              <h1>観測から、<br />次の軌道へ。</h1>
+              <p class="hero-lead">
+                学習による経路予測と、<br />制御・安全監視をつなぐ。
+              </p>
+              <p class="hero-description">
+                自動運転AIチャレンジ
+                E2E部門に向けた、TransFuser風マルチモーダルモデルの研究開発。実装、走行試験、未解決の課題をひとつの入口に。
+              </p>
+              <a class="button primary" href="#results"
+                >現在地を見る <span aria-hidden="true">↗</span></a
+              ><a class="hero-link" href="#architecture">構成を読む →</a>
+            </div>
+            <figure class="hero-figure">
+              <svg
+                viewBox="0 0 480 460"
+                role="img"
+                aria-labelledby="route-title route-desc"
+              >
+                <title id="route-title">観測から将来経路を予測する概念図</title>
+                <desc id="route-desc">
+                  車両の前方にLiDARの観測線、カメラ視野、点列として予測された将来経路を重ねた模式図。実測データではありません。
+                </desc>
+                <defs>
+                  <pattern
+                    id="grid"
+                    width="30"
+                    height="30"
+                    patternUnits="userSpaceOnUse"
+                  >
+                    <path
+                      d="M30 0H0V30"
+                      fill="none"
+                      stroke="#476068"
+                      stroke-width=".6"
+                    />
+                  </pattern>
+                  <linearGradient id="cone" x1="0" y1="1" x2="0" y2="0">
+                    <stop stop-color="#bde788" stop-opacity=".25" />
+                    <stop offset="1" stop-color="#bde788" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+                <rect
+                  width="480"
+                  height="460"
+                  fill="url(#grid)"
+                  opacity=".55"
+                />
+                <path
+                  d="M88 472V294Q89 176 216 167H305Q384 167 386 69V-15"
+                  fill="none"
+                  stroke="#34515a"
+                  stroke-width="113"
+                />
+                <path
+                  d="M88 472V294Q89 176 216 167H305Q384 167 386 69V-15"
+                  fill="none"
+                  stroke="#6b8389"
+                  stroke-width="1.5"
+                  stroke-dasharray="10 12"
+                />
+                <path
+                  d="M32 460V294Q32 110 216 110H305Q329 110 329 69V0M144 460V294Q144 223 216 223H305Q442 223 442 69V0"
+                  fill="none"
+                  stroke="#8b9da1"
+                  stroke-width="1.3"
+                />
+                <path d="M88 350L4 120L260 120Z" fill="url(#cone)" />
+                <g fill="none" stroke="#7eb8be" stroke-opacity=".36">
+                  <path
+                    d="M88 350L39 262M88 350L59 214M88 350L88 175M88 350L131 143M88 350L185 127M88 350L223 153M88 350L232 220"
+                  />
+                  <path
+                    d="M40 267Q86 229 139 267M10 204Q98 138 205 205"
+                    stroke-dasharray="3 6"
+                  />
+                </g>
+                <path
+                  d="M88 350C83 247 119 168 216 167S363 175 383 89"
+                  fill="none"
+                  stroke="#c8ef93"
+                  stroke-width="3.5"
+                />
+                <g fill="#c8ef93">
+                  <circle cx="88" cy="327" r="4" />
+                  <circle cx="89" cy="301" r="4" />
+                  <circle cx="93" cy="273" r="4" />
+                  <circle cx="102" cy="244" r="4" />
+                  <circle cx="117" cy="218" r="4" />
+                  <circle cx="136" cy="196" r="4" />
+                  <circle cx="160" cy="179" r="4" />
+                  <circle cx="187" cy="170" r="4" />
+                  <circle cx="217" cy="167" r="4" />
+                  <circle cx="247" cy="167" r="4" />
+                  <circle cx="277" cy="166" r="4" />
+                  <circle cx="307" cy="162" r="4" />
+                  <circle cx="336" cy="153" r="4" />
+                  <circle cx="361" cy="135" r="4" />
+                  <circle cx="377" cy="109" r="4" />
+                </g>
+                <g transform="translate(68 341)">
+                  <rect
+                    x="-4"
+                    y="4"
+                    width="48"
+                    height="67"
+                    rx="12"
+                    fill="#0d2026"
+                  />
+                  <rect width="40" height="62" rx="10" fill="#eef3e7" />
+                  <rect
+                    x="6"
+                    y="13"
+                    width="28"
+                    height="18"
+                    rx="4"
+                    fill="#28414a"
+                  />
+                  <path d="M8 43H32" stroke="#aac3bc" stroke-width="3" />
+                </g>
+                <g font-family="monospace" font-size="11" letter-spacing="1">
+                  <text x="21" y="28" fill="#a9bec0">LOCAL FRAME / XY</text>
+                  <text x="243" y="276" fill="#ceeaaa">
+                    PREDICTED WAYPOINTS
+                  </text>
+                  <path d="M310 260V189" stroke="#a4c681" stroke-width="1" />
+                  <text x="183" y="345" fill="#93c4ca">
+                    SENSOR OBSERVATIONS
+                  </text>
+                  <path d="M180 336L135 297" stroke="#69989e" />
+                  <text x="21" y="438" fill="#a9bec0">
+                    SCHEMATIC · NOT A DRIVING LOG
+                  </text>
+                </g>
+              </svg>
+              <figcaption>
+                入力・予測経路の模式図。走行ログの可視化ではありません。
+              </figcaption>
+            </figure>
+          </div>
+          <div class="snapshot">
+            <div>
+              <span class="label">MODEL OUTPUT</span>
+              <p><strong>30</strong> 点 / <strong>3.0</strong> 秒</p>
+              <span>TimePathV1・0.1秒間隔のXY</span>
+            </div>
+            <div>
+              <span class="label">RECORDED SINGLE LAP</span>
+              <p><strong>132.36</strong> <small>s</small></p>
+              <span>単独車両・2026.09.18の限定試験</span>
+            </div>
+            <div>
+              <span class="label">CURRENT FOCUS</span>
+              <p class="focus-text">回避の継続と、復帰</p>
+              <span>予測短縮・停止後の再発進を検証</span>
+            </div>
+          </div>
+          <p class="source-line">
+            出典：<a
+              data-source="docs/model_distribution/current_time_path.json"
+              href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/model_distribution/current_time_path.json"
+              >モデル識別情報</a
+            >
+            /
+            <a
+              data-source="docs/time_control_without_gnss_imu.md"
+              href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/time_control_without_gnss_imu.md"
+              >単独周回の記録</a
+            >
+          </p>
+          <div class="callout">
+            <span class="callout-icon" aria-hidden="true">i</span>
+            <p>
+              <strong>このサイトが扱う「現状」</strong><br />公開mainのコード
+              <code>e27e3ca</code>
+              と、その中の検証記録を基準にしています。9月27日のDINOv3関連開発は別ブランチの進捗として区別。設定値、試験で観測した結果、今後の目標を混同しません。
+            </p>
+          </div>
+        </section>
+
+        <section id="architecture" class="section">
+          <div class="section-heading">
+            <span class="section-number">02 / SYSTEM</span>
+            <h2>何を見て、何を予測し、どう走るか。</h2>
+            <p>
+              学習モデルが将来の点列を予測し、モデルの外側で追従制御と安全監視を行います。
+            </p>
+          </div>
+          <div class="architecture-panel">
+            <div class="flow-label">
+              <span>推論・制御で利用する情報</span
+              ><span class="tag">TimePath + optional SLAM MPPI</span>
+            </div>
+            <div class="flow">
+              <div class="flow-inputs">
+                <div>Camera RGB<small>画像の時系列</small></div>
+                <div>2D LiDAR<small>LaserScanの時系列</small></div>
+                <div>Ego State<small>車両状態の履歴</small></div>
+              </div>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+              <div class="flow-node model-node">
+                <span class="label">LEARNED MODEL</span
+                ><strong>Encoder + Fusion</strong><span>時系列特徴を統合</span>
+                <div class="node-divider"></div>
+                <strong>GRU Decoder</strong><span>TimePathV1 / XY 30点</span>
+              </div>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+              <div class="flow-node control-node">
+                <span class="label">OUTSIDE THE MODEL</span
+                ><strong>経路の検査・選択</strong
+                ><span>通常経路 / 局所MPPI</span>
+                <div class="node-divider"></div>
+                <strong>Pure Pursuit</strong><span>操舵・速度指令へ変換</span>
+              </div>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+              <div class="flow-node guard-node">
+                <span class="label">INDEPENDENT GUARD</span
+                ><strong>安全監視</strong><span>時刻・異常値・停止条件</span>
+                <div class="node-divider"></div>
+                <strong>車両指令</strong><span>Ackermann control</span>
+              </div>
+            </div>
+            <p class="flow-foot">
+              任意のSLAM経路：LiDAR + 車速・操舵オドメトリ → Cartographer /
+              局所占有地図 → MPPI候補検査 → 経路選択
+            </p>
+          </div>
+          <div class="two-col principles">
+            <article>
+              <span class="mini-number">A</span>
+              <h3>予測の契約を明示する</h3>
+              <p>
+                現行TimePathの主出力は観測時点の
+                <code>base_link</code> 座標における <code>[B, 30, 2]</code> のXY
+                [m]。時刻は0.1〜3.0秒です。点間距離から求める速度ノルムは、学習済み速度Headや停止確率ではありません。
+              </p>
+              <a
+                data-source="src/aic_transfuser_lite/models/time_path_v1.py"
+                href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/src/aic_transfuser_lite/models/time_path_v1.py"
+                >TimePathの実装 ↗</a
+              >
+            </article>
+            <article>
+              <span class="mini-number">B</span>
+              <h3>教師と推論入力を分ける</h3>
+              <p>
+                将来poseや教師制御は学習・評価用。現在の配布checkpointでは指令履歴も入力しません。通常制御の位置合わせには車速と実操舵角の局所オドメトリを使い、GNSS・IMU・外部poseを制御ノードへ入力しません。
+              </p>
+              <a
+                data-source="docs/time_control_without_gnss_imu.md"
+                href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/time_control_without_gnss_imu.md"
+                >入力の由来と制限 ↗</a
+              >
+            </article>
+          </div>
+          <div class="note amber">
+            <strong>安全監視は設定ごとに確認。</strong>
+            通常周回の近接LiDAR監視は <code>log_only_awsim_v1</code>。SLAM
+            MPPI用設定では
+            <code>stop_v1</code>
+            と実測速度による停止判定が必須です。周回成功を、障害物に対する自動停止の検証結果へ読み替えません。
+          </div>
+          <details class="technical">
+            <summary>
+              モデルの設定値を見る <span>配布checkpointの記録</span>
+            </summary>
+            <div class="detail-body">
+              <div class="table-wrap">
+                <table>
+                  <caption>
+                    TimePathV1 launch_balanced epoch 3
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">設定</th>
+                      <th scope="col">値</th>
+                      <th scope="col">意味</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>hidden_dim</td>
+                      <td>128</td>
+                      <td>融合特徴の次元</td>
+                    </tr>
+                    <tr>
+                      <td>camera_tokens_hw / lidar_tokens</td>
+                      <td>4 × 4 / 32</td>
+                      <td>モダリティごとのトークン数</td>
+                    </tr>
+                    <tr>
+                      <td>fusion_depth / fusion_heads</td>
+                      <td>2 / 4</td>
+                      <td>Transformerの層数 / Attention head数</td>
+                    </tr>
+                    <tr>
+                      <td>image / lidar history</td>
+                      <td>4 / 4</td>
+                      <td>各センサの固定スロット数</td>
+                    </tr>
+                    <tr>
+                      <td>ego_dim / ego_history_length</td>
+                      <td>4 / 10</td>
+                      <td>車両状態のチャネル数 / 履歴数</td>
+                    </tr>
+                    <tr>
+                      <td>use_command_history</td>
+                      <td>false</td>
+                      <td>配布モデルでは制御指令履歴を使用しない</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="source-line">
+                出典：<a
+                  data-source="docs/model_distribution/current_time_path.json"
+                  href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/model_distribution/current_time_path.json"
+                  >checkpointの設定・SHA-256</a
+                >。実ファイルの一致はSHA-256で確認します。
+              </p>
+            </div>
+          </details>
+        </section>
+
+        <section id="results" class="section">
+          <div class="section-heading">
+            <span class="section-number">03 / EVIDENCE</span>
+            <h2>できたこと。その条件。残る課題。</h2>
+            <p>
+              走行記録はそれぞれ異なるコード・設定の試験です。ひとつの現行構成で、すべてを達成した結果ではありません。
+            </p>
+          </div>
+          <div class="evidence-list">
+            <article class="evidence">
+              <div class="evidence-meta">
+                <span class="badge verified">限定試験で確認</span
+                ><time datetime="2026-09-18">2026.09.18</time>
+              </div>
+              <div>
+                <h3>GNSS / IMUを制御入力に使わず、1周完了</h3>
+                <p>
+                  単独車両、速度設定20 / 10 km/h、実測最大12.991
+                  km/h。公式ラップ <strong>132.3635秒</strong>、crash / wall /
+                  course-out penaltyは0 / 0 / 0。
+                </p>
+                <p class="boundary">
+                  単発の周回結果。近接占有監視は記録のみ。複数周の成功率、障害物回避、実車での車輪オドメトリ精度は未検証です。
+                </p>
+                <a
+                  data-source="docs/time_control_without_gnss_imu.md"
+                  href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/time_control_without_gnss_imu.md"
+                  >条件と結果を読む ↗</a
+                >
+              </div>
+            </article>
+            <article class="evidence">
+              <div class="evidence-meta">
+                <span class="badge verified">限定試験で確認</span
+                ><time datetime="2026-09-19">2026.09.19 / rollout02</time>
+              </div>
+              <div>
+                <h3>静止した箱を通過し、通常追従へ復帰</h3>
+                <p>
+                  5 km/h目標のSLAM
+                  MPPI試験。回避指令139回、通常復帰後に約153秒の追従を記録。MPPI計算時間は最大42.52
+                  ms。
+                </p>
+                <p class="boundary">
+                  外側の210秒上限で終了し、周回成功判定はありません。独立の接触カウンタ、実車体の最小距離、複数配置の成功率は未測定です。
+                </p>
+                <a
+                  data-source="docs/slam_mppi_avoidance.md"
+                  href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/slam_mppi_avoidance.md"
+                  >回避の経過と制限を読む ↗</a
+                >
+              </div>
+            </article>
+            <article class="evidence">
+              <div class="evidence-meta">
+                <span class="badge partial">課題を確認</span
+                ><time datetime="2026-09-19">2026.09.19 / speed15-01</time>
+              </div>
+              <div>
+                <h3>上限を上げても、予測範囲の短縮が継続走行を妨げる</h3>
+                <p>
+                  20 / 15 / 15
+                  km/h設定で箱の通過と通常復帰を記録。ただし最初の箱回避区間の最大実測速度は<strong
+                    >6.588 km/h</strong
+                  >。後半に予測範囲が3.741 mから1.203 mへ縮み、停止しました。
+                </p>
+                <p class="boundary">
+                  15
+                  km/hでの箱回避、周回完了は未達。設定した速度上限と達成した回避速度は異なります。予測短縮の学習・入力上の根本原因も未確定です。
+                </p>
+                <a
+                  data-source="docs/slam_mppi_avoidance.md"
+                  href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/slam_mppi_avoidance.md"
+                  >速度試験の記録 ↗</a
+                >
+              </div>
+            </article>
+            <article class="evidence">
+              <div class="evidence-meta">
+                <span class="badge pending">実装・テスト済み</span
+                ><time datetime="2026-09-19">2026.09.19 / main</time>
+              </div>
+              <div>
+                <h3>直前の有効な経路を保持し、低速で復帰を試みる</h3>
+                <p>
+                  保持経路を最新SLAM地図で再検査。最大3 km/h、1試行6秒または2.5
+                  m、1ラン2試行に制限。未知領域や入力異常での停止判定を維持します。
+                </p>
+                <p class="boundary">
+                  公開直前のコード <code>b4ed6b1</code> はnative WSLで
+                  <strong>3324 passed / 4 skipped</strong
+                  >。最新版によるAWSIM復帰完了と、ROS設定同梱修正後の公式colcon再ビルドは未確認です。これは今回のサイト検証件数ではありません。
+                </p>
+                <a
+                  data-source="docs/time_path_runtime_recovery.md"
+                  href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/time_path_runtime_recovery.md"
+                  >保持経路による復帰の仕様 ↗</a
+                >
+              </div>
+            </article>
+          </div>
+          <div class="note">
+            <strong>オフライン評価と走行試験は、別の判断材料。</strong>
+            配布中のlaunch_balancedモデルには、過去のオフライン非劣化条件が未達だった記録もあります。単発の周回成功や配布によって、採用判定を合格へ変更しません。<a
+              data-source="docs/model_sharing.md"
+              href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/model_sharing.md"
+              >モデル配布と評価の位置づけ ↗</a
+            >
+          </div>
+        </section>
+
+        <section id="stack" class="section">
+          <div class="section-heading">
+            <span class="section-number">04 / TECHNOLOGY</span>
+            <h2>学習から走行までの技術スタック。</h2>
+            <p>
+              純粋なPyTorch・数理ロジックとROS依存部分を分け、学習、検証、デプロイの境界を保ちます。
+            </p>
+          </div>
+          <div class="stack-grid">
+            <article class="stack-card">
+              <span class="stack-symbol" aria-hidden="true">01</span>
+              <h3>Learning &amp; Model</h3>
+              <p>Python / PyTorch / torchvision<br />CNN・Transformer・GRU</p>
+              <ul>
+                <li>Camera / LiDAR / egoの特徴抽出と融合</li>
+                <li>TimePathV1の時間基準XY予測</li>
+                <li>masked lossとrun / scenario単位split</li>
+              </ul>
+              <a
+                data-source="src/aic_transfuser_lite/models/time_backbone_v1.py"
+                href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/src/aic_transfuser_lite/models/time_backbone_v1.py"
+                >モデルのコード ↗</a
+              >
+            </article>
+            <article class="stack-card">
+              <span class="stack-symbol" aria-hidden="true">02</span>
+              <h3>Data &amp; Inspection</h3>
+              <p>NumPy / pandas / Pillow<br />PyYAML / rosbags / Matplotlib</p>
+              <ul>
+                <li>MCAP / rosbagからcanonical形式へ変換</li>
+                <li>時刻・欠損・入力と教師の出所を監査</li>
+                <li>LiDARのNaN / inf / 範囲外を除去</li>
+              </ul>
+              <a
+                data-source="docs/02_dataset_spec.md"
+                href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/02_dataset_spec.md"
+                >データ設計 ↗</a
+              >
+            </article>
+            <article class="stack-card">
+              <span class="stack-symbol" aria-hidden="true">03</span>
+              <h3>Runtime &amp; Control</h3>
+              <p>
+                ROS 2 Humble / AWSIM / RViz<br />Pure Pursuit / Cartographer /
+                MPPI
+              </p>
+              <ul>
+                <li>推論・制御・SLAM観測ノードの連携</li>
+                <li>局所地図に基づく静止障害物回避</li>
+                <li>モデル外の鮮度・異常値・停止監視</li>
+              </ul>
+              <a
+                data-source="docs/slam_mppi_avoidance.md"
+                href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/slam_mppi_avoidance.md"
+                >ROS / SLAM MPPI構成 ↗</a
+              >
+            </article>
+            <article class="stack-card">
+              <span class="stack-symbol" aria-hidden="true">04</span>
+              <h3>Development &amp; QA</h3>
+              <p>Windows + native WSL / Git<br />pytest / Docker / colcon</p>
+              <ul>
+                <li>Windowsを編集・commit・pushの正本に</li>
+                <li>WSLで同一commitをlock下で検証</li>
+                <li>checkpointと配布ソースのSHAを照合</li>
+              </ul>
+              <a
+                data-source="docs/windows_codex_wsl_training_workflow.md"
+                href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/windows_codex_wsl_training_workflow.md"
+                >開発・検証の手順 ↗</a
+              >
+            </article>
+          </div>
+          <div class="environment">
+            <span class="label"
+              >RECORDED TRAINING ENVIRONMENT · 2026.09.17</span
+            >
+            <p>
+              Ubuntu 22.04 <span>/</span> Python 3.10.12 <span>/</span> PyTorch
+              2.7.1+cu128 <span>/</span> CUDA build 12.8 <span>/</span> RTX 4080
+            </p>
+            <p class="small">
+              過去の実行環境スナップショット。全利用者の必須構成や、現在稼働中の環境を示すものではありません。依存条件の正本は
+              <a
+                data-source="pyproject.toml"
+                href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/pyproject.toml"
+                >pyproject.toml</a
+              >、観測版は
+              <a
+                data-source="docs/environment/training-wsl-20260917.json"
+                href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/environment/training-wsl-20260917.json"
+                >環境記録</a
+              >を参照。
+            </p>
+          </div>
+          <div class="branch-note">
+            <span class="badge pending">別ブランチで開発中</span>
+            <h3>DINOv3と未来系列による比較実験の準備</h3>
+            <p>
+              2026年9月27日時点の <code>codex/windows-wsl-training-sync</code> /
+              <code>0c63f67</code> には、frozen DINOv3 camera
+              adapter、checkpoint builder接続、依存固定、および学習専用のfuture
+              sequence
+              datasetが追加されています。公開mainの走行モデルには含まれていません。
+            </p>
+            <p>
+              特徴の改善、LiDARとの比較、実時間性、closed-loopの効果は別途評価が必要です。
+            </p>
+            <a
+              href="https://github.com/fis-teria/aichallenge_lite_transfuser/commit/0c63f67e1cf58019c976715b08398ff1d6ee5c30"
+              >開発commitを見る ↗</a
+            >
+          </div>
+        </section>
+
+        <section id="papers" class="section">
+          <div class="section-heading">
+            <span class="section-number">05 / READING ROOM</span>
+            <h2>論文から、実装の意図を読む。</h2>
+            <p>
+              一次資料に基づく短い要約と、このプロジェクトとの関係。論文での成果は、このリポジトリでの再現結果を意味しません。
+            </p>
+          </div>
+          <div class="paper-tools" hidden>
+            <label class="search-label" for="paper-search"
+              >論文を検索<input
+                id="paper-search"
+                type="search"
+                placeholder="例：融合、復帰、DINOv3"
+                autocomplete="off"
+            /></label>
+            <div class="filters" role="group" aria-label="論文の分野">
+              <button type="button" data-filter="all" aria-pressed="true">
+                すべて</button
+              ><button type="button" data-filter="fusion" aria-pressed="false">
+                センサ融合</button
+              ><button
+                type="button"
+                data-filter="learning"
+                aria-pressed="false"
+              >
+                学習</button
+              ><button type="button" data-filter="control" aria-pressed="false">
+                制御・SLAM
+              </button>
+            </div>
+          </div>
+          <p class="search-status small" aria-live="polite" hidden></p>
+          <div class="papers-list">
+            <article class="paper" data-category="fusion">
+              <div class="paper-top">
+                <span class="paper-index">01</span
+                ><span class="tag">センサ融合</span
+                ><span class="paper-year">CVPR 2021</span>
+              </div>
+              <h3>
+                Multi-Modal Fusion Transformer for<br />End-to-End Autonomous
+                Driving
+              </h3>
+              <p class="authors">
+                Aditya Prakash, Kashyap Chitta, Andreas Geiger
+              </p>
+              <p class="paper-summary">
+                画像とLiDARの特徴をAttentionで統合し、幾何的な対応だけでは捉えにくい周辺の文脈を運転判断へ取り込むTransFuserを提案。CARLAの複雑な交通場面で評価しています。
+              </p>
+              <details>
+                <summary>このプロジェクトとの関係</summary>
+                <div class="detail-body">
+                  <p>
+                    <strong>取り入れる考え方：</strong
+                    >CameraとLiDARを別々に符号化し、特徴段階で融合してwaypointへつなぐ構成。
+                  </p>
+                  <p>
+                    <strong>異なる点：</strong>本プロジェクトは2D
+                    LaserScanと独自の時系列・制御契約を扱います。TimePath
+                    decoderには本家のgoal入力を導入しておらず、原論文の完全再現ではありません。
+                  </p>
+                </div>
+              </details>
+              <a
+                class="paper-source"
+                href="https://openaccess.thecvf.com/content/CVPR2021/html/Prakash_Multi-Modal_Fusion_Transformer_for_End-to-End_Autonomous_Driving_CVPR_2021_paper.html"
+                >CVFで原論文を読む ↗</a
+              >
+            </article>
+            <article class="paper" data-category="fusion">
+              <div class="paper-top">
+                <span class="paper-index">02</span
+                ><span class="tag">センサ融合</span
+                ><span class="paper-year">arXiv 2022</span>
+              </div>
+              <h3>
+                TransFuser: Imitation with Transformer-Based Sensor Fusion for
+                Autonomous Driving
+              </h3>
+              <p class="authors">
+                Kashyap Chitta, Aditya Prakash, Bernhard Jaeger, Zehao Yu,
+                Katrin Renz, Andreas Geiger
+              </p>
+              <p class="paper-summary">
+                複数解像度の画像・鳥瞰LiDAR特徴をTransformerで融合する構成を発展させ、長い経路と密な交通を含むCARLAの評価で検証。融合方式を運転結果へ結びつけて比較しています。
+              </p>
+              <details>
+                <summary>このプロジェクトとの関係</summary>
+                <div class="detail-body">
+                  <p>
+                    <strong>参考にする点：</strong
+                    >センサ融合の効果を、オフライン誤差に加えてclosed-loopの走行結果で評価すること。
+                  </p>
+                  <p>
+                    <strong>読み分け：</strong>CVPR
+                    2021版と、この拡張版の設定・ベンチマークは同一ではありません。本リポジトリの軽量モデルやAWSIMの実績に、CARLAの性能値を転記しません。
+                  </p>
+                </div>
+              </details>
+              <a class="paper-source" href="https://arxiv.org/abs/2205.15997"
+                >arXivで原論文を読む ↗</a
+              >
+            </article>
+            <article class="paper" data-category="learning">
+              <div class="paper-top">
+                <span class="paper-index">03</span
+                ><span class="tag">学習・分布ずれ</span
+                ><span class="paper-year">AISTATS 2011</span>
+              </div>
+              <h3>
+                A Reduction of Imitation Learning and Structured Prediction to
+                No-Regret Online Learning
+              </h3>
+              <p class="authors">
+                Stéphane Ross, Geoffrey Gordon, Drew Bagnell
+              </p>
+              <p class="paper-summary">
+                学習した方策の行動が次の観測を変えるため、教師の走行だけで学ぶと運用時に分布ずれが生じる問題を扱います。DAggerでは学習者が訪れた状態に教師の指示を付け、データを反復集約します。
+              </p>
+              <details>
+                <summary>このプロジェクトとの関係</summary>
+                <div class="detail-body">
+                  <p>
+                    <strong>参考にする点：</strong
+                    >通常走行に加え、横ずれ、回避、停止後の復帰などで遭遇する観測を学習データへ含める必要性。
+                  </p>
+                  <p>
+                    <strong>未実施との区別：</strong
+                    >復帰データの追加収集やreplay学習を、そのままDAgger実装とは呼びません。学習者の走行、教師による再ラベル、反復評価まで含めて手順を定義する必要があります。
+                  </p>
+                </div>
+              </details>
+              <a
+                class="paper-source"
+                href="https://proceedings.mlr.press/v15/ross11a.html"
+                >PMLRで原論文を読む ↗</a
+              >
+            </article>
+            <article class="paper" data-category="control">
+              <div class="paper-top">
+                <span class="paper-index">04</span
+                ><span class="tag">サンプリング制御</span
+                ><span class="paper-year">arXiv 2017</span>
+              </div>
+              <h3>
+                Information Theoretic Model Predictive Control: Theory and
+                Applications to Autonomous Driving
+              </h3>
+              <p class="authors">
+                Grady Williams, Paul Drews, Brian Goldfain, James M. Rehg,
+                Evangelos A. Theodorou
+              </p>
+              <p class="paper-summary">
+                情報理論の枠組みからサンプリングに基づく最適制御を導き、候補のコストに応じた重みで制御系列を更新するMPCを構成。自動運転への適用と、cross-entropy法に基づくMPCとの比較を示します。
+              </p>
+              <details>
+                <summary>このプロジェクトとの関係</summary>
+                <div class="detail-body">
+                  <p>
+                    <strong>接続する点：</strong>局所reference-space
+                    MPPIの候補評価と指数重み更新を理解する基礎。
+                  </p>
+                  <p>
+                    <strong>実装上の違い：</strong
+                    >ローカル実装は横オフセット形状や曲率の候補を探索し、平均した経路も占有・未知領域・操舵条件で再検査します。原論文や同梱V45教師C++ノードの完全な移植ではありません。
+                  </p>
+                </div>
+              </details>
+              <a class="paper-source" href="https://arxiv.org/abs/1707.02342"
+                >arXivで原論文を読む ↗</a
+              >
+            </article>
+            <article class="paper" data-category="control">
+              <div class="paper-top">
+                <span class="paper-index">05</span
+                ><span class="tag">2D SLAM</span
+                ><span class="paper-year">ICRA 2016</span>
+              </div>
+              <h3>Real-Time Loop Closure in 2D LIDAR SLAM</h3>
+              <p class="authors">
+                Wolfgang Hess, Damon Kohler, Holger Rapp, Daniel Andor
+              </p>
+              <p class="paper-summary">
+                局所的なサブマップを構築し、scan-to-submapの照合を用いてループ閉じ込みを処理する2D
+                LiDAR
+                SLAM。大きな環境でもリアルタイムに地図の整合を保つための手法を示します。
+              </p>
+              <details>
+                <summary>このプロジェクトとの関係</summary>
+                <div class="detail-body">
+                  <p>
+                    <strong>接続する点：</strong
+                    >Cartographerによる観測の位置合わせと局所地図を理解する基礎。MPPIはその観測を使った占有判定へ接続します。
+                  </p>
+                  <p>
+                    <strong>限界：</strong
+                    >SLAMの利用だけでは、走行可能領域の意味や移動物の未来を判断できません。地図精度・時刻一致・未知領域の扱いは、この環境で別途検証します。
+                  </p>
+                </div>
+              </details>
+              <a
+                class="paper-source"
+                href="https://research.google/pubs/real-time-loop-closure-in-2d-lidar-slam/"
+                >著者所属機関の論文ページ ↗</a
+              >
+            </article>
+            <article class="paper" data-category="learning">
+              <div class="paper-top">
+                <span class="paper-index">06</span
+                ><span class="tag">視覚表現・開発候補</span
+                ><span class="paper-year">arXiv 2025</span>
+              </div>
+              <h3>DINOv3</h3>
+              <p class="authors">Oriane Siméoni et al.</p>
+              <p class="paper-summary">
+                大規模な自己教師あり学習で汎用的な視覚表現を獲得するモデル群。長期学習で密な特徴が劣化する問題へGram
+                anchoringを導入し、多様な視覚タスクへの転用を評価しています。
+              </p>
+              <details>
+                <summary>このプロジェクトとの関係</summary>
+                <div class="detail-body">
+                  <p>
+                    <strong>検討中の使い方：</strong
+                    >凍結した画像encoderの特徴を利用し、現行CNNとの比較を行う開発ブランチの土台。
+                  </p>
+                  <p>
+                    <strong>未確認：</strong
+                    >本コースでの経路精度、回避性能、推論遅延の改善は未確認です。画像特徴の汎用性能が、そのまま運転性能の向上を保証するわけではありません。
+                  </p>
+                </div>
+              </details>
+              <a class="paper-source" href="https://arxiv.org/abs/2508.10104"
+                >arXivで原論文を読む ↗</a
+              >
+            </article>
+          </div>
+          <p id="paper-empty" class="note" hidden>
+            一致する論文はありません。検索語を短くするか「すべて」を選んでください。
+          </p>
+          <p class="small">
+            要約とプロジェクトへの対応づけは、このサイトの編集によるものです。一次資料確認日：2026年9月27日。書誌情報はリンク先を正本とします。
+          </p>
+        </section>
+
+        <section id="next" class="section">
+          <div class="section-heading">
+            <span class="section-number">06 / NEXT QUESTIONS</span>
+            <h2>次の一歩を、検証できる単位に。</h2>
+            <p>
+              以下は公開記録に残る課題を整理した検証案です。完了済みの成果や、実行中の実験を示すものではありません。
+            </p>
+          </div>
+          <ol class="roadmap">
+            <li>
+              <div class="roadmap-index">01</div>
+              <div>
+                <span class="label">RUNTIME RECOVERY</span>
+                <h3>最新版の保持経路復帰をAWSIMで再検証</h3>
+                <p>
+                  同一コード・モデル・設定で、復帰指令の発行、実際の前進、通常追従への戻り、周回完了を別々に記録。停止条件と試行予算も確認します。
+                </p>
+              </div>
+            </li>
+            <li>
+              <div class="roadmap-index">02</div>
+              <div>
+                <span class="label">DATA &amp; MODEL</span>
+                <h3>予測短縮の原因と、復帰・回避教師の不足を切り分ける</h3>
+                <p>
+                  入力の時刻、教師の支持範囲、停止時の系列、checkpointの予測を照合。新しい学習では通常走行の保持も評価し、訓練誤差だけで採用しません。
+                </p>
+              </div>
+            </li>
+            <li>
+              <div class="roadmap-index">03</div>
+              <div>
+                <span class="label">CLOSED-LOOP EVALUATION</span>
+                <h3>単発成功から、条件を変えた反復評価へ</h3>
+                <p>
+                  障害物の配置、進入姿勢、速度を固定した試験群で、完走率、衝突、停止、介入、遅延を比較。移動物や実車への適用は別の検証段階です。
+                </p>
+              </div>
+            </li>
+            <li>
+              <div class="roadmap-index">04</div>
+              <div>
+                <span class="label">REPRESENTATION STUDY</span>
+                <h3>DINOv3 / LiDARの比較条件をそろえる</h3>
+                <p>
+                  入力、split、教師、計算予算を固定して比較。特徴抽出器の変更による効果と制御設定の変更による効果を分け、遅延を含めて判断します。
+                </p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section id="sources" class="section sources">
+          <div class="section-heading">
+            <span class="section-number">KEEP EXPLORING</span>
+            <h2>コードと記録に戻れる入口。</h2>
+          </div>
+          <div class="resource-grid">
+            <a
+              data-source="README.md"
+              href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/README.md"
+              ><span>01 / REPOSITORY</span
+              ><strong>README・プロジェクト全体 ↗</strong></a
+            ><a
+              data-source="docs/time_path_make_dev.md"
+              href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/time_path_make_dev.md"
+              ><span>02 / RUNTIME</span
+              ><strong>TimePath / AWSIMの起動手順 ↗</strong></a
+            ><a
+              data-source="docs/model_sharing.md"
+              href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/model_sharing.md"
+              ><span>03 / CHECKPOINT</span
+              ><strong>配布モデル・ハッシュ・実行環境 ↗</strong></a
+            ><a
+              href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/main/docs/site/README.md"
+              ><span>04 / THIS SITE</span
+              ><strong>サイトの更新・ローカル表示方法 ↗</strong></a
+            >
+          </div>
+          <p class="small">
+            根拠リンクは確認したcommitへ固定し、後日の変更と混ざらないようにしています。リンク先のartifact・動画・重みにはローカル保管物や別配布物が含まれ、新規cloneだけですべてを再実行できるとは限りません。
+          </p>
+          <p class="small">
+            サイト内に外部フォント、アクセス解析、外部JavaScriptは使用していません。本文・図・論文ノートはオフラインでも閲覧できます。原論文・GitHubのリンクはネット接続が必要です。
+          </p>
+        </section>
+        <footer>
+          <span
+            >AIC TransFuser Lite <span class="footer-slash">/</span> Research
+            Notes</span
+          ><a href="#overview">ページの先頭へ ↑</a>
+          <p>Research in progress. Evidence before claims.</p>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

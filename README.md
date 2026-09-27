@@ -1,5 +1,9 @@
 # AIC-TransFuserLite 設計・実装スターターバンドル v0.1
 
+**[プロジェクトサイト](https://fis-teria.github.io/aichallenge_lite_transfuser/)** —
+現状・システム構成・検証結果・技術スタック・参考論文の要約をまとめています。
+[HTMLソース・ローカル表示と更新手順](docs/site/README.md)。
+
 時間基準モデルのAWSIM起動と速度設定は [TimePath ROS 2 / make dev](docs/time_path_make_dev.md) を参照。
 `make dev DEV_CONTROLLER=time MAX_SPEED_KMH=20 CORNER_MAX_SPEED_KMH=10` に対応。
 
