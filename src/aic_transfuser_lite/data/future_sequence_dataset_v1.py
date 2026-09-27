@@ -330,19 +330,22 @@ class FutureSequenceCache:
 
     def __init__(self, root: Path, identity: dict[str, Any]) -> None:
         self.root = root.resolve()
-        expected = dict(identity)
+        # Compare the same JSON representation on disk and in memory. Dataclass
+        # configs contain tuples, which JSON round-trips as lists.
+        canonical = json.loads(json.dumps(identity, allow_nan=False))
+        expected = dict(canonical)
         digest = expected.pop("identity_sha256", None)
         encoded = json.dumps(expected, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
         if digest != hashlib.sha256(encoded).hexdigest() or expected.get("format") != FORMAT:
             raise ValueError("future cache identity mismatch")
-        self.identity = identity
+        self.identity = canonical
         identity_path = self.root / "identity.json"
         if identity_path.exists():
-            if json.loads(identity_path.read_text(encoding="utf-8")) != identity:
+            if json.loads(identity_path.read_text(encoding="utf-8")) != canonical:
                 raise ValueError("future cache root belongs to another source/config")
         else:
             self.root.mkdir(parents=True, exist_ok=True)
-            identity_path.write_text(json.dumps(identity, indent=2, allow_nan=False), encoding="utf-8")
+            identity_path.write_text(json.dumps(canonical, indent=2, allow_nan=False), encoding="utf-8")
         (self.root / "records").mkdir(exist_ok=True)
 
     def get_or_build(

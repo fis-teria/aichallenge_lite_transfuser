@@ -26,6 +26,12 @@ identity fails rather than reusing stale targets. Raw cached targets declare
 augmentation disabled; a future frozen-encoder feature cache must use a distinct
 encoder and augmentation identity.
 
+Cache identities are normalized to their JSON representation before comparison,
+so a new process can reopen a cache using the same tuple-valued configuration.
+The regression test closes over the original builder and verifies that a new
+cache instance reuses the record without rebuilding it; changed identities still
+fail.
+
 Run the focused tests on Windows:
 
 ```powershell

@@ -125,6 +125,12 @@ def test_cache_reuses_exact_identity_and_rejects_changed_source_or_preprocess(tm
     second, reused_second = cache.get_or_build("run:ep:2000000000", builder)
     assert calls == 1 and not reused_first and reused_second
     torch.testing.assert_close(first.image, second.image, rtol=0, atol=0)
+    # A later process constructs a new cache object from the same typed config.
+    # Tuples in that config must compare equal to lists in its JSON manifest.
+    reopened = FutureSequenceCache(tmp_path / "cache", identity)
+    third, reused_third = reopened.get_or_build("run:ep:2000000000", builder)
+    assert calls == 1 and reused_third
+    torch.testing.assert_close(first.image, third.image, rtol=0, atol=0)
     changed_source = cache_identity(source_sha256="b" * 64, dataset_config=dataset_config, future_config=future_config)
     with pytest.raises(ValueError, match="another source/config"):
         FutureSequenceCache(tmp_path / "cache", changed_source)
