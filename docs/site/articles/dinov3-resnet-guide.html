@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="画像を特徴へ変える仕組み、自己教師あり学習、Gram anchoring、ResNet18との比較を5つの図で解説。期待する強みと未検証の走行効果を分けます。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>図解でわかるDINOv3：仕組みとResNet18との違い — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html" aria-current="page"><span>04</span>技術スタック</a><a href="../papers.html"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../updates.html">継続資料</a></div>
+<span class="section-number">継続資料</span><h1>図解でわかるDINOv3：仕組みとResNet18との違い</h1>
+<p class="article-lead">画像を特徴へ変える仕組み、自己教師あり学習、Gram anchoring、ResNet18との比較を5つの図で解説。期待する強みと未検証の走行効果を分けます。</p><div class="article-meta">
+<span>公開 <time datetime="2026-09-27">2026-09-27</time></span>
+<span>更新 <time datetime="2026-09-27">2026-09-27</time></span>
+<span class="tag">技術図解・走行効果は未検証</span></div></header><div class="article-body"><div class="tech-note">
+  <div class="tech-intro">
+    <span class="tech-kicker">VISUAL GUIDE / 画像の「見方」を変える</span>
+    <h2>大きな違いは、走行を学ぶ前に<br />どんな画像の特徴を身につけているか。</h2>
+    <p>DINOv3を使う狙いは、大量の画像から学んだ視覚的な特徴を、経路予測の学習に持ち込むことです。画像を特徴へ変換する部分を交換し、その先のLiDARとの融合や運転の学習につなげます。</p>
+    <div class="tech-chips"><span>5つの図解</span><span>ResNet18との比較</span><span>本プロジェクトの接続位置</span></div>
+  </div>
+
+  <div class="tech-boundary"><strong>この記事の比較対象</strong><p>ResNetはネットワークの<strong>構造名</strong>。DINOv3は自己教師ありの<strong>学習方法と事前学習済みモデル群</strong>で、ViT版のほかConvNeXt版もあります。ここでは既存の<strong>ResNet18</strong>と、導入候補の<strong>DINOv3 ViT-S/16</strong>を比較します。<a href="#source-official">[1]</a></p><p>図は仕組みを説明するための独自の模式図です。実際の注意マップ・認識結果・走行性能を描いたものではありません。</p></div>
+
+  <section class="tech-section" aria-labelledby="role-heading">
+    <span class="tech-kicker">01 / ROLE</span><h2 id="role-heading">DINOv3が担当するのは、画像から特徴を取り出すこと</h2>
+    <p>特徴とは、画像の色や形、場所ごとの手がかりを数値の列に変換したものです。画像encoderはその変換器にあたります。DINOv3の出力だけでハンドル操作や安全停止が決まるわけではありません。</p>
+    <figure class="tech-figure" aria-labelledby="role-caption">
+      <div class="tech-figure-title"><span>図 1</span><strong>運転モデルの中で交換する場所</strong></div>
+      <ol class="tech-flow four">
+        <li><span class="tech-step">入力</span><strong>カメラ画像</strong><svg viewBox="0 0 180 95" aria-hidden="true" focusable="false"><rect width="180" height="95" rx="8" fill="#dfecef"/><path d="M0 40H180V95H0Z" fill="#c4d4bc"/><path d="M70 40H110L158 95H22Z" fill="#647c80"/><path d="M90 43V94" stroke="#fff" stroke-width="3" stroke-dasharray="10 8"/><rect x="117" y="47" width="23" height="19" rx="2" fill="#bd8f66"/></svg><small>前方のRGB画像</small></li>
+        <li class="accent"><span class="tech-step">今回の比較対象</span><strong>画像encoder</strong><p>ResNet18<br />または DINOv3</p><small>画像 → 数値の特徴</small></li>
+        <li><span class="tech-step">組み合わせる</span><strong>センサ・履歴の融合</strong><p>画像の特徴<br />＋ LiDAR・車両状態</p><small>時系列の情報も使う</small></li>
+        <li><span class="tech-step">運転用に学習</span><strong>将来経路などを予測</strong><p>waypoint・速度<br />停止確率</p><small>比較用の共通ILモデル</small></li>
+      </ol>
+      <div class="tech-underlay">モデルの出力を経路追従制御へ接続。モデル外のSafety Supervisorが、センサの古さや異常出力などを監視する。</div>
+      <figcaption id="role-caption">開発ブランチの共通ILモデルでの役割。公開中のTimePathV1走行モデルを置き換えた実績ではありません。<a href="#source-common">[2]</a></figcaption>
+    </figure>
+  </section>
+
+  <section class="tech-section" aria-labelledby="architecture-heading">
+    <span class="tech-kicker">02 / ARCHITECTURE</span><h2 id="architecture-heading">ResNetは畳み込みを積み重ね、ViTはパッチ同士を照合する</h2>
+    <p>ResNetは近くの画素のパターンを畳み込みで拾い、層を重ねて広い範囲の特徴を組み立てます。途中の入力を足し戻す<strong>残差接続</strong>が、深いネットワークの学習を支えます。<a href="#source-resnet">[3]</a></p>
+    <p>ViTは画像を小さな区画<strong>パッチ</strong>に分け、各区画を数値の列<strong>トークン</strong>へ変換します。Self-Attentionは離れた場所も含めてトークン同士の関係を計算します。CNNも深い層では広い範囲を扱えるので、「ResNetは近くしか見えない」という区別ではありません。<a href="#source-vit">[4]</a></p>
+    <figure class="tech-figure" aria-labelledby="architecture-caption">
+      <div class="tech-figure-title"><span>図 2</span><strong>画像を特徴へ変換する、2つの構造</strong></div>
+      <div class="tech-compare">
+        <div class="tech-lane"><span class="tech-kicker">RESNET18 / CNN</span><h3>局所の形を、階層的にまとめる</h3>
+          <svg viewBox="0 0 320 140" role="img" aria-labelledby="cnn-illustration-title"><title id="cnn-illustration-title">画素の一部を畳み込みで参照し、特徴マップを段階的に変換する模式図</title><defs><pattern id="cnn-cell" width="18" height="18" patternUnits="userSpaceOnUse"><path d="M18 0H0V18" fill="none" stroke="#b6cbc3"/></pattern></defs><rect x="12" y="19" width="108" height="108" fill="url(#cnn-cell)"/><rect x="48" y="55" width="54" height="54" fill="#e5bb7b" fill-opacity=".6" stroke="#906633" stroke-width="2"/><path d="M126 74H164" stroke="#406e61" stroke-width="2"/><path d="M157 68L165 74L157 80" fill="none" stroke="#406e61" stroke-width="2"/><rect x="177" y="27" width="70" height="96" fill="#dbe8d8" stroke="#7d9e82"/><rect x="190" y="20" width="70" height="96" fill="#dbe8d8" stroke="#7d9e82"/><rect x="203" y="13" width="70" height="96" fill="#dbe8d8" stroke="#7d9e82"/></svg>
+          <ol class="tech-stack"><li><strong>畳み込み</strong><small>近くの画素から輪郭・模様などを拾う</small></li><li><strong>残差ブロックを重ねる</strong><small>学習した変化 F(x) に入力 x を足す</small><code>出力 = F(x) + x</code></li><li><strong>特徴マップ</strong><small>層を重ねて広い範囲の手がかりへ</small></li></ol>
+        </div>
+        <div class="tech-lane dino"><span class="tech-kicker">DINOV3 ViT-S/16</span><h3>場所ごとの特徴を、互いに参照する</h3>
+          <svg viewBox="0 0 320 140" role="img" aria-labelledby="vit-illustration-title"><title id="vit-illustration-title">分割したパッチと、離れたパッチの間の参照関係を示す模式図</title><g fill="#dcebd4" stroke="#6d8e66"><rect x="18" y="18" width="31" height="31" rx="3"/><rect x="57" y="18" width="31" height="31" rx="3"/><rect x="96" y="18" width="31" height="31" rx="3"/><rect x="18" y="57" width="31" height="31" rx="3"/><rect x="57" y="57" width="31" height="31" rx="3"/><rect x="96" y="57" width="31" height="31" rx="3"/><rect x="18" y="96" width="31" height="31" rx="3"/><rect x="57" y="96" width="31" height="31" rx="3"/><rect x="96" y="96" width="31" height="31" rx="3"/></g><path d="M142 72H176M169 66L177 72L169 78" fill="none" stroke="#406e61" stroke-width="2"/><g stroke="#7d9e82" stroke-width="1.5"><path d="M204 29L289 29L204 114L289 114L204 29M204 29L248 72L289 29M204 114L248 72L289 114M204 29V114M289 29V114"/></g><g fill="#386653"><circle cx="204" cy="29" r="8"/><circle cx="289" cy="29" r="8"/><circle cx="204" cy="114" r="8"/><circle cx="289" cy="114" r="8"/><circle cx="248" cy="72" r="11"/></g></svg>
+          <ol class="tech-stack"><li><strong>16 × 16 pxのパッチへ分割</strong><small>各パッチを384次元のトークンにする</small></li><li><strong>Transformerブロック × 12</strong><small>Attention・MLP・残差接続で特徴を更新</small><code>位置情報には RoPE を利用</code></li><li><strong>全体の特徴 ＋ パッチ特徴</strong><small>CLSトークンと、場所ごとのトークン</small></li></ol>
+        </div>
+      </div>
+      <figcaption id="architecture-caption">特徴を作る経路の模式図。線は実際のAttention値ではありません。DINOv3のViT-S/16の次元・層数・位置情報は公式実装で確認。内部にはregister tokenもありますが、当プロジェクトが使うのはパッチ特徴です。<a href="#source-vit-code">[5]</a></figcaption>
+    </figure>
+    <p class="tech-fine">図の用語：MLPは特徴を変換する小さなニューラルネットワーク、RoPEは位置関係をAttentionへ伝える仕組み、CLSは画像全体を表すトークンです。registerは内部の計算を補助する追加トークンです。</p>
+    <p>構造を変えるだけで強くなるわけではありません。<strong>どんなデータ・目的で事前学習したか</strong>も、得られる特徴を大きく左右します。</p>
+  </section>
+
+  <section class="tech-section" aria-labelledby="training-heading">
+    <span class="tech-kicker">03 / LEARNING</span><h2 id="training-heading">人の正解ラベルがない画像から、見方の一貫性を学ぶ</h2>
+    <p>DINO系は、同じ画像の違う切り抜きや見え方に対して、teacherとstudentの表現を対応づける自己蒸留を使います。teacherは人の回答ではなく、studentの重みの移動平均などから作るネットワークです。DINOv2以降は、画像全体に加えて隠したパッチの特徴も学習対象にします。<a href="#source-dinov2">[6]</a></p>
+    <figure class="tech-figure" aria-labelledby="training-caption">
+      <div class="tech-figure-title"><span>図 3</span><strong>公式の事前学習と、こちらで行う運転学習は別の段階</strong></div>
+      <div class="tech-compare">
+        <div class="tech-lane"><span class="tech-kicker">A / 公式の事前学習</span><h3>画像の特徴を身につける</h3><div class="tech-mini-node">同じ画像から異なる切り抜き・変換</div><div class="tech-split"><div>teacher<br /><small>参照する特徴</small></div><div>student<br /><small>学習する特徴</small></div></div><div class="tech-merge">全体・パッチの表現を対応づける</div><p class="tech-fine">teacherはstudentの移動平均で更新。事前学習の目的を通じて、視覚的な表現を獲得する。</p></div>
+        <div class="tech-lane dino"><span class="tech-kicker">B / 本プロジェクトでの利用</span><h3>特徴を、運転の出力につなぐ</h3><div class="tech-mini-node frozen">学習済みDINOv3を固定して使う</div><div class="tech-down" aria-hidden="true">↓</div><div class="tech-mini-node">変換層・センサ融合・出力Headを学習</div><div class="tech-down" aria-hidden="true">↓</div><div class="tech-mini-node trained">予測と走行ログの教師を比較</div><p class="tech-fine">公式学習を一から再現する構成ではなく、配布済みの特徴抽出器を転用する設計。</p></div>
+      </div>
+      <figcaption id="training-caption">Aは自己教師あり事前学習の概念、Bはローカルの比較設定。「DINOv3に人の画像ラベルが不要」と「運転を学ぶ教師が不要」は異なります。<a href="#source-dinov2">[6]</a> <a href="#source-local-config">[7]</a></figcaption>
+    </figure>
+
+    <p>導入候補のViT-S/16は、大型teacherから知識を蒸留した小型モデルです。この小型化では学習済みの大型teacherを参照します。図Aの自己教師あり事前学習と、小型モデルへの蒸留、図Bの運転用学習は、目的の異なる段階です。<a href="#source-official">[1]</a></p>
+    <h3>Gram anchoring：場所どうしの関係が崩れるのを抑える</h3>
+    <p>DINOv3は、長い学習で画像全体の認識が良くなっても、場所ごとの特徴が劣化する問題に対処します。Gram anchoringは、良い局所特徴を持つteacherを参照し、<strong>パッチどうしの類似関係</strong>を保つように学習します。特徴ベクトルを完全に同じ値に固定する方法ではありません。<a href="#source-dino-paper">[8, §4]</a></p>
+    <figure class="tech-figure" aria-labelledby="gram-caption">
+      <div class="tech-figure-title"><span>図 4</span><strong>「どの場所とどの場所が似ているか」を、学習の基準にする</strong></div>
+      <div class="tech-gram-layout">
+        <div><span class="tech-step">説明用の4パッチ</span><div class="tech-patches" aria-label="説明用の区画A、B、C、D"><span>A</span><span>B</span><span>C</span><span>D</span></div><p>AとB、CとDがそれぞれ似ている、という架空の例。</p></div>
+        <div class="tech-gram-mid"><div class="tech-matrix" role="img" aria-label="4かける4の類似関係。AとB、CとDの組が濃く表示される説明用の行列"><span class="strong">AA</span><span class="strong">AB</span><span>AC</span><span>AD</span><span class="strong">BA</span><span class="strong">BB</span><span>BC</span><span>BD</span><span>CA</span><span>CB</span><span class="strong">CC</span><span class="strong">CD</span><span>DA</span><span>DB</span><span class="strong">DC</span><span class="strong">DD</span></div><small>色が濃い = より似ている、という模式表現</small></div>
+        <div class="tech-gram-result"><strong>teacherの関係表へ近づける</strong><p>studentが作る類似関係との差を小さくする。画像全体の学習と両立させながら、局所の整合性を支える。</p><code>関係表 G = X Xᵀ</code><small>X：長さを正規化したパッチ特徴の行列</small></div>
+      </div>
+      <figcaption id="gram-caption">数値を使わない概念図であり、DINOv3の実測結果ではありません。Gram teacherは初期のteacherから始め、その後も段階的に更新されます。この処理は公式の事前学習側で使うもので、当プロジェクトの推論時に追加する処理ではありません。<a href="#source-dino-paper">[8, §4.2]</a></figcaption>
+    </figure>
+  </section>
+
+  <section class="tech-section" aria-labelledby="capabilities-heading">
+    <span class="tech-kicker">04 / CAPABILITIES</span><h2 id="capabilities-heading">できることは「特徴の転用」。用途に応じた部品を組み合わせる</h2>
+    <div class="tech-capabilities">
+      <div><span>画像全体</span><h3>分類・似た画像の検索</h3><p>全体の特徴を、分類器や特徴間の類似度計算に利用する。</p></div>
+      <div><span>場所ごと</span><h3>領域分割・物体検出</h3><p>どこに何があるかを扱うため、パッチ特徴に専用のHeadやdecoderを接続する。</p></div>
+      <div><span>空間の手がかり</span><h3>深度推定・対応点</h3><p>奥行きや別画像との対応を扱うモデルの特徴抽出部として利用する。</p></div>
+      <div class="hypothesis"><span>このプロジェクトでの期待</span><h3>走行シーンの表現を改善</h3><p>路面・障害物・周辺の文脈の手がかりを、経路予測へ渡せるかを調べる。効果は未測定。</p></div>
+    </div>
+    <p class="tech-source">一般用途は公式のモデルカード・公開例を要約。検出枠・領域ラベル・距離の数値が、汎用backbone単体から完成した答えとして出るわけではありません。多くの用途には追加のモデルとタスクごとの学習が必要です。<a href="#source-model-card">[9]</a></p>
+
+    <h3>他の方法と、何を学ぶかが違う</h3>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="画像モデルの学習目的の比較表。狭い画面では横にスクロールできます">
+      <table class="tech-table"><caption>構造と学習目的を分けて読むための比較</caption><thead><tr><th scope="col">方法</th><th scope="col">主に何から学ぶか</th><th scope="col">選ぶときの視点</th></tr></thead><tbody>
+        <tr><th scope="row">ResNet18</th><td>構造そのものは学習法を指定しない。画像分類のラベル付き事前学習や、タスクの教師で学習できる。</td><td>既存実装との互換性、計算量、用途に合う学習済み重み。<a href="#source-resnet">[3]</a></td></tr>
+        <tr><th scope="row">ViT</th><td>パッチとAttentionを使う構造。教師あり・自己教師ありなど、学習方法は別に選ぶ。</td><td>「ViTだからDINOv3と同じ特徴」ではない。<a href="#source-vit">[4]</a></td></tr>
+        <tr><th scope="row">DINOv2</th><td>ラベルのない画像から、全体・パッチの表現を自己蒸留で学ぶ。</td><td>凍結した特徴の転用。DINOv3と比べる際の直接の先行手法。<a href="#source-dinov2">[6]</a></td></tr>
+        <tr class="tech-selected"><th scope="row">DINOv3</th><td>画像の自己教師あり学習を拡大し、Gram anchoringなどで密な特徴の品質を支える。</td><td>全体と局所の特徴を転用したい場合の候補。サイズ・用途ごとの比較が必要。<a href="#source-dino-paper">[8]</a></td></tr>
+        <tr><th scope="row">CLIP</th><td>画像と文章の組を対応づける。</td><td>文章で画像を検索したり、ラベル文から分類したいとき。通常のDINOv3 backboneは文章encoderを含まない。<a href="#source-clip">[10]</a> <a href="#source-official">[1]</a></td></tr>
+        <tr><th scope="row">MAE</th><td>隠した画像パッチの画素を復元する。</td><td>自己教師あり学習でも、学習目標が異なる。下流タスクへのfine-tuningを含めて比較する。<a href="#source-mae">[11]</a></td></tr>
+      </tbody></table>
+    </div>
+    <p class="tech-fine">DINOv3に文章との対応を追加する派生構成もあります。表は通常の画像backboneと、各手法の基本的な学習目的の比較です。用途を横断した順位表ではありません。</p>
+  </section>
+
+  <section class="tech-section" aria-labelledby="benefits-heading">
+    <span class="tech-kicker">05 / RESNET COMPARISON</span><h2 id="benefits-heading">今までのResNet18に対して、どこに優位性を期待するのか</h2>
+    <p><strong>この比較設定で期待するのは、事前学習済みの視覚知識を使えることです。</strong>ローカルの比較用ResNet18はランダム初期値から学習し、DINOv3側は事前学習済みbackboneを凍結する設計です。したがって、得られる差には構造だけでなく、事前学習・データ量・凍結の違いも含まれます。<a href="#source-local-config">[7]</a></p>
+    <div class="tech-capabilities three">
+      <div><span>期待 1</span><h3>視覚の学習を再利用</h3><p>走行データだけで画像の特徴を一から学ぶ場合に比べ、汎用的な特徴を出発点にできる。少量の走行教師で有利かどうかを検証したい。</p></div>
+      <div><span>期待 2</span><h3>局所と周辺の関係</h3><p>パッチ特徴と広い文脈を扱う構造を活用できる。小さな障害物や路面の変化に効くかは、実データで確かめる必要がある。</p></div>
+      <div><span>設計上の性質</span><h3>学習範囲を絞れる</h3><p>凍結backboneの重み・勾配・optimizer状態を更新せず、変換層以降を学習できる。特徴抽出のforward計算は毎回必要。</p></div>
+    </div>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="ResNet18とDINOv3の条件別比較表。横にスクロールできます">
+      <table class="tech-table"><caption>ローカルの初期比較設定。性能差の実測表ではありません。</caption><thead><tr><th scope="col">観点</th><th scope="col">ResNet18</th><th scope="col">DINOv3 ViT-S/16</th></tr></thead><tbody>
+        <tr><th scope="row">事前学習</th><td>共通IL設定では <code>pretrained=false</code>。ImageNet重みを使う別条件も構成可能。</td><td>公式の学習済み重みを読み込む設計。比較結果はまだない。</td></tr>
+        <tr><th scope="row">更新する場所</th><td>画像encoderから出力側まで学習。</td><td>画像backboneは固定。変換層・融合部・出力側を学習。</td></tr>
+        <tr><th scope="row">モデルの規模の目安</th><td>torchvisionの標準分類器込みで約11.69Mパラメータ。</td><td>公式のViT-S/16は約21Mパラメータ。</td></tr>
+        <tr><th scope="row">運用上の持ち味</th><td>既存モデル・実装との連続性。小さい標準モデルが比較の基準になる。</td><td>汎用の学習済み特徴を利用し、学習する範囲を限定できる。</td></tr>
+        <tr><th scope="row">計算・速度</th><td colspan="2">実機の入力サイズ・精度・履歴長で測定する。パラメータ数だけでFPSは決まらず、凍結しても推論が自動的に速くなるわけではない。</td></tr>
+        <tr><th scope="row">走行性能の優位性</th><td colspan="2"><strong>未確認。</strong>経路誤差・停止・回避・完走を同じ条件で比べて判断する。</td></tr>
+      </tbody></table>
+    </div>
+    <p class="tech-source">設定の根拠 <a href="#source-local-config">[7]</a>、規模の根拠 <a href="#source-torchvision">[12]</a> <a href="#source-official">[1]</a>。標準分類器と公開backboneでは数え方が異なり、ローカルではResNetの分類層を外して変換層を加えます。表の規模をそのままローカルモデル全体の比較に使うことはできません。</p>
+    <p>ResNetも事前学習して凍結できます。構造の効果をより切り分けるなら、<strong>事前学習済みResNet18</strong>も比較に加え、データ・解像度・更新回数と凍結条件を揃える必要があります。「ResNet一般より常に優れる」という結論は、現在の比較からは出せません。</p>
+  </section>
+
+  <section class="tech-section" aria-labelledby="integration-heading">
+    <span class="tech-kicker">06 / LOCAL IMPLEMENTATION</span><h2 id="integration-heading">リポジトリでは、336個のパッチ特徴を16個の融合用トークンへ</h2>
+    <p>入力は高さ224 × 幅384 px。16 px単位で分けると14 × 24 = <strong>336パッチ</strong>になります。adapterはパッチ特徴だけを取り出し、平均poolingで4 × 4にまとめ、融合部が使う128次元へ変換します。<a href="#source-adapter">[13]</a> <a href="#source-profile">[14]</a></p>
+    <figure class="tech-figure" aria-labelledby="integration-caption">
+      <div class="tech-figure-title"><span>図 5</span><strong>実装されているDINOv3 adapterのデータの流れ</strong></div>
+      <ol class="tech-flow four">
+        <li><span class="tech-step">RGB画像</span><strong>224 × 384 px</strong><code>[B, 3, 224, 384]</code><small>共通の正規化を適用</small></li>
+        <li class="frozen"><span class="tech-step">固定したViT-S/16</span><strong>336パッチ</strong><code>[B, 336, 384]</code><small>CLS・registerは取り出さない</small></li>
+        <li><span class="tech-step">Adaptive average pool</span><strong>4 × 4に集約</strong><code>[B, 384, 4, 4]</code><small>空間を16区画へまとめる</small></li>
+        <li class="trained"><span class="tech-step">学習する線形変換</span><strong>384 → 128次元</strong><code>[B, 16, 128]</code><small>既存の融合部へ接続</small></li>
+      </ol>
+      <figcaption id="integration-caption">Bは画像のbatch数。履歴を使う呼び出し側では、batchと時刻を一時的にまとめて処理します。DINOv3の推論は残り、凍結するのは重みの更新です。pooling後は336個の細かな特徴をそのまま融合へ渡しているわけではありません。<a href="#source-adapter">[13]</a></figcaption>
+    </figure>
+    <div class="tech-boundary"><strong>密な特徴の強みを、接続先まで残せるかも検証点</strong><p>4 × 4への集約で細かな場所の情報は要約されます。DINOv3自体の特徴が良くても、入力解像度・pooling・融合・教師の品質によって走行モデルの結果は変わります。ここは実装から考えられる検証課題です。</p></div>
+    <h3>2026年9月27日の公開開発記録で確認できること</h3>
+    <ul><li>ResNet18とDINOv3を同じ融合部・waypoint・速度・停止Headへ接続する基盤を実装。</li><li>公式sourceのランダム初期化を使った接続確認と、ResNet18の小規模学習は記録済み。</li><li><strong>公式学習済みDINOv3の比較学習、対象GPUでの遅延、AWSIMでの改善は未確認。</strong>ResNet18の32更新pilotはDINOv3との性能比較ではありません。</li></ul>
+    <p><a href="dinov3-development.html">導入と共通ILの開発記録</a>、<a href="common-il-pilot-20260927.html">小規模fitの条件と結果</a>に実験の詳細を分けています。この記事は技術の仕組みを説明するもので、走行モデルの切り替えを報告するものではありません。</p>
+  </section>
+
+  <section class="tech-section" aria-labelledby="evaluation-heading">
+    <span class="tech-kicker">07 / WHAT TO VERIFY</span><h2 id="evaluation-heading">「優位性があった」と判断するために</h2>
+    <ol class="tech-checklist"><li><strong>同じデータと出力で比べる</strong><p>run単位のsplit、入力履歴、学習量、融合部、Headを揃える。事前学習と凍結の差も記録する。</p></li><li><strong>未使用の走行データで精度を測る</strong><p>将来時刻ごとの経路誤差、速度誤差、注釈のある停止判断を比較する。学習データのfitだけで結論を出さない。</p></li><li><strong>実行するGPUで速さを測る</strong><p>同じ入力サイズ・数値精度・batch 1で、履歴を含む処理時間とメモリを確認する。前処理から出力までの遅延も測る。</p></li><li><strong>最後に走行で確かめる</strong><p>同じコース・障害物条件で反復し、完走、介入、接触、回避後の復帰を確認する。Safety Supervisorは維持する。</p></li></ol>
+    <p class="tech-takeaway"><strong>DINOv3は、画像の特徴抽出をより良い出発点にできる候補。</strong><br />その強みが、このシステムの経路予測と走行に届くかを、条件を揃えて確かめます。</p>
+  </section>
+
+  <section class="tech-section tech-references" aria-labelledby="references-heading">
+    <span class="tech-kicker">SOURCES</span><h2 id="references-heading">一次資料と実装の参照先</h2>
+    <p>公式研究・公式実装と、ローカルの構成を分けて参照しています。確認日：2026年9月27日。図はこれらをもとに説明用に作成しました。</p>
+    <ol>
+      <li id="source-official"><a href="https://github.com/facebookresearch/dinov3">DINOv3公式リポジトリ</a>：モデル群・パラメータ数・公開例。</li>
+      <li id="source-common"><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/0658afa394a7d071a057444aa15d780c07bb636f/src/aic_transfuser_lite/models/common_il_v1.py" data-source="src/aic_transfuser_lite/models/common_il_v1.py">共通ILモデル</a>：画像encoderから融合・予測Headまでの接続。</li>
+      <li id="source-resnet"><a href="https://arxiv.org/abs/1512.03385">He et al., Deep Residual Learning for Image Recognition</a>：残差学習とResNet。</li>
+      <li id="source-vit"><a href="https://arxiv.org/abs/2010.11929">Dosovitskiy et al., An Image is Worth 16×16 Words</a>：ViTの基本構造。</li>
+      <li id="source-vit-code"><a href="https://github.com/facebookresearch/dinov3/blob/6876159a11b4df116f30f667f8c9888617df0751/dinov3/models/vision_transformer.py">公式ViT実装</a> ／ <a href="https://github.com/facebookresearch/dinov3/blob/6876159a11b4df116f30f667f8c9888617df0751/dinov3/hub/backbones.py">公式ViT-S/16設定</a>：次元・ブロック・位置情報・出力。</li>
+      <li id="source-dinov2"><a href="https://arxiv.org/abs/2304.07193">Oquab et al., DINOv2</a>：自己蒸留・全体とパッチの学習。</li>
+      <li id="source-local-config">共通IL比較設定：<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/0658afa394a7d071a057444aa15d780c07bb636f/configs/common_il_v1/resnet18.json" data-source="configs/common_il_v1/resnet18.json">ResNet18</a> ／ <a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/0658afa394a7d071a057444aa15d780c07bb636f/configs/common_il_v1/dinov3.json" data-source="configs/common_il_v1/dinov3.json">DINOv3</a>。</li>
+      <li id="source-dino-paper"><a href="https://arxiv.org/html/2508.10104v1">Siméoni et al., DINOv3</a>：§3 学習、§4 Gram anchoring、§6-7 評価。この記事は2025年の初版論文を基準に解説。</li>
+      <li id="source-model-card"><a href="https://github.com/facebookresearch/dinov3/blob/6876159a11b4df116f30f667f8c9888617df0751/MODEL_CARD.md">DINOv3公式モデルカード</a>：用途とモデルの位置づけ。</li>
+      <li id="source-clip"><a href="https://arxiv.org/abs/2103.00020">Radford et al., Learning Transferable Visual Models From Natural Language Supervision</a>：CLIP。</li>
+      <li id="source-mae"><a href="https://arxiv.org/abs/2111.06377">He et al., Masked Autoencoders Are Scalable Vision Learners</a>：MAE。</li>
+      <li id="source-torchvision"><a href="https://docs.pytorch.org/vision/main/models/generated/torchvision.models.resnet18.html">torchvision ResNet18</a>：標準モデルの規模。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/0658afa394a7d071a057444aa15d780c07bb636f/src/aic_transfuser_lite/models/camera_encoder.py" data-source="src/aic_transfuser_lite/models/camera_encoder.py">ローカルCameraEncoder</a>：分類層の除去と変換層。</li>
+      <li id="source-adapter"><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/0658afa394a7d071a057444aa15d780c07bb636f/src/aic_transfuser_lite/models/dinov3_camera_encoder.py" data-source="src/aic_transfuser_lite/models/dinov3_camera_encoder.py">DINOv3 adapter</a>：凍結・パッチ特徴・pooling・線形変換。</li>
+      <li id="source-profile"><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/0658afa394a7d071a057444aa15d780c07bb636f/configs/models/dinov3_vits16_frozen.yaml" data-source="configs/models/dinov3_vits16_frozen.yaml">DINOv3入力・融合用プロファイル</a>：224×384、4×4、128次元。</li>
+    </ol>
+  </section>
+</div>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/dinov3.html">DINOv3：自己教師あり視覚表現</a></h3>
+<p>大規模な自己教師あり学習で汎用的な視覚表現を獲得するモデル群。長期学習で密な特徴が劣化する問題へGram anchoringを導入し、多様な視覚タスクへの転用を評価しています。</p><div class="card-bottom"><span>一次資料を確認</span>
+<a class="article-read" href="../articles/dinov3.html" aria-label="DINOv3：自己教師あり視覚表現を読む">記事を読む →</a></div></article><article class="article-card" data-category="development">
+<div class="card-meta"><span class="tag">開発・運用</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/dinov3-development.html">DINOv3と未来系列の比較実験に向けた準備</a></h3>
+<p>DINOv3のworkspace導入、未来教師の分離、共通waypoint・速度・停止Headの学習基盤と未確認範囲。</p><div class="card-bottom"><span>開発ブランチ・共通ILを実装</span>
+<a class="article-read" href="../articles/dinov3-development.html" aria-label="DINOv3と未来系列の比較実験に向けた準備を読む">記事を読む →</a></div></article><article class="article-card" data-category="report">
+<div class="card-meta"><span class="tag">検証記録</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/common-il-pilot-20260927.html">共通IL Headのfitと既存走行ログによる32更新pilot</a></h3>
+<p>6点waypoint・速度・停止の共通Headを実装。人工教師fitとResNet18の学習データ内での損失低下を確認し、未学習の停止とDINO実重みの残件を整理します。</p><div class="card-bottom"><span>学習データ内で確認・走行未評価</span>
+<a class="article-read" href="../articles/common-il-pilot-20260927.html" aria-label="共通IL Headのfitと既存走行ログによる32更新pilotを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/technology-stack.html">学習から走行までの技術スタック</a></h3>
+<p>Python・PyTorch、データ変換、ROS 2・AWSIM、Windows / WSL開発環境の役割と参照先。</p><div class="card-bottom"><span>継続資料</span>
+<a class="article-read" href="../articles/technology-stack.html" aria-label="学習から走行までの技術スタックを読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>
