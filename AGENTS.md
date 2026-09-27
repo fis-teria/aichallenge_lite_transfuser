@@ -57,6 +57,30 @@
 - WSLで学習・テスト・ROS検証を実行するときは`tools/with_wsl_training_lock.sh`を通し、同期と同じworktree lockを保持する。
 - 詳細は`docs/windows_codex_wsl_training_workflow.md`を参照する。
 
+## Project site maintenance (2026-09-27 user policy)
+
+- 変更・更新を行う各タスクには、公開サイトの関連記事の確認・更新を含める。
+  モデル、入力/教師契約、データ処理、制御、安全監視、依存環境、起動手順、検証結果が
+  変わった場合は、原則として同じ変更単位で記事本文とメタデータを更新する。
+- トップページへ長文や作業ログを追記し続けない。1テーマ1記事を基本に分散する。
+  構成・技術スタック等の継続資料は同じ記事を更新し、別条件の試験・新しい実測結果は
+  独立した検証記事へ追加する。論文要約は1本1記事。過去の失敗・制限・根拠を消さない。
+- 編集元は `docs/site_src/articles/*.html` と `docs/site_src/articles.json`。
+  共通レイアウト・CSS・JSも `docs/site_src/` で編集する。`docs/site/` の生成HTMLを直接修正しない。
+- 記事には変更点、確認日、実装/試験の条件、観測結果、未確認事項、根拠を記載する。
+  設定値と実測値、単体テストとAWSIM、開発ブランチと公開mainを区別する。
+  新しいコードの存在だけで既存の走行結果を最新版の実績へ読み替えない。
+- `python tools/build_project_site.py` で一覧・関連記事・公開HTMLを再生成し、
+  `python tools/build_project_site.py --check` と `python tools/check_project_site.py` を実行する。
+  UI/ナビゲーション変更では `tools/check_project_site_browser.py` も実行する。
+- CIはプロジェクト差分に対する記事本文の更新を確認する。読者向け説明に影響しない場合は
+  `.github/site-update-note.json` を当該変更で更新し、理由と対象ファイルを正確に記録する。
+  更新日だけの変更や生成HTMLだけの変更を、記事更新の代わりにしない。
+- 記事の追加・公開・検査方法は `docs/site/README.md` を参照する。作業ブランチにサイトが
+  まだない場合は公開mainを確認し、Windowsの分離checkoutで関連記事を更新する。
+  無関係な未コミット変更を含めず、Gitのcommit/pushは当該依頼の許可範囲で行う。
+  mainへ反映された更新はGitHub Pagesへ自動公開し、配信結果も確認する。
+
 ## Work Order
 
 1. dataset audit

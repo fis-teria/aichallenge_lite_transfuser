@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="異なるコード・設定・試験日の結果を個別に記録。単発の成功、課題の確認、実装テスト、未検証を区別します。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>検証結果と記録 — AIC TransFuser Lite</title>
+    <link rel="icon" href="assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="assets/style.css" />
+    <script src="assets/site.js" defer></script>
+  </head>
+  <body data-page="listing">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="index.html"
+        ><img src="assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="index.html"><span>01</span>プロジェクト概要</a><a href="articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="results.html" aria-current="page"><span>03</span>検証結果</a><a href="articles/technology-stack.html"><span>04</span>技術スタック</a><a href="papers.html"><span>05</span>参考論文</a><a href="articles/roadmap.html"><span>06</span>今後の課題</a><a href="updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><section class="section first listing"><div class="section-heading"><span class="section-number">PROJECT LIBRARY</span><h1>検証結果と記録</h1><p>異なるコード・設定・試験日の結果を個別に記録。単発の成功、課題の確認、実装テスト、未検証を区別します。</p></div><div class="article-grid"><article class="article-card" data-category="report">
+<div class="card-meta"><span class="tag">検証記録</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="articles/single-lap-20260918.html">GNSS / IMUを制御入力に使わない単独周回</a></h3>
+<p>単独車両で132.3635秒の1周を記録。条件、入力の由来、未検証の範囲を整理します。</p><div class="card-bottom"><span>限定試験で確認</span>
+<a class="article-read" href="articles/single-lap-20260918.html" aria-label="GNSS / IMUを制御入力に使わない単独周回を読む">記事を読む →</a></div></article><article class="article-card" data-category="report">
+<div class="card-meta"><span class="tag">検証記録</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="articles/slam-mppi-box-20260919.html">SLAM MPPIによる静止箱通過と通常追従への復帰</a></h3>
+<p>5 km/h目標のrollout02で箱通過と通常復帰を記録。周回成功や一般的な回避保証とは区別します。</p><div class="card-bottom"><span>限定試験で確認</span>
+<a class="article-read" href="articles/slam-mppi-box-20260919.html" aria-label="SLAM MPPIによる静止箱通過と通常追従への復帰を読む">記事を読む →</a></div></article><article class="article-card" data-category="report">
+<div class="card-meta"><span class="tag">検証記録</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="articles/speed-trial-20260919.html">速度上限を上げた試験と予測範囲の短縮</a></h3>
+<p>20 / 15 / 15 km/h設定の試験で、箱回避後の予測短縮と停止を確認しました。</p><div class="card-bottom"><span>課題を確認</span>
+<a class="article-read" href="articles/speed-trial-20260919.html" aria-label="速度上限を上げた試験と予測範囲の短縮を読む">記事を読む →</a></div></article><article class="article-card" data-category="report">
+<div class="card-meta"><span class="tag">検証記録</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="articles/retained-path-recovery.html">保持経路を使う低速復帰の仕様と検証状況</a></h3>
+<p>直前の有効な経路を検査しながら使う復帰処理。コード検証とAWSIM未確認を分けて記録します。</p><div class="card-bottom"><span>実装・テスト済み</span>
+<a class="article-read" href="articles/retained-path-recovery.html" aria-label="保持経路を使う低速復帰の仕様と検証状況を読む">記事を読む →</a></div></article></div><p id="article-empty" class="note" hidden>一致する記事はありません。検索語や分類を変更してください。</p></section>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

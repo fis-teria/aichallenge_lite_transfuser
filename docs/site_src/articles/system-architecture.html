@@ -1,0 +1,134 @@
+<div class="architecture-panel">
+            <div class="flow-label">
+              <span>推論・制御で利用する情報</span
+              ><span class="tag">TimePath + optional SLAM MPPI</span>
+            </div>
+            <div class="flow">
+              <div class="flow-inputs">
+                <div>Camera RGB<small>画像の時系列</small></div>
+                <div>2D LiDAR<small>LaserScanの時系列</small></div>
+                <div>Ego State<small>車両状態の履歴</small></div>
+              </div>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+              <div class="flow-node model-node">
+                <span class="label">LEARNED MODEL</span
+                ><strong>Encoder + Fusion</strong><span>時系列特徴を統合</span>
+                <div class="node-divider"></div>
+                <strong>GRU Decoder</strong><span>TimePathV1 / XY 30点</span>
+              </div>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+              <div class="flow-node control-node">
+                <span class="label">OUTSIDE THE MODEL</span
+                ><strong>経路の検査・選択</strong
+                ><span>通常経路 / 局所MPPI</span>
+                <div class="node-divider"></div>
+                <strong>Pure Pursuit</strong><span>操舵・速度指令へ変換</span>
+              </div>
+              <span class="flow-arrow" aria-hidden="true">→</span>
+              <div class="flow-node guard-node">
+                <span class="label">INDEPENDENT GUARD</span
+                ><strong>安全監視</strong><span>時刻・異常値・停止条件</span>
+                <div class="node-divider"></div>
+                <strong>車両指令</strong><span>Ackermann control</span>
+              </div>
+            </div>
+            <p class="flow-foot">
+              任意のSLAM経路：LiDAR + 車速・操舵オドメトリ → Cartographer /
+              局所占有地図 → MPPI候補検査 → 経路選択
+            </p>
+          </div>
+          <div class="two-col principles">
+            <article>
+              <span class="mini-number">A</span>
+              <h3>予測の契約を明示する</h3>
+              <p>
+                現行TimePathの主出力は観測時点の
+                <code>base_link</code> 座標における <code>[B, 30, 2]</code> のXY
+                [m]。時刻は0.1〜3.0秒です。点間距離から求める速度ノルムは、学習済み速度Headや停止確率ではありません。
+              </p>
+              <a
+                data-source="src/aic_transfuser_lite/models/time_path_v1.py"
+                href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/src/aic_transfuser_lite/models/time_path_v1.py"
+                >TimePathの実装 ↗</a
+              >
+            </article>
+            <article>
+              <span class="mini-number">B</span>
+              <h3>教師と推論入力を分ける</h3>
+              <p>
+                将来poseや教師制御は学習・評価用。現在の配布checkpointでは指令履歴も入力しません。通常制御の位置合わせには車速と実操舵角の局所オドメトリを使い、GNSS・IMU・外部poseを制御ノードへ入力しません。
+              </p>
+              <a
+                data-source="docs/time_control_without_gnss_imu.md"
+                href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/time_control_without_gnss_imu.md"
+                >入力の由来と制限 ↗</a
+              >
+            </article>
+          </div>
+          <div class="note amber">
+            <strong>安全監視は設定ごとに確認。</strong>
+            通常周回の近接LiDAR監視は <code>log_only_awsim_v1</code>。SLAM
+            MPPI用設定では
+            <code>stop_v1</code>
+            と実測速度による停止判定が必須です。周回成功を、障害物に対する自動停止の検証結果へ読み替えません。
+          </div>
+          <details class="technical">
+            <summary>
+              モデルの設定値を見る <span>配布checkpointの記録</span>
+            </summary>
+            <div class="detail-body">
+              <div class="table-wrap">
+                <table>
+                  <caption>
+                    TimePathV1 launch_balanced epoch 3
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">設定</th>
+                      <th scope="col">値</th>
+                      <th scope="col">意味</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>hidden_dim</td>
+                      <td>128</td>
+                      <td>融合特徴の次元</td>
+                    </tr>
+                    <tr>
+                      <td>camera_tokens_hw / lidar_tokens</td>
+                      <td>4 × 4 / 32</td>
+                      <td>モダリティごとのトークン数</td>
+                    </tr>
+                    <tr>
+                      <td>fusion_depth / fusion_heads</td>
+                      <td>2 / 4</td>
+                      <td>Transformerの層数 / Attention head数</td>
+                    </tr>
+                    <tr>
+                      <td>image / lidar history</td>
+                      <td>4 / 4</td>
+                      <td>各センサの固定スロット数</td>
+                    </tr>
+                    <tr>
+                      <td>ego_dim / ego_history_length</td>
+                      <td>4 / 10</td>
+                      <td>車両状態のチャネル数 / 履歴数</td>
+                    </tr>
+                    <tr>
+                      <td>use_command_history</td>
+                      <td>false</td>
+                      <td>配布モデルでは制御指令履歴を使用しない</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="source-line">
+                出典：<a
+                  data-source="docs/model_distribution/current_time_path.json"
+                  href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/model_distribution/current_time_path.json"
+                  >checkpointの設定・SHA-256</a
+                >。実ファイルの一致はSHA-256で確認します。
+              </p>
+            </div>
+          </details>

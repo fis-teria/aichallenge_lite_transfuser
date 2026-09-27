@@ -1,0 +1,34 @@
+<div class="paper-top">
+                <span class="paper-index">01</span
+                ><span class="tag">センサ融合</span
+                ><span class="paper-year">CVPR 2021</span>
+              </div>
+              <h2>
+                Multi-Modal Fusion Transformer for<br />End-to-End Autonomous
+                Driving
+              </h2>
+              <p class="authors">
+                Aditya Prakash, Kashyap Chitta, Andreas Geiger
+              </p>
+              <p class="paper-summary">
+                画像とLiDARの特徴をAttentionで統合し、幾何的な対応だけでは捉えにくい周辺の文脈を運転判断へ取り込むTransFuserを提案。CARLAの複雑な交通場面で評価しています。
+              </p>
+              <details open>
+                <summary>このプロジェクトとの関係</summary>
+                <div class="detail-body">
+                  <p>
+                    <strong>取り入れる考え方：</strong
+                    >CameraとLiDARを別々に符号化し、特徴段階で融合してwaypointへつなぐ構成。
+                  </p>
+                  <p>
+                    <strong>異なる点：</strong>本プロジェクトは2D
+                    LaserScanと独自の時系列・制御契約を扱います。TimePath
+                    decoderには本家のgoal入力を導入しておらず、原論文の完全再現ではありません。
+                  </p>
+                </div>
+              </details>
+              <a
+                class="paper-source"
+                href="https://openaccess.thecvf.com/content/CVPR2021/html/Prakash_Multi-Modal_Fusion_Transformer_for_End-to-End_Autonomous_Driving_CVPR_2021_paper.html"
+                >CVFで原論文を読む ↗</a
+              >

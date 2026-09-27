@@ -1,0 +1,43 @@
+<p class="note">公開記録に残る課題を整理した検証案です。実行中・完了済みの実験を示すものではありません。</p>
+          <ol class="roadmap">
+            <li>
+              <div class="roadmap-index">01</div>
+              <div>
+                <span class="label">RUNTIME RECOVERY</span>
+                <h3>最新版の保持経路復帰をAWSIMで再検証</h3>
+                <p>
+                  同一コード・モデル・設定で、復帰指令の発行、実際の前進、通常追従への戻り、周回完了を別々に記録。停止条件と試行予算も確認します。
+                </p>
+              </div>
+            </li>
+            <li>
+              <div class="roadmap-index">02</div>
+              <div>
+                <span class="label">DATA &amp; MODEL</span>
+                <h3>予測短縮の原因と、復帰・回避教師の不足を切り分ける</h3>
+                <p>
+                  入力の時刻、教師の支持範囲、停止時の系列、checkpointの予測を照合。新しい学習では通常走行の保持も評価し、訓練誤差だけで採用しません。
+                </p>
+              </div>
+            </li>
+            <li>
+              <div class="roadmap-index">03</div>
+              <div>
+                <span class="label">CLOSED-LOOP EVALUATION</span>
+                <h3>単発成功から、条件を変えた反復評価へ</h3>
+                <p>
+                  障害物の配置、進入姿勢、速度を固定した試験群で、完走率、衝突、停止、介入、遅延を比較。移動物や実車への適用は別の検証段階です。
+                </p>
+              </div>
+            </li>
+            <li>
+              <div class="roadmap-index">04</div>
+              <div>
+                <span class="label">REPRESENTATION STUDY</span>
+                <h3>DINOv3 / LiDARの比較条件をそろえる</h3>
+                <p>
+                  入力、split、教師、計算予算を固定して比較。特徴抽出器の変更による効果と制御設定の変更による効果を分け、遅延を含めて判断します。
+                </p>
+              </div>
+            </li>
+          </ol>

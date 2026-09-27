@@ -1,0 +1,223 @@
+[
+  {
+    "slug": "system-architecture",
+    "title": "システム構成とTimePathの入出力",
+    "category": "guide",
+    "nav": "architecture",
+    "summary": "Camera・2D LiDAR・車両状態からの経路予測と、モデル外の制御・安全監視を整理します。",
+    "published": "2026-09-27",
+    "updated": "2026-09-27",
+    "status": "継続資料",
+    "topic": "",
+    "related": [
+      "technology-stack",
+      "retained-path-recovery"
+    ]
+  },
+  {
+    "slug": "technology-stack",
+    "title": "学習から走行までの技術スタック",
+    "category": "guide",
+    "nav": "stack",
+    "summary": "Python・PyTorch、データ変換、ROS 2・AWSIM、Windows / WSL開発環境の役割と参照先。",
+    "published": "2026-09-27",
+    "updated": "2026-09-27",
+    "status": "継続資料",
+    "topic": "",
+    "related": [
+      "system-architecture",
+      "dinov3-development"
+    ]
+  },
+  {
+    "slug": "roadmap",
+    "title": "次に検証する課題と判断基準",
+    "category": "guide",
+    "nav": "next",
+    "summary": "保持経路による復帰、予測短縮、反復評価、画像表現の比較を、検証できる単位に整理します。",
+    "published": "2026-09-27",
+    "updated": "2026-09-27",
+    "status": "継続資料",
+    "topic": "",
+    "related": [
+      "retained-path-recovery",
+      "dinov3-development",
+      "speed-trial-20260919"
+    ]
+  },
+  {
+    "slug": "single-lap-20260918",
+    "title": "GNSS / IMUを制御入力に使わない単独周回",
+    "category": "report",
+    "nav": "results",
+    "summary": "単独車両で132.3635秒の1周を記録。条件、入力の由来、未検証の範囲を整理します。",
+    "published": "2026-09-27",
+    "updated": "2026-09-27",
+    "status": "限定試験で確認",
+    "topic": "",
+    "related": [
+      "system-architecture",
+      "roadmap"
+    ]
+  },
+  {
+    "slug": "slam-mppi-box-20260919",
+    "title": "SLAM MPPIによる静止箱通過と通常追従への復帰",
+    "category": "report",
+    "nav": "results",
+    "summary": "5 km/h目標のrollout02で箱通過と通常復帰を記録。周回成功や一般的な回避保証とは区別します。",
+    "published": "2026-09-27",
+    "updated": "2026-09-27",
+    "status": "限定試験で確認",
+    "topic": "",
+    "related": [
+      "system-architecture",
+      "roadmap"
+    ]
+  },
+  {
+    "slug": "speed-trial-20260919",
+    "title": "速度上限を上げた試験と予測範囲の短縮",
+    "category": "report",
+    "nav": "results",
+    "summary": "20 / 15 / 15 km/h設定の試験で、箱回避後の予測短縮と停止を確認しました。",
+    "published": "2026-09-27",
+    "updated": "2026-09-27",
+    "status": "課題を確認",
+    "topic": "",
+    "related": [
+      "system-architecture",
+      "roadmap"
+    ]
+  },
+  {
+    "slug": "retained-path-recovery",
+    "title": "保持経路を使う低速復帰の仕様と検証状況",
+    "category": "report",
+    "nav": "results",
+    "summary": "直前の有効な経路を検査しながら使う復帰処理。コード検証とAWSIM未確認を分けて記録します。",
+    "published": "2026-09-27",
+    "updated": "2026-09-27",
+    "status": "実装・テスト済み",
+    "topic": "",
+    "related": [
+      "system-architecture",
+      "roadmap"
+    ]
+  },
+  {
+    "slug": "transfuser-cvpr2021",
+    "title": "TransFuser（CVPR 2021）：センサ融合の出発点",
+    "category": "paper",
+    "nav": "papers",
+    "summary": "画像とLiDARの特徴をAttentionで統合し、幾何的な対応だけでは捉えにくい周辺の文脈を運転判断へ取り込むTransFuserを提案。CARLAの複雑な交通場面で評価しています。",
+    "published": "2026-09-27",
+    "updated": "2026-09-27",
+    "status": "一次資料を確認",
+    "topic": "fusion",
+    "related": [
+      "system-architecture"
+    ]
+  },
+  {
+    "slug": "transfuser-2022",
+    "title": "TransFuser拡張版：融合とclosed-loop評価",
+    "category": "paper",
+    "nav": "papers",
+    "summary": "複数解像度の画像・鳥瞰LiDAR特徴をTransformerで融合する構成を発展させ、長い経路と密な交通を含むCARLAの評価で検証。融合方式を運転結果へ結びつけて比較しています。",
+    "published": "2026-09-27",
+    "updated": "2026-09-27",
+    "status": "一次資料を確認",
+    "topic": "fusion",
+    "related": [
+      "system-architecture"
+    ]
+  },
+  {
+    "slug": "dagger",
+    "title": "DAgger：模倣学習で生じる分布ずれ",
+    "category": "paper",
+    "nav": "papers",
+    "summary": "学習した方策の行動が次の観測を変えるため、教師の走行だけで学ぶと運用時に分布ずれが生じる問題を扱います。DAggerでは学習者が訪れた状態に教師の指示を付け、データを反復集約します。",
+    "published": "2026-09-27",
+    "updated": "2026-09-27",
+    "status": "一次資料を確認",
+    "topic": "learning",
+    "related": [
+      "roadmap"
+    ]
+  },
+  {
+    "slug": "information-theoretic-mpc",
+    "title": "情報理論に基づくMPCとサンプリング制御",
+    "category": "paper",
+    "nav": "papers",
+    "summary": "情報理論の枠組みからサンプリングに基づく最適制御を導き、候補のコストに応じた重みで制御系列を更新するMPCを構成。自動運転への適用と、cross-entropy法に基づくMPCとの比較を示します。",
+    "published": "2026-09-27",
+    "updated": "2026-09-27",
+    "status": "一次資料を確認",
+    "topic": "control",
+    "related": [
+      "roadmap"
+    ]
+  },
+  {
+    "slug": "cartographer",
+    "title": "Cartographer：2D LiDAR SLAMとループ閉じ込み",
+    "category": "paper",
+    "nav": "papers",
+    "summary": "局所的なサブマップを構築し、scan-to-submapの照合を用いてループ閉じ込みを処理する2D LiDAR SLAM。大きな環境でもリアルタイムに地図の整合を保つための手法を示します。",
+    "published": "2026-09-27",
+    "updated": "2026-09-27",
+    "status": "一次資料を確認",
+    "topic": "control",
+    "related": [
+      "roadmap"
+    ]
+  },
+  {
+    "slug": "dinov3",
+    "title": "DINOv3：自己教師あり視覚表現",
+    "category": "paper",
+    "nav": "papers",
+    "summary": "大規模な自己教師あり学習で汎用的な視覚表現を獲得するモデル群。長期学習で密な特徴が劣化する問題へGram anchoringを導入し、多様な視覚タスクへの転用を評価しています。",
+    "published": "2026-09-27",
+    "updated": "2026-09-27",
+    "status": "一次資料を確認",
+    "topic": "learning",
+    "related": [
+      "roadmap"
+    ]
+  },
+  {
+    "slug": "dinov3-development",
+    "title": "DINOv3と未来系列の比較実験に向けた準備",
+    "category": "development",
+    "nav": "updates",
+    "summary": "凍結DINOv3 adapterとfuture sequence datasetの開発記録。main収録・走行実績とは区別します。",
+    "published": "2026-09-27",
+    "updated": "2026-09-27",
+    "status": "別ブランチで開発中",
+    "topic": "",
+    "related": [
+      "dinov3",
+      "technology-stack",
+      "roadmap"
+    ]
+  },
+  {
+    "slug": "site-maintenance",
+    "title": "記事を分けて、変更と一緒に更新する",
+    "category": "development",
+    "nav": "updates",
+    "summary": "サイトをテーマ別記事へ分割。開発時の更新ルールと、更新漏れ・生成物のずれを検出する検査を追加しました。",
+    "published": "2026-09-27",
+    "updated": "2026-09-27",
+    "status": "運用変更",
+    "topic": "",
+    "related": [
+      "system-architecture",
+      "technology-stack"
+    ]
+  }
+]

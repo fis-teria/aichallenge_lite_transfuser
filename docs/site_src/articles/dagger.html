@@ -1,0 +1,33 @@
+<div class="paper-top">
+                <span class="paper-index">03</span
+                ><span class="tag">学習・分布ずれ</span
+                ><span class="paper-year">AISTATS 2011</span>
+              </div>
+              <h2>
+                A Reduction of Imitation Learning and Structured Prediction to
+                No-Regret Online Learning
+              </h2>
+              <p class="authors">
+                Stéphane Ross, Geoffrey Gordon, Drew Bagnell
+              </p>
+              <p class="paper-summary">
+                学習した方策の行動が次の観測を変えるため、教師の走行だけで学ぶと運用時に分布ずれが生じる問題を扱います。DAggerでは学習者が訪れた状態に教師の指示を付け、データを反復集約します。
+              </p>
+              <details open>
+                <summary>このプロジェクトとの関係</summary>
+                <div class="detail-body">
+                  <p>
+                    <strong>参考にする点：</strong
+                    >通常走行に加え、横ずれ、回避、停止後の復帰などで遭遇する観測を学習データへ含める必要性。
+                  </p>
+                  <p>
+                    <strong>未実施との区別：</strong
+                    >復帰データの追加収集やreplay学習を、そのままDAgger実装とは呼びません。学習者の走行、教師による再ラベル、反復評価まで含めて手順を定義する必要があります。
+                  </p>
+                </div>
+              </details>
+              <a
+                class="paper-source"
+                href="https://proceedings.mlr.press/v15/ross11a.html"
+                >PMLRで原論文を読む ↗</a
+              >

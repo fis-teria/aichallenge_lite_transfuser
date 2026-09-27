@@ -1,71 +1,4 @@
-<!doctype html>
-<html lang="ja">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta
-      name="description"
-      content="現状、構成、検証記録、技術スタック、論文ノートへの入口。"
-    />
-    <meta name="theme-color" content="#132c32" />
-    <title>Research Notes — AIC TransFuser Lite</title>
-    <link rel="icon" href="assets/mark.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="assets/style.css" />
-    <script src="assets/site.js" defer></script>
-  </head>
-  <body data-page="home">
-    <a class="skip" href="#main">本文へ移動</a>
-    <header class="topbar">
-      <button
-        class="menu-toggle"
-        type="button"
-        aria-label="サイドメニューを開く"
-        aria-controls="project-menu"
-        aria-expanded="false"
-      >
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-          <path
-            d="M4 6h16M4 12h16M4 18h16"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.7"
-            stroke-linecap="round"
-          />
-        </svg>
-      </button>
-      <a class="brand" href="index.html"
-        ><img src="assets/mark.svg" alt="" width="32" height="32" /><span
-          >AIC <strong>TransFuser Lite</strong></span
-        ></a
-      >
-      <div class="toplinks">
-        <span class="edition">RESEARCH NOTES / 2026</span
-        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
-          >GitHub <span aria-hidden="true">↗</span></a
-        >
-      </div>
-    </header>
-    <div class="menu-backdrop" hidden></div>
-    <div class="shell">
-      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
-        <div class="sidebar-heading">
-          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
-          <button
-            class="menu-close"
-            type="button"
-            aria-label="サイドメニューを閉じる"
-          >
-            ×
-          </button>
-        </div>
-        <nav aria-label="サイト内ナビゲーション"><a href="index.html" aria-current="page"><span>01</span>プロジェクト概要</a><a href="articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="results.html"><span>03</span>検証結果</a><a href="articles/technology-stack.html"><span>04</span>技術スタック</a><a href="papers.html"><span>05</span>参考論文</a><a href="articles/roadmap.html"><span>06</span>今後の課題</a><a href="updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
-        <div class="sidebar-note">
-          <span class="dot"></span> 開発・検証中
-          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
-          <a href="index.html#sources">資料と更新方針 ↘</a>
-        </div>
-      </aside>
-      <main id="main"><section id="overview" class="section first">
+<section id="overview" class="section first">
           <div class="section-top">
             <p class="eyebrow">AUTONOMOUS DRIVING / PROJECT NOTEBOOK</p>
             <span class="date"
@@ -252,28 +185,8 @@
               と、その中の検証記録を基準にしています。9月27日のDINOv3関連開発は別ブランチの進捗として区別。設定値、試験で観測した結果、今後の目標を混同しません。
             </p>
           </div>
-        </section><section class="section" id="explore"><div class="section-heading"><span class="section-number">EXPLORE THE PROJECT</span><h2>テーマから読む。</h2><p>全体像は継続資料で、検証の経緯は個別の記事で追えます。</p></div><div class="resource-grid"><a id="architecture" href="articles/system-architecture.html"><span>01 / EXPLORE</span><strong>システムの仕組み →</strong></a><a id="results" href="results.html"><span>02 / EXPLORE</span><strong>検証結果 →</strong></a><a id="stack" href="articles/technology-stack.html"><span>03 / EXPLORE</span><strong>技術スタック →</strong></a><a id="papers" href="papers.html"><span>04 / EXPLORE</span><strong>参考論文 →</strong></a><a id="next" href="articles/roadmap.html"><span>05 / EXPLORE</span><strong>今後の課題 →</strong></a><a id="updates" href="updates.html"><span>06 / EXPLORE</span><strong>記事一覧・更新履歴 →</strong></a></div></section>
-<section class="section" id="recent"><div class="section-heading"><span class="section-number">RECENT ARTICLES</span><h2>最近の記事と更新。</h2><p>記事の公開・更新日順に表示しています。試験の実施日は各記事で確認できます。</p></div><div class="article-grid"><article class="article-card" data-category="development">
-<div class="card-meta"><span class="tag">開発・運用</span>
-<time datetime="2026-09-27">2026-09-27</time></div>
-<h3><a href="articles/site-maintenance.html">記事を分けて、変更と一緒に更新する</a></h3>
-<p>サイトをテーマ別記事へ分割。開発時の更新ルールと、更新漏れ・生成物のずれを検出する検査を追加しました。</p><div class="card-bottom"><span>運用変更</span>
-<a class="article-read" href="articles/site-maintenance.html" aria-label="記事を分けて、変更と一緒に更新するを読む">記事を読む →</a></div></article><article class="article-card" data-category="development">
-<div class="card-meta"><span class="tag">開発・運用</span>
-<time datetime="2026-09-27">2026-09-27</time></div>
-<h3><a href="articles/dinov3-development.html">DINOv3と未来系列の比較実験に向けた準備</a></h3>
-<p>凍結DINOv3 adapterとfuture sequence datasetの開発記録。main収録・走行実績とは区別します。</p><div class="card-bottom"><span>別ブランチで開発中</span>
-<a class="article-read" href="articles/dinov3-development.html" aria-label="DINOv3と未来系列の比較実験に向けた準備を読む">記事を読む →</a></div></article><article class="article-card" data-category="report">
-<div class="card-meta"><span class="tag">検証記録</span>
-<time datetime="2026-09-27">2026-09-27</time></div>
-<h3><a href="articles/retained-path-recovery.html">保持経路を使う低速復帰の仕様と検証状況</a></h3>
-<p>直前の有効な経路を検査しながら使う復帰処理。コード検証とAWSIM未確認を分けて記録します。</p><div class="card-bottom"><span>実装・テスト済み</span>
-<a class="article-read" href="articles/retained-path-recovery.html" aria-label="保持経路を使う低速復帰の仕様と検証状況を読む">記事を読む →</a></div></article><article class="article-card" data-category="report">
-<div class="card-meta"><span class="tag">検証記録</span>
-<time datetime="2026-09-27">2026-09-27</time></div>
-<h3><a href="articles/speed-trial-20260919.html">速度上限を上げた試験と予測範囲の短縮</a></h3>
-<p>20 / 15 / 15 km/h設定の試験で、箱回避後の予測短縮と停止を確認しました。</p><div class="card-bottom"><span>課題を確認</span>
-<a class="article-read" href="articles/speed-trial-20260919.html" aria-label="速度上限を上げた試験と予測範囲の短縮を読む">記事を読む →</a></div></article></div><p class="list-more"><a href="updates.html">すべての記事・更新履歴を見る →</a></p></section><section id="sources" class="section sources">
+        </section><section class="section" id="explore"><div class="section-heading"><span class="section-number">EXPLORE THE PROJECT</span><h2>テーマから読む。</h2><p>全体像は継続資料で、検証の経緯は個別の記事で追えます。</p></div>{{topic_cards}}</section>
+<section class="section" id="recent"><div class="section-heading"><span class="section-number">RECENT ARTICLES</span><h2>最近の記事と更新。</h2><p>記事の公開・更新日順に表示しています。試験の実施日は各記事で確認できます。</p></div>{{latest_articles}}<p class="list-more"><a href="updates.html">すべての記事・更新履歴を見る →</a></p></section><section id="sources" class="section sources">
           <div class="section-heading">
             <span class="section-number">KEEP EXPLORING</span>
             <h2>コードと記録に戻れる入口。</h2>
@@ -307,5 +220,3 @@
             サイト内に外部フォント、アクセス解析、外部JavaScriptは使用していません。本文・図・論文ノートはオフラインでも閲覧できます。原論文・GitHubのリンクはネット接続が必要です。
           </p>
         </section>
-<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
-<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

@@ -1,0 +1,89 @@
+<div class="stack-grid">
+            <article class="stack-card">
+              <span class="stack-symbol" aria-hidden="true">01</span>
+              <h3>Learning &amp; Model</h3>
+              <p>Python / PyTorch / torchvision<br />CNN・Transformer・GRU</p>
+              <ul>
+                <li>Camera / LiDAR / egoの特徴抽出と融合</li>
+                <li>TimePathV1の時間基準XY予測</li>
+                <li>masked lossとrun / scenario単位split</li>
+              </ul>
+              <a
+                data-source="src/aic_transfuser_lite/models/time_backbone_v1.py"
+                href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/src/aic_transfuser_lite/models/time_backbone_v1.py"
+                >モデルのコード ↗</a
+              >
+            </article>
+            <article class="stack-card">
+              <span class="stack-symbol" aria-hidden="true">02</span>
+              <h3>Data &amp; Inspection</h3>
+              <p>NumPy / pandas / Pillow<br />PyYAML / rosbags / Matplotlib</p>
+              <ul>
+                <li>MCAP / rosbagからcanonical形式へ変換</li>
+                <li>時刻・欠損・入力と教師の出所を監査</li>
+                <li>LiDARのNaN / inf / 範囲外を除去</li>
+              </ul>
+              <a
+                data-source="docs/02_dataset_spec.md"
+                href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/02_dataset_spec.md"
+                >データ設計 ↗</a
+              >
+            </article>
+            <article class="stack-card">
+              <span class="stack-symbol" aria-hidden="true">03</span>
+              <h3>Runtime &amp; Control</h3>
+              <p>
+                ROS 2 Humble / AWSIM / RViz<br />Pure Pursuit / Cartographer /
+                MPPI
+              </p>
+              <ul>
+                <li>推論・制御・SLAM観測ノードの連携</li>
+                <li>局所地図に基づく静止障害物回避</li>
+                <li>モデル外の鮮度・異常値・停止監視</li>
+              </ul>
+              <a
+                data-source="docs/slam_mppi_avoidance.md"
+                href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/slam_mppi_avoidance.md"
+                >ROS / SLAM MPPI構成 ↗</a
+              >
+            </article>
+            <article class="stack-card">
+              <span class="stack-symbol" aria-hidden="true">04</span>
+              <h3>Development &amp; QA</h3>
+              <p>Windows + native WSL / Git<br />pytest / Docker / colcon</p>
+              <ul>
+                <li>Windowsを編集・commit・pushの正本に</li>
+                <li>WSLで同一commitをlock下で検証</li>
+                <li>checkpointと配布ソースのSHAを照合</li>
+              </ul>
+              <a
+                data-source="docs/windows_codex_wsl_training_workflow.md"
+                href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/windows_codex_wsl_training_workflow.md"
+                >開発・検証の手順 ↗</a
+              >
+            </article>
+          </div>
+          <div class="environment">
+            <span class="label"
+              >RECORDED TRAINING ENVIRONMENT · 2026.09.17</span
+            >
+            <p>
+              Ubuntu 22.04 <span>/</span> Python 3.10.12 <span>/</span> PyTorch
+              2.7.1+cu128 <span>/</span> CUDA build 12.8 <span>/</span> RTX 4080
+            </p>
+            <p class="small">
+              過去の実行環境スナップショット。全利用者の必須構成や、現在稼働中の環境を示すものではありません。依存条件の正本は
+              <a
+                data-source="pyproject.toml"
+                href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/pyproject.toml"
+                >pyproject.toml</a
+              >、観測版は
+              <a
+                data-source="docs/environment/training-wsl-20260917.json"
+                href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/e27e3caae00d721f22e750a06fe32e9eccbec193/docs/environment/training-wsl-20260917.json"
+                >環境記録</a
+              >を参照。
+            </p>
+          </div>
+          
+        <p class="note">新しい画像encoderの開発状況は、<a href="dinov3-development.html">DINOv3比較実験の開発記録</a>へ分離しています。</p>

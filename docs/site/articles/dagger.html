@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="学習した方策の行動が次の観測を変えるため、教師の走行だけで学ぶと運用時に分布ずれが生じる問題を扱います。DAggerでは学習者が訪れた状態に教師の指示を付け、データを反復集約します。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>DAgger：模倣学習で生じる分布ずれ — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html" aria-current="page"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../papers.html">論文ノート</a></div>
+<span class="section-number">論文ノート</span><h1>DAgger：模倣学習で生じる分布ずれ</h1>
+<p class="article-lead">学習した方策の行動が次の観測を変えるため、教師の走行だけで学ぶと運用時に分布ずれが生じる問題を扱います。DAggerでは学習者が訪れた状態に教師の指示を付け、データを反復集約します。</p><div class="article-meta">
+<span>公開 <time datetime="2026-09-27">2026-09-27</time></span>
+<span>更新 <time datetime="2026-09-27">2026-09-27</time></span>
+<span class="tag">一次資料を確認</span></div></header><div class="article-body"><div class="paper-top">
+                <span class="paper-index">03</span
+                ><span class="tag">学習・分布ずれ</span
+                ><span class="paper-year">AISTATS 2011</span>
+              </div>
+              <h2>
+                A Reduction of Imitation Learning and Structured Prediction to
+                No-Regret Online Learning
+              </h2>
+              <p class="authors">
+                Stéphane Ross, Geoffrey Gordon, Drew Bagnell
+              </p>
+              <p class="paper-summary">
+                学習した方策の行動が次の観測を変えるため、教師の走行だけで学ぶと運用時に分布ずれが生じる問題を扱います。DAggerでは学習者が訪れた状態に教師の指示を付け、データを反復集約します。
+              </p>
+              <details open>
+                <summary>このプロジェクトとの関係</summary>
+                <div class="detail-body">
+                  <p>
+                    <strong>参考にする点：</strong
+                    >通常走行に加え、横ずれ、回避、停止後の復帰などで遭遇する観測を学習データへ含める必要性。
+                  </p>
+                  <p>
+                    <strong>未実施との区別：</strong
+                    >復帰データの追加収集やreplay学習を、そのままDAgger実装とは呼びません。学習者の走行、教師による再ラベル、反復評価まで含めて手順を定義する必要があります。
+                  </p>
+                </div>
+              </details>
+              <a
+                class="paper-source"
+                href="https://proceedings.mlr.press/v15/ross11a.html"
+                >PMLRで原論文を読む ↗</a
+              >
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/roadmap.html">次に検証する課題と判断基準</a></h3>
+<p>保持経路による復帰、予測短縮、反復評価、画像表現の比較を、検証できる単位に整理します。</p><div class="card-bottom"><span>継続資料</span>
+<a class="article-read" href="../articles/roadmap.html" aria-label="次に検証する課題と判断基準を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="サイトをテーマ別記事へ分割。開発時の更新ルールと、更新漏れ・生成物のずれを検出する検査を追加しました。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>記事を分けて、変更と一緒に更新する — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html" aria-current="page"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../updates.html">開発・運用</a></div>
+<span class="section-number">開発・運用</span><h1>記事を分けて、変更と一緒に更新する</h1>
+<p class="article-lead">サイトをテーマ別記事へ分割。開発時の更新ルールと、更新漏れ・生成物のずれを検出する検査を追加しました。</p><div class="article-meta">
+<span>公開 <time datetime="2026-09-27">2026-09-27</time></span>
+<span>更新 <time datetime="2026-09-27">2026-09-27</time></span>
+<span class="tag">運用変更</span></div></header><div class="article-body"><h2>トップは全体の案内、詳しい情報は個別の記事へ</h2>
+<p>構成、技術スタック、検証記録、参考論文を、それぞれ独立したURLで読めるようにしました。サイドメニューは各分野への入口として維持します。</p>
+<h2>記事の種類に合わせた更新</h2>
+<ul><li>構成・技術スタック・今後の課題は、同じ記事を更新して現在の説明を保ちます。</li>
+<li>別の試験条件や新しい実測結果は、新しい検証記事にします。過去の失敗・限界は残します。</li>
+<li>参考論文は1本につき1記事。新たな手法との対応づけは、関係する記事からリンクします。</li></ul>
+<h2>開発と記事更新を同じ作業に含める</h2>
+<p>モデル、入力契約、データ処理、制御、依存環境、起動方法、検証結果が変わったら、関連する本文と更新日を確認します。変更内容、検証した範囲、未確認事項、根拠を記事に反映します。</p>
+<p>CIは変更差分に記事本文の更新があるかを検査します。読者向けの説明に影響しない変更は、その理由と対象ファイルを専用記録に残します。CIが記事の意味や実験結果を自動で執筆・判断する仕組みではありません。</p>
+<h2>公開までの流れ</h2>
+<p>記事を編集 → 一覧とHTMLを再生成 → リンク・記事メタデータ・更新対応を確認 → mainへ反映 → GitHub Pagesへ配信、という流れです。記事一覧・関連記事・更新履歴は共通のメタデータから生成します。</p>
+<p class="note">この変更はサイトの整理と更新運用に関するものです。追加の学習やAWSIM走行試験を実行した報告ではありません。</p>
+<p><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/main/docs/site/README.md">記事の追加・更新手順 ↗</a> / <a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/main/AGENTS.md">リポジトリの作業ルール ↗</a></p>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/system-architecture.html">システム構成とTimePathの入出力</a></h3>
+<p>Camera・2D LiDAR・車両状態からの経路予測と、モデル外の制御・安全監視を整理します。</p><div class="card-bottom"><span>継続資料</span>
+<a class="article-read" href="../articles/system-architecture.html" aria-label="システム構成とTimePathの入出力を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/technology-stack.html">学習から走行までの技術スタック</a></h3>
+<p>Python・PyTorch、データ変換、ROS 2・AWSIM、Windows / WSL開発環境の役割と参照先。</p><div class="card-bottom"><span>継続資料</span>
+<a class="article-read" href="../articles/technology-stack.html" aria-label="学習から走行までの技術スタックを読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

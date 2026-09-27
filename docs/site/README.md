@@ -1,76 +1,124 @@
 # Project research site
 
-プロジェクトの現状、構成、検証結果、技術スタック、参考論文の要約をまとめた静的HTMLサイト。
-外部フォント、CDN、アクセス解析、npmビルドは不要。本文はJavaScriptなしでも読める。
-目次はサイドメニュー方式。幅900 pxを超える画面では左側に常設し、それ以下では
-ヘッダーのメニューボタンから左側のドロワーを開く。項目選択、閉じるボタン、
-背景クリック、Escapeで閉じる。狭い画面のドロワー操作にはJavaScriptを使用する。
+公開URL: https://fis-teria.github.io/aichallenge_lite_transfuser/
 
-- 公開URL: https://fis-teria.github.io/aichallenge_lite_transfuser/
-- HTML: `docs/site/index.html`
-- CSS / JS / アイコン: `docs/site/assets/`
-- 配信対象: **`docs/site/`のみ**。リポジトリ全体や実験artifactをPagesへコピーしない。
-- 公開workflow: `.github/workflows/project-site.yml`
+トップは全体への入口です。構成・技術スタック等の継続資料、試験ごとの検証記録、
+1本ずつの論文ノート、開発・運用記録を独立した記事に分けています。
+サイドメニューと狭い画面の左ドロワーを維持し、旧URLの`#stack`等も新記事へ転送します。
 
-## ローカル表示
+## 編集元と公開物
 
-`docs/site/index.html`をブラウザで直接開くか、リポジトリ直下で実行する。
+| 場所 | 役割 |
+| --- | --- |
+| `docs/site_src/articles/<slug>.html` | 1記事の本文。ここを編集する |
+| `docs/site_src/articles.json` | タイトル、分類、概要、公開日、更新日、状態、関連記事 |
+| `docs/site_src/home.html` | トップの紹介と案内。長文記事は増やさない |
+| `docs/site_src/layout.html` | 全ページ共通のヘッダー・サイドメニュー |
+| `docs/site_src/assets/` | CSS・JavaScript・アイコンの編集元 |
+| `docs/site/` | 生成された公開HTML。README以外は直接編集しない |
+
+Python標準ライブラリで生成します。npmビルド・外部フォント・CDN・アクセス解析は不要。
+本文と記事間リンクはJavaScriptなしでも読めます。検索、狭い画面のドロワー、旧hash転送はJSで補助します。
+
+## 更新を作業の完了条件にする
+
+モデル、データ、入力契約、制御、安全監視、依存、起動方法、評価結果が変わったら、
+同じタスク内で関連記事を更新します。公開main未収録の内容は開発ブランチの進捗と明示します。
+
+- 継続資料: 同じ記事本文と`updated`を更新し、現在の説明を保つ。
+- 新しい試験・実測値: 条件と日付が分かる別の記事を追加。旧結果と失敗・制限は残す。
+- 論文: 1本1記事。一次資料の要約とローカル実装への解釈を区別する。
+- トップ: 読み始めの案内と最近の記事への入口。作業ログや長文記事を集約し続けない。
+
+記事に変更内容、確認日、コード/モデル/設定、検証範囲、未確認事項、根拠を記載します。
+根拠のGitHubリンクは可能な限り完全なcommit SHAへ固定し、`data-source`にリポジトリ内パスを付けます。
+実装・単体テスト・限定AWSIM試験・一般化や完走保証を同一視しません。
+
+## 新しい記事を作る
+
+リポジトリ直下から実行します。PowerShellでは1行で実行できます。
+
+```bash
+python tools/new_site_article.py --slug example-run --title "新しい検証の記録" --summary "対象と目的を短く説明" --category report --status "検証中" --date 2026-09-27
+```
+
+分類は`guide` / `report` / `paper` / `development`。
+論文には`--topic fusion`、`learning`、`control`のいずれかを追加。
+必要なら`--nav stack`等でサイドメニューの所属を指定します。
+作成後、本文の項目を実際の記録で埋め、`ARTICLE_DRAFT`マーカーを削除してください。
+未完成記事・日付の逆転・slug重複・存在しない関連記事はビルド時に拒否します。
+既存slugを指定した上書きも拒否します。
+
+```bash
+python tools/build_project_site.py
+python tools/build_project_site.py --check
+python tools/check_project_site.py
+python -m unittest discover -s tests/site -p 'test_*.py'
+```
+
+記事一覧・最近の記事・関連記事・公開HTMLが生成されます。編集元と生成物を一緒にcommitします。
+URLを維持するため、不要になった記事もいきなり削除せず、位置づけと後継記事を本文へ記載します。
+公開済みHTMLが登録から消えた場合は自動削除せず、ビルドを停止します。
+
+## 変更と記事の対応を検査する
+
+commit後、対象差分の基準SHAを指定します。
+
+```bash
+python tools/check_site_update.py --base <変更前commit> --head HEAD
+```
+
+mainへのpushとmain向けPRでは同じ検査をCIで実行します。プロジェクトのソース、設定、
+仕様、起動ツール、依存、テスト等が変わったとき、記事本文の更新が必要です。
+`articles.json`の更新日だけの変更や、公開HTMLだけの変更では通りません。
+
+読者向け説明に影響しない変更は、当該変更で`.github/site-update-note.json`を作成/更新します。
+`reviewed_paths`には検査対象になった全パスを正確に列挙し、`reason`に具体的な理由を20文字以上で記載します。
+過去の記録を変更せずに使い回したり、一部のパスだけ説明したりすることはできません。
+
+```json
+{
+  "schema_version": 1,
+  "reviewed_paths": ["tests/test_example.py"],
+  "reason": "既存テストの変数名のみを変更し、公開仕様・実行手順・検証結果には変更がないため。"
+}
+```
+
+CIは記事本文の変更有無とファイル範囲を検査します。記事が変更内容を正確に説明しているかは
+作業者が確認します。文章・実験結果の自動執筆や、GitHubの保護ルールによる直接push禁止は設定していません。
+mainの検査が失敗した場合はPagesへの新しい配信を行わず、前回の公開状態を維持します。
+
+## 表示とブラウザ確認
+
+`docs/site/index.html`を直接開くか、以下を実行します。
 
 ```bash
 python -m http.server 8765 --bind 127.0.0.1 --directory docs/site
 # http://127.0.0.1:8765/
 ```
 
-## 検証
-
-```bash
-python tools/check_project_site.py
-```
-
-HTMLのID、内部アンカー、ローカルasset、外部依存の不在、commit固定の根拠リンクを確認する。
-全履歴のあるcheckoutで実行する。外部サイトの稼働や記述内容の正しさを自動保証するものではない。
-
-UIを変更した場合は、学習環境とは別の任意venvにPlaywrightを入れてブラウザsmokeも実行する。
+UI・共通レイアウト・導線を変更したら、任意の検証用venvにPlaywrightを用意して確認します。
 
 ```bash
 python -m pip install playwright
 python -m playwright install chromium
 python tools/check_project_site_browser.py --screenshots /path/to/local/site-checks
-# Windowsで導入済みEdgeを使う場合、ブラウザ追加インストールの代わりに:
+# 導入済みWindows Edgeの場合は追加ブラウザの代わりに:
 python tools/check_project_site_browser.py --channel msedge
-# HTTP配信も確認する場合:
-python tools/check_project_site_browser.py --url http://127.0.0.1:8765/ --channel msedge
 ```
 
-1440 / 1024 / 768 / 390 / 320 pxで横はみ出し、論文の分野フィルタ・検索・0件表示、
-キーボードでの開閉、目次移動、JavaScriptエラー、JS無効時の閲覧を確認する。
-サイドメニューの縦配置、フォーカスの循環・復帰、背景の操作抑止、画面幅変更時の復帰も確認する。
-スクリーンショットはローカルに保存し、Gitへ追加しない。
-Python/モデル/ROSコードを変更した場合は既定のWSL同期とlock下で`pytest -q`も行う。
+5画面幅、記事間移動、論文検索、ドロワー開閉、キーボード、旧hash URL、JS無効時を確認します。
+スクリーンショットはローカル保存。学習/ROSロジックを変えた場合は既定のWSL同期・lockとpytestも実行します。
 
-## 更新方針
+## 公開と履歴
 
-1. 公開mainの対象commitと根拠資料を確認する。別ブランチの機能は明記する。
-2. HTMLの更新日・基準commit・根拠リンクを更新する。根拠は完全なcommit SHAへ固定する。
-3. 数値には試験日、条件、コード、限界を添える。設定上限を実測値として扱わない。
-4. 実装済み、単体テスト済み、限定AWSIM試験、未検証を分ける。
-5. 論文は一次資料を確認し、要約と本プロジェクトへの解釈を分ける。
-6. 上記のリンク検査とブラウザ確認を実行し、Windowsからcommit / pushする。
+GitHub Pagesの配信対象は`docs/site/`だけです。編集元・重み・生ログ・datasetを配信artifactに含めません。
+mainへ反映すると`.github/workflows/project-site.yml`が生成物・リンク・記事対応を検査して配信します。
+公開後はActionsの成功、HTTP応答、公開されたHTMLを確認します。pushはWindowsのローカルcheckoutから行います。
 
-初版のコード基準は`e27e3caae00d721f22e750a06fe32e9eccbec193`。
-DINOv3開発ブランチの記録は`0c63f67e1cf58019c976715b08398ff1d6ee5c30`。
-既存資料を整理したサイトであり、新たなAWSIM試験や学習を実行した報告ではない。
-実験の生ログ、動画、重みには別保管物がある。根拠資料の公開と全実験の完全再現は異なる。
-
-## GitHub Pages
-
-GitHub Settings → Pages → Build and deploymentを**GitHub Actions**へ設定する。
-mainへのサイト関連変更のpush、またはActionsの`Project research site`手動実行で配信する。
-workflowはリンク検査後に`docs/site/`だけをアップロードする。
-配信先の権限は`github-pages`環境と`pages: write` / `id-token: write`に限定する。
-公開後はActionsの成功と公開URLの内容を確認する。
-
-公式workflow参考: https://github.com/actions/starter-workflows/blob/main/pages/static.yml
+初版の実装資料は`e27e3caae00d721f22e750a06fe32e9eccbec193`、DINOv3開発記録は
+`0c63f67e1cf58019c976715b08398ff1d6ee5c30`を確認した記事です。記事が更新されても、
+過去の実験コードと結果を現在の実装の実績に読み替えません。
 
 ## 初版の確認記録（2026-09-27）
 

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="凍結DINOv3 adapterとfuture sequence datasetの開発記録。main収録・走行実績とは区別します。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>DINOv3と未来系列の比較実験に向けた準備 — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html" aria-current="page"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../updates.html">開発・運用</a></div>
+<span class="section-number">開発・運用</span><h1>DINOv3と未来系列の比較実験に向けた準備</h1>
+<p class="article-lead">凍結DINOv3 adapterとfuture sequence datasetの開発記録。main収録・走行実績とは区別します。</p><div class="article-meta">
+<span>公開 <time datetime="2026-09-27">2026-09-27</time></span>
+<span>更新 <time datetime="2026-09-27">2026-09-27</time></span>
+<span class="tag">別ブランチで開発中</span></div></header><div class="article-body"><div class="branch-note">
+            <span class="badge pending">別ブランチで開発中</span>
+            <h3>DINOv3と未来系列による比較実験の準備</h3>
+            <p>
+              2026年9月27日時点の <code>codex/windows-wsl-training-sync</code> /
+              <code>0c63f67</code> には、frozen DINOv3 camera
+              adapter、checkpoint builder接続、依存固定、および学習専用のfuture
+              sequence
+              datasetが追加されています。公開mainの走行モデルには含まれていません。
+            </p>
+            <p>
+              特徴の改善、LiDARとの比較、実時間性、closed-loopの効果は別途評価が必要です。
+            </p>
+            <a
+              href="https://github.com/fis-teria/aichallenge_lite_transfuser/commit/0c63f67e1cf58019c976715b08398ff1d6ee5c30"
+              >開発commitを見る ↗</a
+            >
+          </div>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/dinov3.html">DINOv3：自己教師あり視覚表現</a></h3>
+<p>大規模な自己教師あり学習で汎用的な視覚表現を獲得するモデル群。長期学習で密な特徴が劣化する問題へGram anchoringを導入し、多様な視覚タスクへの転用を評価しています。</p><div class="card-bottom"><span>一次資料を確認</span>
+<a class="article-read" href="../articles/dinov3.html" aria-label="DINOv3：自己教師あり視覚表現を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/technology-stack.html">学習から走行までの技術スタック</a></h3>
+<p>Python・PyTorch、データ変換、ROS 2・AWSIM、Windows / WSL開発環境の役割と参照先。</p><div class="card-bottom"><span>継続資料</span>
+<a class="article-read" href="../articles/technology-stack.html" aria-label="学習から走行までの技術スタックを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/roadmap.html">次に検証する課題と判断基準</a></h3>
+<p>保持経路による復帰、予測短縮、反復評価、画像表現の比較を、検証できる単位に整理します。</p><div class="card-bottom"><span>継続資料</span>
+<a class="article-read" href="../articles/roadmap.html" aria-label="次に検証する課題と判断基準を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>
