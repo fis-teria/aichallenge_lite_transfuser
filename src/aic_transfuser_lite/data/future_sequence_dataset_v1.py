@@ -74,7 +74,9 @@ class FutureSequenceTargets:
 
     Shapes are ``image [F,3,H,W]``, ``lidar [F,2,P]``, ``ego [F,4]`` and
     ``applied_action [F,3]``.  Ego units are m/s, m/s, rad/s and rad.  Applied
-    action units are steering rad, speed m/s and acceleration m/s2.
+    action units are steering rad, speed m/s and acceleration m/s2. The legacy
+    ``applied_action`` name refers to the recorded final command, at its message
+    stamp; it does not establish the actuator's physical application time.
     """
 
     horizons_sec: torch.Tensor
@@ -268,10 +270,13 @@ def build_temporal_training_sample(
     future_config: FutureSequenceConfig,
     epoch_bounds: tuple[int, int],
     freeze_ns: int,
+    intervention_ns: int | None = None,
     environment_stop_intent: bool | None = None,
 ) -> TemporalTrainingSample:
     """Build policy inputs and future teachers through independent branches."""
 
+    if intervention_ns is not None and (type(intervention_ns) is not int or intervention_ns < 0):
+        raise ValueError("intervention_ns must be nonnegative integer ns or None")
     policy = assemble_time_sample(
         events,
         anchor,
@@ -279,6 +284,7 @@ def build_temporal_training_sample(
         epoch_start_ns=epoch_bounds[0],
         epoch_end_ns=epoch_bounds[1],
         freeze_ns=freeze_ns,
+        intervention_ns=intervention_ns,
         environment_stop_intent=environment_stop_intent,
     )
     future = build_future_sequence_targets(
@@ -389,12 +395,14 @@ class TemporalTrainingDataset(Dataset[TemporalTrainingSample]):
         dataset_config: TimeDatasetConfig,
         future_config: FutureSequenceConfig,
         epoch_bounds: dict[tuple[str, str], tuple[int, int]],
+        intervention_ns: dict[tuple[str, str], int] | None = None,
         stop_intent: dict[str, bool] | None = None,
     ) -> None:
         self._records = tuple(records)
         self._dataset_config = dataset_config
         self._future_config = future_config
         self._bounds = dict(epoch_bounds)
+        self._interventions = dict(intervention_ns or {})
         self._stop_intent = dict(stop_intent or {})
 
     def __len__(self) -> int:
@@ -412,5 +420,6 @@ class TemporalTrainingDataset(Dataset[TemporalTrainingSample]):
             future_config=self._future_config,
             epoch_bounds=self._bounds[key],
             freeze_ns=freeze_ns,
+            intervention_ns=self._interventions.get(key),
             environment_stop_intent=self._stop_intent.get(f"{anchor.run}:{anchor.epoch}:{anchor.capture_ns}"),
         )

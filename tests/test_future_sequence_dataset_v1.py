@@ -159,3 +159,35 @@ def test_dataset_does_not_cross_run_epoch_and_validates_shapes():
             future_config=future_config,
             epoch_bounds={("run", "ep"): bounds},
         )[0]
+
+
+def test_dataset_preserves_collection_intervention_without_inventing_stop():
+    events, anchor, dataset_config, future_config, bounds = _setup()
+    kwargs = dict(dataset_config=dataset_config, future_config=future_config,
+                  epoch_bounds={("run", "ep"): bounds})
+    records = [(events, anchor, 2_000_000_001)]
+    original = TemporalTrainingDataset(records, **kwargs)[0]
+    blocked = TemporalTrainingDataset(
+        records, **kwargs, intervention_ns={("run", "ep"): anchor.capture_ns + 2_000_000_000},
+    )[0]
+    assert original.policy.teacher.xy_mask.all()
+    assert blocked.policy.inputs is not None
+    assert not blocked.policy.teacher.xy_mask.any()
+    assert not blocked.policy.teacher.velocity_mask.any()
+    assert not blocked.target_speed_mask.item() and not blocked.stop_mask.item()
+    assert blocked.policy.stop_reason == "COLLECTION_INTERVENTION"
+    # Observation targets remain real observations, even when IL labels are held.
+    torch.testing.assert_close(original.future.image, blocked.future.image, rtol=0, atol=0)
+    # An intervention in another epoch cannot suppress this run's labels.
+    other = TemporalTrainingDataset(records, **kwargs, intervention_ns={("run", "other"): 0})[0]
+    assert other.policy.teacher.xy_mask.all()
+
+
+@pytest.mark.parametrize("invalid", [-1, 1.5, True])
+def test_collection_intervention_requires_integer_nanoseconds(invalid):
+    events, anchor, dataset_config, future_config, bounds = _setup()
+    with pytest.raises(ValueError, match="intervention_ns"):
+        build_temporal_training_sample(
+            events, anchor, dataset_config=dataset_config, future_config=future_config,
+            epoch_bounds=bounds, freeze_ns=2_000_000_001, intervention_ns=invalid,
+        )

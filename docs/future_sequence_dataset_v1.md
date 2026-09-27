@@ -19,6 +19,14 @@ false mask; it is not interpolated or copied into a synthetic label. Stop is
 valid only with an explicit boolean stop-intent annotation. Target speed is
 measured longitudinal speed at t+0.5 s and has its own mask.
 
+Pass the existing `intervention_ns[(run, epoch)]` map into
+`TemporalTrainingDataset`. It preserves the baseline's conservative exclusion:
+if the 3 s IL horizon meets collection braking, XY and target-speed teachers are
+masked. Real future observations remain available for auxiliary prediction;
+collection braking never invents an environment-stop label. The legacy field
+`applied_action` contains the recorded final command at its message timestamp,
+not a measurement of physical actuator application time.
+
 The optional immutable NPZ cache identity includes the source SHA-256, complete
 Dataset config, horizon/tolerance config, preprocessing version, encoder
 identity, and augmentation identity. Reopening a cache root with any different
@@ -56,3 +64,32 @@ pass the prescribed synchronization preflight.
 For Linux/CUDA validation, first commit on Windows, synchronize the exact commit
 using the documented workflow, and run the same command through
 `tools/with_wsl_training_lock.sh`. Do not train from `/mnt/e`.
+
+## Bounded real-data check
+
+After synchronization, run from the native WSL checkout:
+
+```bash
+bash tools/with_wsl_training_lock.sh bash tools/with_workspace_cache.sh \
+  timeout 900 env PYTHONPATH=src .venv/bin/python tools/check_future_sequence_real_data.py \
+  --corpus-root ../datasets/processed/time_teacher_20laps_20260913 \
+  --run-ids 5kmh_run01 8kmh_run01 --samples-per-run 32 --batch-size 4 \
+  --threads 2 --max-source-gib 4 --output runs/validation/future_sequence_real_20260927
+```
+
+Use a new output directory for each invocation; existing reports/cache are never
+overwritten. Budget: two existing train runs, 64 selected anchors, at most 4 GiB
+of source bags, zero optimizer updates, 900 s outer timeout. Test runs remain
+sealed. Start/end, missing-input and collection-intervention cases stay in the
+denominator. Source hashes and original teacher replay are checked only for the
+selected runs. Only the selected sensors are retained as decoded payloads.
+
+`report.json` separates hashing/indexing/decoding, DataLoader CPU assembly, and
+future-cache build/read measurements. A fresh Python process must reuse every
+future-cache record and reproduce its tensor digest. DataLoader timings start
+after bag decoding; future-cache timings omit policy inputs and encoder work.
+OS caches are uncontrolled. The input freeze is the existing camera bag receipt
++ 50 ms proxy, not measured preprocessing completion. Existing-bag preparation
+time is not a newly measured collection-to-training cycle. This check does not
+train a model or establish driving performance. Pretrained DINO forward/backward
+remains pending official weights.
