@@ -1,0 +1,20 @@
+{
+  "format": "common_il_experiment_v1",
+  "time_backbone_config": "configs/time_path_p1/command_off.json",
+  "camera_encoder": {
+    "backbone": "dinov3_vits16", "frozen": true,
+    "repository_path": null, "checkpoint_path": null,
+    "checkpoint_sha256": "08c60483bc63c04f533611e34bf70b120eedb7240f469bc16e9e20bf344b941d"
+  },
+  "initialization_seed": 42,
+  "sampler_seed": 42,
+  "loss_weights": {"waypoint": 1.0, "speed": 1.0, "stop": 1.0},
+  "pilot": {
+    "max_optimizer_steps": 32, "batch_size": 4,
+    "learning_rate": 0.0003, "weight_decay": 0.0001, "max_grad_norm": 1.0
+  },
+  "dataset": {
+    "split": "train", "run_ids": ["5kmh_run01", "8kmh_run01"],
+    "samples_per_run": 32, "stop_annotation": "explicit_only"
+  }
+}
