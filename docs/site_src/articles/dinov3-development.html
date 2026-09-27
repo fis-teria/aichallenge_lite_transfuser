@@ -1,18 +1,46 @@
 <div class="branch-note">
-            <span class="badge pending">別ブランチで開発中</span>
-            <h3>DINOv3と未来系列による比較実験の準備</h3>
-            <p>
-              2026年9月27日時点の <code>codex/windows-wsl-training-sync</code> /
-              <code>0c63f67</code> には、frozen DINOv3 camera
-              adapter、checkpoint builder接続、依存固定、および学習専用のfuture
-              sequence
-              datasetが追加されています。公開mainの走行モデルには含まれていません。
-            </p>
-            <p>
-              特徴の改善、LiDARとの比較、実時間性、closed-loopの効果は別途評価が必要です。
-            </p>
-            <a
-              href="https://github.com/fis-teria/aichallenge_lite_transfuser/commit/0c63f67e1cf58019c976715b08398ff1d6ee5c30"
-              >開発commitを見る ↗</a
-            >
-          </div>
+  <span class="badge pending">開発ブランチの学習基盤</span>
+  <h2>DINOv3とResNet18を共通の出力で比較する</h2>
+  <p>2026年9月27日確認。<code>codex/windows-wsl-training-sync</code> に、画像・2D LiDAR・車両状態の融合から、waypoint・目標速度・停止確率を学習する比較用モデルを追加しました。公開mainの走行モデルは置き換えていません。</p>
+  <p>DINOv3公式重みの検証、実ログによる停止学習、RTX 5060での速度、AWSIMでの走行効果は未確認です。今回のコードや単体fitを、既存の周回結果へ帰属させることはできません。</p>
+</div>
+
+<h2>推論出力と教師の意味</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>出力</th><th>形状</th><th>教師</th></tr></thead>
+  <tbody>
+    <tr><td>将来waypoint</td><td><code>[B,6,2]</code></td><td>観測時のbase_linkを基準に、0.5秒刻みで3秒先までのXY座標。単位はm。</td></tr>
+    <tr><td>目標速度</td><td><code>[B,1]</code></td><td>0.5秒後に観測した前後方向速度。単位はm/s。経路の点間距離から求めた速度とは別の学習Headです。</td></tr>
+    <tr><td>停止確率</td><td><code>[B,1]</code></td><td>明示的に注釈した環境に対する停止意図。出力logitをsigmoidで確率にします。</td></tr>
+  </tbody>
+</table>
+</div>
+<p>既存の30点TimeTeacherから、対応する6点と0.5秒後の速度を選びます。旧TimePathV1の30点出力、checkpoint形式、既存の走行モデルは保持しています。</p>
+<p>現在・過去の入力と教師は別のオブジェクトです。方策は教師付きbatchを受け付けず、未来の観測や操作は推論入力になりません。欠損教師にはHeadごとにmaskを使い、収集終了操作や低速を停止意図に読み替えません。</p>
+
+<h2>比較条件を揃える範囲</h2>
+<p>ResNet18とDINOv3の設定はCamera encoder以外を共通にしています。run単位のsplit、選ぶanchor、損失、更新回数、sampler seedに加え、LiDAR・融合部・3つのHeadの初期値も揃えます。</p>
+<p>初期ResNet18はランダム初期値から全体を学習し、DINOv3 ViT-S/16は公式の事前学習済みbackboneを凍結して使う設計です。事前学習と凍結条件の違いがあるため、構造だけの効果を測る比較とは扱いません。</p>
+<p>waypointと速度にはL1、停止にはbinary cross entropyを使います。教師がないHeadの勾配はNoneのままとし、AdamWの重み減衰や過去のモーメントでも更新されないことをテストしています。すべての教師が無効なら、そのbatchのforwardと更新を省略します。</p>
+
+<h2>制御とSafety Supervisorへの境界</h2>
+<p>offline adapterは既存の<code>AuthoritativePlanV3</code>へ変換します。6点の時刻付き経路と、学習した1つの速度を一定に保つ参照を渡します。これは6点別々の速度予測ではありません。停止教師がない場合の停止確率はNoneとし、停止確率を必須にした既存の検査で拒否されます。</p>
+<p>座標変換、データの古さ、追従制御、センサtimeout、停止距離、最終制動は引き続きモデルの外で扱います。ROS topicや実行中のcontrollerを変更する作業は含めていません。</p>
+
+<h2>ここまでの確認と残件</h2>
+<ul>
+  <li>未来系列Datasetは、既存AWSIMの2走行・64点で入力と未来教師の分離、mask、別プロセスでのキャッシュ再利用を確認しました。</li>
+  <li>共通Headの人工教師fitと、ResNet18の小規模実ログpilotは、<a href="common-il-pilot-20260927.html">条件と結果を記した検証記事</a>へ分けています。</li>
+  <li>DINOv3の公式sourceと依存環境はworkspace内へ導入済みです。公式学習済み重みを取得して、実際のforward/backwardと比較学習を確認する作業が残っています。</li>
+  <li>実ログの停止Headには、停止意図の正例・負例の注釈が必要です。現時点では学習済み停止能力を主張できません。</li>
+</ul>
+
+<h2>導入履歴と根拠</h2>
+<p>初期導入の<code>0c63f67</code>では、frozen DINOv3 adapter、既存builder接続、依存固定を確認しました。公式sourceのランダム初期化によるCUDA確認であり、公式学習済み重みの検証ではありません。この制限は今回も残っています。</p>
+<ul>
+  <li><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/0658afa394a7d071a057444aa15d780c07bb636f/docs/common_il_v1.md" data-source="docs/common_il_v1.md">共通ILの契約、起動方法、検証結果と未確認範囲</a></li>
+  <li><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/d5b75590f2b7ac50e982c3c3a2d5b7547dd9f724/src/aic_transfuser_lite/models/common_il_v1.py" data-source="src/aic_transfuser_lite/models/common_il_v1.py">比較用モデルと初期値の分離</a></li>
+  <li><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/f5cfed16991b0cce1f227dd536d3a2cb96ad439e/docs/future_sequence_dataset_v1.md" data-source="docs/future_sequence_dataset_v1.md">未来系列Datasetの実ログ確認</a></li>
+  <li><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/commit/0c63f67e1cf58019c976715b08398ff1d6ee5c30">公式source・依存の初期導入commit</a></li>
+</ul>

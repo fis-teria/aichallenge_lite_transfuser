@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="6点waypoint・速度・停止の共通Headを実装。人工教師fitとResNet18の学習データ内での損失低下を確認し、未学習の停止とDINO実重みの残件を整理します。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>共通IL Headのfitと既存走行ログによる32更新pilot — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html" aria-current="page"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../results.html">検証記録</a></div>
+<span class="section-number">検証記録</span><h1>共通IL Headのfitと既存走行ログによる32更新pilot</h1>
+<p class="article-lead">6点waypoint・速度・停止の共通Headを実装。人工教師fitとResNet18の学習データ内での損失低下を確認し、未学習の停止とDINO実重みの残件を整理します。</p><div class="article-meta">
+<span>公開 <time datetime="2026-09-27">2026-09-27</time></span>
+<span>更新 <time datetime="2026-09-27">2026-09-27</time></span>
+<span class="tag">学習データ内で確認・走行未評価</span></div></header><div class="article-body"><div class="branch-note">
+  <span class="badge pending">開発ブランチ・学習データ内のfit確認</span>
+  <h2>3つの出力を学習する処理が動くことを確認</h2>
+  <p>2026年9月27日、共通のwaypoint・速度・停止Headを追加し、人工教師へのfitと、既存AWSIM走行ログを使ったResNet18の32更新pilotを行いました。DINOv3公式重みでの学習、実ログの停止Head学習、走行性能の評価は含みません。</p>
+  <p>対象は開発ブランチ<code>codex/windows-wsl-training-sync</code>の<code>d5b7559</code>です。公開mainへ反映するのはこの記事であり、稼働中のモデルやSafety Supervisorを切り替える変更ではありません。</p>
+</div>
+
+<h2>確認したモデルと条件</h2>
+<p>出力は0.5秒刻み・3秒先までの6点waypoint、0.5秒後の前後方向速度1値、停止意図の確率1値です。教師は入力と分離し、Headごとに有効maskを使います。詳しい構成は<a href="dinov3-development.html">DINOv3・共通ILの開発記録</a>を参照してください。</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>項目</th><th>条件</th></tr></thead>
+  <tbody>
+    <tr><td>実行環境</td><td>native WSL、Python 3.10、PyTorch 2.7.1+cu128、RTX 4080</td></tr>
+    <tr><td>画像encoder</td><td>ResNet18、ランダム初期値から学習。DINOとの実測比較ではありません。</td></tr>
+    <tr><td>入力</td><td>単眼画像224×384、2D LiDAR 750点、許可された車両状態と履歴</td></tr>
+    <tr><td>実ログの選択</td><td>train splitの5kmh_run01・8kmh_run01から各32点を時系列上で等間隔に選択</td></tr>
+    <tr><td>学習</td><td>batch 4、AdamW、LR 0.0003、32更新・128点提示、float32、TF32無効</td></tr>
+    <tr><td>計画上限</td><td>2走行・最大64点、32更新または256点提示、900秒。新規AWSIM走行0。</td></tr>
+  </tbody>
+</table>
+</div>
+<p>5 km/h・8 km/hは収集時の設定名です。モデルがその速度で走行できたという実績ではありません。test splitは使っていません。</p>
+
+<h2>人工教師：3つのHeadのfit</h2>
+<p>4つの固定特徴ベクトルに明示的な教師を与え、64回更新しました。停止の正例2件・負例2件も含む、Head単体の確認です。</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>損失</th><th>更新前</th><th>更新後</th></tr></thead>
+  <tbody>
+    <tr><td>waypoint L1（座標平均、m）</td><td>1.219004</td><td>0.038731</td></tr>
+    <tr><td>速度L1（m/s）</td><td>0.764807</td><td>0.063234</td></tr>
+    <tr><td>停止BCE</td><td>0.850513</td><td>0.000576</td></tr>
+  </tbody>
+</table>
+</div>
+<p>この結果は単純な教師にHeadをfitできることを示します。画像encoderの性能や、実環境で止まれる能力を示すものではありません。</p>
+
+<h2>実ログ：waypointと速度の小規模学習</h2>
+<p>64点の入力はすべて有効で、waypoint・速度の教師は61点にありました。残り3点は元のmaskに従って学習から除外しています。停止意図の注釈は0件でした。前のDataset監査は境界・欠損を意図的に含める選び方だったため、その有効点数との単純比較はできません。</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>損失</th><th>更新前</th><th>更新後</th><th>教師有効数</th></tr></thead>
+  <tbody>
+    <tr><td>waypoint L1（座標平均、m）</td><td>1.493029</td><td>0.362948</td><td>61</td></tr>
+    <tr><td>速度L1（m/s）</td><td>1.701119</td><td>0.112004</td><td>61</td></tr>
+    <tr><td>停止BCE</td><td>未計算</td><td>未計算</td><td>0</td></tr>
+  </tbody>
+</table>
+</div>
+<p>これは学習に使った同じ64点に対する評価モードでの損失です。waypoint L1はXY座標ごとの絶対誤差平均であり、ユークリッド距離のADEとは異なります。未使用runでの精度や走行中の性能改善は、この数値から判断できません。</p>
+<p>停止Headのパラメータは更新前後で完全一致しました。保存したcheckpointを読み直した際には、3つの出力tensorも保存前と完全一致しています。停止logitは出力されますが、実ログでの停止学習は未実施です。</p>
+
+<h2>所要時間と検証の範囲</h2>
+<p>既存キャッシュの一度のハッシュ確認を含む準備は56.050秒、32更新の学習ループは3.537秒でした。CUDAの最大allocated memoryは839,936,000 bytes（約0.782 GiB）です。GPU全体の使用量や、RTX 5060 Laptop・Jetsonでの推論レイテンシの測定ではありません。</p>
+<p>関連するWindowsテストは36件成功し、同じ実装commitでのnative WSL全体テストは3,348件成功・4件スキップ・93件のwarning、所要113.84秒でした。スキップは未導入のOSQP、既存のjsonschema/Draft2020検査2件、任意の公式LiDAR packageで、それらの連携は未検証です。DINO関連の単体テストには代用backboneを使っており、公式学習済み重みの動作確認には含めません。</p>
+<p>dataset識別子は<code>d5b6756a6f26f18539c707efe459f7d30e023b0d9caf23aab78bce27c730457f</code>。使用したcache manifest、64個のanchor ID、seed、更新順、各損失とmask件数をworkspace内の実験記録へ保存しています。</p>
+
+<h2>残っている確認</h2>
+<ul>
+  <li>DINOv3公式学習済み重みでのforward/backwardと同条件pilot。</li>
+  <li>停止意図の正例と負例の明示的な注釈。低速・収集終了・bag終端から自動で正解を作らない。</li>
+  <li>未使用runでの比較、未来予測補助の有無、推論実機での計測、AWSIMの閉ループ評価。</li>
+</ul>
+<p>今回のpilotを保持中の走行モデルへ自動昇格させる処理はありません。</p>
+
+<h2>根拠と再現</h2>
+<ul>
+  <li><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/0658afa394a7d071a057444aa15d780c07bb636f/docs/common_il_v1.md" data-source="docs/common_il_v1.md">実測結果、検証コマンド、残っている確認</a></li>
+  <li><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/d5b75590f2b7ac50e982c3c3a2d5b7547dd9f724/tools/train_common_il_pilot.py" data-source="tools/train_common_il_pilot.py">有限fit・pilotとcheckpoint再現確認</a></li>
+  <li><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/d5b75590f2b7ac50e982c3c3a2d5b7547dd9f724/configs/common_il_v1/resnet18.json" data-source="configs/common_il_v1/resnet18.json">ResNet18の共通実験設定</a></li>
+  <li><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/issues/5">Issue #5の実装・検証記録</a></li>
+</ul>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="development">
+<div class="card-meta"><span class="tag">開発・運用</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/dinov3-development.html">DINOv3と未来系列の比較実験に向けた準備</a></h3>
+<p>DINOv3のworkspace導入、未来教師の分離、共通waypoint・速度・停止Headの学習基盤と未確認範囲。</p><div class="card-bottom"><span>開発ブランチ・共通ILを実装</span>
+<a class="article-read" href="../articles/dinov3-development.html" aria-label="DINOv3と未来系列の比較実験に向けた準備を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/system-architecture.html">システム構成とTimePathの入出力</a></h3>
+<p>Camera・2D LiDAR・車両状態からの経路予測と、モデル外の制御・安全監視を整理します。</p><div class="card-bottom"><span>継続資料</span>
+<a class="article-read" href="../articles/system-architecture.html" aria-label="システム構成とTimePathの入出力を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

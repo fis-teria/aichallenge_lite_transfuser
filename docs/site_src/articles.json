@@ -194,15 +194,16 @@
     "title": "DINOv3と未来系列の比較実験に向けた準備",
     "category": "development",
     "nav": "updates",
-    "summary": "凍結DINOv3 adapterとfuture sequence datasetの開発記録。main収録・走行実績とは区別します。",
+    "summary": "DINOv3のworkspace導入、未来教師の分離、共通waypoint・速度・停止Headの学習基盤と未確認範囲。",
     "published": "2026-09-27",
     "updated": "2026-09-27",
-    "status": "別ブランチで開発中",
+    "status": "開発ブランチ・共通ILを実装",
     "topic": "",
     "related": [
       "dinov3",
       "technology-stack",
-      "roadmap"
+      "roadmap",
+      "common-il-pilot-20260927"
     ]
   },
   {
@@ -218,6 +219,21 @@
     "related": [
       "system-architecture",
       "technology-stack"
+    ]
+  },
+  {
+    "slug": "common-il-pilot-20260927",
+    "title": "共通IL Headのfitと既存走行ログによる32更新pilot",
+    "category": "report",
+    "nav": "results",
+    "summary": "6点waypoint・速度・停止の共通Headを実装。人工教師fitとResNet18の学習データ内での損失低下を確認し、未学習の停止とDINO実重みの残件を整理します。",
+    "published": "2026-09-27",
+    "updated": "2026-09-27",
+    "status": "学習データ内で確認・走行未評価",
+    "topic": "",
+    "related": [
+      "dinov3-development",
+      "system-architecture"
     ]
   }
 ]
