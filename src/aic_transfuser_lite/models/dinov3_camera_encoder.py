@@ -6,6 +6,7 @@ explicit local DINOv3 repository, checkpoint, and full SHA-256.
 from __future__ import annotations
 
 import hashlib
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +20,54 @@ DINOV3_PATCH_SIZE = 16
 DINOV3_EMBED_DIM = 384
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
 IMAGENET_STD = (0.229, 0.224, 0.225)
+
+
+def resolve_camera_encoder_config(
+    config: dict[str, Any], *, output_dim: int, token_h: int, token_w: int,
+    image_height: int, image_width: int,
+) -> dict[str, Any]:
+    """Validate an optional model camera config against the shared fusion shape.
+
+    Paths may be null in a portable config template; construction checks that
+    the local repository and checkpoint actually exist before loading anything.
+    Image preprocessing remains the shared Dataset/runtime responsibility.
+    """
+    if type(config) is not dict:
+        raise TypeError("camera_encoder must be a dict")
+    name = config.get("backbone")
+    common = {"backbone", "output_dim", "token_h", "token_w"}
+    if name == DINOV3_MODEL_NAME:
+        allowed = common | {"repository_path", "checkpoint_path", "checkpoint_sha256", "frozen"}
+        if config.get("frozen", True) is not True:
+            raise ValueError("initial DINOv3 comparison requires frozen=true")
+        if image_height % DINOV3_PATCH_SIZE or image_width % DINOV3_PATCH_SIZE:
+            raise ValueError("DINOv3 image H/W must be divisible by patch size 16")
+        for key in ("repository_path", "checkpoint_path"):
+            value = config.get(key)
+            if value is not None and (type(value) is not str or not value.strip()):
+                raise ValueError(f"camera_encoder.{key} must be a nonempty string or null")
+        digest = config.get("checkpoint_sha256")
+        if digest is not None and (
+            type(digest) is not str or len(digest) != 64
+            or any(character not in "0123456789abcdef" for character in digest)
+        ):
+            raise ValueError("DINOv3 checkpoint_sha256 must be a lowercase full SHA-256")
+    elif name == "resnet18":
+        allowed = common | {"pretrained"}
+        if type(config.get("pretrained", False)) is not bool:
+            raise TypeError("camera_encoder.pretrained must be bool")
+    else:
+        raise ValueError(f"unsupported camera backbone: {name!r}")
+    unknown = set(config) - allowed
+    if unknown:
+        raise ValueError(f"unknown camera_encoder keys: {sorted(unknown)}")
+    resolved = deepcopy(config)
+    for key, expected in (("output_dim", output_dim), ("token_h", token_h), ("token_w", token_w)):
+        actual = config.get(key, expected)
+        if type(actual) is not int or actual <= 0 or actual != expected:
+            raise ValueError(f"camera_encoder.{key} must match model fusion shape ({expected})")
+        resolved[key] = expected
+    return resolved
 
 
 def _sha256(path: Path) -> str:

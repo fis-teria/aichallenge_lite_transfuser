@@ -225,6 +225,8 @@ def _validate_model_config(model: torch.nn.Module, config: TimeModelConfig) -> N
         raise ValueError("model/config mismatch: camera_tokens_hw")
     if int(backbone.get("lidar_tokens", -1)) != config.lidar_tokens:
         raise ValueError("model/config mismatch: lidar_tokens")
+    if backbone.get("camera_encoder") != config.camera_encoder:
+        raise ValueError("model/config mismatch: camera_encoder")
     for key in ("fusion_depth", "fusion_heads", "lidar_angle_min_rad"):
         if backbone.get(key) != getattr(config,key):
             raise ValueError(f"model/config mismatch: {key}")

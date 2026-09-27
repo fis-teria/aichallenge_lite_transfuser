@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from copy import deepcopy
 from collections import defaultdict
 from pathlib import Path
 from typing import Sequence
@@ -701,7 +702,7 @@ def full_control_model_kwargs_v3(config: dict[str, object]) -> dict[str, object]
     model = config["model"]
     data = config["data"]
     bounds = model["control_bounds"]
-    return {
+    kwargs = {
         "image_height": int(data["image_height"]),
         "image_width": int(data["image_width"]),
         "lidar_points": int(data["lidar_points"]),
@@ -733,6 +734,9 @@ def full_control_model_kwargs_v3(config: dict[str, object]) -> dict[str, object]
         "behavior_classes": int(model["behavior_classes"]),
         "behavior_sides": int(model["behavior_sides"]),
     }
+    if model.get("camera_encoder") is not None:
+        kwargs["camera_encoder"] = deepcopy(model["camera_encoder"])
+    return kwargs
 
 
 def move_batch_v3(batch: ModelBatchV3, device: torch.device) -> ModelBatchV3:

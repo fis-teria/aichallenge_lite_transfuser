@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, fields
+from copy import deepcopy
 import math
 from typing import Any
 
 from torch import nn
 
 from aic_transfuser_lite.models.time_path_v1 import TimePathV1
+from aic_transfuser_lite.models.dinov3_camera_encoder import resolve_camera_encoder_config
 
 
 @dataclass(frozen=True)
@@ -50,6 +52,7 @@ class TimeModelConfig:
     pose_body_frame: str = "base_link"
     preprocess_version: str = "time_preprocess_v1"
     history_version: str = "valid_cnn_fixed_slot_masked_ego_v2"
+    camera_encoder: dict[str, Any] | None = None
 
     def validate(self) -> None:
         ints = (self.image_height, self.image_width, self.lidar_points,
@@ -66,6 +69,12 @@ class TimeModelConfig:
             raise TypeError("camera_tokens_hw must be a 2-tuple")
         if any(type(value) is not int or value <= 0 for value in self.camera_tokens_hw):
             raise ValueError("camera_tokens_hw values must be positive ints")
+        if self.camera_encoder is not None:
+            resolve_camera_encoder_config(
+                self.camera_encoder, output_dim=self.hidden_dim,
+                token_h=self.camera_tokens_hw[0], token_w=self.camera_tokens_hw[1],
+                image_height=self.image_height, image_width=self.image_width,
+            )
         if self.future_steps != 30 or self.future_dt_sec != 0.1:
             raise ValueError("TimePathV1 requires 30 future steps at 0.1 seconds")
         if self.image_history_length > self.max_sensor_history or self.lidar_history_length > self.max_sensor_history:
@@ -107,6 +116,8 @@ class TimeModelConfig:
         self.validate()
         value = asdict(self)
         value["camera_tokens_hw"] = list(self.camera_tokens_hw)
+        if self.camera_encoder is None:
+            value.pop("camera_encoder")
         return value
 
     @classmethod
@@ -114,11 +125,12 @@ class TimeModelConfig:
         if type(value) is not dict:
             raise TypeError("time model config must be a dict")
         names = {field.name for field in fields(cls)}
-        missing = names - set(value)
+        # Older checkpoints require all legacy fields, but have no camera selector.
+        missing = names - {"camera_encoder"} - set(value)
         unknown = set(value) - names
         if missing or unknown:
             raise ValueError(f"time model config keys mismatch: missing={sorted(missing)}, unknown={sorted(unknown)}")
-        data = dict(value)
+        data = deepcopy(value)
         if "camera_tokens_hw" in data:
             data["camera_tokens_hw"] = tuple(data["camera_tokens_hw"])
         config = cls(**data)
@@ -127,7 +139,7 @@ class TimeModelConfig:
 
     def model_kwargs(self) -> dict[str, Any]:
         self.validate()
-        return {"image_height": self.image_height, "image_width": self.image_width,
+        kwargs = {"image_height": self.image_height, "image_width": self.image_width,
                 "lidar_points": self.lidar_points, "ego_dim": self.ego_dim,
                 "hidden_dim": self.hidden_dim, "camera_tokens_hw": self.camera_tokens_hw,
                 "lidar_tokens": self.lidar_tokens, "fusion_depth": self.fusion_depth,
@@ -136,6 +148,9 @@ class TimeModelConfig:
                 "control_head_enabled": False, "control_sequence_head_enabled": False,
                 "behavior_head_enabled": False,
                 "lidar_angle_min_rad": self.lidar_angle_min_rad}
+        if self.camera_encoder is not None:
+            kwargs["camera_encoder"] = deepcopy(self.camera_encoder)
+        return kwargs
 
     def dataset_config(self) -> Any:
         from aic_transfuser_lite.data.time_dataset_v1 import TimeDatasetConfig

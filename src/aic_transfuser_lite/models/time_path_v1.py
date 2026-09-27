@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from copy import deepcopy
 import inspect
 from typing import Any
 
@@ -62,7 +63,10 @@ class TimePathV1(nn.Module):
         bound = inspect.signature(FullControlLiteV3).bind(**{**kwargs, "control_head_enabled": False,
             "control_sequence_head_enabled": False, "behavior_head_enabled": False})
         bound.apply_defaults()
-        self._backbone_config = dict(bound.arguments)
+        self._backbone_config = deepcopy(dict(bound.arguments))
+        # Preserve the exact extra-state identity of pre-DINO checkpoints.
+        if self._backbone_config.get("camera_encoder") is None:
+            self._backbone_config.pop("camera_encoder", None)
         self.backbone = TimeBackboneV1(**self._backbone_config)
         self.backbone.trajectory_head = None
         self.backbone.speed_profile_head = None

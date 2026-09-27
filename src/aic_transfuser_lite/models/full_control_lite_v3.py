@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Mapping
+from typing import Any, Mapping
 
 import torch
 from torch import nn
@@ -13,6 +13,7 @@ from aic_transfuser_lite.contracts.model_batch_v3 import (
 from aic_transfuser_lite.contracts.model_output_v3 import ModelOutputV3
 
 from .camera_encoder import CameraEncoder
+from .dinov3_camera_encoder import build_camera_encoder, resolve_camera_encoder_config
 from .ego_encoder import EgoEncoder
 from .fusion import TokenFusionTransformer
 from .heads.speed_profile import SpeedProfileHead
@@ -68,6 +69,7 @@ class FullControlLiteV3(nn.Module):
         behavior_head_enabled: bool = False,
         behavior_classes: int = 5,
         behavior_sides: int = 3,
+        camera_encoder: dict[str, Any] | None = None,
     ) -> None:
         super().__init__()
         if trajectory_steps != 15 or candidates != 1:
@@ -92,12 +94,19 @@ class FullControlLiteV3(nn.Module):
         self.max_sensor_history = max_sensor_history
         self.max_ego_history = max_ego_history
         self.command_history_alignment = command_history_alignment
-        self.camera = CameraEncoder(
-            output_dim=hidden_dim,
-            token_h=camera_tokens_hw[0],
-            token_w=camera_tokens_hw[1],
-            pretrained=False,
-        )
+        if camera_encoder is None:
+            self.camera = CameraEncoder(
+                output_dim=hidden_dim,
+                token_h=camera_tokens_hw[0],
+                token_w=camera_tokens_hw[1],
+                pretrained=False,
+            )
+        else:
+            self.camera = build_camera_encoder(resolve_camera_encoder_config(
+                camera_encoder, output_dim=hidden_dim,
+                token_h=camera_tokens_hw[0], token_w=camera_tokens_hw[1],
+                image_height=image_height, image_width=image_width,
+            ))
         self.lidar = Lidar1DEncoder(
             output_dim=hidden_dim,
             token_count=lidar_tokens,
