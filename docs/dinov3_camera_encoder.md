@@ -84,6 +84,32 @@ It does not upgrade the Python environment, download weights or accept access
 conditions. With no checkpoint its status is `SOURCE_READY_WEIGHTS_MISSING`;
 that status does not mean pretrained inference is available.
 
+At the pinned source revision, Torch Hub also imports evaluation modules.
+The existing project venv needed the additional dependencies pinned in
+`configs/environments/dinov3_hub_py310_requirements.txt`. They were verified
+with Python 3.10, torch 2.7.1+cu128 and torchvision 0.22.1+cu128. Install them
+with the existing package versions constrained, so the resolver cannot
+silently replace the working CUDA stack:
+
+```bash
+bash tools/with_wsl_training_lock.sh bash tools/with_workspace_cache.sh \
+  .venv/bin/python -m pip freeze --exclude-editable \
+  > runs/setup/dinov3/environment-constraints.txt
+bash tools/with_wsl_training_lock.sh bash tools/with_workspace_cache.sh \
+  .venv/bin/python -m pip install \
+  -c runs/setup/dinov3/environment-constraints.txt \
+  -r configs/environments/dinov3_hub_py310_requirements.txt
+```
+
+On 2026-09-27, the official source was installed in the WSL workspace and 13
+missing packages were added to its `.venv`; all 56 previously installed package
+versions were preserved. A **random-initialized official backbone** passed a
+CUDA camera-adapter forward/backward check on RTX 4080: input `[1,3,224,384]`,
+output `[1,16,128]`, frozen backbone and finite nonzero projection gradient.
+This checks source/environment compatibility, not pretrained-weight loading
+or driving quality. The uncredentialed official weight endpoint returned
+HTTP 403; pretrained weights remain absent pending the user's access request.
+
 Acquire `dinov3_vits16_pretrain_lvd1689m-08c60483.pth` through the
 [official Meta access form](https://ai.meta.com/resources/models-and-libraries/dinov3-downloads/).
 The reference implementation expects the original `.pth` state dictionary;
