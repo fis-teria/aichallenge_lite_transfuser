@@ -50,23 +50,66 @@ This Git repository contains only the adapter, configurations and tests. It
 does not contain the official DINOv3 source checkout or pretrained weights.
 As of the 2026-09-27 inspection, both configured paths were null and no DINOv3
 weights were found in the checked project/model/cache directories on Windows,
-WSL or `graneple@192.168.3.10`. This was not a full-disk inventory.
+WSL or the configured SSH host. This was not a full-disk inventory.
 
-For future placement, use Linux-native storage, for example
-`/home/thistle/e2e_autonomous/third_party/dinov3` for the official source and
-`/home/thistle/e2e_autonomous/e2e_lite_transfuser/weights/dinov3/` for weights.
-These are suggested destinations, not installed assets. Do not put weights
-in Git or train from `/mnt/e`. After acquiring the official source/weights
-and filling a local config, construction can be checked under the WSL lock:
+All assets now use the **project workspace**, not a sibling directory or a
+user-global installation. The same layout applies on each execution host:
+
+| Workspace-relative path | Purpose |
+| --- | --- |
+| `.venv/` | Existing project Python environment |
+| `third_party/dinov3/` | Official source, pinned to `6876159a11b4df116f30f667f8c9888617df0751` |
+| `weights/dinov3/` | Official ViT-S/16 pretrained checkpoint |
+| `.cache/` | PyTorch, Hugging Face, pip and GPU/compiler caches |
+| `runs/setup/dinov3/model_config.json` | Generated host-local absolute paths |
+| `runs/setup/dinov3/setup.json` | Installation status and source/weight identity |
+
+The training workspace is
+`/home/thistle/e2e_autonomous/e2e_lite_transfuser`. Windows remains the code/Git
+source of truth; do not train from `/mnt/e`. Source dependencies, weights,
+environment and generated outputs are excluded from this project's Git.
+
+Install the source and prepare the configuration using the existing WSL venv:
 
 ```bash
 cd /home/thistle/e2e_autonomous/e2e_lite_transfuser
-bash tools/with_wsl_training_lock.sh .venv/bin/python - <<'PY'
+bash tools/with_wsl_training_lock.sh bash tools/with_workspace_cache.sh \
+  .venv/bin/python tools/setup_dinov3_workspace.py
+```
+
+The setup script checks the pinned official repository, creates workspace
+directories and writes a local config. It preserves a differing existing
+repository, checkpoint or manually edited config by stopping with an error.
+It does not upgrade the Python environment, download weights or accept access
+conditions. With no checkpoint its status is `SOURCE_READY_WEIGHTS_MISSING`;
+that status does not mean pretrained inference is available.
+
+Acquire `dinov3_vits16_pretrain_lvd1689m-08c60483.pth` through the
+[official Meta access form](https://ai.meta.com/resources/models-and-libraries/dinov3-downloads/).
+The reference implementation expects the original `.pth` state dictionary;
+the Hugging Face Transformers `model.safetensors` is not a drop-in replacement.
+After downloading the approved file, import it (replace the example source path):
+
+```bash
+bash tools/with_wsl_training_lock.sh bash tools/with_workspace_cache.sh \
+  .venv/bin/python tools/setup_dinov3_workspace.py \
+  --checkpoint /path/to/dinov3_vits16_pretrain_lvd1689m-08c60483.pth
+```
+
+The importer checks the full SHA-256 before publishing the file in
+`weights/dinov3/`; it never replaces an existing different weight file. Download
+URLs containing access tokens must not be committed or posted to Issues.
+Once the status is `READY_FOR_PRETRAINED_SMOKE`, construction can be checked:
+
+```bash
+cd /home/thistle/e2e_autonomous/e2e_lite_transfuser
+bash tools/with_wsl_training_lock.sh bash tools/with_workspace_cache.sh \
+  env PYTHONPATH=src .venv/bin/python - <<'PY'
 import json
 from pathlib import Path
 from aic_transfuser_lite.training.time_config_v1 import TimeModelConfig, build_time_model
 
-config = TimeModelConfig.from_dict(json.loads(Path("tmp/dinov3_local.json").read_text()))
+config = TimeModelConfig.from_dict(json.loads(Path("runs/setup/dinov3/model_config.json").read_text()))
 model = build_time_model(config).eval()
 print(model.backbone.camera.pretrained_provenance())
 PY
@@ -78,7 +121,7 @@ CUDA latency or closed-loop driving evaluation.
 Focused verification:
 
 ```powershell
-.\tmp\slam_mppi_test_env\Scripts\python.exe -m pytest -q tests/test_dinov3_camera_encoder.py tests/test_dinov3_model_integration.py tests/test_time_backbone_p0.py tests/test_time_checkpoint_p1.py
+.\tmp\slam_mppi_test_env\Scripts\python.exe -m pytest -q tests/test_dinov3_workspace_setup.py tests/test_dinov3_camera_encoder.py tests/test_dinov3_model_integration.py tests/test_time_backbone_p0.py tests/test_time_checkpoint_p1.py
 ```
 
 The tests inject a ViT-S/16-compatible fake backbone, including at the local
