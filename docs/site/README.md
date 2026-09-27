@@ -67,3 +67,17 @@ workflowはリンク検査後に`docs/site/`だけをアップロードする。
 公開後はActionsの成功と公開URLの内容を確認する。
 
 公式workflow参考: https://github.com/actions/starter-workflows/blob/main/pages/static.yml
+
+## 初版の確認記録（2026-09-27）
+
+- `60417a48fcd69ec3b230f6514d01bf1dd8497b76`をWindowsでcommitし、専用のnative WSLコピーへ
+  既定syncスクリプトで同期。lock下の`pytest -q`は**3324 passed / 4 skipped**（143.13秒）。
+  4 skipはOSQP、schema validator関連2件、任意の公式package不足。
+- 最初の実行はGit管理外の旧checkpoint 2ファイルがないため5件失敗した。
+  既存WSLから専用コピーへ配置してSHA-256一致を確認後、全体を再実行して通過。
+  重みをGitへ追加したり、テストをskipへ変更したりしていない。
+- Edge headlessで5画面幅、file URLとHTTP配信、JS無効時の閲覧を確認。
+  PC・スマホのスクリーンショットも目視確認。検索・目次・開閉とリソース読込は正常。
+- ローカルasset / 内部リンク44件、commit固定の根拠13種類を検査。
+  後続変更は公開workflowの権限設定とこの記録のみ。学習・ROSのコード差分はない。
+- サイトの公開はAWSIM試験や走行性能の追加検証ではない。
