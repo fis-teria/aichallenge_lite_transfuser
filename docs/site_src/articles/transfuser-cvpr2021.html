@@ -1,34 +1,52 @@
-<div class="paper-top">
-                <span class="paper-index">01</span
-                ><span class="tag">センサ融合</span
-                ><span class="paper-year">CVPR 2021</span>
-              </div>
-              <h2>
-                Multi-Modal Fusion Transformer for<br />End-to-End Autonomous
-                Driving
-              </h2>
-              <p class="authors">
-                Aditya Prakash, Kashyap Chitta, Andreas Geiger
-              </p>
-              <p class="paper-summary">
-                画像とLiDARの特徴をAttentionで統合し、幾何的な対応だけでは捉えにくい周辺の文脈を運転判断へ取り込むTransFuserを提案。CARLAの複雑な交通場面で評価しています。
-              </p>
-              <details open>
-                <summary>このプロジェクトとの関係</summary>
-                <div class="detail-body">
-                  <p>
-                    <strong>取り入れる考え方：</strong
-                    >CameraとLiDARを別々に符号化し、特徴段階で融合してwaypointへつなぐ構成。
-                  </p>
-                  <p>
-                    <strong>異なる点：</strong>本プロジェクトは2D
-                    LaserScanと独自の時系列・制御契約を扱います。TimePath
-                    decoderには本家のgoal入力を導入しておらず、原論文の完全再現ではありません。
-                  </p>
-                </div>
-              </details>
-              <a
-                class="paper-source"
-                href="https://openaccess.thecvf.com/content/CVPR2021/html/Prakash_Multi-Modal_Fusion_Transformer_for_End-to-End_Autonomous_Driving_CVPR_2021_paper.html"
-                >CVFで原論文を読む ↗</a
-              >
+<p class="paper-summary">TransFuserの主要な貢献は、CameraとLiDARの特徴を、物理的な投影先だけに限定せずattentionで結び付けることです。CVPR 2021原著はセンサからwaypointまでを模倣学習し、PIDが操舵・加減速を担当します。E2E Lite TransFuserへ持ち込めるのはこの設計上の考え方であり、原著のスコアや安全性をそのまま引き継ぐことはできません。</p>
+<p><strong>対象：</strong>Aditya Prakash、Kashyap Chitta、Andreas Geiger、CVPR 2021。最終確認2026-10-02。2022年公開・PAMI 2023誌面拡張は同一研究familyの別versionとして扱います。</p>
+<h2>課題は局所的な対応だけでは足りないこと</h2>
+<p>交差点では、画像に見える信号と、LiDARが捉える横方向の車両を一緒に考える必要があります。幾何投影は同じ物体の特徴を対応付けるのに自然ですが、判断に必要な関係は空間的に離れていることがあります。原著は、この広い文脈をセンサ融合に入れる設計をCARLAで検証しました。これは幾何が不要という証明ではなく、原著の比較条件では局所投影型の融合だけでは足りない場面があった、という読み方が適切です。<a href="https://arxiv.org/pdf/2104.09224">原著 §1–3、Fig. 1</a></p>
+<h2>どこまでを学習するか</h2>
+<p>概念的な流れは「前方RGBとLiDAR BEV＋自車速度 → 各センサencoder → 中間特徴のfusion → goal条件付きwaypoint decoder → モデル外PID → steering/throttle/brake」です。予測したwaypointを教師軌道へ近付けるbehavior cloningであり、衝突報酬を使って直接RLする手法ではありません。教師はシミュレータの特権情報を使いますが、その特権情報全部を実行時のstudentへ渡す設計ではありません。<a href="https://arxiv.org/pdf/2104.09224">原著 §3</a></p>
+<p><strong>時間の注意：</strong>原著の観測は単一時刻です。GRUは未来のwaypointを順番に生成するために使われます。「GRUがあるから過去センサを記憶する」とは言えません。この違いは、ego/history入力を持つE2E Liteと比較するときに特に重要です。</p>
+<h2>機構を三つに分ける</h2>
+<h3>1 特徴として結び付ける</h3>
+<p>CameraとLiDAR BEVをそれぞれCNNで符号化し、複数の深さで特徴を交換します。attentionをかける段では特徴を小さな格子へ縮約します。一般式A = softmax(QK<sup>T</sup>/√d)Vは、あるtokenからどのtokenを参照するかを入力に応じて変える計算です。ここでの利点は、異なるセンサの離れた位置にも依存関係を作れることです。attention mapは診断の手掛かりになりますが、正しい因果判断や安全性の証明ではありません。</p>
+<h3>2 未来の点列を生成する</h3>
+<p>decoderは差分δw<sub>t</sub>を出し、w<sub>t</sub> = w<sub>t−1</sub> + δw<sub>t</sub>として未来waypointを作ります。損失はΣ‖w<sub>t</sub>−w*<sub>t</sub>‖<sub>1</sub>です。これは経路の教師への近さを最適化しますが、controllerの応答、衝突余裕、速度制約がすべて自動的に満たされるという意味ではありません。<a href="https://arxiv.org/pdf/2104.09224">原著 §3.3–3.5</a></p>
+<h3>3 操作へ変換する</h3>
+<p>waypoint間の距離と向きから縦・横のPID入力を作ります。補足資料Algorithm 1では、希望速度が小さい場合や現速度に対して減速が必要な場合にbrakeへ切り替える規則も示されます。したがって、学習モデル単体と、PID・brake規則を含む走行systemを分けて評価する必要があります。<a href="https://www.cvlibs.net/publications/Prakash2021CVPR_supplementary.pdf">補足 §1.2、Algorithm 1</a></p>
+<h2>条件と結果</h2>
+<p>以下は原著Table 1aの一部です。著者が報告したsimulation結果であり、本プロジェクトの計測でも再実験でもありません。DSは各routeの完了割合とそのrouteの違反係数の積をroute間で平均した指標で、大きいほどよい値です。RCは走行経路の完了割合です。</p>
+<div class="table-wrap" role="region" aria-label="Town05 Longにおける原著の比較結果" tabindex="0"><table><caption>Town05 Longにおける原著の比較結果</caption><thead><tr><th scope="col">方式</th><th scope="col">Town05 Long DS</th><th scope="col">Town05 Long RC</th></tr></thead><tbody>
+<tr><td>AIM 画像のみのwaypoint基準</td><td>26.50 ± 4.82</td><td>60.66 ± 7.66</td></tr>
+<tr><td>Late Fusion</td><td>31.30 ± 5.53</td><td>68.05 ± 5.39</td></tr>
+<tr><td>Geometric Fusion</td><td>25.30 ± 4.08</td><td>69.17 ± 11.07</td></tr>
+<tr><td>TransFuser</td><td>33.15 ± 4.04</td><td>56.36 ± 7.14</td></tr>
+</tbody></table></div>
+<p><strong>対応する実験条件：</strong>CARLA 0.9.10、学習7 towns、未学習Town05、ClearNoon。Longは10 routes、各1,000–2,000 mで交差点を含みます。値はTable 1aが報告する平均±標準偏差です。Table captionは学習3 seedsを各3回評価した計9 runsと説明しています。ここでは集約を再計算していません。前方RGB一視点と3D LiDARをBEV化した入力、自車速度と疎なgoalを用います。学習はGTX 1080Ti単体と補足に記載されています。expertの目標速度は状況に応じて0、4、7 m/s。これらはteacherの設定であり、試験中の実測速度分布ではありません。試験車種・全runの速度分布・end-to-end推論遅延は今回確認した結果表に併記されていないため、ここから実車や特定ハードウェアの性能を推定しません。<a href="https://arxiv.org/pdf/2104.09224">原著 §4、Table 1</a>、<a href="https://www.cvlibs.net/publications/Prakash2021CVPR_supplementary.pdf">補足 §2.2、§4</a></p>
+<p><strong>読み取れること：</strong>この比較ではTransFuserのDSが高くてもRCは低くなっています。「あらゆる指標で勝つ」「完走率が同じ割合で上がる」という結論にはできません。平均値と標準偏差だけから統計的有意差も断定しません。原著abstractの衝突減少率だけを見出しにするより、進捗と違反のtrade-offを同時に読むことが実装判断に役立ちます。</p>
+<h2>原著 コード 公開重みを分ける</h2>
+<p>公式リポジトリの現在の案内はPAMI 2023拡張を主対象とし、CVPR 2021コードはcvpr2021 branchと明記しています。さらに同branchのREADMEは、配布checkpointがbug fixを含むleaderboard向け改良版で、配布データとは異なるデータで学習され、その全データを共有できていないことを記載しています。論文表、手元のbranch、downloadした重みが同じ実験を表すとは限りません。<a href="https://github.com/autonomousvision/transfuser">現行README</a>、<a href="https://github.com/autonomousvision/transfuser/tree/cvpr2021">CVPR 2021 READMEのTraining節</a></p>
+<p>また、原著本文のセンサ・network説明をそのまま現行codeへ写す前に、補足と実装を確認する必要があります。たとえば補足ではfusion前後の1×1 convolutionによる埋込み次元の調整が説明されています。再現時にはbranch名だけでなくcommit SHA、config、checkpointのhash、dataset版、CARLA版を固定します。今回の調査は公式branchの文書確認までで、公式コード全体の再実行確認はしていません。<a href="https://www.cvlibs.net/publications/Prakash2021CVPR_supplementary.pdf">補足 §1.1</a></p>
+<h2>強み 限界 失敗をどう読むか</h2>
+<ul>
+<li><strong>強み：</strong>融合位置を中間特徴に置くため、センサ固有encoderを保ちながら相互作用を学べます。single-modality、late fusion、geometry fusionの比較を設計しやすい構造です。</li>
+<li><strong>観測の限界：</strong>見えていない対象の正確な状態までattentionが復元する保証はありません。LiDAR欠測、画角、時刻差、センサノイズが変わる導入先では再検証が必要です。</li>
+<li><strong>学習の限界：</strong>BCの教師データにない回復状態では誤差が蓄積し得ます。L1が小さいだけでは、停止すべき場面や分岐で望ましい選択になったとは言えません。</li>
+<li><strong>評価の限界：</strong>原著主要比較は特定town・weatherのsimulationです。全天候・実車・race速度への汎化はここで示された結論ではありません。</li>
+<li><strong>工学的な注意：</strong>global attentionの計算量、前処理の同期、waypointの時刻とcontroller周期を別々に管理します。軽量化が必要ならencoderだけでなくtoken数とfusion段数も候補ですが、減らせば性能が保たれるという保証はありません。</li>
+</ul>
+<p>後半の導入上の注意は本稿の分析・提案であり、原著が実証した全failure catalogueではありません。</p>
+<h2>他方式との位置関係</h2>
+<p>Late Fusionとの比較は「個別に符号化した後で合わせる」こととの差を見ます。Geometry Fusionとの比較は「投影対応を主とする関係付け」から広い文脈を学ぶ効果を見ます。UniADとの違いは、検出・追跡・占有などの明示的な中間タスクをどれだけ持つかです。MILEとの違いは、未来環境のlatent dynamicsを学ぶかどうかです。これらは研究課題の違いであり、入力・データ・計算量を揃えない横断順位は付けません。<a href="https://arxiv.org/html/2212.10156v2">UniAD</a>、<a href="https://arxiv.org/html/2210.07729v2">MILE</a></p>
+<h2>E2E Liteへの適用候補と必要作業</h2>
+<p><strong>まず境界を維持する：</strong>mainの対象commitでは2D LaserScanと時間履歴を扱い、TimePath decoderに原著のgoal入力はありません。出力は観測時点base_link座標の0.1–3.0秒のXY点列、shape [B,30,2]、単位mです。点間距離から算出する速度は学習済みspeed headや停止確率とは区別します。この時点でセンサ・時間・進路条件が異なります。「TransFuser風の特徴融合」と「原著を再現したモデル」は別の表現にします。対象commitの<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/src/aic_transfuser_lite/models/time_path_v1.py" data-source="src/aic_transfuser_lite/models/time_path_v1.py">TimePathV1</a>と<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/src/aic_transfuser_lite/models/time_backbone_v1.py" data-source="src/aic_transfuser_lite/models/time_backbone_v1.py">time backbone</a>で確認した内容です。</p>
+<div class="table-wrap" role="region" aria-label="E2E Liteへの適用候補と検証項目" tabindex="0"><table><caption>E2E Liteへの適用候補と検証項目</caption><thead><tr><th scope="col">適用候補</th><th scope="col">必要データ 再学習</th><th scope="col">コード 計算変更</th><th scope="col">検証と現在の状態</th></tr></thead><tbody>
+<tr><td>fusionの寄与を分離</td><td>同一splitで画像のみ・scanのみ・late fusion・attention fusionを再学習</td><td>encoder/fusion切替、パラメータ数・VRAM・遅延記録</td><td>offline slice後に同一条件closed-loop。提案段階、未測定</td></tr>
+<tr><td>縮約token数を比較</td><td>解像度変更ごとの学習。近接物・細い障害物を含むholdout</td><td>pooling/token位置埋込みの整合確認。変形後のshapeテスト</td><td>小物体の損失と計算短縮を両方測る。提案段階</td></tr>
+<tr><td>既存のteacher分離を維持しデータ来歴を拡充</td><td>rosbag/変換時の由来・時刻・座標metadata。必要ならデータ再生成</td><td>dataset schema、入力allowlist、future漏洩検査</td><td>teacher targetの無効化はmainに実装されテストsourceあり。追加metadata整備とデータセット全体の来歴・漏洩監査は未実施</td></tr>
+<tr><td>時間整合と欠測耐性の比較</td><td>同期ログ、欠測・遅延の条件付き評価。augmentation導入時は再学習</td><td>mask、履歴reset、ego-motion補償の検査</td><td>入力破壊はstress testとし通常精度と分ける。提案段階</td></tr>
+</tbody></table></div>
+<p>必要GPU時間や改善率は、現行modelサイズ、dataset量、予算が未固定なので見積もっていません。学習GPUの例だけで、利用者のhardwareに同じ時間・速度が出るとは言えません。まず現行baselineの学習設定と推論経路を固定し、前処理・転送・ROS queue・controllerまでの応答時間を測れる評価計画を作ります。</p>
+<h2>実証状態を明示する</h2>
+<ul><li><strong>論文で実証：</strong>原著の限定されたCARLA条件での比較。上表のDSとRC</li><li><strong>適用候補：</strong>中間特徴fusionのablation、token軽量化、時刻・入力権限検査</li><li><strong>project実装済み：</strong><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/src/aic_transfuser_lite/models/time_path_v1.py" data-source="src/aic_transfuser_lite/models/time_path_v1.py">TimePathV1のteacher target無効化・XY出力</a>、<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/src/aic_transfuser_lite/models/time_backbone_v1.py" data-source="src/aic_transfuser_lite/models/time_backbone_v1.py">時間履歴処理</a>、<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/tests/test_time_path_v1.py" data-source="tests/test_time_path_v1.py">teacher分離・shapeなどのテストsource</a>を確認。テストsourceの閲覧であり、今回新たに実行した検証ではない</li><li><strong>project実測済み：</strong>今回の調査では新たな学習・走行・計測はなし。既存試験記事を別証拠として扱う</li></ul>
+<p>採用判定は、offline trajectory errorだけではなく、未学習scenarioでの完走、衝突、逸脱、停止、介入、deadline超過を確認してから行います。現行safety supervisorやcontrollerを、この論文を理由に外したり置き換えたりする提案ではありません。</p>
+<h2>出典と確認範囲</h2>
+<ol><li><a href="https://arxiv.org/pdf/2104.09224">原著全文</a>：§3、§4、Table 1、Fig. 2。arXiv初回版2021-04-19を確認</li><li><a href="https://openaccess.thecvf.com/content/CVPR2021/html/Prakash_Multi-Modal_Fusion_Transformer_for_End-to-End_Autonomous_Driving_CVPR_2021_paper.html">CVF公式書誌</a>：CVPR 2021、著者・掲載情報</li><li><a href="https://www.cvlibs.net/publications/Prakash2021CVPR_supplementary.pdf">著者補足資料</a>：network、controller、expert、学習hardware・条件</li><li><a href="https://github.com/autonomousvision/transfuser/tree/cvpr2021">公式CVPR 2021 branch</a>：データ区分、checkpoint注意書き。実行検証なし</li><li><a href="https://github.com/autonomousvision/transfuser">公式現行README</a>：PAMI拡張との版関係</li></ol>

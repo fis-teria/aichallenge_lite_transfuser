@@ -12,7 +12,11 @@
     "related": [
       "technology-stack",
       "retained-path-recovery"
-    ]
+    ],
+    "editorial_action": "維持・参照",
+    "gap_or_boundary": "各概説から入出力契約の参照先にする。一般論から本実装の実績を推定しない。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   },
   {
     "slug": "technology-stack",
@@ -28,7 +32,11 @@
       "dinov3-resnet-guide",
       "system-architecture",
       "dinov3-development"
-    ]
+    ],
+    "editorial_action": "維持・参照",
+    "gap_or_boundary": "実装導入時のみ依存関係を更新。文献一覧を追加しない。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   },
   {
     "slug": "roadmap",
@@ -44,7 +52,11 @@
       "retained-path-recovery",
       "dinov3-development",
       "speed-trial-20260919"
-    ]
+    ],
+    "editorial_action": "関連リンク追加候補",
+    "gap_or_boundary": "文献調査の執筆計画と既存の実装・試験計画を分ける。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   },
   {
     "slug": "single-lap-20260918",
@@ -59,7 +71,11 @@
     "related": [
       "system-architecture",
       "roadmap"
-    ]
+    ],
+    "editorial_action": "実績を保全",
+    "gap_or_boundary": "単独周回の条件をレーシング競技結果へ一般化しない。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   },
   {
     "slug": "slam-mppi-box-20260919",
@@ -74,7 +90,11 @@
     "related": [
       "system-architecture",
       "roadmap"
-    ]
+    ],
+    "editorial_action": "実績を保全",
+    "gap_or_boundary": "5 km/hの限定回避試験を安全保証と呼ばない。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   },
   {
     "slug": "speed-trial-20260919",
@@ -89,7 +109,11 @@
     "related": [
       "system-architecture",
       "roadmap"
-    ]
+    ],
+    "editorial_action": "実績を保全",
+    "gap_or_boundary": "速度設定と実測値、予測短縮・停止を区別。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   },
   {
     "slug": "retained-path-recovery",
@@ -104,23 +128,29 @@
     "related": [
       "system-architecture",
       "roadmap"
-    ]
+    ],
+    "editorial_action": "維持・参照",
+    "gap_or_boundary": "安全制御概説から未検証範囲を含め参照。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   },
   {
     "slug": "transfuser-cvpr2021",
-    "title": "TransFuser原著の仕組みと再現条件",
+    "title": "TransFuser（CVPR 2021）：センサ融合の出発点",
     "category": "paper",
     "nav": "papers",
-    "summary": "原著のfusion・waypoint・PID、限定されたCARLA結果、公式版差とE2E Liteへの適用条件。",
+    "summary": "画像とLiDARの特徴をAttentionで統合し、幾何的な対応だけでは捉えにくい周辺の文脈を運転判断へ取り込むTransFuserを提案。CARLAの複雑な交通場面で評価しています。",
     "published": "2026-09-27",
-    "updated": "2026-10-02",
-    "status": "原著と補足を確認",
+    "updated": "2026-09-27",
+    "status": "一次資料を確認",
     "topic": "fusion",
     "related": [
-      "e2e-field-overview",
-      "transfuser-2022",
       "system-architecture"
-    ]
+    ],
+    "editorial_action": "既存記事更新",
+    "gap_or_boundary": "重複新設せず、入力・出力・評価条件・2D LiDARとの差を補強。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   },
   {
     "slug": "transfuser-2022",
@@ -134,7 +164,11 @@
     "topic": "fusion",
     "related": [
       "system-architecture"
-    ]
+    ],
+    "editorial_action": "既存記事更新",
+    "gap_or_boundary": "2021版と同一研究系列として版差・評価差を明示。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   },
   {
     "slug": "dagger",
@@ -148,7 +182,11 @@
     "topic": "learning",
     "related": [
       "roadmap"
-    ]
+    ],
+    "editorial_action": "基礎として参照",
+    "gap_or_boundary": "期間前の基礎。2018年以降の新規研究と数えない。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   },
   {
     "slug": "information-theoretic-mpc",
@@ -162,7 +200,11 @@
     "topic": "control",
     "related": [
       "roadmap"
-    ]
+    ],
+    "editorial_action": "基礎記事更新",
+    "gap_or_boundary": "原論文の公表日と対象期間の境界を照合。MPPI派生の概説との重複を抑える。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   },
   {
     "slug": "cartographer",
@@ -176,7 +218,11 @@
     "topic": "control",
     "related": [
       "roadmap"
-    ]
+    ],
+    "editorial_action": "基礎として参照",
+    "gap_or_boundary": "期間前の位置推定基盤。運転方策・レーシング制御の成果と数えない。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   },
   {
     "slug": "dinov3",
@@ -191,7 +237,11 @@
     "related": [
       "dinov3-resnet-guide",
       "roadmap"
-    ]
+    ],
+    "editorial_action": "既存記事参照",
+    "gap_or_boundary": "視覚表現の基盤。運転closed-loopの直接根拠としない。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   },
   {
     "slug": "dinov3-development",
@@ -209,7 +259,11 @@
       "technology-stack",
       "roadmap",
       "common-il-pilot-20260927"
-    ]
+    ],
+    "editorial_action": "開発記事を保全",
+    "gap_or_boundary": "導入準備と走行効果を混同しない。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   },
   {
     "slug": "site-maintenance",
@@ -224,7 +278,11 @@
     "related": [
       "system-architecture",
       "technology-stack"
-    ]
+    ],
+    "editorial_action": "維持",
+    "gap_or_boundary": "編集元・生成・検査の運用説明。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   },
   {
     "slug": "common-il-pilot-20260927",
@@ -239,7 +297,11 @@
     "related": [
       "dinov3-development",
       "system-architecture"
-    ]
+    ],
+    "editorial_action": "実績を保全",
+    "gap_or_boundary": "学習データ内pilotと未見走行評価を分ける。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   },
   {
     "slug": "dinov3-resnet-guide",
@@ -256,109 +318,10 @@
       "dinov3-development",
       "common-il-pilot-20260927",
       "technology-stack"
-    ]
-  },
-  {
-    "slug": "e2e-field-overview",
-    "title": "E2E自動運転の全体像と比較の読み方",
-    "category": "guide",
-    "nav": "papers",
-    "summary": "2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。",
-    "published": "2026-10-02",
-    "updated": "2026-10-02",
-    "status": "文献調査",
-    "topic": "",
-    "related": [
-      "transfuser-cvpr2021",
-      "transfuser-2022",
-      "system-architecture",
-      "research-map"
-    ]
-  },
-  {
-    "slug": "mpc-mppi-overview",
-    "title": "MPC / MPPIをどう選ぶか：モデル・制約・探索・保証",
-    "category": "guide",
-    "nav": "stack",
-    "summary": "線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。",
-    "published": "2026-10-02",
-    "updated": "2026-10-02",
-    "status": "文献俯瞰・適用候補",
-    "topic": "control",
-    "related": [
-      "information-theoretic-mpc",
-      "robust-mppi",
-      "system-architecture",
-      "research-map"
-    ]
-  },
-  {
-    "slug": "robust-mppi",
-    "title": "Robust MPPI：追従器を予測の内側へ入れる",
-    "category": "paper",
-    "nav": "papers",
-    "summary": "RMPPIの名目／実状態と追従内包、条件付きfree-energy保証、実験条件の違い、導入前の検証を解説します。",
-    "published": "2026-10-02",
-    "updated": "2026-10-02",
-    "status": "原論文精読・未実装候補",
-    "topic": "control",
-    "related": [
-      "information-theoretic-mpc",
-      "mpc-mppi-overview",
-      "system-architecture"
-    ]
-  },
-  {
-    "slug": "racing-overview-2018-2026",
-    "title": "高速自律レーシングの研究地図：2018–2026",
-    "category": "guide",
-    "nav": "papers",
-    "summary": "F1TENTHと実車の位置推定、タイヤ同定、経路・速度、対戦、実時間を評価条件ごとに整理。",
-    "published": "2026-10-02",
-    "updated": "2026-10-02",
-    "status": "調査・適用候補",
-    "topic": "",
-    "related": [
-      "forzaeth-race-stack-2024",
-      "system-architecture",
-      "roadmap",
-      "research-map"
-    ]
-  },
-  {
-    "slug": "forzaeth-race-stack-2024",
-    "title": "ForzaETH Race Stack：全スタックと対戦の条件",
-    "category": "paper",
-    "nav": "papers",
-    "summary": "2024年の全スタック論文から、MAP、評価の条件、追越しの失敗とTimePathへの適用候補を読む。",
-    "published": "2026-10-02",
-    "updated": "2026-10-02",
-    "status": "論文解説・未適用",
-    "topic": "control",
-    "related": [
-      "racing-overview-2018-2026",
-      "system-architecture",
-      "retained-path-recovery"
-    ]
-  },
-  {
-    "slug": "research-map",
-    "title": "E2E・レーシング・MPC文献調査の範囲と資料台帳",
-    "category": "guide",
-    "nav": "papers",
-    "summary": "2018-10-02〜2026-10-02と期間前の基礎を、時代・領域・資料種別で整理。確認済みの範囲と未調査を分けます。",
-    "published": "2026-10-02",
-    "updated": "2026-10-02",
-    "status": "初回調査・未調査範囲を明示",
-    "topic": "",
-    "related": [
-      "e2e-field-overview",
-      "racing-overview-2018-2026",
-      "mpc-mppi-overview",
-      "transfuser-cvpr2021",
-      "transfuser-2022",
-      "information-theoretic-mpc",
-      "roadmap"
-    ]
+    ],
+    "editorial_action": "既存記事参照",
+    "gap_or_boundary": "画像表現の説明を重複再執筆しない。",
+    "audited_at": "2026-10-02",
+    "snapshot_commit": "8d9ab923e8cc2d01b28296a3032f65ab9438c384"
   }
 ]

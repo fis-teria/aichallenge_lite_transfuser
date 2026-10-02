@@ -1,0 +1,37 @@
+<div class="paper-top"><span class="tag">論文精読・ロバスト制御</span><span class="paper-year">RA-L 2021</span></div>
+<h2>Robust MPPI：追従器を予測の内側へ入れる</h2>
+<p class="authors">Manan S. Gandhi, Bogdan Vlahov, Jason Gibson, Grady Williams, Evangelos A. Theodorou／Georgia Institute of Technology ACDS Lab、Grady WilliamsはEmbark Trucksにも所属</p>
+<p class="paper-summary">外乱後も追従可能な候補を評価するには、計画器が下流の追従器の働きを知る必要があります。RMPPIはその接続を扱う研究です。採用価値は「必ず速い」ことではなく、予測と実際の閉ループ動作の食い違いを減らす構成にあります。</p>
+<p><strong>一次資料：</strong><a href="https://arxiv.org/pdf/2102.09027v1">Robust Model Predictive Path Integral Control: Analysis and Performance Guarantees（全8頁）</a>、<a href="https://doi.org/10.1109/LRA.2021.3057563">RA-L DOI</a>。arXiv v1は2021-02-17。本文・定理の前提・Algorithm 1–3・Table Iを2026-10-02確認。著者実装は<a href="https://github.com/ACDSLab/MPPI-Generic">MPPI-Generic</a>を別の実装資料として参照し、論文当時と同じcommitとは仮定しません。</p>
+<h3>1. 背景：計画通りに戻す力を、計画側が知らない</h3>
+<p>通常のMPPIでは前回の良い操作系列周辺を探索しても、外乱後にはその周辺が不適切になることがあります。Tube-MPPIは名目系を別に持って追従しますが、名目状態と実状態の乖離、および探索内で追従補正を考慮しない点が問題になります。RMPPIは名目系と実系を組にして展開し、フィードバックを実系側の予測へ入れ、名目初期状態も選択します。<a href="https://arxiv.org/pdf/2102.09027v1">原論文§III</a></p>
+<p>著者の実装解説も、Tube-MPPIとRMPPIの差を「tracking feedbackをサンプル内へ含めるか」として説明します。どちらもMPPIに追従器が存在するという外形だけで、同一構造とは言えません。<a href="https://acdslab.github.io/mppi-generic-website/docs/mppi.html">著者公式解説</a></p>
+<h3>2. 仕組みを読むための最小の式</h3>
+<p>説明用に時間離散化をfへ含めると、<code>xⁿₖ₊₁=f(xⁿₖ,uₖ+εₖ)</code>と<code>xₖ₊₁=f(xₖ,uₖ+k(xₖ,xⁿₖ)+εₖ)+wₖ</code>を対で考えます。xⁿは名目状態、kは追従補正、εは探索雑音、wは外乱です。この表記は概念説明であり、原論文の重要度重みを置き換える実装仕様ではありません。</p>
+<p>論文では補正を含む分布の重要度重み、混合コスト、free energy閾値の下での名目状態選択を組み合わせます。free energyは<code>F=−λ log E[exp(−S/λ)]</code>です。導かれるのは、追従収縮・コストのLipschitz性・Monte Carlo推定誤差などを仮定したfree energy増加の上界です。<a href="https://arxiv.org/pdf/2102.09027v1">§III–IV</a></p>
+<p><strong>解釈：</strong>このFは障害物までのメートル単位の距離ではありません。コストの定義や尺度に依存するため、ある実験での閾値を別車両・別地図へコピーしても同じ危険度を意味しません。滑らかなコストの仮定を使う議論に、未知セルを無限コストにする離散的棄却規則を無条件で接続することもできません。</p>
+<h3>3. 実験の読み方：速さと頑健さを混同しない</h3>
+<p>AutoRallyは1/5スケール車両で、Gazeboと実機が評価されました。実機ではparticle filterによる状態推定、feedforward NNの動力学、iLQG追従を使用しています。CCM追従の比較はCPU上で非実時間でした。Table Iの実機平均周回時間はMPPI 30.67秒、RMPPI 31.07秒で、RMPPIは長い走行線を取っています。比較実機の目標速度は9 m/sですが、コスト関数が同一ではありません。シミュレーションでは目標速度自体も異なります。したがって純粋なアルゴリズム順位は付けられません。<a href="https://arxiv.org/pdf/2102.09027v1">§V・Table I</a></p>
+<p><strong>再現に不足する情報：</strong>今回確認した本文だけではCPU/GPUの具体的型番、全センサ構成、学習用走行データの分割、各試験で固定された全ハイパーパラメータを再現用の一式として確定できません。文献参照先と実験コードの照合が必要です。現プロジェクトのCamera＋2D LiDAR構成やAWSIM速度域へ、これらの実機結果を直接転用できません。</p>
+<h3>4. 強み・限界・失敗の切り分け</h3>
+<ul>
+<li><strong>文献から読み取れる強み：</strong>追従器が修正できる動きを候補評価へ含め、名目状態の無理な独走を抑える設計対象が明確です。</li>
+<li><strong>保証の境界：</strong>収縮を仮定する式と、実機iLQGがあらゆる速度・摩擦で収縮することは同じではありません。free energyの観測が良好でも、無条件の衝突回避証明や最悪実行時間証明にはなりません。</li>
+<li><strong>失敗仮説：</strong>操舵の飽和・遅れで追従器が十分に戻せない、モデルが横滑りを誤る、推定座標がずれる、地図が古い、候補分布が有効な回避を含まない場合を独立に試験すべきです。これは本記事の適用上の分析です。</li>
+<li><strong>比較先：</strong>通常MPPIとの差を見るなら同じコスト・動力学・予算を固定し、Tube-MPPIとの差なら名目状態更新とrollout内フィードバックを別々に無効化する必要があります。CoVOやSMPPIは共分散や滑らかさという別の設計点を変えるため、名称だけの横並び比較は不十分です。</li>
+</ul>
+<h3>5. 現プロジェクトへの適用は「候補」</h3>
+<p><strong>公開mainの事実：</strong>現在のreference-space MPPIは参照経路の横方向形状または曲率系列を探索し、その後Pure Pursuitと操舵応答補償で追従します。名目・実系を同時に展開するRMPPIでも、原論文のiLQG/CCM構成でもありません。現行TimePathはXY30点を出力し、速度headや停止確率headが実装済みであるとはここでは扱いません。出典：公開main <code>8d9ab923e8cc2d01b28296a3032f65ab9438c384</code>の<a data-source="docs/slam_mppi_avoidance.md" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/docs/slam_mppi_avoidance.md">現行SLAM MPPIの設計・検証記録</a>と<a data-source="src/aic_transfuser_lite/models/time_path_v1.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/src/aic_transfuser_lite/models/time_path_v1.py">現行TimePathの出力定義</a>。</p>
+<p><strong>応用案：</strong>まず参照候補を既存Pure Pursuitと操舵遅れモデルで追跡したときの軌跡も評価する「閉ループ予測の比較実験」が考えられます。これはRMPPIの問題意識を借りた派生候補であり、論文再現とは呼びません。実装をRMPPIと呼ぶなら、探索変数、名目状態伝播、重要度補正、混合コスト、追従器の前提まで一致させる必要があります。</p>
+<h3>6. 導入前に必要なデータ・計算・実装変更</h3>
+<ol>
+<li><strong>同期データ：</strong>観測時刻、操作送信時刻、実操舵角、実速度、位置・姿勢変化、停止理由、参照経路、占有地図を同じ走行単位で取得する。教師専用情報を制御入力へ混入させない。</li>
+<li><strong>動力学同定：</strong>低速域でまず舵角応答と遅延を同定し、速度別・曲率別の残差を評価する。NN残差を用いるなら未見runとscenarioを分離し、単一ステップ誤差だけでなく予測区間全体のずれを測る。学習費用・必要データ量は現在未確定。</li>
+<li><strong>制御実装：</strong>名目状態、実状態、追従状態を明示的な単位と座標で保持し、飽和・レート制限を予測と実指令の両方へ入れる。期限切れ・非有限値・全候補不成立時の停止はモデル外に残す。</li>
+<li><strong>計算予算：</strong>二系統のrolloutと追従計算で増える費用を測る。著者ライブラリがGPUを用いることは、現在のホストにそのまま搭載可能な証拠ではない。モデル推論、SLAM、制御が同時稼働したp99遅延とdeadline missを計測する。</li>
+</ol>
+<h3>7. 検証計画と採用判断</h3>
+<p>本記事では新しい実験を実施していません。提案する順序は、①同期ログによるモデル誤差の把握、②理想モデル上での境界値・全候補棄却・飽和試験、③同じ速度・箱配置・センサ制限・停止監視下でのAWSIM反復比較です。実機や移動障害物へ拡張する前に、接触カウンタ、車体最小距離、停止距離、横ずれ、操舵振動、復帰時間、成功率の信頼区間を記録します。</p>
+<p>現在のAWSIM rollout02は単一静止箱の通過・通常追従復帰を示しますが、周回成功やRMPPIの実証ではありません。現行手法を残した対照実験で、停止監視を弱めず改善できるかが採用条件です。「学習モデルを使った」「追従器を追加した」だけでロバスト保証が得られるとは判断しません。</p>
+<h3>変更点・関連資料</h3>
+<p>既存のWilliams論文記事とは別研究として、RMPPIの機構、条件付き保証、実機比較の交絡、現実装との差を追加しました。原論文の複製図は用いていません。<a href="information-theoretic-mpc.html">基礎のInformation-Theoretic MPC</a>、<a href="mpc-mppi-overview.html">MPC / MPPI分野俯瞰</a>、<a href="system-architecture.html">現行システム構成</a>も参照してください。</p>

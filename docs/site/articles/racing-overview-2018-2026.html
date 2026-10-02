@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="F1TENTHと実車の位置推定、タイヤ同定、経路・速度、対戦、実時間を評価条件ごとに整理。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>高速自律レーシングの研究地図：2018–2026 — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html" aria-current="page"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../updates.html">継続資料</a></div>
+<span class="section-number">継続資料</span><h1>高速自律レーシングの研究地図：2018–2026</h1>
+<p class="article-lead">F1TENTHと実車の位置推定、タイヤ同定、経路・速度、対戦、実時間を評価条件ごとに整理。</p><div class="article-meta">
+<span>公開 <time datetime="2026-10-02">2026-10-02</time></span>
+<span>更新 <time datetime="2026-10-02">2026-10-02</time></span>
+<span class="tag">調査・適用候補</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">高速自律レーシング・分野概観</span><span class="paper-year">2018–2026</span></div>
+<h2>高速自律レーシングの研究地図：速さ・限界運動・相手・実時間を分けて読む</h2>
+<p class="paper-summary">高速走行は、推論を速くするだけでは成立しません。位置推定の遅れ、タイヤの横滑り、走行ラインと速度の組合せ、相手の未来、失敗時の停止を同時に扱う問題です。F1TENTHと実車研究を、性能順位ではなく、何を観測し、何を仮定し、どこまで実験したかで整理します。</p>
+<p><strong>確認日：2026-10-02。</strong>対象期間は2018-10-02から確認日まで。これは代表研究の一次資料を読んだ概観であり、網羅的なシステマティックレビューではありません。本文の「論文実証」「適用候補」「プロジェクト実装」「プロジェクト実測」を区別します。2026年資料には査読状況未確認のプレプリントを含みます。</p>
+
+<h3>1. 問題設定：最高速度、周回時間、レース勝利は別の目的</h3>
+<p>単独のタイムトライアルでは、コース内で短い時間の周回を反復できることが目的です。障害物回避では、当初の最短ラインから外れても、衝突しない経路が必要です。対戦では、相手も動き、進路選択がこちらの動きに依存し得ます。最高速度の一瞬の記録は、このいずれの達成も保証しません。周回時間だけを最適化すると、完走した試行だけを平均して危険な方式を過大評価することもあります。</p>
+<p>F1TENTHは1:10の研究基盤です。実車と比べて反復実験しやすい一方、限られたセンサ視野と計算資源の中で意思決定する必要があります。F1TENTH評価環境論文は、既知地図の走行、未知障害物を含む走行、複数車両の競争を分けています。報酬を「先に規定周回を終える」に変えると、単純な最速周回とは異なる戦略が生まれる点が重要です。<a href="https://proceedings.mlr.press/v123/o-kelly20a/o-kelly20a.pdf">O’Kellyら、2020、§5–6</a></p>
+<p>比較表に必須なのは、車両尺度、コース長・幅、路面、センサ、地図の既知性、外部測位の有無、実車／シミュレーション、相手のルール、計算機、遅延測定区間です。実車のオーバル高速記録、狭いF1TENTHの周回、CARLAの交通遵守を一列の「高性能順」に並べることはしません。</p>
+
+<h3>2. 歴史：地図とモデルの統合から、適応と複数相手へ</h3>
+<ul>
+<li><strong>2018年末：</strong>今回の期間開始から年末に限定した一次研究の十分な読解は未了です。空欄を「研究がなかった」と解釈しません。期間前のMPCC・反復学習制御は系譜上の基礎として扱います。</li>
+<li><strong>2019–2020：</strong>AMZ Driverlessは、未知のコーンコースを認識・地図化し、その後モデルを用いて速く走る統合系を提示。低速時と高速時で適切な車両モデルを接続し、タイヤ制約も制御に入れています。論文公開年と2017・2018年の大会実績年は別です。<a href="https://arxiv.org/pdf/1905.05150">AMZ原論文、§5</a></li>
+<li><strong>2020：</strong>F1TENTHの共通評価環境、事前計算するレーシングライン、相手の行動に適応するFormulaZeroなど、再現可能な環境と競争のモデル化が進展。FormulaZeroは事前に多様な相手モデルを作り、走行中に相手への信念を更新する方式です。<a href="https://proceedings.mlr.press/v119/sinha20a/sinha20a.pdf">FormulaZero、§2–3</a></li>
+<li><strong>2020公開／2021刊行：</strong>BayesRaceは過去の走行から車両モデル誤差を学ぶ系列。ここで確認した評価は検証済みの1:43・1:10シミュレーションであり、実車での追越し達成と読まないようにします。<a href="https://proceedings.mlr.press/v155/jain21b.html">BayesRace正式会議ページ</a></li>
+<li><strong>2022–2023：</strong>全分野サーベイが認識・計画・制御・E2Eを整理。MAP controllerは幾何学的追従の軽さを維持しながらタイヤモデルを使う選択肢を提示。MAPは2022年プレプリントと2023年ICRA論文を同一研究として数えます。<a href="https://arxiv.org/abs/2202.07008">Betzら、2022</a>、<a href="https://arxiv.org/html/2209.04346v2">MAP原論文</a></li>
+<li><strong>2024：</strong>ForzaETHが全スタックと対戦時の失敗まで報告。F1TENTH共通ベンチマークは、正解位置を与えた計画器と粒子フィルタの推定位置を与えた計画器を分け、自己位置誤差が結論を変えることを示します。<a href="https://arxiv.org/html/2403.11784v2">ForzaETH</a>、<a href="https://arxiv.org/html/2402.18558v2">Unifying F1TENTH、§IV</a></li>
+<li><strong>2024–2025：</strong>Predictive Spliner、On-Track SysID、M-Predictive Splinerにより、相手予測、短時間のタイヤ同定、複数相手の対応を個別に検証。全スタック論文と部品論文の結果は重複した独立実験として数えません。<a href="https://arxiv.org/html/2410.04868v1">相手予測</a>、<a href="https://arxiv.org/html/2411.17508v1">同定</a>、<a href="https://arxiv.org/html/2506.16301v1">複数相手</a></li>
+<li><strong>2025：</strong>IU Luddyの実車ARSは、オーバルとロードコース、世代別の推定・制御系を報告。全ての機能が最高速度で同時に検証されたわけではありません。<a href="https://arxiv.org/html/2512.06892v1">ARS、§2–4</a></li>
+<li><strong>2026年、10月2日まで：</strong>Formula Studentの連続的な速度適応が、物理摩擦係数そのものではなく追従の安定性も含む実効的な余裕を学ぶ方向を提示。対象期間内の新規研究全体を網羅したとの主張はしません。<a href="https://arxiv.org/html/2606.10733v1">Bergerhoffら、2026、§III–IV</a></li>
+</ul>
+
+<h3>3. 六つの技術群と、その間の依存関係</h3>
+<h4>自己位置推定：正確さだけでなく、時刻と故障を測る</h4>
+<p>LiDAR地図照合、粒子フィルタ、SLAM、車輪オドメトリ、IMU、GNSSは用途も故障様式も違います。既知地図上で現在位置を求める処理と、未知地図を作る処理も分離します。位置誤差を小さくするフィルタでも、遅延が増えれば追従に不利になる場合があります。工学上の一次近似として、速度vで時刻ずれτがあれば前後方向のずれはvτです。これは論文測定値ではなく、時間同期を設計対象にする理由を示す近似です。</p>
+<p>Unifying F1TENTHのシミュレーションは車両更新100 Hz、通常の計画25 Hz、四つの縮尺・幅調整済みコース、各試験10周です。正解位置・摩擦0.9の比較ではオフライン最適化＋追従が最短でした。しかしこれは、その設定と実装群における結果です。「MPCや学習は常に遅い」と一般化できません。<a href="https://arxiv.org/html/2402.18558v2">§IV、Table II</a></p>
+<h4>車両・タイヤモデル：曲がれるという仮定を明示する</h4>
+<p>運動学的自転車モデルは、タイヤの横滑りを無視できる範囲では扱いやすい選択です。動力学モデルは横速度、ヨーレート、タイヤ力を含みます。複雑化すると同定する量が増え、観測できない状態を「正確に既知」と置く危険も増えます。モデル同定には、操舵指令ではなく実操舵、時刻整列した速度、状態推定の信頼性が必要です。</p>
+<p>On-Track SysIDはモデル残差をNNで補い、その補正モデルからタイヤパラメータを反復同定します。原論文の30秒は収録時間、約3秒は6反復の学習処理であり、センサ較正・走行準備込みではありません。実車では同定したモデルをMAPに用いて閉ループを検証し、ノイズ付き1-step予測の良いNLSでも完走できない例を報告。予測RMSEを安全な運転の代用にしない教訓です。CPU型式の詳細と本プロジェクトでの時間は未確認です。<a href="https://arxiv.org/html/2411.17508v1">§III–IV、Table I</a></p>
+<h4>レーシングライン・速度・ラップ：線と時間を一緒に考える</h4>
+<p>最短距離の経路と、速く通れる経路は同じではありません。最小曲率法は曲がりの強さを抑える代理目的、最短時間法は速度と動力学を含む目的です。TUMの公開実装には両系統があり、名称を混同しないことが大切です。<a href="https://github.com/TUMFTM/global_racetrajectory_optimization">著者公開コード・References</a></p>
+<figure class="tech-figure"><div class="table-wrap" role="region" tabindex="0" aria-label="経路と速度の概念式"><pre style="white-space: pre-wrap; overflow-wrap: anywhere" aria-label="経路と速度の概念式">幾何経路 p(s) → 曲率 κ(s) → 許容速度 v(s) → 到達時刻 t(s)
+曲率側の近似制約：v(s)² |κ(s)| ≤ a_y,max(s)
+周回時間の目的：T = ∫ ds / v(s)
+前向き加速制約：v_next² ≤ v_now² + 2 a_x,max Δs
+後ろ向き制動制約：v_now² ≤ v_next² + 2 b_max Δs （b_max > 0）</pre></div><figcaption>説明用の一般式。平面走行・簡略化した加速度制約の下での関係です。最小曲率だけで最短時間や衝突回避が保証されるわけではありません。ゼロ速度、複合摩擦、バンク、操舵速度制限を扱うには別途定義が必要です。</figcaption></figure>
+<h4>限界走行と適応：路面を知ることと、運転余裕を学ぶこと</h4>
+<p>2026年のAdaptive VPは、安定性から得る係数を位置ごとに更新し速度を調整します。MF17実車の10周比較は平均29.30秒から26.90秒への約8%改善。「35%」は停止発進を含む第1周37.15秒から第10周24.32秒への変化で、同条件の他手法に35%勝った意味ではありません。大会評価は14 m/sの速度上限が設定され、最終周には制動時の車輪ロックも記載。本文から計算機の詳細・周期保証を確認できず、記事では補いません。<a href="https://arxiv.org/html/2606.10733v1">§IV-A、IV-D</a></p>
+<h4>追越しと相手予測：障害物の位置だけでは足りない</h4>
+<p>追越しでは「どちら側が空いているか」に加え「その場所に同じ時刻に到着するか」が問題になります。Predictive Splinerはコース進行度に対する相手の横位置・速度をGPで予測する方向です。実験は成功追越し5回まで続け、成功数と衝突数から率を作る設計であり、固定回数の独立レース勝率ではありません。i7-1165G7で平均計算8.40 msに対し標準偏差26.64 ms。平均だけから実時間締切を保証できません。<a href="https://arxiv.org/html/2410.04868v1">§IV、Tables II–III</a></p>
+<p>M-Predictive Splinerは相手識別の継続と複数相手へ拡張しますが、追跡評価の一部は収録bagを用いたオフライン処理、追越し評価は実車です。これらを同じ「実車リアルタイム成功率」にまとめません。確認したv1本文のコードURLは未提供を示す仮リンクで、論文だけを根拠に完成コードが取得可能とは書けません。<a href="https://arxiv.org/html/2506.16301v1">§I、IV</a></p>
+<h4>Sim-to-realと実時間：部品の測定をシステム全体へ広げない</h4>
+<p>ARSの最高260 km/hはAV24、LVMSオーバル、ARS2のMPC構成での報告です。Xeon 12-coreとA5000、多重GNSS/IMU・LiDAR・レーダなどを備え、2D LiDAR中心の小型車と条件が違います。相手認識の別試験は7–28 m/sで、LiDAR追跡の一部は録画再生。ロードコース最高速度は表195 km/hと本文191 km/hに不一致があり、本概観では一つに確定しません。<a href="https://arxiv.org/html/2512.06892v1">§2、Table 1、§4</a></p>
+
+<h3>4. 何を比較すれば、導入判断に役立つか</h3>
+<ul>
+<li><strong>追従器の比較：</strong>入力経路と推定状態を固定。軌跡誤差、操舵振動、限界速度だけでなく、停止発進・急減速・計算締切も確認する</li>
+<li><strong>計画器の比較：</strong>追従器と速度上限を固定。衝突・境界逸脱・停止・完走率を先に報告し、完走時の時間を添える</li>
+<li><strong>予測器の比較：</strong>オフラインの軌跡誤差に加え、同じ相手・初期条件での閉ループ結果を必要とする。衝突直前の誤差を平均に埋めない</li>
+<li><strong>適応の比較：</strong>学習前後の路面・タイヤ・温度、必要なデータ量、更新中の制御、未知環境での退行を記録する</li>
+<li><strong>システムの比較：</strong>CPU使用率の分母、GPUとの同期、入力取得から指令までのp50/p95/p99・最悪値、欠測率と停止理由を揃える</li>
+</ul>
+<p>会社・大会主催者・チーム広報の「優勝」「人間並み」は、その主体の発表としては有用ですが、再現可能なアルゴリズム比較とは別です。本稿の性能議論は原論文の実験条件を根拠にしています。</p>
+
+<h3>5. E2E Lite TransFuserへの適用候補：先に契約と比較条件を作る</h3>
+<p><strong>プロジェクト実装：</strong>公開mainの確認対象は <code>8d9ab923e8cc2d01b28296a3032f65ab9438c384</code>。TimePathはXYのみの30点、0.1–3.0秒で、追従はPure Pursuit。局所Cartographer占有地図とreference-space MPPIは任意構成です。これを論文のFrenet全周地図、タイヤ同定、相手追跡と同一視しません。速度・停止ヘッドという目標仕様も、現行の実装済み出力と分けます。</p>
+<p>現行コード・資料の固定参照：<a data-source="src/aic_transfuser_lite/models/time_path_v1.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/src/aic_transfuser_lite/models/time_path_v1.py">TimePath実装</a>、<a data-source="docs/time_control_without_gnss_imu.md" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/docs/time_control_without_gnss_imu.md">制御入力と状態情報の由来</a>、<a data-source="docs/slam_mppi_avoidance.md" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/docs/slam_mppi_avoidance.md">speed15-01と後続試験の記録</a>。固定したmainは資料の確認版であり、過去の試験をこのcommitで新たに実行した意味ではありません。</p>
+<p><strong>プロジェクト実測：</strong>監査された箱回避試験の最初の箱回避区間の最大6.588 km/hと、20/15/15 km/hという設定上限は別物です。後続の予測短縮ではSTOPPED_NO_LAPも観測されています。レーシング、ForzaETH移植、実車限界走行の達成は確認していません。既存の試験記事の失敗も残して判断します。</p>
+<p><strong>適用候補A：評価の移植。</strong>最も低コストなのは、走行run単位の比較表に境界余裕、経路追従誤差、停止理由、入力age、制御締切を追加することです。モデル再学習は原理上不要。既存ログに必要項目がなければ追加収録が必要で、その時点までは測定不能とします。</p>
+<p><strong>適用候補B：経路と速度の整合。</strong>時間付き点列から導かれる速度・曲率と、実際に追従可能な速度の不一致を解析します。点間差分は予測ノイズを増幅するため、停止に相当する経路形状や短い予測を、平滑化や外挿で勝手に前進可能へ変えない検査が必要です。論文の全周速度プロファイルをそのまま短いTimePathに当てはめることはできません。</p>
+<p><strong>適用候補C：モデル同定の前段。</strong>車輪速度、実操舵、状態推定、較正・時刻の契約を先に検査。現在の制御ノードはGNSS/IMU/外部poseを使わない一方、学習入力にはAWSIMの横速度・ヨーレートが含まれるため、それらが実センサから得られるとは限りません。観測が成立するまでは横滑りモデル同定を実装済みとしません。</p>
+<p><strong>導入順の提案：</strong>ログ契約 → オフライン再生 → シミュレーションの低速閉ループ → 欠測・時刻ずれ・摩擦変化の条件追加 → 必要なら追従器または速度計画を一つだけ変更。相手予測は対戦シナリオと追跡データの準備後です。大規模なE2E再学習や実車高速化は、本稿の作業範囲に含めていません。</p>
+<p><strong>資源と合否：</strong>ログ解析はCPUで開始可能ですが、必要RAM・実時間性能はデータ量と実装次第で未測定です。モデル変更がある場合はrun/scenario splitを保ち、再学習時間・GPU・seedを別途記録。事前に「安全指標を悪化させず完走」「同条件の基準器を維持」「締切逸脱時に安全停止」の合否条件を定義します。論文のラップ短縮率を本プロジェクトの見込み改善率には使いません。</p>
+
+<h3>6. 根拠と未確認範囲</h3>
+<p>原論文の読解範囲は、ForzaETHの§3–9、Unifying F1TENTHの§III–V、AMZの§5、F1TENTH環境の§5–6、FormulaZeroの§2–3、SysIDの§III–IV、Spliner系列の手法・実験、ARSの§2–5、2026 Adaptive VPの§III–IVです。BayesRaceと2022全体サーベイは今回メタデータ・要旨確認にとどまり、細かな数値の根拠には使いません。2018年末、独立した2021年・2023年の全分野カバレッジ、2026年後半の網羅性は残る調査ギャップです。</p>
+<p>この追加の変更点は、レーシング分野の独立した見取り図、条件付き比較、適用候補の提示です。コード、制御値、学習、走行試験は変更していません。関連：<a href="forzaeth-race-stack-2024.html">ForzaETH全スタック詳解</a>、<a href="system-architecture.html">現行システム構成</a>、<a href="roadmap.html">検証課題</a>。</p>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-02">2026-10-02</time></div>
+<h3><a href="../articles/forzaeth-race-stack-2024.html">ForzaETH Race Stack：全スタックと対戦の条件</a></h3>
+<p>2024年の全スタック論文から、MAP、評価の条件、追越しの失敗とTimePathへの適用候補を読む。</p><div class="card-bottom"><span>論文解説・未適用</span>
+<a class="article-read" href="../articles/forzaeth-race-stack-2024.html" aria-label="ForzaETH Race Stack：全スタックと対戦の条件を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/system-architecture.html">システム構成とTimePathの入出力</a></h3>
+<p>Camera・2D LiDAR・車両状態からの経路予測と、モデル外の制御・安全監視を整理します。</p><div class="card-bottom"><span>継続資料</span>
+<a class="article-read" href="../articles/system-architecture.html" aria-label="システム構成とTimePathの入出力を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/roadmap.html">次に検証する課題と判断基準</a></h3>
+<p>保持経路による復帰、予測短縮、反復評価、画像表現の比較を、検証できる単位に整理します。</p><div class="card-bottom"><span>継続資料</span>
+<a class="article-read" href="../articles/roadmap.html" aria-label="次に検証する課題と判断基準を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-02">2026-10-02</time></div>
+<h3><a href="../articles/research-map.html">E2E・レーシング・MPC文献調査の範囲と資料台帳</a></h3>
+<p>2018-10-02〜2026-10-02と期間前の基礎を、時代・領域・資料種別で整理。確認済みの範囲と未調査を分けます。</p><div class="card-bottom"><span>初回調査・未調査範囲を明示</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC文献調査の範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

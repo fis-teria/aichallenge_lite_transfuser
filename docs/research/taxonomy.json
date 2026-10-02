@@ -1,0 +1,102 @@
+{
+  "checked_date": "2026-10-02",
+  "window_start": "2018-10-02",
+  "window_end": "2026-10-02",
+  "eras": [
+    {
+      "id": "foundation",
+      "start": null,
+      "end": "2018-10-01",
+      "label": "期間前の基礎（2018-10-02より前）"
+    },
+    {
+      "id": "2018-2020",
+      "start": "2018-10-02",
+      "end": "2020-12-31",
+      "label": "2018-10-02–2020"
+    },
+    {
+      "id": "2021-2022",
+      "start": "2021-01-01",
+      "end": "2022-12-31",
+      "label": "2021–2022"
+    },
+    {
+      "id": "2023-2024",
+      "start": "2023-01-01",
+      "end": "2024-12-31",
+      "label": "2023–2024"
+    },
+    {
+      "id": "2025",
+      "start": "2025-01-01",
+      "end": "2025-12-31",
+      "label": "2025"
+    },
+    {
+      "id": "2026",
+      "start": "2026-01-01",
+      "end": "2026-10-02",
+      "label": "2026-01-01–10-02"
+    }
+  ],
+  "domains": {
+    "e2e": "E2E自動運転",
+    "racing": "高速自律レーシング",
+    "control": "MPC・MPPI・安全制御"
+  },
+  "source_types": {
+    "paper": "原著論文（査読あり）",
+    "preprint": "プレプリント",
+    "survey": "サーベイ",
+    "code": "公式コード・ソフトウェア",
+    "benchmark": "ベンチマーク・データ・競技規則",
+    "technical": "公式技術記事・講演・仕様"
+  },
+  "cross_cutting_axes": {
+    "inputs": [
+      "camera",
+      "2D LiDAR",
+      "3D LiDAR",
+      "ego state",
+      "map / route",
+      "privileged teacher only"
+    ],
+    "outputs": [
+      "direct control",
+      "waypoints / trajectory",
+      "speed / stop",
+      "cost / value / occupancy"
+    ],
+    "learning": [
+      "imitation / behavior cloning",
+      "DAgger / expert aggregation",
+      "reinforcement learning",
+      "self-supervised representation",
+      "world model / generative"
+    ],
+    "evaluation": [
+      "open-loop",
+      "closed-loop simulation",
+      "closed-loop real vehicle",
+      "latency / hardware",
+      "failure / safety interventions"
+    ],
+    "control": [
+      "trajectory tracking",
+      "contouring / progress",
+      "sampling MPC / MPPI",
+      "learned dynamics",
+      "uncertainty / robustness",
+      "safety filter / supervisor"
+    ]
+  },
+  "status_definition": {
+    "調査済み": "登録した資料の明記された確認範囲のみ。時代・領域全体の完了を意味しない。",
+    "未調査": "当該資料種別・時代・領域について、確認範囲が登録されていない。未発見と不存在を区別する。",
+    "資料不足": "候補は見つかったが、本文・版・評価条件など主張に必要な根拠が不足している。"
+  },
+  "undated_policy": "公表年不明の公式ドキュメント等はera=undatedとし、108セルの年別集計から除外する。台帳と資料年表の末尾に残す。",
+  "completeness_policy": "全セルに coverage_complete=false を維持。網羅性を主張しない。境界年2018は公表日の照合が必要。",
+  "deduplication_policy": "同一研究のarXiv・会議・雑誌・著者サイト・公式コードはstudy_family_idで束ねる。版の違いは別source_idとして残し、研究数と資料数を混同しない。"
+}

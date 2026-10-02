@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>E2E自動運転の全体像と比較の読み方 — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html" aria-current="page"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../updates.html">継続資料</a></div>
+<span class="section-number">継続資料</span><h1>E2E自動運転の全体像と比較の読み方</h1>
+<p class="article-lead">2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。</p><div class="article-meta">
+<span>公開 <time datetime="2026-10-02">2026-10-02</time></span>
+<span>更新 <time datetime="2026-10-02">2026-10-02</time></span>
+<span class="tag">文献調査</span></div></header><div class="article-body"><p class="paper-summary">E2E自動運転は「画像から直接操舵する一種類の方式」ではありません。学習する範囲、観測できる情報、出力の契約、評価環境が異なる研究群です。本稿は2018年10月2日から2026年10月2日までの代表例を、E2E Lite TransFuserで設計判断に使える分類へ整理します。全論文の網羅調査ではなく、比較条件を揃えるための入口です。</p>
+<p><strong>最終確認日：</strong>2026-10-02。論文の初回公開年と会議・誌面の発表年を区別します。企業の公開発表は技術動向の証拠として扱い、独立に再現された走行性能とは扱いません。</p>
+<h2>何を解く技術か</h2>
+<p>車両が次にどう動くかは、道路形状、障害物、他車の意図、自車状態、目的地の組合せで決まります。モジュール方式では認識・予測・計画・制御の間に人が定めた表現を渡します。E2Eでは、その一部または全体を最終的な運転目的に沿って学習します。重要なのは「ニューラルネットが一つか」よりも、「どの誤差がどこまで伝播し、どの部分が固定されるか」です。</p>
+<p>たとえばTransFuserはセンサからwaypointまでを学習し、低レベル操作はPIDへ渡します。UniADは追跡、地図、運動予測、占有、計画という意味を持つ中間タスクを残して統合学習します。ChauffeurNetは認識済みの環境表現を入力とするため、raw sensorからの認識を含む方式とは境界が異なります。これらをすべて「完全なブラックボックス」と呼ぶと、監督信号と故障箇所を見失います。<a href="https://arxiv.org/pdf/2104.09224">TransFuser §3</a>、<a href="https://arxiv.org/html/2212.10156v2">UniAD §3</a>、<a href="https://arxiv.org/abs/1812.03079">ChauffeurNet</a></p>
+<h2>比較を始める前の六つの軸</h2>
+<div class="table-wrap" role="region" aria-label="E2E方式を比較する六つの軸" tabindex="0"><table><caption>E2E方式を比較する六つの軸</caption><thead><tr><th scope="col">軸</th><th scope="col">主な選択肢</th><th scope="col">読み違えると起きること</th></tr></thead><tbody>
+<tr><td>学習境界</td><td>raw sensor→操作、raw sensor→軌道、構造化状態→軌道、複数タスクの統合</td><td>認識済み入力を使うplannerを、同じ難度のセンサE2Eと誤認する</td></tr>
+<tr><td>教師と目的</td><td>人の実演、ルールexpert、特権情報teacher、RL、自己教師あり事前学習</td><td>特権情報を実行時にも使えると誤認する</td></tr>
+<tr><td>空間表現</td><td>画像・BEV raster・ベクトル・object query・latent state</td><td>必要な地図や物体ラベルの費用を見落とす</td></tr>
+<tr><td>時間表現</td><td>単一時刻、積層履歴、RNN状態、時系列attention、未来の生成</td><td>未来waypointのGRUを過去観測の時間融合と取り違える</td></tr>
+<tr><td>出力契約</td><td>steering/throttle、時刻付きXY、速度、停止確率、候補軌道とscore</td><td>経路形状から速度を復元できる前提を無意識に置く</td></tr>
+<tr><td>証拠</td><td>open-loop、非反応型短時間simulation、反応型closed-loop、実車</td><td>ADE低下を衝突率低下に読み替える</td></tr>
+</tbody></table></div>
+<p>本表は本稿の分析枠組みです。各研究の公式分類そのものではありません。「E2E」という名称だけで、センサ仕様、map利用、controller、safety supervisorの有無は決まりません。</p>
+<h2>2018年から2026年への流れ</h2>
+<p><strong>2018年後半から2020年：</strong>模倣の成功だけでなく、失敗状態を学習へ入れる方法が中心的な問題になりました。2018年12月公開のChauffeurNetは実演軌道を乱して望ましくない状態を合成し、回復を学ぶ方向を示します。2019年のBehavior Cloningの限界研究はデータ分布と動的物体への一般化を検証しました。Learning by Cheatingは特権情報を持つteacherから視覚studentへ段階的に知識を移します。なおConditional Imitation Learningの2017年初回公開・2018年5月会議は本稿の期間外で、経路指示を条件にする前史としてのみ参照します。<a href="https://arxiv.org/abs/1812.03079">ChauffeurNet</a>、<a href="https://arxiv.org/abs/1904.08980">BCの限界</a>、<a href="https://proceedings.mlr.press/v100/chen20a.html">LBC</a></p>
+<p><strong>2021年：</strong>情報と教師をどう使うかが分岐します。TransFuserは画像とLiDARの特徴間attention、RoachはRLで学んだexpertからの模倣、World on Railsは記録ログから扱いやすい非反応型世界を仮定した価値学習を追求します。RLとILは排他的ではなく、RL teacher→IL studentという組合せがあります。<a href="https://arxiv.org/pdf/2104.09224">TransFuser</a>、<a href="https://arxiv.org/abs/2108.08265">Roach</a>、<a href="https://arxiv.org/abs/2105.00636">World on Rails</a></p>
+<p><strong>2022年から2023年：</strong>MILEは映像から潜在状態の時間発展と運転方策を学びます。一方UniADは複数の認識・予測タスクを計画へ結び付け、VADはベクトル化された場面表現を使います。どちらも「中間表現を全部捨てる」という単純な進化ではありません。TransFuser誌面拡張は同一研究系統として扱い、初回版と別々に論文数を水増ししません。<a href="https://arxiv.org/html/2210.07729v2">MILE</a>、<a href="https://arxiv.org/html/2212.10156v2">UniAD</a>、<a href="https://arxiv.org/abs/2303.12077">VAD</a>、<a href="https://github.com/autonomousvision/transfuser">TransFuser公式の版説明</a></p>
+<p><strong>2024年から2025年：</strong>モデル規模の拡張に加え、評価と推論コストが主要な設計軸になります。NAVSIMは実データと非反応型simulationを組み合わせ、単純な軌道誤差では捉えにくい計画性能を測ります。DriveLMは知覚・予測・計画を関係付けた質問応答を扱い、Think2Driveはlatent world model内でRLを進めます。DiffusionDriveは候補軌道分布を扱いながら反復生成を短縮し、DriveTransformerは過去のtask queryを再利用するstreaming設計を採ります。<a href="https://arxiv.org/html/2406.15349v2">NAVSIM</a>、<a href="https://arxiv.org/html/2312.14150v2">DriveLM</a>、<a href="https://arxiv.org/abs/2402.16720">Think2Drive</a>、<a href="https://arxiv.org/html/2411.15139v2">DiffusionDrive</a>、<a href="https://arxiv.org/html/2503.07656v1">DriveTransformer</a></p>
+<p><strong>2026年10月2日まで：</strong>世界モデルとfoundation modelを、車上方策だけでなく教師・合成データ・評価環境にも使う動きがあります。Waymoは2026年2月、cameraとLiDARを生成する世界モデルを公式発表しました。NVIDIAは8月のAlpamayo 2 Super発表で、軌道、言語的説明、meta-action、自動ラベルなどの用途を説明しています。これらは企業による能力・提供形態の発表です。本稿では一般的な安全性、他社比の優位、E2E Liteでの再現性の証明には使いません。<a href="https://waymo.com/blog/2026/02/the-waymo-world-model-a-new-frontier-for-autonomous-driving-simulation/">Waymo公式</a>、<a href="https://blogs.nvidia.com/blog/alpamayo-2-super-open-model-now-available/">NVIDIA公式</a></p>
+<h2>仕組みを共通言語で読む</h2>
+<p><strong>IL：</strong>観測oと経路条件gから、teacherの軌道τを近似するのが基本形です。L<sub>BC</sub> = E[ℓ(π<sub>θ</sub>(o,g), τ<sub>expert</sub>)]。この式が小さくなるのは収集済みデータ上の誤差です。方策自身が少し外れた状態へ入った後の回復は、別のデータ分布の問題になります。データ量だけでなく、停止、旋回、接近、回復をどれだけ含むかを確認します。</p>
+<p><strong>RL：</strong>J(θ) = E[Σγ<sup>t</sup>r(s<sub>t</sub>,a<sub>t</sub>)]という長期目的を最大化します。問題は報酬設計、探索、sample cost、安全制約です。シミュレータの特権状態でRLを行うことと、生センサ入力の車上モデルをRL学習することは同じではありません。RoachやThink2Driveを導入候補として読む際には、teacher、student、実行時観測を別図にします。</p>
+<p><strong>融合と時系列：</strong>空間融合は「同じ時刻の異なるセンサの情報をどう結ぶか」、時間融合は「動きと観測履歴をどう保持するか」です。Self-attentionの基本計算はsoftmax(QK<sup>T</sup>/√d)V。密なtoken同士を全結合する場合、attention行列はtoken数の二乗で大きくなるため、低解像度化、疎なquery、memoryの制限に意味があります。これは一般的な計算構造からの分析で、特定の実装速度を保証する数式ではありません。</p>
+<p><strong>世界モデル：</strong>p(z<sub>t+1</sub>|z<sub>t</sub>,a<sub>t</sub>)を学ぶ場合、行動に応じた未来を考えることができます。ただし、予測画像が自然に見えることと、車両運動・接触・他車の反応が正しいことは別です。MILEのような方策学習の内部状態、Think2DriveのRL用環境、Waymo発表のセンサsimulationは役割が異なります。<a href="https://arxiv.org/html/2210.07729v2">MILE</a>、<a href="https://arxiv.org/abs/2402.16720">Think2Drive</a></p>
+<p><strong>Foundation model：</strong>大規模事前学習の表現、言語、生成能力を再利用する分類です。「world model」と同義ではありません。VLMが正しく説明できても、操作に必要な幾何、latency、分布外時の停止判断が正しいとは限りません。言語説明の評価、軌道品質、実際の閉ループ行動は別々に検証します。<a href="https://arxiv.org/html/2312.14150v2">DriveLM</a>、<a href="https://arxiv.org/html/2511.00088v1">Alpamayo-R1</a></p>
+<h2>学習 評価 推論を混ぜない</h2>
+<div class="table-wrap" role="region" aria-label="学習・評価・推論の確認条件" tabindex="0"><table><caption>学習・評価・推論の確認条件</caption><thead><tr><th scope="col">段階</th><th scope="col">記録すべき条件</th><th scope="col">典型的な落とし穴</th></tr></thead><tbody>
+<tr><td>学習</td><td>収集expert、run/scenario split、ラベル座標系、履歴長、入力時刻、teacher専用情報、augmentation、seed</td><td>隣接frameの分割漏洩、未来由来の速度や経路指示、成功区間だけの学習</td></tr>
+<tr><td>open-loop評価</td><td>軌道誤差の時刻別分解、停止・旋回・障害物距離別slice、基準方策</td><td>直進が大半の平均値で感覚入力を使わない方策が高得点</td></tr>
+<tr><td>simulation評価</td><td>反応型か、route/weather/traffic、seed、controller、介入、timeout、失敗分類</td><td>同じCARLAでも版・scenario・penaltyが違う数値を並べる</td></tr>
+<tr><td>推論</td><td>CPU/GPU、precision、batch、前処理・転送・queue込みの遅延分布、欠測時動作</td><td>network単体FPSをセンサから制御までの応答速度と呼ぶ</td></tr>
+</tbody></table></div>
+<p>NAVSIM v1は非反応型の評価設計です。論文中でclosed-loopとの相関が示されても、個々の導入先でclosed-loop改善が成立したことにはなりません。評価器のversion、指標実装、入力権限が変わった後のスコアは別欄へ置きます。本稿は条件を揃えていない研究横断の数値ランキングを作りません。<a href="https://arxiv.org/html/2406.15349v2">NAVSIM §3–5</a></p>
+<h2>強みと限界を比較する</h2>
+<p>センサから軌道までの直接ILは構成を追いやすい一方、成功軌道だけでは回復行動を学びにくい設計です。明示的な中間タスクは診断と補助教師に役立つ一方、ラベル生成と複数損失の調整が増えます。多候補生成は複数の正解を表現できますが、候補を安全に選ぶscoreや制御制約は別途必要です。world modelは反実仮想を扱える可能性を持ちますが、model errorを方策が利用してしまう危険があります。以上は各構成からの工学的推論で、全手法に共通する実験結果ではありません。</p>
+<p>故障を「モデルが弱い」でまとめず、認識欠落、時間ずれ、進路条件の曖昧さ、教師の偏り、controller不整合、計算deadline超過へ分けると、再学習が必要な問題と、入出力契約を直す問題を切り分けられます。</p>
+<h2>E2E Lite TransFuserで検討する順序</h2>
+<p><strong>監査済み資料との差分：</strong>既存サイトのmain説明ではCamera・2D LaserScan・ego/historyから時刻付きTimePathを出力し、制御はモデル外です。原著TransFuserの3D LiDAR、単一時刻入力、goal条件付きdecoderとは異なります。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/src/aic_transfuser_lite/models/time_path_v1.py" data-source="src/aic_transfuser_lite/models/time_path_v1.py">対象commitのTimePathV1</a>、<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/src/aic_transfuser_lite/models/time_backbone_v1.py" data-source="src/aic_transfuser_lite/models/time_backbone_v1.py">time backbone</a>、<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/tests/test_time_path_v1.py" data-source="tests/test_time_path_v1.py">teacher分離などのテストsource</a>を確認しています。今回の確認はコードとテストsourceの閲覧で、新たな実行検証ではありません。既存のteacher分離実装を保ち、以下の追加調査候補とは分けます。</p>
+<ol>
+<li><strong>最優先の候補：</strong>センサを使わないego/history-only基準と、Camera-only、LaserScan-only、fusionの比較設計。必要なのは同じrun/scenario split、同じhead、同じ学習予算。各条件を再学習して初めてfusionの寄与を比較できます。入力をゼロにするだけのテストは分布外stress testとして分けます。</li>
+<li><strong>次の候補：</strong>旋回・停止・近接・復帰区間の分布を記録し、teacher由来、測定値、推定値を明示するデータカード。コード変更候補はdataset metadataと評価集計であり、運転controllerの変更は不要です。</li>
+<li><strong>その後の候補：</strong>時間融合の長さやquery数を一要因ずつ変える。履歴同期、ego-motion補償、欠測maskが必要で、過去frameの並べ方だけでは正しい時間モデルになりません。VRAM、遅延、保持状態のreset条件を測定します。</li>
+<li><strong>後順位の候補：</strong>VLM teacherやworld model。事前に、追加ラベルの正確性、ライセンス、入力センサ差、教師実行費用、蒸留先の遅延上限を確認します。まずoffline分析用teacherとして費用対効果を調べる、という提案であり導入決定ではありません。</li>
+</ol>
+<p><strong>検証ゲート：</strong>①shape・単位・時刻・teacher漏洩のテスト、②未学習runでのoffline slice、③同一route・seed・controllerでの反復simulation、④衝突・逸脱・停止理由・完走率・遅延の同時確認。offline改善だけで速度を上げたり安全監視を外したりしません。本調査で学習、制御変更、走行実験は行っていません。</p>
+<h2>今回の範囲と次に埋める穴</h2>
+<p>本稿は代表研究の設計比較です。2026年論文の全数抽出、全企業の非公開stackの推定、実車の安全性比較は未実施です。次の深掘り候補は、原著TransFuserの再現契約、BCの分布ずれと回復データ、評価器差分、teacher→studentの情報制約です。企業発表は独立した実験・モデルカードと結び付くまで別の証拠区分を保ちます。</p>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-02">2026-10-02</time></div>
+<h3><a href="../articles/transfuser-cvpr2021.html">TransFuser原著の仕組みと再現条件</a></h3>
+<p>原著のfusion・waypoint・PID、限定されたCARLA結果、公式版差とE2E Liteへの適用条件。</p><div class="card-bottom"><span>原著と補足を確認</span>
+<a class="article-read" href="../articles/transfuser-cvpr2021.html" aria-label="TransFuser原著の仕組みと再現条件を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/transfuser-2022.html">TransFuser拡張版：融合とclosed-loop評価</a></h3>
+<p>複数解像度の画像・鳥瞰LiDAR特徴をTransformerで融合する構成を発展させ、長い経路と密な交通を含むCARLAの評価で検証。融合方式を運転結果へ結びつけて比較しています。</p><div class="card-bottom"><span>一次資料を確認</span>
+<a class="article-read" href="../articles/transfuser-2022.html" aria-label="TransFuser拡張版：融合とclosed-loop評価を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/system-architecture.html">システム構成とTimePathの入出力</a></h3>
+<p>Camera・2D LiDAR・車両状態からの経路予測と、モデル外の制御・安全監視を整理します。</p><div class="card-bottom"><span>継続資料</span>
+<a class="article-read" href="../articles/system-architecture.html" aria-label="システム構成とTimePathの入出力を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-02">2026-10-02</time></div>
+<h3><a href="../articles/research-map.html">E2E・レーシング・MPC文献調査の範囲と資料台帳</a></h3>
+<p>2018-10-02〜2026-10-02と期間前の基礎を、時代・領域・資料種別で整理。確認済みの範囲と未調査を分けます。</p><div class="card-bottom"><span>初回調査・未調査範囲を明示</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC文献調査の範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

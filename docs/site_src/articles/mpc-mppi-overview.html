@@ -1,0 +1,49 @@
+<div class="paper-top"><span class="tag">制御分野俯瞰</span><span class="paper-year">2018–2026</span></div>
+<h2>MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を分けて読む</h2>
+<p class="paper-summary">MPCは毎周期、有限の未来を予測して最初の操作を実行する枠組みです。MPPIはその最適化をサンプリングで近似する一群です。線形／非線形、ロバスト／確率的、学習モデル／物理モデルは別の分類軸であり、「新しい手法ほど安全・高速」という順序にはなりません。</p>
+<p><strong>確認日：</strong>2026-10-02。主な探索期間は2018-10-02〜2026-10-02。基礎となる2017年以前の研究は背景として区別します。以下の設計判断は文献と公開mainの照合に基づく候補で、新しい制御実装・学習・走行試験の結果ではありません。</p>
+<h3>1. 何を最適化するのか</h3>
+<p>離散状態x、操作u、予測モデルf、予測長Hを使う一般的な説明形は、<code>min Σ ℓ(xₖ,uₖ,rₖ) + φ(xH), subject to xₖ₊₁=f(xₖ,uₖ), xₖ∈X, uₖ∈U</code>です。rは参照軌道、ℓは途中のコスト、φは終端コストです。最初の操作だけを適用し、新しい観測で問題を解き直します。追従誤差、操舵変化、速度偏差、障害物との距離は目的関数の候補ですが、単位や尺度を揃えず重みだけ調整すると、望む優先順位になりません。<a href="https://acdslab.github.io/mppi-generic-website/docs/mppi.html">著者グループの定式化</a></p>
+<p><strong>設計上の区別：</strong>大きな衝突ペナルティを置くことと、衝突状態を許さない制約を証明することは別です。最適化上の実行可能性、次周期でも解ける再帰的実行可能性、閉ループ安定性、衝突回避、有限時間内の計算完了も、それぞれ異なる性質です。定理を利用するときは、モデル誤差の集合、初期状態、終端集合、推定誤差、計算誤差が前提に含まれるかを確認します。</p>
+<h3>2. 分類は一列のランキングではなく、組み合わせ</h3>
+<div class="table-wrap" role="region" aria-label="MPCとMPPIの分類軸・利点・限界" tabindex="0"><table><caption>MPCとMPPIの分類軸・利点・限界</caption><thead><tr><th scope="col">分類軸</th><th scope="col">仕組み・利点</th><th scope="col">制約と失敗要因</th></tr></thead><tbody>
+<tr><td>線形／線形時変MPC</td><td>線形ダイナミクス、二次コスト、線形制約なら凸QPとして構成できる。OSQPの公式MPC例がこの構造を示す</td><td>車両の滑りや大きな姿勢変化を線形近似する範囲を外れると、最適化の解の正しさと車両予測の正しさが分離する</td></tr>
+<tr><td>非線形MPC</td><td>非線形モデルを直接扱い、SQPなどで局所的に解く。acadosは積分・感度・QPを組み合わせる実装例</td><td>非凸性、初期値、微分可能性、反復予算が重要。局所解や収束打切りを大域最適解と呼ばない</td></tr>
+<tr><td>ロバストMPC／tube系</td><td>誤差集合や追従フィードバックを扱い、予測と実系のずれに備える</td><td>想定外の誤差は保証外。大きすぎる誤差集合は保守的になり、通行可能な経路まで除くことがある</td></tr>
+<tr><td>確率的MPC</td><td>不確実性の分布とchance constraintを扱う。PMPSCでは確率的tubeと安全な終端集合を使う</td><td>許容違反確率を明記する必要がある。分布の校正が崩れた状況へ、保証をそのまま移せない</td></tr>
+<tr><td>学習ベースMPC</td><td>物理モデルの残差、コスト、提案分布などを学習する。予測安全フィルタを別層にする構成もある</td><td>教師分布外、オンライン更新による変化、モデル不確実性の過小評価を検証する必要がある</td></tr>
+<tr><td>サンプリングMPC／MPPI</td><td>候補系列のrolloutを並列評価し、低コスト系列へ探索分布を移す</td><td>有限候補で重要な回避モードを見落とす。サンプルの平均が障害物を横切る場合もあるため、採用結果の再検査が必要</td></tr>
+</tbody></table></div>
+<p>一次資料：<a href="https://osqp.org/docs/examples/mpc.html">OSQP公式MPC例</a>、<a href="https://arxiv.org/pdf/1910.13753v3">acados本文</a>、<a href="https://arxiv.org/pdf/1906.10417">PMPSC本文</a>、<a href="https://arxiv.org/pdf/1812.05506v4">非線形予測安全フィルタ本文</a>。表の失敗要因と適用判断は、各手法の仮定から導いた本記事の整理です。</p>
+<h3>3. MPPIの更新と、計算時間を決める要素</h3>
+<p>代表的な説明形は、候補<code>Uⁱ=Ū+εⁱ</code>を展開し、重要度補正を含むコストSⁱから<code>wⁱ=exp[−(Sⁱ−min S)/λ] / Σⱼ exp[−(Sʲ−min S)/λ]</code>、<code>Ū←Ū+Σᵢwⁱεⁱ</code>と更新するものです。λは重みの集中度に関係します。式は説明用で、原論文の重要度補正、雑音分布、操作コストを省略したまま異なる実装へ移植してはいけません。<a href="https://acdslab.github.io/mppi-generic-website/docs/mppi.html">MPPI-Generic公式解説</a></p>
+<p>この構造からの実装上の見積りでは、候補数K、予測長H、反復回数Iを増やすと、おおむねK×H×I回のモデル・コスト評価が必要です。実時間はGPU転送、メモリ帯域、地図参照、モデルの分岐、候補棄却の処理にも依存します。候補が独立でも、各候補の時間発展には依存関係があります。「GPUなら一定周波数」とは限りません。著者実装MPPI-GenericはC++/CUDAとNVIDIA GPUを前提にしています。<a href="https://github.com/ACDSLab/MPPI-Generic">公式実装</a></p>
+<p>QPのwarm startは前回の主・双対変数を初期化に再利用する仕組みです。MPPIでは前回系列を時間シフトして探索中心に利用できます。いずれも入力の鮮度や障害物変化を無視して前回の解を採用する許可にはなりません。<a href="https://osqp.org/docs/interfaces/python.html">OSQP warm start仕様</a></p>
+<h3>4. 2018–2026：何が改善対象になったか</h3>
+<ul>
+<li><strong>2018：</strong>Information-Theoretic MPCのTRO版。情報理論によるサンプリング制御と自動運転への適用を整理。2017年arXivと同じ研究系列として数えます。<a href="information-theoretic-mpc.html">既存の個別記事</a>、<a href="https://doi.org/10.1109/TRO.2018.2865891">原論文DOI</a></li>
+<li><strong>2018初稿／2021改訂：</strong>非線形predictive safety filter。学習器が提案する操作を、安全な終端集合へ至るバックアップ計画の観点から検査・修正する設計。通常の停止監視器を置いただけで同じ証明を持つわけではありません。<a href="https://arxiv.org/abs/1812.05506">一次資料</a></li>
+<li><strong>2019–2020：</strong>PMPSCは確率的制約と学習制御を接続。acadosは組込み最適化のモジュール化を進め、モデルや制約だけでなくソルバ構成を設計対象にします。両者は解いている問題が違い、速度ランキングの競合ではありません。<a href="https://arxiv.org/abs/1906.10417">PMPSC</a>、<a href="https://arxiv.org/abs/1910.13753">acados</a></li>
+<li><strong>2021：</strong>Robust MPPIは、追従器をrollout内へ組み込み、名目状態の選択も扱います。ロバスト化の主眼はサンプル数の増加ではありません。<a href="robust-mppi.html">個別解説</a></li>
+<li><strong>2021初稿／2022刊行：</strong>Smooth MPPIは入力を持ち上げて変化を扱い、最適化内部で滑らかさを作ります。外付けフィルタで操作を書き換える問題への回答です。2025年v8は改訂であり、新しい独立研究として重複計上しません。<a href="https://arxiv.org/pdf/2112.09988v8">本文</a></li>
+<li><strong>2023：</strong>実装利用の広がりを確認する補助資料としてNav2の公式ROSCon資料があります。この年を新しい理論の成立年と決めつけません。<a href="https://roscon.ros.org/2023/talks/On_Use_of_Nav2_MPPI_Controller.pdf">公式発表</a></li>
+<li><strong>2024：</strong>CoVO-MPCは探索共分散の設計を収束解析へ結び付けます。二次目的での主結果は候補数が無限大へ向かう極限を含み、有限候補・非凸回避の全面的保証ではありません。MPPI-Genericは再利用可能なGPU実装という別の課題を扱います。<a href="https://proceedings.mlr.press/v242/yi24b/yi24b.pdf">CoVO本文</a>、<a href="https://arxiv.org/abs/2409.07563">実装論文</a></li>
+<li><strong>2025：</strong>Whole-Body MPPI（ICRA）は四脚の全身制御への展開例です。著者の実機構成はmotion capture、IMU、joint encoderから状態を推定するため、現プロジェクトのCamera＋2D LiDAR車両との直接比較はできません。用途の広がりとして紹介し、車両での優劣の根拠にはしません。<a href="https://whole-body-mppi.github.io/">著者プロジェクト・実装への入口</a>。SMPPIのv8もこの年ですが同一研究の改訂です。</li>
+<li><strong>2026-09：</strong>ToIAは、早い時点の観測が後続の予測に与える価値を、タスクとの関連で重み付けするGP残差学習付きMPPIです。本文は合成残差・地形クラス別GPを用いたシミュレーションと明記し、現実的車両・実機検証を今後の課題とします。査読済み採択は確認できていません。<a href="https://arxiv.org/pdf/2609.19378v1">一次本文</a></li>
+</ul>
+<h3>5. 学習プランナと制御器を組み合わせる四つの場所</h3>
+<p>以下は設計候補です。①学習器のwaypointをMPCの参照にする、②学習器から操作系列の初期値・候補分布を得る、③運動モデルの残差を学習する、④学習器の提案を予測安全フィルタで検査する、という分解ができます。①は参照が走行可能とは限らず、②は候補分布が同じ誤りへ集中し得ます。③には時刻同期した状態・操作・次状態が必要で、④には安全集合と誤差境界を構成できることが必要です。学習器を追加しても、欠測・NaN・古い観測への対応は独立して必要です。</p>
+<h3>6. E2E Lite TransFuserで既にあるもの</h3>
+<p><strong>実装の事実：</strong>公開main <code>8d9ab923e8cc2d01b28296a3032f65ab9438c384</code>の制御資料では、TimePathの参照に対し4係数の形状を探索するreference-space MPPIと、曲率を積分する代替候補生成があり、得られた経路をPure Pursuitで追従します。256候補×3反復、150 ms予算は設定値です。古い地図・モデル出力や候補不成立は停止要求となり、平均経路も再検査します。これは論文の制御系列・車両動力学rolloutを忠実に実装したRMPPIではありません。</p>
+<p><strong>実測の範囲：</strong>2026-09-19のAWSIM単一静止箱rollout02では、5 km/h目標で箱通過と通常追従復帰が記録され、最大計算時間42.52 msでした。ただし対象試験commitは<code>409af4e88b5452c3c83a5d848eeda1bad3366d96</code>で、終了は外部supervisorによるものです。周回成功、移動障害物、実車体最小距離、複数配置での成功率はこの記録から主張できません。予算150 msと観測最大42.52 msを同じ種類の値として扱わないでください。</p>
+<p>現行TimePathのXY30点から計算する区間弦長を0.1秒で割った速度ノルムは独立に学習した速度headではありません。主出力をwaypoint・target speed・stop probabilityとする設計目標と、今の実装契約を分けて読みます。出典：公開mainの<a data-source="docs/slam_mppi_avoidance.md" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/docs/slam_mppi_avoidance.md">現行SLAM MPPIの設計・検証記録</a>、<a data-source="src/aic_transfuser_lite/models/time_path_v1.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/src/aic_transfuser_lite/models/time_path_v1.py">現行TimePathの出力定義</a>、<a href="system-architecture.html">システム構成記事</a>。</p>
+<h3>7. 次の比較を成立させる条件</h3>
+<ol>
+<li><strong>先に契約を固定：</strong>座標系、操舵rad、速度m/s、時間s、観測と指令のtimestamp、制御周期、候補の有効期限を記録する。teacher/debug-only情報を推論入力に混ぜない。</li>
+<li><strong>モデルを変える場合：</strong>舵角指令・実舵角・車速・姿勢変化の同期ログで遅延と一段／多段予測残差を測る。学習型ならrun/scenario単位の分割と未見速度・未見摩擦で検証する。現時点で学習時間・必要GPUメモリは未測定。</li>
+<li><strong>同条件で比較：</strong>現行参照空間MPPI、候補探索を変えた版、非線形MPCを、同じ参照・地図・車体形状・速度・入力制限・停止監視・計算上限で評価する。平均追従誤差だけでなく最大逸脱、停止距離、接触、不要停止、復帰時間、p50/p95/p99遅延、deadline miss、候補不成立率を残す。</li>
+<li><strong>段階を混同しない：</strong>数式単体試験→ログ再生→理想モデル閉ループ→公式AWSIM有限試験→許可された実機試験。ログ再生で衝突がないように見えても、制御の違いで将来観測が変わる閉ループ成功ではない。</li>
+<li><strong>採用ゲート：</strong>停止監視を弱めず、分布外と候補枯渇時に安全側へ倒れ、同条件の成功率と遅延尾部が改善するかを判断する。「MPPI」という名称の一致を採用根拠にしない。</li>
+</ol>
+<h3>変更点・読解範囲・未確認事項</h3>
+<p>分類軸、期間別の代表研究、現在の参照空間実装との境界、比較プロトコルを新設しました。RMPPIは本文全8頁と数式・実験表を確認、その他は各本文の該当節または公式実装資料を確認しました。全論文の追試・全公開実装のビルドは実施していません。2025–2026の全研究、車両向けchance constraintと混合整数MPC、KMPPI・SVG-MPPIの独立精読は残っています。</p>
