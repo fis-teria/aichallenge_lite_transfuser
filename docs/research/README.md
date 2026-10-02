@@ -79,13 +79,13 @@ CSVはUTF-8 BOM付き。配列・辞書セルはJSON表記です。機械処理�
 
 20論文と6補助資料を統合し、81資料・65研究系列へ更新しました。navigationを研究分類へ追加し、144セル中34セルは範囲限定の調査済み、110セルは未調査です。全セルの `coverage_complete` はfalse。公表年不明4資料は台帳と年表に残し、年代別集計から除外しました。初回の55資料・108セルの検査記録は上の履歴として保持します。
 
-- `article-intents.{json,csv}`: ニュース由来20論文の記事目的、公開前条件、状態。3件は `ready_for_publication`、16件は `awaiting_fuller_review`、LOOP1件は `on_hold_primary_inconsistency`
+- `article-intents.{json,csv}`: ニュース由来20論文の記事目的、公開前条件、状態。3件は `published`、16件は `awaiting_fuller_review`、LOOP1件は `on_hold_primary_inconsistency`
 - `story-batches.json`: 比較の軸でまとめた候補群。掲載順は固定優先順位ではない
 - 文献の `review_status` と記事の `article_status` は別。書誌や限定節の確認だけで個別記事を公開済みにしない
 - DreamStreamのREADMEは実行コード未提供のためtechnical。StreamRigのコード・評価protocol・設定は同一研究系列。TrafficSignBenchのコード・データは初公表年未確認のためundated
 - 共有会話の本文・URL、原論文の丸ごと、重み・datasetをこの更新へ含めない
 
-公開先とCIを確認した後に3記事の状態をpublishedへ更新し、公開URL・commit・確認結果を記録します。生成・リンク・サイトテスト・ブラウザ検査は既存の `docs/site/README.md` の手順で実施します。学習・制御コードの変更、学習、走行、著者結果の独立再現はこの文書更新に含みません。
+記事commit `0a6a0024d2cea4d003e1b641ba22e5b8b0c57855` の[CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/37006412478)と実配信を確認し、3件をpublishedへ更新しました。公開URL・確認結果は `news-publication-20261002.json` に記録しています。30ページと3資産の完全一致、実配信の4ページ×4画面幅と相互リンクを確認しました。生成・リンク・サイトテスト・ブラウザ検査は既存の `docs/site/README.md` の手順で実施します。学習・制御コードの変更、学習、走行、著者結果の独立再現はこの文書更新に含みません。
 
 ### 第1便の公開前検査
 
