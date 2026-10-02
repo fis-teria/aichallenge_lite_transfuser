@@ -1,0 +1,183 @@
+{
+  "checked_date": "2026-10-02",
+  "status": "3記事はWindows公開検査待ち。残16件は追加精読、LOOP1件は一次資料内の不整合により保留。文献の確認状態と公開状態を別管理する。",
+  "existing_queue_policy": "Append or reconcile with the current canonical queue; do not overwrite prior user-priority corrections or treat these proposal priorities as a replacement for them.",
+  "batches": [
+    {
+      "batch_id": "first-wave",
+      "state": "ready_for_publication",
+      "sources": [
+        "2609.26792",
+        "2609.38463",
+        "2609.40244"
+      ],
+      "articles": [
+        {
+          "slug": "dreamstream-2026",
+          "angle": "見た目の忠実さと運転policy評価の妥当性を分ける",
+          "gate": "FDπ改善と運転安全改善を混同しない。8秒評価・長時間drift・未公開code/dataを明記"
+        },
+        {
+          "slug": "traffic-sign-bench-2026",
+          "angle": "到達できても交通規則に従えない：標識別closed-loop評価",
+          "gate": "semantic BEVのplanner評価、SCD集約法、29,000生成scenarioと5,800testを正確に説明"
+        },
+        {
+          "slug": "streamrig-2026",
+          "angle": "multi-camera rigを時間方向につなぐodometryと評価条件",
+          "gate": "NCLT/KITTI学習とZJH zero-shotを分け、GTjoin、up-to-scale、noncommercial code licenseを明記"
+        }
+      ]
+    },
+    {
+      "batch_id": "dynamic-world-navigation",
+      "state": "次候補・追加精読待ち",
+      "sources": [
+        "2609.39166",
+        "2609.38873",
+        "2609.17168",
+        "2609.14634"
+      ],
+      "articles": [
+        {
+          "candidate_slug": "evolvingnav-2026",
+          "angle": "古い物体位置を信じ続けない：4D beliefと意味記憶の鮮度",
+          "gate": "シミュレーションの探索成功率と実機64episodeの成績を分け、SLAM幾何精度改善とは言わない"
+        },
+        {
+          "candidate_slug": "dodger-2026",
+          "angle": "CBFを学習時の教師にすることと実行時の安全保証の違い",
+          "gate": "97.27%の観測上限解除条件・実機例の小規模性・barrier違反を含む限界を精読"
+        },
+        {
+          "candidate_slug": "humemslam-2026",
+          "angle": "意味記憶でloop候補を絞る：場所認識と幾何検証の分担",
+          "gate": "正式題名を使用。候補削減・recall・誤closure・ATEのtrade-offを同条件で読む"
+        },
+        {
+          "candidate_slug": "scout-slam-2026",
+          "angle": "動的3DGS SLAMにおける追跡と再構成の不確実性",
+          "gate": "正式題名を使用。ATEと再構成指標を分け、keyframe計算条件を精読"
+        }
+      ]
+    },
+    {
+      "batch_id": "human-aware-goals",
+      "state": "次候補・追加精読待ち",
+      "sources": [
+        "2609.18125",
+        "2609.28467",
+        "2609.16737"
+      ],
+      "articles": [
+        {
+          "candidate_slug": "prism-social-navigation-2026",
+          "angle": "相互作用スタイルを予測するsocial navigation",
+          "gate": "人格認識や実歩行者への検証と誤記しない。Turtlebot/ORCA・GTtracking条件を確認"
+        },
+        {
+          "candidate_slug": "robot-group-joining-2026",
+          "angle": "安全に進む前に、どこへ加わるかを決める",
+          "gate": "goal-pose予測と既存navigation stackを分け、20試行の小規模評価を一般化しない"
+        },
+        {
+          "candidate_slug": "visual-cue-video-planning-2026",
+          "angle": "video plannerと機体固有inverse dynamicsの分担",
+          "gate": "狭路成功率の母数・約4秒の計画遅延・異機体転移の実験条件を追加確認"
+        }
+      ]
+    },
+    {
+      "batch_id": "driving-latency-and-memory",
+      "state": "次候補・追加精読待ち",
+      "sources": [
+        "2609.38948",
+        "2609.18623",
+        "2609.38641"
+      ],
+      "articles": [
+        {
+          "candidate_slug": "drivingbench-2026",
+          "angle": "低速実車で見えたVLM指令の遅れと評価の限界",
+          "gate": "private parking lot・安全driver・同一conversationに残る試行文脈、engagementとfinish到達時刻を区別"
+        },
+        {
+          "candidate_slug": "five-vla-2026",
+          "angle": "recurrent action memoryで軽量VLAの運転をつなぐ",
+          "gate": "正式題名とrecurrent action memoryを主軸に。CARLA/非反応型評価/hardware FPSを分ける"
+        },
+        {
+          "candidate_slug": "ad-memo-2026",
+          "angle": "言語memoryが閉ループでも車両stateはreplay：Da Capoを読む",
+          "gate": "学習のsemi-closed-loopと相互作用する運転closed-loopを混同しない"
+        }
+      ]
+    },
+    {
+      "batch_id": "grounded-planning-and-data",
+      "state": "次候補・追加精読待ち",
+      "sources": [
+        "2609.15169",
+        "2609.26299",
+        "2609.27747",
+        "2609.39995",
+        "2609.16919"
+      ],
+      "articles": [
+        {
+          "candidate_slug": "grava-2026",
+          "angle": "認識・関係・行動を結び付けるgrounded reasoning",
+          "gate": "正しい書誌とNAVSIMの非反応型評価条件を精読し、説明品質を運転安全性へ読み替えない"
+        },
+        {
+          "candidate_slug": "foredrive-2026",
+          "angle": "未来映像を生成せずplanningに役立つlatentを使う",
+          "gate": "現camera入力と訓練時未来教師を分け、non-reactive評価の範囲を明記"
+        },
+        {
+          "candidate_slug": "lada-2026",
+          "angle": "少量の言語ラベルでintentを学ぶ運転VLA",
+          "gate": "5%言語annotationと基準の学習/計算量条件を精読。未知指示や実車安全の実証とはしない"
+        },
+        {
+          "candidate_slug": "rule-aligned-diffusion-2026",
+          "angle": "diffusion plannerの判断へ規則が与える圧力を読む",
+          "gate": "v2書誌訂正と同本文、nuPlan planner-level評価・難scenario中心の改善・保証なしを明記"
+        },
+        {
+          "candidate_slug": "neurosymbead-2026",
+          "angle": "物体と関係に根拠を持つcaptionデータをどう使うか",
+          "gate": "正式題名を使用。caption/perception評価とpolicy planning評価を分け、dataset実公開を再確認"
+        }
+      ]
+    },
+    {
+      "batch_id": "safety-benchmark-next",
+      "state": "次候補・公開物確認待ち",
+      "sources": [
+        "2609.26618"
+      ],
+      "articles": [
+        {
+          "candidate_slug": "navsafe-infinity-2026",
+          "angle": "open-loop報酬とclosed-loop安全の乖離を事象別に測る",
+          "gate": "280scenarios/28categoriesの論文条件、policy比較、コード公開状態を精読。実車保証とはしない"
+        }
+      ]
+    },
+    {
+      "batch_id": "hold-primary-inconsistency",
+      "state": "保留",
+      "sources": [
+        "2609.25969"
+      ],
+      "articles": [
+        {
+          "candidate_slug": "loop-occupancy-forecasting-2026",
+          "angle": "LiDAR履歴のoccupancy予測を速度指令へ結び付ける",
+          "gate": "原著abstractの実機16回無衝突とlimitationsの実機closed-loop将来課題がPDFでも矛盾。版更新/著者訂正を確認するまで実機成功を事実として公開しない"
+        }
+      ]
+    }
+  ]
+}

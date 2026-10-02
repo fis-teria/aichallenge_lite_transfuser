@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="交通状態と生成画像を分ける閉ループ評価、FDπの意味、Navhard-CLの条件と失敗分析、E2E Liteへの適用境界。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>DreamStream：生成映像で運転方策を評価する条件 — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html" aria-current="page"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../papers.html">論文ノート</a></div>
+<span class="section-number">論文ノート</span><h1>DreamStream：生成映像で運転方策を評価する条件</h1>
+<p class="article-lead">交通状態と生成画像を分ける閉ループ評価、FDπの意味、Navhard-CLの条件と失敗分析、E2E Liteへの適用境界。</p><div class="article-meta">
+<span>公開 <time datetime="2026-10-02">2026-10-02</time></span>
+<span>更新 <time datetime="2026-10-02">2026-10-02</time></span>
+<span class="tag">原著・公開状況を確認</span></div></header><div class="article-body"><p class="paper-summary">DreamStreamは、生成動画を自動運転の評価装置として使う研究です。交通状態をシミュレータで進め、その状態に沿うカメラ画像を生成して方策へ戻します。読むべき点は、映像の美しさよりも「方策が判断に使う情報が保たれたか」を測る設計と、候補軌道の不足・選び間違い・外観変化への弱さを分ける評価法です。E2E Liteへの当面の適用候補は評価の切り分けであり、生成器の導入や走行性能の改善は未検証です。</p>
+<p><strong>対象論文：</strong>DreamStream: Towards Policy-Oriented Generative Simulation for End-to-End Driving。Ziyang Leng、Sicheng Moほか、UCLA / Toyota Research Institute。確認版はarXiv:2609.26792v1、公開2026-09-22、最終確認2026-10-02です。arXivの著者コメントと公式READMEにはCoRL 2026採択の記載があります。本稿はその著者申告とarXiv版を確認し、会議録版・査読記録を独立には照合していません。<a href="https://arxiv.org/abs/2609.26792v1">書誌と版</a></p>
+<div class="note amber"><strong>公開状況の注意：</strong>論文abstractにはコード・データ公開の案内がありますが、確認時の公式リポジトリはREADMEと紹介画像だけで、Code Release欄は「Coming soon」です。実行コード、checkpoint、データ配布、再現手順が利用できるとは記載しません。確認commitは <code>9a04e7b3be4023a02d1556d7ffeda9b47da2a018</code> です。<a href="https://github.com/VAIL-UCLA/DreamStream/tree/9a04e7b3be4023a02d1556d7ffeda9b47da2a018">公式リポジトリの確認版</a></div>
+
+<h2>1. 評価器の誤差と運転方策の誤差を分けたい</h2>
+<p>記録済みの画像から未来軌道を予測するopen-loop評価では、方策が少し外れた位置へ進んでも、次に入力される画像は原則として記録時のままです。実際の走行では、自分の操作が次の観測と他車との位置関係を変えます。そこでclosed-loopにすると、今度はシミュレータの見た目や交通挙動が方策に与える影響が混ざります。衝突した理由が判断の弱さなのか、生成画像が車線をずらしたからなのかを判別できなければ、モデル改良の方向も誤ります。</p>
+<p>この問題は<a href="e2e-field-overview.html">E2E自動運転の全体像</a>で扱う「予測誤差と走行評価の距離」に接続します。DreamStreamは新しい運転方策そのものではなく、方策を試す側の研究です。学習モデル・制御器・評価環境を同じ箱として扱わず、どの境界を改善した論文なのかを先に固定すると読みやすくなります。</p>
+<p>研究の流れとして、ゲームエンジン型は状態を制御しやすく、実走行ログは観測の現実性に強みがあります。再構成型や動画生成型は外観の差を縮める候補ですが、車両の位置、道路形状、行動への反応を保つ別の課題があります。DreamStreamは状態遷移と画像生成を分担させ、この両方を評価しようとします。これは著者の問題設定を整理したもので、すべての既存方式に同じ弱点があるという断定ではありません。<a href="https://arxiv.org/html/2609.26792v1#S2">原著 §2</a></p>
+
+<h2>2. 仕組み：物理状態を先に進めてから観測を生成する</h2>
+<p>方策πが出す計画軌道を、シミュレータSが一部だけ実行します。更新した自車・周辺車・地図の状態から、カメラへ投影した交通layoutを作り、自己回帰動画モデルGが次の画像を生成します。方策はその画像を受け取り再計画します。layoutにはHD mapの車線等と周辺agentの3D bounding boxを含み、生成器の記憶にはKV cacheを使います。実験の物理backendはBridgeSimです。<a href="https://arxiv.org/html/2609.26792v1#S3.SS1">原著 §3.1</a>、<a href="https://arxiv.org/html/2609.26792v1#A3.SS3">付録 C.3</a></p>
+<figure class="tech-figure">
+<div class="tech-figure-title"><span>CONCEPT</span><strong>閉ループ内の担当を分ける</strong></div>
+<div class="table-wrap" tabindex="0" role="region" aria-label="評価ループ図。狭い画面では左右にスクロールできます" style="max-width:100%;overflow-x:auto;">
+<svg style="display:block;width:100%;min-width:760px;max-width:none;height:auto;" viewBox="0 0 850 370" role="img" aria-labelledby="dreamstream-loop-title dreamstream-loop-desc" xmlns="http://www.w3.org/2000/svg">
+<title id="dreamstream-loop-title">DreamStreamの評価ループ</title><desc id="dreamstream-loop-desc">方策が軌道を計画し、BridgeSimが状態を更新する。その状態を交通layoutへ変換し、動画生成器が作った観測を方策へ戻す。走行の採点はシミュレータ状態に基づく。</desc>
+<defs><marker id="dreamstream-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#426961"/></marker></defs>
+<g fill="#ffffff" stroke="#426961" stroke-width="2"><rect x="20" y="30" width="340" height="95" rx="10"/><rect x="490" y="30" width="340" height="95" rx="10"/><rect x="490" y="220" width="340" height="100" rx="10"/><rect x="20" y="220" width="340" height="100" rx="10"/></g>
+<g fill="#173a3e" font-family="sans-serif" font-size="22" text-anchor="middle"><text x="190" y="67">評価対象の方策 π</text><text x="660" y="67">BridgeSim / 状態遷移 S</text><text x="660" y="258">交通 layout</text><text x="190" y="258">自己回帰動画モデル G</text></g>
+<g fill="#48615b" font-family="sans-serif" font-size="17" text-anchor="middle"><text x="190" y="101">画像を受け取り、軌道を計画</text><text x="660" y="101">自車と周辺agentを更新</text><text x="660" y="293">地図・物体boxを画像面へ投影</text><text x="190" y="293">layout + 外観条件 + KV cache</text><text x="425" y="62">軌道の一部</text><text x="726" y="178">更新した状態</text><text x="425" y="254">幾何条件</text><text x="112" y="178">次の観測</text></g>
+<g stroke="#426961" stroke-width="3" fill="none" marker-end="url(#dreamstream-arrow)"><path d="M360 85 L490 85"/><path d="M660 125 L660 220"/><path d="M490 275 L360 275"/><path d="M190 220 L190 125"/></g>
+<text x="425" y="355" fill="#48615b" font-family="sans-serif" font-size="17" text-anchor="middle">採点は実行されたシミュレータ軌跡から行う</text>
+</svg>
+</div>
+<figcaption>狭い画面では図を左右にスクロールできます。本稿作成の概念図。原著の図の転載ではありません。生成画像とシミュレータ内の状態が一致しているかは別途検証対象です。生成器が交通の真値を自由に決める構造ではありません。</figcaption>
+</figure>
+<p>概念式では、τ<sub>i</sub> = π(o<sub>i</sub>)、s<sub>i+1</sub> = S(s<sub>i</sub>, τ<sub>i</sub>の先頭部分)、o<sub>i+1</sub> = G(layout(s<sub>i+1</sub>), 外観条件, cache) と書けます。ここでは読みやすさのため添字と履歴を省略しています。大切なのは、計画全体を一度に実行せず再計画する点と、計画・物理状態・可視観測を区別する点です。</p>
+<p><strong>本稿の分析：</strong>状態の正しさだけでは観測の正しさを保証できず、画像の自然さだけでは状態との一致を保証できません。たとえばシミュレータ上の車両が右へ動いたのに、生成画像では以前の位置へ残れば、採点の正解と方策が見た情報が食い違います。評価器の品質管理にも、時刻・座標・物体対応の契約が必要になります。</p>
+
+<h2>3. 動画モデルを閉ループ向けに蒸留する</h2>
+<p>論文の学習は、layout条件付きの教師動画モデルを作り、少ない生成stepで動く因果的なstudentへ蒸留し、最後にstudent自身が生成した過去を使って学習する三段階です。最後のSelf Forcingは、正しい過去だけを見て学習したモデルが自分の小さな誤りを入力として受け取る、という学習時と実行時の差を扱います。<a href="https://arxiv.org/html/2609.26792v1#A2.SS1">付録 B.1</a></p>
+<ul>
+<li><strong>交通layoutへの追従：</strong>条件あり・なしの教師出力の差を強調するguidanceを蒸留に用います。式は G<sub>guide</sub> = G<sub>without layout</sub> + w(G<sub>with layout</sub> − G<sub>without layout</sub>) です。layoutを外す分岐でも初期画像の条件は保持します。単にtext promptを強くする説明では不十分です。</li>
+<li><strong>外観の多様性：</strong>既存scenarioのlayoutを保って初期画像の天候等を編集し、教師で動画化した合成clipを蒸留へ加えます。付録では500 scenarioを元にした合成sceneを説明しています。編集指示に従うことと、全pixelの幾何が保たれることは別なので、導入先でも検査を省けません。</li>
+<li><strong>時間方向の安定性：</strong>完全にdenoiseしたlatentではなく、denoisingの早い時点のlatentをcacheに使います。ここでの「早い時点」は生成処理内の時点であり、走行の最初の画像を固定して使い続けるという意味ではありません。</li>
+</ul>
+<p>Wan 2.1 / 2.2を利用する構成が示され、学習用動画はnuPlan由来で約90時間と記載されています。これは動画生成器側の学習条件です。評価される各運転方策が、この90時間を共通に使って同条件で学習されたという意味ではありません。<a href="https://arxiv.org/html/2609.26792v1#A2.SS2">付録 B.2–B.3</a>、<a href="https://arxiv.org/html/2609.26792v1#A3.SS1">付録 C.1</a></p>
+
+<h2>4. FDπが測るものと測れないもの</h2>
+<p>FDπは、実画像と対応する生成画像を複数の公開E2E方策へ入れ、計画に使うscene-context特徴の分布を比較します。単一方策kについて実画像の平均・共分散をμ<sub>k</sub>, Σ<sub>k</sub>、生成側をμ̃<sub>k</sub>, Σ̃<sub>k</sub>とすると、Fréchet距離は平均の差と共分散の差から計算されます。方策ごとの特徴scaleを抑えるため、実画像側の共分散のtraceで正規化してから、方策panel内で平均します。<a href="https://arxiv.org/html/2609.26792v1#S4.SS1">原著 §4.1、式2–3</a></p>
+<div class="note"><strong>指標の概略：</strong><br/>d<sub>k</sub> = ‖μ<sub>k</sub> − μ̃<sub>k</sub>‖² + tr(Σ<sub>k</sub> + Σ̃<sub>k</sub> − 2(Σ<sub>k</sub>Σ̃<sub>k</sub>)<sup>1/2</sup>)<br/>FDπ = mean<sub>k</sub>[d<sub>k</sub> / tr(Σ<sub>k</sub>)]<br/>小さいほど特徴分布の差が小さい値です。原著の表は読みやすさのため100倍した値を示します。実装時には共分散推定と行列平方根の数値安定性も確認対象になります。</div>
+<p>panelはDrivoR、DiffusionDrive系、LTF、RAP、SparseDriveV2です。FIDのような一般画像向け特徴だけでなく、運転判断に実際に使う表現を測定器に選ぶ発想に意味があります。一方、FDπの低下は安全な行動の証明ではありません。分布の平均・共分散が近くても、ある特定の車両だけを消してしまうこと、少数の危険場面だけを壊すこと、対応するframeを取り違えることは別途調べる必要があります。</p>
+<p><strong>本稿の分析：</strong>どの方策をpanelに選ぶかで、測定器が敏感な情報も変わります。画像特徴の一致を評価するpanelに、E2E LiteのCamera＋2D LiDARの融合特性が自動的に含まれるわけではありません。導入先専用の特徴距離を追加するなら、評価対象そのものに都合のよい指標にならないよう、別方策や未使用scenarioを残す必要があります。原著のheld-out方策評価は、この懸念に対する検査の一つとして読めます。</p>
+
+<h2>5. 数字の読み方：視覚特徴距離と走行スコアを分ける</h2>
+<h3>視覚特徴距離の比較</h3>
+<div class="table-wrap" tabindex="0" role="region" aria-label="原著Table 1のFDπ比較。各値は100倍表記、低い方がよい。横スクロールできます"><table><caption>原著Table 1のFDπ比較。各値は100倍表記、低い方がよい</caption><thead><tr><th scope="col">評価集合</th><th scope="col">比較先</th><th scope="col">比較先のFDπ</th><th scope="col">DreamStreamのFDπ</th></tr></thead><tbody>
+<tr><td>nuScenes val</td><td>HUGSIM</td><td>11.68</td><td>7.27</td></tr>
+<tr><td>NAVSIM navtest</td><td>DriveArena</td><td>25.45</td><td>5.47</td></tr>
+</tbody></table></div>
+<p>原著Table 1から、各集合で最も小さい比較先のFDπを抜粋しました。いずれもFDπ×100の表記で低い方がよい値です。11.68 / 7.27 ≈ 1.6、25.45 / 5.47 ≈ 4.7が見出しの倍率に対応します。これは特徴分布の距離の比であり、完走率、安全率、実車性能の倍率ではありません。nuScenes表ではHUGSIM・DriveArena・DreamForgeに評価集合で学習した旨の印があり、学習条件が完全に揃った競争として読みません。<a href="https://arxiv.org/html/2609.26792v1#S4.SS1">原著 Table 1</a></p>
+<p>原著は対象方策を特徴panelから外す検査でもFDπとopen-loop PDMSの相関を調べています。この相関の対象は、実道路での事故率でもAWSIM完走率でもありません。画質指標の改善が運転に関係するかを確かめる補助証拠として扱います。<a href="https://arxiv.org/html/2609.26792v1#S4.SS3">原著 §4.3</a></p>
+<h3>同じ方策で観測の作り方を変える</h3>
+<p>Navhard-Baseの比較は、BridgeSimのRGB、DriveArenaで生成したRGB、DreamStreamで生成したRGBを方策へ入力します。例としてDiffusionDriveの結果を抜粋します。方策名が同じでも、入力の描画方式を変えるとclosed-loopの軌跡が変わる比較です。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Navhard-BaseのDiffusionDrive。原著Table 2aの著者報告。横スクロールできます"><table><caption>Navhard-BaseのDiffusionDrive。原著Table 2aの著者報告</caption><thead><tr><th scope="col">観測の供給元</th><th scope="col">DS</th><th scope="col">EPDMS</th><th scope="col">RC</th></tr></thead><tbody>
+<tr><td>BridgeSim RGB</td><td>46.19</td><td>61.56</td><td>72.67</td></tr>
+<tr><td>DriveArena</td><td>32.02</td><td>56.39</td><td>55.56</td></tr>
+<tr><td>DreamStream</td><td>59.68</td><td>72.98</td><td>81.37</td></tr>
+</tbody></table></div>
+<p>原著Table 2aの報告値です。DSはscenarioごとにroute completionと実行軌跡の各frameのEPDMS平均を掛ける式です。EPDMSは衝突・走行可能領域・信号・進行方向などの制約と、進捗・TTC・車線維持・快適性などの項を組み合わせます。表の集約済みEPDMSとRCを掛け直してDSを再現できるとは限りません。<a href="https://arxiv.org/html/2609.26792v1#S5.T2">Table 2a</a>、<a href="https://arxiv.org/html/2609.26792v1#A3.SS2">付録 C.2、式7–8</a></p>
+<p><strong>本稿の分析：</strong>同一方策が高いスコアを出したことは、観測条件が行動を変えた証拠です。それだけで「実道路と同じ失敗頻度を再現する評価器になった」とは言えません。その主張には実環境との対応、scenario別の失敗一致、生成の確率変動などの検証が必要です。Table 2aの数値にseed別分散や信頼区間は併記されていないため、ここでは統計的有意差を主張しません。</p>
+
+<h2>6. Navhard-CLの条件を固定して読む</h2>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Navhard-CLの評価条件と解釈上の境界。横スクロールできます"><table><caption>Navhard-CLの評価条件と解釈上の境界</caption><thead><tr><th scope="col">項目</th><th scope="col">原著の条件</th><th scope="col">読者が区別すべき点</th></tr></thead><tbody>
+<tr><td>closed-loop設定</td><td>BridgeSim backend、8秒、5 frameごとに再計画、直近1 frameを方策へ入力</td><td>生成器のcacheに履歴があることと、方策の画像入力枚数は別</td></tr>
+<tr><td>Navhard-Base</td><td>NAVSIM navhardの421 scenarioをScenarioNet経由でMetaDrive backendへ移す</td><td>実ログを起点にするが、評価中の一般交通は付録 C.3でIDMと説明</td></tr>
+<tr><td>Navhard-AdvBehavior</td><td>Adv-BMTで敵対agentを入れ、選別後325 variants</td><td>元のroute・mapを維持するが、Base全421件と同じ件数ではない</td></tr>
+<tr><td>Navhard-AdvWeather</td><td>照明・天候・路面外観を変えた5,000超のscenarioと外観の組合せ</td><td>独立した5,000超の実収集sceneではない</td></tr>
+</tbody></table></div>
+<p>以上は付録 C.3–C.4の条件です。原著にはBaseをlog-replay由来と呼ぶ箇所もありますが、初期化に実ログを使うことと、周辺車が評価中ずっと記録軌跡を再生することを混同しません。また§4.3のFDπ感度分析に出る540件のNavhard subsetは別の評価記述であり、この421件へ置き換えて数を合わせません。<a href="https://arxiv.org/html/2609.26792v1#A3.SS3">付録 C.3–C.4</a></p>
+<p>5 frameの再計画間隔を秒へ換算するには、simulationの時間刻みを別に確認する必要があります。後述の処理fpsは壁時計上の処理性能であり、それを使って車両の制御周期を逆算しません。8秒の評価も、任意に長いroute、長時間の停止後再発進、レース全周の検証を意味しません。</p>
+
+<h2>7. 失敗を「作れない」「選べない」「見え方が変わる」に分解する</h2>
+<h3>候補の選択と候補の不足</h3>
+<p>候補軌道を複数出して採点する方策には、少なくとも二つの失敗があります。よい候補があるのに低く採点する場合と、候補集合に通れる軌道がない場合です。論文は候補を固定して、学習scorerをシミュレータ内の正解EPDMSによるoracle選択へ置き換えます。DiffusionDriveではTable 7のBase DSが58.76から62.40へ変わりますが、oracleを使っても敵対条件のDSは49.42です。<a href="https://arxiv.org/html/2609.26792v1#A3.T7">付録 Table 7</a></p>
+<p><strong>読み方の留保：</strong>これは固定候補集合と採点基準の下で原因を調べる操作です。oracleという名称だけで、全episodeのDSが必ず上がる数学的保証にはしません。実際にTable 7のDiffusionDriveV2はBaseで58.06から57.07です。局所的な候補のEPDMSを最大化することと、再計画後まで含む最終DSを最大化することは別です。またTable 7のBase値はTable 2aと同一ではなく、別の分析表として扱います。</p>
+<p>E2E LiteのTimePathは単一XY軌道を出すため、このoracle scorerの差をそのまま測る対象ではありません。一方、モデル外の局所MPPIには候補生成と候補検査があるので、「候補が全滅したのか」「生成範囲が足りないのか」「選択後の平均経路が不成立なのか」を記録するという診断思想は適用候補になります。これはDreamStreamを移植したという意味ではありません。</p>
+<h3>悪天候と路面外観を一括りにしない</h3>
+<p>Table 2cは元のDSが80以上の高得点subsetで、雨・雪・夜の影響を調べています。付録Table 8は別の集約で、通常の雨によるDS差は+0.15、雪に覆われた路面では−4.52と報告されます。この二つを混ぜて「雨で必ず大幅悪化」「夜には問題がない」と一般化しません。路面が隠れることと、明るさだけが変わることを分けてslice評価する点が重要です。<a href="https://arxiv.org/html/2609.26792v1#S5.T2">Table 2c</a>、<a href="https://arxiv.org/html/2609.26792v1#A3.T8">付録 Table 8</a></p>
+<p><strong>本稿の分析：</strong>ここで変えているのは主に可視外観です。濡れた見た目を作るだけで、摩擦低下、水しぶきによるセンサ障害、雪面のタイヤ力まで再現できたとは言えません。道路意味の見落としと車両力学の破綻を同じ「天候耐性」の数字に混ぜないことが、AWSIM等へ評価計画を持ち込む際にも役立ちます。</p>
+
+<h2>8. 強みと限界</h2>
+<ul>
+<li><strong>強み：</strong>交通状態、画像生成、方策、採点の担当を分け、外観と相互作用の条件を変えられる評価設計です。単一の最終スコアだけでなく、特徴距離と失敗原因を調べる入口があります。</li>
+<li><strong>残る生成誤差：</strong>layout条件を使っても、遮蔽・細い構造・物体identity・長時間の一貫性は検査対象です。著者自身が長時間rolloutのdriftを限界として記載しています。</li>
+<li><strong>範囲の限界：</strong>著者の評価はsimulation内で、実道路・hardware-in-the-loopの実証ではありません。知覚の差が小さくても、交通挙動、車両モデル、接触判定が対象環境と一致するとは限りません。</li>
+<li><strong>診断の限界：</strong>FDπは画像側の分布指標です。個々の危険物の見落とし、多センサ不整合、全方策に共通する盲点を単独では排除できません。</li>
+<li><strong>再現の限界：</strong>公開repositoryで実装・重み・設定を読めない現時点では、論文のruntime、前処理、random seed、モデル版と各結果表の対応を実行して確かめられていません。</li>
+</ul>
+<p>最初の二点の設計説明とsimulation・driftの制約は原著に基づき、導入先での検査項目は本稿の分析です。<a href="https://arxiv.org/html/2609.26792v1#S7">原著 §7</a></p>
+
+<h2>9. 計算量は運転モデルと別会計にする</h2>
+<p>Table 5は単体RTX PRO 6000上の著者測定です。Wan 2.1の1.3B構成は生成20.2 fps・simulation 10.1 fps・VRAM 32 GB、Wan 2.2の5B構成は16.9 fps・8.8 fps・67 GBです。付録の解像度はそれぞれ832×480と1280×704で、同解像度での純粋なparameter数比較ではありません。全モデル学習は約200 A100 GPU-daysと報告されています。<a href="https://arxiv.org/html/2609.26792v1#S6">原著 §6、Table 5</a>、<a href="https://arxiv.org/html/2609.26792v1#A2.SS2">付録 B.2</a></p>
+<p>GPU-daysは総計算資源の単位であり、手元で200日かかるという壁時計時間の予測ではありません。生成fpsとsimulation fpsの差にも注意が必要です。さらにE2E Liteへ組み込む場合は、画像生成、LiDAR生成または再利用、前処理、方策推論、controller、記録までの待ち時間が加わります。論文の生成fpsを、現行ROS制御のdeadlineが満たせる証拠には使いません。</p>
+<p><strong>適用判断：</strong>計算資源と公開実装が未確定の現段階では、生成器を一から再学習するより、同じscenarioで評価の観測条件と採点条件を分ける設計を先に用意する方が、確認すべき仮説を小さくできます。これは本稿の提案で、費用対効果を測定した結論ではありません。</p>
+
+<h2>10. 他の方式と比較すると何が見えるか</h2>
+<div class="table-wrap" tabindex="0" role="region" aria-label="評価方式の役割と比較軸。横スクロールできます"><table><caption>評価方式の役割と比較軸</caption><thead><tr><th scope="col">比較対象</th><th scope="col">比較の軸</th><th scope="col">本稿での位置付け</th></tr></thead><tbody>
+<tr><td>実ログ中心の評価</td><td>固定観測と操作後の観測</td><td>実ログは観測の基準。閉ループは方策が作る分布の変化を調べる</td></tr>
+<tr><td>ゲームエンジンRGB</td><td>状態との一致と画像の分布差</td><td>生成画像へ替える際も、基準rendererと同じ状態で比較する</td></tr>
+<tr><td>DriveArena / HUGSIM</td><td>生成・再構成方式と評価集合</td><td>原著Table 1の比較先。全ての設定やsceneへ及ぶ横断順位にはしない</td></tr>
+<tr><td>TransFuser系の運転方策</td><td>評価装置と評価対象</td><td>置換関係ではない。方策を固定してrendererを変える実験を考えられる</td></tr>
+<tr><td>局所MPPIと独立安全監視</td><td>計画・制御・監視と観測生成</td><td>生成器が導入されても、実行経路の幾何検査や停止監視は別の責務</td></tr>
+</tbody></table></div>
+<p>ここでの比較は研究の役割と評価設計を整理したものです。異なるdataset、入力センサ、車両、演算予算の結果を一つの性能順位へまとめません。系譜は<a href="research-map.html">研究マップ</a>、現行構成の担当範囲は<a href="system-architecture.html">システム構成</a>も参照してください。</p>
+
+<h2>11. E2E Liteへの適用候補：まず入力契約を守る</h2>
+<p>本節のコード基準は監査済み <code>8d9ab923e8cc2d01b28296a3032f65ab9438c384</code> です。TimePathV1の主出力は観測時点base_link座標のXY、shape [B,30,2]、単位m、未来0.1–3.0秒です。画像・2D LiDAR・egoの時間履歴を扱い、forwardではteacher targetを除外します。DreamStreamの評価方策に対する直近画像1枚の設定とは入力契約が異なります。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/src/aic_transfuser_lite/models/time_path_v1.py" data-source="src/aic_transfuser_lite/models/time_path_v1.py">TimePathV1</a>、<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/src/aic_transfuser_lite/models/time_backbone_v1.py" data-source="src/aic_transfuser_lite/models/time_backbone_v1.py">time backbone</a></p>
+<p>したがって画像だけを置き換えて通常の多センサ評価と同じ名前で扱うことは避けます。画像にだけ物体が動き、LaserScanには元の物体が残れば、renderer比較にセンサ矛盾が混ざります。一方、その矛盾自体を調べたい実験なら、通常の評価と分けた意図的なstress testとして設計できます。HD mapや3D boxをrenderer・採点器へ渡すことは、推論モデルへ特権情報として渡す許可にはなりません。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="本プロジェクトへの適用候補。導入・測定済みの一覧ではない。横スクロールできます"><table><caption>本プロジェクトへの適用候補。導入・測定済みの一覧ではない</caption><thead><tr><th scope="col">適用候補</th><th scope="col">必要データ・再学習</th><th scope="col">コード・計算変更</th><th scope="col">検証と現在の状態</th></tr></thead><tbody>
+<tr><td>観測条件別のpaired評価</td><td>同じ初期状態・route・交通条件のbaselineと外観変種。凍結方策の評価なら方策の再学習は不要</td><td>scenario対応ID、renderer版、生成seed、観測時刻を記録。生成器用の別GPU予算が必要</td><td>まず幾何・時刻の一致を検査。導入案であり、生成器接続は未実装</td></tr>
+<tr><td>方策特徴の距離を補助診断にする</td><td>同じsceneの元画像と変種。対象外sceneをholdout。feature抽出だけなら再学習不要</td><td>凍結featureの抽出、共分散・距離計算、sample数と正規化の記録</td><td>局所破損と走行指標にも照合。FDπと同一と称するにはpanelと手順を合わせる。未実装・未測定</td></tr>
+<tr><td>候補不足を失敗ログで区別する</td><td>局所MPPIの入力地図、基準経路、候補・棄却理由。通常は新たなモデル学習不要</td><td>既存診断の利用から開始。必要な記録だけを追加し、候補検査を緩めない</td><td>候補診断は既存コード・文書にある。DreamStream式分析や改善効果は未実施</td></tr>
+<tr><td>外観augmentationを学習へ使う</td><td>検査済み生成sceneと正しい教師。元scenarioと全変種を同じsplitへ置く</td><td>変換来歴・採用条件、再学習、保存容量、GPU予算を別途確保</td><td>提案段階。未使用実ログ・AWSIMでの改善を別々に検証する必要がある</td></tr>
+</tbody></table></div>
+<p>局所MPPIの既存診断と制約の根拠は、固定版の<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/docs/slam_mppi_avoidance.md" data-source="docs/slam_mppi_avoidance.md">回避設計・制限</a>です。この実装は静止障害物向けの局所reference-space探索で、論文の対向車・cut-in等の敵対交通へそのまま適用できる構成ではありません。DreamStreamを根拠に、動的物体への対応済みや安全監視の不要を主張しません。</p>
+<h3>検証の順序を小さく分ける</h3>
+<ol>
+<li><strong>来歴を固定：</strong>paper版、生成器・方策・controllerのcommitと重みhash、dataset split、scenario ID、seedを保存する。実装公開後も論文の表と配布版の一致を確認する。</li>
+<li><strong>観測を検査：</strong>カメラ内部・外部パラメータ、layout投影、画像とLaserScanの物体位置、時刻、mask、欠測処理を確認する。意図しない教師情報が推論へ入らないことを検査する。</li>
+<li><strong>凍結方策で比較：</strong>frameごとの特徴・軌道変化を見た後、同一条件の有限closed-loopで進捗、接触、逸脱、停止、介入、処理deadlineを別々に記録する。平均だけで失敗scenarioを消さない。</li>
+<li><strong>再学習は別実験：</strong>合成データを使う場合は、元sceneと変種のsplit漏洩を防ぎ、実データだけのbaselineと同じ予算で比較する。走行改善を主張するなら別途の走行証拠を残す。</li>
+</ol>
+<p>ここで挙げた検証は計画であり、実行済みの報告ではありません。生成simulationでの指標向上、offline error低下、unit test通過のどれも、AWSIMや実車への性能移転を単独では証明しません。</p>
+
+<h2>12. 実証状態と結論</h2>
+<ul>
+<li><strong>論文で実証：</strong>著者の限定されたdataset・simulation条件で、FDπ、観測供給元別のclosed-loopスコア、敵対行動・外観変化の診断を報告。</li>
+<li><strong>適用候補：</strong>評価の観測条件と交通条件の分離、多センサ整合監査、候補生成と選択の原因切り分け。</li>
+<li><strong>project実装済み：</strong>固定commitでTimePathのXY出力・teacher分離・時間履歴処理、局所MPPIの診断と安全上の制限を確認。DreamStreamの生成器・FDπ・Navhard-CLは導入していない。</li>
+<li><strong>project実測済み：</strong>本稿では新たな学習、生成、走行、計測を行っていない。既存AWSIM結果をこの論文の実績へ読み替えない。</li>
+</ul>
+<p>DreamStreamから持ち帰るべき問いは、「方策が失敗したか」だけでなく「何を見せ、どの状態で動かし、何で採点したか」です。この三つを固定して初めて、rendererの改善、方策の改善、controllerの改善を区別できます。公開実装の確認が進むまでは、再現済みの基盤として採用するより、評価設計を点検するための文献として位置付けます。</p>
+
+<h2>出典と確認範囲</h2>
+<ol>
+<li><a href="https://arxiv.org/abs/2609.26792v1">arXiv書誌 v1</a>：公開日、著者、CoRL 2026採択の著者申告。会議録版・査読記録は未照合。</li>
+<li><a href="https://arxiv.org/html/2609.26792v1">原著全文 v1</a>：本文と付録を確認。§3の設計、§4のFDπ、§5のclosed-loop比較、§6のablation・runtime、§7の限界、付録Bの学習、付録Cの評価条件・失敗分析を主に参照。</li>
+<li><a href="https://github.com/VAIL-UCLA/DreamStream/blob/9a04e7b3be4023a02d1556d7ffeda9b47da2a018/README.md">公式READMEの確認版</a>：公開予定の記載、研究名・著者・会議表記。repository全treeはREADMEと紹介画像のみ。コード実行・重み・データ配布の検証はできていない。</li>
+<li><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/tree/8d9ab923e8cc2d01b28296a3032f65ab9438c384">E2E Liteの固定コード基準</a>：本文に示したTimePath・backbone・局所MPPI文書を参照。閲覧確認であり、本稿のためのROS実行やAWSIM再試験はない。</li>
+</ol>
+<p><strong>今回の更新：</strong>DreamStreamを1論文1記事で追加し、方式の解説、評価条件、数値の意味、公開状況、現行projectへの適用候補を分離しました。確認日：2026-10-02。</p>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-02">2026-10-02</time></div>
+<h3><a href="../articles/e2e-field-overview.html">E2E自動運転の全体像と比較の読み方</a></h3>
+<p>2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。</p><div class="card-bottom"><span>文献調査</span>
+<a class="article-read" href="../articles/e2e-field-overview.html" aria-label="E2E自動運転の全体像と比較の読み方を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-02">2026-10-02</time></div>
+<h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
+<p>4領域・144区分の確認範囲と未調査を整理。81資料・65研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・確認範囲を更新</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/system-architecture.html">システム構成とTimePathの入出力</a></h3>
+<p>Camera・2D LiDAR・車両状態からの経路予測と、モデル外の制御・安全監視を整理します。</p><div class="card-bottom"><span>継続資料</span>
+<a class="article-read" href="../articles/system-architecture.html" aria-label="システム構成とTimePathの入出力を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

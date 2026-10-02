@@ -51,8 +51,248 @@
   {
     "priority": "候補（都度選定）",
     "task": "Robot Navigation & E2Eの定期技術ニュースから記事候補を確認する",
-    "deliverable": "一次資料と既存研究系列を照合した台帳更新、navigation領域・144セルへの拡張、既存記事の更新または新規個別記事",
+    "deliverable": "navigationを含む4領域・144セル、一次資料26件の台帳追加、個別解説3記事と残件の確認範囲",
     "gate": "共有内容・対象期間・一次URLを確認し、対象分野との関係と比較価値を評価。企業の主張と論文の結果を区別し、未確認内容は公開しない。追加セルの過去年代を自動で調査済みにしない",
-    "state": "一次資料を確認した記事原稿・台帳差分の受領待ち。Windows側のニュース記事・taxonomy・調査件数は未変更"
+    "state": "20論文と6補助資料を台帳へ統合。3記事は公開検査待ち、16件は追加精読、LOOPは一次資料内の不整合により保留"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "video plannerと機体固有inverse dynamicsの分担",
+    "deliverable": "visual-cue-video-planning-2026",
+    "gate": "狭路成功率の母数・約4秒の計画遅延・異機体転移の実験条件を追加確認",
+    "state": "awaiting_fuller_review",
+    "source_ids": [
+      "NEWS-ARXIV-2609.16737-v2"
+    ],
+    "batch_id": "human-aware-goals",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "意味記憶でloop候補を絞る：場所認識と幾何検証の分担",
+    "deliverable": "humemslam-2026",
+    "gate": "正式題名を使用。候補削減・recall・誤closure・ATEのtrade-offを同条件で読む",
+    "state": "awaiting_fuller_review",
+    "source_ids": [
+      "NEWS-ARXIV-2609.17168-v1"
+    ],
+    "batch_id": "dynamic-world-navigation",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "動的3DGS SLAMにおける追跡と再構成の不確実性",
+    "deliverable": "scout-slam-2026",
+    "gate": "正式題名を使用。ATEと再構成指標を分け、keyframe計算条件を精読",
+    "state": "awaiting_fuller_review",
+    "source_ids": [
+      "NEWS-ARXIV-2609.14634-v1"
+    ],
+    "batch_id": "dynamic-world-navigation",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "相互作用スタイルを予測するsocial navigation",
+    "deliverable": "prism-social-navigation-2026",
+    "gate": "人格認識や実歩行者への検証と誤記しない。Turtlebot/ORCA・GTtracking条件を確認",
+    "state": "awaiting_fuller_review",
+    "source_ids": [
+      "NEWS-ARXIV-2609.18125-v1"
+    ],
+    "batch_id": "human-aware-goals",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "recurrent action memoryで軽量VLAの運転をつなぐ",
+    "deliverable": "five-vla-2026",
+    "gate": "正式題名とrecurrent action memoryを主軸に。CARLA/非反応型評価/hardware FPSを分ける",
+    "state": "awaiting_fuller_review",
+    "source_ids": [
+      "NEWS-ARXIV-2609.18623-v1"
+    ],
+    "batch_id": "driving-latency-and-memory",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "認識・関係・行動を結び付けるgrounded reasoning",
+    "deliverable": "grava-2026",
+    "gate": "正しい書誌とNAVSIMの非反応型評価条件を精読し、説明品質を運転安全性へ読み替えない",
+    "state": "awaiting_fuller_review",
+    "source_ids": [
+      "NEWS-ARXIV-2609.15169-v1"
+    ],
+    "batch_id": "grounded-planning-and-data",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "物体と関係に根拠を持つcaptionデータをどう使うか",
+    "deliverable": "neurosymbead-2026",
+    "gate": "正式題名を使用。caption/perception評価とpolicy planning評価を分け、dataset実公開を再確認",
+    "state": "awaiting_fuller_review",
+    "source_ids": [
+      "NEWS-ARXIV-2609.16919-v1"
+    ],
+    "batch_id": "grounded-planning-and-data",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "LiDAR履歴のoccupancy予測を速度指令へ結び付ける",
+    "deliverable": "loop-occupancy-forecasting-2026",
+    "gate": "原著abstractの実機16回無衝突とlimitationsの実機closed-loop将来課題がPDFでも矛盾。版更新/著者訂正を確認するまで実機成功を事実として公開しない",
+    "state": "on_hold_primary_inconsistency",
+    "source_ids": [
+      "NEWS-ARXIV-2609.25969-v1"
+    ],
+    "batch_id": "hold-primary-inconsistency",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "安全に進む前に、どこへ加わるかを決める",
+    "deliverable": "robot-group-joining-2026",
+    "gate": "goal-pose予測と既存navigation stackを分け、20試行の小規模評価を一般化しない",
+    "state": "awaiting_fuller_review",
+    "source_ids": [
+      "NEWS-ARXIV-2609.28467-v1"
+    ],
+    "batch_id": "human-aware-goals",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "open-loop報酬とclosed-loop安全の乖離を事象別に測る",
+    "deliverable": "navsafe-infinity-2026",
+    "gate": "280scenarios/28categoriesの論文条件、policy比較、コード公開状態を精読。実車保証とはしない",
+    "state": "awaiting_fuller_review",
+    "source_ids": [
+      "NEWS-ARXIV-2609.26618-v1"
+    ],
+    "batch_id": "safety-benchmark-next",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "見た目の忠実さと運転policy評価の妥当性を分ける",
+    "deliverable": "dreamstream-2026",
+    "gate": "FDπ改善と運転安全改善を混同しない。8秒評価・長時間drift・未公開code/dataを明記",
+    "state": "ready_for_publication",
+    "source_ids": [
+      "NEWS-ARXIV-2609.26792-v1"
+    ],
+    "batch_id": "first-wave",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "少量の言語ラベルでintentを学ぶ運転VLA",
+    "deliverable": "lada-2026",
+    "gate": "5%言語annotationと基準の学習/計算量条件を精読。未知指示や実車安全の実証とはしない",
+    "state": "awaiting_fuller_review",
+    "source_ids": [
+      "NEWS-ARXIV-2609.27747-v1"
+    ],
+    "batch_id": "grounded-planning-and-data",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "未来映像を生成せずplanningに役立つlatentを使う",
+    "deliverable": "foredrive-2026",
+    "gate": "現camera入力と訓練時未来教師を分け、non-reactive評価の範囲を明記",
+    "state": "awaiting_fuller_review",
+    "source_ids": [
+      "NEWS-ARXIV-2609.26299-v2"
+    ],
+    "batch_id": "grounded-planning-and-data",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "古い物体位置を信じ続けない：4D beliefと意味記憶の鮮度",
+    "deliverable": "evolvingnav-2026",
+    "gate": "シミュレーションの探索成功率と実機64episodeの成績を分け、SLAM幾何精度改善とは言わない",
+    "state": "awaiting_fuller_review",
+    "source_ids": [
+      "NEWS-ARXIV-2609.39166-v2"
+    ],
+    "batch_id": "dynamic-world-navigation",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "CBFを学習時の教師にすることと実行時の安全保証の違い",
+    "deliverable": "dodger-2026",
+    "gate": "97.27%の観測上限解除条件・実機例の小規模性・barrier違反を含む限界を精読",
+    "state": "awaiting_fuller_review",
+    "source_ids": [
+      "NEWS-ARXIV-2609.38873-v1"
+    ],
+    "batch_id": "dynamic-world-navigation",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "multi-camera rigを時間方向につなぐodometryと評価条件",
+    "deliverable": "streamrig-2026",
+    "gate": "NCLT/KITTI学習とZJH zero-shotを分け、GTjoin、up-to-scale、noncommercial code licenseを明記",
+    "state": "ready_for_publication",
+    "source_ids": [
+      "NEWS-ARXIV-2609.40244-v1"
+    ],
+    "batch_id": "first-wave",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "低速実車で見えたVLM指令の遅れと評価の限界",
+    "deliverable": "drivingbench-2026",
+    "gate": "private parking lot・安全driver・同一conversationに残る試行文脈、engagementとfinish到達時刻を区別",
+    "state": "awaiting_fuller_review",
+    "source_ids": [
+      "NEWS-ARXIV-2609.38948-v1"
+    ],
+    "batch_id": "driving-latency-and-memory",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "到達できても交通規則に従えない：標識別closed-loop評価",
+    "deliverable": "traffic-sign-bench-2026",
+    "gate": "semantic BEVのplanner評価、SCD集約法、29,000生成scenarioと5,800testを正確に説明",
+    "state": "ready_for_publication",
+    "source_ids": [
+      "NEWS-ARXIV-2609.38463-v1"
+    ],
+    "batch_id": "first-wave",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "diffusion plannerの判断へ規則が与える圧力を読む",
+    "deliverable": "rule-aligned-diffusion-2026",
+    "gate": "v2書誌訂正と同本文、nuPlan planner-level評価・難scenario中心の改善・保証なしを明記",
+    "state": "awaiting_fuller_review",
+    "source_ids": [
+      "NEWS-ARXIV-2609.39995-v2"
+    ],
+    "batch_id": "grounded-planning-and-data",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "言語memoryが閉ループでも車両stateはreplay：Da Capoを読む",
+    "deliverable": "ad-memo-2026",
+    "gate": "学習のsemi-closed-loopと相互作用する運転closed-loopを混同しない",
+    "state": "awaiting_fuller_review",
+    "source_ids": [
+      "NEWS-ARXIV-2609.38641-v1"
+    ],
+    "batch_id": "driving-latency-and-memory",
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
   }
 ]

@@ -43,7 +43,8 @@
   "domains": {
     "e2e": "E2E自動運転",
     "racing": "高速自律レーシング",
-    "control": "MPC・MPPI・安全制御"
+    "control": "MPC・MPPI・安全制御",
+    "navigation": "移動ロボット・SLAM・Human-aware navigation"
   },
   "source_types": {
     "paper": "原著論文（査読あり）",
@@ -96,7 +97,9 @@
     "未調査": "当該資料種別・時代・領域について、確認範囲が登録されていない。未発見と不存在を区別する。",
     "資料不足": "候補は見つかったが、本文・版・評価条件など主張に必要な根拠が不足している。"
   },
-  "undated_policy": "公表年不明の公式ドキュメント等はera=undatedとし、108セルの年別集計から除外する。台帳と資料年表の末尾に残す。",
+  "undated_policy": "公表年不明の公式ドキュメント等はera=undatedとし、144セルの年別集計から除外する。台帳と資料年表の末尾に残す。",
   "completeness_policy": "全セルに coverage_complete=false を維持。網羅性を主張しない。境界年2018は公表日の照合が必要。",
-  "deduplication_policy": "同一研究のarXiv・会議・雑誌・著者サイト・公式コードはstudy_family_idで束ねる。版の違いは別source_idとして残し、研究数と資料数を混同しない。"
+  "deduplication_policy": "同一研究のarXiv・会議・雑誌・著者サイト・公式コードはstudy_family_idで束ねる。版の違いは別source_idとして残し、研究数と資料数を混同しない。",
+  "article_status_policy": "調査済みはchecked_scopeで明記した確認範囲のみ。記事の作成・公開状態はarticle_statusとして別に管理する。publishedは公開先とCIを確認した後に記録する。",
+  "navigation_scope_note": "移動ロボットの位置推定・意味記憶・動的回避・社会的goalを含む。自動車E2Eの実装・走行成果とは別。サイトcategory・検索topicを追加するものではない。"
 }

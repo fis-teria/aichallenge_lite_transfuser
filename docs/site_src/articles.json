@@ -171,11 +171,13 @@
     "nav": "papers",
     "summary": "局所的なサブマップを構築し、scan-to-submapの照合を用いてループ閉じ込みを処理する2D LiDAR SLAM。大きな環境でもリアルタイムに地図の整合を保つための手法を示します。",
     "published": "2026-09-27",
-    "updated": "2026-09-27",
+    "updated": "2026-10-02",
     "status": "一次資料を確認",
     "topic": "control",
     "related": [
-      "roadmap"
+      "roadmap",
+      "streamrig-2026",
+      "research-map"
     ]
   },
   {
@@ -272,7 +274,9 @@
       "transfuser-cvpr2021",
       "transfuser-2022",
       "system-architecture",
-      "research-map"
+      "research-map",
+      "dreamstream-2026",
+      "traffic-sign-bench-2026"
     ]
   },
   {
@@ -343,13 +347,13 @@
   },
   {
     "slug": "research-map",
-    "title": "E2E・レーシング・MPC文献調査の範囲と資料台帳",
+    "title": "E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳",
     "category": "guide",
     "nav": "papers",
-    "summary": "2018-10-02〜2026-10-02の確認範囲と未調査を整理。重要性・未調査範囲・比較価値で継続調査を選び、ナビゲーションも対象に加えます。",
+    "summary": "4領域・144区分の確認範囲と未調査を整理。81資料・65研究系列を管理し、重要性・不足・比較価値でテーマを選びます。",
     "published": "2026-10-02",
     "updated": "2026-10-02",
-    "status": "初回調査・選定方針を更新",
+    "status": "4領域・確認範囲を更新",
     "topic": "",
     "related": [
       "e2e-field-overview",
@@ -358,7 +362,58 @@
       "transfuser-cvpr2021",
       "transfuser-2022",
       "information-theoretic-mpc",
-      "roadmap"
+      "roadmap",
+      "dreamstream-2026",
+      "streamrig-2026",
+      "traffic-sign-bench-2026"
+    ]
+  },
+  {
+    "slug": "dreamstream-2026",
+    "title": "DreamStream：生成映像で運転方策を評価する条件",
+    "category": "paper",
+    "topic": "learning",
+    "nav": "papers",
+    "summary": "交通状態と生成画像を分ける閉ループ評価、FDπの意味、Navhard-CLの条件と失敗分析、E2E Liteへの適用境界。",
+    "published": "2026-10-02",
+    "updated": "2026-10-02",
+    "status": "原著・公開状況を確認",
+    "related": [
+      "e2e-field-overview",
+      "research-map",
+      "system-architecture"
+    ]
+  },
+  {
+    "slug": "streamrig-2026",
+    "title": "StreamRig（2026）：多眼カメラの幾何を生かす逐次オドメトリ",
+    "category": "paper",
+    "nav": "papers",
+    "summary": "校正済み多眼rigと凍結3Dモデルを使うStreamRig。学習split・GT接続・尺度・実行条件を確認し、位置合わせへの適用候補と課題を整理します。",
+    "published": "2026-10-02",
+    "updated": "2026-10-02",
+    "status": "一次資料・公開実装を確認",
+    "topic": "fusion",
+    "related": [
+      "cartographer",
+      "research-map",
+      "system-architecture"
+    ]
+  },
+  {
+    "slug": "traffic-sign-bench-2026",
+    "title": "TrafficSignBench：標識遵守を完走と同時に測る",
+    "category": "paper",
+    "nav": "papers",
+    "summary": "標識ごとのclosed-loop評価と規則教師による学習。SCDの分母、公開版の範囲差、E2E Liteへの適用条件を整理。",
+    "published": "2026-10-02",
+    "updated": "2026-10-02",
+    "status": "原著・公開実装を確認",
+    "topic": "learning",
+    "related": [
+      "e2e-field-overview",
+      "research-map",
+      "system-architecture"
     ]
   }
 ]

@@ -1,0 +1,113 @@
+<p class="paper-summary">到着率や衝突率がよくても、標識が要求する行動を守ったとは限りません。TrafficSignBenchは、交通標識ごとの規則を実行可能な判定器にし、「対象規則を守る」と「目的地へ着く」を同時に評価する研究です。E2E Liteへの直接の示唆は、新しいモデルへの交換より先に、停止・減速・進入禁止などの失敗を個別に観測できる評価系を用意することです。</p>
+<p><strong>対象：</strong>Victoria Smirnovaほか、<em>TrafficSignBench: Rule-Centric Closed-Loop Evaluation of Traffic-Sign Compliance in Autonomous Driving</em>。arXiv:2609.38463v1、2026-09-29公開。最終確認2026-10-02。査読済み採択を確認した論文としてではなく、<strong>プレプリント</strong>として扱います。以下の数値は著者のシミュレーション報告であり、本プロジェクトによる再現実験ではありません。<a href="https://arxiv.org/abs/2609.38463v1">書誌・版情報</a></p>
+<div class="note amber"><strong>最初に押さえる境界：</strong>標識の意味を構造化情報としてplannerへ渡す評価です。カメラ画像から標識を発見・分類するベンチマークでも、知覚から実車制御までを一括検証した結果でもありません。また、論文の29種類・29,000シナリオと、確認時の公開コード・データの配布範囲には違いがあります。</div>
+
+<h2>1 解こうとしている問題：うまく走ることと規則を守ること</h2>
+<p>通常の経路追従なら、短い経路で目的地へ着けば効率が上がります。しかし、その近道が進入禁止なら評価は逆であるべきです。横断歩道を他者と衝突せず通過しても、歩行者へ譲る必要があったかは別に確認しなければなりません。逆に、停止したままなら違反は増えにくくても、移動の目的を果たせません。TrafficSignBenchは、こうした「総合スコアに埋もれる失敗」を個別の規則へ分解します。<a href="https://arxiv.org/html/2609.38463v1#S1">原著 §I</a></p>
+<p>背景には、ログ上の教師軌道との距離を測るopen-loop評価から、plannerの出力を実際に実行し、その後の状態も変化させるclosed-loop評価への広がりがあります。ただし、closed-loopであるだけでは、すべての交通規則が検査されるわけではありません。原著は、経路や運転能力を単位とする評価に対し、標識が要求する判断を単位とする評価軸を追加しています。open-loopでも注釈付き軌道から一部の制約違反は調べられますが、その後の相互作用や制御誤差の蓄積までは再現できません。「open-loopでは規則について何も測れない」と一般化する必要はありません。<a href="https://arxiv.org/html/2609.38463v1#S2">原著 §II</a>、<a href="e2e-field-overview.html">E2E研究の全体像</a></p>
+
+<h2>2 何を何件作ったのか</h2>
+<p>著者はロシアの交通規則を基準に、明確な義務・制限を持つ34標識を実装しています。終了標識や同じ法的効果を持つ標識をまとめ、closed-loopの機能別テストは29種類に整理します。分類は優先関係6、速度4、障害物・通行空間8、経路選択11です。これは29,000種類の道路や34種類の画像分類クラスを集めた、という意味ではありません。<a href="https://arxiv.org/html/2609.38463v1#S3">原著 §III</a></p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="生成シナリオの単位と件数。横スクロールできます"><table><caption>論文v1における生成単位。公開データセットの実ファイル数とは区別する</caption><thead><tr><th scope="col">単位</th><th scope="col">規模</th><th scope="col">何を表すか</th></tr></thead><tbody>
+<tr><td>元になる実地図cropの候補集合</td><td>26,020</td><td>MoscowのOpenStreetMapから得た交差点・分岐・道路区間</td></tr>
+<tr><td>機能別シナリオ種類</td><td>29</td><td>34標識の意味をテスト可能な単位へ整理</td></tr>
+<tr><td>種類ごとの地図割当</td><td>100、うち学習80・テスト20</td><td>標識割当前に地図の識別子でsplit。種類をまたぐ同一場所の扱いも確認が必要</td></tr>
+<tr><td>地図ごとの生成variant</td><td>10</td><td>出発lane、経路長、初速、交通密度、背景車両挙動を変える</td></tr>
+<tr><td>生成シナリオ総数</td><td>29,000</td><td>29 × 100 × 10。23,200学習、5,800テスト</td></tr>
+</tbody></table></div>
+<p>実地図由来なのは道路の幾何・接続関係です。評価対象の標識は、その規則を試せる場所へ手続き的に配置します。道路の実在、標識の実際の配置、交通の実観測を同一視しません。初速や密度などの分布をnuPlan統計で調整していますが、走行エピソード自体はシミュレーションです。<a href="https://arxiv.org/html/2609.38463v1#S3.SS3">原著 §III-C</a>、<a href="https://arxiv.org/html/2609.38463v1#S3.SS4">§III-D</a></p>
+<p>重要なのは、ランダムに標識を置くだけにしないことです。譲る場面では自車が近付くタイミングで主道路の車列を流し、進入禁止では禁止側を近道にし、横断歩道では遅れて入る歩行者や続いて渡る集団を用意します。規則を知らなくても偶然通れる場面を減らし、plannerに実際の判断を要求する設計です。</p>
+
+<h2>3 機構：標識の意味を渡し、走行中に規則を検査する</h2>
+<figure class="architecture-panel"><figcaption><strong>評価の概念図</strong>。原著と公開実装をもとに本稿で整理</figcaption>
+<ol><li>地図・出発状態・背景交通・対象標識を固定したシナリオを作る</li><li>構造化された環境・標識情報をplannerへ渡す</li><li>plannerとcontrollerの出力でMetaDrive内の車両を動かす</li><li>各時刻の対象zone・速度・進路・他者との関係を規則判定器が記録する</li><li>違反の有無と目的地到着を、同じエピソードの組として集計する</li></ol>
+</figure>
+<p>本稿では、構造化された意味情報を含むBEV・object表現と、センサからそれを生成する知覚処理を区別します。原著は知覚誤差を切り離してplanningを比較しています。PlanT-2-FTは標識をobject tokenへ符号化し、さらに有効な標識クラスと数値を保持するpersistent sign-state tokenを使います。標識を通り過ぎたあとも続く速度制限のように、「今の画面に見えるか」と「今も有効か」が異なる規則を扱うためです。<a href="https://arxiv.org/html/2609.38463v1#S4.SS4">原著 §IV-D</a>、<a href="https://arxiv.org/html/2609.38463v1#S7">§VII</a></p>
+<p><strong>本稿の解釈：</strong>時間履歴の入力を増やすことと、規則の有効区間を正しく管理することは別の課題です。後者には規則の開始・解除、どのlaneに適用するか、停止済みか、他者が通過したかという状態が必要になります。学習器に過去画像を渡しただけで、この状態管理が実証されたとは言えません。</p>
+
+<h3>停止判定をコードまで読むと見える条件</h3>
+<p>確認した公式commit <code>4d001d0925d3aabf4434236c4531436b84829d75</code>の<code>StopSign</code>は、譲り規則に停止線条件を加えます。同一道路・対象zone内で停止線より前にいて、速度が<strong>0.5 m/s未満</strong>なら「線の前で停止した」状態を記録します。停止線を0.3 m越えた側では、その記録があるかを確認します。この状態記録関数には、低速状態の継続時間を要求する条件は見当たりません。<a href="https://github.com/emb-ai/traffic-sign-bench/blob/4d001d0925d3aabf4434236c4531436b84829d75/traffic_bench/signs/junction/yield_sign.py#L1115-L1204">StopSignの実装</a></p>
+<p>したがって、ここでの成功は実装されたpredicateに対する成功です。速度が厳密にゼロになった、一定時間止まった、各国の法的要件を満たした、という追加の意味を持たせません。0.5 m/sや0.3 mはこの実装の判定値で、本プロジェクトの推奨停止条件でもありません。速度規則も、対象zone内での<code>speed_km_h &gt; speed_limit</code>を違反とする実装を確認しました。zoneの開始・終了、単位、離散時刻の取り方は、評価器を移植するときに固定すべき契約です。<a href="https://github.com/emb-ai/traffic-sign-bench/blob/4d001d0925d3aabf4434236c4531436b84829d75/traffic_bench/signs/speed/limit.py">速度制限の実装</a></p>
+
+<h2>4 SCDは「遵守率」と「到着率」の平均の積ではない</h2>
+<p>エピソードiについて、対象規則の違反イベントがなければC<sub>i</sub> = 1、目的地へ着けばD<sub>i</sub> = 1とします。説明用に書き下すと、種類kのSCDは次の形です。</p>
+<p class="formula"><strong>SCD<sub>k</sub> = 100 × (1 / N<sub>k</sub>) Σ<sub>i∈k</sub> C<sub>i</sub>D<sub>i</sub></strong><br><strong>Overall SCD = (1 / 29) Σ<sub>k=1…29</sub> SCD<sub>k</sub></strong></p>
+<p>N<sub>k</sub>はその種類の採点対象エピソード数です。同じ試行で両方を満たしたかを先に求めるので、平均遵守率と平均到着率を掛けた値ではありません。標識へ到達する前に停止し続けたり、衝突して終わったりしても、違反がないだけでは得点できません。グループ集計と29種類のmacro平均も区別します。6・4・8・11種類から成る四グループの平均を、単純に四等分する指標ではありません。<a href="https://arxiv.org/html/2609.38463v1#S4.SS1">原著 §IV-A</a></p>
+<p><strong>実装との対応：</strong>公開コードの<code>sr_and_dest</code>は、対象標識の違反イベントがゼロである<code>target_compliant_event</code>と、到着記録<code>arrived_dest</code>のANDです。集計の分母は対象標識classが特定できる行で、zoneに入った試行だけではありません。未知classの行は対象規則集計から外れるため、独自データを追加する際は「総試行数」「対象class判定可能数」「zone進入数」を併記し、欠けた試行を成功として扱わないことが大切です。<a href="https://github.com/emb-ai/traffic-sign-bench/blob/4d001d0925d3aabf4434236c4531436b84829d75/traffic_bench/eval/metrics/csv.py#L326-L459">エピソード指標</a>、<a href="https://github.com/emb-ai/traffic-sign-bench/blob/4d001d0925d3aabf4434236c4531436b84829d75/traffic_bench/eval/metrics/aggregate.py#L320-L425">分母を含む集計</a></p>
+<p>公式ツールはepisode単位の集計に加え、同じ地図のvariantを先に平均するmap単位の集計と、そのbootstrap信頼区間も出します。同じ道路の10variantは10個の独立した地理環境ではないためです。論文表のmacro平均、実装のepisode平均、map平均のどれを報告するかを記録しなければ、同名の「成功率」でも比較が曖昧になります。<a href="https://github.com/emb-ai/traffic-sign-bench/blob/4d001d0925d3aabf4434236c4531436b84829d75/traffic_bench/eval/metrics/README.md">公式metricsガイド</a></p>
+
+<h2>5 ルール教師を作り、PlanT-2を追加学習する</h2>
+<p>評価対象17plannerの内訳は、IDMとその4変種・PPO・CaRL・PlanT-2の基準8方式、それぞれへ明示的な規則制約を加えたexpert 8方式、追加学習したPlanT-2-FTです。expertは対象規則へ直接アクセスできる特権付き参照系です。通常の学習plannerと同じ情報条件の順位として並べません。複数expertの走行をあとから選ぶOracleも用いますが、単一のオンラインplannerではなく、評価baseline数には含みません。<a href="https://arxiv.org/html/2609.38463v1#S4.SS2">原著 §IV-B</a></p>
+<p>教師収集では23,200学習シナリオにexpertを走らせ、遵守と到着の両方を満たす軌道を選びます。失敗したexpertには設定の再sampleも行い、速度と快適性を考慮して各シナリオで最大2軌道を残し、36,828軌道を得たと報告しています。これは元の初期条件に対する無条件の成功率ではなく、成功軌道を選別・補充した教師集合です。hard caseでの失敗頻度を推定するデータと、成功行動を学ばせるデータは分けて読みます。<a href="https://arxiv.org/html/2609.38463v1#S4.SS3">原著 §IV-C</a></p>
+<p>PlanT-2-FTでは、37.2Mパラメータのplannerを基に、標識表現と速度出力など147,976パラメータ、約0.4%を追加します。path・waypointのL1損失と離散速度のcross-entropyを同時に学習します。速度教師は単に標識の数値を追わせるのではなく、原則としてexpertの先4秒間の最小速度を使い、減速が必要な先の状況を教師へ入れます。最低速度標識は別の教師規則を持ちます。進路規制では禁止側へ向く入力routeと、遵守したexpertの未来軌道を区別することも重要です。<a href="https://arxiv.org/html/2609.38463v1#S4.SS4">原著 §IV-D</a></p>
+<p><strong>報告された学習条件：</strong>教師軌道のうち29,462を学習、7,366をvalidationに用い、26 epochs、batch 128、AdamW、基本学習率10<sup>−4</sup>、cosine decay、勾配clip 1.0、NVIDIA A100 1基。標識に関係する判断区間を重くし、標識familyのbatch構成も調整しています。地図を分ける最初のtrain/test分割と、教師軌道を分けるtrain/validation分割を混同しません。最終checkpointはclosed-loop validationで選択したと記載されています。総GPU時間、実行時遅延、本プロジェクトで必要なVRAMは、この条件からは確定できません。</p>
+
+<h2>6 評価条件をそろえて結果を読む</h2>
+<p>下表は原著Table IIの抜粋です。Moscow実地図cropに生成したMetaDriveシナリオ、29種類、5,800テストエピソードという条件の著者報告です。DSはDriving Score、到着・衝突はepisode単位、Overall SCDは種類単位のmacro平均です。DSの名称が同じでも、別シミュレータや別ベンチマークのスコアと横断順位を作りません。<a href="https://arxiv.org/html/2609.38463v1#S5.T2">原著 Table II</a></p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="原著Table IIのplanner比較。横スクロールできます"><table><caption>基準plannerと追加学習モデル。数値は原著の報告値</caption><thead><tr><th scope="col">planner</th><th scope="col">DS ↑</th><th scope="col">到着率 % ↑</th><th scope="col">衝突率 % ↓</th><th scope="col">Overall SCD % ↑</th></tr></thead><tbody>
+<tr><td>IDM</td><td>35.7</td><td>66.4</td><td>21.0</td><td>7.2</td></tr>
+<tr><td>PPO</td><td>35.6</td><td>67.9</td><td>27.5</td><td>3.2</td></tr>
+<tr><td>CaRL</td><td>39.6</td><td>73.7</td><td>21.0</td><td>2.9</td></tr>
+<tr><td>PlanT-2</td><td>28.6</td><td>56.1</td><td>43.3</td><td>5.9</td></tr>
+<tr><td>PlanT-2-FT</td><td>74.2</td><td>74.8</td><td>12.0</td><td>72.3</td></tr>
+</tbody></table></div>
+<p>基準8方式全体のOverall SCDは2.9–9.0%。PlanT-2からPlanT-2-FTへは5.9%から72.3%へ、66.4 percentage pointsの改善です。この差は「標識対応に必要な情報と教師を加えた系」の比較であり、backboneだけの効果でも、認識器の精度改善率でもありません。最も高い特権expertのSCDは80.0%ですが、特権情報の有無を含むため通常方式の公平な勝敗表にはしません。</p>
+<p>PlanT-2-FTのグループSCDはPriority 57.2%、Speed 96.2%、Obstacles 90.8%、Routing 58.4%。速度や通行空間で高くても、他者への譲りと分岐の走り切りに課題が残ります。原著本文にあるObstacleの3.7%から90.8%という説明は、元のPlanT-2の0.7%との直接比較ではなく、基準群の最良値との比較です。比較相手を固定して読む必要があります。<a href="https://arxiv.org/html/2609.38463v1#S5.SS1">原著 §V-A</a></p>
+
+<h3>全体の数字と失敗内訳を混ぜない</h3>
+<p>§V-Bのpooled auditは、PlanT-2-FTについて5,800試行中1,430試行、24.7%が「対象標識には違反しないが未到着」、198試行、3.4%が標識違反だったと報告します。同節の遵守率は96.6%、joint SCDは71.9%です。<strong>Table IIの72.3%と、この71.9%は別の報告値として保持します。</strong>元のepisode記録から再集計しておらず、両者の差の原因は今回確認できていません。各種類の試行数が同じで同じ対象集合ならmacro平均とpooled平均は一致するので、「平均方法が違うから」とだけ説明して差を解消したことにはしません。<a href="https://arxiv.org/html/2609.38463v1#S5.SS2">原著 §V-B</a></p>
+<p>この内訳の示唆は、規則を守ったあとに目的地まで走り切る能力も別途必要、ということです。一方、違反がなかった試行に、規則を試す前に終わった試行が含まれ得る点には注意します。高い遵守率だけを、安全な実行能力や意味理解の証明へ置き換えません。</p>
+
+<h3>標識情報を消す実験は何を検証したか</h3>
+<p>著者は、各テスト地図から10variantのうち1つを選んだ<strong>580組</strong>で、同じcheckpoint・同じsceneの標識identityをobject tokenとpersistent stateから除く実験をしています。標識板は匿名の静的物体として残します。Overall SCDは72.8%から15.4%へ、遵守率は90.3%から28.9%へ下がりました。これは入力された標識の意味情報が行動に寄与する証拠です。580組の結果を5,800試行全体の72.3%と直接引き算したり、カメラの標識認識失敗率として使ったりしません。横断歩道では路面表示と歩行者という別の手掛かりがあることも、同実験の例外として報告されています。<a href="https://arxiv.org/html/2609.38463v1#S5.T3">原著 Table III</a>、<a href="https://arxiv.org/html/2609.38463v1#S5.SS4">§V-D</a></p>
+
+<h2>7 強みと、まだ言えないこと</h2>
+<ul>
+<li><strong>強み：</strong>規則、適用区間、違反判定、シナリオ生成を結び付けており、モデルを変える前に「何が苦手か」を切り分けやすい</li>
+<li><strong>強み：</strong>禁止側を近道にするなど、地図を走るだけでは正解しない場面を作る。標識情報を外すpaired実験もあり、情報利用を点検できる</li>
+<li><strong>知覚の限界：</strong>標識の検出漏れ、遠距離・逆光・遮蔽での誤分類、読み取った数値の誤りは抽象化されている。センサE2Eの信頼性は別検証</li>
+<li><strong>規則の範囲：</strong>主として一つの対象規則を試す。複数規則が同時に有効な場合や、標識に直接結び付かない文脈依存規則を網羅しない</li>
+<li><strong>地域の限界：</strong>道路の地理はMoscow。原著の他国との意味対応分析には日本は含まれない。日本の標識・左側通行・競技ルールへ、外観だけを変えて適用できるとは確認されていない</li>
+<li><strong>統計の限界：</strong>地図・variant・標識種類・学習seedを異なる単位として管理する必要がある。本稿は生ログや信頼区間を再計算せず、小さい差の有意性を主張しない</li>
+<li><strong>実車への境界：</strong>シミュレータ、構造化入力、ルールchecker、controllerを含む条件付き評価。実車、公道、全速度域、異常センサ時の安全性は示していない</li>
+</ul>
+<p>知覚・単一対象規則の範囲は原著の明示的な制限、実車移植・評価契約への注意はそれを踏まえた本稿の分析です。<a href="https://arxiv.org/html/2609.38463v1#S7">原著 §VII</a></p>
+
+<h2>8 論文、配布コード、配布データを同じ版とみなさない</h2>
+<p>確認時の公式READMEは<strong>25種類の実行可能な評価profile</strong>を案内し、Hugging Faceの公式dataset cardも<strong>25標識・2,500地図</strong>と記載しています。論文の29種類・29,000生成シナリオとは数える対象だけでなく、掲載されている種類の範囲にも差があります。dataset cardは、配布folderがclosed-loop評価manifestではなく地図であること、同じsplit内で同じ場所を再利用し得ることも明記しています。これを「29,000道路がそのままdownloadできる」とは紹介しません。<a href="https://github.com/emb-ai/traffic-sign-bench/blob/4d001d0925d3aabf4434236c4531436b84829d75/README.md">確認commitのREADME</a>、<a href="https://huggingface.co/datasets/emb-ai/traffic-sign-bench">公式dataset card</a></p>
+<p>再現するときは、論文対象版、repository commit、submodule、checkpoint、地図配布revision、生成manifest、採点コードを一式で固定します。<code>sign=all</code>は登録済みprofile全体であり、その一語だけで論文29種類の追試になったとは言えません。各種類の生成件数と欠落を照合してから比較します。公式手順はmanifest生成、closed-loop実行、metrics集計を分離しており、CPUのみのIDM 1episode smoke testも案内しています。ただし、その実行成功と全論文結果の再現は別です。<a href="https://github.com/emb-ai/traffic-sign-bench/blob/4d001d0925d3aabf4434236c4531436b84829d75/traffic_bench/eval/README.md">評価手順</a></p>
+<p>コードはMIT、配布地図はOpenStreetMap由来でODbL 1.0と表示されています。コード・地図・重み・他project由来submoduleを一つのライセンスとして扱いません。本調査ではdownloadした重みの実行、dataset全件の整合性検査、ベンチマーク実行は行っていません。</p>
+
+<h2>9 他のE2E研究とどう比較するか</h2>
+<div class="table-wrap" tabindex="0" role="region" aria-label="TrafficSignBenchと関連評価の比較軸。横スクロールできます"><table><caption>TrafficSignBenchと関連評価の比較軸</caption><thead><tr><th scope="col">比較する軸</th><th scope="col">TrafficSignBenchが加える観測</th><th scope="col">置き換わらないもの</th></tr></thead><tbody>
+<tr><td>教師軌道とのoffline誤差</td><td>実際に動かした結果の違反と未到着</td><td>予測精度、学習分布の監査、データ漏洩検査</td></tr>
+<tr><td>経路単位のclosed-loop評価</td><td>どの標識・規則で失敗したかという診断</td><td>長い経路の連続運転、総合的な交通相互作用</td></tr>
+<tr><td>Camera・LiDARから学ぶTransFuser型</td><td>意味が与えられた後の判断の問題を切り出す</td><td>センサ融合、標識認識、観測欠落への頑健性</td></tr>
+<tr><td>幾何的な局所回避・追従制御</td><td>衝突しない経路でも禁止側へ入っていないか</td><td>車両応答、制動距離、追従誤差、実行deadline</td></tr>
+</tbody></table></div>
+<p>これは本稿による評価軸の整理です。モデル方式の優劣や、CARLA・NAVSIM・AWSIM間の順位を表す表ではありません。研究の位置付けは<a href="research-map.html">研究資料マップ</a>、学習と制御の境界は<a href="e2e-field-overview.html">E2E研究の全体像</a>と合わせて読むと整理しやすくなります。</p>
+
+<h2>10 E2E Liteで先に持ち込むべきもの</h2>
+<p><strong>現行実装の境界：</strong>確認したmainコード基準のTimePathV1はCamera・2D LiDAR・ego履歴から、観測時点の<code>base_link</code>座標で0.1–3.0秒先のXY 30点、<code>[B,30,2]</code>、単位mを出します。点間距離から求める速度ノルムは、学習済みspeed headや停止確率ではありません。局所SLAM MPPIは静的占有地図に対する参照経路候補の検査であり、道路意味の分類や動的物体予測をするplannerではありません。確認sourceから、交通標識の意味を識別し、規則stateを保持する機能が実装・検証済みとは言えません。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/src/aic_transfuser_lite/models/time_path_v1.py" data-source="src/aic_transfuser_lite/models/time_path_v1.py">TimePathV1</a>、<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/src/aic_transfuser_lite/control/slam_mppi.py" data-source="src/aic_transfuser_lite/control/slam_mppi.py">局所MPPI</a>、<a href="system-architecture.html">システム構成</a></p>
+<p>本稿の提案は、まず「学習器を増やす」より「見落とした失敗を測る」ことです。競技が要求する停止・速度・進入条件を先に特定し、該当しない公道規則を無条件に増やさず、現行の制御・安全監視を保ったまま評価側へ独立したcheckerを足す案が考えられます。評価器の真値をモデル入力へ混ぜないことが前提です。</p>
+<div class="table-wrap" tabindex="0" role="region" aria-label="本プロジェクトへの適用候補。いずれも提案段階。横スクロールできます"><table><caption>本プロジェクトへの適用候補。いずれも提案段階</caption><thead><tr><th scope="col">適用候補</th><th scope="col">データ・再学習</th><th scope="col">コード・計算への影響</th><th scope="col">検証と状態</th></tr></thead><tbody>
+<tr><td>規則別の採点と失敗ログ</td><td>停止線・有効zone・目標速度などの評価用注釈、時刻付き車両状態。採点器だけならモデル再学習不要</td><td>走行ログへ規則ID、進入、違反時刻、到着、終了理由を追加。モデル本体の計算を増やさず検査可能</td><td>手作り軌道で正例・違反例・未進入例・欠測例をunit test。その後に記録済みログ。提案段階</td></tr>
+<tr><td>遵守と完走を同時に測る</td><td>scenario単位の固定splitと試行manifest。同じ道路のvariantを束ねる</td><td>AND指標、規則別・地図別の集計、試行母数・欠落理由の保存</td><td>停止し続けるpolicyが高得点にならないことを確認。現行baselineの数値は未測定</td></tr>
+<tr><td>規則の開始・解除・停止履歴を扱う</td><td>規則state、適用lane、開始・解除時刻。oracle入力で切り分ける試験とセンサ入力試験を別にする</td><td>state契約・reset・timeout・矛盾時の扱い。学習入力に追加するならmodel/data schemaと再学習が必要</td><td>標識通過後、解除直後、遅れて現れる他者、時刻ずれを試験。未実装</td></tr>
+<tr><td>規則を守る教師の追加収集</td><td>停止・譲り・回復を含む成功軌道と失敗記録。run/scenarioを分け、frameランダム分割を避ける</td><td>教師生成、選別、速度・停止教師の定義、必要ならhead追加。学習GPU・simulation予算が別途必要</td><td>同じ未学習scenarioで規則遵守、完走、衝突、介入を比較。未収集・未学習</td></tr>
+</tbody></table></div>
+<p>MetaDriveの構造化object、車両寸法、座標系、速度単位、controllerを、AWSIMのCamera・2D LaserScan・車両応答へそのまま移すことはできません。planner adapterから独立して、時刻・座標・単位の変換テストを用意します。公式PlanT-2 adapterにも座標の左右向きとPure Pursuitのlookahead設定に関する注意がありますが、その定数を本プロジェクトへコピーする根拠にはしません。<a href="https://github.com/emb-ai/traffic-sign-bench/blob/4d001d0925d3aabf4434236c4531436b84829d75/traffic_bench/agents/adapters/plant2/plant2_adapter.py#L35-L94">公式adapterの座標・追従契約</a></p>
+<p>採用判断の順番は、①checker自体の正しさ、②保存ログでの再現可能な集計、③知覚誤差を切り離したsimulation、④センサ入力を含むclosed-loop、です。前段が通っても後段の成功には数えません。GPU時間や改善率は、データ量とモデル変更が未確定なので見積もっていません。リアルタイム化ではモデル推論だけでなく、前処理・転送・queue・制御・安全監視までの遅延を別途測ります。</p>
+
+<h2>11 何が確認済みで、何が提案なのか</h2>
+<ul><li><strong>論文で報告：</strong>特定のMetaDrive条件での17planner比較、規則教師によるPlanT-2-FT、580組の標識情報ablation</li><li><strong>公開実装で確認：</strong>規則checkerの一部、SCD相当列のAND計算と分母、episode/map集計、25profileの案内。全文実装監査や実行再現ではない</li><li><strong>プロジェクトへの適用候補：</strong>独立した規則別checker、遵守と完走の組評価、規則state、教師データの追加。いずれも本稿の提案</li><li><strong>プロジェクト実装済み：</strong>TimePathのXY 30点契約、静的占有地図ベースの局所経路検査など、参照sourceで確認した既存機能。標識遵守機能の新規実装はない</li><li><strong>プロジェクト実測：</strong>本調査では新しい学習、AWSIM走行、実車試験、性能計測を行っていない。既存の周回・静的障害物記事を標識遵守の実績へ読み替えない</li></ul>
+
+<h2>12 出典・版・更新内容</h2>
+<ol>
+<li><a href="https://arxiv.org/abs/2609.38463v1">arXiv書誌</a>と<a href="https://arxiv.org/html/2609.38463v1">v1全文</a>：§I–VII、Tables I–III、図の説明を確認。2026-09-29初回版。本文はCC BY 4.0の表示。本稿は日本語で再構成した解説・分析で、著者の公式訳ではない</li>
+<li><a href="https://github.com/emb-ai/traffic-sign-bench/tree/4d001d0925d3aabf4434236c4531436b84829d75">公式コードの確認commit</a>：README、評価・metrics文書、SCD相当のCSVと集計処理、停止・速度checker、sign registry、PlanT-2 adapterの座標・追従部分。実行なし</li>
+<li><a href="https://huggingface.co/datasets/emb-ai/traffic-sign-bench">公式配布データ</a>：dataset card、地図数・25標識・splitの説明と配布形式を確認。全データや重みのdownload・追試なし</li>
+<li><a href="https://github.com/emb-ai/traffic-sign-bench/blob/4d001d0925d3aabf4434236c4531436b84829d75/scripts/plant2_ft_pipeline/README.md">公式追加学習手順</a>：dump、split、学習、closed-loop評価を分離する構成を確認。手順例の設定を論文最終実験と同一視しない</li>
+<li><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/tree/8d9ab923e8cc2d01b28296a3032f65ab9438c384">E2E Liteのコード基準</a>：TimePathと局所MPPIのsource確認。後続の文書更新と、学習・制御実装の変更を区別</li>
+</ol>
+<p><strong>2026-10-02更新：</strong>新規記事。生成シナリオと地図の区別、SCDの分母、72.3%と71.9%の未照合差、論文29種類と公開25profileの範囲差、停止checkerの実装条件、E2E Liteへの未実装の適用候補を記録しました。</p>

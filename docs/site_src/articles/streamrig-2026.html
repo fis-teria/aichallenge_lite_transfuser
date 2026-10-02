@@ -1,0 +1,213 @@
+<div class="tech-note">
+  <div class="tech-intro">
+    <span class="tech-kicker">PAPER / MULTI-CAMERA ODOMETRY</span>
+    <h2>StreamRig：複数カメラの配置を生かし、移動を逐次推定する</h2>
+    <p>同じ時刻の周囲画像をひとまとまりとして理解し、その小さな表現を時間方向につなぐ。StreamRigは、学習済み3Dモデルを固定したまま、校正済みの多眼カメラから移動量を推定する研究です。注目点はカメラの枚数だけでなく、<strong>カメラ間の既知の幾何・履歴の圧縮・基準時刻の更新</strong>を組み合わせた設計にあります。</p>
+    <div class="tech-chips"><span>arXiv v1 / 2026-09-30</span><span>視覚オドメトリ</span><span>確認日 2026-10-02</span></div>
+  </div>
+
+  <div class="tech-boundary">
+    <strong>先に押さえる3点</strong>
+    <ul>
+      <li>推定対象はカメラrigの位置・姿勢です。経路計画、操舵、障害物回避の性能は、この論文の評価対象に含まれません。</li>
+      <li><strong>シミュレーションだけで学習して実機をzero-shot評価したのはZJHの実験</strong>です。NCLTとKITTI-360では、それぞれの実データの学習splitを使います。</li>
+      <li>公開コードの評価では、記録の途切れを正解の相対姿勢で接続します。表の精度を、欠損を含む全行程を外部補助なしで追跡した実績とは読み替えません。</li>
+    </ul>
+    <p>以下はYufei Weiらのプレプリントと公式実装の解説です。確認したarXiv記録に採録先の記載はなく、査読済みの成果として扱っていません。本プロジェクトへの導入・再学習・走行試験は未実施です。<a href="#sr-paper">[1]</a> <a href="#sr-readme">[2]</a></p>
+  </div>
+
+  <section class="tech-section" aria-labelledby="sr-problem">
+    <span class="tech-kicker">01 / PROBLEM</span>
+    <h2 id="sr-problem">「同時に見ている関係」と「時間をまたぐ関係」を両方使いたい</h2>
+    <p><strong>rig</strong>は、同じ台に固定され、同時刻の画像を取得するカメラの組です。各カメラの焦点距離などを表す内部パラメータと、カメラ同士の位置・向きを表す外部パラメータが分かれば、違う方向の画像を幾何的に関係づけられます。前方が一時的に見づらくても、側方の観測が移動推定を支える可能性があります。</p>
+    <p>一方、長い映像の全画像・全パッチを記憶すると、計算とメモリが増え続けます。単眼用のstreamingモデルへ同時刻の複数画像を順番に入力するだけでは、同時観測であることや既知のカメラ配置を十分に利用できません。StreamRigは、<strong>空間方向の理解を先に行い、時間方向へ渡す情報を小さくする</strong>ことでこの問題に取り組みます。<a href="#sr-paper">[1, §I–II]</a></p>
+
+    <h3>先行研究との位置関係</h3>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="先行手法とStreamRigの役割の比較。横スクロールできます">
+      <table class="tech-table"><caption>StreamRig論文が整理する研究の流れ</caption><thead><tr><th scope="col">系統</th><th scope="col">得意な構造</th><th scope="col">StreamRigが接続する点</th></tr></thead><tbody>
+        <tr><th scope="row">従来の多眼VO / SLAM</th><td>カメラ配置を明示し、観測の幾何誤差を最適化する</td><td>校正済みrigという入力の考え方を引き継ぎ、学習済み3D特徴から姿勢を読み出す</td></tr>
+        <tr><th scope="row">MapAnything・Rig3R・G2G</th><td>画像集合やrig内の関係をまとめて扱う</td><td>固定画像集合・画像群ペアの処理に、継続する時間方向の状態を加える</td></tr>
+        <tr><th scope="row">CUT3R・STream3Rなど</th><td>過去の状態を使い、単眼映像を逐次処理する</td><td>時間の連続性に、同時刻の多眼幾何を組み合わせる</td></tr>
+        <tr class="tech-selected"><th scope="row">StreamRig</th><td>校正済みrigの共同認識＋圧縮履歴＋基準の更新</td><td>現在と過去の画像だけから、基準rigに対する相対姿勢を出力する</td></tr>
+      </tbody></table>
+    </div>
+    <p class="tech-fine">この表は用途と構造の整理で、すべてのSLAM方式を同条件で比べた性能順位ではありません。著者の比較実験に含まれる方式・学習条件は後述します。研究全体での場所は<a href="research-map.html">自動運転・レース・制御の研究マップ</a>も参照してください。</p>
+  </section>
+
+  <section class="tech-section" aria-labelledby="sr-mechanism">
+    <span class="tech-kicker">02 / MECHANISM</span>
+    <h2 id="sr-mechanism">3Dの理解を固定し、姿勢を読む部分だけを学習する</h2>
+    <figure class="tech-figure" aria-labelledby="sr-flow-caption">
+      <div class="tech-figure-title"><span>図 1</span><strong>空間をまとめてから、時間をつなぐ</strong></div>
+      <ol class="tech-flow four">
+        <li><span class="tech-step">同時観測</span><strong>校正済みrig</strong><p>各カメラのRGB<br />内部・外部パラメータ</p><small>同じ時刻の画像を1組にする</small></li>
+        <li class="accent"><span class="tech-step">固定する部分</span><strong>MapAnything</strong><p>画像とray・poseの情報から<br />カメラ間の特徴を統合</p><small>時刻ごとに1回だけ計算</small></li>
+        <li><span class="tech-step">学習する部分</span><strong>圧縮＋CausalBridge</strong><p>16 tokens / camera<br />過去のKV-cacheを参照</p><small>未来のrigにはアクセスしない</small></li>
+        <li><span class="tech-step">推定</span><strong>Pose head</strong><p>基準カメラに対する<br />3Dの回転・並進</p><small>一定間隔で基準を更新</small></li>
+      </ol>
+      <div class="tech-underlay">学習時の正解：相対姿勢。推論時の入力：RGBとrigの校正情報。論文のLiDAR点群の図は推定姿勢の可視化であり、StreamRigへのLiDAR入力ではありません。</div>
+      <figcaption id="sr-flow-caption">論文§IIIに基づく独自の模式図。モデルの実測値や本プロジェクトへの組み込み結果を描いたものではありません。<a href="#sr-paper">[1]</a></figcaption>
+    </figure>
+
+    <h3>1. MapAnythingがrig全体を共同認識する</h3>
+    <p>凍結したfront-endへ、画像、内部パラメータから求めた画素のray方向、基準カメラに対する外部パラメータを渡します。DINOv2由来の画像特徴へ幾何情報を組み込み、カメラ間のAttentionを使った特徴を生成します。<strong>校正情報を直接受け取るのはこのfront-end</strong>で、その後の学習部には外部パラメータを別入力しません。したがって校正を省いても同じ方法になるわけではありません。<a href="#sr-paper">[1, §III-A]</a></p>
+
+    <h3>2. Rig-Resamplerが姿勢推定に必要な特徴へ圧縮する</h3>
+    <p>2層のcross-attentionと学習可能なqueryで、各カメラのパッチ特徴を16個のlatent tokenへまとめます。論文の224×224画像・5カメラの例では、1,280個のpatch tokenが80個になります。これは後段の時間方向の処理とcacheを小さくする工夫であり、画像encoder自体の計算がなくなるわけではありません。<a href="#sr-paper">[1, §III-A]</a></p>
+
+    <h3>3. CausalBridgeは現在と過去だけを参照する</h3>
+    <p>8層のAttentionが、カメラの識別、anchorかqueryかという役割、基準カメラの印を使って圧縮特徴を処理します。同一rig内の参照は自由ですが、時間方向では未来を見せません。過去rigのkeyとvalueをcacheへ保存し、新しいrigが来たときに再利用します。公開実装にも逐次推論用の<code>StreamCacheRunner</code>があり、全窓の因果推論との等価性を調べるテストが用意されています。本記事ではそのテストを実行していません。<a href="#sr-cache">[3]</a></p>
+    <p>特徴的なのが<strong>anchor snapshot</strong>です。基準rigのtokenをqueryごとにコピーし、そのコピーと現在rigを相互に参照させます。コピーはそのquery専用なので、基準側を更新するために未来の観測を混ぜる必要がありません。通常の固定anchorよりも、比較する2組の間で姿勢に関係する情報をやり取りできる設計です。<a href="#sr-paper">[1, §III-B]</a></p>
+
+    <h3>4. 出力は基準カメラから見た現在カメラの姿勢</h3>
+    <p>Pose headは回転と並進を読み出し、現在rigの基準カメラの座標をanchorの基準カメラ座標へ変換する<code>T(a←t)</code>を出します。他カメラの姿勢は既知の校正から作れる補助的な学習目標です。車体中心の位置や地図の絶対座標がそのまま出るという契約ではないため、車両へ接続するときはカメラと<code>base_link</code>の関係を別途扱います。<a href="#sr-paper">[1, §III-B]</a></p>
+
+    <h3>5. Re-anchoringが記憶量を制限する</h3>
+    <p>一定数Nのrigを処理したら最後のrigを次のanchorにし、ブロック間の推定を合成します。これで状態をブロック長に応じた範囲へ抑えます。短すぎるブロックでは合成回数が増え、長すぎると学習した移動範囲を超えます。NCLTの標準モデルではN=24付近の並進driftが小さく、学習上限を超えるN=64では悪化しています。<a href="#sr-paper">[1, §III-D・IV-C]</a></p>
+    <p class="tech-fine">古いrigのtokenをさらに減らすlong-history方式も検討されていますが、こちらの状態量は系列長とともに増えます。「圧縮したから永久に一定メモリ」ではなく、通常方式のメモリ上限を作るのはre-anchoringです。また、基準の更新は過去の地図へ戻って誤差を修正するloop closureとは異なります。</p>
+  </section>
+
+  <section class="tech-section" aria-labelledby="sr-learning">
+    <span class="tech-kicker">03 / TRAINING</span>
+    <h2 id="sr-learning">相対姿勢だけで学習するが、良い初期値と対象rigのデータが重要</h2>
+    <p>学習対象はRig-Resampler、CausalBridge、Pose headの合計74.6Mパラメータ。論文のシステム全体638Mの11.7%です。学習するパラメータが少なくても、推論時には固定した大きなfront-endも動作します。<a href="#sr-paper">[1, §III-C]</a></p>
+    <ol>
+      <li><strong>Stage I：画像群どうしの再位置推定で初期化。</strong>軌跡上から作った2つの画像群を使い、相対姿勢を学びます。多様な配置・移動を経験させ、固定特徴から幾何を読む能力を作ります。入力の校正へ回転1.5度・並進0.1 mのSE(3)ノイズを加え、教師は正しい姿勢のままにします。</li>
+      <li><strong>Stage II：対象rigの時系列へ適応。</strong>同じ学習部へ因果maskとanchor snapshotを適用し、rigの窓から姿勢を学びます。回転誤差と、正解の移動距離で正規化した並進誤差を使い、近距離の学習が遠距離の大きな誤差に埋もれにくくします。</li>
+    </ol>
+    <p>ここでの「相対姿勢だけ」は、StreamRigの追加学習の教師を説明する表現です。<strong>正解poseが不要という意味でも、MapAnythingまでゼロから姿勢教師だけで学習したという意味でもありません。</strong>Stage IなしのNCLT ablationでは並進driftが2.77%から41.37%へ悪化しており、凍結モデルへランダムなheadを載せるだけでは同等になりません。<a href="#sr-paper">[1, §III-C・Table III]</a></p>
+    <div class="note amber"><strong>論文の代表設定と配布設定を分ける。</strong>論文では可変長窓[6,48]と576k窓の学習を説明しています。確認した公式YAMLではNCLTが[6,48]・57,600窓×10 epochs、KITTI-360が[3,12]・48,000窓×10 epochsです。再現時は対象データセットの設定を固定し、全データセットで同じ窓長・学習予算だったとは仮定しません。<a href="#sr-config">[4]</a></div>
+  </section>
+
+  <section class="tech-section" aria-labelledby="sr-evaluation">
+    <span class="tech-kicker">04 / EVALUATION</span>
+    <h2 id="sr-evaluation">どこで学習し、何を測ったのか</h2>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="データセットごとの学習条件とStreamRigの結果。横スクロールできます">
+      <table class="tech-table"><caption>論文Table IのStreamRig行。数値は著者報告であり、本プロジェクトでの再測定ではありません</caption><thead><tr><th scope="col">データセットとrig</th><th scope="col">学習 / 評価条件</th><th scope="col">t_rel ↓</th><th scope="col">r_rel ↓</th><th scope="col">ATE ↓</th></tr></thead><tbody>
+        <tr><th scope="row">NCLT<br />5カメラ・周囲視野</th><td>実データの8セッションで学習。2012-02-19と2012-08-20の2セッション、合計12.29 kmで評価</td><td>2.77%</td><td>1.39度 / 100 m</td><td>28.4 m<br />SE(3)</td></tr>
+        <tr><th scope="row">TartanGround<br />4方向・各90度</th><td>シミュレーションの対象training splitで学習。評価用に分離した10シーンの各3本の最長軌跡、合計12.60 kmで評価</td><td>12.70%</td><td>17.90度 / 100 m</td><td>11.0 m<br />SE(3)</td></tr>
+        <tr><th scope="row">KITTI-360<br />0.59 m双眼＋左右魚眼</th><td>実走行0000、0002–0007で学習。0009・0010、合計13.63 kmで評価。魚眼は90度視野へ変換</td><td>2.59%</td><td>0.98度 / 100 m</td><td>63.7 m<br />SE(3)</td></tr>
+        <tr><th scope="row">ZJH<br />7 cm双眼＋斜め2眼</th><td>25環境・131本の模擬歩行軌跡のみで学習。未知環境の実ヒューマノイド3系列、合計0.36 kmへzero-shot適用</td><td>3.48%</td><td>14.88度 / 100 m</td><td>0.88 m<br />Sim(3)</td></tr>
+      </tbody></table>
+    </div>
+    <p>ZJHの模擬環境は実スキャンから3D Gaussian Splattingで再構成されています。実機の正解軌跡にはCOLMAPのrig再構成を使い、<strong>全方式に系列ごと1つのscale補正</strong>を認めています。この結果だけでは、新しい実機でメートル尺度が校正不要で得られるとはいえません。<a href="#sr-paper">[1, §IV-A]</a></p>
+
+    <h3>driftとATEは違うものを測る</h3>
+    <ul>
+      <li><strong>t_rel：</strong>区間長に対する並進の相対誤差。NCLT・KITTI-360では100–800 m、TartanGround・ZJHでは10–80 mの区間で計算します。</li>
+      <li><strong>r_rel：</strong>距離あたりの回転の相対誤差。この記事の単位は度 / 100 mです。公開コード内部の度 / mと取り違えないようにします。</li>
+      <li><strong>ATE：</strong>軌跡全体を正解に合わせたあとの位置誤差。SE(3)は回転・並進で合わせ、Sim(3)はさらに1つの全体scaleを合わせます。走行距離や環境が異なる行のATEをそのまま順位づけることはできません。</li>
+    </ul>
+
+    <h3>再現上重要な、公開コードの集計と欠損処理</h3>
+    <p>READMEの結果はstride 3、100–800 m区間、全系列ATEのSE(3)整列という条件です。ただし、論文本文の概略だけでは集計の細部を取りこぼします。公式commit <code>3a41caf249a484b71b20c562f79af6a5e44cbed1</code>の評価スクリプトを読むと、次の区別があります。<a href="#sr-readme">[2]</a> <a href="#sr-eval-code">[5]</a></p>
+    <ul>
+      <li><strong>NCLT：</strong>各日付の中では有効区間数で相対誤差を集計し、その後2日付を等重み平均します。ATEも日付ごとに求めて等重み平均します。時刻差が1,000 msを超える隙間では、前後の推定軌跡をGTの相対姿勢で接続します。</li>
+      <li><strong>KITTI-360：</strong>4眼画像と公式poseのそろう連続したvalid runで推論します。0009の6本と0010の4本、合計10本です。t_rel / r_relは全runの有効区間数でpoolし、ATEはGTでrun間を接続したdrive全体で求め、2 driveのGT経路長で重み付けします。</li>
+      <li><strong>論文との記述粒度：</strong>本文はKITTI-360の指標を経路長で重み付けすると説明しますが、公開コードでは相対誤差は区間数によるpooling、ATEは経路長重み付き平均です。本記事は両者を同一の平均方式として省略しません。</li>
+    </ul>
+    <p>GT接続は推定区間の内部形状を修正する処理ではありませんが、記録が欠けた区間の移動を正解で補います。<strong>その空白も含めた自律的な追跡・復帰能力は測れていません。</strong>また、NCLTの配布評価はN=24、KITTI-360はN=3が既定です。論文の表を比較するときは、同じ系列だけでなく、re-anchoring、サンプリング、scale、欠損処理を一緒に記録する必要があります。<a href="#sr-eval-code">[5]</a></p>
+
+    <h3>何に対して良くなったのか</h3>
+    <p>著者の比較では、StreamRigは4データセットすべてで、GTを与えるoracleを除いた方式の中でt_relとr_relが最小です。NCLTではG2G-chainの6.08%・3.54度 / 100 mに対して2.77%・1.39度 / 100 m、KITTI-360では単眼CUT3Rの3.59%・1.63度 / 100 mに対して2.59%・0.98度 / 100 mです。<a href="#sr-paper">[1, Table I]</a></p>
+    <p>比較相手には対象splitでfine-tuneした方式と公開重みをそのまま使う方式が混在し、入力カメラ数も同じではありません。さらにKITTI-360のATEでは、scale整列を含むSTream3Rが53.6 mで、StreamRigのSE(3)整列63.7 mより小さくなっています。したがって<strong>「すべての指標・すべてのVO / SLAMに勝つ」という結論にはしません。</strong></p>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="KITTI-360カメラ枚数の比較。横スクロールできます">
+      <table class="tech-table"><caption>カメラsubsetだけを変えたTable II。StreamRig内での比較</caption><thead><tr><th scope="col">入力</th><th scope="col">t_rel</th><th scope="col">r_rel</th><th scope="col">ATE・SE(3)</th></tr></thead><tbody>
+        <tr><th scope="row">前方単眼</th><td>4.84%</td><td>1.92度 / 100 m</td><td>85.4 m</td></tr>
+        <tr><th scope="row">前方双眼</th><td>3.59%</td><td>1.33度 / 100 m</td><td>67.2 m</td></tr>
+        <tr class="tech-selected"><th scope="row">双眼＋左右2眼</th><td>2.59%</td><td>0.98度 / 100 m</td><td>63.7 m</td></tr>
+      </tbody></table>
+    </div>
+    <p>このablationは、同時観測の幾何と視野を増やす意味を示しています。同時に、単眼版の並進driftはCUT3Rより大きいため、現在の単一画像系へそのまま移植すれば改善するという根拠にはなりません。<a href="#sr-paper">[1, §IV-B・Table II]</a></p>
+  </section>
+
+  <section class="tech-section" aria-labelledby="sr-compute">
+    <span class="tech-kicker">05 / COMPUTE AND RELEASE</span>
+    <h2 id="sr-compute">計算は小さい時間処理と、大きい固定front-endに分かれる</h2>
+    <p>論文Table Vでは、RTX 4090、BF16、batch 1、入力をメモリへ載せた状態、512回の到着について、5×224×224画像からposeまでの中央値を<strong>26.2 ms / rig</strong>、throughputを38.2 rigs/s、peak allocated GPU memoryを2.6 GiBと報告します。内訳はfront-endとResamplerが24.9 ms、BridgeとPose headが約1.3 msです。<a href="#sr-paper">[1, §IV-E]</a></p>
+    <p>この中央値は、センサ取得からROS配信までの遅延上限でも、TimePathと同時実行した実測でもありません。とくにFig. 1の精度はStreamRig N=24と9-frame版CUT3R、費用はStreamRig N=2とrecurrent版CUT3Rという<strong>別設定</strong>です。高精度側の設定に26.2 msを無条件で対応づけないようにします。</p>
+    <p>G2G-chainの50.9 msとの差も、毎回2つのrigを再encodeする実装を含む比較です。直前rigの特徴をcacheするpairwise方式は、N=2のStreamRigと同じ計算を行うため、そこでの主な利点は履歴を使った精度です。<a href="#sr-paper">[1, §IV-E]</a></p>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="公開成果物と必要資源。横スクロールできます">
+      <table class="tech-table"><caption>2026-10-02に一次資料で確認した再現準備</caption><thead><tr><th scope="col">項目</th><th scope="col">確認できた内容</th><th scope="col">注意点</th></tr></thead><tbody>
+        <tr><th scope="row">重み・評価</th><td>NCLT用とKITTI-360用の重みの配布先、SHA-256一覧、学習・評価スクリプト</td><td>重みのダウンロードや推論による独立再現は本記事では未実施</td></tr>
+        <tr><th scope="row">固定特徴cache</th><td>NCLT約470 GiB、KITTI-360約104 GiB。NCLT評価のhost memoryは約35 GB</td><td>GPUの2.6 GiBだけでは全工程の資源を表せない。元画像・前処理分も必要</td></tr>
+        <tr><th scope="row">学習費用</th><td>NCLTのStage IIはcache済み特徴を使って約48 RTX 4090 GPU-hours</td><td>4 GPUなら必ず12時間で終わるという保証ではない。Stage I・特徴生成・データ整備を含む総費用でもない</td></tr>
+        <tr><th scope="row">実装環境</th><td>READMEの例はPython 3.12、PyTorch 2.9.1、CUDA 12.8系wheel</td><td>本プロジェクトの学習・ROS環境との互換性は未確認。共有環境の無条件更新は避ける</td></tr>
+      </tbody></table>
+    </div>
+    <p>長窓の追加研究では、推定訓練費用が270、710 GPU-hoursへ増えています。長く記憶できることと、最小driftがさらに良くなることは別です。論文は、長窓化による利用可能なanchor距離の拡大と、学習範囲を超えたときの飽和を併せて報告しています。<a href="#sr-paper">[1, §IV-C]</a> <a href="#sr-readme">[2]</a> <a href="#sr-data">[6]</a></p>
+  </section>
+
+  <section class="tech-section" aria-labelledby="sr-limits">
+    <span class="tech-kicker">06 / LIMITS</span>
+    <h2 id="sr-limits">強みを生かすには、何が壊れるかも確認する</h2>
+    <ul>
+      <li><strong>長距離drift：</strong>ブロック間の姿勢をつなぐ以上、誤差は残ります。再訪問検出の探索的な結果はありますが、loop triggerの定量評価や地図を使った共同最適化は将来課題です。完成したloop-closing SLAMとしては扱いません。</li>
+      <li><strong>学習範囲の外：</strong>anchorからの変位が学習範囲を超えると、出力変位が飽和する傾向があります。窓のframe数だけでなく、速度とstrideを含めた実際の移動距離が重要です。</li>
+      <li><strong>rigへの依存：</strong>Stage Iの校正ノイズによる学習はありますが、新しい取付け誤差・時刻ずれ・片眼欠損を広範囲に許容できるという実証にはなりません。</li>
+      <li><strong>実運用の頑健性：</strong>雨、露光差、レンズ汚れ、rolling shutter、激しい遮蔽、長い停止、低速旋回に対する本車両での失敗率は不明です。論文に登場する多様な環境だけから安全な停止判断まで保証できません。</li>
+      <li><strong>信頼度と安全動作：</strong>poseを出せることと、そのposeを使ってよいか判定できることは別の設計課題です。制御へ入れるなら、異常値・遅延・不連続・外部参照との不一致を検出する条件が必要です。</li>
+    </ul>
+    <p class="tech-fine">最初の2項目は論文の実験・将来課題に基づきます。後半は本プロジェクトへ適用するときの検証課題であり、著者がそれらの条件で失敗したと報告した、という意味ではありません。<a href="#sr-paper">[1, §IV-C・V]</a></p>
+  </section>
+
+  <section class="tech-section" aria-labelledby="sr-project">
+    <span class="tech-kicker">07 / PROJECT CONNECTION</span>
+    <h2 id="sr-project">本プロジェクトでは、まず位置合わせの独立候補として考える</h2>
+    <p>確認した公開mainのモデル・制御コードは、Camera RGB・2D LaserScan・ego stateの時系列から、観測時点の<code>base_link</code>で0.1–3.0秒後のXY 30点を予測するTimePathV1です。車速と実操舵角の局所オドメトリを使った位置合わせ、任意のCartographer・占有地図・局所MPPIという経路も記載されています。<strong>StreamRigが必要とする同期済み多眼rigの校正・データ契約は、この確認範囲では見つかっていません。</strong><a href="#sr-project-source">[7]</a></p>
+    <p>このため、StreamRigは既存画像encoderの単純な置換ではなく、新しい観測・姿勢推定系の候補です。TimePathのwaypoint出力とも、2D LiDARから作る占有情報とも役割が違います。現在の構成は<a href="system-architecture.html">システム構成とTimePathの入出力</a>、地図の整合性とloop closureは<a href="cartographer.html">Cartographer</a>の記事へつながります。</p>
+
+    <h3>候補A：ログ上で比較する独立オドメトリ</h3>
+    <p>最初の用途として考えやすいのは、制御へ入力せず、同期rigのログから推定した移動を既存の局所オドメトリや独立GTと比べることです。どの条件で車速・操舵からの推定と差が開くかを観察できます。ただし、比較対象を教師にも使った場合には独立した精度検証にならないので、GTの由来を区別します。</p>
+
+    <h3>候補B：観測・保持経路の位置合わせを補助する</h3>
+    <p>十分な検証後には、過去の観測や保持経路を現在座標へ変換する姿勢源の候補になります。採用するなら、どの時刻のどの座標変換を置き換えるかを限定します。特にStreamRigのanchor更新による内部基準変更を、そのまま外部の<code>odom</code>の飛びにしない接続が必要です。LiDARの占有判定、未知領域の扱い、独立した安全監視は別に維持します。</p>
+
+    <h3>候補C：圧縮した時系列表現という設計を参考にする</h3>
+    <p>rig特徴を圧縮して履歴へ渡す考え方は、センサ融合や長い履歴を扱うモデルの参考になります。ただし、本プロジェクトの4×4 camera tokenや2D scan tokenと、StreamRigの多眼幾何を学んだlatentは同じものではありません。現在のGRU履歴をCausalBridgeへ置き換える効果は別の仮説で、入力・教師・計算量をそろえた再学習が必要です。</p>
+
+    <div class="table-wrap" tabindex="0" role="region" aria-label="StreamRigの導入候補で追加確認が必要なもの。横スクロールできます">
+      <table class="tech-table"><caption>導入を判断するための変更候補。実装済みの一覧ではありません</caption><thead><tr><th scope="col">項目</th><th scope="col">必要になる確認・変更</th><th scope="col">現在の扱い</th></tr></thead><tbody>
+        <tr><th scope="row">センサ・時刻</th><td>カメラ数・取付け・共有時刻・露光時刻・到着遅延・欠損maskを記録。未来の画像を待って過去のposeに使わない契約</td><td>多眼rigの有無、同期精度、通信帯域を未確認</td></tr>
+        <tr><th scope="row">校正・画像変換</th><td>各眼のK、歪み、外部姿勢、カメラ順序を固定。crop・resize・魚眼変換後のKも一致させる</td><td>現在の224×384 RGB前処理と論文の224×224を同一視しない</td></tr>
+        <tr><th scope="row">座標・尺度</th><td><code>T(a←t)</code>の向き、camera optical frameと車体の軸、m / rad、SE(3)から車体・平面運動への変換を明示</td><td>GT scale補正に依存した評価だけでは制御用のメートル精度を確認できない</td></tr>
+        <tr><th scope="row">データと再学習</th><td>rig画像と相対pose教師を集める。session / run / 環境で分割し、Stage I初期値・Stage II適応の必要性を検証</td><td>NCLT・KITTI重みの新車両へのzero-shot精度は不明</td></tr>
+        <tr><th scope="row">runtime</th><td>独立した推論プロセス、履歴cacheのreset、再起動・時刻逆行、更新周期、品質情報とtimeoutの接続</td><td>ROS 2への組み込み、本機GPUでの実時間性は未検証</td></tr>
+        <tr><th scope="row">モデル・安全</th><td>pose源だけの変更か、TimePath入力の追加かを分ける。後者はcheckpointと入力契約を変更して再学習・非回帰確認</td><td>既存の走行結果をStreamRig導入後の実績へ引き継がない</td></tr>
+      </tbody></table>
+    </div>
+    <p class="tech-fine">根拠となる本プロジェクトのコード確認はcommit <code>8d9ab923e8cc2d01b28296a3032f65ab9438c384</code>です。配布checkpointの学習元・検証runtimeはその記録内の別commitに属し、最新の文書更新と同一ではありません。ここでは過去の限定AWSIM試験を、新しい視覚オドメトリの検証へ読み替えていません。<a href="#sr-project-source">[7]</a></p>
+  </section>
+
+  <section class="tech-section" aria-labelledby="sr-tests">
+    <span class="tech-kicker">08 / VALIDATION PLAN</span>
+    <h2 id="sr-tests">導入判断を、再現・未見データ・実時間性に分ける</h2>
+    <ol>
+      <li><strong>元の結果を再現できるか。</strong>公式commit、重みSHA-256、split、stride、N、GT gap接続、SE(3) / Sim(3)、集計方式を固定します。GTで接続した公表条件の再現と、接続なし・欠損ありの運用条件を別々に報告します。</li>
+      <li><strong>座標・因果性の契約が正しいか。</strong>合成した既知の移動で変換の向きと尺度を確認し、未来画像の改変が過去出力を変えないこと、全窓とcache推論の一致、anchor更新前後の連続性を検査します。</li>
+      <li><strong>対象rigの未見runで有効か。</strong>既存の局所オドメトリと同じGT・同じ有効時間で比較します。短区間の相対誤差、長距離drift、停止中の漂い、scale誤差、回転誤差、追跡失敗・再初期化率を分けます。</li>
+      <li><strong>失敗を検出できるか。</strong>時刻ずれ、片眼欠損、校正ずれ、画像ぼけ、動く物体、暗所、長い停止・旋回を含む条件で、誤差だけでなく異常検出と出力停止までを測ります。</li>
+      <li><strong>既存処理と共存できるか。</strong>TimePath・地図処理と同時に動かし、センサ時刻からpose利用までの中央値・p95・p99・最大遅延、GPU / host memory、queueの蓄積、温度による低速化を測ります。4090単体の中央値はこの測定の代わりになりません。</li>
+      <li><strong>制御へ入れた結果が改善するか。</strong>上の条件を満たした後に、停止条件を備えた限定シミュレーション試験へ進みます。周回、接触、最小距離、停止、復帰を複数runで確認し、オフラインpose精度の改善とclosed-loopの改善を分けて判断します。</li>
+    </ol>
+    <p>以上は記事として整理した検証案です。学習・実装・実車・AWSIMの試験を行った記録ではなく、未確認事項を確認済みへ変えるための判断基準です。</p>
+  </section>
+
+  <section class="tech-section" aria-labelledby="sr-sources-heading">
+    <span class="tech-kicker">09 / SOURCES</span>
+    <h2 id="sr-sources-heading">一次資料・公開範囲・利用条件</h2>
+    <p>確認日は2026-10-02。論文本文§I–V・Tables I–V、arXivの版履歴、公式README・前処理手順・配布設定・評価集計コードを確認しました。本文の数値は著者報告、コードの挙動は静的な読解、プロジェクトへの接続は適用候補として区別しています。独立した数値再現、runtime計測、走行試験は行っていません。</p>
+    <p><strong>利用条件：</strong>StreamRigのコードは<strong>CC BY-NC 4.0</strong>、同梱MapAnythingのコードは<strong>Apache 2.0</strong>です。異なる条件をまとめて「商用利用も自由な同一ライセンス」と扱わないようにします。重み・依存モデル・データセットの条件も、実際に採用する版ごとに確認が必要です。KITTI-360の取得には登録と同データセットの利用条件への同意が案内されています。<a href="#sr-license">[8]</a></p>
+    <ol class="source-list">
+      <li id="sr-paper"><strong>論文：</strong>Yufei Wei, Shuhao Ye, Qi Wang, Xin Zheng, Qing Huang, Rong Xiong, Yue Wang, <cite>StreamRig: Exploiting Intra-Rig Geometry for Streaming Multi-Camera Odometry</cite>。<a href="https://arxiv.org/abs/2609.40244">arXiv・版履歴</a> / <a href="https://arxiv.org/html/2609.40244v1">v1全文</a>。v1公開2026-09-30。本文の手法・表はこの版に基づく日本語の要約と解説です。論文本文の表示ライセンスは<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>で、コードのライセンスとは別です。</li>
+      <li id="sr-readme"><strong>公式実装と配布物：</strong><a href="https://github.com/WeiYuFei0217/StreamRig">StreamRig repository</a> / <a href="https://github.com/WeiYuFei0217/StreamRig/blob/3a41caf249a484b71b20c562f79af6a5e44cbed1/README.md">確認したREADME</a>。NCLT / KITTI-360の重み配布、手順、資源、GT接続の説明。</li>
+      <li id="sr-cache"><strong>逐次推論と因果性：</strong><a href="https://github.com/WeiYuFei0217/StreamRig/blob/3a41caf249a484b71b20c562f79af6a5e44cbed1/streamrig/models/stream_cache.py">stream_cache.py</a> / <a href="https://github.com/WeiYuFei0217/StreamRig/blob/3a41caf249a484b71b20c562f79af6a5e44cbed1/tests/test_cache_equiv.py">cache等価性テスト</a> / <a href="https://github.com/WeiYuFei0217/StreamRig/blob/3a41caf249a484b71b20c562f79af6a5e44cbed1/tests/test_anchor_snapshot.py">anchor snapshotテスト</a>。</li>
+      <li id="sr-config"><strong>配布学習設定：</strong><a href="https://github.com/WeiYuFei0217/StreamRig/blob/3a41caf249a484b71b20c562f79af6a5e44cbed1/configs/nclt_streamrig.yaml">NCLT YAML</a> / <a href="https://github.com/WeiYuFei0217/StreamRig/blob/3a41caf249a484b71b20c562f79af6a5e44cbed1/configs/kitti360_streamrig.yaml">KITTI-360 YAML</a>。</li>
+      <li id="sr-eval-code"><strong>評価の細部：</strong><a href="https://github.com/WeiYuFei0217/StreamRig/blob/3a41caf249a484b71b20c562f79af6a5e44cbed1/scripts/summarize_nclt.py">NCLT集計・restitch</a> / <a href="https://github.com/WeiYuFei0217/StreamRig/blob/3a41caf249a484b71b20c562f79af6a5e44cbed1/scripts/k360_drive_metrics.py">KITTI-360集計・GT接続</a> / <a href="https://github.com/WeiYuFei0217/StreamRig/blob/3a41caf249a484b71b20c562f79af6a5e44cbed1/scripts/eval_nclt.sh">NCLT評価既定値</a> / <a href="https://github.com/WeiYuFei0217/StreamRig/blob/3a41caf249a484b71b20c562f79af6a5e44cbed1/scripts/eval_kitti360.sh">KITTI-360評価既定値</a>。</li>
+      <li id="sr-data"><strong>データ準備：</strong><a href="https://github.com/WeiYuFei0217/StreamRig/blob/3a41caf249a484b71b20c562f79af6a5e44cbed1/data_preprocessing/nclt/README.md">NCLT前処理</a> / <a href="https://github.com/WeiYuFei0217/StreamRig/blob/3a41caf249a484b71b20c562f79af6a5e44cbed1/data_preprocessing/kitti360/README.md">KITTI-360前処理</a>。</li>
+      <li id="sr-project-source"><strong>本プロジェクトの確認基準：</strong><a data-source="src/aic_transfuser_lite/models/time_path_v1.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/src/aic_transfuser_lite/models/time_path_v1.py">TimePathV1</a> / <a data-source="docs/model_distribution/current_time_path.json" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/docs/model_distribution/current_time_path.json">配布checkpointの契約</a> / <a data-source="docs/time_control_without_gnss_imu.md" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8d9ab923e8cc2d01b28296a3032f65ab9438c384/docs/time_control_without_gnss_imu.md">車速・操舵による局所オドメトリ</a>。ソースに残るoffline / runtime_ready表記と、別途記録された限定runtime統合を区別し、一般的な実運用対応を意味するものとはしていません。</li>
+      <li id="sr-license"><strong>ライセンス原文：</strong><a href="https://github.com/WeiYuFei0217/StreamRig/blob/3a41caf249a484b71b20c562f79af6a5e44cbed1/LICENSE">StreamRig CC BY-NC 4.0</a> / <a href="https://github.com/WeiYuFei0217/StreamRig/blob/3a41caf249a484b71b20c562f79af6a5e44cbed1/third_party/mapanything/LICENSE">同梱MapAnything Apache 2.0</a>。</li>
+    </ol>
+    <p class="tech-fine">更新内容：2026-09-30公開のStreamRig v1を1論文1記事で追加。学習データ・尺度・GT gap接続・集計・実行条件を明示し、現行システムへの適用候補と未確認事項を整理しました。</p>
+  </section>
+</div>
