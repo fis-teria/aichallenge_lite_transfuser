@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="完走履歴による終端集合・残り時間・局所モデル、BARC実験と公開コードの版差、現行TimePathへの適用条件。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>LMPC：走行履歴から学ぶラップタイム最適化 — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html" aria-current="page"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../papers.html">論文ノート</a></div>
+<span class="section-number">論文ノート</span><h1>LMPC：走行履歴から学ぶラップタイム最適化</h1>
+<p class="article-lead">完走履歴による終端集合・残り時間・局所モデル、BARC実験と公開コードの版差、現行TimePathへの適用条件。</p><div class="article-meta">
+<span>公開 <time datetime="2026-10-03">2026-10-03</time></span>
+<span>更新 <time datetime="2026-10-03">2026-10-03</time></span>
+<span class="tag">原著・公式コード確認／未実装候補</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文精読・学習制御</span><span class="paper-year">2019</span></div>
+<h2>LMPC：走れた履歴から、次のラップを改善する</h2>
+<p class="authors">Ugo Rosolia, Francesco Borrelli／University of California, Berkeley</p>
+<p class="paper-summary">一周できる制御器があっても、短い予測区間だけでは「この先で減速するなら、今どこを走るべきか」が見えません。Learning Model Predictive Control（LMPC）は、完走した履歴を終端状態の候補と残り時間の見積もりに変え、局所的に学んだ車両モデルと組み合わせます。レーシングと学習ベースMPCの接点を、論文・公開コード・本プロジェクトへの導入候補に分けて読みます。</p>
+<p>対象は<a href="https://arxiv.org/abs/1901.08184">Learning How to Autonomously Race a Car: a Predictive Control Approach</a>。初稿は2019-01-24、確認版は2019-10-29のv4です。<a href="https://arxiv.org/pdf/1901.08184v4">本文全7頁</a>と公式コードを2026-10-03に確認しました。本記事は文献・コードの静的調査であり、独立した追試や本プロジェクトでのLMPC実装・走行評価ではありません。</p>
+
+<h3>1. 何を学ぶのか：教師の操作ではなく、完走の続き</h3>
+<p>固定したレーシングラインを追うMPCでは、ラインと速度の設計を別途用意します。一方、ラップタイム最小化を毎周期フルコースで解くと計算が重くなります。LMPCの工夫は「今から短い区間を最適化し、その先を過去の成功例へ接続する」ことです。走行から得るのは、終端に置ける状態、そこからゴールまでのコスト、状態と操作の局所的な関係です。画像から直接操作を学ぶE2E方策とは、学習対象も必要な観測も異なります。<a href="https://arxiv.org/html/1901.08184v4#S3">原著§III</a></p>
+<figure class="tech-figure">
+  <figcaption>図1　履歴が次の計画へ戻る経路（本記事の概念図）</figcaption>
+  <ol class="tech-flow four">
+    <li><strong>完走履歴</strong><p>状態・適用操作・残りステップ数を保存</p></li>
+    <li><strong>二つの用途</strong><p>終端集合とコスト／局所的な車両モデル</p></li>
+    <li><strong>短い区間のMPC</strong><p>制約付きで計画し、最初の操作だけ適用</p></li>
+    <li><strong>次の周回へ</strong><p>新しい実行履歴で集合・モデルを更新</p></li>
+  </ol>
+  <p>終端集合はXY平面上の空き領域ではありません。速度や姿勢を含む状態空間の集合です。履歴を保存しただけで、障害物回避や未知の路面での安全性が付くわけではありません。</p>
+</figure>
+
+<h3>2. 状態と終端コストを読む</h3>
+<p>原著の状態は <code>x = [vₓ, vᵧ, r, eψ, s, eᵧ]</code>、操作は <code>u = [δ, a]</code>。縦・横速度はm/s、ヨーレートrはrad/s、向きの誤差eψと操舵δはrad、コース進捗sと横偏差eᵧはm、加速度aはm/s²です。既知の中心線に沿うFrenet座標を使うため、同じXY位置でも走行方向・周回・速度が違えば、同じ接続先とは扱えません。<a href="https://arxiv.org/html/1901.08184v4#S2">原著§II</a></p>
+<p>履歴から選んだm個の状態を列に持つ行列をD、その状態から実際に完走するまでの残りステップ数を並べた行ベクトルをcと書きます。記事用に添字を省略すると、終端状態と終端コストの関係は次の形です。</p>
+<div class="table-wrap" role="region" aria-label="LMPCの終端条件と目的関数" tabindex="0"><table class="tech-table"><caption>式1　局所的な履歴を短い予測へ接続する</caption><thead><tr><th scope="col">式</th><th scope="col">意味</th></tr></thead><tbody>
+<tr><td><code>x<sub>N</sub> = Dλ</code>、<code>λ ≥ 0</code>、<code>Σλᵢ = 1</code></td><td>予測の末端を、選んだ状態の凸結合へ置く。Dは6×m、λはm次元。</td></tr>
+<tr><td><code>V(x<sub>N</sub>) = min cλ</code></td><td>同じ終端状態を表せる重みの中で、履歴からの残りコストを小さくする。</td></tr>
+<tr><td><code>min Σh(x<sub>k</sub>) + cλ</code></td><td>予測区間内の未完走ステップと、その先の残りステップを合わせる。</td></tr>
+<tr><td><code>x<sub>k+1</sub> = A<sub>k</sub>x<sub>k</sub> + B<sub>k</sub>u<sub>k</sub> + C<sub>k</sub></code></td><td>局所モデル、状態・操作の制約、初期状態を同時に満たす。</td></tr>
+</tbody></table></div>
+<p>hは未完走なら1、完走後は0。ステップ数を秒に直すにはサンプル周期を掛けます。原著の「Q-function」は履歴上のコストを凸結合する値関数で、ニューラルネットのQ学習を前提としません。たとえば接続先までの短期コストが同じでも、履歴上の残り時間が短い状態を選ぶ動機が生まれます。ただしこれは過去の到達例による近似であり、真の最速ラップ時間が分かるという意味ではありません。<a href="https://arxiv.org/html/1901.08184v4#S3.SS3">原著§III-C–D、式7–11</a></p>
+<p>全履歴の全点を候補にするとλが大きくなります。原著は終端候補の近傍だけを取り、次の候補を履歴の後続状態から作ります。この計算量削減には、探索できる接続先も履歴の近くに偏るという代償があります。局所解への収束と、コース全体の最適性は分けて評価する必要があります。</p>
+
+<h3>3. 車両モデル：幾何を残し、速度の変化を局所回帰する</h3>
+<p>タイヤの全パラメータを同定する代わりに、近い走行状態のデータから「次の縦速度・横速度・ヨーレート」を局所回帰します。位置と向きは、中心線の曲率κ(s)を用いる既知の運動学で結びます。たとえば進捗速度は <code>ṡ = (vₓ cos eψ − vᵧ sin eψ) / (1 − κ(s)eᵧ)</code>。これを前回の予測系列の近くで線形化し、予測ステップごとに異なるアフィンモデルを作ります。<a href="https://arxiv.org/html/1901.08184v4#S4">原著§IV</a></p>
+<p><strong>実装を読む際の着眼点：</strong>縦速度の回帰には加速度、横速度・ヨーレートには操舵が入ります。<a href="https://github.com/urosolia/RacingLMPC/blob/b49c95e7795ef6f343efacedb6b90a69c7855b32/src/fnc/controller/PredictiveModel.py">著者のPredictiveModel.py</a>は、状態・操作の近傍をカーネルで重み付けし、回帰と幾何の線形化を分けています。ここでの「学習」は重み付きの局所回帰で、画像ネットワークの再学習やGPU学習とは別です。</p>
+<p><strong>本記事の解析：</strong>近傍判定ではm/sとrad/sなどをそのまま混ぜず、重みとデータの励起範囲を確認すべきです。同じ低速直進のログを増やしても、限界旋回のモデルが識別できるとは限りません。また上式の分母が小さくなる場所や、中心線への対応が曖昧な交差では、回帰精度以前に座標の扱いが問題になります。モデル残差、条件数、近傍点数、コース進捗の連続性を記録する理由がここにあります。</p>
+
+<h3>4. 原著の実験結果と、数値の境界</h3>
+<div class="table-wrap" role="region" aria-label="LMPC原著の実験条件" tabindex="0"><table class="tech-table"><caption>表1　原著§V・Table I・Fig.2–6で確認した範囲</caption><thead><tr><th scope="col">項目</th><th scope="col">原著の条件・観測</th><th scope="col">解釈上の制限</th></tr></thead><tbody>
+<tr><th scope="row">車両・環境</th><td>1/10 BARC、反時計回りの楕円・L字コース。初期は1.2 m/sの定速追従。</td><td>二つの固定コースの単独走行。実車サイズ、対戦、動的障害物の結果ではない。</td></tr>
+<tr><th scope="row">計算系</th><td>i7搭載MSI GT72で高位制御。Odroid XU4でWi-Fi通信、Arduino Nanoで低位制御。ROS、Python、OSQP。</td><td>全処理を車載小型CPUだけで実行した値ではない。i7の型番や遅延分布の詳細は本文から確定できない。</td></tr>
+<tr><th scope="row">予測・履歴</th><td>10 Hz、N=12、直近2周。終端近傍K=20、回帰近傍P=80、帯域h=10。</td><td>予測時間1.2 sは周期とNからの換算。hは近傍距離の定義に依存する。</td></tr>
+<tr><th scope="row">ラップの推移</th><td>著者は29周後の収束を報告。Fig.2には途中の増減もある。</td><td>毎周の実測時間が厳密に減る実験結果ではない。複数seedの統計や成功率の分布は示されていない。</td></tr>
+<tr><th scope="row">横加速度</th><td>IMU生計測で最大は約1 gと報告。</td><td>限界の説明は摩擦係数μ=1、空力無視の仮定。全状態の推定精度やセンサ構成は本文だけでは再現に十分でない。</td></tr>
+<tr><th scope="row">計算時間</th><td>有限時間最適化は平均10 ms未満。先行LMPCの90 msと比較し、双方N=12・10 Hzと記載。</td><td>Fig.6は最適化とモデル同定を別々に表示。通信・推定を含む全周期の最大値やdeadline違反率ではない。</td></tr>
+</tbody></table></div>
+<p>出典：<a href="https://arxiv.org/pdf/1901.08184v4#page=5">原著pp.5–6</a>。図の曲線から厳密なラップタイム短縮率を逆算していません。速度色の凡例も学習途中と収束後で異なります。モデル同定を含む処理時間とQP単独の時間を混ぜると、導入先で必要な計算予算を過小評価します。</p>
+
+<h3>5. 公式コードは、論文の設定そのものとは限らない</h3>
+<p>原著の脚注が指定するのは<a href="https://github.com/MPC-Berkeley/barc/tree/7a481c7044fb85aacd64f2b36df9e29463ea5912">BARCのdevel-ugoブランチ（確認commit 7a481c7）</a>です。一方、<a href="https://github.com/urosolia/RacingLMPC/tree/b49c95e7795ef6f343efacedb6b90a69c7855b32">著者のRacingLMPC（確認commit b49c95e）</a>は動的単車両モデルとPacejkaタイヤによるシミュレーション実装です。いずれもソースを静的に読み、実行はしていません。指定ブランチの現存commitが実験時の実行物と完全一致することまでは確認できていません。</p>
+<div class="table-wrap" role="region" aria-label="論文と公開シミュレーション実装の違い" tabindex="0"><table class="tech-table"><caption>表2　RacingLMPCの固定commitから分かる版差</caption><thead><tr><th scope="col">観点</th><th scope="col">確認した実装</th><th scope="col">再利用時の意味</th></tr></thead><tbody>
+<tr><th scope="row">予測長・初期化</th><td><code>main.py</code>はN=14、dt=0.1 s。LMPCの初期履歴はPID軌跡を4回追加。</td><td>論文のN=12・2周とは別。冒頭コメントに列挙されたLTI/LTV比較を、実際の履歴投入経路と混同しない。</td></tr>
+<tr><th scope="row">履歴の選択</th><td>ラップ時間で並べ、4履歴から合計48終端点を使う。近い状態をL1距離で探し、その周辺の時系列点を選択。</td><td>原著Table Iの「進捗sで近傍を取る・直近2周」と一致しない。</td></tr>
+<tr><th scope="row">制約</th><td>終端等式にslack、横境界にも罰則付きslackがある。</td><td>最適化が解けたことと、元の境界・終端条件を厳密に満たしたことは別。slack量の記録が必要。</td></tr>
+<tr><th scope="row">解法</th><td>QPにOSQP、局所回帰にCVXOPT。OSQPはsolveごとにsetupし、通常の呼び出しは明示warm-start初期値を渡していない。</td><td>同じ疎行列構造の再利用や前回解の利用による高速化は、導入候補として別途測る必要がある。</td></tr>
+</tbody></table></div>
+<p>根拠：<a href="https://github.com/urosolia/RacingLMPC/blob/b49c95e7795ef6f343efacedb6b90a69c7855b32/src/main.py">main.py</a>、<a href="https://github.com/urosolia/RacingLMPC/blob/b49c95e7795ef6f343efacedb6b90a69c7855b32/src/initControllerParameters.py">初期設定</a>、<a href="https://github.com/urosolia/RacingLMPC/blob/b49c95e7795ef6f343efacedb6b90a69c7855b32/src/fnc/controller/PredictiveControllers.py">制御器の組立・履歴選択・solve</a>。BARC側にも<a href="https://github.com/MPC-Berkeley/barc/blob/7a481c7044fb85aacd64f2b36df9e29463ea5912/workspace/src/barc/src/ControllersObject/LMPC.py">終端・横境界のslackと遅延を扱う実装</a>があります。論文の簡潔な定式化から、実装の硬い制約を推測するのは避けるべきです。</p>
+<p>RacingLMPCの<code>main.py</code>先頭には教育・研究目的の利用と出典表示に関する記述がありますが、確認treeに独立したLICENSEファイルはありません。依存版も固定されておらず、現行環境での起動は未確認です。コード移植は、ライセンスと依存の確認を含む別の実装作業になります。</p>
+
+<h3>6. 強みと失敗条件：safe setという名称の読み方</h3>
+<p><strong>強み：</strong>実行したデータから短い予測の先を評価でき、専用の最速ライン教師を先に用意しなくても改善を狙えます。幾何とデータで学ぶ部分が分かれているため、モデル・終端集合・コストのどこが結果に効いたかも検証しやすい構成です。</p>
+<p><strong>原著の条件：</strong>履歴の凸結合から次の状態へ進めるという議論は、線形系、または局所集合内で線形化が非線形系を近似できることに依存します。非線形な車両の安全な二つの状態を混ぜても、その中間から同じように安全に走れるとは限りません。<a href="https://arxiv.org/html/1901.08184v4#S3.SS4">§III-Dの条件付きの記述</a>を、モデル誤差・外乱・未知障害物に対する無条件の保証へ拡張しません。</p>
+<p><strong>本記事の解析：</strong>路面摩擦の変化、車体・タイヤの変更、推定のずれ、同じ進捗にいる別方向の車両、履歴にない急制動では、近傍回帰と終端の続行可能性の両方が崩れ得ます。速い履歴だけの保持は、遅い安全な接続先を失う可能性もあります。失敗した周回を成功履歴へ登録しないこと、制約緩和とソルバー異常を監視すること、現在の環境で履歴を再検査することが、導入検討の条件です。対戦・追越しの性能はこの論文では裏付けられません。</p>
+
+<h3>7. 既存手法と何を比較するか</h3>
+<div class="table-wrap" role="region" aria-label="LMPCと関連手法の比較" tabindex="0"><table class="tech-table"><caption>表3　性能順位ではなく、解いている問題を比較する</caption><thead><tr><th scope="col">手法</th><th scope="col">主な役割</th><th scope="col">LMPCとの比較軸</th></tr></thead><tbody>
+<tr><th scope="row">固定ラインの追従MPC</th><td>与えられた経路・速度へ追従</td><td>追従誤差だけでなく、ライン改善と周回コストの変化を分ける。</td></tr>
+<tr><th scope="row"><a href="forzaeth-race-stack-2024.html">ForzaETH Race Stack</a></th><td>位置推定・計画・制御・対戦をつなぐ全体構成</td><td>全スタックと一つの学習制御器を同列にしない。LMPC単体に対戦機能を読み込まない。</td></tr>
+<tr><th scope="row"><a href="information-theoretic-mpc.html">MPPI</a>／<a href="robust-mppi.html">RMPPI</a></th><td>候補系列のサンプリング、コスト重み付け。RMPPIは追従を予測へ含める。</td><td>LMPCは履歴由来の終端情報と局所モデル、これらのMPPI手法は探索・フィードバックの扱いが主題。組合せは候補だが、本論文の実証内容ではない。</td></tr>
+<tr><th scope="row">本サイトのreference-space MPPI</th><td>静的占有に対して局所参照経路を修正</td><td>周回終端価値や学習した速度状態モデルは持たない。求める入出力・安全条件が違う。</td></tr>
+</tbody></table></div>
+<p>関連する分類は<a href="mpc-mppi-overview.html">MPC・MPPI概説</a>、車両・速度・対戦を含む評価条件は<a href="racing-overview-2018-2026.html">高速レーシング概説</a>を参照してください。別の車両・コース・計算機のラップタイムやms値から優劣を決めません。</p>
+
+<h3>8. 現行E2E Lite TransFuserへの適用候補</h3>
+<p>以下は2026-10-03に確認した公開系統の<code>45c0b4d</code>に基づきます。<strong>本プロジェクトで実装済み</strong>なのは、TimePathV1の観測時base_link座標における30点の未来XY（0.1〜3.0 s）と、静的占有を使うreference-space MPPIです。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/45c0b4d3f17ad7135b40e219be71aab39a88faa3/src/aic_transfuser_lite/models/time_path_v1.py">モデル出力</a>の速度は区間の距離から得るノルムであり、LMPCが必要とする符号付き縦・横速度とは別です。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/45c0b4d3f17ad7135b40e219be71aab39a88faa3/docs/model_distribution/current_time_path.json">配布設定</a>ではcommand historyを無効にしています。</p>
+<p>現在の<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/45c0b4d3f17ad7135b40e219be71aab39a88faa3/src/aic_transfuser_lite/control/slam_mppi.py">MPPIコード</a>は横方向の参照オフセットや曲率候補を評価し、未知占有を拒否します。終端の復帰はコストであり、LMPCの履歴由来の終端制約ではありません。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/45c0b4d3f17ad7135b40e219be71aab39a88faa3/docs/time_control_without_gnss_imu.md">現行の制御入力契約</a>も、車速・実測操舵による局所オドメトリと、診断専用の車両運動情報を区別しています。診断値を説明なしに新しい推論入力へ転用できません。</p>
+<p><strong>本プロジェクトで実測済み</strong>の範囲は、たとえば<a href="slam-mppi-box-20260919.html">2026-09-19のAWSIM静止箱試験</a>の5 km/h目標における通過・復帰です。対応する<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/45c0b4d3f17ad7135b40e219be71aab39a88faa3/docs/slam_mppi_avoidance.md">検証記録</a>の最大計算時間42.52 msは、その試験のMPPI処理の観測値です。LMPCのi7上のQP平均時間との速度ランキングには使えません。<a href="speed-trial-20260919.html">速度上限を上げた試験</a>にも予測範囲の短縮と停止が記録されており、限界走行や周回学習が実証済みという状態ではありません。</p>
+<p><strong>導入候補としての判断：</strong>最初に検討する価値があるのは、制御器の一括置換よりも、履歴の品質・座標・到達後コストを明示する設計です。ただしTimePathの未来予測は実行済みの安全な履歴ではないため、そのままsafe setへ登録する案には根拠がありません。実行して完走した軌跡との対応が必要です。操舵・加速度はモデル外の制御器で扱い、モデルの主出力をwaypoint・速度・停止とする設計方針、外部Safety Supervisorによる監視を保つことが検討の前提です。</p>
+
+<h3>9. 必要なデータ・変更・検証</h3>
+<div class="table-wrap" role="region" aria-label="LMPC導入候補の検証項目" tabindex="0"><table class="tech-table"><caption>表4　実装依頼を行う前に明確にする契約</caption><thead><tr><th scope="col">対象</th><th scope="col">必要な準備と確認</th></tr></thead><tbody>
+<tr><th scope="row">データ</th><td>完走／失敗の区別、コースと路面条件、時刻同期した状態と実際に適用された操作、中心線・境界・周回番号。vᵧ・ヨーレートの推定誤差、操舵・加減速の遅延も記録。teacher/debug-only値を推論入力へ混入させない。</td></tr>
+<tr><th scope="row">再学習</th><td>局所回帰の更新と画像モデルの再学習を分ける。LMPC単体の検討なら画像モデルの再学習は必須ではない。run・scenarioを分離し、同一周回の隣接frameを学習・評価へ混ぜない。</td></tr>
+<tr><th scope="row">計算資源</th><td>近傍探索、モデル同定、行列構築、QP、状態推定・通信を個別と全体で測る。平均だけでなくp95/p99・最大・deadline違反を記録。GPUが必要とも、現在のCPUで足りるとも未判定。</td></tr>
+<tr><th scope="row">実装変更</th><td>Frenet変換と周回境界、履歴採否、終端集合・コスト、回帰、制御入力への変換、slack・solver異常時の処理が必要。オンライン適応や参照だけの補助利用は別方式として評価する。</td></tr>
+<tr><th scope="row">段階的な評価</th><td>保存データ上で近傍不足・外挿・単位・多段予測誤差を確認した後、別依頼で同条件のclosed-loop比較を行う。ラップ時間、完走率、境界違反、介入、計算予算、モデル誤差を並べる。</td></tr>
+<tr><th scope="row">失敗試験</th><td>摩擦変化、推定ずれ、操舵遅延、履歴不足、失敗履歴の混入、終端slack増大、通信断、未知障害物。センサtimeout・停止距離・NaN監視は終端集合とは独立に残す。</td></tr>
+</tbody></table></div>
+<p>オフラインでの回帰誤差の改善は、AWSIM・実車のラップ短縮や衝突回避の証明にはなりません。本調査では学習・制御コードを変更せず、学習・走行実験も実施していません。</p>
+
+<h3>10. 出典と残る調査</h3>
+<p>最終確認日：2026-10-03。原著v4の方法・条件・図表、著者RacingLMPCのREADME・main・設定・制御器・モデル・シミュレータ、原著指定BARCのLMPC実装とlaunchを確認しました。確認したコードは版を固定したリンクで示しています。出版社版との逐語照合、実験当日の完全な設定・生ログ、全センサの推定仕様、ソフトウェアの動作再現は未確認です。</p>
+<p>次の候補は、LMPCの基礎理論での再帰的実行可能性の前提、モデル不確かさを明示する学習MPC、BayesRaceやオンライン同定との比較です。原著の参照文献にある先行方式と後続方式を追い、保証・速度改善・計算短縮がそれぞれ何を前提とするかを確認します。調査の現在地は<a href="research-map.html">研究地図と資料年表</a>へ反映しています。</p>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-03">2026-10-03</time></div>
+<h3><a href="../articles/racing-overview-2018-2026.html">高速自律レーシングの研究地図：2018–2026</a></h3>
+<p>F1TENTHと実車の位置推定、タイヤ同定、経路・速度、対戦、実時間を評価条件ごとに整理。</p><div class="card-bottom"><span>調査・適用候補</span>
+<a class="article-read" href="../articles/racing-overview-2018-2026.html" aria-label="高速自律レーシングの研究地図：2018–2026を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-03">2026-10-03</time></div>
+<h3><a href="../articles/mpc-mppi-overview.html">MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</a></h3>
+<p>線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="card-bottom"><span>文献俯瞰・適用候補</span>
+<a class="article-read" href="../articles/mpc-mppi-overview.html" aria-label="MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-02">2026-10-02</time></div>
+<h3><a href="../articles/robust-mppi.html">Robust MPPI：追従器を予測の内側へ入れる</a></h3>
+<p>RMPPIの名目／実状態と追従内包、条件付きfree-energy保証、実験条件の違い、導入前の検証を解説します。</p><div class="card-bottom"><span>原論文精読・未実装候補</span>
+<a class="article-read" href="../articles/robust-mppi.html" aria-label="Robust MPPI：追従器を予測の内側へ入れるを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-03">2026-10-03</time></div>
+<h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
+<p>4領域・144区分の確認範囲と未調査を整理。81資料・65研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

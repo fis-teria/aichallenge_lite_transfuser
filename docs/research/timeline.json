@@ -144,6 +144,24 @@
     "checked_scope": "Full text downloaded; first page metadata, optimal-control/SQP architecture sections inspected; benchmarks not extracted"
   },
   {
+    "year": 2019,
+    "classification_year": 2019,
+    "publication_date": "2019-01-24",
+    "updated": "2019-10-29 v4",
+    "era": "2018-2020",
+    "domain": "control",
+    "title": "Learning How to Autonomously Race a Car: a Predictive Control Approach",
+    "study_family_id": "lmpc-racing-2019",
+    "source_id": "C15",
+    "url": "https://arxiv.org/pdf/1901.08184v4",
+    "date_basis": "arXiv version history: v1 2019-01-24, checked v4 2019-10-29. DOI is arXiv DOI.",
+    "boundary_note": "著者arXiv版を確認。出版社版との逐語照合と実験時の全設定・生ログは未確認。",
+    "source_type": "preprint",
+    "doi": "10.48550/arXiv.1901.08184",
+    "checked_date": "2026-10-03",
+    "checked_scope": "Full v4 PDF, 7 pages; sections I–VI, equations 1–17, Table I and Figures 1–6. Method, conditional local feasibility, BARC setup, solver versus identification timing, lap fluctuations and official code links checked. No independent reproduction."
+  },
+  {
     "year": 2020,
     "classification_year": 2020,
     "publication_date": "",
@@ -1456,5 +1474,41 @@
     "doi": null,
     "checked_date": "2026-10-02",
     "checked_scope": "README; eval and metrics docs; csv sr_and_dest and aggregation denominators; StopSign threshold/state; SpeedLimitSign; registry; PlanT-2 adapter lines1–130; training README."
+  },
+  {
+    "year": null,
+    "classification_year": null,
+    "publication_date": "",
+    "updated": "commit b49c95e7795ef6f343efacedb6b90a69c7855b32; 2020-10-01",
+    "era": "undated",
+    "domain": "control",
+    "title": "RacingLMPC — author simulation implementation",
+    "study_family_id": "lmpc-racing-2019",
+    "source_id": "C16",
+    "url": "https://github.com/urosolia/RacingLMPC/tree/b49c95e7795ef6f343efacedb6b90a69c7855b32",
+    "date_basis": "Commit date is a version timestamp, not proof of first public release. Excluded from era counts until publication date is verified.",
+    "boundary_note": "初公表日未確認。確認commitの日付を公開日へ代用しない。原著実車実験の設定とは異なる。main.pyの教育・研究用途の条件を確認し、独立LICENSEファイルはtreeに見つからない。",
+    "source_type": "code",
+    "doi": "",
+    "checked_date": "2026-10-03",
+    "checked_scope": "Pinned tree, README, src/main.py, initControllerParameters.py, PredictiveControllers.py, PredictiveModel.py and simulator/SysModel.py. Static inspection of initialization, horizon, history selection, slack constraints, OSQP setup and local regression. No execution."
+  },
+  {
+    "year": null,
+    "classification_year": null,
+    "publication_date": "",
+    "updated": "commit 7a481c7044fb85aacd64f2b36df9e29463ea5912; 2019-05-09",
+    "era": "undated",
+    "domain": "control",
+    "title": "BARC devel-ugo — repository specified by the LMPC paper",
+    "study_family_id": "lmpc-racing-2019",
+    "source_id": "C17",
+    "url": "https://github.com/MPC-Berkeley/barc/tree/7a481c7044fb85aacd64f2b36df9e29463ea5912",
+    "date_basis": "Pinned branch commit timestamp is not treated as publication date. Excluded from era counts.",
+    "boundary_note": "初公表日未確認。現存devel-ugoのcommitと原著実験時の全ファイルが同一とは断定しない。",
+    "source_type": "code",
+    "doi": "",
+    "checked_date": "2026-10-03",
+    "checked_scope": "Paper footnote repository/branch resolved. Pinned branch tree, ControllersObject/LMPC.py (constraint slacks, model regression, input delay, OSQP assembly), runLMPCmpcUbuntuNewBARC.launch and root license inspected. Not the whole ROS stack; exact experiment configuration and execution unverified."
   }
 ]

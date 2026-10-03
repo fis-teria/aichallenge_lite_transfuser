@@ -70,7 +70,7 @@
 <span class="section-number">継続資料</span><h1>MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</h1>
 <p class="article-lead">線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-02">2026-10-02</time></span>
-<span>更新 <time datetime="2026-10-02">2026-10-02</time></span>
+<span>更新 <time datetime="2026-10-03">2026-10-03</time></span>
 <span class="tag">文献俯瞰・適用候補</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">制御分野俯瞰</span><span class="paper-year">2018–2026</span></div>
 <h2>MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を分けて読む</h2>
 <p class="paper-summary">MPCは毎周期、有限の未来を予測して最初の操作を実行する枠組みです。MPPIはその最適化をサンプリングで近似する一群です。線形／非線形、ロバスト／確率的、学習モデル／物理モデルは別の分類軸であり、「新しい手法ほど安全・高速」という順序にはなりません。</p>
@@ -120,6 +120,9 @@
 </ol>
 <h3>変更点・読解範囲・未確認事項</h3>
 <p>分類軸、期間別の代表研究、現在の参照空間実装との境界、比較プロトコルを新設しました。RMPPIは本文全8頁と数式・実験表を確認、その他は各本文の該当節または公式実装資料を確認しました。全論文の追試・全公開実装のビルドは実施していません。2025–2026の全研究、車両向けchance constraintと混合整数MPC、KMPPI・SVG-MPPIの独立精読は残っています。</p>
+
+<h3>履歴から終端条件を学ぶLMPC</h3>
+<p>2026-10-03追記。<a href="learning-mpc-racing-2019.html">LMPCによる自律レーシング（2019）</a>を追加しました。終端集合・残り時間・局所モデルの学習を説明し、QPの平均時間と制御全体の計算時間、理論上の条件と公開コードのslackを区別します。サンプリングや追従器を主題とするMPPI・RMPPIと、何を改善しようとしているかを比較できます。本プロジェクトでは未実装の導入候補です。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-09-27">2026-09-27</time></div>
@@ -137,9 +140,14 @@
 <p>Camera・2D LiDAR・車両状態からの経路予測と、モデル外の制御・安全監視を整理します。</p><div class="card-bottom"><span>継続資料</span>
 <a class="article-read" href="../articles/system-architecture.html" aria-label="システム構成とTimePathの入出力を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-02">2026-10-02</time></div>
+<time datetime="2026-10-03">2026-10-03</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
 <p>4領域・144区分の確認範囲と未調査を整理。81資料・65研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
-<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-03">2026-10-03</time></div>
+<h3><a href="../articles/learning-mpc-racing-2019.html">LMPC：走行履歴から学ぶラップタイム最適化</a></h3>
+<p>完走履歴による終端集合・残り時間・局所モデル、BARC実験と公開コードの版差、現行TimePathへの適用条件。</p><div class="card-bottom"><span>原著・公式コード確認／未実装候補</span>
+<a class="article-read" href="../articles/learning-mpc-racing-2019.html" aria-label="LMPC：走行履歴から学ぶラップタイム最適化を読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>
