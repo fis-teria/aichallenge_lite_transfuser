@@ -133,3 +133,5 @@ Learning by Cheating（CoRL 2019 / PMLR 2020）を1記事として追加しま�
 - 新記事・研究地図・E2E概説・DAggerを320/390/768/1440pxで確認。6表のcaption・横スクロール、図・数式を確認し、PC・スマホの図と数式を目視確認。相互リンクも確認。
 - 新記事の一次資料22 URLはHTTP 200。既存83資料・年表レコードと既存30キュー項目を保全し、LBCだけ確認範囲を更新。CSVとJSONの件数を照合し、ニュース由来20件の状態を変更していない。
 - 差分は調査管理とサイト本文・メタデータ・生成HTMLのみ。全体pytest、学習・走行、著者コードの独立再現は今回未実施。
+
+LBC記事の公開commit `4d8215f737dfe3e1e0d07b9df9e20d763a4ca294` の[CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/37171095274)と、変更した15配信HTMLの生成物との完全一致を確認しました。新記事・研究地図・E2E概説・DAggerを実配信で4画面幅確認し、相互リンクと表のキーボード横スクロールも確認。公開URL・hash・確認範囲は `lbc-publication-20261004.json` に記録し、該当記事状態をpublishedにしました。変更のない配信ページ・資産は再取得していません。
