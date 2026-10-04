@@ -70,9 +70,9 @@
 <span class="section-number">継続資料</span><h1>E2E自動運転の全体像と比較の読み方</h1>
 <p class="article-lead">2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-02">2026-10-02</time></span>
-<span>更新 <time datetime="2026-10-02">2026-10-02</time></span>
+<span>更新 <time datetime="2026-10-04">2026-10-04</time></span>
 <span class="tag">文献調査</span></div></header><div class="article-body"><p class="paper-summary">E2E自動運転は「画像から直接操舵する一種類の方式」ではありません。学習する範囲、観測できる情報、出力の契約、評価環境が異なる研究群です。本稿は2018年10月2日から2026年10月2日までの代表例を、E2E Lite TransFuserで設計判断に使える分類へ整理します。全論文の網羅調査ではなく、比較条件を揃えるための入口です。</p>
-<p><strong>最終確認日：</strong>2026-10-02。論文の初回公開年と会議・誌面の発表年を区別します。企業の公開発表は技術動向の証拠として扱い、独立に再現された走行性能とは扱いません。</p>
+<p><strong>最終確認日：</strong>2026-10-04。初回の俯瞰範囲は2026-10-02までで、今回の追記はLBCの精読と関連記事です。論文の初回公開年と会議・誌面の発表年を区別します。企業の公開発表は技術動向の証拠として扱い、独立に再現された走行性能とは扱いません。</p>
 <h2>何を解く技術か</h2>
 <p>車両が次にどう動くかは、道路形状、障害物、他車の意図、自車状態、目的地の組合せで決まります。モジュール方式では認識・予測・計画・制御の間に人が定めた表現を渡します。E2Eでは、その一部または全体を最終的な運転目的に沿って学習します。重要なのは「ニューラルネットが一つか」よりも、「どの誤差がどこまで伝播し、どの部分が固定されるか」です。</p>
 <p>たとえばTransFuserはセンサからwaypointまでを学習し、低レベル操作はPIDへ渡します。UniADは追跡、地図、運動予測、占有、計画という意味を持つ中間タスクを残して統合学習します。ChauffeurNetは認識済みの環境表現を入力とするため、raw sensorからの認識を含む方式とは境界が異なります。これらをすべて「完全なブラックボックス」と呼ぶと、監督信号と故障箇所を見失います。<a href="https://arxiv.org/pdf/2104.09224">TransFuser §3</a>、<a href="https://arxiv.org/html/2212.10156v2">UniAD §3</a>、<a href="https://arxiv.org/abs/1812.03079">ChauffeurNet</a></p>
@@ -123,6 +123,9 @@
 
 <h2>2026年の評価研究を読む</h2>
 <p><a href="dreamstream-2026.html">DreamStream</a>は観測生成器と運転方策の誤差を分け、<a href="traffic-sign-bench-2026.html">TrafficSignBench</a>は対象規則の遵守と到着を同じ試行で採点します。前者の特徴距離と後者の規則指標は、同じ性能順位へ統合できません。両記事で原著・配布版・評価条件・本プロジェクトへの未実装の適用候補を区別しています。2026-10-02、関連記事を追加しました。</p>
+
+<h2>特権教師から生徒へ移す情報を読む</h2>
+<p>2026-10-04、<a href="learning-by-cheating-2019.html">Learning by Cheating（CoRL 2019）の個別解説</a>を追加しました。実演で選ばれなかった進路にも教師信号を出す全分岐監督と、生徒の走行状態へ教師付けするDAggerを分けて説明します。二段化だけでは改善しなかった実験、到着率と衝突判定の違い、CARLA 0.9.5と公開0.9.6実装の差を整理しています。教師情報の分離が実装されていることと、LBCの蒸留を本プロジェクトで実施済みであることは別です。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-02">2026-10-02</time></div>
@@ -140,7 +143,7 @@
 <p>Camera・2D LiDAR・車両状態からの経路予測と、モデル外の制御・安全監視を整理します。</p><div class="card-bottom"><span>継続資料</span>
 <a class="article-read" href="../articles/system-architecture.html" aria-label="システム構成とTimePathの入出力を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-03">2026-10-03</time></div>
+<time datetime="2026-10-04">2026-10-04</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
 <p>4領域・144区分の確認範囲と未調査を整理。81資料・65研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
 <a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
@@ -153,6 +156,11 @@
 <time datetime="2026-10-02">2026-10-02</time></div>
 <h3><a href="../articles/traffic-sign-bench-2026.html">TrafficSignBench：標識遵守を完走と同時に測る</a></h3>
 <p>標識ごとのclosed-loop評価と規則教師による学習。SCDの分母、公開版の範囲差、E2E Liteへの適用条件を整理。</p><div class="card-bottom"><span>原著・公開実装を確認</span>
-<a class="article-read" href="../articles/traffic-sign-bench-2026.html" aria-label="TrafficSignBench：標識遵守を完走と同時に測るを読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/traffic-sign-bench-2026.html" aria-label="TrafficSignBench：標識遵守を完走と同時に測るを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-04">2026-10-04</time></div>
+<h3><a href="../articles/learning-by-cheating-2019.html">Learning by Cheating：特権教師から画像の運転方策へ</a></h3>
+<p>全分岐の教師信号とDAgger、CARLA成功率の定義、公開コードの版差、TimePathへの導入条件を解説。</p><div class="card-bottom"><span>原著・補足・公式コード確認／未導入</span>
+<a class="article-read" href="../articles/learning-by-cheating-2019.html" aria-label="Learning by Cheating：特権教師から画像の運転方策へを読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

@@ -70,7 +70,7 @@
 <span class="section-number">論文ノート</span><h1>DAgger：模倣学習で生じる分布ずれ</h1>
 <p class="article-lead">学習した方策の行動が次の観測を変えるため、教師の走行だけで学ぶと運用時に分布ずれが生じる問題を扱います。DAggerでは学習者が訪れた状態に教師の指示を付け、データを反復集約します。</p><div class="article-meta">
 <span>公開 <time datetime="2026-09-27">2026-09-27</time></span>
-<span>更新 <time datetime="2026-09-27">2026-09-27</time></span>
+<span>更新 <time datetime="2026-10-04">2026-10-04</time></span>
 <span class="tag">一次資料を確認</span></div></header><div class="article-body"><div class="paper-top">
                 <span class="paper-index">03</span
                 ><span class="tag">学習・分布ずれ</span
@@ -104,11 +104,19 @@
                 href="https://proceedings.mlr.press/v15/ross11a.html"
                 >PMLRで原論文を読む ↗</a
               >
+
+<h3>運転への適用例：Learning by Cheating</h3>
+<p>2026-10-04追記。<a href="learning-by-cheating-2019.html">LBCの個別解説</a>では、特権情報を持つ学習済み教師が、生徒の訪れた状態と全進路分岐へwaypointの教師信号を与えます。生徒状態の収集と、保存データ上の蒸留は別段階です。教師・生徒を混ぜる公開コードの収集方策も確認しています。DAggerの理論を、近似教師・有限データ・本プロジェクトの走行へ無条件に適用するものではありません。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
 <time datetime="2026-09-27">2026-09-27</time></div>
 <h3><a href="../articles/roadmap.html">次に検証する課題と判断基準</a></h3>
 <p>保持経路による復帰、予測短縮、反復評価、画像表現の比較を、検証できる単位に整理します。</p><div class="card-bottom"><span>継続資料</span>
-<a class="article-read" href="../articles/roadmap.html" aria-label="次に検証する課題と判断基準を読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/roadmap.html" aria-label="次に検証する課題と判断基準を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-04">2026-10-04</time></div>
+<h3><a href="../articles/learning-by-cheating-2019.html">Learning by Cheating：特権教師から画像の運転方策へ</a></h3>
+<p>全分岐の教師信号とDAgger、CARLA成功率の定義、公開コードの版差、TimePathへの導入条件を解説。</p><div class="card-bottom"><span>原著・補足・公式コード確認／未導入</span>
+<a class="article-read" href="../articles/learning-by-cheating-2019.html" aria-label="Learning by Cheating：特権教師から画像の運転方策へを読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

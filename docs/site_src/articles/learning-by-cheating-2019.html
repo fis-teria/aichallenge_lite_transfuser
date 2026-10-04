@@ -1,0 +1,103 @@
+<div class="paper-top"><span class="tag">模倣学習・教師と生徒</span><span class="paper-year">CoRL 2019 / PMLR 2020</span></div>
+<h2>Learning by Cheating：特権情報を学習時だけ使う</h2>
+<p class="authors">Dian Chen, Brady Zhou, Vladlen Koltun, Philipp Krähenbühl／UT Austin、Intel Labs</p>
+<p class="paper-summary">正解の地図や物体位置が見える教師に、画像だけでは学びにくい運転の判断を先に学ばせる。その教師から、画像・速度・進路指示で走る生徒へ知識を移すのがLearning by Cheating（LBC）です。重要なのは二つのモデルを並べることよりも、生徒が訪れた状態や、実演で選ばれなかった進路にも教師信号を出せることにあります。</p>
+<p>対象は<a href="https://proceedings.mlr.press/v100/chen20a.html">Learning by Cheating</a>。CoRL 2019の研究で、PMLRの書誌年は2020年、<a href="https://arxiv.org/abs/1912.12294">arXiv v1</a>は2019-12-27です。2026-10-04に採択本文10頁、補足3頁、著者公開コードを確認しました。論文のCARLA実験、固定版コードからの読解、本プロジェクトへの導入候補を区別します。</p>
+
+<h3>1. 背景：実演された操作だけでは教師信号が足りない</h3>
+<p>通常のbehavior cloningは、専門家が走った状態と選んだ行動の組を学びます。交差点で左折したログには、その瞬間に直進する場合の正解がありません。また、生徒が少し逸脱した状態は、専門家のきれいな走行ログに含まれないことがあります。データを単純に反復しても、この二つの不足は埋まりません。</p>
+<p>LBCはまず、道路・車線・車両・歩行者・信号状態の正解を上から描いた地図を見る教師を、autopilotの実演から学習します。教師は画像認識の誤差を背負わずに運転を学び、地図と軌道を同時に回転・平行移動して回復状態も増やせます。次に教師を使い、生徒の全進路分岐と、生徒自身の走行中の状態へラベルを与えます。<a href="https://proceedings.mlr.press/v100/chen20a/chen20a.pdf#page=3">原著§2</a></p>
+<p>ここでの「cheating」は学習時に利用する特権情報を指します。実行時の生徒にはその地図を渡しません。ただし生徒はRGBだけで走るわけでもなく、車速と「左・右・直進・車線追従」の指示を受けます。指示を生成するナビゲーションや、waypointを操作へ変えるPIDは別の構成要素です。</p>
+
+<figure class="tech-figure">
+  <figcaption>図1　教師情報を渡す場所と、実行時の境界（本記事の概念図）</figcaption>
+  <ol class="tech-flow four">
+    <li><strong>実演を収集</strong><p>状態・画像・速度・進路指示と未来位置を記録</p></li>
+    <li><strong>教師を学習</strong><p>正解の俯瞰地図から、進路別のwaypointを予測</p></li>
+    <li><strong>生徒へ蒸留</strong><p>画像側の全分岐を教師で監督し、生徒の走行状態を追加</p></li>
+    <li><strong>生徒を実行</strong><p>RGB＋速度＋指示 → waypoint → PID。教師地図は入力しない</p></li>
+  </ol>
+  <p>学習中に教師地図を保存することと、車上推論で地図を使うことは別です。また教師の予測は学習した近似であり、どの状態でも正しい理想的なoracleとは限りません。</p>
+</figure>
+
+<h3>2. 仕組み：座標の対応を使った軌道の蒸留</h3>
+<p>教師は7チャネルの地図を入力します。内訳は道路、車線境界、車両、歩行者、赤・黄・緑信号です。ResNet-18の特徴から各進路・各未来点のheatmapを作り、soft-argmaxで座標へ変換します。生徒はImageNet事前学習済みResNet-34を使い、前方画像上のwaypointを予測します。画像の軸と出力位置を対応させてから、既知のカメラ幾何で地面上へ写します。<a href="https://proceedings.mlr.press/v100/chen20a/chen20a.pdf#page=3">原著§2.1–2.2・§3</a></p>
+<div class="table-wrap" role="region" aria-label="LBCの教師学習と蒸留の式" tabindex="0"><table class="tech-table"><caption>式1　学習対象と情報の流れ（添字を省略した説明用の表記）</caption><thead><tr><th scope="col">関係</th><th scope="col">意味</th></tr></thead><tbody>
+<tr><td><code>w<sub>k</sub> = R<sub>t</sub><sup>−1</sup>(x<sub>t+kΔt</sub> − x<sub>t</sub>)</code></td><td>実演の未来位置を観測時の車両座標へ変換。未来位置は教師専用で、現在の推論入力ではない。</td></tr>
+<tr><td><code>ŵ<sub>c,k</sub> = Σ<sub>p</sub> p · h<sub>c,k</sub>(p)</code></td><td>正規化されたheatmap hの座標平均。進路cごとに未来点kを得る。</td></tr>
+<tr><td><code>L<sub>T</sub> = E[‖w − T(M,v)<sup>c</sup>‖₁]</code></td><td>教師Tを、地図M・速度vから実演の軌道へ近付ける。実演で選ばれた分岐cを監督。</td></tr>
+<tr><td><code>L<sub>S</sub> = E[Σ<sub>c</sub> ‖P(S(I,v)<sup>c</sup>) − T(M,v)<sup>c</sup>‖₁]</code></td><td>生徒Sの画像座標出力を変換Pで教師と揃え、全分岐を監督。係数・平均の取り方は実装で確認する。</td></tr>
+</tbody></table></div>
+<p>white-box supervisionは、実演で選んだ一つの操作だけを真似る代わりに、学習済み教師の全分岐のwaypointを利用する設計です。たとえば左折の途中にも右折指示に対応する教師出力を得られます。ただし、教師がその状態の右折を実際に成功させた証拠ではありません。教師が妥当な軌道を返す範囲を確認する必要があります。</p>
+<p><strong>本記事の解析：</strong>heatmapの平均は微分可能でも、安全な経路を保証しません。二つの候補へ確率が分かれた場合、平均点がその間の走れない場所に来る可能性があります。waypoint回帰の損失が小さいこと、選んだ進路が正しいこと、車体が通過できることは別の確認項目です。</p>
+
+<h3>3. DAggerと座標変換が学習手順を左右する</h3>
+<p>生徒は最初に保存済みの状態で教師を模倣し、その後、生徒の方策で訪れた状態にも教師からラベルを得ます。これは<a href="dagger.html">DAgger</a>の、自分の行動で変わる入力分布へ学習を合わせる考え方です。原著は損失の大きい状態を重点的に再サンプルする方法も用います。オンラインとは学習中にシミュレータからデータを追加する意味で、運用車両が無制限に自己更新することではありません。</p>
+<p><a href="https://github.com/dotchen/LearningByCheating/blob/4145d33f74c9a8f27061a0f94840f3e458ecc60e/training/train_image_phase2.py">公開phase2</a>では教師と生徒の操作を確率的に混ぜ、生徒の選択確率を学習ラウンドeに対して <code>1 − 0.5 × 0.95<sup>e</sup></code> としています。保存した俯瞰地図から全分岐の教師予測を再計算して学習します。<a href="https://github.com/dotchen/LearningByCheating/blob/4145d33f74c9a8f27061a0f94840f3e458ecc60e/training/phase2_utils.py">replay buffer</a>は容量上限に達すると損失重みの小さい点を除くため、全履歴を等しく残す実装ではありません。収集分布と再生分布も記録すべき対象です。</p>
+<p>画像から地面への変換は固定した地面と前向きカメラを仮定します。原著補足のカメラは384×160、水平画角90°、高さ1.4 mです。画像の地平線付近では射影の分母が小さくなります。初期heatmapが画像中央を出すと遠方へ発散するため、原著は画像座標上の損失で1,000更新のwarm-upを入れています。公開コードにも<a href="https://github.com/dotchen/LearningByCheating/blob/4145d33f74c9a8f27061a0f94840f3e458ecc60e/training/train_image_phase0.py">専用phase0</a>がありますが、原著の更新回数を公開スクリプトの既定実行条件へ読み替えません。<a href="https://proceedings.mlr.press/v100/chen20a/chen20a-supp.zip">公式補足§1（ZIP内PDF）</a></p>
+<p><strong>本記事の解析：</strong>異なる高さ・姿勢のカメラ、傾斜路、車体ピッチ変化へ、その射影と4 mの補正値をそのまま移植する根拠はありません。カメラ座標と車両座標の符号、原点、画像の上下、単位をテストする必要があります。時間方向に離れた点を「同じwaypoint」と扱うことも、速度や制動の誤差へ直結します。</p>
+
+<h3>4. 何が効いたか：二段化だけでは改善しない</h3>
+<p>原著Table 1は、CARLA 0.9.5、CoRL2017のNavigation、未学習Town・未学習天候での比較です。下表の成功率はこの条件に限ります。原著の直接模倣用データには軌道ノイズがなく、この比較を「あらゆるbehavior cloningは20%しか成功しない」という主張には使えません。</p>
+<div class="table-wrap" role="region" aria-label="LBCのアブレーション結果" tabindex="0"><table class="tech-table"><caption>表1　原著Table 1の同条件比較：到着成功率（%）</caption><thead><tr><th scope="col">教師の構成</th><th scope="col">全分岐の監督</th><th scope="col">生徒の走行状態を追加</th><th scope="col">成功率</th></tr></thead><tbody>
+<tr><td>autopilotから直接模倣</td><td>なし</td><td>なし</td><td>20</td></tr>
+<tr><td>学習した教師を介する</td><td>なし</td><td>なし</td><td>16</td></tr>
+<tr><td>学習した教師を介する</td><td>なし</td><td>あり</td><td>64</td></tr>
+<tr><td>学習した教師を介する</td><td>あり</td><td>なし</td><td>96</td></tr>
+<tr><td>学習した教師を介する</td><td>あり</td><td>あり</td><td>100</td></tr>
+</tbody></table></div>
+<p>出典：<a href="https://proceedings.mlr.press/v100/chen20a/chen20a.pdf#page=7">採択版p.7</a>。この実験では教師を一段増やすだけの行は改善していません。全分岐の教師信号と、生徒が作る状態分布の両方を説明して初めて、方式の採用理由を検討できます。直接模倣を強くする回復データやaugmentationと同じ予算で比べることは、導入先での追加検証です。</p>
+
+<h3>5. 評価結果：「100%」の定義とCARLAの版差</h3>
+<p>原著の学習・検証データはTown1、学習天候4種から収集し、Town2を未学習Townとして使います。0.9.5では学習157K・検証39K frame、0.9.6では学習174K frame。収集は10 fpsで、推論性能の測定FPSではありません。0.9.6の収集設定には他車100台・歩行者250人が含まれます。これを全評価シナリオの交通量へ流用しません。<a href="https://proceedings.mlr.press/v100/chen20a/chen20a.pdf#page=6">本文§4</a>、<a href="https://proceedings.mlr.press/v100/chen20a/chen20a-supp.zip">補足§1</a></p>
+<div class="table-wrap" role="region" aria-label="LBCの評価条件と数値の読み方" tabindex="0"><table class="tech-table"><caption>表2　原著の評価結果と適用範囲</caption><thead><tr><th scope="col">条件・指標</th><th scope="col">著者の報告</th><th scope="col">読み取れる範囲</th></tr></thead><tbody>
+<tr><th scope="row">CoRL2017／0.9.5</th><td>未学習Town・未学習天候で4タスクすべて100%。各タスク25経路を天候条件ごとに実行する設計。</td><td>時間内到着が成功。衝突・赤信号違反は失敗に数えない。全条件100%ではなく、既知天候の未学習TownでNav. dynamicは99%。</td></tr>
+<tr><th scope="row">NoCrash／0.9.5</th><td>未学習Town・未学習天候・DenseでLBCは85±1%、CILRSは67±2%（原表表記）。</td><td>各条件25経路。時間切れに加え、閾値を超える衝突が失敗。赤信号遵守の指標とは別。旧版の正確な交通配置は追加照合が必要。</td></tr>
+<tr><th scope="row">NoCrash／0.9.6</th><td>同じ名称のTown・天候・Dense条件でLBCは39±8%（原表表記）。</td><td>描画・歩行者挙動が変更された環境で別途学習・評価。0.9.5との数値差を、同一実験での単純な性能低下率にしない。</td></tr>
+<tr><th scope="row">違反の分析</th><td>0.9.5のNoCrash経路を対象に、10 kmあたりの赤信号違反と衝突を別集計。</td><td>Fig.5にはLBCでも違反が残る。到着率100%を無事故や規則遵守の保証と呼ばない。</td></tr>
+</tbody></table></div>
+<p>出典：<a href="https://proceedings.mlr.press/v100/chen20a/chen20a.pdf#page=7">本文Tables 2–3</a>、<a href="https://proceedings.mlr.press/v100/chen20a/chen20a.pdf#page=8">Fig.5</a>。±は原表どおり転記し、本文・補足から確定できない反復数・ばらつきの定義を補っていません。CoRL2017の10 km/h、NoCrashの5 km/hは時間制限を決める換算速度で、実測の巡航速度ではありません。計算機型番別の学習時間・推論遅延も今回の本文・補足では確認できず、現行GPUとの速度比較はできません。</p>
+<p>0.9.5について補足は歩行者autopilotが正常動作しない条件でのCILRS比較も示します。0.9.6の公開実装では歩行者横断を扱うため、navmesh、車両回避、渋滞時の歩行者移動を変更しています。環境の版と改変を含めて実験条件です。<a href="https://proceedings.mlr.press/v100/chen20a/chen20a-supp.zip">補足Table 4</a>、<a href="https://github.com/dotchen/LearningByCheating/blob/4145d33f74c9a8f27061a0f94840f3e458ecc60e/README.md">著者READMEのBenchmark Results</a></p>
+
+<h3>6. 公式コードを読む：方式と設定を分ける</h3>
+<p><a href="https://github.com/dotchen/LearningByCheating/tree/4145d33f74c9a8f27061a0f94840f3e458ecc60e">release-0.9.6のcommit 4145d33</a>を固定して確認しました。commit日時は2022-04-18で、研究の発表年ではありません。READMEは0.9.5版を公開予定と記載しており、今回その実験コード一式は確認できていません。以下は公開コードの静的読解で、学習済み重みの実行結果ではありません。</p>
+<div class="table-wrap" role="region" aria-label="LBC公式実装の確認点" tabindex="0"><table class="tech-table"><caption>表3　移植前に確認する公開コードの契約</caption><thead><tr><th scope="col">対象</th><th scope="col">確認した内容</th><th scope="col">含意</th></tr></thead><tbody>
+<tr><th scope="row">出力と時間</th><td>画像モデルは4分岐×5点。既定gap=5とDT=0.1 sなら未来点間隔は0.5 s。</td><td>本プロジェクトの30点・0.1 s契約と異なる。同じ点数に補間するだけで教師の意味は揃わない。</td></tr>
+<tr><th scope="row">全分岐の損失</th><td>phase1はteacherとstudentをall_branch=Trueで呼び、座標変換後の全分岐・全点をL1で比較。</td><td>教師が使う地図を生徒へ連結する実装ではない。教師ラベルの生成と推論入力を分離する。</td></tr>
+<tr><th scope="row">速度と停止</th><td>ImageAgentは地面座標の点間距離をgap×DTで割り、目標速度を得る。brake_thresholdは2.0。</td><td>この計算の単位はm/sで、原著§2.3の2.0 km/hとは異なる。本文の閾値をコードと同じだと扱わない。</td></tr>
+<tr><th scope="row">評価suite</th><td>0.9.6のNoCrashTown02-v6は他車70・歩行者150。NoCrashのsuiteで衝突を失敗へ含める。</td><td>収集時の100台・250人と異なる。suite名、天候、衝突判定を固定する必要がある。</td></tr>
+<tr><th scope="row">環境と再現</th><td>MITライセンス。環境ファイルはPython 3.5.6、PyTorch 1.0.0、CUDA toolkit 8.0を指定。</td><td>現在のPython/PyTorchでの起動は未確認。READMEも再学習の乱数性とPID再調整の可能性を記載する。</td></tr>
+</tbody></table></div>
+<p>根拠：<a href="https://github.com/dotchen/LearningByCheating/blob/4145d33f74c9a8f27061a0f94840f3e458ecc60e/bird_view/models/image.py">画像モデル・ImageAgent</a>、<a href="https://github.com/dotchen/LearningByCheating/blob/4145d33f74c9a8f27061a0f94840f3e458ecc60e/bird_view/utils/datasets/image_lmdb.py">画像dataset</a>、<a href="https://github.com/dotchen/LearningByCheating/blob/4145d33f74c9a8f27061a0f94840f3e458ecc60e/training/train_image_phase1.py">phase1</a>、<a href="https://github.com/dotchen/LearningByCheating/blob/4145d33f74c9a8f27061a0f94840f3e458ecc60e/benchmark/__init__.py">suite定義</a>、<a href="https://github.com/dotchen/LearningByCheating/blob/4145d33f74c9a8f27061a0f94840f3e458ecc60e/environment.yml">依存環境</a>、<a href="https://github.com/dotchen/LearningByCheating/blob/4145d33f74c9a8f27061a0f94840f3e458ecc60e/LICENSE">LICENSE</a>。制動閾値の差が論文スコアへ与える影響は、評価時の重み・設定・ログを再現していないため未確認です。</p>
+
+<h3>7. 強み・限界・関連手法との比較</h3>
+<p>強みは、認識の難しさと運転の教師信号の設計を分け、実演にない分岐と生徒の逸脱状態へ監督を広げられることです。単に大きい画像モデルに置き換える研究ではありません。一方で正解の物体・信号・道路状態を学習中に取得できる環境と、逸脱状態にも妥当な出力を返す教師が必要です。教師の誤りや画像から見えない対象への依存は、生徒が学べないラベルにもつながります。</p>
+<p><strong>本記事の解析：</strong>特権情報を推論入力から除くだけでは、観測の情報量が十分とは限りません。遮蔽物の裏まで知る教師と単眼の生徒では、同じ画像に対して異なる教師行動が必要になる場合があります。ラベルの矛盾、見通し、指示の妥当性を調べる必要があります。またLBCは実車移行を今後の課題にしており、道路傾斜や実センサの欠測に耐えることをこの実験から保証できません。</p>
+<div class="table-wrap" role="region" aria-label="LBCと関連する学習方式の比較" tabindex="0"><table class="tech-table"><caption>表4　比較する役割</caption><thead><tr><th scope="col">方式</th><th scope="col">LBCとの関係</th></tr></thead><tbody>
+<tr><th scope="row">通常の条件付き模倣</th><td>実演で選ばれた進路の教師を使うのが出発点。LBCでは学習した教師が別分岐のラベルも生成する。</td></tr>
+<tr><th scope="row"><a href="dagger.html">DAgger</a></th><td>学習者が訪れる状態へ教師付けする基礎。LBCは特権情報を持つ学習済み教師と全分岐のwaypoint監督を組み合わせる。</td></tr>
+<tr><th scope="row">画像→地図→運転</th><td>LBCは生徒に地図の完全復元を必須としない。補足の地図予測baselineは分布外の知覚誤差で失敗し、この実験ではLBCを下回った。</td></tr>
+<tr><th scope="row"><a href="transfuser-cvpr2021.html">TransFuser</a></th><td>センサ融合の設計と、教師信号・収集分布の設計は別軸。LBCの知見をCamera＋LiDARの生徒へ検討することはできるが、効果は別途検証が必要。</td></tr>
+<tr><th scope="row">Roach・World on Rails等の後続</th><td>教師をRLで作るか、ログを使って価値を学ぶかにも選択肢がある。LBC自体をRLや世界モデルの実証と呼ばない。詳細比較は次の調査対象。</td></tr>
+</tbody></table></div>
+<p>地図予測baselineの条件は<a href="https://proceedings.mlr.press/v100/chen20a/chen20a-supp.zip">補足§2</a>を参照してください。後続の研究位置づけは<a href="e2e-field-overview.html">E2E概説</a>へつなぎ、異なるCARLA版や評価指標のスコアを順位表へ統合しません。</p>
+
+<h3>8. 現行E2E Lite TransFuserへの適用候補</h3>
+<p>2026-10-04、公開系統<code>038d84b</code>のコード・配布設定・検証記録を再確認しました。<strong>実装済みの境界</strong>として、<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/038d84bf89e0e8f05669b59d92b48a13a84662cb/src/aic_transfuser_lite/models/time_path_v1.py" data-source="src/aic_transfuser_lite/models/time_path_v1.py">TimePathV1</a>は観測時base_linkの未来XYを30点・0.1 s刻みで出力し、forwardではtargetsを除外します。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/038d84bf89e0e8f05669b59d92b48a13a84662cb/src/aic_transfuser_lite/data/time_dataset_v1.py" data-source="src/aic_transfuser_lite/data/time_dataset_v1.py">入力builder</a>はteacher branchを呼ばず、<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/038d84bf89e0e8f05669b59d92b48a13a84662cb/src/aic_transfuser_lite/data/time_teacher_v1.py" data-source="src/aic_transfuser_lite/data/time_teacher_v1.py">未来教師</a>は別に作ります。これは情報分離の根拠であり、LBC教師を導入済みという意味ではありません。</p>
+<p>現在のモデルはgoal条件付きではなく、LBCの4進路分岐も持ちません。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/038d84bf89e0e8f05669b59d92b48a13a84662cb/docs/model_distribution/current_time_path.json" data-source="docs/model_distribution/current_time_path.json">配布設定</a>で無効にしているcommand historyは過去の操作系列であり、LBCの「左折・右折」指示と同じものではありません。全分岐監督を導入するなら、先にナビゲーション入力、分岐の意味、許可された観測を定義する必要があります。</p>
+<p><strong>導入候補：</strong>現在の入力・出力契約を保ったまま検討できるのは、教師のラベル品質を評価し、生徒の失敗状態にもラベルを与えられるかを調べることです。既存の完走ログの未来位置は、その実行軌道の教師にはなりますが、別の状態・別の進路を選んだときの正解にはなりません。学習済み教師の追加、反実仮想の分岐、オンライン収集は新たな実装・実験依頼として扱います。</p>
+<p><strong>実測済みとの区別：</strong><a href="single-lap-20260918.html">既存の単独周回</a>は限定されたAWSIM試験です。<a href="common-il-pilot-20260927.html">共通ILの32更新pilot</a>は開発ブランチの学習データ内のfitで、LBCの蒸留や未学習環境での改善ではありません。LBCの論文結果を、本プロジェクトの実装・実測済み欄へ移しません。外部Safety Supervisorのtimeout・停止距離・NaN監視も、教師の性能とは独立に必要です。</p>
+
+<h3>9. 必要なデータ・計算資源・変更・検証</h3>
+<div class="table-wrap" role="region" aria-label="LBC導入候補に必要な準備" tabindex="0"><table class="tech-table"><caption>表5　追加実装を検討する前の確認項目</caption><thead><tr><th scope="col">対象</th><th scope="col">必要な準備</th></tr></thead><tbody>
+<tr><th scope="row">データと教師</th><td>時刻同期した画像・車両状態・実演未来位置と、学習専用の道路・物体・信号ラベル。失敗状態の教師信頼度と、教師が利用できる情報の一覧を残す。</td></tr>
+<tr><th scope="row">再学習</th><td>特権教師の学習、保存データでの蒸留、必要なら生徒状態での反復学習。run・scenarioを分離し、同一走行の隣接frameを独立評価としない。全分岐あり／なしと収集方法を一要因ずつ比較する。</td></tr>
+<tr><th scope="row">計算資源</th><td>教師・生徒の二つの学習とCARLA相当の収集環境が必要。GPUメモリ、教師ラベル生成時間、シミュレーション速度、推論全体の遅延を分けて予算化。原著の10 fpsを推論性能へ代用しない。</td></tr>
+<tr><th scope="row">実装変更</th><td>教師ラベルの保存形式・座標変換・有効mask・損失・収集方策の記録。4分岐を採る場合は進路入力を新設する設計が必要。waypoint・速度・停止を主出力とする方針を保つ。</td></tr>
+<tr><th scope="row">検証項目</th><td>teacher漏洩、軌道の時刻・単位・座標、地平線近傍の射影、停止と進路分岐、遮蔽、分布外の教師誤り。offline誤差に加え、別依頼のclosed-loopで完走・衝突・違反・介入・遅延を確認する。</td></tr>
+</tbody></table></div>
+<p>これは導入候補の検討表です。本記事の作成で学習・制御・ROSコードや設定は変更していません。著者コードの再現、再学習、AWSIM・実車走行も実施していません。</p>
+
+<h3>10. 出典と次の調査</h3>
+<p>最終確認日：2026-10-04。採択本文§1–5・Tables 1–3・Fig.1–5、公式補足§1–3・Tables 1–4、arXivの書誌と付録、固定版公式コードの教師・生徒・学習3段階・dataset・評価suite・依存・ライセンスを確認しました。補足ZIP内の動画は評価根拠に用いていません。コード実行、公開重みの照合、0.9.5の完全な実験構成、実機での計算負荷は未確認です。</p>
+<p>次は、教師を強化学習で作るRoach、非反応型世界の仮定でログから学ぶWorld on Rails、LBC著者の後続LAVを候補に、教師の質・観測・データ利用範囲を比較します。各候補の未確認箇所を先に埋め、原則1論文1記事で扱います。現在の確認範囲と資料の関連は<a href="research-map.html">研究地図・資料年表</a>を参照してください。</p>
