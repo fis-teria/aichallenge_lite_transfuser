@@ -141,3 +141,7 @@ LBC記事の公開commit `4d8215f737dfe3e1e0d07b9df9e20d763a4ca294` の[CI](http
 既存C04を限定節の確認へ増補し、PSFの個別記事とMPC概説・保持経路・研究地図からの逆リンクを追加しました。初稿2018-12-13と確認版2021-05-17を区別し、定理4.6の条件付き確率保証と現行2ファイルの静的確認を記録しています。台帳は86資料・66研究系列で不変、144セル中34セルは範囲限定の調査済み、110セルは未調査。公表年不明7資料を年代集計から除外し、全セルcoverage_complete=falseを維持します。研究地図の概要メタデータを最新JSONの件数へ修正しました。
 
 生成・一致・全リンク・29件のサイト回帰が成功。33ページ・1436リンク/asset・37種類のcommit固定根拠を確認しました。Windows Edgeで5画面幅のナビゲーション、全33ページのPC/mobile、追加・更新4記事の320/390/768/1440px、図・表・数式・逆リンク・JS無効時を確認しました。既存ブラウザ検査のリサイズ直後の判定は一度失敗し、描画2フレームの同期を加えた作業フォルダ内wrapperで検査本体を変更せず再確認して成功。サイトのCSS/JS・検査スクリプトは変更していません。検査記録は `psf-validation-20261007.json`。公開commitのCIと実配信は確認後に別途記録します。学習・制御・ROSコードや設定は変更せず、全体pytest・学習・AWSIM・実車走行・著者結果の独立再現は本更新に含めません。未移送Roach原稿は別件として保持し再作成していません。
+
+### PSF記事の公開確認
+
+記事commit `cba9fe6b0493c7845667e7ccd774d613ebc7677a` をHervararのWindows checkoutから既存fis-teria認証でmainへpushしました。[公開CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/37568803977)はsuccess。全33ページと3資産がHTTP 200でWindows生成物とバイト単位で一致しました。[PSF記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/predictive-safety-filter-2018.html)と関連記事3本を実配信の320/390/768/1440pxで確認し、構成図・比較表の横スクロール・停止距離式・逆リンク・JS無効時の閲覧に問題はありません。公開記録は `psf-publication-20261007.json`。Git作者情報は移行先で未設定だったため、既存履歴の表記をcommit単位で使用し、グローバル設定・origin・認証は変更していません。新しい資格情報の発行、SSH/WSL/クラウドpush、API書込みは行っていません。
