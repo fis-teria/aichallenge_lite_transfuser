@@ -1,0 +1,48 @@
+<div class="paper-top"><span class="tag">予測安全フィルタ</span><span class="paper-year">2018初稿 / 2021改訂</span></div>
+<h2>PSF：保持した経路と「安全な退避計画」の違い</h2>
+<p class="paper-summary">学習器の提案を使う前に、制約を守りながら終端安全集合へ至る計画を探すのが予測安全フィルタ（PSF）です。保持経路の再利用と似た形でも、モデル・誤差・終端制御の条件が違えば、論文の保証は移りません。</p>
+<p class="note">確認日：2026-10-07。原著の限定節と公開mainのコードを静的に確認しました。PSFの導入・追試・AWSIM・実車検証は行っていません。</p>
+<h3>課題と背景</h3>
+<p>学習方策の性能改善と制約充足を分けるPSFは、提案された入力からの変更を抑えながら、安全な終端集合まで到達できる計画を探します。直近一歩の衝突検査だけでは、次の時刻に行き詰まる可能性を評価できません。</p>
+<figure class="tech-figure">
+<div class="tech-figure-title"><span>仕組み</span><strong>提案入力から実系へ渡すまで</strong></div>
+<ol class="tech-flow four">
+<li><strong>学習器が提案</strong><p>現在の状態から操作入力を出す。経路を出すTimePathとは入力の契約が異なる。</p></li>
+<li><strong>退避計画を探索</strong><p>状態・入力制約、モデルの信頼範囲、終端集合への到達を検査する。</p></li>
+<li class="accent"><strong>最初の入力を選択</strong><p>提案を認証できればそのまま使い、必要なら変更する。次周期には再計画する。</p></li>
+<li><strong>解なしへの備え</strong><p>条件の下で短縮ホライズンを解き、最後は既知の終端安全制御へ移る。</p></li>
+</ol>
+<figcaption>原著Algorithm 1 / 2を説明する構成図。任意の保存経路を安全な退避計画と認定する手順ではありません。</figcaption>
+</figure>
+<h3>仕組みと保証の境界</h3>
+<p>原著の名目系では、最初の操作と学習器の提案との差を目的に、状態・入力制約、モデルが正確に分かる領域、終端安全集合への到達を課します。長さNの問題が解けないときは、最後に実行可能だった計画から残る長さへホライズンを縮めて再び解きます。以前の計画の残りが実行可能な解の存在を支え、残り長さが0になれば終端安全制御へ移ります。</p>
+<p>不確実な系では、状態・入力に依存するモデル誤差の信頼集合と、誤差を見込んで狭めた制約を使います。定理4.6は、初期実行可能性に加え、終端安全制御（仮定4.2）、予測軌道近傍の局所増分安定化可能性（4.3）、信頼集合写像の連続性（4.5）と、その変化率・制約の縮小量・許容誤差の関係に依存します。保証は指定した確率水準での制約充足であり、無条件に衝突を防ぐ主張ではありません。各時刻を個別に覆う誤差確率だけで、全時刻を通じた保証へ読み替えることもできません。</p>
+<p>評価は振子とBullet上のquadrotorという数値例です。車両レースや歩行者回避の実証ではありません。モデル誤差が大きいと初期状態から実行可能な計画を得られない場合もあります。</p>
+<p>出典：Wabersich・Zeilinger、<a href="https://arxiv.org/html/1812.05506v4">arXiv v4、§4.1–4.3、Algorithm 1 / 2、定理4.6、§5</a>。<a href="https://arxiv.org/abs/1812.05506v4">版履歴</a>では初稿2018-12-13、確認版2021-05-17です。証明全体の独立監査・著者実装の照合は未実施です。</p>
+<h3>現行プロジェクトとの比較</h3>
+<p>以下は公開main <code>10b08878445537ffd3698f09344640db4111fd17</code> のコードの静的確認です。特定の実行設定で全機能が有効だったという意味ではありません。</p>
+<div class="table-wrap" role="region" aria-label="PSFと現行実装の比較" tabindex="0"><table><caption>安全確認の対象と、保証に必要な条件</caption><thead><tr><th scope="col">処理</th><th scope="col">確認した機能</th><th scope="col">境界</th></tr></thead><tbody>
+<tr><th scope="row">原著PSF</th><td>入力の変更量を抑え、終端安全集合へ至る制約付き計画を解く</td><td>モデル・信頼集合・終端制御・初期実行可能性等の仮定が必要。本プロジェクトでは未導入</td></tr>
+<tr><th scope="row">Safety Supervisor</th><td>センサ時刻、非有限値、前方LiDAR距離、速度上限などを検査し、必要に応じて制動指令へ差し替える</td><td>設定した遅延・減速度から停止距離を計算する。終端集合へ至る予測最適化の保証とは異なる</td></tr>
+<tr><th scope="row">保持経路の復帰</th><td>経路長・横ずれ・向き・鮮度・試行時間等の条件で保持経路を選ぶ</td><td>選択処理自体は動作を許可しない。各指令の前に新しい占有情報と制御側の安全確認が必要</td></tr>
+</tbody></table></div>
+<p><code>safety_supervisor.py</code>の停止距離式は、非負の車速vについて <code>d = v × latency + v² / (2 × |brake_accel|) + margin</code> です。これは設定された遅延・減速度を使う計算であり、タイヤや路面を同定した結果ではありません。</p>
+<p>確認した<code>safety_supervisor.py</code>と<code>time_path_recovery.py</code>からは、PSFの終端安全集合、信頼集合付き予測最適化、定理の仮定検証を確認できません。保持済み経路をそのまま論文の安全なバックアップ計画と呼ぶことはできません。</p>
+<p>停止監視は異常入力を検出しやすく、保持経路は一時的な予測短縮への復帰に役立つ設計です。それぞれの機能が存在することと、将来にわたり制約を満たすことの証明は別です。既存の限定走行実績は元の記事の条件のまま参照してください。</p>
+<h3>適用候補と必要な検証</h3>
+<p>ここからは未実装の設計候補です。TimePathの経路を直接PSFへ入力するだけでは接続できません。下流の追従器が出す操舵・加減速を提案入力とするか、追従器を含めた系に対して経路修正を定義するか、まず制御境界を選ぶ必要があります。</p>
+<ol>
+<li>状態・入力・時刻を定義する：車速、姿勢、操舵応答、実際の指令適用時刻をそろえ、計算と通信の遅延を含める</li>
+<li>モデルと誤差範囲を測る：速度域・路面・旋回条件でデータを分離し、学習に使わない走行で誤差を調べる。低速ログだけから高速の信頼範囲を決めない</li>
+<li>退避先を設計する：単なる「速度0」ではなく、停止までの掃引領域、壁からの余裕、操舵・制動の限界を含めて定義する</li>
+<li>故障時の扱いを決める：解なし、計算期限超過、観測欠損、地図更新、相手の予測外移動を個別に試験する</li>
+<li>計算資源を評価する：対象PC・モデル・予測長を固定し、最適化だけでなく観測から指令までの遅延分布と期限超過率を測る。GPUを用意すれば自動的に成立するものではない</li>
+</ol>
+<p>歩行者を含む移動ロボットへ移す場合も、相手の不確実性と車体形状、停止能力を別に扱う必要があります。この原著の数値例から人に対する安全保証は導けません。</p>
+<h3>変更点・確認範囲・参照</h3>
+<p>C04の既存資料を限定節の確認へ増補し、PSFの個別解説、構成図、比較表を追加しました。確認範囲は名目系・不確実系の仕組み、定理の記述と仮定、数値例の条件、現行2ファイルです。完全な証明監査、著者コードの再現、PSF実装、学習・走行試験は含みません。</p>
+<ul>
+<li><a data-source="src/aic_transfuser_lite/control/safety_supervisor.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/10b08878445537ffd3698f09344640db4111fd17/src/aic_transfuser_lite/control/safety_supervisor.py">現行Safety Supervisor（固定commit）</a></li>
+<li><a data-source="src/aic_transfuser_lite/control/time_path_recovery.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/10b08878445537ffd3698f09344640db4111fd17/src/aic_transfuser_lite/control/time_path_recovery.py">現行保持経路の復帰処理（固定commit）</a></li>
+<li><a href="mpc-mppi-overview.html">MPC / MPPI概説</a>、<a href="robust-mppi.html">Robust MPPI</a>、<a href="retained-path-recovery.html">保持経路の復帰</a>、<a href="research-map.html">調査範囲</a></li>
+</ul>

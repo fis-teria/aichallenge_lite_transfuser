@@ -22,7 +22,7 @@
 <h3>4. 2018–2026：何が改善対象になったか</h3>
 <ul>
 <li><strong>2018：</strong>Information-Theoretic MPCのTRO版。情報理論によるサンプリング制御と自動運転への適用を整理。2017年arXivと同じ研究系列として数えます。<a href="information-theoretic-mpc.html">既存の個別記事</a>、<a href="https://doi.org/10.1109/TRO.2018.2865891">原論文DOI</a></li>
-<li><strong>2018初稿／2021改訂：</strong>非線形predictive safety filter。学習器が提案する操作を、安全な終端集合へ至るバックアップ計画の観点から検査・修正する設計。通常の停止監視器を置いただけで同じ証明を持つわけではありません。<a href="https://arxiv.org/abs/1812.05506">一次資料</a></li>
+<li><strong>2018初稿／2021改訂：</strong>非線形predictive safety filter。学習器が提案する操作を、安全な終端集合へ至るバックアップ計画の観点から検査・修正する設計。通常の停止監視器を置いただけで同じ証明を持つわけではありません。<a href="https://arxiv.org/abs/1812.05506">一次資料</a>、<a href="predictive-safety-filter-2018.html">PSFと保持経路の違いを読む</a></li>
 <li><strong>2019–2020：</strong>PMPSCは確率的制約と学習制御を接続。acadosは組込み最適化のモジュール化を進め、モデルや制約だけでなくソルバ構成を設計対象にします。両者は解いている問題が違い、速度ランキングの競合ではありません。<a href="https://arxiv.org/abs/1906.10417">PMPSC</a>、<a href="https://arxiv.org/abs/1910.13753">acados</a></li>
 <li><strong>2021：</strong>Robust MPPIは、追従器をrollout内へ組み込み、名目状態の選択も扱います。ロバスト化の主眼はサンプル数の増加ではありません。<a href="robust-mppi.html">個別解説</a></li>
 <li><strong>2021初稿／2022刊行：</strong>Smooth MPPIは入力を持ち上げて変化を扱い、最適化内部で滑らかさを作ります。外付けフィルタで操作を書き換える問題への回答です。2025年v8は改訂であり、新しい独立研究として重複計上しません。<a href="https://arxiv.org/pdf/2112.09988v8">本文</a></li>
@@ -50,3 +50,6 @@
 
 <h3>履歴から終端条件を学ぶLMPC</h3>
 <p>2026-10-03追記。<a href="learning-mpc-racing-2019.html">LMPCによる自律レーシング（2019）</a>を追加しました。終端集合・残り時間・局所モデルの学習を説明し、QPの平均時間と制御全体の計算時間、理論上の条件と公開コードのslackを区別します。サンプリングや追従器を主題とするMPPI・RMPPIと、何を改善しようとしているかを比較できます。本プロジェクトでは未実装の導入候補です。</p>
+
+<h3>予測安全フィルタと保持経路の境界</h3>
+<p>2026-10-07追記。<a href="predictive-safety-filter-2018.html">PSFの個別解説</a>では、短縮ホライズン・終端安全制御と確率的なモデル誤差の条件を確認し、現行の停止監視・保持経路復帰との差を整理しました。保存済みの経路を再利用できることだけでは、PSFの保証を持つことにはなりません。実装・追試は未実施です。</p>
