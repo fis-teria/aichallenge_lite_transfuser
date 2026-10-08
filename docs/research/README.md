@@ -145,3 +145,11 @@ LBC記事の公開commit `4d8215f737dfe3e1e0d07b9df9e20d763a4ca294` の[CI](http
 ### PSF記事の公開確認
 
 記事commit `cba9fe6b0493c7845667e7ccd774d613ebc7677a` をHervararのWindows checkoutから既存fis-teria認証でmainへpushしました。[公開CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/37568803977)はsuccess。全33ページと3資産がHTTP 200でWindows生成物とバイト単位で一致しました。[PSF記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/predictive-safety-filter-2018.html)と関連記事3本を実配信の320/390/768/1440pxで確認し、構成図・比較表の横スクロール・停止距離式・逆リンク・JS無効時の閲覧に問題はありません。公開記録は `psf-publication-20261007.json`。Git作者情報は移行先で未設定だったため、既存履歴の表記をcommit単位で使用し、グローバル設定・origin・認証は変更していません。新しい資格情報の発行、SSH/WSL/クラウドpush、API書込みは行っていません。
+
+## BayesRaceの追加調査（2026-10-08）
+
+既存R15の本文未確認を解消し、予測残差の学習をLMPCの終端学習・PSFの条件付き保証と比較する価値でBayesRaceを選定しました。前回の制御安全から車両モデルへ軸を移しています。採択本文12頁・付録・図表、arXiv v2、固定版の著者コードを静的確認し、初稿2020とPMLR書誌2021を区別。台帳88資料・66研究系列、年代集計80資料と公表年不明8資料です。分類補正により144セル中33セルが範囲限定の調査済み、111セルが未調査となり、全セルcoverage_complete=falseを保っています。
+
+コードのGP特徴順・scaler、境界制約の既定無効、solve単独の計時、周回後の再学習、論文と基準モデルのヨーレート式および積分法の不一致を記録しました。コード・保存データ・依存の実行や著者結果の再現は未実施です。ニュース由来20件のarticle-intentsは保全。親側の共有ニュース確認は可視3便20項目で新規候補が見えた範囲はなく、元会話のlive更新状態は未確認です。確認範囲はnews-intake-check-20261008.jsonに記録しています。
+
+生成・一致・全リンク検査と29件のサイト回帰が成功。30記事・34ページ、1514リンク/asset・37種類のcommit固定根拠を確認しました。既存ブラウザ検査で5画面幅のナビゲーション、全34ページのPC/mobile、旧hashとJS無効時を確認。新記事と関連記事4本を320/390/768/1440pxで確認し、図・4表・数式・キーボード横スクロール・相互リンクを検査、PC/スマホ画像を目視確認しました。一次資料22 URLとHTML節アンカーはHTTP 200で確認。検査記録はbayesrace-validation-20261008.json。描画2フレームを待つ作業フォルダ内wrapperを使用し、既存検査本体・サイトJS/CSSは変更していません。公開CI・実配信は確認後に別途記録します。学習・制御・ROSコードや設定を変更せず、全体pytest・学習・AWSIM・実車試験はこの文書更新に含めません。Roachの未移送原稿は別件として保持し、再作成していません。

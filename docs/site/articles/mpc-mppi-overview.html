@@ -70,7 +70,7 @@
 <span class="section-number">継続資料</span><h1>MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</h1>
 <p class="article-lead">線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-02">2026-10-02</time></span>
-<span>更新 <time datetime="2026-10-07">2026-10-07</time></span>
+<span>更新 <time datetime="2026-10-08">2026-10-08</time></span>
 <span class="tag">文献俯瞰・適用候補</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">制御分野俯瞰</span><span class="paper-year">2018–2026</span></div>
 <h2>MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を分けて読む</h2>
 <p class="paper-summary">MPCは毎周期、有限の未来を予測して最初の操作を実行する枠組みです。MPPIはその最適化をサンプリングで近似する一群です。線形／非線形、ロバスト／確率的、学習モデル／物理モデルは別の分類軸であり、「新しい手法ほど安全・高速」という順序にはなりません。</p>
@@ -126,6 +126,9 @@
 
 <h3>予測安全フィルタと保持経路の境界</h3>
 <p>2026-10-07追記。<a href="predictive-safety-filter-2018.html">PSFの個別解説</a>では、短縮ホライズン・終端安全制御と確率的なモデル誤差の条件を確認し、現行の停止監視・保持経路復帰との差を整理しました。保存済みの経路を再利用できることだけでは、PSFの保証を持つことにはなりません。実装・追試は未実施です。</p>
+
+<h3>予測モデルの残差を学ぶBayesRace</h3>
+<p>2026-10-08追記。<a href="bayesrace-2020.html">BayesRaceの個別解説</a>では、単純な車両モデルにGP平均の残差を足す構成を確認しました。残差学習は候補探索の方式とは別の設計軸です。平均補正から確率的安全保証は導けず、GP・NMPCの計算と指令適用までの期限も別に検証する必要があります。現行参照空間MPPIへの導入や著者結果の追試は行っていません。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-09-27">2026-09-27</time></div>
@@ -143,12 +146,12 @@
 <p>Camera・2D LiDAR・車両状態からの経路予測と、モデル外の制御・安全監視を整理します。</p><div class="card-bottom"><span>継続資料</span>
 <a class="article-read" href="../articles/system-architecture.html" aria-label="システム構成とTimePathの入出力を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-07">2026-10-07</time></div>
+<time datetime="2026-10-08">2026-10-08</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
-<p>4領域・144区分の確認範囲と未調査を整理。86資料・66研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
+<p>4領域・144区分の確認範囲と未調査を整理。88資料・66研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
 <a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-03">2026-10-03</time></div>
+<time datetime="2026-10-08">2026-10-08</time></div>
 <h3><a href="../articles/learning-mpc-racing-2019.html">LMPC：走行履歴から学ぶラップタイム最適化</a></h3>
 <p>完走履歴による終端集合・残り時間・局所モデル、BARC実験と公開コードの版差、現行TimePathへの適用条件。</p><div class="card-bottom"><span>原著・公式コード確認／未実装候補</span>
 <a class="article-read" href="../articles/learning-mpc-racing-2019.html" aria-label="LMPC：走行履歴から学ぶラップタイム最適化を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
@@ -156,6 +159,11 @@
 <time datetime="2026-10-07">2026-10-07</time></div>
 <h3><a href="../articles/predictive-safety-filter-2018.html">PSF：保持した経路と安全な退避計画の違い</a></h3>
 <p>予測安全フィルタの条件付き保証と、現行の停止監視・保持経路復帰との境界を整理。</p><div class="card-bottom"><span>原著の限定節確認・未導入</span>
-<a class="article-read" href="../articles/predictive-safety-filter-2018.html" aria-label="PSF：保持した経路と安全な退避計画の違いを読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/predictive-safety-filter-2018.html" aria-label="PSF：保持した経路と安全な退避計画の違いを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-08">2026-10-08</time></div>
+<h3><a href="../articles/bayesrace-2020.html">BayesRace：車両モデルの残差を学び、MPCの予測を補う</a></h3>
+<p>GP残差で車両予測を補うBayesRace。原著とコードの版差、計算期限、安全保証との違いを確認。</p><div class="card-bottom"><span>原著・公式コード確認／未導入</span>
+<a class="article-read" href="../articles/bayesrace-2020.html" aria-label="BayesRace：車両モデルの残差を学び、MPCの予測を補うを読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="GP残差で車両予測を補うBayesRace。原著とコードの版差、計算期限、安全保証との違いを確認。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>BayesRace：車両モデルの残差を学び、MPCの予測を補う — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html" aria-current="page"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../papers.html">論文ノート</a></div>
+<span class="section-number">論文ノート</span><h1>BayesRace：車両モデルの残差を学び、MPCの予測を補う</h1>
+<p class="article-lead">GP残差で車両予測を補うBayesRace。原著とコードの版差、計算期限、安全保証との違いを確認。</p><div class="article-meta">
+<span>公開 <time datetime="2026-10-08">2026-10-08</time></span>
+<span>更新 <time datetime="2026-10-08">2026-10-08</time></span>
+<span class="tag">原著・公式コード確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文精読・学習モデル</span><span class="paper-year">2020 / 2021</span></div>
+<h2>BayesRace：車両モデルの残差を学び、MPCの予測を補う</h2>
+<p class="authors">Achin Jain, Matthew O’Kelly, Pratik Chaudhari, Manfred Morari</p>
+<p class="paper-summary">同じ経路を追っても、旋回や制動で予測と実際の動きがずれると、MPCが選んだ操作は期待どおりに働きません。BayesRaceは単純な車両モデルを残し、過去の走行から学んだ残差で予測を補います。何を学ぶのか、公開コードのどこを再確認すべきか、現行TimePathへ接続するには何が足りないかを整理します。</p>
+<p>対象は<a href="https://proceedings.mlr.press/v155/jain21b.html">BayesRace: Learning to race autonomously using prior experience</a>。CoRL 2020の研究で、PMLRの書誌年は2021です。arXiv初稿は2020-05-10、確認版v2は2020-11-15。2026-10-08に<a href="https://proceedings.mlr.press/v155/jain21b/jain21b.pdf">採択本文全12頁・付録・図表</a>、<a href="https://arxiv.org/pdf/2005.04755v2">arXiv v2</a>と<a href="https://github.com/jainachin/bayesrace/tree/0a23cf950d5ec97c12c373622a4606c2321ad7ed">著者実装の固定commit 0a23cf9</a>を確認しました。以下は文献とコードの静的調査です。本プロジェクトへの実装、著者結果の追試、学習・走行試験は行っていません。</p>
+
+<h3>1. 学習するのは、次の状態の予測誤差</h3>
+<p>横滑りまで表す動的モデルでは、路面やタイヤに合わせた同定が必要です。原著は、縦・横速度とヨーレートを含む拡張運動学モデルを土台にし、実際の次状態との差をGP（Gaussian Process）で学びます。タイヤ係数を直接推定する手法でも、画像から操作を出すE2E方策でもありません。レーシングラインをBayesian optimizationで作る処理は、この残差学習とは別の段階です。<a href="https://arxiv.org/html/2005.04755v2#S3">原著§3</a>、<a href="https://arxiv.org/html/2005.04755v2#S4">§4</a></p>
+<figure class="tech-figure">
+  <figcaption>図1　単純なモデルへ、走行データの補正を戻す（本記事の概念図）</figcaption>
+  <ol class="tech-flow four">
+    <li><strong>同期した走行ログ</strong><p>状態・適用操作・次状態をそろえる</p></li>
+    <li><strong>一段先の残差</strong><p>次状態と単純モデルの予測を比較</p></li>
+    <li><strong>三つのGP</strong><p>縦速度・横速度・ヨーレートを補正</p></li>
+    <li><strong>MPCと次のログ</strong><p>補正した予測で操作を選び、後で再学習</p></li>
+  </ol>
+  <p>一段の予測が改善しても、長い予測、未見の路面、期限内の計算、将来の制約充足まで確認できたわけではありません。</p>
+</figure>
+
+<h3>2. 状態・操作・GPの入力を分ける</h3>
+<p>状態は <code>x = [X, Y, ψ, vₓ, vᵧ, ω, δ]</code>。位置X・Yはm、姿勢ψと操舵δはrad、縦・横速度はm/s、ヨーレートωはrad/sです。操作は <code>u = [d, δ̇]</code> で、dはPWM duty、δ̇は操舵角速度です。原著のΔδはTable 1でδ̇として使われます。操舵角そのものや加速度指令と同じ入力に読み替えません。</p>
+<div class="table-wrap" role="region" aria-label="BayesRaceの残差と予測" tabindex="0"><table class="tech-table"><caption>式1　記事用に添字を簡略化した予測補正</caption><thead><tr><th scope="col">関係</th><th scope="col">意味と境界</th></tr></thead><tbody>
+<tr><td><code>eₖ = x<sub>k+1</sub> − f<sub>kin</sub>(xₖ, uₖ)</code></td><td>同じ初期状態と操作から、一段先の差を学習する。連続時間の加速度残差とは単位が違う。</td></tr>
+<tr><td><code>zₖ = [vₓ, vᵧ, ω, δ, d, δ̇]</code></td><td>GPの特徴は6成分。三つのGPがvₓ・vᵧ・ωの残差を出す。位置を直接GPで予測する構成ではない。</td></tr>
+<tr><td><code>x<sub>k+1</sub> = f<sub>kin</sub>(xₖ, uₖ) + B μ<sub>GP</sub>(zₖ)</code></td><td>Bは三つの補正を7状態へ配置する行列。MPCにはGPの平均を使う。</td></tr>
+</tbody></table></div>
+<p>出典：<a href="https://arxiv.org/html/2005.04755v2#S4.SS2">§4.2、式3–6</a>。平均で不確実性を置き換えるため、GPの予測区間が描かれていることからchance constraintや衝突確率の保証は導けません。</p>
+
+<h3>3. 評価は、モデル誤差を補うシミュレーション</h3>
+<div class="table-wrap" role="region" aria-label="BayesRace原著の評価範囲" tabindex="0"><table class="tech-table"><caption>表1　採択本文§4・付録A/Bで確認した条件</caption><thead><tr><th scope="col">観点</th><th scope="col">確認した条件</th><th scope="col">読めないこと</th></tr></thead><tbody>
+<tr><th scope="row">車両とデータ</th><td>1:43の動的モデルと、実験で検証された1:10 F1TENTHシミュレータ。単純追従で集めたログから学び、別の走路で評価。</td><td>本研究の実車走行・追越し・歩行者回避の実証ではない。</td></tr>
+<tr><th scope="row">比較対象</th><td>補正なし、GP補正、シミュレータの真のモデルを知るMPC。走路に合わせた新しいログでGPを更新する比較もある。</td><td>真の動力学が未知の実車で、その比較上限を利用できるわけではない。更新後の比較では境界違反の罰則も弱めている。</td></tr>
+<tr><th scope="row">付録の転移</th><td>新しい4走路のうち1走路で学習、3走路で検証。GPカーネルの滑らかさを変更し、MPCは再調整していない。</td><td>車両・摩擦・観測のどんな変更にも無調整で対応できるという証拠ではない。</td></tr>
+<tr><th scope="row">時間</th><td>モデル刻み20 msに対し、付録BのMPC実行時間は0.26 ± 0.1 s。2.9 GHz Dual-Core Intel Core i5、macOS。</td><td>50 Hzの実時間制御を達成した値ではない。本文の±をp99や最大遅延へ読み替えない。</td></tr>
+</tbody></table></div>
+<p>根拠：<a href="https://proceedings.mlr.press/v155/jain21b/jain21b.pdf#page=6">本文pp.6–8</a>、<a href="https://proceedings.mlr.press/v155/jain21b/jain21b.pdf#page=12">付録B</a>。原著のlap timeを別の車両・走路のLMPCやForzaETHと順位付けしていません。ここからの設計上の着眼点は、予測精度の改善と、制御全体が締切に間に合うことを別々に測る点です。</p>
+
+<h3>4. 公開コードで分かる設定と版差</h3>
+<p>以下は確認commitのORCA用経路です。付属するデータや学習済みpickleは実行・読込みせず、ソースを確認しました。既定値が論文の全図に対応するとは限りません。</p>
+<div class="table-wrap" role="region" aria-label="BayesRace著者コードの静的確認" tabindex="0"><table class="tech-table"><caption>表2　再現前に固定したい条件</caption><thead><tr><th scope="col">観点</th><th scope="col">ソースの事実</th><th scope="col">再利用への示唆</th></tr></thead><tbody>
+<tr><th scope="row">学習データ</th><td><code>load_data.py</code>は動的モデルと一段の運動学予測の差を使い、特徴順は[d, δ̇, δ, vₓ, vᵧ, ω]。scalerを学習側でfitする。</td><td>論文の特徴列挙順と異なる。モデル、特徴順、scalerを一組で保管する。</td></tr>
+<tr><th scope="row">GPの学習</th><td><code>train_model_orca.py</code>は400サンプル、RBFと定数カーネル。既定のVARIDX=3はvₓだけで、SAVE_MODELS=False。</td><td>1回起動すれば三つのGPと保存物がそろう設定ではない。公開READMEの手順と実行フラグの確認が必要。</td></tr>
+<tr><th scope="row">MPC</th><td><code>run_nmpc_orca_gp.py</code>はTs=0.02 s、N=20、TRACK_CONS=False。GP平均を使い、境界を有効にすると罰則付きslackを加える。</td><td>0.4 sの予測長は設定からの換算。境界無効・slack付きの解を硬い制約の保証と呼ばない。</td></tr>
+<tr><th scope="row">計時</th><td>solveの直前・直後を計時し、シミュレーション時刻は計算時間にかかわらずTsずつ進む。</td><td>表示されたsolver時間は観測・GP準備・通信込みの周期時間ではない。実機の期限超過処理をこのループから推測しない。</td></tr>
+<tr><th scope="row">更新</th><td>別スクリプトで走行後のログを追加し、GPを再fitする。ω用の更新には先頭20サンプルを除外する分岐がある。</td><td>毎周期のオンライン再学習ではない。低速のデータ除外が結果へ及ぼす影響も確認対象。</td></tr>
+</tbody></table></div>
+<p>根拠：<a href="https://github.com/jainachin/bayesrace/blob/0a23cf950d5ec97c12c373622a4606c2321ad7ed/bayes_race/gp/load_data.py">データ生成</a>、<a href="https://github.com/jainachin/bayesrace/blob/0a23cf950d5ec97c12c373622a4606c2321ad7ed/bayes_race/gp/train_model_orca.py">GP学習</a>、<a href="https://github.com/jainachin/bayesrace/blob/0a23cf950d5ec97c12c373622a4606c2321ad7ed/bayes_race/gp/update_model_orca.py">GP更新</a>、<a href="https://github.com/jainachin/bayesrace/blob/0a23cf950d5ec97c12c373622a4606c2321ad7ed/bayes_race/mpc/run_nmpc_orca_gp.py">MPC実行</a>、<a href="https://github.com/jainachin/bayesrace/blob/0a23cf950d5ec97c12c373622a4606c2321ad7ed/bayes_race/mpc/gpmpc.py">最適化の組立</a>。</p>
+<p><strong>式の不一致：</strong>採択本文Table 1の拡張運動学モデルは <code>ω̇ = (δ̇vₓ + δv̇ₓ) / (l<sub>f</sub> + l<sub>r</sub>)</code>。一方、固定版の<a href="https://github.com/jainachin/bayesrace/blob/0a23cf950d5ec97c12c373622a4606c2321ad7ed/bayes_race/models/kinematic6.py">kinematic6.py</a>は数値モデルとCasADiモデルの双方で <code>(δ̇vₓ + δv̇ₓ) × (l<sub>f</sub> + l<sub>r</sub>)</code> です。論文どおりの式とは確認できません。修正して図の結果を再現できるか、保存済みデータ・モデルがどの式で作られたかは未確認です。</p>
+<p><strong>離散化も別：</strong><a href="https://github.com/jainachin/bayesrace/blob/0a23cf950d5ec97c12c373622a4606c2321ad7ed/bayes_race/data/simulate_kinematic_orca.py">残差用の予測生成</a>はRunge–Kutta積分を呼びますが、<code>gpmpc.py</code>の状態遷移は前進Eulerの <code>x + Ts·f + e</code>。本記事の解析として、GPだけを別の刻みや積分法へ移すと、残差の意味も変わります。またPWMモデルは駆動係数Cm1・Cm2を使うため、「幾何と質量だけで全入力モデルが不要」とは扱えません。</p>
+<p><a href="https://github.com/jainachin/bayesrace/blob/0a23cf950d5ec97c12c373622a4606c2321ad7ed/LICENSE.md">ライセンスはMIT</a>。<a href="https://github.com/jainachin/bayesrace/blob/0a23cf950d5ec97c12c373622a4606c2321ad7ed/README.md">README</a>はPython 3.6環境を案内し、<a href="https://github.com/jainachin/bayesrace/blob/0a23cf950d5ec97c12c373622a4606c2321ad7ed/setup.py">setup.py</a>はCasADi 3.5.1、scikit-learn 0.22.2.post1などを固定しています。現行Pythonへの互換性、保存モデルの再読込み、結果の再現は未確認です。古い依存を本サイトの環境へ導入していません。</p>
+
+<h3>5. LMPC・PSFと、学習の役割が違う</h3>
+<div class="table-wrap" role="region" aria-label="学習モデルと安全条件の比較" tabindex="0"><table class="tech-table"><caption>表3　同じ走行履歴でも、戻す先が違う</caption><thead><tr><th scope="col">手法</th><th scope="col">履歴・モデルの役割</th><th scope="col">比較する条件</th></tr></thead><tbody>
+<tr><th scope="row">BayesRace</th><td>運動学モデルの一段予測へGP平均の補正を加える。</td><td>未見の状態での残差、多段予測、制約緩和、計算期限。</td></tr>
+<tr><th scope="row"><a href="learning-mpc-racing-2019.html">LMPC</a></th><td>完走履歴から終端集合・残り時間を作り、局所車両モデルも学ぶ。</td><td>履歴への接続可能性、局所近似、終端・横境界のslack。</td></tr>
+<tr><th scope="row"><a href="predictive-safety-filter-2018.html">PSF</a></th><td>モデル誤差の条件と終端安全制御を用い、提案入力からの修正を選ぶ。</td><td>初期実行可能性、信頼集合、終端条件など保証の仮定。</td></tr>
+<tr><th scope="row">現行参照空間MPPI</th><td>静的占有を使って経路形状・曲率候補を評価する。</td><td>予測経路の鮮度・幾何・占有検査。GPで速度状態を補う実装ではない。</td></tr>
+</tbody></table></div>
+<p>この表は問題設定の比較です。BayesRaceのGPを足しただけでLMPCの終端条件やPSFの確率保証が付くわけではありません。関連する全体像は<a href="racing-overview-2018-2026.html">レーシング概説</a>と<a href="mpc-mppi-overview.html">MPC・MPPI概説</a>で確認できます。</p>
+
+<h3>6. 現行TimePathへ接続する前に必要なこと</h3>
+<p><strong>現行コードの事実：</strong>公開系統 <code>358623c</code>の<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/358623cbfcfcd43828f2d66149e2d00f69162959/src/aic_transfuser_lite/models/time_path_v1.py">TimePathV1</a>は観測時のbase_link座標で30点の未来XY（0.1〜3.0 s）を出します。区間弦長の速度ノルムは、符号付きvₓ・vᵧやωとは別です。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/358623cbfcfcd43828f2d66149e2d00f69162959/src/aic_transfuser_lite/control/slam_mppi.py">参照空間MPPI</a>は4係数の横オフセット・曲率候補から経路を作り、静的占有を検査します。これはBayesRaceの7状態を予測するNMPCとは異なります。</p>
+<p><strong>導入候補：</strong>TimePathを参照経路にし、下流で車両状態を予測する制御器を定義する接続は考えられます。ただし現行の<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/358623cbfcfcd43828f2d66149e2d00f69162959/src/aic_transfuser_lite/control/waypoint_controller.py">基本追従器</a>は操舵角と加速度を出します。BayesRaceのPWM duty・操舵角速度とは単位も駆動系も違い、公開コードの入力をそのままつなげません。以下は未実装の検証案です。</p>
+<ol>
+<li><strong>状態と適用時刻をそろえる：</strong>指令値・実舵角・車速・姿勢変化を区別し、通信と駆動応答の遅延を含める。診断用の情報を無断で推論入力へ変えない。</li>
+<li><strong>まず基準モデルを検査する：</strong>単位、ヨーレート式、入力変換、積分法を固定する。低速直進で合うだけで限界旋回のモデルが得られたとは扱わない。</li>
+<li><strong>走行単位で学習と評価を分ける：</strong>隣接サンプルをランダム分割するだけでなく、別走行・別速度・別路面の一段／多段残差を測る。GPの分散と実際の誤差の対応も確認する。</li>
+<li><strong>同条件の制御比較にする：</strong>参照経路、速度上限、車体形状、停止監視、占有処理、計算予算を固定し、補正の有無を比較する。不要停止・接触・最大逸脱・slack・期限超過を記録する。</li>
+<li><strong>計算全体を測る：</strong>センサ入力から実際の指令適用までのp50/p95/p99、最大値、解なし時の処理を測る。GP学習時間、モデル更新、MPC solve、GPU利用の効果を混ぜない。</li>
+</ol>
+<p>本プロジェクトの過去の<a href="slam-mppi-box-20260919.html">5 km/h・AWSIM静止箱試験</a>は、記事に記載した限定条件の結果です。今回の文献更新で高速走行・タイヤ同定・BayesRaceの性能を確認したことにはなりません。</p>
+
+<h3>変更点・確認範囲・残る課題</h3>
+<p>既存台帳R15の書誌・要旨確認を採択本文と付録の精読へ更新し、arXiv v2と固定版の公式コードを同じ研究系列へ追加しました。残差学習の位置、平均補正と安全保証の違い、公開コードの境界設定・計時・式の不一致を新たに整理しています。全結果の再現、保存データの生成条件、現行依存での実行、実車の観測・遅延・未見路面の評価は残ります。分類と関連記事は<a href="research-map.html">研究地図</a>へ反映しました。</p>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-08">2026-10-08</time></div>
+<h3><a href="../articles/racing-overview-2018-2026.html">高速自律レーシングの研究地図：2018–2026</a></h3>
+<p>F1TENTHと実車の位置推定、タイヤ同定、経路・速度、対戦、実時間を評価条件ごとに整理。</p><div class="card-bottom"><span>調査・適用候補</span>
+<a class="article-read" href="../articles/racing-overview-2018-2026.html" aria-label="高速自律レーシングの研究地図：2018–2026を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-08">2026-10-08</time></div>
+<h3><a href="../articles/mpc-mppi-overview.html">MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</a></h3>
+<p>線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="card-bottom"><span>文献俯瞰・適用候補</span>
+<a class="article-read" href="../articles/mpc-mppi-overview.html" aria-label="MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-08">2026-10-08</time></div>
+<h3><a href="../articles/learning-mpc-racing-2019.html">LMPC：走行履歴から学ぶラップタイム最適化</a></h3>
+<p>完走履歴による終端集合・残り時間・局所モデル、BARC実験と公開コードの版差、現行TimePathへの適用条件。</p><div class="card-bottom"><span>原著・公式コード確認／未実装候補</span>
+<a class="article-read" href="../articles/learning-mpc-racing-2019.html" aria-label="LMPC：走行履歴から学ぶラップタイム最適化を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-07">2026-10-07</time></div>
+<h3><a href="../articles/predictive-safety-filter-2018.html">PSF：保持した経路と安全な退避計画の違い</a></h3>
+<p>予測安全フィルタの条件付き保証と、現行の停止監視・保持経路復帰との境界を整理。</p><div class="card-bottom"><span>原著の限定節確認・未導入</span>
+<a class="article-read" href="../articles/predictive-safety-filter-2018.html" aria-label="PSF：保持した経路と安全な退避計画の違いを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-08">2026-10-08</time></div>
+<h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
+<p>4領域・144区分の確認範囲と未調査を整理。88資料・66研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

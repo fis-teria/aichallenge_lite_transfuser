@@ -68,22 +68,37 @@
       <main id="main"><section class="section first listing"><div class="section-heading"><span class="section-number">PROJECT LIBRARY</span><h1>記事一覧・更新履歴</h1><p>記事の公開・更新日順に掲載しています。試験の実施日は各記事に記録。継続資料、検証記録、論文ノート、開発・運用の記事を横断して探せます。</p></div><div class="paper-tools" hidden><label class="search-label" for="article-search">記事を検索
 <input id="article-search" type="search" placeholder="例：復帰、DINOv3、LiDAR" autocomplete="off"></label>
 <div class="filters" role="group" aria-label="記事の種類"><button type="button" data-filter="all" aria-pressed="true">すべて</button><button type="button" data-filter="guide" aria-pressed="false">継続資料</button><button type="button" data-filter="report" aria-pressed="false">検証記録</button><button type="button" data-filter="paper" aria-pressed="false">論文ノート</button><button type="button" data-filter="development" aria-pressed="false">開発・運用</button></div></div>
-<p class="search-status small" aria-live="polite" hidden></p><div class="article-grid"><article class="article-card" data-category="report">
+<p class="search-status small" aria-live="polite" hidden></p><div class="article-grid"><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-08">2026-10-08</time></div>
+<h3><a href="articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
+<p>4領域・144区分の確認範囲と未調査を整理。88資料・66研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
+<a class="article-read" href="articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-08">2026-10-08</time></div>
+<h3><a href="articles/racing-overview-2018-2026.html">高速自律レーシングの研究地図：2018–2026</a></h3>
+<p>F1TENTHと実車の位置推定、タイヤ同定、経路・速度、対戦、実時間を評価条件ごとに整理。</p><div class="card-bottom"><span>調査・適用候補</span>
+<a class="article-read" href="articles/racing-overview-2018-2026.html" aria-label="高速自律レーシングの研究地図：2018–2026を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-08">2026-10-08</time></div>
+<h3><a href="articles/mpc-mppi-overview.html">MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</a></h3>
+<p>線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="card-bottom"><span>文献俯瞰・適用候補</span>
+<a class="article-read" href="articles/mpc-mppi-overview.html" aria-label="MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-08">2026-10-08</time></div>
+<h3><a href="articles/bayesrace-2020.html">BayesRace：車両モデルの残差を学び、MPCの予測を補う</a></h3>
+<p>GP残差で車両予測を補うBayesRace。原著とコードの版差、計算期限、安全保証との違いを確認。</p><div class="card-bottom"><span>原著・公式コード確認／未導入</span>
+<a class="article-read" href="articles/bayesrace-2020.html" aria-label="BayesRace：車両モデルの残差を学び、MPCの予測を補うを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-08">2026-10-08</time></div>
+<h3><a href="articles/learning-mpc-racing-2019.html">LMPC：走行履歴から学ぶラップタイム最適化</a></h3>
+<p>完走履歴による終端集合・残り時間・局所モデル、BARC実験と公開コードの版差、現行TimePathへの適用条件。</p><div class="card-bottom"><span>原著・公式コード確認／未実装候補</span>
+<a class="article-read" href="articles/learning-mpc-racing-2019.html" aria-label="LMPC：走行履歴から学ぶラップタイム最適化を読む">記事を読む →</a></div></article><article class="article-card" data-category="report">
 <div class="card-meta"><span class="tag">検証記録</span>
 <time datetime="2026-10-07">2026-10-07</time></div>
 <h3><a href="articles/retained-path-recovery.html">保持経路を使う低速復帰の仕様と検証状況</a></h3>
 <p>直前の有効な経路を検査しながら使う復帰処理。コード検証とAWSIM未確認を分けて記録します。</p><div class="card-bottom"><span>実装・テスト済み</span>
-<a class="article-read" href="articles/retained-path-recovery.html" aria-label="保持経路を使う低速復帰の仕様と検証状況を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
-<div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-07">2026-10-07</time></div>
-<h3><a href="articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
-<p>4領域・144区分の確認範囲と未調査を整理。86資料・66研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
-<a class="article-read" href="articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
-<div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-07">2026-10-07</time></div>
-<h3><a href="articles/mpc-mppi-overview.html">MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</a></h3>
-<p>線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="card-bottom"><span>文献俯瞰・適用候補</span>
-<a class="article-read" href="articles/mpc-mppi-overview.html" aria-label="MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<a class="article-read" href="articles/retained-path-recovery.html" aria-label="保持経路を使う低速復帰の仕様と検証状況を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-07">2026-10-07</time></div>
 <h3><a href="articles/predictive-safety-filter-2018.html">PSF：保持した経路と安全な退避計画の違い</a></h3>
@@ -103,17 +118,7 @@
 <time datetime="2026-10-04">2026-10-04</time></div>
 <h3><a href="articles/dagger.html">DAgger：模倣学習で生じる分布ずれ</a></h3>
 <p>学習した方策の行動が次の観測を変えるため、教師の走行だけで学ぶと運用時に分布ずれが生じる問題を扱います。DAggerでは学習者が訪れた状態に教師の指示を付け、データを反復集約します。</p><div class="card-bottom"><span>一次資料を確認</span>
-<a class="article-read" href="articles/dagger.html" aria-label="DAgger：模倣学習で生じる分布ずれを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
-<div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-03">2026-10-03</time></div>
-<h3><a href="articles/racing-overview-2018-2026.html">高速自律レーシングの研究地図：2018–2026</a></h3>
-<p>F1TENTHと実車の位置推定、タイヤ同定、経路・速度、対戦、実時間を評価条件ごとに整理。</p><div class="card-bottom"><span>調査・適用候補</span>
-<a class="article-read" href="articles/racing-overview-2018-2026.html" aria-label="高速自律レーシングの研究地図：2018–2026を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
-<div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-03">2026-10-03</time></div>
-<h3><a href="articles/learning-mpc-racing-2019.html">LMPC：走行履歴から学ぶラップタイム最適化</a></h3>
-<p>完走履歴による終端集合・残り時間・局所モデル、BARC実験と公開コードの版差、現行TimePathへの適用条件。</p><div class="card-bottom"><span>原著・公式コード確認／未実装候補</span>
-<a class="article-read" href="articles/learning-mpc-racing-2019.html" aria-label="LMPC：走行履歴から学ぶラップタイム最適化を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<a class="article-read" href="articles/dagger.html" aria-label="DAgger：模倣学習で生じる分布ずれを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-02">2026-10-02</time></div>
 <h3><a href="articles/traffic-sign-bench-2026.html">TrafficSignBench：標識遵守を完走と同時に測る</a></h3>
