@@ -153,3 +153,7 @@ LBC記事の公開commit `4d8215f737dfe3e1e0d07b9df9e20d763a4ca294` の[CI](http
 コードのGP特徴順・scaler、境界制約の既定無効、solve単独の計時、周回後の再学習、論文と基準モデルのヨーレート式および積分法の不一致を記録しました。コード・保存データ・依存の実行や著者結果の再現は未実施です。ニュース由来20件のarticle-intentsは保全。親側の共有ニュース確認は可視3便20項目で新規候補が見えた範囲はなく、元会話のlive更新状態は未確認です。確認範囲はnews-intake-check-20261008.jsonに記録しています。
 
 生成・一致・全リンク検査と29件のサイト回帰が成功。30記事・34ページ、1514リンク/asset・37種類のcommit固定根拠を確認しました。既存ブラウザ検査で5画面幅のナビゲーション、全34ページのPC/mobile、旧hashとJS無効時を確認。新記事と関連記事4本を320/390/768/1440pxで確認し、図・4表・数式・キーボード横スクロール・相互リンクを検査、PC/スマホ画像を目視確認しました。一次資料22 URLとHTML節アンカーはHTTP 200で確認。検査記録はbayesrace-validation-20261008.json。描画2フレームを待つ作業フォルダ内wrapperを使用し、既存検査本体・サイトJS/CSSは変更していません。公開CI・実配信は確認後に別途記録します。学習・制御・ROSコードや設定を変更せず、全体pytest・学習・AWSIM・実車試験はこの文書更新に含めません。Roachの未移送原稿は別件として保持し、再作成していません。
+
+### BayesRace記事の公開確認
+
+記事commit `d99c7a2e523de6f3c15bf6e1eba9e37f252bfbe1` をHervararのWindows checkoutから既存fis-teria認証でmainへpushしました。[公開CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/37719572604)はsuccess。全34ページと3資産がHTTP 200で生成物とバイト単位で一致しました。[BayesRace記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/bayesrace-2020.html)と関連記事4本を実配信の320/390/768/1440pxで確認し、図・4表・数式・キーボード横スクロール・逆リンク・JS無効時の閲覧が成功。最終題名のローカル表示も再確認しています。記録はbayesrace-publication-20261008.jsonで、該当調査キューをpublishedへ更新しました。公開上の未解決事項はありません。著者コード・保存データの再現、現行依存での起動、実車遅延・未見路面の検証は記事公開とは別の未実施事項です。origin・認証・グローバルGit設定は変更せず、新規資格情報・SSH/WSL/クラウドpush・API書込みは使用していません。
