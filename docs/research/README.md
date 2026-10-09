@@ -163,3 +163,7 @@ LBC記事の公開commit `4d8215f737dfe3e1e0d07b9df9e20d763a4ca294` の[CI](http
 既存E2E-WORをarXiv v3の限定本文確認へ増補し、固定版の公式CARLAコードを同じworld-on-rails系列に1資料追加しました。31記事・89資料・66系列。公表年不明9資料は年代別144セルから除外し、年代集計80資料・調査済み33セル・未調査111セルと全coverage_complete=falseを保ちます。公式コードのcommit日時は初公表年へ代用しません。論文・コードの版差と現行TimePathへ必要な教師/出力の設計を個別記事、E2E概説・LBC・研究地図へ反映しています。
 
 ニュース受入記録は親側の公開ページ確認に基づき、直近三版20項目と全七版48項目を区別しました。古い項目は新着にせず、10/8版が見えないことからlive元会話の更新なしとは結論しません。学習・制御・ROSコードや設定変更、著者コード実行、学習・走行・独立再現は未実施です。生成一致・35ページの1581リンク/asset・42種類のcommit固定根拠、29件のサイト回帰が成功しました。Windows Edgeで5画面幅のナビゲーション、全35ページのPC/mobile、更新4記事×320/390/768/1440pxの表示、構成図・数式・4表・横スクロール・逆リンク・JS無効時を確認。外部根拠21 URLはHTTP 200。既存検査本体・CSS/JSは変更していません。検証記録は `wor-validation-20261009.json`。対象commitのCI・実配信はpush後に別記録へ残します。
+
+### World on Rails記事の公開確認
+
+記事commit `1de8216b39cf922992506963edec23b8e7cee157` をHervararのWindows正式checkoutから既存fis-teria認証でmainへ通常pushしました。[対象CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/37895990742)はsuccess。全35ページと3資産がHTTP 200でWindows生成物とバイト単位で一致しました。[記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/world-on-rails-2021.html)と関連記事3本を実配信の320/390/768/1440pxで確認し、構成図・数式・4表・横スクロール・逆リンク・JS無効時に問題はありません。公開記録は `wor-publication-20261009.json`。Git作者表記は既存履歴をcommit単位で使用し、グローバル設定・origin・認証・公開workflowは変更していません。
