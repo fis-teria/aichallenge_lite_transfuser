@@ -18,7 +18,7 @@
     "task": "対象分野の代表研究を比較し、個別記事の追加・更新テーマを選ぶ",
     "deliverable": "選定理由を伴う個別研究記事。E2EはTransFuser以外の手法も対象。移動ロボット・SLAM・人との相互作用を扱うナビゲーションも含む",
     "gate": "重要性・未調査範囲・比較価値を確認し、入力・出力・教師・実験・制約・実装への示唆を区別",
-    "state": "既存の個別記事に加えBayesRaceを2026-10-08に選定。本文未確認の既存R15と、LMPC・PSFとの比較価値で採用。公開状態は個別項目に記録し、次回は同じ基準で都度選定。"
+    "state": "World on Railsを2026-10-09に選定。前回BayesRaceからE2Eの教師生成へ軸を移し、要旨のみだった既存E2E-WORを増補。On-Track SysID・MPPI-Generic・動的ナビゲーション等も候補として残す。公開状態は個別項目に記録し、固定優先を設けない。"
   },
   {
     "priority": "候補（都度選定）",
@@ -32,7 +32,7 @@
     "task": "コードと論文の対応・ライセンス・再現条件を確認",
     "deliverable": "公式実装リンクとcommit・環境の記録",
     "gate": "コードの存在を再現成功としない",
-    "state": "LMPC・LBCに続きBayesRaceの固定commit・ライセンス・環境・コードの版差を2026-10-08に静的確認。著者コードの独立再現は未実施。その他の実装は都度確認。"
+    "state": "LMPC・LBCに続きBayesRaceの固定commit・ライセンス・環境・コードの版差を2026-10-08に静的確認。著者コードの独立再現は未実施。その他の実装は都度確認。 World on Railsも2026-10-09に固定版で静的確認。停止報酬・KL蒸留・収集の版差と古い依存を記録し、実行・追試は未実施。"
   },
   {
     "priority": "候補（都度選定）",
@@ -338,7 +338,7 @@
     "task": "Roach・World on Rails・LAVの教師とデータ利用を比較する",
     "deliverable": "原則1論文1記事と関連比較",
     "gate": "特権情報・RL・非反応型世界・他車データの仮定と、版を揃えた評価条件を一次資料で確認",
-    "state": "候補。今回のLBC記事から続く精読対象で、固定優先順位ではない"
+    "state": "World on Railsを限定本文・公式コードの静的確認へ増補。Roachの未移送原稿は別件として保持し再作成しない。LAV等は次回に同じ基準で都度選定。"
   },
   {
     "priority": "完了",
@@ -354,5 +354,17 @@
     "scope": "前回PSFから車両予測モデルへ対象を移し、既存R15の全文未確認の穴を補う。学習・制御コードや設定を変更せず、実装・走行・再現を含まない。",
     "publication_commit": "d99c7a2e523de6f3c15bf6e1eba9e37f252bfbe1",
     "publication_url": "https://fis-teria.github.io/aichallenge_lite_transfuser/articles/bayesrace-2020.html"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "World on Railsの非反応仮定・行動価値教師・評価版差を個別解説",
+    "deliverable": "world-on-rails-2021",
+    "gate": "原著v3・固定コード・現行入力/教師契約の確認、生成一致・リンク・サイト回帰・PC/mobile表示、対象commitのCIと実配信確認。",
+    "state": "ready_for_publication; CIと実配信の確認後に公開記録を更新する",
+    "source_ids": [
+      "E2E-WOR",
+      "E2E-WOR-CODE"
+    ],
+    "scope": "記事・研究管理資料のみ。学習・制御・ROSコードや設定変更、著者コード実行、学習・走行・独立再現を含まない。"
   }
 ]

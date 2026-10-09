@@ -70,7 +70,7 @@
 <span class="section-number">論文ノート</span><h1>Learning by Cheating：特権教師から画像の運転方策へ</h1>
 <p class="article-lead">全分岐の教師信号とDAgger、CARLA成功率の定義、公開コードの版差、TimePathへの導入条件を解説。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-04">2026-10-04</time></span>
-<span>更新 <time datetime="2026-10-04">2026-10-04</time></span>
+<span>更新 <time datetime="2026-10-09">2026-10-09</time></span>
 <span class="tag">原著・補足・公式コード確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">模倣学習・教師と生徒</span><span class="paper-year">CoRL 2019 / PMLR 2020</span></div>
 <h2>Learning by Cheating：特権情報を学習時だけ使う</h2>
 <p class="authors">Dian Chen, Brady Zhou, Vladlen Koltun, Philipp Krähenbühl／UT Austin、Intel Labs</p>
@@ -173,10 +173,10 @@
 
 <h3>10. 出典と次の調査</h3>
 <p>最終確認日：2026-10-04。採択本文§1–5・Tables 1–3・Fig.1–5、公式補足§1–3・Tables 1–4、arXivの書誌と付録、固定版公式コードの教師・生徒・学習3段階・dataset・評価suite・依存・ライセンスを確認しました。補足ZIP内の動画は評価根拠に用いていません。コード実行、公開重みの照合、0.9.5の完全な実験構成、実機での計算負荷は未確認です。</p>
-<p>次は、教師を強化学習で作るRoach、非反応型世界の仮定でログから学ぶWorld on Rails、LBC著者の後続LAVを候補に、教師の質・観測・データ利用範囲を比較します。各候補の未確認箇所を先に埋め、原則1論文1記事で扱います。現在の確認範囲と資料の関連は<a href="research-map.html">研究地図・資料年表</a>を参照してください。</p>
+<p>2026-10-09追記。<a href="world-on-rails-2021.html">World on Railsの個別解説</a>で、自車モデルと非反応の周囲ログから未選択の操作にも価値を付ける教師生成を比較しました。LBCの教師模倣とは教師の由来が異なり、両手法のCARLA版・評価条件を分けて読む必要があります。教師を強化学習で作るRoach、LBC著者の後続LAVも候補として保持します。各候補の未確認箇所を先に埋め、原則1論文1記事で扱います。現在の確認範囲と資料の関連は<a href="research-map.html">研究地図・資料年表</a>を参照してください。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-04">2026-10-04</time></div>
+<time datetime="2026-10-09">2026-10-09</time></div>
 <h3><a href="../articles/e2e-field-overview.html">E2E自動運転の全体像と比較の読み方</a></h3>
 <p>2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。</p><div class="card-bottom"><span>文献調査</span>
 <a class="article-read" href="../articles/e2e-field-overview.html" aria-label="E2E自動運転の全体像と比較の読み方を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
@@ -191,9 +191,14 @@
 <p>原著のfusion・waypoint・PID、限定されたCARLA結果、公式版差とE2E Liteへの適用条件。</p><div class="card-bottom"><span>原著と補足を確認</span>
 <a class="article-read" href="../articles/transfuser-cvpr2021.html" aria-label="TransFuser原著の仕組みと再現条件を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-08">2026-10-08</time></div>
+<time datetime="2026-10-09">2026-10-09</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
-<p>4領域・144区分の確認範囲と未調査を整理。88資料・66研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
-<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<p>4領域・144区分の確認範囲と未調査を整理。89資料・66研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-09">2026-10-09</time></div>
+<h3><a href="../articles/world-on-rails-2021.html">World on Rails：保存ログから未選択の操作にも教師を付ける</a></h3>
+<p>非反応の周囲ログから行動価値を作る教師生成。評価条件・コードの版差・TimePathへの接続を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
+<a class="article-read" href="../articles/world-on-rails-2021.html" aria-label="World on Rails：保存ログから未選択の操作にも教師を付けるを読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

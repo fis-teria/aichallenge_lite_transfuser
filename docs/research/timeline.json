@@ -308,20 +308,20 @@
   {
     "year": 2021,
     "classification_year": 2021,
-    "publication_date": "",
-    "updated": "2021-05-03",
+    "publication_date": "2021-05-03",
+    "updated": "2021-10-02 v3",
     "era": "2021-2022",
     "domain": "e2e",
     "title": "Learning to Drive from a World on Rails",
     "study_family_id": "world-on-rails",
     "source_id": "E2E-WOR",
-    "url": "https://arxiv.org/abs/2105.00636",
-    "date_basis": "領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2021-05。確認した版と初稿は区別する。",
-    "boundary_note": "",
+    "url": "https://arxiv.org/html/2105.00636v3",
+    "date_basis": "arXiv初稿v1は2021-05-03、確認版v3は2021-10-02。初稿日・改訂日・確認日を区別する。URL資料種別は著者preprint。",
+    "boundary_note": "ICCV 2021 study; reviewed author arXiv v3, not independently verified against publisher text. Nonreactive world is a training approximation; CARLA results and six-model leaderboard submission are not real-vehicle safety validation.",
     "source_type": "preprint",
-    "doi": "",
-    "checked_date": "2026-10-02",
-    "checked_scope": "abstract; nonreactive assumption and value-learning concept only"
+    "doi": "10.48550/arXiv.2105.00636",
+    "checked_date": "2026-10-09",
+    "checked_scope": "arXiv v3 §§3–5, Tables 1–5, Appendix A/D–G; factorization, backward induction, distillation, CARLA evaluation and assumptions. Relevant author-code paths read separately; no result reproduction."
   },
   {
     "year": 2021,
@@ -1582,5 +1582,23 @@
     "doi": "",
     "checked_date": "2026-10-08",
     "checked_scope": "Static read: README, LICENSE.md, setup.py, gp/load_data.py, train_model_orca.py, update_model_orca.py, gp/utils.py, mpc/run_nmpc_orca_gp.py, mpc/gpmpc.py, models/kinematic6.py, data/simulate_kinematic_orca.py and params/orca.py. Verified default boundary constraints off, feature/scaler order, GP mean use, solve-only timing, offline update, model-equation and integration differences. No source execution, dataset/pickle loading, dependency installation or reproduction."
+  },
+  {
+    "year": null,
+    "classification_year": null,
+    "publication_date": "",
+    "updated": "release commit 7d0e3286c78f92b6b73271eedb96dbc1305e35dd; commit timestamp 2022-02-17",
+    "era": "undated",
+    "domain": "e2e",
+    "title": "World on Rails — official CARLA implementation",
+    "study_family_id": "world-on-rails",
+    "source_id": "E2E-WOR-CODE",
+    "url": "https://github.com/dotchen/WorldOnRails/tree/7d0e3286c78f92b6b73271eedb96dbc1305e35dd",
+    "date_basis": "初公表年未確認。確認日・commit日時を初公表年へ代用せず、undatedとして年代別144セルの件数から除外する。",
+    "boundary_note": "Initial public release date unknown; commit timestamp is version evidence only. Paper stop reward 0.01 differs from config 0.1; KL teacher-distribution loss and Q-based collection require experiment correspondence checks. No independent reproduction.",
+    "source_type": "code",
+    "doi": "",
+    "checked_date": "2026-10-09",
+    "checked_scope": "Pinned README, INSTALL/RAILS/DATASET docs, dependency environment and MIT license; ego/camera models, Bellman reward/update, labeler, train_main KL distillation, QCollector and ImageAgent key paths statically read. No dependency install, data/weight loading or code execution."
   }
 ]

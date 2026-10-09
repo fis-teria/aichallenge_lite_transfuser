@@ -70,7 +70,7 @@
 <span class="section-number">継続資料</span><h1>E2E自動運転の全体像と比較の読み方</h1>
 <p class="article-lead">2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-02">2026-10-02</time></span>
-<span>更新 <time datetime="2026-10-04">2026-10-04</time></span>
+<span>更新 <time datetime="2026-10-09">2026-10-09</time></span>
 <span class="tag">文献調査</span></div></header><div class="article-body"><p class="paper-summary">E2E自動運転は「画像から直接操舵する一種類の方式」ではありません。学習する範囲、観測できる情報、出力の契約、評価環境が異なる研究群です。本稿は2018年10月2日から2026年10月2日までの代表例を、E2E Lite TransFuserで設計判断に使える分類へ整理します。全論文の網羅調査ではなく、比較条件を揃えるための入口です。</p>
 <p><strong>最終確認日：</strong>2026-10-04。初回の俯瞰範囲は2026-10-02までで、今回の追記はLBCの精読と関連記事です。論文の初回公開年と会議・誌面の発表年を区別します。企業の公開発表は技術動向の証拠として扱い、独立に再現された走行性能とは扱いません。</p>
 <h2>何を解く技術か</h2>
@@ -126,6 +126,9 @@
 
 <h2>特権教師から生徒へ移す情報を読む</h2>
 <p>2026-10-04、<a href="learning-by-cheating-2019.html">Learning by Cheating（CoRL 2019）の個別解説</a>を追加しました。実演で選ばれなかった進路にも教師信号を出す全分岐監督と、生徒の走行状態へ教師付けするDAggerを分けて説明します。二段化だけでは改善しなかった実験、到着率と衝突判定の違い、CARLA 0.9.5と公開0.9.6実装の差を整理しています。教師情報の分離が実装されていることと、LBCの蒸留を本プロジェクトで実施済みであることは別です。</p>
+
+<h2>ログから未選択の操作にも教師を付ける</h2>
+<p>2026-10-09、<a href="world-on-rails-2021.html">World on Rails（2021）の個別解説</a>を追加しました。LBCの教師模倣に対し、自車モデルと記録した周囲の動きから候補操作の価値を計算する構成です。周囲が自車に反応しない近似と、走行時に観測へ反応する画像方策を区別します。CARLA評価の版・成功判定・ensembleと公開コードの差、現行TimePathへ必要な教師・出力の設計を整理し、導入・追試・走行は未実施です。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-02">2026-10-02</time></div>
@@ -143,9 +146,9 @@
 <p>Camera・2D LiDAR・車両状態からの経路予測と、モデル外の制御・安全監視を整理します。</p><div class="card-bottom"><span>継続資料</span>
 <a class="article-read" href="../articles/system-architecture.html" aria-label="システム構成とTimePathの入出力を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-08">2026-10-08</time></div>
+<time datetime="2026-10-09">2026-10-09</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
-<p>4領域・144区分の確認範囲と未調査を整理。88資料・66研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
+<p>4領域・144区分の確認範囲と未調査を整理。89資料・66研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
 <a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-02">2026-10-02</time></div>
@@ -158,9 +161,14 @@
 <p>標識ごとのclosed-loop評価と規則教師による学習。SCDの分母、公開版の範囲差、E2E Liteへの適用条件を整理。</p><div class="card-bottom"><span>原著・公開実装を確認</span>
 <a class="article-read" href="../articles/traffic-sign-bench-2026.html" aria-label="TrafficSignBench：標識遵守を完走と同時に測るを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-04">2026-10-04</time></div>
+<time datetime="2026-10-09">2026-10-09</time></div>
 <h3><a href="../articles/learning-by-cheating-2019.html">Learning by Cheating：特権教師から画像の運転方策へ</a></h3>
 <p>全分岐の教師信号とDAgger、CARLA成功率の定義、公開コードの版差、TimePathへの導入条件を解説。</p><div class="card-bottom"><span>原著・補足・公式コード確認／未導入</span>
-<a class="article-read" href="../articles/learning-by-cheating-2019.html" aria-label="Learning by Cheating：特権教師から画像の運転方策へを読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/learning-by-cheating-2019.html" aria-label="Learning by Cheating：特権教師から画像の運転方策へを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-09">2026-10-09</time></div>
+<h3><a href="../articles/world-on-rails-2021.html">World on Rails：保存ログから未選択の操作にも教師を付ける</a></h3>
+<p>非反応の周囲ログから行動価値を作る教師生成。評価条件・コードの版差・TimePathへの接続を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
+<a class="article-read" href="../articles/world-on-rails-2021.html" aria-label="World on Rails：保存ログから未選択の操作にも教師を付けるを読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="非反応の周囲ログから行動価値を作る教師生成。評価条件・コードの版差・TimePathへの接続を整理。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>World on Rails：保存ログから未選択の操作にも教師を付ける — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html" aria-current="page"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../papers.html">論文ノート</a></div>
+<span class="section-number">論文ノート</span><h1>World on Rails：保存ログから未選択の操作にも教師を付ける</h1>
+<p class="article-lead">非反応の周囲ログから行動価値を作る教師生成。評価条件・コードの版差・TimePathへの接続を整理。</p><div class="article-meta">
+<span>公開 <time datetime="2026-10-09">2026-10-09</time></span>
+<span>更新 <time datetime="2026-10-09">2026-10-09</time></span>
+<span class="tag">原著・公式コードの静的確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文精読・教師生成</span><span class="paper-year">2021</span></div>
+<h2>World on Rails：保存ログから未選択の操作にも教師を付ける</h2>
+<p class="authors">Dian Chen, Vladlen Koltun, Philipp Krähenbühl</p>
+<p class="paper-summary">走行ログにあるのは、実際に選んだ操作の結果です。World on Railsは、自車の動きを計算する小さなモデルと、記録した周囲の動きを組み合わせ、選ばなかった操作にも価値を付けます。教師の作り方をLBCと比較し、周囲が反応しない近似の限界、論文とコードの差、現行TimePathへの接続条件を整理します。</p>
+<p>対象はICCV 2021の<a href="https://dotchen.github.io/world_on_rails/">Learning to Drive from a World on Rails</a>。arXiv初稿は2021-05-03、確認版v3は2021-10-02です。2026-10-09に<a href="https://arxiv.org/html/2105.00636v3">著者版の主要節・評価表・関連付録</a>と<a href="https://github.com/dotchen/WorldOnRails/tree/7d0e3286c78f92b6b73271eedb96dbc1305e35dd">著者コードの固定commit 7d0e328</a>を静的確認しました。出版社版の独立照合、コード実行、追試、学習・AWSIM・実車走行は未実施です。本プロジェクトへ導入した記事ではありません。</p>
+
+<h3>1. 教師は、記録された操作の模倣だけではない</h3>
+<figure class="tech-figure">
+<figcaption>図1　学習用の価値計算と、走行時の画像方策を分ける（本記事の概念図）</figcaption>
+<ol class="tech-flow four">
+<li><strong>データを分ける</strong><p>操作と応答の小さなデータ、画像と周囲の状態の走行ログ</p></li>
+<li><strong>自車モデルを学ぶ</strong><p>操作から次の位置・向き・速度を計算する</p></li>
+<li><strong>行動価値を計算</strong><p>周囲のログを固定し、候補操作の先を評価する</p></li>
+<li><strong>画像方策へ蒸留</strong><p>走行時は観測・速度・経路指示から操作を出す</p></li>
+</ol>
+<p>周囲の車両や歩行者はログに沿って動きます。「動かない世界」ではなく、自車の別の操作に反応しない世界です。学習用の将来ログを、走行時に利用する構成ではありません。</p>
+</figure>
+<p>原著は学習した自車モデルと記録済みの周囲の状態から、離散化した行動価値を後ろ向きに計算します。主要な画像学習データには専門家の操作を保存しません。一方、自車モデルの学習にはランダム操作と応答のデータを使います。「操作データが全工程で不要」とは読みません。<a href="https://arxiv.org/html/2105.00636v3#S3">原著§3</a>、<a href="https://arxiv.org/html/2105.00636v3#S5">§5</a></p>
+
+<h3>2. 非反応の仮定で、価値計算を簡単にする</h3>
+<div class="table-wrap" role="region" aria-label="World on Railsの価値計算" tabindex="0"><table class="tech-table"><caption>式1　原著式2を記事用の記号に置き換えた関係</caption><thead><tr><th scope="col">関係</th><th scope="col">意味</th></tr></thead><tbody>
+<tr><td><code>Q<sub>t</sub>(x, a) = r(x, ŵ<sub>t</sub>, a) + γ V<sub>t+1</sub>(f<sub>ego</sub>(x, a))</code></td><td>xは自車状態、aは操作、ŵは記録された周囲の状態、rは明示的に設計した報酬。候補操作の次状態を自車モデルで計算する。</td></tr>
+<tr><td><code>V<sub>t</sub>(x) = max<sub>a</sub> Q<sub>t</sub>(x, a)</code></td><td>周囲の状態はログの時刻に沿う。格子と操作候補の範囲内で、先の価値を比較する。</td></tr>
+</tbody></table></div>
+<p>出典：<a href="https://arxiv.org/html/2105.00636v3#S3.SS2">§3.2、式2</a>。この教師は、モデル・報酬・格子と「周囲が反応しない」という条件で計算した値です。自車が割り込んだときに相手が減速する、といった真の反実仮想を再現した正解ラベルとは限りません。原著自身も、この仮定はシミュレータと現実で成立しないと明記しています。</p>
+
+<h3>3. CARLAの結果を、条件ごとに読む</h3>
+<div class="table-wrap" role="region" aria-label="World on Railsの評価条件" tabindex="0"><table class="tech-table"><caption>表1　原著§5と付録で確認した結果・条件</caption><thead><tr><th scope="col">評価</th><th scope="col">確認した内容</th><th scope="col">解釈の境界</th></tr></thead><tbody>
+<tr><th scope="row">Leaderboard</th><td>2021年7月時点のTable 1でDS 31.37、RC 57.65、IS 0.56。主要データは100万frame。上位提出は6モデルのensemble。</td><td>現在の順位や単一モデルの結果として転載しない。到着・違反の指標を分ける。</td></tr>
+<tr><th scope="row">NoCrash</th><td>CARLA 0.9.10、Town1で学習。未見Town2・未見天候・Dense条件の成功率は66%。</td><td>衝突打切りには閾値がある。成功率を「すべて無接触」と言い換えない。</td></tr>
+<tr><th scope="row">LBCとの比較</th><td>同じ0.9.10でLBCを再学習し、追加カメラ視点とsegmentation教師を使う。</td><td>LBC原著の別CARLA版の値と直接順位付けしない。</td></tr>
+<tr><th scope="row">時間の区別</th><td>収集・価値計算は4 FPS、画像方策とsimulatorは20 FPS。CARLAの価値計算はH=5。</td><td>20 FPSをオンラインのBellman最適化速度や、本プロジェクトの遅延へ代用しない。</td></tr>
+</tbody></table></div>
+<p>根拠：<a href="https://arxiv.org/pdf/2105.00636v3">Tables 1–2、付録A・D・F</a>。これらはシミュレータ上の結果です。本プロジェクトや実車の安全保証には移せません。</p>
+
+<h3>4. 公開コードは、論文の設定と分けて固定する</h3>
+<p>以下はrelease系統の確認commitにある処理です。README・収集・ラベル生成・学習・走行の主要ソースを読み、データや公開重みは読み込んでいません。</p>
+<div class="table-wrap" role="region" aria-label="World on Railsの論文と公式コードの差" tabindex="0"><table class="tech-table"><caption>表2　再現前に確認する版と実行条件</caption><thead><tr><th scope="col">観点</th><th scope="col">静的確認した事実</th><th scope="col">残る確認</th></tr></thead><tbody>
+<tr><th scope="row">蒸留</th><td><code>train_main</code>は<code>softmax(Q / temperature)</code>を教師分布としたKL損失にsegmentation損失を加える。</td><td>原著式3の期待価値とentropyの表現との対応、学習挙動・結果の一致は追試していない。</td></tr>
+<tr><th scope="row">停止報酬</th><td>原著§4は0.01。公開<code>config.yaml</code>の<code>stop_rew</code>は0.1で、報酬計算がこの値を使う。</td><td>論文の各結果を再現する設定がどれかは未確認。</td></tr>
+<tr><th scope="row">走行時</th><td><code>ImageAgent</code>は画像、速度、GPSから得た経路指示を使用。速度別logitの補間と、制動・スロットルの後処理がある。</td><td>方策の出力分布だけで最終操作が決まると扱わず、後処理を含めて評価する。</td></tr>
+<tr><th scope="row">収集と計算資源</th><td><code>QCollector</code>は現在の世界を固定した価値計算で操作を収集。後段のlabelerは将来のログを使い、RayでGPUを分担する。</td><td>原著のautopilot収集との対応、教師生成時間・GPUメモリ・全体費用は未計測。</td></tr>
+</tbody></table></div>
+<p>固定版の根拠：<a href="https://github.com/dotchen/WorldOnRails/blob/7d0e3286c78f92b6b73271eedb96dbc1305e35dd/rails/rails.py">ラベル生成と蒸留</a>、<a href="https://github.com/dotchen/WorldOnRails/blob/7d0e3286c78f92b6b73271eedb96dbc1305e35dd/config.yaml">設定</a>、<a href="https://github.com/dotchen/WorldOnRails/blob/7d0e3286c78f92b6b73271eedb96dbc1305e35dd/rails/bellman.py">価値・報酬計算</a>、<a href="https://github.com/dotchen/WorldOnRails/blob/7d0e3286c78f92b6b73271eedb96dbc1305e35dd/autoagents/image_agent.py">走行時処理</a>、<a href="https://github.com/dotchen/WorldOnRails/blob/7d0e3286c78f92b6b73271eedb96dbc1305e35dd/autoagents/collector_agents/q_collector.py">収集処理</a>。</p>
+<p><a href="https://github.com/dotchen/WorldOnRails/blob/7d0e3286c78f92b6b73271eedb96dbc1305e35dd/docs/INSTALL.md">導入手順</a>はCARLA 0.9.10.1を案内し、<a href="https://github.com/dotchen/WorldOnRails/blob/7d0e3286c78f92b6b73271eedb96dbc1305e35dd/environment.yaml">環境定義</a>はPython 3.7.9、PyTorch 1.4、CUDA 10.1です。<a href="https://github.com/dotchen/WorldOnRails/blob/7d0e3286c78f92b6b73271eedb96dbc1305e35dd/LICENSE">コードはMIT</a>、<a href="https://github.com/dotchen/WorldOnRails/blob/7d0e3286c78f92b6b73271eedb96dbc1305e35dd/docs/DATASET.md">データ案内はCC-BY</a>と記載されています。データライセンスの版と実際の取得、現在の依存での動作は未確認です。古い環境を本プロジェクトへ導入していません。</p>
+
+<h3>5. LBC・BayesRaceとの比較で分かる役割</h3>
+<div class="table-wrap" role="region" aria-label="ログから何を学ぶかの比較" tabindex="0"><table class="tech-table"><caption>表3　履歴から戻す先が異なる</caption><thead><tr><th scope="col">手法</th><th scope="col">ログ・教師の役割</th><th scope="col">主な比較軸</th></tr></thead><tbody>
+<tr><th scope="row"><a href="learning-by-cheating-2019.html">LBC</a></th><td>特権教師から画像の生徒へ運転の教師信号を移す。</td><td>教師の質、全分岐監督、生徒状態での教師付け。</td></tr>
+<tr><th scope="row">World on Rails</th><td>自車モデルと非反応の周囲ログから、未選択の操作にも価値を計算する。</td><td>応答モデル、報酬、周囲の反応を省く近似。</td></tr>
+<tr><th scope="row"><a href="bayesrace-2020.html">BayesRace</a></th><td>車両モデルの予測残差を学び、MPCの状態予測を補う。</td><td>残差の一般化、多段予測、制約と計算期限。</td></tr>
+</tbody></table></div>
+<p>この表は学習する対象の比較です。異なるセンサ・車両・評価条件のスコアは統合していません。World on Railsの小さな自車モデルは、BayesRaceのGP残差モデルと同じ機能を持つわけではありません。</p>
+
+<h3>6. 現行TimePathへの接続には、教師と出力の設計が必要</h3>
+<p><strong>現行コードの事実：</strong>確認した公開main <code>8db2fb1</code>の<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8db2fb1588b9024b611af3c4ea851bb9cd979711/src/aic_transfuser_lite/models/time_path_v1.py" data-source="src/aic_transfuser_lite/models/time_path_v1.py">TimePathV1</a>は観測時のbase_link座標で30点の未来XY（0.1〜3.0 s）を出します。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8db2fb1588b9024b611af3c4ea851bb9cd979711/src/aic_transfuser_lite/data/time_teacher_v1.py" data-source="src/aic_transfuser_lite/data/time_teacher_v1.py">現在の教師生成</a>は記録された将来位置・速度を使い、時刻・frame・介入境界を検査します。確認したこの経路にWorld on Railsの行動価値生成はありません。</p>
+<p><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8db2fb1588b9024b611af3c4ea851bb9cd979711/src/aic_transfuser_lite/data/time_dataset_v1.py" data-source="src/aic_transfuser_lite/data/time_dataset_v1.py">入力構築</a>は利用可能時刻で情報を区切り、教師側と分離します。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8db2fb1588b9024b611af3c4ea851bb9cd979711/src/aic_transfuser_lite/contracts/model_batch_v3.py" data-source="src/aic_transfuser_lite/contracts/model_batch_v3.py">command_history</a>は過去の制御指令で、高水準の経路指示ではありません。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8db2fb1588b9024b611af3c4ea851bb9cd979711/docs/model_distribution/current_time_path.json" data-source="docs/model_distribution/current_time_path.json">現行checkpoint manifest</a>は<code>use_command_history=false</code>で、既存の限定AWSIM試験と未達のofflineゲートを記録しています。教師を分離できることを、価値蒸留の実施や性能改善と読み替えません。</p>
+<ol>
+<li><strong>教師データを定義：</strong>車線・信号・周囲の参加者の時系列、報酬、欠測・不確実性を教師専用に保存する。未来の自車XYだけから、別操作の価値を作らない。</li>
+<li><strong>自車の応答を同定：</strong>実際に適用された操舵・駆動・制動、観測と通信の遅延をそろえる。CARLAの正規化操作をradやm/s²へそのまま流用しない。</li>
+<li><strong>経路出力への接続を選ぶ：</strong>候補経路の採点や教師経路の生成を検討するなら、新しい設計として定義する。原著の直接操作出力をTimePathのheadへ置き換えるだけでは接続できない。</li>
+<li><strong>時間・計算予算を固定：</strong>原著の0.25 s刻み・H=5と現行0.1 s刻み・3 sの違いを扱い、教師生成と走行時推論の費用を分けて測る。</li>
+<li><strong>検証を段階化：</strong>run・scenarioを分離し、教師漏洩・モデル誤差・格子外・報酬の偏りをofflineで確認する。その後の別依頼で、相互作用する閉ループの衝突・逸脱・違反・介入・遅延を評価する。外部安全監視は保持する。</li>
+</ol>
+<p>以上は本記事の設計上の分析です。実装・学習・走行の成果ではなく、導入可否も未判定です。</p>
+
+<h3>7. 確認範囲と次の候補</h3>
+<p>原著v3 §§3–5、Tables 1–5、付録A・D–Gと、固定版のREADME・手順・依存・ライセンス・自車モデル・価値計算・蒸留・収集・走行の主要処理を静的確認しました。全実験の再現、公開重みと図表の対応、実機での計算負荷、出版社版との逐語照合は未実施です。記事の表示・リンク検査と、研究の独立追試は分けて記録します。</p>
+<p>次はOn-Track SysIDの物理パラメータ同定、MPPI-Genericのベンチマークと実装条件、動的ナビゲーション、残るニュース論文を、重要性・確認の不足・比較価値で都度選びます。Roachの未移送原稿は別件として保持し再作成していません。<a href="e2e-field-overview.html">E2E概説</a>と<a href="research-map.html">研究地図</a>に確認範囲をまとめています。</p>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-09">2026-10-09</time></div>
+<h3><a href="../articles/learning-by-cheating-2019.html">Learning by Cheating：特権教師から画像の運転方策へ</a></h3>
+<p>全分岐の教師信号とDAgger、CARLA成功率の定義、公開コードの版差、TimePathへの導入条件を解説。</p><div class="card-bottom"><span>原著・補足・公式コード確認／未導入</span>
+<a class="article-read" href="../articles/learning-by-cheating-2019.html" aria-label="Learning by Cheating：特権教師から画像の運転方策へを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-09">2026-10-09</time></div>
+<h3><a href="../articles/e2e-field-overview.html">E2E自動運転の全体像と比較の読み方</a></h3>
+<p>2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。</p><div class="card-bottom"><span>文献調査</span>
+<a class="article-read" href="../articles/e2e-field-overview.html" aria-label="E2E自動運転の全体像と比較の読み方を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-08">2026-10-08</time></div>
+<h3><a href="../articles/bayesrace-2020.html">BayesRace：車両モデルの残差を学び、MPCの予測を補う</a></h3>
+<p>GP残差で車両予測を補うBayesRace。原著とコードの版差、計算期限、安全保証との違いを確認。</p><div class="card-bottom"><span>原著・公式コード確認／未導入</span>
+<a class="article-read" href="../articles/bayesrace-2020.html" aria-label="BayesRace：車両モデルの残差を学び、MPCの予測を補うを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-09">2026-10-09</time></div>
+<h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
+<p>4領域・144区分の確認範囲と未調査を整理。89資料・66研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

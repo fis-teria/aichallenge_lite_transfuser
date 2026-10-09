@@ -276,22 +276,23 @@
     "authors_or_organization": "Dian Chen; Vladlen Koltun; Philipp Krähenbühl",
     "year": 2021,
     "classification_year": 2021,
-    "publication_date": "",
-    "updated": "2021-05-03",
-    "url": "https://arxiv.org/abs/2105.00636",
-    "doi": "",
+    "publication_date": "2021-05-03",
+    "updated": "2021-10-02 v3",
+    "url": "https://arxiv.org/html/2105.00636v3",
+    "doi": "10.48550/arXiv.2105.00636",
     "source_type": "preprint",
     "original_source_type": "paper",
     "domain": "e2e",
     "era": "2021-2022",
-    "checked_date": "2026-10-02",
-    "checked_scope": "abstract; nonreactive assumption and value-learning concept only",
+    "checked_date": "2026-10-09",
+    "checked_scope": "arXiv v3 §§3–5, Tables 1–5, Appendix A/D–G; factorization, backward induction, distillation, CARLA evaluation and assumptions. Relevant author-code paths read separately; no result reproduction.",
     "related_articles": [
-      "e2e-field-overview"
+      "e2e-field-overview",
+      "world-on-rails-2021"
     ],
     "review_status": "調査済み",
-    "boundary_note": "",
-    "date_basis": "領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2021-05。確認した版と初稿は区別する。",
+    "boundary_note": "ICCV 2021 study; reviewed author arXiv v3, not independently verified against publisher text. Nonreactive world is a training approximation; CARLA results and six-model leaderboard submission are not real-vehicle safety validation.",
+    "date_basis": "arXiv初稿v1は2021-05-03、確認版v3は2021-10-02。初稿日・改訂日・確認日を区別する。URL資料種別は著者preprint。",
     "origin_ledger": "source-ledger.json",
     "independent_replication": false
   },
@@ -2794,5 +2795,34 @@
     "checked_scope": "Static read: README, LICENSE.md, setup.py, gp/load_data.py, train_model_orca.py, update_model_orca.py, gp/utils.py, mpc/run_nmpc_orca_gp.py, mpc/gpmpc.py, models/kinematic6.py, data/simulate_kinematic_orca.py and params/orca.py. Verified default boundary constraints off, feature/scaler order, GP mean use, solve-only timing, offline update, model-equation and integration differences. No source execution, dataset/pickle loading, dependency installation or reproduction.",
     "boundary_note": "First public release date unverified; commit timestamp is not substituted for publication date. Same BayesRace family. Kinematic yaw-acceleration expression differs from paper Table 1; generated data/model provenance and effect on results unverified.",
     "date_basis": "公式コードの初公表日は未確認。commit日時は確認版の記録に限り、年代別件数から除外する。"
+  },
+  {
+    "source_id": "E2E-WOR-CODE",
+    "study_family_id": "world-on-rails",
+    "title": "World on Rails — official CARLA implementation",
+    "authors_or_organization": "Dian Chen / WorldOnRails authors",
+    "year": null,
+    "classification_year": null,
+    "publication_date": "",
+    "updated": "release commit 7d0e3286c78f92b6b73271eedb96dbc1305e35dd; commit timestamp 2022-02-17",
+    "url": "https://github.com/dotchen/WorldOnRails/tree/7d0e3286c78f92b6b73271eedb96dbc1305e35dd",
+    "doi": "",
+    "source_type": "code",
+    "original_source_type": "author-code",
+    "domain": "e2e",
+    "era": "undated",
+    "checked_date": "2026-10-09",
+    "checked_scope": "Pinned README, INSTALL/RAILS/DATASET docs, dependency environment and MIT license; ego/camera models, Bellman reward/update, labeler, train_main KL distillation, QCollector and ImageAgent key paths statically read. No dependency install, data/weight loading or code execution.",
+    "related_articles": [
+      "world-on-rails-2021",
+      "e2e-field-overview"
+    ],
+    "review_status": "調査済み",
+    "boundary_note": "Initial public release date unknown; commit timestamp is version evidence only. Paper stop reward 0.01 differs from config 0.1; KL teacher-distribution loss and Q-based collection require experiment correspondence checks. No independent reproduction.",
+    "date_basis": "初公表年未確認。確認日・commit日時を初公表年へ代用せず、undatedとして年代別144セルの件数から除外する。",
+    "origin_ledger": "source-ledger.json",
+    "independent_replication": false,
+    "code_license": "MIT",
+    "code_commit_if_verified": "7d0e3286c78f92b6b73271eedb96dbc1305e35dd"
   }
 ]
