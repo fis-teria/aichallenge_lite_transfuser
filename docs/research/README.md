@@ -179,3 +179,7 @@ LBC記事の公開commit `4d8215f737dfe3e1e0d07b9df9e20d763a4ca294` の[CI](http
 ユーザーの2026-10-10の指定により、記事の編集・生成・commit/push・配信確認はHervararのWindows正式checkoutで行います。記事用の絶対パスをAGENTSのサイト運用、docs/site/README、site-maintenance記事へ明記しました。定期更新設定は親側で扱います。生成・サイト回帰・ブラウザ検査と対象commitのCI・実配信は、それぞれ確認後に別記録へ残します。
 
 正式生成・生成一致、36ページの1,655リンク/assetと45種類の固定commit根拠、29件のサイト回帰が成功しました。既存ブラウザ検査の5画面幅、全36ページのPC/mobile、新記事と更新関連記事の320/390/768/1440px、図・数式・3表・キーボード横スクロール・相互リンク・JS無効時を確認し、PC/mobileの図表を目視確認しました。一次資料16 URLはHTTP 200。CSVはBOMを除いた列名・元の列順とJSONの一致を確認し、対象外の既存行を保全。詳細はmppi-generic-validation-20261010.jsonに記録。対象commitのCI・実配信はpush後に別記録へ残します。
+
+### MPPI-Generic記事の公開確認
+
+記事commit `93c2cc1bc64b477ca9472290ba8fd3e054f054fc` をHervararのWindows正式checkoutから既存fis-teria認証でmainへ通常pushしました。[対象CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/38056505465)はsuccess。全36ページと3資産がHTTP 200でWindows生成物とバイト単位で一致しました。[記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/mppi-generic-2024.html)と関連記事・運用記事を実配信の320/390/768/1440pxで確認し、構成図・数式・3表・キーボード横スクロール・逆リンク・JS無効時に問題はありません。公開記録は `mppi-generic-publication-20261010.json`、該当キューはpublishedです。公開上のブロッカーはありません。原著・コードの全体監査、依存・実験版の完全対応、著者結果の独立再現、制御導入・走行は別の未実施事項です。記事更新環境をHervararへ統一し、定期設定自体は親側の管理対象として変更していません。origin・認証・グローバルGit設定を変更せず、新資格情報・SSH/WSL/クラウドpush・API書込みは使用していません。
