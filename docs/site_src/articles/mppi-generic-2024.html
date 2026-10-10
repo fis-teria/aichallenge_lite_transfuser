@@ -1,0 +1,70 @@
+<div class="paper-top"><span class="tag">論文精読・GPU実装</span><span class="paper-year">2024 / 2026 v4</span></div>
+<h2>MPPI-Generic：GPU並列化と制御周期を分けて測る</h2>
+<p class="authors">Bogdan Vlahov, Jason Gibson, Manan Gandhi, Evangelos A. Theodorou / Georgia Tech ACDS Lab</p>
+<p class="paper-summary">MPPIの候補数を増やせても、センサ観測から指令適用までに間に合うとは限りません。MPPI-GenericのCUDA実装を、候補探索の仕組み、CPUとGPUの処理分担、計時範囲から読みます。既存の参照空間MPPIとの違いを整理し、導入を判断するために必要な測定を具体化します。</p>
+<p class="note"><strong>確認日：2026-10-10。</strong>論文の限定節と固定版の著者コードを静的に確認しました。ライブラリのビルド、ベンチマーク追試、制御実装の変更、学習、AWSIM・実車走行は行っていません。</p>
+
+<h3>1. 課題：探索の量と、判断を返す期限</h3>
+<p>学習器の未来経路が障害物へ近づくとき、下流の制御側には、候補を比較して経路や操作を修正する役割があります。<a href="information-theoretic-mpc.html">Information-Theoretic MPC</a>はサンプリング制御の基礎、<a href="robust-mppi.html">RMPPI</a>は追従器を含む外乱への応答、<a href="bayesrace-2020.html">BayesRace</a>は予測モデルの残差を扱います。今回は、その計算をどのように並列化し、何を計時するかに範囲を絞ります。</p>
+<p><a href="https://github.com/ACDSLab/MPPI-Generic/blob/798fa3fc75669705ccd57209e6b68c94c5179935/README.md">公式READMEの固定版</a>はC++/CUDAライブラリとしてNVIDIA GPU、GCC/G++、Eigen、CMake等を挙げています。CUDA 10以降に対応し11.7以降を推奨する記述ですが、対象PCでの互換性を今回検証したわけではありません。CPUのPython処理を同じ関数名へ置き換えるだけで導入できる構成ではありません。</p>
+
+<h3>2. 仕組み：候補の時間発展と、候補間の並列化</h3>
+<figure class="tech-figure">
+<figcaption>図1　計算を分担しても、返す指令には期限がある（本記事の概念図）</figcaption>
+<ol class="tech-flow four">
+<li><strong>状態と平均操作</strong><span>観測時刻・座標・単位をそろえる。操作系列をGPUへ渡す。</span></li>
+<li><strong>候補を生成・展開</strong><span>候補ごとにモデルを進め、コストを計算。各候補の時間方向には依存がある。</span></li>
+<li><strong>重みと平均を更新</strong><span>コストの最小値・正規化にはCPU処理と同期も入る。</span></li>
+<li><strong>返却後の検査・適用</strong><span>最終出力の検査、追従、停止監視、通信、指令適用を別に測る。</span></li>
+</ol>
+</figure>
+<p><a href="https://acdslab.github.io/mppi-generic-website/docs/mppi.html">公式アルゴリズム解説</a>では、平均操作系列の周りに候補を作り、モデルで状態を展開してから重みを付けます。下の式は同じ共分散の加法Gaussian雑音を使う説明形です。Sには必要な操作コスト・重要度補正を含めます。雑音分布を変更した実装へ、補正を省いたまま移植する式ではありません。</p>
+<div class="table-wrap" role="region" aria-label="MPPIの説明用更新式" tabindex="0"><table class="tech-table"><caption>式1　重みの分母は全候補について正規化する</caption><thead><tr><th scope="col">関係</th><th scope="col">意味と条件</th></tr></thead><tbody>
+<tr><td><code>Uⁱ = Ū + εⁱ</code></td><td>i番目の操作系列。候補数をKとし、εはここでは平均0のGaussian雑音。</td></tr>
+<tr><td><code>ρ = min<sub>i</sub> Sⁱ</code><br><code>wⁱ = exp[−(Sⁱ − ρ)/λ] / Σ<sub>j</sub> exp[−(Sʲ − ρ)/λ]</code></td><td>λ &gt; 0。最小値を引いてから計算する。小さいλでは少数の候補へ重みが集中しやすい。</td></tr>
+<tr><td><code>Ū ← Ū + Σ<sub>i</sub> wⁱ εⁱ</code></td><td>重み付き更新。有限候補から得た平均であり、大域最適性や衝突回避の証明ではない。</td></tr>
+</tbody></table></div>
+<p><a href="https://github.com/ACDSLab/MPPI-Generic/blob/798fa3fc75669705ccd57209e6b68c94c5179935/include/mppi/controllers/MPPI/mppi_controller.cu#L152">Vanilla MPPIのcomputeControl</a>には、初期状態のGPU転送、rollout、コストのCPUへの転送と同期、CPUでのbaseline・normalizer計算があり、<a href="https://github.com/ACDSLab/MPPI-Generic/blob/798fa3fc75669705ccd57209e6b68c94c5179935/include/mppi/sampling_distributions/gaussian/gaussian.cu#L434">Gaussian sampler</a>がGPUで重み付き平均を更新して結果を返します。「GPU実装」でも転送やCPU処理を無視できません。</p>
+<p><a href="https://arxiv.org/html/2409.07563v4">原著v4の§III-C</a>は、状態展開とコスト評価を分けるsplit kernelと、一つへまとめるcombined kernelを比較します。前者は時間方向のコスト評価を並列化でき、後者は中間状態のglobal memoryへの書き出しを減らせます。固定版の<a href="https://github.com/ACDSLab/MPPI-Generic/blob/798fa3fc75669705ccd57209e6b68c94c5179935/include/mppi/controllers/MPPI/mppi_controller.cu#L45">chooseAppropriateKernel</a>はshared memory容量を検査し、利用可能な両方式を計時して選びます。その選択は対象の設定に対する初期評価であり、全入力での最悪時間を保証するものではありません。</p>
+
+<h3>3. 条件付きの計算時間：候補数で優劣が変わる</h3>
+<p>原著v4の§V・Tables I/IIは、差動駆動モデルと目標・障害物コストを使い、刻み0.02 s、100段の予測で実装を比較します。換算した予測時間は2 sで、0.02 sは処理時間の実測値ではありません。AutoRally、MPPI-Generic、Nav2は各10,000回、TorchRLは1,000回。block寸法は比較間で共通で、機種ごとの最高性能まで調整した結果ではありません。</p>
+<div class="table-wrap" role="region" aria-label="Jetson Orin Nanoでの掲載平均時間" tabindex="0"><table class="tech-table"><caption>表1　Jetson Orin Nano 8 GB、付録Table IIIの平均時間だけを抜粋（ms）</caption><thead><tr><th scope="col">候補数K</th><th scope="col">MPPI-Generic</th><th scope="col">AutoRally</th><th scope="col">この2実装の比較</th></tr></thead><tbody>
+<tr><th scope="row">128</th><td>0.629</td><td>0.947</td><td>MPPI-Genericの平均が短い。</td></tr>
+<tr><th scope="row">4,096</th><td>3.0924</td><td>2.713</td><td>AutoRallyの平均が短い。</td></tr>
+</tbody></table></div>
+<p>出典は<a href="https://arxiv.org/pdf/2409.07563v4#page=20">v4 PDFの20ページ目</a>。表の平均を抜粋し、論文のばらつき値を最悪時間やp99へ読み替えていません。これらは著者の掲載値で、今回のWindows PC・AWSIM・高速レーシングの測定結果ではありません。</p>
+<p>本記事の解釈として、比較したいのは「最も短い平均」だけではありません。同じモデル・コスト・探索範囲のまま候補数を増やせるのか、出力の質や期限超過がどう変わるのかも必要です。計算の改善だけでは、モデル誤差、古い地図、候補に回避経路が含まれない問題を解決できません。</p>
+
+<h3>4. 公開コードから確認した計時範囲と版</h3>
+<p>比較コードを固定したcommitは<a href="https://github.com/ACDSLab/MPPI_Paper_Example_Code/tree/a68d34dc73bdb5a04d81ba2bf70873afb3851610">a68d34d</a>です。gitlinkが指定するライブラリは<code>c57427e58ee8eec08a6689f2b49bf6d9a76a8940</code>。今回処理を読んだライブラリmain <code>798fa3f</code>とは違います。論文の全実験が、これらの固定版と完全に対応することは確認していません。</p>
+<div class="table-wrap" role="region" aria-label="著者比較コードの計時範囲" tabindex="0"><table class="tech-table"><caption>表2　同じ「optimization time」でも入口と出口を確認する</caption><thead><tr><th scope="col">実装</th><th scope="col">固定版でタイマーに含まれる処理</th><th scope="col">再現前に残る確認</th></tr></thead><tbody>
+<tr><th scope="row">MPPI-Generic</th><td><a href="https://github.com/ACDSLab/MPPI_Paper_Example_Code/blob/a68d34dc73bdb5a04d81ba2bf70873afb3851610/test/mppi-generic/mppi_mppi-generic_comparisons.cu#L197">updateStateとrunControlIteration</a>。SimpleDynPlantのpubControlは模擬状態を一段進める。</td><td>BasePlantの内部処理、実験で使ったsubmodule、同期とwarm-upをそろえる。</td></tr>
+<tr><th scope="row">AutoRally</th><td><a href="https://github.com/ACDSLab/MPPI_Paper_Example_Code/blob/a68d34dc73bdb5a04d81ba2bf70873afb3851610/test/autorally/mppi_autorally_comparisons.cu#L188">computeControl、系列取得、模擬状態の一段更新</a>。</td><td>MPPI-Genericと同じ返却条件・状態更新を含むかを照合する。</td></tr>
+<tr><th scope="row">Nav2 / TorchRL</th><td>Nav2は<a href="https://github.com/ACDSLab/MPPI_Paper_Example_Code/blob/a68d34dc73bdb5a04d81ba2bf70873afb3851610/test/ros2/mppi_ros2_comparisons.cpp#L228">evalControl</a>。TorchRLは<a href="https://github.com/ACDSLab/MPPI_Paper_Example_Code/blob/a68d34dc73bdb5a04d81ba2bf70873afb3851610/scripts/differential_drive_env.py#L283">world_env.rollout(1, planner)</a>で、計時前に20回のwarm-upを行う。</td><td>ROS版、Python側の環境処理、GPU処理完了の同期、設定と依存版を記録する。</td></tr>
+</tbody></table></div>
+<p>掲載値が無効だと結論する確認ではなく、追試の測定仕様を決めるための静的確認です。共通設定、CMake、主要タイミング箇所を読みましたが、BasePlant全経路や比較相手の依存全体は監査していません。平均と標準偏差を書き出すコードがあっても、p99・最大値・期限超過率がそろうわけではありません。</p>
+
+<h3>5. 現行プロジェクトのMPPIは、探索するものが違う</h3>
+<p>以下は公開系統<code>8f89a60</code>の静的確認です。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8f89a60c8489a2b3c4c40f4e2aab94eb213b67f1/src/aic_transfuser_lite/control/slam_mppi.py" data-source="src/aic_transfuser_lite/control/slam_mppi.py">ReferenceMppi</a>はNumPy/SciPyで参照経路の4係数を探索します。通常の横オフセット群は256候補×3反復で、成立しなければ曲率を積分する候補群を追加します。予測長は最大16 mの空間距離で、上の論文の100段×0.02 sとは同じ条件ではありません。</p>
+<p>未知領域・車体余裕・形状を検査し、不成立候補を除き、重み付き平均の経路も再検査します。終端で元の経路へ戻ることはコスト項で、硬い終端制約ではありません。その後のPure Pursuitで操舵へ変換します。確認した静的占有のplannerは移動物体を予測しません。また、リポジトリ全体にCUDAコードがないという確認ではありません。</p>
+<p><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8f89a60c8489a2b3c4c40f4e2aab94eb213b67f1/configs/control/time_path_slam_mppi.json" data-source="configs/control/time_path_slam_mppi.json">低速試験用設定</a>の<code>controller_wall_period_s=0.05</code>は50 ms周期、<code>plan_max_age_s=0.5</code>は計画の鮮度条件です。設定値だけでは実際の適用周期や最悪時間を確認できません。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8f89a60c8489a2b3c4c40f4e2aab94eb213b67f1/docs/slam_mppi_avoidance.md" data-source="docs/slam_mppi_avoidance.md">既存rollout02記録</a>の計算時間最大42.52 msは、5 km/h目標・静止箱1個・NPCなしの限定試験です。周回成功判定ではなく外部supervisorで終了し、複数配置の成功率や実車体最小距離は未測定です。元の<a href="slam-mppi-box-20260919.html">箱回避の記事</a>の条件を保ち、新しい実験結果として数えません。</p>
+
+<h3>6. 強み・限界と、導入判断の比較軸</h3>
+<p>再利用できるCUDA実装とモデル・コスト・サンプリングの分担は、探索を大きくする候補になります。一方、APIへ接続できること、低い平均計算時間、全候補が無効なときの処理、最終指令の安全性は別に確認する項目です。<a href="predictive-safety-filter-2018.html">PSFの終端安全条件</a>も、ライブラリを導入しただけでは得られません。</p>
+<p>本プロジェクトでの比較案は二つです。まず既存の参照空間探索を同じ意味のまま高速化し、候補数・出力・無効判定をCPU版と比べる方法。次に操舵・加減速の操作系列を車両モデルで展開する方法です。後者は制御方式そのものの変更で、GPU移植と同じ評価に混ぜられません。現時点ではどちらも未実装です。On-Track SysIDなどのモデル同定、動的障害物の予測、データ生成の候補も引き続き別の比較軸として残ります。</p>
+
+<h3>7. 必要なデータ・計算資源・検証</h3>
+<p>以下は本記事の導入候補で、今回実施した操作ではありません。</p>
+<ol>
+<li><strong>境界を固定する：</strong>状態・操作の単位、車両モデル、刻み、座標、予測長、最終経路と指令の契約を決める。同じ入力と候補で、CPU/GPUのコスト・採用結果・不成立時の動作を比較する。</li>
+<li><strong>同期ログを用意する：</strong>センサ取得、入力確定、転送開始、GPU処理完了、返却、最終検査、指令適用の時刻を区別する。学習用と評価用をrun/scenario単位で分け、低速データから高速域の誤差を推定しない。</li>
+<li><strong>資源を一組で記録する：</strong>CPU/GPU、メモリ、OS、driver/CUDA、依存とcommit、block寸法、候補数K・予測長H・反復Iを保存する。推論・SLAM等とGPUを共有するときの混雑、温度・電力制限、転送と地図更新も測る。</li>
+<li><strong>返却までと適用までを分けて測る：</strong>固定seed、warm-up、同期方法、測定回数をそろえ、平均・p50・p95・p99・最大値・期限超過率を残す。処理段階ごとの時間に加え、観測から適用までの全体時間を測る。</li>
+<li><strong>失敗を別に評価する：</strong>全候補棄却、NaN、地図更新、計算期限超過、GPU異常、古い出力、平均経路の衝突を個別に扱う。最終検査と外部停止監視を保ち、停止時間、接触、車体最小距離、成功率を同じ条件で比較する。</li>
+</ol>
+<p>学習データを増やす提案と、制御時の探索を増やす提案は必要な資源も異なります。歩行者を含むnavigationへ移す場合は、人の予測誤差や通行の相互作用を追加評価する必要があります。この記事の差動駆動ベンチマークや静止箱の記録から、対人安全や高速車両の能力は導けません。</p>
+
+<h3>8. 出典・確認範囲</h3>
+<p><a href="https://arxiv.org/abs/2409.07563">arXivの版履歴</a>：初稿2024-09-11、確認したv4は2026-02-24。<a href="https://arxiv.org/html/2409.07563v4">本文</a>の§II–IVの関連箇所、§V-Aの設定と結果、付録Table IIIの選んだ行を確認しました。全証明の監査、§V-Bのサンプリング効率実験の追試、実車での検証はしていません。HTMLの生成日を初稿・改訂の提出日へ代用しません。</p>
+<p><a href="https://github.com/ACDSLab/MPPI-Generic/tree/798fa3fc75669705ccd57209e6b68c94c5179935">ライブラリ固定版</a>と<a href="https://github.com/ACDSLab/MPPI_Paper_Example_Code/tree/a68d34dc73bdb5a04d81ba2bf70873afb3851610">比較コード固定版</a>は主要処理だけを静的確認しています。前者のcommit日時は2026-09-03、後者は2026-02-23で、初公表日や論文実験版と同義ではありません。現行プロジェクトは上記commitで参照しました。<a href="mpc-mppi-overview.html">MPC / MPPI概説</a>、<a href="research-map.html">研究地図</a>へ戻れます。</p>

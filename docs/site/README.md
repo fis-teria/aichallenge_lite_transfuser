@@ -2,6 +2,11 @@
 
 公開URL: https://fis-teria.github.io/aichallenge_lite_transfuser/
 
+記事の更新環境（2026-10-10ユーザー指定）: HervararのWindows。編集・生成・commit/push・配信確認は
+`C:\Users\euPHo\Documents\Codex\2026-10-06\task\migration-20261006\e2e` の正式checkoutから行います。
+既存Git認証を使用し、SSH/WSL/クラウドpush・GitHub API書込み・remote/認証変更で代替しません。
+定期更新もこの環境を対象にし、記事以外の学習・制御・実行許可へ拡張しません。
+
 トップは全体への入口です。構成・技術スタック等の継続資料、試験ごとの検証記録、
 1本ずつの論文ノート、開発・運用記録を独立した記事に分けています。
 サイドメニューと狭い画面の左ドロワーを維持し、旧URLの`#stack`等も新記事へ転送します。

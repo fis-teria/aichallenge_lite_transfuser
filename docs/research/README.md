@@ -167,3 +167,15 @@ LBC記事の公開commit `4d8215f737dfe3e1e0d07b9df9e20d763a4ca294` の[CI](http
 ### World on Rails記事の公開確認
 
 記事commit `1de8216b39cf922992506963edec23b8e7cee157` をHervararのWindows正式checkoutから既存fis-teria認証でmainへ通常pushしました。[対象CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/37895990742)はsuccess。全35ページと3資産がHTTP 200でWindows生成物とバイト単位で一致しました。[記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/world-on-rails-2021.html)と関連記事3本を実配信の320/390/768/1440pxで確認し、構成図・数式・4表・横スクロール・逆リンク・JS無効時に問題はありません。公開記録は `wor-publication-20261009.json`。Git作者表記は既存履歴をcommit単位で使用し、グローバル設定・origin・認証・公開workflowは変更していません。
+
+## MPPI-Genericの追加調査（2026-10-10）
+
+既存C08をarXiv v4の限定本文確認、C09を公式解説の再確認へ増補しました。公式ライブラリと比較コードの固定版を同じmppi-generic系列へ2資料追加。32記事・91資料・66研究系列、公表年不明11資料を除く年代集計80資料です。144セル中調査済み33・未調査111、全coverage_complete=falseを維持します。新コードのcommit日時を初公表年へ代用していません。
+
+候補数による掲載平均時間の比較、split/combined kernel、著者コードの計時範囲、ライブラリmainと比較コードgitlinkの版差、現行の静的参照空間MPPIとの境界を個別記事・MPC概説・RMPPI・研究地図へ反映しました。公式コードのビルド・実行、追試、学習・制御コードや設定の変更、走行・独立再現は未実施です。ニュース由来20件のarticle-intentsとRoachの別件原稿は保全しました。
+
+共有チャットは公開共有ページのHTML内JSONをデータとして確認。全7版48項目、最新の掲載期間9/25–10/1で、取得スナップショットに10/8版は見えません。元会話のlive更新なしとは結論せず、古い項目を新着にしていません。範囲はnews-intake-check-20261010.jsonに保存。共有本文・URLは公開記事へ転載していません。
+
+ユーザーの2026-10-10の指定により、記事の編集・生成・commit/push・配信確認はHervararのWindows正式checkoutで行います。記事用の絶対パスをAGENTSのサイト運用、docs/site/README、site-maintenance記事へ明記しました。定期更新設定は親側で扱います。生成・サイト回帰・ブラウザ検査と対象commitのCI・実配信は、それぞれ確認後に別記録へ残します。
+
+正式生成・生成一致、36ページの1,655リンク/assetと45種類の固定commit根拠、29件のサイト回帰が成功しました。既存ブラウザ検査の5画面幅、全36ページのPC/mobile、新記事と更新関連記事の320/390/768/1440px、図・数式・3表・キーボード横スクロール・相互リンク・JS無効時を確認し、PC/mobileの図表を目視確認しました。一次資料16 URLはHTTP 200。CSVはBOMを除いた列名・元の列順とJSONの一致を確認し、対象外の既存行を保全。詳細はmppi-generic-validation-20261010.jsonに記録。対象commitのCI・実配信はpush後に別記録へ残します。

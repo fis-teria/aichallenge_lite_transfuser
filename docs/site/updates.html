@@ -68,12 +68,32 @@
       <main id="main"><section class="section first listing"><div class="section-heading"><span class="section-number">PROJECT LIBRARY</span><h1>記事一覧・更新履歴</h1><p>記事の公開・更新日順に掲載しています。試験の実施日は各記事に記録。継続資料、検証記録、論文ノート、開発・運用の記事を横断して探せます。</p></div><div class="paper-tools" hidden><label class="search-label" for="article-search">記事を検索
 <input id="article-search" type="search" placeholder="例：復帰、DINOv3、LiDAR" autocomplete="off"></label>
 <div class="filters" role="group" aria-label="記事の種類"><button type="button" data-filter="all" aria-pressed="true">すべて</button><button type="button" data-filter="guide" aria-pressed="false">継続資料</button><button type="button" data-filter="report" aria-pressed="false">検証記録</button><button type="button" data-filter="paper" aria-pressed="false">論文ノート</button><button type="button" data-filter="development" aria-pressed="false">開発・運用</button></div></div>
-<p class="search-status small" aria-live="polite" hidden></p><div class="article-grid"><article class="article-card" data-category="guide">
+<p class="search-status small" aria-live="polite" hidden></p><div class="article-grid"><article class="article-card" data-category="development">
+<div class="card-meta"><span class="tag">開発・運用</span>
+<time datetime="2026-10-10">2026-10-10</time></div>
+<h3><a href="articles/site-maintenance.html">記事を分けて、変更と一緒に更新する</a></h3>
+<p>サイトをテーマ別記事へ分割。開発時の更新ルールと、更新漏れ・生成物のずれを検出する検査を追加しました。</p><div class="card-bottom"><span>運用変更</span>
+<a class="article-read" href="articles/site-maintenance.html" aria-label="記事を分けて、変更と一緒に更新するを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-09">2026-10-09</time></div>
+<time datetime="2026-10-10">2026-10-10</time></div>
 <h3><a href="articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
 <p>4領域・144区分の確認範囲と未調査を整理。89資料・66研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
 <a class="article-read" href="articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-10">2026-10-10</time></div>
+<h3><a href="articles/mpc-mppi-overview.html">MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</a></h3>
+<p>線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="card-bottom"><span>文献俯瞰・適用候補</span>
+<a class="article-read" href="articles/mpc-mppi-overview.html" aria-label="MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-10">2026-10-10</time></div>
+<h3><a href="articles/mppi-generic-2024.html">MPPI-Generic：GPU並列化と制御周期を分けて測る</a></h3>
+<p>CUDA実装の候補探索・計時範囲と、現行の参照空間MPPIへ接続する条件を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
+<a class="article-read" href="articles/mppi-generic-2024.html" aria-label="MPPI-Generic：GPU並列化と制御周期を分けて測るを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-10">2026-10-10</time></div>
+<h3><a href="articles/robust-mppi.html">Robust MPPI：追従器を予測の内側へ入れる</a></h3>
+<p>RMPPIの名目／実状態と追従内包、条件付きfree-energy保証、実験条件の違い、導入前の検証を解説します。</p><div class="card-bottom"><span>原論文精読・未実装候補</span>
+<a class="article-read" href="articles/robust-mppi.html" aria-label="Robust MPPI：追従器を予測の内側へ入れるを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
 <time datetime="2026-10-09">2026-10-09</time></div>
 <h3><a href="articles/e2e-field-overview.html">E2E自動運転の全体像と比較の読み方</a></h3>
@@ -93,12 +113,7 @@
 <time datetime="2026-10-08">2026-10-08</time></div>
 <h3><a href="articles/racing-overview-2018-2026.html">高速自律レーシングの研究地図：2018–2026</a></h3>
 <p>F1TENTHと実車の位置推定、タイヤ同定、経路・速度、対戦、実時間を評価条件ごとに整理。</p><div class="card-bottom"><span>調査・適用候補</span>
-<a class="article-read" href="articles/racing-overview-2018-2026.html" aria-label="高速自律レーシングの研究地図：2018–2026を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
-<div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-08">2026-10-08</time></div>
-<h3><a href="articles/mpc-mppi-overview.html">MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</a></h3>
-<p>線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="card-bottom"><span>文献俯瞰・適用候補</span>
-<a class="article-read" href="articles/mpc-mppi-overview.html" aria-label="MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<a class="article-read" href="articles/racing-overview-2018-2026.html" aria-label="高速自律レーシングの研究地図：2018–2026を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-08">2026-10-08</time></div>
 <h3><a href="articles/bayesrace-2020.html">BayesRace：車両モデルの残差を学び、MPCの予測を補う</a></h3>
@@ -146,11 +161,6 @@
 <a class="article-read" href="articles/forzaeth-race-stack-2024.html" aria-label="ForzaETH Race Stack：全スタックと対戦の条件を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-02">2026-10-02</time></div>
-<h3><a href="articles/robust-mppi.html">Robust MPPI：追従器を予測の内側へ入れる</a></h3>
-<p>RMPPIの名目／実状態と追従内包、条件付きfree-energy保証、実験条件の違い、導入前の検証を解説します。</p><div class="card-bottom"><span>原論文精読・未実装候補</span>
-<a class="article-read" href="articles/robust-mppi.html" aria-label="Robust MPPI：追従器を予測の内側へ入れるを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
-<div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-02">2026-10-02</time></div>
 <h3><a href="articles/cartographer.html">Cartographer：2D LiDAR SLAMとループ閉じ込み</a></h3>
 <p>局所的なサブマップを構築し、scan-to-submapの照合を用いてループ閉じ込みを処理する2D LiDAR SLAM。大きな環境でもリアルタイムに地図の整合を保つための手法を示します。</p><div class="card-bottom"><span>一次資料を確認</span>
 <a class="article-read" href="articles/cartographer.html" aria-label="Cartographer：2D LiDAR SLAMとループ閉じ込みを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
@@ -159,11 +169,6 @@
 <h3><a href="articles/transfuser-cvpr2021.html">TransFuser原著の仕組みと再現条件</a></h3>
 <p>原著のfusion・waypoint・PID、限定されたCARLA結果、公式版差とE2E Liteへの適用条件。</p><div class="card-bottom"><span>原著と補足を確認</span>
 <a class="article-read" href="articles/transfuser-cvpr2021.html" aria-label="TransFuser原著の仕組みと再現条件を読む">記事を読む →</a></div></article><article class="article-card" data-category="development">
-<div class="card-meta"><span class="tag">開発・運用</span>
-<time datetime="2026-09-27">2026-09-27</time></div>
-<h3><a href="articles/site-maintenance.html">記事を分けて、変更と一緒に更新する</a></h3>
-<p>サイトをテーマ別記事へ分割。開発時の更新ルールと、更新漏れ・生成物のずれを検出する検査を追加しました。</p><div class="card-bottom"><span>運用変更</span>
-<a class="article-read" href="articles/site-maintenance.html" aria-label="記事を分けて、変更と一緒に更新するを読む">記事を読む →</a></div></article><article class="article-card" data-category="development">
 <div class="card-meta"><span class="tag">開発・運用</span>
 <time datetime="2026-09-27">2026-09-27</time></div>
 <h3><a href="articles/dinov3-development.html">DINOv3と未来系列の比較実験に向けた準備</a></h3>

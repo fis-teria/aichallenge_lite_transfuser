@@ -18,7 +18,7 @@
     "task": "対象分野の代表研究を比較し、個別記事の追加・更新テーマを選ぶ",
     "deliverable": "選定理由を伴う個別研究記事。E2EはTransFuser以外の手法も対象。移動ロボット・SLAM・人との相互作用を扱うナビゲーションも含む",
     "gate": "重要性・未調査範囲・比較価値を確認し、入力・出力・教師・実験・制約・実装への示唆を区別",
-    "state": "World on Railsを2026-10-09に選定。前回BayesRaceからE2Eの教師生成へ軸を移し、要旨のみだった既存E2E-WORを増補。On-Track SysID・MPPI-Generic・動的ナビゲーション等も候補として残す。公開状態は個別項目に記録し、固定優先を設けない。"
+    "state": "MPPI-Genericを2026-10-10に選定。前回World on Railsの教師生成から計算資源・計時境界へ軸を移し、既存C08を限定本文確認へ増補。On-Track SysID・動的ナビゲーション・他のE2E等も候補として残す。公開状態は個別項目へ記録し、固定優先を設けない。"
   },
   {
     "priority": "候補（都度選定）",
@@ -368,5 +368,19 @@
     "scope": "記事・研究管理資料のみ。学習・制御・ROSコードや設定変更、著者コード実行、学習・走行・独立再現を含まない。",
     "publication_commit": "1de8216b39cf922992506963edec23b8e7cee157",
     "publication_url": "https://fis-teria.github.io/aichallenge_lite_transfuser/articles/world-on-rails-2021.html"
+  },
+  {
+    "priority": "候補（都度選定）",
+    "task": "MPPI-GenericのGPU並列化・計時範囲・現行参照空間MPPIとの境界を個別解説",
+    "deliverable": "mppi-generic-2024",
+    "gate": "原著v4・公式解説・固定コード・現行planner/設定/既存検証の照合、正式生成一致・リンク・サイト回帰・PC/mobile表示、対象commitのCIと実配信確認。",
+    "state": "article_prepared_publication_verification_pending",
+    "source_ids": [
+      "C08",
+      "C09",
+      "C08-CODE",
+      "C08-BENCH-CODE"
+    ],
+    "scope": "記事・サイト運用・研究管理資料のみ。学習・制御・ROSコードや設定変更、著者コード実行、学習・走行・独立再現を含まない。"
   }
 ]
