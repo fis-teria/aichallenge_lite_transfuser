@@ -4,7 +4,7 @@
     "task": "3領域の概説を公開可能な本文へまとめる",
     "deliverable": "e2e-field-overview / racing-overview-2018-2026 / mpc-mppi-overview",
     "gate": "確認済み出典のみ引用し、仮説・研究メモを含めない",
-    "state": "2026-10-02公開済み。commit 4641257464d72416281cee68a2d9be64ef85085f のCI・実配信確認済み"
+    "state": "On-Track SysIDを2026-10-11に選定。MPPI-Genericの計算資源から物理パラメータ同定へ比較軸を移し、既存R06/R07のコード確認不足を補う。動的navigation・他のE2E・制御も都度比較し、固定優先を設けない。公開状態は個別項目へ記録する。"
   },
   {
     "priority": "候補（都度選定）",
@@ -384,5 +384,19 @@
     "scope": "記事・サイト運用・研究管理資料のみ。学習・制御・ROSコードや設定変更、著者コード実行、学習・走行・独立再現を含まない。",
     "publication_commit": "93c2cc1bc64b477ca9472290ba8fd3e054f054fc",
     "publication_url": "https://fis-teria.github.io/aichallenge_lite_transfuser/articles/mppi-generic-2024.html"
+  },
+  {
+    "priority": "選定済み（2026-10-11）",
+    "task": "On-Track SysIDの原著と公開コードを個別記事へ統合",
+    "deliverable": "on-track-sysid-2024",
+    "gate": "原典・版差・現行コード境界、正式生成・全リンク・29件サイト回帰・表示検査、対象commit CIと実配信確認",
+    "state": "記事・台帳を統合。公開前検証中。CI・実配信確認後にpublishedを記録する。",
+    "source_ids": [
+      "R06",
+      "R07"
+    ],
+    "scope": "article-only; no author-code execution, implementation, training or driving",
+    "publication_commit": "",
+    "publication_url": ""
   }
 ]

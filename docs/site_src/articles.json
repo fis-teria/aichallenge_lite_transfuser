@@ -328,7 +328,7 @@
     "nav": "papers",
     "summary": "F1TENTHと実車の位置推定、タイヤ同定、経路・速度、対戦、実時間を評価条件ごとに整理。",
     "published": "2026-10-02",
-    "updated": "2026-10-08",
+    "updated": "2026-10-11",
     "status": "調査・適用候補",
     "topic": "",
     "related": [
@@ -337,7 +337,8 @@
       "roadmap",
       "research-map",
       "learning-mpc-racing-2019",
-      "bayesrace-2020"
+      "bayesrace-2020",
+      "on-track-sysid-2024"
     ]
   },
   {
@@ -347,13 +348,14 @@
     "nav": "papers",
     "summary": "2024年の全スタック論文から、MAP、評価の条件、追越しの失敗とTimePathへの適用候補を読む。",
     "published": "2026-10-02",
-    "updated": "2026-10-02",
+    "updated": "2026-10-11",
     "status": "論文解説・未適用",
     "topic": "control",
     "related": [
       "racing-overview-2018-2026",
       "system-architecture",
-      "retained-path-recovery"
+      "retained-path-recovery",
+      "on-track-sysid-2024"
     ]
   },
   {
@@ -361,9 +363,9 @@
     "title": "E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳",
     "category": "guide",
     "nav": "papers",
-    "summary": "4領域・144区分の確認範囲と未調査を整理。89資料・66研究系列を管理し、重要性・不足・比較価値でテーマを選びます。",
+    "summary": "4領域・144区分の確認範囲と未調査を整理。91資料・66研究系列を管理し、重要性・不足・比較価値でテーマを選びます。",
     "published": "2026-10-02",
-    "updated": "2026-10-10",
+    "updated": "2026-10-11",
     "status": "4領域・ニュース3記事公開",
     "topic": "",
     "related": [
@@ -382,7 +384,8 @@
       "predictive-safety-filter-2018",
       "bayesrace-2020",
       "world-on-rails-2021",
-      "mppi-generic-2024"
+      "mppi-generic-2024",
+      "on-track-sysid-2024"
     ]
   },
   {
@@ -493,7 +496,7 @@
     "nav": "papers",
     "summary": "GP残差で車両予測を補うBayesRace。原著とコードの版差、計算期限、安全保証との違いを確認。",
     "published": "2026-10-08",
-    "updated": "2026-10-08",
+    "updated": "2026-10-11",
     "status": "原著・公式コード確認／未導入",
     "topic": "control",
     "related": [
@@ -501,7 +504,8 @@
       "mpc-mppi-overview",
       "learning-mpc-racing-2019",
       "predictive-safety-filter-2018",
-      "research-map"
+      "research-map",
+      "on-track-sysid-2024"
     ]
   },
   {
@@ -536,6 +540,24 @@
       "robust-mppi",
       "slam-mppi-box-20260919",
       "bayesrace-2020",
+      "research-map"
+    ]
+  },
+  {
+    "slug": "on-track-sysid-2024",
+    "title": "On-Track SysID：残差からタイヤモデルへ戻す",
+    "category": "paper",
+    "nav": "papers",
+    "summary": "短い走行からの物理同定。予測誤差と周回、原著と公開コードの版差、TimePathへの接続条件を整理。",
+    "published": "2026-10-11",
+    "updated": "2026-10-11",
+    "status": "原著・公式コードの静的確認／未導入",
+    "topic": "control",
+    "related": [
+      "racing-overview-2018-2026",
+      "forzaeth-race-stack-2024",
+      "bayesrace-2020",
+      "mppi-generic-2024",
       "research-map"
     ]
   }

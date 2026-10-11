@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="短い走行からの物理同定。予測誤差と周回、原著と公開コードの版差、TimePathへの接続条件を整理。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>On-Track SysID：残差からタイヤモデルへ戻す — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html" aria-current="page"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../papers.html">論文ノート</a></div>
+<span class="section-number">論文ノート</span><h1>On-Track SysID：残差からタイヤモデルへ戻す</h1>
+<p class="article-lead">短い走行からの物理同定。予測誤差と周回、原著と公開コードの版差、TimePathへの接続条件を整理。</p><div class="article-meta">
+<span>公開 <time datetime="2026-10-11">2026-10-11</time></span>
+<span>更新 <time datetime="2026-10-11">2026-10-11</time></span>
+<span class="tag">原著・公式コードの静的確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文詳解・タイヤ同定</span><span class="paper-year">2024 / RA-L 2025</span></div>
+<h2>On-Track SysID：残差からタイヤモデルへ戻す</h2>
+<p class="authors">Onur Dikici、Edoardo Ghignone、Cheng Hu、Nicolas Baumann、Lei Xie、Andrea Carron、Michele Magno、Matteo Corno</p>
+<p class="paper-summary">旋回の予測が外れるとき、残差を学んでそのまま使う方法と、残差から物理モデルを同定し直す方法があります。On-Track SysIDは後者です。短い走行ログでNNを学習し、補正したモデルから仮想データを作ってタイヤ係数へ戻します。一段先の誤差、実際の周回、計算時間を分け、公開コードの版差も確認します。</p>
+<p>確認日：2026-10-11。対象は<a href="https://arxiv.org/html/2411.17508v1">Learning-Based On-Track System Identification for Scaled Autonomous Racing in Under a Minute、arXiv v1</a>の§III–Vと関連図表、<a href="https://arxiv.org/pdf/2411.17508v1">全8頁のPDFの該当箇所</a>、<a href="https://github.com/ForzaETH/On-Track-SysID/tree/7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2">著者コードの固定commit 7b2b712（2025-01-21）</a>です。<a href="https://arxiv.org/abs/2411.17508">書誌・版履歴</a>は初稿2024-11-26、RA-L 10巻2号・2025年2月と記載しています。本記事の数値はv1に基づき、雑誌本文との完全な版比較は未実施。著者コードの実行、独立追試、本プロジェクトへの実装・学習・走行は行っていません。</p>
+
+<h3>1. 何を同定し、何を既知として残すか</h3>
+<p>対象は前後輪を各一輪にまとめた動的single-trackモデルの横運動です。質量、ヨー慣性、重心から車軸までの距離を既知として残し、前後タイヤのPacejka係数を更新します。「事前知識なし」という結果は、正しいタイヤ係数が不要という条件です。車両寸法・状態推定・適用操舵まで未知のまま同定できる意味ではありません。小型車の低い重心を前提に荷重移動を無視し、縦横の動力学を分けるモデルの限界もあります。<a href="https://arxiv.org/html/2411.17508v1#S3.SS1">原著§III-A</a></p>
+<figure class="tech-figure">
+  <figcaption>図1　残差NNを経由して、タイヤ係数を更新する（本記事の概念図）</figcaption>
+  <ol class="tech-flow four">
+    <li><strong>走行ログ</strong><p>縦・横速度、ヨーレート、操舵を対応させる</p></li>
+    <li><strong>一段先の残差</strong><p>名目モデルとの差をNNで補正する</p></li>
+    <li><strong>仮想の定常データ</strong><p>一定速度で操舵を増やし、タイヤ力を計算する</p></li>
+    <li><strong>係数へ戻す</strong><p>前後輪をフィットし、名目モデルを更新する</p></li>
+  </ol>
+  <p>更新したモデルで残差を学び直します。図の仮想データは、新しく測ったタイヤ力ではありません。NNの補正とモデルの仮定から作られます。</p>
+</figure>
+<p>収集には、タイヤ係数を要求しないPure Pursuitを使用。取得後に非因果の低域フィルタを掛け、左右対称の運動を仮定して横速度・ヨーレート・操舵の符号を反転したデータを追加します。未来のサンプルを使う前処理を、そのまま毎周期のオンライン観測器にすることはできません。仮想データでは平均速度を一定にして操舵を0から0.4 radへ増やし、10秒・0.02秒刻みで補正モデルを展開します。定常近似から求めた力とスリップ角をフィットし、NNを初期化して反復します。収束は実験上の判断で、任意の初期値・路面に対する収束定理ではありません。<a href="https://arxiv.org/html/2411.17508v1#S3.SS3">§III-C</a>、<a href="https://arxiv.org/html/2411.17508v1#S3.SS5">§III-E–F</a></p>
+
+<h3>2. 残差の単位と、タイヤ力の係数をそろえる</h3>
+<div class="table-wrap" role="region" aria-label="On-Track SysIDの状態と残差式" tabindex="0"><table class="tech-table"><caption>式1　原著式4–7を記事用にまとめた関係</caption><thead><tr><th scope="col">関係</th><th scope="col">意味と確認点</th></tr></thead><tbody>
+<tr><td><code>xₖ = [vᵧ, ω]、uₖ = [vₓ, δ]</code></td><td>vₓ・vᵧはm/s、ωはrad/s、δはrad。縦速度を入力として与え、加減速のモデル全体を同定する構成ではない。</td></tr>
+<tr><td><code>eₖ = x<sub>k+1</sub> − f<sub>model</sub>(xₖ, uₖ, Φ)</code></td><td>教師は一段先の横速度・ヨーレートの差。加速度残差と読み替えず、モデル刻みを合わせる。</td></tr>
+<tr><td><code>x<sub>k+1</sub> = f<sub>model</sub>(xₖ, uₖ, Φ) + f<sub>NN</sub>(vₓ, vᵧ, ω, δ)</code></td><td>補正したモデルを仮想データ生成に使用。その結果から前後輪それぞれのB・C・D・Eを更新する。</td></tr>
+</tbody></table></div>
+<p>原著式2の力は <code>Fᵧ = D sin(C atan(Bα − E(Bα − atan(Bα))))</code>。公開コードの<code>generate_predictions.py</code>と<code>solve_pacejka.py</code>では、これに静的な鉛直荷重F<sub>z</sub>を掛けています。したがって原著式のDは力の振幅、コードのDは荷重で正規化した係数です。値だけをコピーせず、N、rad、荷重の定義を照合する必要があります。この違いは固定版コードの静的確認であり、係数の実測検証ではありません。<a href="https://arxiv.org/html/2411.17508v1#S3.SS1">原著式2–4</a>、<a href="https://github.com/ForzaETH/On-Track-SysID/blob/7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2/src/helpers/generate_predictions.py">著者コードの予測式</a></p>
+
+<h3>3. 小さな予測誤差と、走れるモデルを分けて評価する</h3>
+<p>シミュレーションはF1TENTHのモデルを対象のsingle-track式へ合わせ、30秒・2周のデータを収集。人工Gaussianノイズの係数ηを0〜1.4まで0.2刻みで変え、各条件を10回反復しました。「RMSEが3.3倍低い」は横速度とヨーレートの一段予測を平均した報告です。ヨーレート単独はNLSと同程度で、物理試験の全指標・完走率が一律3.3倍改善した意味ではありません。テストデータは同じ走路の別runです。<a href="https://arxiv.org/html/2411.17508v1#S4.SS2">§IV-B</a>、<a href="https://arxiv.org/html/2411.17508v1#S4.SS3">§IV-C、Fig. 5</a></p>
+<div class="table-wrap" role="region" aria-label="物理F1TENTHでのモデル比較" tabindex="0"><table class="tech-table"><caption>表1　v1 Table Iの物理1:10 F1TENTH比較（本プロジェクトの結果ではない）</caption><thead><tr><th scope="col">指標</th><th scope="col">提案法</th><th scope="col">定常同定</th><th scope="col">NLS</th></tr></thead><tbody>
+<tr><th scope="row">横速度RMSE [m/s]</th><td>0.0233</td><td>0.0239</td><td>0.0289</td></tr>
+<tr><th scope="row">ヨーレートRMSE [rad/s]</th><td>0.106</td><td>0.108</td><td>0.0655</td></tr>
+<tr><th scope="row">平均周回時間 [s]</th><td>8.10</td><td>8.16</td><td>N.C.</td></tr>
+<tr><th scope="row">平均横ずれ [m]</th><td>0.082</td><td>0.092</td><td>N.C.</td></tr>
+<tr><th scope="row">最大横ずれ [m]</th><td>0.27</td><td>0.30</td><td>N.C.</td></tr>
+</tbody></table></div>
+<p>N.C.はコース違反なしの一周を完了できなかったことです。NLSはヨーレートRMSEが最小でも、タイヤ力を過小評価して閉ループでは走れませんでした。三方式の係数を同じMAP追従器で使った比較であり、RMSEだけで制御への適否を決めない例です。提案法は同路面で30秒・約3周のログを使い、定常同定は6.5 m × 6.5 mの場所で2〜3 m/s、操舵0.2〜0.4 radの三実験です。Fig. 6では前輪0.15 rad、後輪0.13 radを超えるスリップ角でデータ不足による曲線のずれがあり、この範囲外の精度を示した結果として扱いません。<a href="https://arxiv.org/html/2411.17508v1#S4.SS4">§IV-D、Fig. 6、Table I</a></p>
+<p>原著は車載Intel NUC・ROS環境を記載し、6反復を約0.5秒ずつ、計3秒と報告します。硬いタイヤのモデルから柔らかいタイヤへの適応例は30秒のログと2反復・1秒を使い、平均周回8.75→8.50秒、平均横ずれ0.16→0.11 mでした。これはTable IIの一条件です。観測から指令までの最悪遅延、任意の摩擦変化への保証、LUT生成・描画を含む公開コード全体の完了時間は確認できません。<a href="https://arxiv.org/html/2411.17508v1#S4.SS5">§IV-E、Table II</a></p>
+
+<h3>4. 公開コードを、そのまま論文実験の版と見なさない</h3>
+<p>固定commitの主要経路を、収集→前処理→残差学習→仮想データ→係数フィット→保存→LUT生成まで静的確認しました。依存の導入、ROS起動、学習や生成は実行していません。次の差や確認点を残します。</p>
+<div class="table-wrap" role="region" aria-label="原著と固定版コードの照合" tabindex="0"><table class="tech-table"><caption>表2　7b2b712の静的確認で分かったこと</caption><thead><tr><th scope="col">対象</th><th scope="col">確認した処理</th><th scope="col">再現前の確認</th></tr></thead><tbody>
+<tr><th scope="row">NNと反復</th><td><a href="https://github.com/ForzaETH/On-Track-SysID/blob/7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2/src/helpers/SimpleNN.py">SimpleNN</a>は4→8→8→2、bias込み130パラメータ。原著§IV-Aは4→8→2・58。<a href="https://github.com/ForzaETH/On-Track-SysID/blob/7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2/src/helpers/train_model.py">train_model</a>は各反復でNNを初期化し、回数は設定値で終了。</td><td>130は層の重み・biasからの計数。論文の3秒をこの構成の実測へ転用しない。全初期値での収束判定もない。</td></tr>
+<tr><th scope="row">収集と時間</th><td><a href="https://github.com/ForzaETH/On-Track-SysID/blob/7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2/params/nn_params.yaml">YAML</a>は30秒、6反復、各100 epoch。<a href="https://github.com/ForzaETH/On-Track-SysID/blob/7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2/README.md">README</a>の既定50秒とは異なる。<a href="https://github.com/ForzaETH/On-Track-SysID/blob/7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2/src/on_track_sys_id.py">収集ノード</a>は50 Hzでvₓ&gt;1 m/sのときだけ計数し、状態callbackと操舵callbackの最新値を保存。</td><td>サンプル数から求める30秒は壁時計30秒と一致するとは限らない。CSVにstampはなく、見た経路に両topicの時刻同期・鮮度検査はない。</td></tr>
+<tr><th scope="row">前処理と仮想データ</th><td>3次Butterworthのfiltfilt、操舵を5サンプル移動し先頭5行を除去。実機は横速度へlᵣωを加える。仮想速度は平均を2.75〜4 m/sへclip、操舵0〜0.4 radを500点で展開。</td><td>座標原点・遅れ補正・速度範囲を対象車両で再検証。鏡像データを連結してから隣接行の教師を作るので、連結境界を独立した時系列として扱う確認も必要。</td></tr>
+<tr><th scope="row">係数フィット</th><td><a href="https://github.com/ForzaETH/On-Track-SysID/blob/7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2/src/helpers/solve_pacejka.py">solve_pacejka</a>はヨーレート・スリップ角で点を除外し、係数に上下限を設定。callbackは各点の残差ベクトルではなく二乗和Sを一つ返す。</td><td><a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.least_squares.html">SciPyの既定目的</a>と合わせると実際の目的は½S²。S≥0なので大域最小点の集合は変わらないが、数値的な収束挙動まで同じとは限らない。実行検証は未実施。</td></tr>
+<tr><th scope="row">LUTと終了</th><td><a href="https://github.com/ForzaETH/On-Track-SysID/blob/7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2/src/helpers/simulate_model.py">simulate_model</a>は0.5〜7 m/sと操舵0〜0.4 radの表を生成。定常に達しない点や曲線上限の先をNaNへ除外。最後の反復とLUT生成には描画待ちがある。</td><td>表の生成範囲は実機で精度・安全を検証した範囲ではない。保存・LUT・描画を含む時間と、原著の学習時間を分けて測る。</td></tr>
+</tbody></table></div>
+<p>これらは、公開版を再現するときの確認点です。著者の実験が誤っていたと判定したものではなく、論文の実験版との同一性が未確認という範囲です。パッケージの<code>package.xml</code>はMIT表記ですが、上流コードを含むライセンス全体の監査は未実施です。</p>
+
+<h3>5. 現行プロジェクトでは、どこを接続する必要があるか</h3>
+<p>公開mainの確認版は<code>4cd2ced2798957f8d4b127476b4342808b0c072b</code>です。以下はコードと配布設定の静的確認であり、今回の走行結果ではありません。TimePathの経路予測はタイヤ係数の学習と出力契約が異なるため、下流の追従・車体応答を境界として検討します。</p>
+<ul>
+<li><a data-source="src/aic_transfuser_lite/control/vehicle_motion_v1.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/4cd2ced2798957f8d4b127476b4342808b0c072b/src/aic_transfuser_lite/control/vehicle_motion_v1.py">vehicle_motion_v1</a>は静的wheelbaseと、AWSIM用の有効応答長 <code>L + K v²</code>を区別する設計です。Pacejkaの前後輪8係数の同定ループではありません。10/15/20 km/h用のpolicyも、対象速度で校正済みではなく限定試験への外挿と明記されています。</li>
+<li><a data-source="src/aic_transfuser_lite/control/awsim_steering_response.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/4cd2ced2798957f8d4b127476b4342808b0c072b/src/aic_transfuser_lite/control/awsim_steering_response.py">awsim_steering_response</a>は物理操舵要求とactuatorの目標を分け、時刻の間隔や変更率を扱います。論文のδへ、ROSの指令値・物理舵角・遅れた実応答のどれを渡すかを先にそろえる必要があります。</li>
+<li><a data-source="configs/control/time_path_vehicle_model_5kmh_20260913.json" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/4cd2ced2798957f8d4b127476b4342808b0c072b/configs/control/time_path_vehicle_model_5kmh_20260913.json">5 km/h限定設定</a>はAWSIMのasset固定、運動記録、awsim_understeer_v1を指定。設定の存在だけで全実行時の有効性を証明しません。<a data-source="docs/time_vehicle_consistency_20260913.md" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/4cd2ced2798957f8d4b127476b4342808b0c072b/docs/time_vehicle_consistency_20260913.md">既存の車体応答検証記録</a>も、狭い低速域の観測と多速度の同定を区別しています。既存の未完走・停止理由は維持します。</li>
+</ul>
+<p><a href="bayesrace-2020.html">BayesRace</a>はGPの残差平均をMPCの予測へ残し、On-Track SysIDは残差NNからPacejkaモデルへ戻します。<a href="learning-mpc-racing-2019.html">LMPC</a>の完走履歴による終端集合・価値、<a href="predictive-safety-filter-2018.html">PSF</a>の条件付き制約保証とも学習対象が違います。タイヤ予測の改善は、そのまま衝突回避や将来の安全性の証明にはなりません。</p>
+
+<h3>6. 導入候補として、最初に検証する小さな単位</h3>
+<p>ここからは未実装の設計案です。まず既存ログで縦・横速度、ヨーレート、実操舵、指令の適用時刻と観測地点をそろえ、モデルを変えずに一段予測の残差を調べることが入口になります。AWSIM由来の状態を、実センサで常に取得可能な観測へ読み替えません。</p>
+<ol>
+<li>座標・原点・単位・サンプル間隔・遅延を固定し、欠損と非有限値を明示する。非因果前処理と制御時の因果処理を分ける。</li>
+<li>同じrunの隣接フレームを学習と評価へ分けず、run/scenario単位で検証する。鏡像の作成元も同じsplitに保つ。速度・路面・操舵域外の誤差を別表にする。</li>
+<li>名目モデル、NN補正、係数へ戻したモデルを同条件で比較する。一段RMSEに加え、長い予測、タイヤ力の形、周回・最大横ずれ・停止理由を確認する。</li>
+<li>対象PCと依存版を固定し、前処理・各反復・係数フィット・LUT生成・指令までの時間を測る。最悪値と締切逸脱時の扱いも記録する。</li>
+<li>係数・LUT・適用範囲を版管理してから、別途許可された限定閉ループ試験で一つずつ評価する。未検証の高スリップ走行でデータを集めることを、この記事の実行手順にはしない。</li>
+</ol>
+<p>小型NNと少量データによる同定なので、大規模E2E学習とは計算の目的が異なります。公開コードはROS 1のrospy/catkin、PyTorch、SciPy等を使います。現行ROS 2への接続、必要RAM、Hervararでの処理時間、実センサでの可観測性は未確認。GPUを追加するだけでデータの時刻・モデルの妥当性が成立するわけではありません。</p>
+
+<h3>7. 根拠と関連記事</h3>
+<p>本記事は原著v1（著者ら、2024、<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>）を日本語で要約し、図1・式1・比較の解釈を独自に作成しました。原著の図を転載していません。§III–Vの機構・条件・Fig. 5–6・Tables I–II、固定版の主要コード経路、公開mainの上記4資料を確認しています。完全な依存・全分岐・雑誌版の監査、著者結果の独立再現は未実施です。</p>
+<p>関連記事：<a href="racing-overview-2018-2026.html">レーシング概観</a>、<a href="forzaeth-race-stack-2024.html">ForzaETH全スタックとMAP</a>、<a href="bayesrace-2020.html">BayesRaceの残差学習</a>、<a href="mppi-generic-2024.html">MPPI-Genericの計時範囲</a>、<a href="research-map.html">研究地図と調査範囲</a>。</p>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-11">2026-10-11</time></div>
+<h3><a href="../articles/racing-overview-2018-2026.html">高速自律レーシングの研究地図：2018–2026</a></h3>
+<p>F1TENTHと実車の位置推定、タイヤ同定、経路・速度、対戦、実時間を評価条件ごとに整理。</p><div class="card-bottom"><span>調査・適用候補</span>
+<a class="article-read" href="../articles/racing-overview-2018-2026.html" aria-label="高速自律レーシングの研究地図：2018–2026を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-11">2026-10-11</time></div>
+<h3><a href="../articles/forzaeth-race-stack-2024.html">ForzaETH Race Stack：全スタックと対戦の条件</a></h3>
+<p>2024年の全スタック論文から、MAP、評価の条件、追越しの失敗とTimePathへの適用候補を読む。</p><div class="card-bottom"><span>論文解説・未適用</span>
+<a class="article-read" href="../articles/forzaeth-race-stack-2024.html" aria-label="ForzaETH Race Stack：全スタックと対戦の条件を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-11">2026-10-11</time></div>
+<h3><a href="../articles/bayesrace-2020.html">BayesRace：車両モデルの残差を学び、MPCの予測を補う</a></h3>
+<p>GP残差で車両予測を補うBayesRace。原著とコードの版差、計算期限、安全保証との違いを確認。</p><div class="card-bottom"><span>原著・公式コード確認／未導入</span>
+<a class="article-read" href="../articles/bayesrace-2020.html" aria-label="BayesRace：車両モデルの残差を学び、MPCの予測を補うを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-10">2026-10-10</time></div>
+<h3><a href="../articles/mppi-generic-2024.html">MPPI-Generic：GPU並列化と制御周期を分けて測る</a></h3>
+<p>CUDA実装の候補探索・計時範囲と、現行の参照空間MPPIへ接続する条件を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
+<a class="article-read" href="../articles/mppi-generic-2024.html" aria-label="MPPI-Generic：GPU並列化と制御周期を分けて測るを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-11">2026-10-11</time></div>
+<h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
+<p>4領域・144区分の確認範囲と未調査を整理。91資料・66研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

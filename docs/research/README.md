@@ -183,3 +183,15 @@ LBC記事の公開commit `4d8215f737dfe3e1e0d07b9df9e20d763a4ca294` の[CI](http
 ### MPPI-Generic記事の公開確認
 
 記事commit `93c2cc1bc64b477ca9472290ba8fd3e054f054fc` をHervararのWindows正式checkoutから既存fis-teria認証でmainへ通常pushしました。[対象CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/38056505465)はsuccess。全36ページと3資産がHTTP 200でWindows生成物とバイト単位で一致しました。[記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/mppi-generic-2024.html)と関連記事・運用記事を実配信の320/390/768/1440pxで確認し、構成図・数式・3表・キーボード横スクロール・逆リンク・JS無効時に問題はありません。公開記録は `mppi-generic-publication-20261010.json`、該当キューはpublishedです。公開上のブロッカーはありません。原著・コードの全体監査、依存・実験版の完全対応、著者結果の独立再現、制御導入・走行は別の未実施事項です。記事更新環境をHervararへ統一し、定期設定自体は親側の管理対象として変更していません。origin・認証・グローバルGit設定を変更せず、新資格情報・SSH/WSL/クラウドpush・API書込みは使用していません。
+
+## On-Track SysIDの追加調査（2026-10-11）
+
+MPPI-Genericの計算資源から物理パラメータ同定へ比較軸を移し、既存R06/R07のコード確認不足を補う1記事を追加しました。原著v1 §III–V・Fig.5–6・Tables I–IIとPDF、固定commit 7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2の主要経路、公開mainの車体応答・操舵・配布設定を静的確認。雑誌の書誌2025と初稿2024を区別し、雑誌本文との完全な版比較は未実施です。
+
+台帳91資料・66研究系列、年代集計80・公表年不明11は不変。144セル中33セルは限定範囲の調査済み、111セルは未調査、全coverage_complete=falseを維持。NN58対130、時刻同期・荷重正規化・フィット目的・LUTと計時の境界、RMSE最小のNLSがN.C.となる実機例を整理しました。コード実行・追試・導入、学習・制御・ROS変更、学習・AWSIM/実車走行は未実施。既存ニュース20件と未移送Roach原稿は別件として保全します。
+
+共有ニュースは実際に可視7版48項目を取得。最新期間9/25–10/1と最新message日時10/2は前回と同じです。10/8版が見えないことからlive元会話の更新なしとは結論しません。公開CI・実配信は検証後に別記録へ残します。
+
+### On-Track SysID記事の公開前検査
+
+正式生成・一致検査と全リンク検査、サイト回帰29件が成功。33記事・37ページ、1736リンク/asset、49種類のcommit固定根拠を確認しました。既存Edge検査は5画面幅と全37ページのPC/mobile、検索・メニュー・キーボード・旧hash・JS無効時で成功。新記事と関連記事4本は320/390/768/1440pxで、図1・3表・数式・表の横スクロールと相互リンクを確認し、PC/mobileの図表を目視しました。外部一次資料18 URLはHTTP200、arXiv節リンクも一致。JSON/CSV、無関係89台帳レコード、記事範囲外5514ファイルを保全。CSS/JS・生成/検査ツールは変更していません。検査記録は `on-track-sysid-validation-20261011.json`。全体pytest・学習・走行・独立追試は未実施です。

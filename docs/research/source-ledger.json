@@ -806,25 +806,29 @@
     "authors_or_organization": "Onur Dikici, Edoardo Ghignone, Cheng Hu, Nicolas Baumann, Lei Xie, Andrea Carron, Michele Magno, Matteo Corno",
     "year": 2024,
     "classification_year": 2024,
-    "publication_date": "",
-    "updated": "2024-11-26",
+    "publication_date": "2024-11-26",
+    "updated": "2024-11-26 v1",
     "url": "https://arxiv.org/html/2411.17508v1",
     "doi": "10.48550/arXiv.2411.17508",
     "source_type": "preprint",
     "original_source_type": "preprint",
     "domain": "racing",
     "era": "2023-2024",
-    "checked_date": "2026-10-02",
-    "checked_scope": "Full HTML retrieved; §§III–IV, data processing, simulation noisy NLS comparison, physical testing TablesI–II",
+    "checked_date": "2026-10-11",
+    "checked_scope": "arXiv metadata/version/license; introduction and related-work context, §§III–V mechanism, assumptions, one-step evaluation and physical/adaptation conditions; Fig.5–6, Tables I–II cross-checked with PDF pages 5–6. Not a journal-version comparison or independent reproduction.",
     "related_articles": [
       "racing-overview-2018-2026",
-      "forzaeth-race-stack-2024"
+      "forzaeth-race-stack-2024",
+      "on-track-sysid-2024"
     ],
     "review_status": "調査済み",
-    "boundary_note": "RA-L2025 noted on ETH institutional page, but article uses verified v1. 30s collection plus3s six-iteration training; one-step RMSE not closed-loop safety.",
-    "date_basis": "領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2024-11。確認した版と初稿は区別する。",
+    "boundary_note": "Initial arXiv v1 is 2024-11-26; metadata lists RA-L volume10 issue2 February2025, DOI10.1109/LRA.2025.3527336. One family; article numbers use v1. 30s data plus3s six-iteration training is reported for the paper setup, not current code or current project. Physical NLS has smallest yaw-rate RMSE but N.C. laps. Slip-angle data limit and known geometry/mass remain. No safety or arbitrary-model convergence guarantee inferred.",
+    "date_basis": "分類年はarXiv初稿2024-11-26。書誌欄のRA-L2025年2月とは区別。雑誌本文との完全な版比較は未実施。",
     "origin_ledger": "source-ledger.json",
-    "independent_replication": false
+    "independent_replication": false,
+    "latest_version": "v1",
+    "primary_metadata_url": "https://arxiv.org/abs/2411.17508",
+    "full_text_url": "https://arxiv.org/pdf/2411.17508v1"
   },
   {
     "source_id": "R07",
@@ -834,24 +838,27 @@
     "year": 2024,
     "classification_year": 2024,
     "publication_date": "",
-    "updated": "",
-    "url": "https://github.com/ForzaETH/On-Track-SysID",
+    "updated": "commit 7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2; commit timestamp 2025-01-21",
+    "url": "https://github.com/ForzaETH/On-Track-SysID/tree/7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2",
     "doi": "",
     "source_type": "code",
     "original_source_type": "author-code",
     "domain": "racing",
     "era": "2023-2024",
-    "checked_date": "2026-10-02",
-    "checked_scope": "README algorithm and file roles; no execution",
+    "checked_date": "2026-10-11",
+    "checked_scope": "Pinned README, package/launch/YAML, collection callbacks, filter/mirror, residual teachers, SimpleNN and training, virtual-data and Pacejka fit, save/load and LUT/dynamics inspected statically. Partial audit; no install, ROS launch, training, LUT generation or execution.",
     "related_articles": [
       "racing-overview-2018-2026",
-      "forzaeth-race-stack-2024"
+      "forzaeth-race-stack-2024",
+      "on-track-sysid-2024"
     ],
     "review_status": "調査済み",
-    "boundary_note": "",
-    "date_basis": "領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。",
+    "boundary_note": "Code commit postdates arXiv v1; experiment correspondence unverified. NN4-8-8-2 has130 parameters vs paper4-8-2/58. YAML30s vs README50s; stamp-free latest-callback sampling, fixed dt, noncausal processing, mirrored seam and force normalization need validation. least_squares callback returns scalar SSE; default objective is half SSE squared. LUT/plots are separate from reported3s training.",
+    "date_basis": "既存書誌年2024を、2024年の著者論文内の公開コードURL・公開記述に基づいて保持。初公表日は未確認。確認commitの2025年日時を初公表日へ代用しない。",
     "origin_ledger": "source-ledger.json",
-    "independent_replication": false
+    "independent_replication": false,
+    "code_commit_if_verified": "7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2",
+    "code_license": "MIT declared in package.xml; no root license file found in inspected tree; upstream license audit not performed"
   },
   {
     "source_id": "R08",
