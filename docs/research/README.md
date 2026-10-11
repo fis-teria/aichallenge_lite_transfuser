@@ -195,3 +195,7 @@ MPPI-Genericの計算資源から物理パラメータ同定へ比較軸を移�
 ### On-Track SysID記事の公開前検査
 
 正式生成・一致検査と全リンク検査、サイト回帰29件が成功。33記事・37ページ、1736リンク/asset、49種類のcommit固定根拠を確認しました。既存Edge検査は5画面幅と全37ページのPC/mobile、検索・メニュー・キーボード・旧hash・JS無効時で成功。新記事と関連記事4本は320/390/768/1440pxで、図1・3表・数式・表の横スクロールと相互リンクを確認し、PC/mobileの図表を目視しました。外部一次資料18 URLはHTTP200、arXiv節リンクも一致。JSON/CSV、無関係89台帳レコード、記事範囲外5514ファイルを保全。CSS/JS・生成/検査ツールは変更していません。検査記録は `on-track-sysid-validation-20261011.json`。全体pytest・学習・走行・独立追試は未実施です。
+
+### On-Track SysID記事の公開確認
+
+記事commit `64e76282d3858906acd40767bd574277fd2d3b4a` をHervararのWindows正式checkoutから既存Git認証でmainへ通常pushしました。[公開CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/38107185295)のbuild/deployはsuccess。全37ページと3資産がHTTP200でWindows正式生成物とバイト単位で一致。[新記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/on-track-sysid-2024.html)と関連記事4本を実配信の320/390/768/1440pxで確認し、図・3表・数式・キーボード横スクロール・相互リンク・JS無効時に問題はありません。公開記録は `on-track-sysid-publication-20261011.json`、キューをpublishedへ更新。SSH/WSL/クラウドpush、API書込み、remote/認証/グローバル設定変更は行っていません。
