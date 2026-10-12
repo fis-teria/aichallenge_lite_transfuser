@@ -211,3 +211,7 @@ QP参照と実行入力の分岐、二枝critic、原著と公開設定の目標
 ### DODGER記事の公開前検査
 
 正式生成・一致検査と全リンク検査、サイト回帰29件が成功。34記事・38ページ、1821リンク/asset、52種類のcommit固定根拠を確認しました。既存Edge検査は5画面幅と全38ページのPC/mobile、検索・メニュー・キーボード・旧hash・JS無効時で成功。新記事と関連記事4本は320/390/768/1440pxで、図1・3表・数式・表の横スクロールと相互リンクを確認し、PC/mobileの図表を目視しました。外部一次資料18 URLはHTTP200、arXiv節リンクも一致。JSON/CSV、無関係90台帳レコード、記事範囲外5516ファイルを保全。CSS/JS・生成/検査ツールは変更していません。検査記録は `dodger-validation-20261012.json`。全体pytest・学習・走行・独立追試は未実施です。
+
+### DODGER記事の公開確認
+
+記事commit `2927a0069d6c5ee1ab5e0c336bc2a9312d38a74c` をHervararのWindows正式checkoutから既存Git認証で通常pushしました。[CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/38198640216)のbuild/deployはsuccess。全38ページ+3資産はHTTP200、Windows公式生成物とバイト単位で一致。[新記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/dodger-2026.html)と関連記事4本を実配信320/390/768/1440pxで確認し、図1・3表・式・横スクロール・相互リンク・JS無効時に問題なし。`dodger-publication-20261012.json`へ記録し、関連資料/intent/queueをpublishedへ更新。ニュース20件は公開4・追加精読15・LOOP保留1です。他19ニュースと無関係な台帳・batchを保全。SSH/WSL/クラウドpush・API書込み・remote/認証/グローバル設定変更、学習・走行は行っていません。
