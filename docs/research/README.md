@@ -199,3 +199,15 @@ MPPI-Genericの計算資源から物理パラメータ同定へ比較軸を移�
 ### On-Track SysID記事の公開確認
 
 記事commit `64e76282d3858906acd40767bd574277fd2d3b4a` をHervararのWindows正式checkoutから既存Git認証でmainへ通常pushしました。[公開CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/38107185295)のbuild/deployはsuccess。全37ページと3資産がHTTP200でWindows正式生成物とバイト単位で一致。[新記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/on-track-sysid-2024.html)と関連記事4本を実配信の320/390/768/1440pxで確認し、図・3表・数式・キーボード横スクロール・相互リンク・JS無効時に問題はありません。公開記録は `on-track-sysid-publication-20261011.json`、キューをpublishedへ更新。SSH/WSL/クラウドpush、API書込み、remote/認証/グローバル設定変更は行っていません。
+
+## DODGERの追加調査（2026-10-12）
+
+On-Track SysIDの物理同定から、動的navigationの訓練参照と実行監視へ比較軸を移しました。v1/v2の関連本文・機構・評価条件・付録とPDF対応箇所、固定版著者コード02dd5a965bdaa2e9ab60da3f3255b9acf5d45febの選択経路、現行mainの監視・静的SLAM MPPI・限定設定を確認。v1/v2の取得HTML article本文は空白正規化後に一致しましたが、PDF/TeX/成果物の完全一致・証明の監査は未確認です。
+
+既存v1を保全し、主期間後の10/5改訂v2と初公表年未確認のcodeを同系列へ追加。93資料・66系列、年代集計81（初稿年分類を保つ改訂追跡を含む）・undated12。144セル中調査済み33・未調査111、全coverage_complete=false。ニュース20件のうちDODGERだけを更新し、他19件・他90台帳レコードとRoach別件原稿を保全しました。
+
+QP参照と実行入力の分岐、二枝critic、原著と公開設定の目標・評価数の差、実機h違反・推定余裕と認識誤りを整理。著者コード実行・学習・導入・AWSIM/実車試験、全体pytestは未実施。共有スナップショットは可視7版48項目で最新9/25–10/1、message10/2と前回同じ。live元会話の更新なしとは結論せず、会話本文・URLを転載しません。公開CI・実配信は検証後に別記録します。
+
+### DODGER記事の公開前検査
+
+正式生成・一致検査と全リンク検査、サイト回帰29件が成功。34記事・38ページ、1821リンク/asset、52種類のcommit固定根拠を確認しました。既存Edge検査は5画面幅と全38ページのPC/mobile、検索・メニュー・キーボード・旧hash・JS無効時で成功。新記事と関連記事4本は320/390/768/1440pxで、図1・3表・数式・表の横スクロールと相互リンクを確認し、PC/mobileの図表を目視しました。外部一次資料18 URLはHTTP200、arXiv節リンクも一致。JSON/CSV、無関係90台帳レコード、記事範囲外5516ファイルを保全。CSS/JS・生成/検査ツールは変更していません。検査記録は `dodger-validation-20261012.json`。全体pytest・学習・走行・独立追試は未実施です。

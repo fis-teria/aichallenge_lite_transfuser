@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="動的障害物ナビの方策・CBF参照を分け、実機条件と公開コード、現行の停止監視との境界を確認。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>DODGER：学習時の安全参照と、実行時の監視を分ける — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html" aria-current="page"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../papers.html">論文ノート</a></div>
+<span class="section-number">論文ノート</span><h1>DODGER：学習時の安全参照と、実行時の監視を分ける</h1>
+<p class="article-lead">動的障害物ナビの方策・CBF参照を分け、実機条件と公開コード、現行の停止監視との境界を確認。</p><div class="article-meta">
+<span>公開 <time datetime="2026-10-12">2026-10-12</time></span>
+<span>更新 <time datetime="2026-10-12">2026-10-12</time></span>
+<span class="tag">原著・主要コードの静的確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文・実装調査／動的ナビゲーション</span><span class="paper-year">2026</span></div>
+<h2>DODGER：学習時の安全参照と、実行時の監視を分ける</h2>
+<p class="authors">Sanghyuk Park、Kwanwoo Lee、Taekyung Kim、Seohyeon Lim、Yisoo Lee</p>
+<p class="paper-summary">学習中に危険な入力を修正すると、方策自身が起こす失敗に触れる機会も変わります。DODGERは、方策が選ぶ入力でシミュレーションを進め、CBFによる修正案と制約違反を学習に使う方法です。公開コードを追い、何が訓練の参照で、何が実行時の停止処理かを整理します。</p>
+<p>確認日：2026-10-12。<a href="https://arxiv.org/html/2609.38873v2">DODGER原著v2</a>（<a href="https://arxiv.org/abs/2609.38873">初稿2026-09-30、v2は2026-10-05</a>）の関連機構・評価・付録、<a href="https://arxiv.org/pdf/2609.38873v2">PDFの該当式・評価条件</a>、<a href="https://psh0823.github.io/dodger-homepage/">著者の公式解説</a>と<a href="https://github.com/PSH0823/dodger/tree/02dd5a965bdaa2e9ab60da3f3255b9acf5d45feb">著者コードの固定commit 02dd5a9（2026-09-29）</a>を確認しました。取得したv1/v2 HTMLのarticle本文は、空白を正規化したテキストで一致しました。PDF・TeX・実験成果物まで同一と確認した意味ではありません。主期間2018-10-02〜2026-10-02のv1を保全し、以後の改訂v2を同じ研究系列へ関連付けます。</p>
+<p>対象は移動障害物に囲まれたUnitree G1の高位ナビゲーションです。画像から運転を学ぶE2Eモデルや、車両レースの実証ではありません。本記事は文献・公開コードと現行mainの静的確認です。著者実装の起動・学習・追試、現行系への導入、AWSIM・実車試験は行っていません。</p>
+
+<h3>1. 方策の経験と、安全な参照を別の経路に置く</h3>
+<figure class="tech-figure"><figcaption>図1　公開コードの役割を説明する概念図（本記事作成）</figcaption>
+<ol class="tech-flow four">
+<li><strong>周囲と目標</strong><p>障害物の位置・半径・速度と自車状態を表す</p></li>
+<li><strong>GATと方策</strong><p>周囲を集約し、加速度とヨーレートを選ぶ</p></li>
+<li><strong>方策入力で経験</strong><p>速度指令へ変換して固定された歩行方策へ渡す</p></li>
+<li><strong>参照から学習</strong><p>QPとの差・制約違反・報酬で方策とcriticを更新する</p></li>
+</ol><p>訓練のQP修正案は学習信号です。DODGERの分岐では、修正案を環境へ実行する入力として選びません。実機で探索や試行錯誤を行う手順ではありません。</p></figure>
+<p><a href="https://github.com/PSH0823/dodger/blob/02dd5a965bdaa2e9ab60da3f3255b9acf5d45feb/training/training/_src/locomotion/g1/multi_obstacle_navigation/navigation.py">navigation.pyのstep</a>はQP参照を求めた後、<code>algorithm != "dodger"</code>の比較法だけで修正入力を選びます。DODGERでは方策入力を積分し、指令の範囲へclipします。「方策入力を使う」は、物理的な入力上限まで無制限に外す意味ではありません。QPとの差を罰する項、CBF条件と歩行方策の指令範囲の違反を別々に記録します。</p>
+<p><a href="https://github.com/PSH0823/dodger/blob/02dd5a965bdaa2e9ab60da3f3255b9acf5d45feb/training/learning/ppo/split_value_losses.py">split_value_losses.py</a>は正・負の二つの価値を推定し、制約違反による継続率の減少を正の枝へ適用します。負の枝は実際の終了条件を使います。危険な場面で、衝突などの負の報酬まで小さくしてしまうことを避ける構成です。これは学習の目的を変える処理で、出力が必ず制約を満たすという判定器ではありません。</p>
+<p>背景と全体像は<a href="https://psh0823.github.io/dodger-homepage/">公式ページのOverall Framework</a>にも示されています。周囲のグラフを高位方策へ入れ、固定済みの低位歩行器が動きを実現する役割分担です。高位で選んだ入力と、身体が実現した運動を同一視しないことが、車両の下流追従器との比較にも役立ちます。</p>
+
+<h3>2. 式のどこへ、学習と実行が接続するか</h3>
+<div class="table-wrap" role="region" aria-label="DODGERコードの入力・制約・学習の関係" tabindex="0"><table class="tech-table"><caption>式1　固定版コードから整理した接続関係</caption><thead><tr><th scope="col">関係</th><th scope="col">意味・確認点</th></tr></thead><tbody>
+<tr><td><code>u = [a<sub>f</sub>, a<sub>l</sub>, ω]</code><br><code>v<sub>cmd,next</sub> = clip(v<sub>cmd</sub> + Δt a)</code></td><td>前後・横の加速度はm/s²、速度指令はm/s、ヨーレートはrad/s。横に動けるG1の入力で、車両の操舵角と同じではない。学習側は50 Hz刻み、実行側は高位周期で積分する。</td></tr>
+<tr><td><code>q<sub>h</sub> = L<sub>f</sub>h + L<sub>g</sub>h u + αh</code></td><td>CBFの状態変化を入力uに沿って評価する。違反はq<sub>h</sub>&lt;0。訓練のQP参照と、方策入力に対する違反の評価を分ける。</td></tr>
+<tr><td><code>positive_done = 1 − (1 − hard_done)(1 − δ)</code></td><td>δは制約違反から求める継続率の調整。正の価値のGAEに使い、負の価値はhard_doneで扱う。実ロボットをこの確率で終了させる機構ではない。</td></tr>
+</tbody></table></div>
+<p>出典：上記step・lossと<a href="https://github.com/PSH0823/dodger/blob/02dd5a965bdaa2e9ab60da3f3255b9acf5d45feb/training/training/_src/locomotion/g1/multi_obstacle_navigation/dpcbf.py">dpcbf.py</a>。DPCBFは接近方向と横方向の相対速度を使う放物線状の境界です。固定版では合成半径へ<code>safety_factor</code>を掛け、速度・距離へεの平滑化と半径依存の係数を入れています。原著式4の簡略なhと数値がそのまま一致する前提は置かず、座標の符号、定数の単位、接触近傍の処理を再現時に照合する必要があります。</p>
+<p><a href="https://arxiv.org/html/2609.38873v2#S2.SS1">原著§II-A</a>のCBF不変性は、モデルと正則性を満たし、条件を満たす入力を実際に適用する仮定の下での記述です。QP参照へ近づくように学習した方策には、その条件が毎回成立することを別に確かめる必要があります。状態の推定誤差、指令追従のずれ、制約緩和を残したまま、一般の安全保証へ読み替えません。</p>
+
+<h3>3. 論文の結果を、条件と一緒に読む</h3>
+<div class="table-wrap" role="region" aria-label="DODGERの評価範囲" tabindex="0"><table class="tech-table"><caption>表1　原著v2・公式ページの評価と読み取れる範囲</caption><thead><tr><th scope="col">評価</th><th scope="col">条件・結果</th><th scope="col">境界</th></tr></thead><tbody>
+<tr><th scope="row">学習効率</th><td>MuJoCoのG1。障害物上限速度0.6 m/sでDODGER約114 M、CBF-RL-Min約277 Mの環境遷移で収束。0.8 m/s条件ではDODGER約536 M。</td><td>Mは百万遷移。壁時計の学習時間・必要GPU量・Hervararでの所要時間ではない。<a href="https://psh0823.github.io/dodger-homepage/">公式Learning Framework Evaluation</a></td></tr>
+<tr><th scope="row">観測数の上限を外す</th><td>シミュレーションで成功97.27%。平均観測12.54、最大同時20、判断の68.65%で10超。</td><td>訓練時の観測上限10を評価時に解除した条件。20人の実機実験や歩行者への安全率ではない。<a href="https://arxiv.org/html/2609.38873v2#S4.SS3">§IV-C</a></td></tr>
+<tr><th scope="row">実機</th><td>G1、LiDAR＋IMUのDLIO、選択障害物は最大10。Fig. 5は歩行者5人。hの最小値は一時的に負、推定した占有形状の距離余裕dは正。</td><td>検出の結合・分離と速度推定の飛びがある。図の一例を試行全体の成功率にしない。<a href="https://arxiv.org/html/2609.38873v2#S4.SS4">§IV-D、Fig. 5</a></td></tr>
+</tbody></table></div>
+<p>論文の成功条件は、時間・故障の前に目標0.6 m以内へ達し、向き10°以内、速度0.2 m/s以下、ヨーレート0.2 rad/s以下であること。評価256 episode、直近3評価の平均95%以上を収束とします。観測は5 m、最大10を選択。実機の訓練障害物速度上限は0.8 m/sで、図中の推定0.895 m/sはその範囲を超えます。これらは原著の条件で、公開設定や本プロジェクトの実測ではありません。<a href="https://arxiv.org/html/2609.38873v2#S4.SS2">§IV-B</a>、<a href="https://arxiv.org/html/2609.38873v2#S4.SS4">§IV-D</a></p>
+<p>公式ページは四つの実機シナリオを提示し、接近・横断・複数人の密集を示しています。低次元のDubins-carではcriticの危険領域とHJ参照を比較していますが、全身G1の到達可能性を完全に証明したものではありません。動画・図による事例、統計評価、形式的保証をそれぞれ区別します。<a href="https://psh0823.github.io/dodger-homepage/">公式Real-Robot Experiments／Safety Analysis</a></p>
+
+<h3>4. 公開コードの設定・実行経路で残る確認点</h3>
+<div class="table-wrap" role="region" aria-label="DODGER公開コードの確認と版差" tabindex="0"><table class="tech-table"><caption>表2　02dd5a9の主要経路を静的確認した結果</caption><thead><tr><th scope="col">対象</th><th scope="col">確認した処理</th><th scope="col">限界・再現前の確認</th></tr></thead><tbody>
+<tr><th scope="row">観測・GAT</th><td><a href="https://github.com/PSH0823/dodger/blob/02dd5a965bdaa2e9ab60da3f3255b9acf5d45feb/training/training/_src/locomotion/g1/multi_obstacle_navigation/networks.py">学習側GAT</a>は12ノード×9特徴でvalid maskを持つ。robotから周囲・目標へattentionし、13成分の局所状態と結合。</td><td><a href="https://github.com/PSH0823/dodger/blob/02dd5a965bdaa2e9ab60da3f3255b9acf5d45feb/training/training/_src/locomotion/g1/multi_obstacle_navigation/README.md">ONNX説明</a>は可変ノード×8特徴でmaskを渡さない。重みを読み込むだけで観測構築・正規化・歩行器まで揃うとは限らない。</td></tr>
+<tr><th scope="row">訓練の設定</th><td><a href="https://github.com/PSH0823/dodger/blob/02dd5a965bdaa2e9ab60da3f3255b9acf5d45feb/training/training/_src/locomotion/g1/multi_obstacle_navigation/config.py">config.py</a>は高位10 Hz・低位50 Hz、20障害物・選択10、速度上限0.6 m/s。目標半径0.30 m、評価512 episodeを既定とする。</td><td>原著の目標0.6 m・256 episodeとは差がある。0.8 m/sの論文実機方策と、この既定値・配布重みの完全な対応は未確認。</td></tr>
+<tr><th scope="row">QPと失敗</th><td>訓練の<a href="https://github.com/PSH0823/dodger/blob/02dd5a965bdaa2e9ab60da3f3255b9acf5d45feb/training/training/_src/locomotion/g1/multi_obstacle_navigation/dpcbf.py">QP経路</a>はslackを持ち、硬い条件の実行可能性を診断。解失敗時のfallback設定はpolicy。</td><td>診断結果は実行入力を置換しない。参照のQPが存在するだけで、訓練や実行の全入力が硬いCBF条件を満たしたことにはならない。</td></tr>
+<tr><th scope="row">G1の高位実行</th><td><a href="https://github.com/PSH0823/dodger/blob/02dd5a965bdaa2e9ab60da3f3255b9acf5d45feb/deployment/deploy/robots/g1/src/State_Navigation.cpp">UpdateHighLevel</a>は障害物選択・CBF評価→ONNX方策→clip・速度積分→低位方策へ渡す。確認経路ではQP修正を指令へ適用しない。</td><td>「runtime safety filterなし」はCBF-QPの差し替えがないという範囲。odom・障害物の未着／stale時には目標を解除し速度指令を0へする処理もある。</td></tr>
+<tr><th scope="row">監視の既定値</th><td><a href="https://github.com/PSH0823/dodger/blob/02dd5a965bdaa2e9ab60da3f3255b9acf5d45feb/deployment/deploy/robots/g1/config/policy/navigation/v1/params/navigation.yaml">navigation.yaml</a>はhigh_level_dt=0.1秒。collision_stopとjoint_target_watchdogはfalse、期限超過のstop_streak/fault_streakは0。</td><td>監視コードの存在と、その経路が有効なことは別。期限の警告や速度指令0は、身体の即時静止・転倒防止の保証ではない。今回の実測はない。</td></tr>
+<tr><th scope="row">認識と計算資源</th><td><a href="https://github.com/PSH0823/dodger/blob/02dd5a965bdaa2e9ab60da3f3255b9acf5d45feb/deployment/ros2/README.md">認識README</a>はMid-360の3D点群→2D scan→円形障害物の追跡を説明。<a href="https://github.com/PSH0823/dodger/blob/02dd5a965bdaa2e9ab60da3f3255b9acf5d45feb/training/README.md">訓練</a>はJAX/MJX系、実行はONNXと低位歩行方策。</td><td>推定された位置・速度・半径には誤り得る余地がある。設定の周期は達成した最悪遅延ではない。CPU/GPU型番・学習壁時間・対象PCのメモリと期限は未検証。</td></tr>
+</tbody></table></div>
+<p>調査は上記の選択経路に限定しています。依存や全分岐、ONNX変換の数値一致、配布重みと論文の各結果、付録の全導関数・CBF成立条件の完全監査は未実施。コードの疑問点を、著者の実験が誤っていたとの判定へ広げません。リポジトリはApache-2.0表記で、各上流のlicense・noticeを保持する方針です。今回は図・コード・重みを転載せず、役割と条件を独自に整理しました。</p>
+
+<h3>5. 現行TimePathとの比較と、小さな適用候補</h3>
+<p>確認した公開mainは<code>132241174cf3c4f19155d97bda38902915cd9e7d</code>。以下は機能と配布設定の確認であり、DODGERの導入や新しい走行実績ではありません。</p>
+<ul>
+<li><a data-source="src/aic_transfuser_lite/control/safety_supervisor.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/132241174cf3c4f19155d97bda38902915cd9e7d/src/aic_transfuser_lite/control/safety_supervisor.py">Safety Supervisor</a>はセンサ時刻、非有限値、停止距離・前方LiDAR、指令の有効期限などを検査する。方策の外の差し替え処理で、DODGERの訓練信号と役割が違う。</li>
+<li><a data-source="src/aic_transfuser_lite/control/slam_mppi.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/132241174cf3c4f19155d97bda38902915cd9e7d/src/aic_transfuser_lite/control/slam_mppi.py">SLAM MPPI</a>は静的占有上の参照経路オフセットを探索し、コード自身が移動物体を予測しないと記載する。<a data-source="configs/control/time_path_slam_mppi.json" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/132241174cf3c4f19155d97bda38902915cd9e7d/configs/control/time_path_slam_mppi.json">限定設定</a>もfixed_5kmhと独立scan-stopを指定。今回の資料だけで全実行設定の有効性は判断しない。</li>
+<li><a href="predictive-safety-filter-2018.html">PSF</a>の条件付き予測安全保証、<a href="world-on-rails-2021.html">World on Rails</a>の教師生成とも条件が異なる。参照・教師・criticを使う共通点だけで、実行時の安全集合や相手への反応を同じものと呼ばない。既存の<a href="slam-mppi-box-20260919.html">静止箱試験</a>と<a href="speed-trial-20260919.html">予測短縮・停止の記録</a>は元の条件を維持する。</li>
+</ul>
+<p>最初の候補は、既存ログで「相手の位置・速度・半径の推定」と「新しいscanでの停止判定」の差を分析することです。現行の静的占有データだけでは動的グラフの教師を作れません。仮に導入を検討するなら、以下を別途設計・許可・検証する必要があります。</p>
+<ol>
+<li>観測契約：同一時刻・座標の自車状態と障害物ID、速度、占有形状、不確かさを保存。結合・分離、見失い、再出現、遅延を評価し、推論と評価用の正解情報を分離する。</li>
+<li>車両への接続：横移動できるG1の加速度・ヨーレートから、車両の操舵・加減速またはTimePathの修正へ境界を定義する。タイヤ、制動、車体の掃引領域、下流追従誤差を含めてモデルと制約を作り直す。</li>
+<li>学習と比較：方策による経験と修正入力による経験を同予算で比較する。scenario/runごとに学習・評価を分け、未見の動き、認識誤り、密度、速度域を別集計。衝突・timeout・到達率を同時に報告する。</li>
+<li>資源と期限：高位推論だけでなく、認識・グラフ・下流制御から指令適用までを測る。GPU、並列環境数、seed、遷移数、実時間を分ける。コード既定値だけから必要資源や効果を見積もらない。</li>
+<li>検証順：観測監査→静的なオフライン再生→シミュレーションの限定比較→別途許可された閉ループ試験。学習結果を理由に現行の停止監視を削除・無効化する提案は本記事に含めない。</li>
+</ol>
+<p>本更新の成果は、学習の参照と実行の監視をコードで分けた1記事、v1/v2と著者実装の関連付け、比較への相互リンクです。関連記事：<a href="research-map.html">研究地図と未調査範囲</a>、<a href="predictive-safety-filter-2018.html">PSF</a>、<a href="mpc-mppi-overview.html">MPC / MPPI概説</a>、<a href="world-on-rails-2021.html">World on Rails</a>。</p>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-12">2026-10-12</time></div>
+<h3><a href="../articles/predictive-safety-filter-2018.html">PSF：保持した経路と安全な退避計画の違い</a></h3>
+<p>予測安全フィルタの条件付き保証と、現行の停止監視・保持経路復帰との境界を整理。</p><div class="card-bottom"><span>原著の限定節確認・未導入</span>
+<a class="article-read" href="../articles/predictive-safety-filter-2018.html" aria-label="PSF：保持した経路と安全な退避計画の違いを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-12">2026-10-12</time></div>
+<h3><a href="../articles/mpc-mppi-overview.html">MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</a></h3>
+<p>線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="card-bottom"><span>文献俯瞰・適用候補</span>
+<a class="article-read" href="../articles/mpc-mppi-overview.html" aria-label="MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-12">2026-10-12</time></div>
+<h3><a href="../articles/world-on-rails-2021.html">World on Rails：保存ログから未選択の操作にも教師を付ける</a></h3>
+<p>非反応の周囲ログから行動価値を作る教師生成。評価条件・コードの版差・TimePathへの接続を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
+<a class="article-read" href="../articles/world-on-rails-2021.html" aria-label="World on Rails：保存ログから未選択の操作にも教師を付けるを読む">記事を読む →</a></div></article><article class="article-card" data-category="report">
+<div class="card-meta"><span class="tag">検証記録</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/slam-mppi-box-20260919.html">SLAM MPPIによる静止箱通過と通常追従への復帰</a></h3>
+<p>5 km/h目標のrollout02で箱通過と通常復帰を記録。周回成功や一般的な回避保証とは区別します。</p><div class="card-bottom"><span>限定試験で確認</span>
+<a class="article-read" href="../articles/slam-mppi-box-20260919.html" aria-label="SLAM MPPIによる静止箱通過と通常追従への復帰を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-12">2026-10-12</time></div>
+<h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
+<p>4領域・144区分の確認範囲と未調査を整理。93資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

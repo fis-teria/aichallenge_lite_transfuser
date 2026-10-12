@@ -70,7 +70,7 @@
 <span class="section-number">論文ノート</span><h1>PSF：保持した経路と安全な退避計画の違い</h1>
 <p class="article-lead">予測安全フィルタの条件付き保証と、現行の停止監視・保持経路復帰との境界を整理。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-07">2026-10-07</time></span>
-<span>更新 <time datetime="2026-10-07">2026-10-07</time></span>
+<span>更新 <time datetime="2026-10-12">2026-10-12</time></span>
 <span class="tag">原著の限定節確認・未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">予測安全フィルタ</span><span class="paper-year">2018初稿 / 2021改訂</span></div>
 <h2>PSF：保持した経路と「安全な退避計画」の違い</h2>
 <p class="paper-summary">学習器の提案を使う前に、制約を守りながら終端安全集合へ至る計画を探すのが予測安全フィルタ（PSF）です。保持経路の再利用と似た形でも、モデル・誤差・終端制御の条件が違えば、論文の保証は移りません。</p>
@@ -119,9 +119,12 @@
 <li><a data-source="src/aic_transfuser_lite/control/time_path_recovery.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/10b08878445537ffd3698f09344640db4111fd17/src/aic_transfuser_lite/control/time_path_recovery.py">現行保持経路の復帰処理（固定commit）</a></li>
 <li><a href="mpc-mppi-overview.html">MPC / MPPI概説</a>、<a href="robust-mppi.html">Robust MPPI</a>、<a href="retained-path-recovery.html">保持経路の復帰</a>、<a href="research-map.html">調査範囲</a></li>
 </ul>
+
+<h3>学習の参照と、実行時のフィルタを分けるDODGER</h3>
+<p>2026-10-12追記。<a href="dodger-2026.html">DODGERの個別解説</a>では、訓練でCBF-QP参照と違反を学習に使い、実行時に方策入力をQPへ通さない高位ナビゲーションを確認しました。PSFの条件付き予測安全保証と学習済み方策の経験的な回避結果を区別します。G1実機では推定距離余裕が正でもhが一時的に負になる例があり、車両への保証・導入は未確認です。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-10">2026-10-10</time></div>
+<time datetime="2026-10-12">2026-10-12</time></div>
 <h3><a href="../articles/mpc-mppi-overview.html">MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</a></h3>
 <p>線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="card-bottom"><span>文献俯瞰・適用候補</span>
 <a class="article-read" href="../articles/mpc-mppi-overview.html" aria-label="MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
@@ -136,9 +139,14 @@
 <p>直前の有効な経路を検査しながら使う復帰処理。コード検証とAWSIM未確認を分けて記録します。</p><div class="card-bottom"><span>実装・テスト済み</span>
 <a class="article-read" href="../articles/retained-path-recovery.html" aria-label="保持経路を使う低速復帰の仕様と検証状況を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-11">2026-10-11</time></div>
+<time datetime="2026-10-12">2026-10-12</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
-<p>4領域・144区分の確認範囲と未調査を整理。91資料・66研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
-<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<p>4領域・144区分の確認範囲と未調査を整理。93資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-12">2026-10-12</time></div>
+<h3><a href="../articles/dodger-2026.html">DODGER：学習時の安全参照と、実行時の監視を分ける</a></h3>
+<p>動的障害物ナビの方策・CBF参照を分け、実機条件と公開コード、現行の停止監視との境界を確認。</p><div class="card-bottom"><span>原著・主要コードの静的確認／未導入</span>
+<a class="article-read" href="../articles/dodger-2026.html" aria-label="DODGER：学習時の安全参照と、実行時の監視を分けるを読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

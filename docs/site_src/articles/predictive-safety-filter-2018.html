@@ -46,3 +46,6 @@
 <li><a data-source="src/aic_transfuser_lite/control/time_path_recovery.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/10b08878445537ffd3698f09344640db4111fd17/src/aic_transfuser_lite/control/time_path_recovery.py">現行保持経路の復帰処理（固定commit）</a></li>
 <li><a href="mpc-mppi-overview.html">MPC / MPPI概説</a>、<a href="robust-mppi.html">Robust MPPI</a>、<a href="retained-path-recovery.html">保持経路の復帰</a>、<a href="research-map.html">調査範囲</a></li>
 </ul>
+
+<h3>学習の参照と、実行時のフィルタを分けるDODGER</h3>
+<p>2026-10-12追記。<a href="dodger-2026.html">DODGERの個別解説</a>では、訓練でCBF-QP参照と違反を学習に使い、実行時に方策入力をQPへ通さない高位ナビゲーションを確認しました。PSFの条件付き予測安全保証と学習済み方策の経験的な回避結果を区別します。G1実機では推定距離余裕が正でもhが一時的に負になる例があり、車両への保証・導入は未確認です。</p>

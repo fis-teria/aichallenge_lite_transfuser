@@ -70,7 +70,7 @@
 <span class="section-number">論文ノート</span><h1>World on Rails：保存ログから未選択の操作にも教師を付ける</h1>
 <p class="article-lead">非反応の周囲ログから行動価値を作る教師生成。評価条件・コードの版差・TimePathへの接続を整理。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-09">2026-10-09</time></span>
-<span>更新 <time datetime="2026-10-09">2026-10-09</time></span>
+<span>更新 <time datetime="2026-10-12">2026-10-12</time></span>
 <span class="tag">原著・公式コードの静的確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文精読・教師生成</span><span class="paper-year">2021</span></div>
 <h2>World on Rails：保存ログから未選択の操作にも教師を付ける</h2>
 <p class="authors">Dian Chen, Vladlen Koltun, Philipp Krähenbühl</p>
@@ -140,6 +140,9 @@
 <h3>7. 確認範囲と次の候補</h3>
 <p>原著v3 §§3–5、Tables 1–5、付録A・D–Gと、固定版のREADME・手順・依存・ライセンス・自車モデル・価値計算・蒸留・収集・走行の主要処理を静的確認しました。全実験の再現、公開重みと図表の対応、実機での計算負荷、出版社版との逐語照合は未実施です。記事の表示・リンク検査と、研究の独立追試は分けて記録します。</p>
 <p>次はOn-Track SysIDの物理パラメータ同定、MPPI-Genericのベンチマークと実装条件、動的ナビゲーション、残るニュース論文を、重要性・確認の不足・比較価値で都度選びます。Roachの未移送原稿は別件として保持し再作成していません。<a href="e2e-field-overview.html">E2E概説</a>と<a href="research-map.html">研究地図</a>に確認範囲をまとめています。</p>
+
+<h3>参照を学ぶことと、参照入力で動くこと</h3>
+<p>2026-10-12追記。<a href="dodger-2026.html">DODGERの個別記事</a>では、QP参照へ近づく学習信号を使いながら、訓練経験は方策自身の入力で集める分岐を確認しました。World on Railsの非反応ログからの教師生成とは、相手・入力・経験の集め方が異なります。G1の横移動可能な入力や実機条件を、車両E2Eの教師・安全保証へそのまま置換しません。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-09">2026-10-09</time></div>
@@ -157,9 +160,14 @@
 <p>GP残差で車両予測を補うBayesRace。原著とコードの版差、計算期限、安全保証との違いを確認。</p><div class="card-bottom"><span>原著・公式コード確認／未導入</span>
 <a class="article-read" href="../articles/bayesrace-2020.html" aria-label="BayesRace：車両モデルの残差を学び、MPCの予測を補うを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-11">2026-10-11</time></div>
+<time datetime="2026-10-12">2026-10-12</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
-<p>4領域・144区分の確認範囲と未調査を整理。91資料・66研究系列を管理し、重要性・不足・比較価値でテーマを選びます。</p><div class="card-bottom"><span>4領域・ニュース3記事公開</span>
-<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<p>4領域・144区分の確認範囲と未調査を整理。93資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-12">2026-10-12</time></div>
+<h3><a href="../articles/dodger-2026.html">DODGER：学習時の安全参照と、実行時の監視を分ける</a></h3>
+<p>動的障害物ナビの方策・CBF参照を分け、実機条件と公開コード、現行の停止監視との境界を確認。</p><div class="card-bottom"><span>原著・主要コードの静的確認／未導入</span>
+<a class="article-read" href="../articles/dodger-2026.html" aria-label="DODGER：学習時の安全参照と、実行時の監視を分けるを読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

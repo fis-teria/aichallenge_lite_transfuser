@@ -1325,11 +1325,11 @@
     "source_id": "NEWS-ARXIV-2609.38873-v1",
     "url": "https://arxiv.org/html/2609.38873v1",
     "date_basis": "分類年と公表日はarXiv初稿v1。updatedとURLは確認した最新の版。ニュース掲載日を論文公表日に代用しない。",
-    "boundary_note": "97.27% is simulation evaluation after removing the 10-obstacle observation cap: average 12.54 observed obstacles, up to 20 simultaneously. It is not a 20-pedestrian physical-trial success rate.; CBF guidance at training does not establish a formal collision-avoidance guarantee for the deployed learned policy.; The real experiment temporarily violates h >= 0, while estimated footprint separation remains positive.; This is humanoid/mobile-robot navigation, not an automotive end-to-end driving model.",
+    "boundary_note": "97.27% is simulation evaluation after removing the 10-obstacle observation cap: average 12.54 observed obstacles, up to 20 simultaneously. It is not a 20-pedestrian physical-trial success rate.; CBF guidance at training does not establish a formal collision-avoidance guarantee for the deployed learned policy.; The real experiment temporarily violates h >= 0, while estimated footprint separation remains positive.; This is humanoid/mobile-robot navigation, not an automotive end-to-end driving model. Original v1 ID/URL/date preserved; v2 Oct5 revision and pinned author code are separate records in the same family. No runtime CBF-QP guarantee or current-project integration inferred.",
     "source_type": "preprint",
     "doi": "10.48550/arXiv.2609.38873",
-    "checked_date": "2026-10-02",
-    "checked_scope": "Read metadata, abstract and targeted method/results/discussion/real-robot passages; opened official code README. No reproduction or complete formal-proof audit."
+    "checked_date": "2026-10-12",
+    "checked_scope": "Re-read v1 related §§II–IV and appendices A/B; normalized retrieved HTML article text compared against v2 and matched. Version metadata differs. Not a PDF/TeX/artifact equivalence proof, full derivative/proof audit or reproduction."
   },
   {
     "year": 2026,
@@ -1636,5 +1636,41 @@
     "doi": "",
     "checked_date": "2026-10-10",
     "checked_scope": "Pinned tree, .gitmodules/gitlink, CMake, common settings, MPPI-Generic/AutoRally/Nav2 timers, TorchRL warm-up and timing, SimpleDynPlant one-step update read statically. Not all dependencies or BasePlant paths; no execution."
+  },
+  {
+    "year": 2026,
+    "classification_year": 2026,
+    "publication_date": "2026-10-05",
+    "updated": "2026-10-05 v2",
+    "era": "2026",
+    "domain": "navigation",
+    "title": "DODGER: Safety-Guided Reinforcement Learning for Robot Navigation Among Dynamic Obstacles",
+    "study_family_id": "dodger",
+    "source_id": "NEWS-ARXIV-2609.38873-v2",
+    "url": "https://arxiv.org/html/2609.38873v2",
+    "date_basis": "分類年2026は研究初稿2026-09-30に基づく。資料公表日2026-10-05はv2の提出日で、初回主期間2018-10-02〜2026-10-02の外の追加追跡。v1を保全し同系列へ関連付ける。",
+    "boundary_note": "97.27% is simulation evaluation after removing the 10-obstacle observation cap: average 12.54 observed obstacles, up to 20 simultaneously. It is not a 20-pedestrian physical-trial success rate.; CBF guidance at training does not establish a formal collision-avoidance guarantee for the deployed learned policy.; The real experiment temporarily violates h >= 0, while estimated footprint separation remains positive.; This is humanoid/mobile-robot navigation, not an automotive end-to-end driving model. Original v1 ID/URL/date preserved; v2 Oct5 revision and pinned author code are separate records in the same family. No runtime CBF-QP guarantee or current-project integration inferred.",
+    "source_type": "preprint",
+    "doi": "10.48550/arXiv.2609.38873",
+    "checked_date": "2026-10-12",
+    "checked_scope": "arXiv version history; §§II–IV mechanism, Algorithm1, simulation success definition/cap removal and Fig.5 real-perception limitations; selected appendices A/B and PDF corresponding equation/evaluation passages. v1/v2 normalized HTML article text matches; complete proofs, dependencies and experiment artifacts not audited."
+  },
+  {
+    "year": null,
+    "classification_year": null,
+    "publication_date": "",
+    "updated": "commit 02dd5a965bdaa2e9ab60da3f3255b9acf5d45feb; commit timestamp 2026-09-29",
+    "era": "undated",
+    "domain": "navigation",
+    "title": "DODGER — official training and G1 deployment implementation",
+    "study_family_id": "dodger",
+    "source_id": "DODGER-CODE",
+    "url": "https://github.com/PSH0823/dodger/tree/02dd5a965bdaa2e9ab60da3f3255b9acf5d45feb",
+    "date_basis": "初公表日・初公表年は未確認。commit日時や確認日を初公表年へ代用せずundatedとし、年代別144セルから除外する。",
+    "boundary_note": "Source commit date is not first release date. Actor-vs-QP training branch verified; G1 selected runtime evaluates boundaries but does not apply QP-filtered action. Timeout stops exist; collision_stop/joint watchdog disabled and deadline fault/stop streak0 in YAML. Default goal/evaluation count and smoothed radius-aware barrier differ from manuscript simplification. Full experiment-version/weight/dependency equivalence and guarantees unverified.",
+    "source_type": "code",
+    "doi": "",
+    "checked_date": "2026-10-12",
+    "checked_scope": "Pinned root/training/deployment documentation and licenses; selected navigation config/step, DPCBF/QP, GAT, split-value PPO, ONNX export description; G1 UpdateHighLevel, navigation YAML and obstacle perception documentation. Static partial path audit; no install, weight download, code execution, training or robot operation."
   }
 ]
