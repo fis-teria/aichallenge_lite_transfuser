@@ -227,3 +227,7 @@ DODGERの動的navigationからE2Eの時間表現へ移り、既存v1の本文�
 ### FIVE-VLA記事の公開前検査
 
 正式生成・一致検査と39ページ1897リンク/asset・58固定根拠、サイト回帰29件が成功。目標点の記録未来軌道由来を最後に補足し、公式再生成と一致確認後に表示検査を実施。既存Edge検査は5幅・全39ページPC/mobile、検索/メニュー/キーボード/旧hash/JS無効で成功。新記事と関連4本は320/390/768/1440px、図1・3表・式・横スクロールと相互リンクが成功し、画像を目視確認。外部一次11 URLはHTTP200、arXiv節アンカー一致。JSON/CSVと他92資料/19ニュース、記事範囲外5520ファイルを保全しました。記録は `five-vla-validation-20261013.json`。全体pytest・著者コード追試・学習・走行は未実施。
+
+### FIVE-VLA記事の公開確認
+
+記事commit `e7a6fef8809b3bbab974be7492a49f7d3e286254` を承認済みHervararの正式Windows checkoutから既存認証で通常push。[CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/38338852582)のbuild/deployはsuccess。全39ページと3資産はHTTP200で正式生成物と完全一致。[新記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/five-vla-2026.html)と関連4本を実配信320/390/768/1440pxで確認し、図1・3表・式・横スクロール・相互リンク・JS無効で問題なし。公開記録は `five-vla-publication-20261013.json`。対象資料/intent/queueをpublishedへ更新。ニュース20件は公開5・追加精読14・LOOP保留1、他19ニュース/92資料/他batchを保全。FIVE固有実装と独立再現は未確認。学習/制御/設定変更・学習/走行、SSH/WSL/他host/クラウドpush、API/Web書込み、別認証・remote変更は行っていません。
