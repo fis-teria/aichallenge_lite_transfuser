@@ -215,3 +215,15 @@ QP参照と実行入力の分岐、二枝critic、原著と公開設定の目標
 ### DODGER記事の公開確認
 
 記事commit `2927a0069d6c5ee1ab5e0c336bc2a9312d38a74c` をHervararのWindows正式checkoutから既存Git認証で通常pushしました。[CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/38198640216)のbuild/deployはsuccess。全38ページ+3資産はHTTP200、Windows公式生成物とバイト単位で一致。[新記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/dodger-2026.html)と関連記事4本を実配信320/390/768/1440pxで確認し、図1・3表・式・横スクロール・相互リンク・JS無効時に問題なし。`dodger-publication-20261012.json`へ記録し、関連資料/intent/queueをpublishedへ更新。ニュース20件は公開4・追加精読15・LOOP保留1です。他19ニュースと無関係な台帳・batchを保全。SSH/WSL/クラウドpush・API書込み・remote/認証/グローバル設定変更、学習・走行は行っていません。
+
+## FIVE-VLAの追加確認（2026-10-13）
+
+DODGERの動的navigationからE2Eの時間表現へ移り、既存v1の本文評価の不足と現行の指令履歴・保持経路との比較価値で選定しました。§3–5・関連付録とPDFの機構/Table5/A.18/A.19、著者紹介頁、現行mainのTimePath・履歴・設定を静的確認。明示位置履歴のオフライン誤差改善と閉ループSR低下、RAMの二状態交代と計時範囲、非反応評価の責任判定/分母を区別しています。
+
+台帳93資料・66系列、年代集計81・undated12、144セル中調査済み33・未調査111は不変、全coverage_complete=falseです。既存FIVEだけを増補し、他92資料/19ニュース項目を保全。原著・著者頁・検索の範囲ではFIVE固有実装/重みを確認できず、名称API検索は403 rate limitで未取得。再試行・別認証で迂回していません。公開実装なしとは断定しません。
+
+共有ニュースは可視7版48項目、最新9/25–10/1・message10/2で前回と同じ。live元会話の更新なしとは結論せず、本文・URLは転載しません。学習/制御/ROS/設定変更、著者コード実行・追試・実装・学習・AWSIM/実車試験、全体pytestは未実施。Roachの未移送原稿は別件として保全。公開CI・配信は確認後に別記録します。
+
+### FIVE-VLA記事の公開前検査
+
+正式生成・一致検査と39ページ1897リンク/asset・58固定根拠、サイト回帰29件が成功。目標点の記録未来軌道由来を最後に補足し、公式再生成と一致確認後に表示検査を実施。既存Edge検査は5幅・全39ページPC/mobile、検索/メニュー/キーボード/旧hash/JS無効で成功。新記事と関連4本は320/390/768/1440px、図1・3表・式・横スクロールと相互リンクが成功し、画像を目視確認。外部一次11 URLはHTTP200、arXiv節アンカー一致。JSON/CSVと他92資料/19ニュース、記事範囲外5520ファイルを保全しました。記録は `five-vla-validation-20261013.json`。全体pytest・著者コード追試・学習・走行は未実施。

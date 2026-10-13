@@ -68,12 +68,32 @@
       <main id="main"><section class="section first listing"><div class="section-heading"><span class="section-number">PROJECT LIBRARY</span><h1>記事一覧・更新履歴</h1><p>記事の公開・更新日順に掲載しています。試験の実施日は各記事に記録。継続資料、検証記録、論文ノート、開発・運用の記事を横断して探せます。</p></div><div class="paper-tools" hidden><label class="search-label" for="article-search">記事を検索
 <input id="article-search" type="search" placeholder="例：復帰、DINOv3、LiDAR" autocomplete="off"></label>
 <div class="filters" role="group" aria-label="記事の種類"><button type="button" data-filter="all" aria-pressed="true">すべて</button><button type="button" data-filter="guide" aria-pressed="false">継続資料</button><button type="button" data-filter="report" aria-pressed="false">検証記録</button><button type="button" data-filter="paper" aria-pressed="false">論文ノート</button><button type="button" data-filter="development" aria-pressed="false">開発・運用</button></div></div>
-<p class="search-status small" aria-live="polite" hidden></p><div class="article-grid"><article class="article-card" data-category="guide">
+<p class="search-status small" aria-live="polite" hidden></p><div class="article-grid"><article class="article-card" data-category="report">
+<div class="card-meta"><span class="tag">検証記録</span>
+<time datetime="2026-10-13">2026-10-13</time></div>
+<h3><a href="articles/retained-path-recovery.html">保持経路を使う低速復帰の仕様と検証状況</a></h3>
+<p>直前の有効な経路を検査しながら使う復帰処理。コード検証とAWSIM未確認を分けて記録します。</p><div class="card-bottom"><span>実装・テスト済み</span>
+<a class="article-read" href="articles/retained-path-recovery.html" aria-label="保持経路を使う低速復帰の仕様と検証状況を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-12">2026-10-12</time></div>
+<time datetime="2026-10-13">2026-10-13</time></div>
 <h3><a href="articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
 <p>4領域・144区分の確認範囲と未調査を整理。93資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
 <a class="article-read" href="articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-13">2026-10-13</time></div>
+<h3><a href="articles/e2e-field-overview.html">E2E自動運転の全体像と比較の読み方</a></h3>
+<p>2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。</p><div class="card-bottom"><span>文献調査</span>
+<a class="article-read" href="articles/e2e-field-overview.html" aria-label="E2E自動運転の全体像と比較の読み方を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-13">2026-10-13</time></div>
+<h3><a href="articles/five-vla-2026.html">FIVE-VLA：行動トークンの記憶と、履歴入力の違い</a></h3>
+<p>RAMの再帰・履歴比較・非反応評価と計時条件を確認し、現行TimePathの履歴との境界を整理。</p><div class="card-bottom"><span>原著・現行コードの静的確認／FIVE実装未照合</span>
+<a class="article-read" href="articles/five-vla-2026.html" aria-label="FIVE-VLA：行動トークンの記憶と、履歴入力の違いを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-13">2026-10-13</time></div>
+<h3><a href="articles/world-on-rails-2021.html">World on Rails：保存ログから未選択の操作にも教師を付ける</a></h3>
+<p>非反応の周囲ログから行動価値を作る教師生成。評価条件・コードの版差・TimePathへの接続を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
+<a class="article-read" href="articles/world-on-rails-2021.html" aria-label="World on Rails：保存ログから未選択の操作にも教師を付けるを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
 <time datetime="2026-10-12">2026-10-12</time></div>
 <h3><a href="articles/mpc-mppi-overview.html">MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</a></h3>
@@ -84,11 +104,6 @@
 <h3><a href="articles/dodger-2026.html">DODGER：学習時の安全参照と、実行時の監視を分ける</a></h3>
 <p>動的障害物ナビの方策・CBF参照を分け、実機条件と公開コード、現行の停止監視との境界を確認。</p><div class="card-bottom"><span>原著・主要コードの静的確認／未導入</span>
 <a class="article-read" href="articles/dodger-2026.html" aria-label="DODGER：学習時の安全参照と、実行時の監視を分けるを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
-<div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-12">2026-10-12</time></div>
-<h3><a href="articles/world-on-rails-2021.html">World on Rails：保存ログから未選択の操作にも教師を付ける</a></h3>
-<p>非反応の周囲ログから行動価値を作る教師生成。評価条件・コードの版差・TimePathへの接続を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
-<a class="article-read" href="articles/world-on-rails-2021.html" aria-label="World on Rails：保存ログから未選択の操作にも教師を付けるを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-12">2026-10-12</time></div>
 <h3><a href="articles/predictive-safety-filter-2018.html">PSF：保持した経路と安全な退避計画の違い</a></h3>
@@ -128,12 +143,7 @@
 <time datetime="2026-10-10">2026-10-10</time></div>
 <h3><a href="articles/robust-mppi.html">Robust MPPI：追従器を予測の内側へ入れる</a></h3>
 <p>RMPPIの名目／実状態と追従内包、条件付きfree-energy保証、実験条件の違い、導入前の検証を解説します。</p><div class="card-bottom"><span>原論文精読・未実装候補</span>
-<a class="article-read" href="articles/robust-mppi.html" aria-label="Robust MPPI：追従器を予測の内側へ入れるを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
-<div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-09">2026-10-09</time></div>
-<h3><a href="articles/e2e-field-overview.html">E2E自動運転の全体像と比較の読み方</a></h3>
-<p>2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。</p><div class="card-bottom"><span>文献調査</span>
-<a class="article-read" href="articles/e2e-field-overview.html" aria-label="E2E自動運転の全体像と比較の読み方を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<a class="article-read" href="articles/robust-mppi.html" aria-label="Robust MPPI：追従器を予測の内側へ入れるを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-09">2026-10-09</time></div>
 <h3><a href="articles/learning-by-cheating-2019.html">Learning by Cheating：特権教師から画像の運転方策へ</a></h3>
@@ -143,12 +153,7 @@
 <time datetime="2026-10-08">2026-10-08</time></div>
 <h3><a href="articles/learning-mpc-racing-2019.html">LMPC：走行履歴から学ぶラップタイム最適化</a></h3>
 <p>完走履歴による終端集合・残り時間・局所モデル、BARC実験と公開コードの版差、現行TimePathへの適用条件。</p><div class="card-bottom"><span>原著・公式コード確認／未実装候補</span>
-<a class="article-read" href="articles/learning-mpc-racing-2019.html" aria-label="LMPC：走行履歴から学ぶラップタイム最適化を読む">記事を読む →</a></div></article><article class="article-card" data-category="report">
-<div class="card-meta"><span class="tag">検証記録</span>
-<time datetime="2026-10-07">2026-10-07</time></div>
-<h3><a href="articles/retained-path-recovery.html">保持経路を使う低速復帰の仕様と検証状況</a></h3>
-<p>直前の有効な経路を検査しながら使う復帰処理。コード検証とAWSIM未確認を分けて記録します。</p><div class="card-bottom"><span>実装・テスト済み</span>
-<a class="article-read" href="articles/retained-path-recovery.html" aria-label="保持経路を使う低速復帰の仕様と検証状況を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<a class="article-read" href="articles/learning-mpc-racing-2019.html" aria-label="LMPC：走行履歴から学ぶラップタイム最適化を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-04">2026-10-04</time></div>
 <h3><a href="articles/dagger.html">DAgger：模倣学習で生じる分布ずれ</a></h3>

@@ -1,0 +1,66 @@
+<div class="paper-top"><span class="tag">論文精読・E2Eの時間表現</span><span class="paper-year">2026</span></div>
+<h2>FIVE-VLA：行動トークンの記憶と、履歴入力の違い</h2>
+<p class="authors">Kemal Oksuz、Alexandru Buburuzan、Yuhan Yao、Puneet K. Dokania</p>
+<p class="paper-summary">過去の動きを入力すれば、次の動きは予測しやすくなります。しかし記録された正しい履歴で誤差が減ることと、自分の予測で走り続けられることは別です。FIVE-VLAは出力側の内部表現を短い記憶として戻します。再帰とリセット、閉ループ評価、計算時間を確認し、現行の指令履歴・保持経路と比較します。</p>
+<p>確認日：2026-10-13。対象は<a href="https://arxiv.org/html/2609.18623v1">FIVE-VLA原著v1</a>（初稿<a href="https://arxiv.org/abs/2609.18623">2026-09-16</a>）の§3–5と関連付録、<a href="https://arxiv.org/pdf/2609.18623v1">PDFの機構・Table 5・Tables A.18/A.19の対応箇所</a>です。原著はCC BY-NC-SA 4.0表記。本記事は独自の日本語整理と概念図で、原著の画像は転載していません。著者の<a href="https://alexbubu.com/publication/oksuz2026five/">公式紹介頁</a>と公開資料の検索も確認しましたが、FIVE-VLA固有のコード・重みと実験の対応は確認できませんでした。探索の一部は取得制限があり、「実装は存在しない」とは断定しません。著者追試、本プロジェクトへの実装・学習・走行は未実施です。</p>
+
+<h3>1. 画像を軽く処理し、出力の内部表現を戻す</h3>
+<p>単眼の構成は前方RGB画像448×896、文字列で表した自車速度、次の目標点2個、入力テキストを使います。FastVLMを土台とし、画像から98個のvision tokenを作ります。これは画像のtoken数であり、入力全体の長さではありません。操舵用のpath waypointは経路上の1 m間隔、速度用のspeed waypointは未来時刻に対応するXY点です。点数とホライズンはデータセットごとに定めます。画像から操舵・加速度を直接出す構成ではなく、下流の制御器がwaypointを操作へ変換します。<a href="https://arxiv.org/html/2609.18623v1#S3.SS1">§3.1</a>、<a href="https://arxiv.org/html/2609.18623v1#S3.SS3">§3.3</a></p>
+<figure class="tech-figure"><figcaption>図1　RAMの情報の戻り方（本記事の概念図）</figcaption>
+<ol class="tech-flow four">
+<li><strong>現在の観測</strong><p>画像・速度・目標点・入力テキスト</p></li>
+<li><strong>行動queryと記憶</strong><p>固定の学習queryへ前回の内部表現を合わせる</p></li>
+<li><strong>LLMとwaypoint</strong><p>行動tokenから経路と時間付き点列を出す</p></li>
+<li><strong>次の記憶へ</strong><p>出力側の行動tokenをencodeし、次時刻へ戻す</p></li>
+</ol><p>戻すのはモデル内の行動tokenです。過去の実位置、発行した操舵、車体が実現した動き、保存した退避経路とは区別します。</p></figure>
+<p>RAM（Recurrent Action Memory）は、前回のLLM出力の行動tokenをself-attentionでencodeし、学習する行動queryからcross-attentionで読む二つのtransformer blockです。最初は記憶が空なので元のqueryを使います。効率重視の運転モードでは固定の出力prefixを入力へ移し、文字列の逐次生成を省いて一回のLLM forwardで点列を得ます。CoTやVQAは別の動作モードです。<a href="https://arxiv.org/html/2609.18623v1#S4">§4</a>、<a href="https://arxiv.org/html/2609.18623v1#S3.SS2">§3.2</a></p>
+
+<h3>2. 短い記憶を、無制限に引き継がない</h3>
+<div class="table-wrap" role="region" aria-label="RAMの再帰関係" tabindex="0"><table class="tech-table"><caption>式1　原著式2–3を記事用に簡略化</caption><thead><tr><th scope="col">関係</th><th scope="col">意味と境界</th></tr></thead><tbody>
+<tr><td><code>M<sub>t−1</sub> = Encoder(Q̂<sub>t−1</sub>)</code></td><td>前回出力の行動tokenを記憶へする。実際の車両指令が適用された証拠ではない。</td></tr>
+<tr><td><code>Q<sub>t</sub> = Decoder(Q<sub>learned</sub>, M<sub>t−1</sub>)</code></td><td>現在の行動queryを記憶で補う。現在の画像・状態・目標点も別に入力する。</td></tr>
+<tr><td><code>初期状態：Q<sub>t</sub> = Q<sub>learned</sub></code></td><td>空の記憶から開始できる構成。再起動・境界・リセットの評価が必要。</td></tr>
+</tbody></table></div>
+<p>訓練は二段階です。まずRAMなしで学び、次に短い連続streamでRAM・LLM・出力decoderをfine-tuneします。RAMの追加部分を初期化時にゼロ出力とし、元のqueryをskip接続で保つ設計です。時間をまたぐ勾配を止め、gradient accumulationも使います。標準の閉ループ向け訓練は6 epoch＋RAM fine-tune 4 epoch、streamはT=4です。GPU型番・台数・壁時計時間をこの数字だけから見積もれません。<a href="https://arxiv.org/html/2609.18623v1#S4.SS1">§4.1</a>、<a href="https://arxiv.org/html/2609.18623v1#S7.SS1">付録A.1</a></p>
+<p>推論のRAM accumulationでは、同じ現在入力に対しprimaryとsecondaryの二つの記憶状態を扱います。secondaryを空から蓄積し、T/2ステップごとにprimaryへ交代します。T=4なら2ステップごとの交代です。状態を無期限に伸ばす方法でも、毎回完全に空へ戻す方法でもありません。原著は学習時より長い系列への一般化を課題として残しています。<a href="https://arxiv.org/html/2609.18623v1#S4.SS2">§4.2</a>、Table 8</p>
+
+<h3>3. 正しい過去位置で測る誤差と、閉ループ成功率</h3>
+<p>閉ループ向けにはCARLAのPDMLite expertによるSimLingoデータ、約200万画像・4 fps・140時間を使い、平均3評価seedで報告しています。Bench2Driveは220シナリオで、SRは違反なしで完了したrouteの割合です。単独車両の定速周回や実車試験とは条件が異なります。NVIDIA Physical AI AV側は別に約860時間で訓練、約350時間でテストし、運転の監督のみを使います。NVIDIA側の目標点は記録した未来の自車軌道から作り、訓練・評価時にStudent’s t分布の雑音を加えて粗い経路案内にしています。情報漏れを抑えるための処理で、将来情報を常に実行時に取得できるという意味ではありません。<a href="https://arxiv.org/html/2609.18623v1#S5">§5</a></p>
+<div class="table-wrap" role="region" aria-label="明示的な履歴とRAMの比較" tabindex="0"><table class="tech-table"><caption>表1　原著Table 5の選択列。単眼FIVE-VLA内の履歴比較</caption><thead><tr><th scope="col">追加する履歴</th><th scope="col">Bench2Drive SR [%] ↑</th><th scope="col">NVIDIA speed ADE [m] ↓</th></tr></thead><tbody>
+<tr><th scope="row">なし、RAMなし</th><td>73.03</td><td>0.549</td></tr>
+<tr><th scope="row">過去位置3 waypoint、RAMなし</th><td>64.39</td><td>0.373</td></tr>
+<tr><th scope="row">過去位置10 waypoint、RAMなし</th><td>70.00</td><td>0.358</td></tr>
+<tr><th scope="row">RAM、明示的な位置履歴なし</th><td>77.27</td><td>0.402</td></tr>
+</tbody></table></div>
+<p>speed ADEは3秒先までのXY位置の平均誤差で、m/sの速度誤差ではありません。履歴の由来は、NVIDIA側では記録したexpertの動き、閉ループ側ではモデル制御の動きです。過去位置を追加するとADEは下がってもSRが下がるため、記録履歴を外挿する近道と自分の誤差の蓄積を分けて評価します。この結果だけで、種類も用途も違う現行の指令履歴が悪いと結論することはできません。<a href="https://arxiv.org/html/2609.18623v1#S5.SS2">§5.2</a>、付録A.4</p>
+<p>実データ側のNC-Vは、予測waypointを3秒の非反応rolloutへ通した際のat-fault接触の割合です。周囲は記録された軌道をたどり、次のモデル入力も次の記録観測に戻ります。観測ごとに自車と制御器を初期化するため、連続する実車閉ループではありません。正面・停止物との接触を対象とする独自の責任判定、欠損ラベルによる分母の除外、地図に基づく走行領域評価の省略もあります。単眼NC-Vの0.87→0.78%は掲載丸め値から約10.3%の相対減少、0.09ポイントの絶対差であり、実車事故率の改善ではありません。<a href="https://arxiv.org/html/2609.18623v1#S7.SS2">付録A.2</a></p>
+
+<h3>4. 98 vision tokenと、運転全体の計算期限を分ける</h3>
+<div class="table-wrap" role="region" aria-label="FIVE-VLAの推論モードと計算時間" tabindex="0"><table class="tech-table"><caption>表2　Table A.18のT4計測。FIVE-VLAはRAM accumulationあり</caption><thead><tr><th scope="col">モード</th><th scope="col">T4 fps ↑</th><th scope="col">平均の逐次LLM forward数</th></tr></thead><tbody>
+<tr><th scope="row">固定prefixを入力、文字生成なし</th><td>3.89</td><td>1</td></tr>
+<tr><th scope="row">固定の4 tokenを生成してから点列</th><td>1.46</td><td>5</td></tr>
+<tr><th scope="row">CoT生成あり</th><td>0.39</td><td>24.55</td></tr>
+</tbody></table></div>
+<p>計時対象はSimLingoデータで訓練した単眼モデルです。原著はT4 16 GBを車載edgeのproxy、A100 80 GB、H200 141 GBで比較し、FIVE-VLAの効率モードはそれぞれ3.89／29.96／56.71 fpsと報告します。T4を実車へ配備した実証ではありません。1 fps当たりの逆数を、観測から制動適用までの最大遅延へ読み替えません。<a href="https://arxiv.org/html/2609.18623v1#S5.SS1">§5.1、Table 3</a>、<a href="https://arxiv.org/html/2609.18623v1#S7.SS6">付録A.6</a></p>
+<p>98は画像1枚のvision token数ですが、単眼の効率モードではLLMへ2×164 tokenを通します。二つのRAM状態が活性化しているときは同じ軌道予測callでbatch処理し、逐次forward数を2とは数えません。RAM block単独の処理時間が小さくても、secondaryをLLMへ通す追加計算は残ります。RAMなし5.35 fps、Reset 5.15、Accumulation 3.89というT4の比較もあり、記憶の追加が無料という結果ではありません。A100での推論ピーク1.68 GBは、訓練全体や実行システム全体の必要メモリではありません。<a href="https://arxiv.org/html/2609.18623v1#S7.SS4">付録A.4、Table A.14</a>、<a href="https://arxiv.org/html/2609.18623v1#S7.SS6">Tables A.18/A.19</a></p>
+
+<h3>5. 現行TimePathで、同じ名前にしない三つの時間表現</h3>
+<p>静的確認した公開mainは<code>8e17014dd00f263ab6d267d8dc91d7d1a233b7c9</code>。以下は機能・設定の確認で、今回の走行実績やRAM実装ではありません。</p>
+<ul>
+<li><a data-source="src/aic_transfuser_lite/models/time_path_v1.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8e17014dd00f263ab6d267d8dc91d7d1a233b7c9/src/aic_transfuser_lite/models/time_path_v1.py">TimePathV1</a>は0.1秒ごとの未来XY 30点をGRU decoderで生成します。隠れ状態はforwardごとに入力特徴から作り、同じ呼出内で未来の点を展開します。このGRUの存在は、観測時刻間でFIVEの行動tokenを戻すRAMの導入を意味しません。区間速度もXYからの弦長で、独立した学習speed headとは異なります。</li>
+<li><a data-source="src/aic_transfuser_lite/models/time_backbone_v1.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8e17014dd00f263ab6d267d8dc91d7d1a233b7c9/src/aic_transfuser_lite/models/time_backbone_v1.py">TimeBackboneV1</a>はsensor/ego/commandの固定slotとmaskを処理します。<a data-source="src/aic_transfuser_lite/runtime/input_history_v3.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8e17014dd00f263ab6d267d8dc91d7d1a233b7c9/src/aic_transfuser_lite/runtime/input_history_v3.py">入力履歴builder</a>のcommand列は操舵rad・速度m/s・加速度m/s²の数値です。モデル内部の行動token、実位置の履歴、実操舵の計測と区別します。</li>
+<li><a data-source="configs/time_path_p1/command_on.json" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8e17014dd00f263ab6d267d8dc91d7d1a233b7c9/configs/time_path_p1/command_on.json">P1の比較設定</a>には指令履歴10・use_command_history=trueがある一方、<a data-source="configs/control/time_path_slam_mppi.json" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8e17014dd00f263ab6d267d8dc91d7d1a233b7c9/configs/control/time_path_slam_mppi.json">5 km/hの限定SLAM MPPI設定</a>はcommand_history=falseです。設定の存在から、全走行で履歴が有効だったとは扱いません。</li>
+<li><a data-source="src/aic_transfuser_lite/control/time_path_recovery.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/8e17014dd00f263ab6d267d8dc91d7d1a233b7c9/src/aic_transfuser_lite/control/time_path_recovery.py">保持経路の復帰</a>は既存経路の鮮度・幾何・試行条件を検査する制御側の機能です。学習内の記憶ではなく、動作許可も独立した安全確認を必要とします。<a href="retained-path-recovery.html">既存の検証状況</a>を最新コードの追加走行実績へ読み替えません。</li>
+</ul>
+
+<h3>6. 小さな導入候補と、先に必要な検証</h3>
+<p>ここからは未実装の設計案です。最初に、同じrun・同じ予測時刻について「観測窓」「過去指令」「予測した点列」「実現した車体運動」を分けて評価することが入口です。FIVE-VLAをそのまま移植するには、目標点・言語・RGB中心の入力、二種類のwaypointと下流制御、訓練データを現在の契約へ合わせ直す必要があります。LiDARを追加するだけで原著のモデルと条件が維持されるわけではありません。</p>
+<ol>
+<li>履歴の由来を固定する：expert、モデル予測、発行指令、実運動を別の信号として保存。取得時刻・利用可能時刻・clock epoch・欠損maskを保ち、run/scenario単位で学習と評価を分ける。</li>
+<li>比較を小さくする：同じbackboneと訓練予算で、履歴なし・明示履歴・候補の再帰状態を比べる。記録入力での誤差に加え、自分の予測を戻す場合の誤差蓄積と停止理由を調べる。</li>
+<li>状態の寿命を定義する：初回、時刻逆転、長い観測欠損、目標変更、再起動でのresetを指定する。T=4やT/2交代を、検証なしに現在の観測周期へコピーしない。</li>
+<li>資源と変更範囲を決める：RAM候補なら入力・出力token、初期化、学習stream、checkpointのstate契約と再学習が必要。対象PCでVRAM・batch・精度・推論モードと観測から指令までの遅延を実測する。</li>
+<li>検証順を守る：データ・時刻監査→オフライン再生→欠損と誤った履歴の注入→別途許可された限定閉ループ比較。現行の停止監視を維持し、記憶に基づく出力を安全な退避計画と呼ばない。</li>
+</ol>
+<p>原著の限界は短い記憶とcamera-onlyの知覚です。付録A.3にも、誤った記憶や欠落frameで性能が変わる比較があります。公開のFIVE固有実装・重み、訓練資源・再現性、現行系への接続と効果は未確認です。バックボーンの<a href="https://github.com/apple-aiml-research/ml-fastvlm">FastVLM公式公開物</a>があることを、FIVE-VLA全体の公開・再現確認へ置き換えません。</p>
+<p>確認範囲は原著§3–5、関連する付録A.1–A.6/A.8と選択表、PDFの対応箇所、著者紹介、上記現行code/configです。全34頁の全主張・証明・全評価コードの監査や独立再現は未実施。関連記事：<a href="e2e-field-overview.html">E2Eの比較軸</a>、<a href="world-on-rails-2021.html">World on Railsの教師と評価境界</a>、<a href="retained-path-recovery.html">保持経路</a>、<a href="mppi-generic-2024.html">計時範囲と期限</a>、<a href="research-map.html">研究地図</a>。</p>

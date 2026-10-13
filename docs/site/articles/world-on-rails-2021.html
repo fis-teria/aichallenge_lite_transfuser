@@ -70,7 +70,7 @@
 <span class="section-number">論文ノート</span><h1>World on Rails：保存ログから未選択の操作にも教師を付ける</h1>
 <p class="article-lead">非反応の周囲ログから行動価値を作る教師生成。評価条件・コードの版差・TimePathへの接続を整理。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-09">2026-10-09</time></span>
-<span>更新 <time datetime="2026-10-12">2026-10-12</time></span>
+<span>更新 <time datetime="2026-10-13">2026-10-13</time></span>
 <span class="tag">原著・公式コードの静的確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文精読・教師生成</span><span class="paper-year">2021</span></div>
 <h2>World on Rails：保存ログから未選択の操作にも教師を付ける</h2>
 <p class="authors">Dian Chen, Vladlen Koltun, Philipp Krähenbühl</p>
@@ -143,6 +143,9 @@
 
 <h3>参照を学ぶことと、参照入力で動くこと</h3>
 <p>2026-10-12追記。<a href="dodger-2026.html">DODGERの個別記事</a>では、QP参照へ近づく学習信号を使いながら、訓練経験は方策自身の入力で集める分岐を確認しました。World on Railsの非反応ログからの教師生成とは、相手・入力・経験の集め方が異なります。G1の横移動可能な入力や実機条件を、車両E2Eの教師・安全保証へそのまま置換しません。</p>
+
+<h3>教師の履歴と、自分の予測を戻す記憶</h3>
+<p>2026-10-13追記。<a href="five-vla-2026.html">FIVE-VLAのRAM</a>は出力の行動tokenを次の入力へ戻します。明示的な位置履歴の比較では、expert履歴での誤差改善とモデル制御の閉ループSR低下が同時に見られます。World on Railsの非反応教師生成と、FIVEの実データ非反応評価も、何を記録から固定するかを区別して参照します。追試・導入は未実施です。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-09">2026-10-09</time></div>
@@ -150,7 +153,7 @@
 <p>全分岐の教師信号とDAgger、CARLA成功率の定義、公開コードの版差、TimePathへの導入条件を解説。</p><div class="card-bottom"><span>原著・補足・公式コード確認／未導入</span>
 <a class="article-read" href="../articles/learning-by-cheating-2019.html" aria-label="Learning by Cheating：特権教師から画像の運転方策へを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-09">2026-10-09</time></div>
+<time datetime="2026-10-13">2026-10-13</time></div>
 <h3><a href="../articles/e2e-field-overview.html">E2E自動運転の全体像と比較の読み方</a></h3>
 <p>2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。</p><div class="card-bottom"><span>文献調査</span>
 <a class="article-read" href="../articles/e2e-field-overview.html" aria-label="E2E自動運転の全体像と比較の読み方を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
@@ -160,7 +163,7 @@
 <p>GP残差で車両予測を補うBayesRace。原著とコードの版差、計算期限、安全保証との違いを確認。</p><div class="card-bottom"><span>原著・公式コード確認／未導入</span>
 <a class="article-read" href="../articles/bayesrace-2020.html" aria-label="BayesRace：車両モデルの残差を学び、MPCの予測を補うを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-12">2026-10-12</time></div>
+<time datetime="2026-10-13">2026-10-13</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
 <p>4領域・144区分の確認範囲と未調査を整理。93資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
 <a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
@@ -168,6 +171,11 @@
 <time datetime="2026-10-12">2026-10-12</time></div>
 <h3><a href="../articles/dodger-2026.html">DODGER：学習時の安全参照と、実行時の監視を分ける</a></h3>
 <p>動的障害物ナビの方策・CBF参照を分け、実機条件と公開コード、現行の停止監視との境界を確認。</p><div class="card-bottom"><span>原著・主要コードの静的確認／未導入</span>
-<a class="article-read" href="../articles/dodger-2026.html" aria-label="DODGER：学習時の安全参照と、実行時の監視を分けるを読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/dodger-2026.html" aria-label="DODGER：学習時の安全参照と、実行時の監視を分けるを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-13">2026-10-13</time></div>
+<h3><a href="../articles/five-vla-2026.html">FIVE-VLA：行動トークンの記憶と、履歴入力の違い</a></h3>
+<p>RAMの再帰・履歴比較・非反応評価と計時条件を確認し、現行TimePathの履歴との境界を整理。</p><div class="card-bottom"><span>原著・現行コードの静的確認／FIVE実装未照合</span>
+<a class="article-read" href="../articles/five-vla-2026.html" aria-label="FIVE-VLA：行動トークンの記憶と、履歴入力の違いを読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

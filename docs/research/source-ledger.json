@@ -1649,14 +1649,17 @@
     "original_source_type": "author arXiv manuscript",
     "domain": "e2e",
     "era": "2026",
-    "checked_date": "2026-10-02",
-    "checked_scope": "Abstract and full-text code-link scan; detailed experiments not exhaustively audited.",
+    "checked_date": "2026-10-13",
+    "checked_scope": "arXiv v1 metadata/license; §§3–5 mechanism, RAM training/accumulation, conditional comparisons and selected tables; related Appendices A.1–A.6/A.8. PDF mechanism, Table5 and Tables A.18/A.19 cross-check. Author publication page and code-link scan; no complete34-page claim audit, author implementation or independent reproduction.",
     "related_articles": [
       "e2e-field-overview",
-      "research-map"
+      "research-map",
+      "five-vla-2026",
+      "retained-path-recovery",
+      "world-on-rails-2021"
     ],
     "review_status": "調査済み",
-    "boundary_note": "Primary title differs from shared-chat title.; Real-world dataset evaluation does not mean on-road closed-loop validation.; T4 is explicitly used as an edge-device proxy, not a demonstrated deployed vehicle computer.",
+    "boundary_note": "Same existing FIVE-VLA family and v1. Latent action-token recurrence differs from explicit waypoint/command history and retained control paths. Table5 uses expert history for non-reactive evaluation versus model-controlled history in closed-loop. NC-V counts eligible observation rollouts with a qualifying at-fault contact, not real accidents/unique collisions. T4 is a proxy; vision98 tokens differs from total2x164 LLM tokens. No project guarantee or integration inferred.",
     "date_basis": "分類年と公表日はarXiv初稿v1。updatedとURLは確認した最新の版。ニュース掲載日を論文公表日に代用しない。",
     "origin_ledger": "news-primary-intake-20261002",
     "independent_replication": false,
@@ -1665,15 +1668,34 @@
     "primary_metadata_url": "https://arxiv.org/abs/2609.18623",
     "latest_version": "v1",
     "source_evidence": [
-      "arXiv title, submission history and abstract",
-      "HTML author-link scan; no detailed results-table audit"
+      {
+        "url": "https://arxiv.org/html/2609.18623v1",
+        "section": "§§3–5; Table5; related Appendix A.1–A.6/A.8",
+        "supports": "RAM, explicit history distinction, non-reactive metrics and conditional timing"
+      },
+      {
+        "url": "https://arxiv.org/pdf/2609.18623v1",
+        "section": "mechanism and selected Tables5/A.18/A.19",
+        "supports": "Cross-check selected equations/results; not full proof/code audit"
+      },
+      {
+        "url": "https://alexbubu.com/publication/oksuz2026five/",
+        "section": "paper introduction and visible links",
+        "supports": "Author publication description; does not verify a FIVE-specific code release"
+      }
     ],
     "code_url": null,
-    "code_status": "No author code/project link found in checked arXiv abstract or full text.",
+    "code_status": "FIVE-specific author code/weights and experiment correspondence unverified in paper/author page/web-search scope. Exact-name public API search returned403 rate limit; not retried or bypassed with credentials. Official FastVLM backbone repository is separate and does not verify FIVE/RAM implementation.",
     "code_license": null,
     "code_commit_if_verified": null,
-    "article_status": "awaiting_fuller_review",
-    "publication_gate": "正式題名とrecurrent action memoryを主軸に。CARLA/非反応型評価/hardware FPSを分ける"
+    "article_status": "prepublication_checked",
+    "publication_gate": "正式題名とrecurrent action memoryを主軸に。CARLA/非反応型評価/hardware FPSを分ける",
+    "full_text_url": "https://arxiv.org/pdf/2609.18623v1",
+    "license": "CC BY-NC-SA4.0 manuscript",
+    "supporting_urls": [
+      "https://alexbubu.com/publication/oksuz2026five/",
+      "https://github.com/apple-aiml-research/ml-fastvlm"
+    ]
   },
   {
     "source_id": "NEWS-ARXIV-2609.15169-v1",
