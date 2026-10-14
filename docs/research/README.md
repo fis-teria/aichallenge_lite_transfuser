@@ -241,3 +241,7 @@ FIVE-VLAのE2E時間表現からレーシングの相手予測へ移り、公式
 ### Predictive Spliner記事の公開前検査
 
 正式生成と一致、40ページ1972リンク/asset・59固定根拠、サイト回帰29件を確認。全サイトEdgeは5幅・全40ページPC/mobile、既存操作/JS無効で成功。対象5記事を4幅で確認し、図1・3表・式・横スクロール・相互リンク、PC/mobile画像を確認。研究地図本文とカードを最新95資料/66系列へ照合して正式再生成。外部一次10 URLはHTTP200、arXiv節アンカー一致。JSON/CSV・他92台帳/年表レコード、20ニュースintent/batchと記事範囲外5526ファイルを保全。記録はpredictive-spliner-validation-20261014.json。全体pytest・著者コード追試・学習・走行は未実施。
+
+### Predictive Spliner記事の公開確認
+
+記事commit `969b8b741a80220be28f256e058129385337df65` をHervararの正式Windows checkoutから既存認証で通常push。[CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/38504716732)のbuild/deployはsuccess。全40ページと3資産はHTTP200で正式生成物と完全一致。[新記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/predictive-spliner-2024.html)と関連4本を実配信320/390/768/1440pxで確認し、図1・3表・式・横スクロール・相互リンク・JS無効で問題なし。公開記録はpredictive-spliner-publication-20261014.json。対象3資料/queueをpublishedへ更新し、他92資料・20ニュースintent/batch・Roach別件原稿を保全。完全な版/実験commit照合・独立再現・導入は未確認。学習/制御/設定変更・学習/走行、SSH/WSL/他host/クラウドpush、API/Web書込み、別認証・remote変更は行っていません。
