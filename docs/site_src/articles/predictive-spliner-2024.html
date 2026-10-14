@@ -1,0 +1,51 @@
+<div class="paper-top"><span class="tag">論文詳解・相手予測と追越し</span><span class="paper-year">2024</span></div>
+<h2>Predictive Spliner：相手の周回を学び、追越しの場所を選ぶ</h2>
+<p class="authors">Nicolas Baumann、Edoardo Ghignone、Cheng Hu、Benedict Hildisch、Tino Hämmerle、Alessandro Bettoni、Andrea Carron、Lei Xie、Michele Magno</p>
+<p class="paper-summary">今いる相手を避けても、早く横へ出過ぎると速度を失い、追越しが難しくなります。Predictive Splinerは相手の横位置と速度をコースに沿って学び、将来並ぶ区間を予測してから経路を修正します。1:10車両での比較、成功5回までの評価手順、公開コードとの違いを読み分けます。</p>
+<p>確認日：2026-10-14。対象は<a href="https://arxiv.org/html/2410.04868v2">原著arXiv v2（2024-11-28）の§III–V・Algorithms 1–2・Tables II–III</a>と<a href="https://arxiv.org/pdf/2410.04868v2">8頁のPDF対応箇所</a>、<a href="https://github.com/ForzaETH/predictive-spliner/tree/ddbfbb2312eccda7bb5d84469ec0980ddb07a5e9">公式コードの固定commit ddbfbb2（2024-12-02）</a>の選択した処理です。<a href="https://arxiv.org/abs/2410.04868">初稿は2024-10-07</a>。登録済み<a href="https://arxiv.org/html/2410.04868v1">v1</a>も保全し、関連記述を比較しました。v2は周回ごとの更新・予測から外れた相手・RoCの説明を補っています。論文、コード、実験ログの完全な対応確認、著者コード実行、独立追試、本プロジェクトへの導入・走行は未実施です。</p>
+
+<h3>1. 何を学び、どこで横へ出るか</h3>
+<p>Frenet座標の<code>s</code>はコースに沿う距離、<code>d</code>は基準ラインからの横位置です。相手を1周追従し、10 cmごとに位置と縦速度を集めます。論文は<code>d(s)</code>にMatérn、<code>vₛ(s)</code>にRBFを使う2つのGaussian Process（GP）を定義します。次の周回でも似た行動をするという仮定があり、自由に戦略を変える相手を常に予測できる方式ではありません。v2は周回単位での更新と、推定のばらつきから外れた相手への追越し中断も説明します。<a href="https://arxiv.org/html/2410.04868v2#S3.SS1">§III-A</a></p>
+<figure class="tech-figure"><figcaption>図1　相手の経路を学び、将来の重なりを空間的な回避区間へ変える（本記事の概念図）</figcaption><ol class="tech-flow four">
+<li><strong>相手を観測</strong><p>1周の横位置・速度をsに対応させる</p></li>
+<li><strong>先へ伝播</strong><p>自車と相手が将来並ぶ区間RoCを求める</p></li>
+<li><strong>経路を修正</strong><p>その区間で横の余裕・曲率・コース境界を制約する</p></li>
+<li><strong>下流で追従</strong><p>修正経路と速度を追従器へ渡す</p></li>
+</ol><p>観測・自己位置・追従器が必要です。相手の予測だけで車両を制御する構成ではありません。</p></figure>
+<p>自車と相手を時間方向へ進め、縦方向に重なる始点・終点をコース上のRegion of Collision（RoC）へ変換します。この区間でSplinerの初期経路をSQPで修正し、相手との横距離、曲率、左右境界、最後の2点で基準ラインへ戻る条件を課します。現在の相手位置だけを障害物にする場合より、早過ぎる回避を減らす狙いです。これは予測と幾何制約に基づく設計であり、相手の予測誤差を含む一般的な安全証明ではありません。<a href="https://arxiv.org/html/2410.04868v2#S3.SS2">§III-B</a>、<a href="https://arxiv.org/html/2410.04868v2#S3.SS3">§III-C</a></p>
+
+<h3>2. 成功率は、試行の止め方と一緒に読む</h3>
+<div class="table-wrap" role="region" aria-label="追越し成功率の定義と評価手順" tabindex="0"><table class="tech-table"><caption>式1　原著§IV-Aの成功率と分母</caption><thead><tr><th scope="col">定義</th><th scope="col">評価上の意味</th></tr></thead><tbody>
+<tr><td><code>R = Nₒₜ / (Nₒₜ + N꜀)</code></td><td>Nₒₜは成功した追越し、N꜀は衝突。各実験は成功5回まで継続する。</td></tr>
+<tr><td><code>Nₒₜ = 5</code></td><td>固定5試行の成功率ではない。追越せず追従した時間や機会を、この分母がすべて数えるとは読み取れない。</td></tr>
+</tbody></table></div>
+<p>物理試験は1:10車両。自車は最小曲率ライン、相手は同じライン・最短経路・中心線・LiDARによる反応型の4条件です。最初の3条件は自車に反応しない相手で、4番目は自車の動きで進路が変わり得ます。相手の速度は各方式で追越し可能な上限へ調整されます。方式間で同じ速度に固定した試験と区別する必要があります。<a href="https://arxiv.org/html/2410.04868v2#S4.SS1">§IV-A</a></p>
+<div class="table-wrap" role="region" aria-label="相手条件別の追越し成功率" tabindex="0"><table class="tech-table"><caption>表1　Table IIの成功率R（%、方式別の最大速度条件）</caption><thead><tr><th scope="col">相手</th><th scope="col">Spliner</th><th scope="col">Predictive Spliner</th><th scope="col">読み方</th></tr></thead><tbody>
+<tr><td>同じレーシングライン</td><td>55.5</td><td>71.4</td><td>両方式が同じ相手速度ではない</td></tr>
+<tr><td>最短経路</td><td>55.5</td><td>100.0</td><td>成功5回・この条件で衝突0という限定結果</td></tr>
+<tr><td>中心線</td><td>62.5</td><td>83.3</td><td>相手は固定経路を走る</td></tr>
+<tr><td>反応型</td><td>55.5</td><td>83.3</td><td>周回間で似た行動という仮定が外れ得る</td></tr>
+</tbody></table></div>
+<p>4条件の単純平均は57.25%と84.50%。原著の「47.6%向上」は相対的な増加で、差は27.25 percentage pointsです。83.1%は同じレーシングライン条件で著者が報告する相手速度の尺度です。ただしv1/v2の速度尺度式は<code>Tₒₚₚ / Tₑ₉ₒ ∈ [0,1]</code>と記載され、同一距離を遅い相手が走る場合の周回時間比と本文の速度解釈に整合しません。PDFでも確認できるためHTMLの欠落とは扱わず、表の報告値として留保します。独自に式を訂正して実測値を再計算していません。<a href="https://arxiv.org/html/2410.04868v2#S4.SS2">§IV-B・Table II</a></p>
+<p>MPCとPredictive MPCは別枠です。他の方式はMAP追従器を使い、元の追従器の周回時間も異なるため、全方式を同条件の制御性能順位にできません。N.C.は成功5回を達成できなかった条件。大会での利用はv2の著者報告であり、Table IIとは別の試行数・生ログまで確認したわけではありません。</p>
+
+<h3>3. 平均8.40 msから、指令期限の保証は導けない</h3>
+<div class="table-wrap" role="region" aria-label="計画処理の平均とばらつき" tabindex="0"><table class="tech-table"><caption>表2　Table IIIの計画処理、Intel i7-1165G7</caption><thead><tr><th scope="col">方式</th><th scope="col">平均時間 ms</th><th scope="col">標準偏差 ms</th><th scope="col">平均CPU使用率 %</th></tr></thead><tbody>
+<tr><td>Spliner</td><td>5.50</td><td>2.74</td><td>16.74</td></tr>
+<tr><td>Predictive Spliner</td><td>8.40</td><td>26.64</td><td>22.79</td></tr>
+</tbody></table></div>
+<p>psutilの100%は1コア分です。全CPUの22.79%という意味ではありません。標準偏差は平均より大きく、最大時間・高分位・期限超過率はこの表から確定できません。認識、GP更新、通信、追従、指令適用までの全経路の遅延とも区別します。MPCは計画と制御を同時に行うため、原著も計画器の時間との直接比較を留保しています。<a href="https://arxiv.org/html/2410.04868v2#S4.SS3">§IV-C・Table III</a>、<a href="mppi-generic-2024.html">MPPI-Genericの計時範囲</a></p>
+
+<h3>4. 固定版の公式コードで確認できた境界</h3>
+<ul>
+<li><a href="https://github.com/ForzaETH/predictive-spliner/blob/ddbfbb2312eccda7bb5d84469ec0980ddb07a5e9/src/gaussian_process_opp_traj.py">GP処理</a>は全周がそろった<code>whole_lap</code>分岐で横位置をCCMA平滑化・補間から取り、速度はGP平均を使います。全周未取得時の横位置にはMatérn GPを使います。論文の「2つのGP」と、すべての処理分岐が一致するとは言えません。</li>
+<li>同ファイルは<code>return_std=True</code>の戻り値を<code>d_var / vs_var</code>へ格納します。名前だけで分散と解釈せず、標準偏差と分散の単位を受け渡し時に確認する必要があります。</li>
+<li><a href="https://github.com/ForzaETH/predictive-spliner/blob/ddbfbb2312eccda7bb5d84469ec0980ddb07a5e9/src/collision_prediction.py">衝突予測</a>は最初に見つけた動的障害物1件を扱い、<code>proj_vs_mps</code>を読んで先へ進めます。選択したループにGP分布からの確率標本化はなく、横位置のずれ0.25 m超または相手周回数1未満で追従要求を出します。論文の不確実性による中断説明を、そのままこの固定閾値の実装と同一視しません。</li>
+<li><a href="https://github.com/ForzaETH/predictive-spliner/blob/ddbfbb2312eccda7bb5d84469ec0980ddb07a5e9/src/sqp_avoidance_node.py">SQP処理</a>は横位置二乗・二階差分二乗・初期差分二乗の目的関数、境界・相手との距離などの制約を持ち、SLSQPを最大20反復で呼びます。反復数の上限は時間の上限ではありません。論文式を完全に一致する実行仕様として転載していません。</li>
+</ul>
+<p><a href="https://github.com/ForzaETH/predictive-spliner/blob/ddbfbb2312eccda7bb5d84469ec0980ddb07a5e9/README.md">READMEの簡易シミュレーション</a>は認識を無効にして相手のpublisherを使う構成です。この手順だけの動作確認では、LiDARからの相手認識や物理追越しを再現したことになりません。本記事では起動・コード実行を行っていません。複数相手のM-Predictive Splinerは別研究で、今回の1相手のコードに読み替えません。</p>
+
+<h3>5. 現行プロジェクトとの接続は、まだ設計候補</h3>
+<p>公開main <code>fbb858a</code>の<a data-source="src/aic_transfuser_lite/control/slam_mppi.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/fbb858ac1cb6f3fd426cfb7d75ce2f53e99e8712/src/aic_transfuser_lite/control/slam_mppi.py">SLAM MPPI</a>は静的占有に対する参照経路の横ずらしです。未知領域を禁止し、車体の円近似などで候補を検査しますが、移動相手を予測しないと明記しています。基準への復帰もコストであり、論文の終端制約と同じではありません。現行関数の入力は参照点列、自己姿勢、占有グリッド等で、相手ID付きの将来位置・速度・不確実性を渡す契約をここでは確認できません。</p>
+<p>適用を検討するなら、相手IDと追跡の切替、観測時刻と速度の単位、周回の継ぎ目、欠損・急な進路変更、車体の掃引領域、予測が外れたときの追従／停止、全処理の期限を先に定義する必要があります。<a href="slam-mppi-box-20260919.html">既存SLAM MPPIの検証</a>は元の記事にある限定条件のまま参照してください。1:10車両の結果を現在の車両や歩行者回避の保証へ移していません。</p>
+<p>関連記事：<a href="racing-overview-2018-2026.html">レーシング研究地図</a>、<a href="forzaeth-race-stack-2024.html">ForzaETH全スタック</a>、<a href="on-track-sysid-2024.html">タイヤ同定</a>、<a href="predictive-safety-filter-2018.html">PSFの条件付き保証</a>、<a href="research-map.html">調査範囲と台帳の読み方</a>。</p>

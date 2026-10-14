@@ -68,12 +68,13 @@
     "nav": "results",
     "summary": "5 km/h目標のrollout02で箱通過と通常復帰を記録。周回成功や一般的な回避保証とは区別します。",
     "published": "2026-09-27",
-    "updated": "2026-09-27",
+    "updated": "2026-10-14",
     "status": "限定試験で確認",
     "topic": "",
     "related": [
       "system-architecture",
-      "roadmap"
+      "roadmap",
+      "predictive-spliner-2024"
     ]
   },
   {
@@ -331,7 +332,7 @@
     "nav": "papers",
     "summary": "F1TENTHと実車の位置推定、タイヤ同定、経路・速度、対戦、実時間を評価条件ごとに整理。",
     "published": "2026-10-02",
-    "updated": "2026-10-11",
+    "updated": "2026-10-14",
     "status": "調査・適用候補",
     "topic": "",
     "related": [
@@ -341,7 +342,8 @@
       "research-map",
       "learning-mpc-racing-2019",
       "bayesrace-2020",
-      "on-track-sysid-2024"
+      "on-track-sysid-2024",
+      "predictive-spliner-2024"
     ]
   },
   {
@@ -351,14 +353,15 @@
     "nav": "papers",
     "summary": "2024年の全スタック論文から、MAP、評価の条件、追越しの失敗とTimePathへの適用候補を読む。",
     "published": "2026-10-02",
-    "updated": "2026-10-11",
+    "updated": "2026-10-14",
     "status": "論文解説・未適用",
     "topic": "control",
     "related": [
       "racing-overview-2018-2026",
       "system-architecture",
       "retained-path-recovery",
-      "on-track-sysid-2024"
+      "on-track-sysid-2024",
+      "predictive-spliner-2024"
     ]
   },
   {
@@ -366,9 +369,9 @@
     "title": "E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳",
     "category": "guide",
     "nav": "papers",
-    "summary": "4領域・144区分の確認範囲と未調査を整理。93資料・66研究系列を管理し、主期間と改訂追跡を区別します。",
+    "summary": "4領域・144区分の確認範囲と未調査を整理。95資料・66研究系列を管理し、主期間と改訂追跡を区別します。",
     "published": "2026-10-02",
-    "updated": "2026-10-13",
+    "updated": "2026-10-14",
     "status": "4領域・限定資料を調査",
     "topic": "",
     "related": [
@@ -390,7 +393,8 @@
       "mppi-generic-2024",
       "on-track-sysid-2024",
       "dodger-2026",
-      "five-vla-2026"
+      "five-vla-2026",
+      "predictive-spliner-2024"
     ]
   },
   {
@@ -603,6 +607,26 @@
       "retained-path-recovery",
       "mppi-generic-2024",
       "research-map"
+    ]
+  },
+  {
+    "slug": "predictive-spliner-2024",
+    "title": "Predictive Spliner：相手の周回を学び、追越しの場所を選ぶ",
+    "category": "paper",
+    "nav": "papers",
+    "summary": "相手のGP予測と衝突区間、成功5回までの評価、計時と公開コードの差を整理。",
+    "published": "2026-10-14",
+    "updated": "2026-10-14",
+    "status": "原著v2・固定版コードの静的確認／未導入",
+    "topic": "control",
+    "related": [
+      "racing-overview-2018-2026",
+      "forzaeth-race-stack-2024",
+      "slam-mppi-box-20260919",
+      "research-map",
+      "on-track-sysid-2024",
+      "mppi-generic-2024",
+      "predictive-safety-filter-2018"
     ]
   }
 ]

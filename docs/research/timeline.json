@@ -594,6 +594,24 @@
     "checked_scope": "Full text downloaded; §§4.1–4.3, Theorem 1 infinite-sample assumptions and covariance discussion read; no cross-domain improvement percentages used"
   },
   {
+    "year": 2024,
+    "classification_year": 2024,
+    "publication_date": "2024-11-28",
+    "updated": "2024-11-28 v2",
+    "era": "2023-2024",
+    "domain": "racing",
+    "title": "Predictive Spliner: Data-Driven Overtaking in Autonomous Racing Using Opponent Trajectory Prediction",
+    "study_family_id": "predictive-spliner",
+    "source_id": "R08-V2",
+    "url": "https://arxiv.org/html/2410.04868v2",
+    "date_basis": "領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2024-10。確認した版と初稿は区別する。",
+    "boundary_note": "Same predictive-spliner family; classification2024 follows initial manuscript. Per-lap update/uncertainty-abort/RoC/reactive-opponent clarification and competition reports are v2 author text, not independent evidence. Time-ratio inconsistency remains in PDF. Code-to-experiment correspondence unverified.",
+    "source_type": "preprint",
+    "doi": "10.48550/arXiv.2410.04868",
+    "checked_date": "2026-10-14",
+    "checked_scope": "v2 §§III–V, Algorithms1–2, TablesII–III; PDF8pages selected mechanism, ratio equation, table and timing passages. Selected v1/v2 wording comparison; not complete proof/version or experiment audit."
+  },
+  {
     "year": 2025,
     "classification_year": 2024,
     "publication_date": "",
@@ -722,8 +740,8 @@
   {
     "year": 2024,
     "classification_year": 2024,
-    "publication_date": "",
-    "updated": "2024-10-07",
+    "publication_date": "2024-10-07",
+    "updated": "2024-10-07 v1",
     "era": "2023-2024",
     "domain": "racing",
     "title": "Predictive Spliner: Data-Driven Overtaking in Autonomous Racing Using Opponent Trajectory Prediction",
@@ -731,11 +749,11 @@
     "source_id": "R08",
     "url": "https://arxiv.org/html/2410.04868v1",
     "date_basis": "領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2024-10。確認した版と初稿は区別する。",
-    "boundary_note": "Equation for speed ratio appears inverted vs definition [0,1]; article avoids formula. 8.40ms mean and26.64ms SD belong planner on i7-1165G7; not total stack/worst case.",
+    "boundary_note": "Initial2024-10-07; revised v2 is separate R08-V2 in same family. v1/v2 speed-scaler equation has time-ratio inconsistency; values retained as author reports. Success-until-five protocol and mean/SD planner timing are conditional, not general safety/deadline guarantees.",
     "source_type": "preprint",
     "doi": "10.48550/arXiv.2410.04868",
-    "checked_date": "2026-10-02",
-    "checked_scope": "Full HTML retrieved; §§III–IV, TablesII–III, sampling-until-five-successes protocol"
+    "checked_date": "2026-10-14",
+    "checked_scope": "v1 §§III–V, Algorithms1–2, TablesII–III rechecked; compared related v2 text. v1 retained as its own source/version. No full version equivalence or independent reproduction."
   },
   {
     "year": 2024,
@@ -1672,5 +1690,23 @@
     "doi": "",
     "checked_date": "2026-10-12",
     "checked_scope": "Pinned root/training/deployment documentation and licenses; selected navigation config/step, DPCBF/QP, GAT, split-value PPO, ONNX export description; G1 UpdateHighLevel, navigation YAML and obstacle perception documentation. Static partial path audit; no install, weight download, code execution, training or robot operation."
+  },
+  {
+    "year": null,
+    "classification_year": null,
+    "publication_date": "",
+    "updated": "commit ddbfbb2312eccda7bb5d84469ec0980ddb07a5e9 (2024-12-02T07:44:01Z)",
+    "era": "undated",
+    "domain": "racing",
+    "title": "Predictive Spliner — official opponent regression, collision prediction and SQP implementation",
+    "study_family_id": "predictive-spliner",
+    "source_id": "PREDICTIVE-SPLINER-CODE",
+    "url": "https://github.com/ForzaETH/predictive-spliner/tree/ddbfbb2312eccda7bb5d84469ec0980ddb07a5e9",
+    "date_basis": "初公表年未確認。固定commit日時は版の確認に使い、公表日へ代用しない。",
+    "boundary_note": "First public release date unverified; commit date is version evidence only, excluded from era counts. Same existing study family; no new independent replication. Partial files do not verify full-stack state-machine behavior.",
+    "source_type": "code",
+    "doi": "",
+    "checked_date": "2026-10-14",
+    "checked_scope": "README and seven selected src/message files: opponent observation/projection, GP/CCMA branch, local prediction, single-opponent collision propagation, SQP objectives/constraints. Static reading only; no dependencies/launches executed or experiment reproduction."
   }
 ]

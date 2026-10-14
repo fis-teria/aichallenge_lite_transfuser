@@ -1,15 +1,17 @@
 <h2>調査範囲と分類</h2>
-<p>確認日: 2026-10-13。初回の主対象期間2018-10-02〜2026-10-02と期間前の基礎を保全し、その後の確認を追記しています。E2E自動運転、高速自律レーシング、MPC・MPPI、移動ロボット・SLAM・人との相互作用を扱うナビゲーションを整理します。代表資料の確認であり、全領域の網羅を意味しません。</p>
+<p>確認日: 2026-10-14。初回の主対象期間2018-10-02〜2026-10-02と期間前の基礎を保全し、その後の確認を追記しています。E2E自動運転、高速自律レーシング、MPC・MPPI、移動ロボット・SLAM・人との相互作用を扱うナビゲーションを整理します。代表資料の確認であり、全領域の網羅を意味しません。</p>
 <h2>調査状態の読み方</h2><p>「調査済み」は記載した資料と確認範囲のみ。「未調査」は未確認、「資料不足」は根拠が必要条件を満たさない状態です。資料が見つからないことを、研究が存在しないことの証明にはしません。文献の確認状態と記事の作成・公開状態は別に管理します。</p>
-<p>現在は93資料・66研究系列、6時代 × 4領域 × 6資料種別の144区分です。33区分は範囲限定の調査済み、111区分は未調査で、網羅済みは0区分です。公表年不明の12資料は時代別集計から除外しています。</p>
+<p>現在は95資料・66研究系列、6時代 × 4領域 × 6資料種別の144区分です。33区分は範囲限定の調査済み、111区分は未調査で、網羅済みは0区分です。公表年不明の13資料は時代別集計から除外しています。</p>
 <h2>追加確認と個別解説</h2>
 <p><a href="mppi-generic-2024.html">MPPI-Generic：GPU並列化と制御周期を分けて測る</a>を追加しました。既存C08/C09を限定確認へ増補し、ライブラリと比較コードの固定版を同じ研究系列へ2資料追加しました。初公表年は未確認で、年代別集計へは加えません。確認日2026-10-10。追試・導入は未実施です。</p>
 <h2>タイヤ同定とコードの追加確認</h2>
 <p><a href="on-track-sysid-2024.html">On-Track SysID：残差からタイヤモデルへ戻す</a>を追加しました。既存R06/R07を更新し、資料数91・研究系列数66は不変。原著v1の実機Table I/II、固定版コードの主要経路と版差を確認しました。2026-10-11。雑誌版の完全照合・追試・導入は未実施です。</p>
 <h2>DODGERの改訂・実装の追加確認</h2>
-<p><a href="dodger-2026.html">DODGER：学習時の安全参照と、実行時の監視を分ける</a>を追加しました。v1を保全し、主期間後のv2(2026-10-05)と固定版公式コードを同じ系列へ2資料追加。現在の年代集計81資料は初稿年分類を保った改訂追跡を含み、コードはundatedのため除外します。実行・追試・車両導入は未実施です。</p>
+<p><a href="dodger-2026.html">DODGER：学習時の安全参照と、実行時の監視を分ける</a>を追加しました。v1を保全し、主期間後のv2(2026-10-05)と固定版公式コードを同じ系列へ2資料追加。DODGER追加時点の年代集計81資料は初稿年分類を保った改訂追跡を含み、コードはundatedのため除外します。実行・追試・車両導入は未実施です。</p>
 <h2>FIVE-VLAの本文・評価条件を追加確認</h2>
 <p><a href="five-vla-2026.html">FIVE-VLA：行動トークンの記憶と、履歴入力の違い</a>を追加しました。既存v1の確認範囲を増補し、93資料・66系列は不変。明示履歴のオフライン/閉ループ比較、RAMの状態交代、推論モードと計時、現行コードとの境界を確認。FIVE固有実装・重み・独立再現は未確認です。</p>
+<h2>Predictive Splinerの改訂・公式コードを追加確認</h2>
+<p><a href="predictive-spliner-2024.html">Predictive Spliner：相手の周回を学び、追越しの場所を選ぶ</a>を追加。登録済みv1を保全し、v2と固定版codeの2資料を同系列へ追加しました。現在95資料・66系列、年代集計82・公表年不明13。成功5回までの分母・方式別速度条件・計時・コード分岐を区別します。独立再現・導入・走行は未実施です。</p>
 <h2>今回公開した解説と残る確認</h2><ul>
 <li><a href="world-on-rails-2021.html">World on Rails：未選択の操作への教師生成</a>：既存E2E-WORを本文の限定確認へ増補。非反応仮定・評価条件と公式コードの差、TimePathへの接続条件を整理。公式コードは同じ研究系列へ1資料追加し、公表年不明として年代集計から除外。2026-10-09追加。</li>
 <li><a href="bayesrace-2020.html">BayesRace：車両予測の残差学習</a>：既存R15の本文未確認を解消し、初稿と公式コードを同じ研究系列へ追加。平均補正・計算期限・実装の版差を確認。2026-10-08追加。</li>
@@ -41,7 +43,7 @@
 </ul>
 <h3>2023–2024</h3><ul>
 <li>E2E自動運転: 原著論文（査読あり） 未調査／プレプリント 調査済み（5資料・範囲限定）／サーベイ 未調査／公式コード・ソフトウェア 調査済み（1資料・範囲限定）／ベンチマーク・データ・競技規則 未調査／公式技術記事・講演・仕様 未調査</li>
-<li>高速自律レーシング: 原著論文（査読あり） 未調査／プレプリント 調査済み（3資料・範囲限定）／サーベイ 調査済み（1資料・範囲限定）／公式コード・ソフトウェア 調査済み（2資料・範囲限定）／ベンチマーク・データ・競技規則 未調査／公式技術記事・講演・仕様 未調査</li>
+<li>高速自律レーシング: 原著論文（査読あり） 未調査／プレプリント 調査済み（4資料・範囲限定）／サーベイ 調査済み（1資料・範囲限定）／公式コード・ソフトウェア 調査済み（2資料・範囲限定）／ベンチマーク・データ・競技規則 未調査／公式技術記事・講演・仕様 未調査</li>
 <li>MPC・MPPI・安全制御: 原著論文（査読あり） 調査済み（1資料・範囲限定）／プレプリント 調査済み（1資料・範囲限定）／サーベイ 未調査／公式コード・ソフトウェア 未調査／ベンチマーク・データ・競技規則 未調査／公式技術記事・講演・仕様 調査済み（1資料・範囲限定）</li>
 <li>移動ロボット・SLAM・Human-aware navigation: 原著論文（査読あり） 未調査／プレプリント 未調査／サーベイ 未調査／公式コード・ソフトウェア 未調査／ベンチマーク・データ・競技規則 未調査／公式技術記事・講演・仕様 未調査</li>
 </ul>
@@ -260,10 +262,9 @@
 <p>確認日2026-10-11。収集・前処理・残差教師・NN・仮想データ・係数フィット・保存・LUTの主要経路を静的確認。NNは論文58に対し130パラメータ。時刻同期、固定刻み、荷重での正規化、フィット目的と計時範囲は再現前の確認点。実行・完全な依存監査・独立追試は未実施。</p>
 <p><a href="https://github.com/ForzaETH/On-Track-SysID/tree/7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2">一次資料（固定commit）</a>、<a href="on-track-sysid-2024.html">個別記事</a>。commit日時を初公表日へ代用しません。</p>
 <h3>Predictive Spliner: Data-Driven Overtaking in Autonomous Racing Using Opponent Trajectory Prediction</h3>
-<p>Nicolas Baumann, Edoardo Ghignone, Cheng Hu, Benedict Hildisch, Tino Hämmerle, Alessandro Bettoni, Andrea Carron, Lei Xie, Michele Magno。公表年: 2024。資料種別: プレプリント。研究系列: predictive-spliner。</p>
-<p>資料更新日・版: 2024-10-07。確認日: 2026-10-02。確認範囲: Full HTML retrieved; §§III–IV, TablesII–III, sampling-until-five-successes protocol</p>
-<p><a href="https://arxiv.org/html/2410.04868v1">一次資料</a>。DOI: 10.48550/arXiv.2410.04868。</p>
-<p>年の扱い: 領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2024-10。確認した版と初稿は区別する。</p>
+<p>Nicolas Baumann, Edoardo Ghignone, Cheng Hu, Benedict Hildisch, Tino Hämmerle, Alessandro Bettoni, Andrea Carron, Lei Xie, Michele Magno。初稿2024-10-07 v1と改訂2024-11-28 v2。研究系列predictive-spliner。</p>
+<p>確認日2026-10-14。§III–V、Algorithms 1–2、Tables II–IIIとv2 PDFの対応箇所を確認。1周の予測仮定、成功5回までの評価、速度尺度式の留保、平均/標準偏差の計時を整理しました。v1は別資料として保全しています。</p>
+<p><a href="https://arxiv.org/html/2410.04868v1">v1</a>、<a href="https://arxiv.org/html/2410.04868v2">v2</a>、<a href="predictive-spliner-2024.html">個別解説</a>。DOI:10.48550/arXiv.2410.04868。コードの実験対応・完全な版比較・独立再現は未確認。</p>
 <h3>Think2Drive: Efficient Reinforcement Learning by Thinking in Latent World Model for Quasi-Realistic Autonomous Driving (in CARLA-v2)</h3>
 <p>Qifeng Li; Xiaosong Jia; Shaobo Wang; Junchi Yan。公表年: 2024。資料種別: プレプリント。研究系列: think2drive。</p>
 <p>資料更新日・版: 2024-02-26。確認日: 2026-10-02。確認範囲: abstract; model-based RL planning concept; HTML v3 unavailable; numerical claims intentionally omitted</p>
@@ -546,3 +547,7 @@
 <h3>DODGER — official training and G1 deployment implementation</h3>
 <p>同系列dodgerの公式コード。初公表日・年は未確認でundated。確認commit 02dd5a965bdaa2e9ab60da3f3255b9acf5d45feb（2026-09-29）、確認日2026-10-12。訓練の方策/参照分岐、DPCBF・GAT・split-value PPOとG1高位指令・監視設定の主要経路を静的確認。全分岐、依存、重みと実験の完全対応、実行・追試は未実施です。</p>
 <p><a href="https://github.com/PSH0823/dodger/tree/02dd5a965bdaa2e9ab60da3f3255b9acf5d45feb">固定版コード</a>、<a href="dodger-2026.html">個別解説</a>。commit日時を初公表年へ代用せず、年代別144セルから除外します。</p>
+
+<h3>Predictive Spliner — official implementation（公表年未確認）</h3>
+<p>固定commit ddbfbb2312eccda7bb5d84469ec0980ddb07a5e9、2024-12-02。選択した8ファイルの静的確認。全周CCMA・速度GP平均・標準偏差field・1相手の衝突伝播・SQPを確認。初公表年は未確認で年代集計に含めません。</p>
+<p><a href="https://github.com/ForzaETH/predictive-spliner/tree/ddbfbb2312eccda7bb5d84469ec0980ddb07a5e9">一次コード</a>、<a href="predictive-spliner-2024.html">個別解説</a>。実行・追試・全スタック照合は未実施。</p>

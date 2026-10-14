@@ -231,3 +231,13 @@ DODGERの動的navigationからE2Eの時間表現へ移り、既存v1の本文�
 ### FIVE-VLA記事の公開確認
 
 記事commit `e7a6fef8809b3bbab974be7492a49f7d3e286254` を承認済みHervararの正式Windows checkoutから既存認証で通常push。[CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/38338852582)のbuild/deployはsuccess。全39ページと3資産はHTTP200で正式生成物と完全一致。[新記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/five-vla-2026.html)と関連4本を実配信320/390/768/1440pxで確認し、図1・3表・式・横スクロール・相互リンク・JS無効で問題なし。公開記録は `five-vla-publication-20261013.json`。対象資料/intent/queueをpublishedへ更新。ニュース20件は公開5・追加精読14・LOOP保留1、他19ニュース/92資料/他batchを保全。FIVE固有実装と独立再現は未確認。学習/制御/設定変更・学習/走行、SSH/WSL/他host/クラウドpush、API/Web書込み、別認証・remote変更は行っていません。
+
+## Predictive Splinerの追加確認（2026-10-14）
+
+FIVE-VLAのE2E時間表現からレーシングの相手予測へ移り、公式コード未照合と評価選別を補う比較価値で選定。R08 v1を保全し、v2と固定commit codeを同系列へ追加しました。§III–V/Algorithms1–2/TablesII–IIIとv2 PDF対応箇所、選択8ファイル、現行静的占有MPPIを確認。GP/CCMAの分岐・平均伝播・不確実性field、成功5回までの分母と方式別最大速度、計時を区別しています。
+
+台帳95資料・66系列、年代集計82・undated13、144セル中調査済み33・未調査111、全coverage_complete=false。初稿分類と改訂日を区別し、codeのcommit日は初公表日へ代用しません。既存他92資料、ニュース20intent/batch、Roachの未移送原稿を保全。共有スナップショットは実取得7版48項目、最新9/25–10/1・message10/2で前回可視範囲と同じ。live元会話は未確認、本文/URLは転載しません。完全な版/実験commit照合、著者コード実行・独立再現・導入・学習・AWSIM/実車試験、全体pytestは未実施。学習/制御/ROS/設定変更なし。公開CIと実配信は確認後に別記録します。
+
+### Predictive Spliner記事の公開前検査
+
+正式生成と一致、40ページ1972リンク/asset・59固定根拠、サイト回帰29件を確認。全サイトEdgeは5幅・全40ページPC/mobile、既存操作/JS無効で成功。対象5記事を4幅で確認し、図1・3表・式・横スクロール・相互リンク、PC/mobile画像を確認。研究地図本文とカードを最新95資料/66系列へ照合して正式再生成。外部一次10 URLはHTTP200、arXiv節アンカー一致。JSON/CSV・他92台帳/年表レコード、20ニュースintent/batchと記事範囲外5526ファイルを保全。記録はpredictive-spliner-validation-20261014.json。全体pytest・著者コード追試・学習・走行は未実施。
