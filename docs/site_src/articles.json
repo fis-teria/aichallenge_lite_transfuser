@@ -99,14 +99,15 @@
     "nav": "results",
     "summary": "直前の有効な経路を検査しながら使う復帰処理。コード検証とAWSIM未確認を分けて記録します。",
     "published": "2026-09-27",
-    "updated": "2026-10-13",
+    "updated": "2026-10-15",
     "status": "実装・テスト済み",
     "topic": "",
     "related": [
       "system-architecture",
       "roadmap",
       "predictive-safety-filter-2018",
-      "five-vla-2026"
+      "five-vla-2026",
+      "evolvingnav-2026"
     ]
   },
   {
@@ -175,13 +176,14 @@
     "nav": "papers",
     "summary": "局所的なサブマップを構築し、scan-to-submapの照合を用いてループ閉じ込みを処理する2D LiDAR SLAM。大きな環境でもリアルタイムに地図の整合を保つための手法を示します。",
     "published": "2026-09-27",
-    "updated": "2026-10-02",
+    "updated": "2026-10-15",
     "status": "一次資料を確認",
     "topic": "control",
     "related": [
       "roadmap",
       "streamrig-2026",
-      "research-map"
+      "research-map",
+      "evolvingnav-2026"
     ]
   },
   {
@@ -369,9 +371,9 @@
     "title": "E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳",
     "category": "guide",
     "nav": "papers",
-    "summary": "4領域・144区分の確認範囲と未調査を整理。95資料・66研究系列を管理し、主期間と改訂追跡を区別します。",
+    "summary": "4領域・144区分の確認範囲と未調査を整理。97資料・66研究系列を管理し、主期間と改訂追跡を区別します。",
     "published": "2026-10-02",
-    "updated": "2026-10-14",
+    "updated": "2026-10-15",
     "status": "4領域・限定資料を調査",
     "topic": "",
     "related": [
@@ -394,7 +396,8 @@
       "on-track-sysid-2024",
       "dodger-2026",
       "five-vla-2026",
-      "predictive-spliner-2024"
+      "predictive-spliner-2024",
+      "evolvingnav-2026"
     ]
   },
   {
@@ -580,7 +583,7 @@
     "nav": "papers",
     "summary": "動的障害物ナビの方策・CBF参照を分け、実機条件と公開コード、現行の停止監視との境界を確認。",
     "published": "2026-10-12",
-    "updated": "2026-10-12",
+    "updated": "2026-10-15",
     "status": "原著・主要コードの静的確認／未導入",
     "topic": "control",
     "related": [
@@ -588,7 +591,8 @@
       "mpc-mppi-overview",
       "world-on-rails-2021",
       "slam-mppi-box-20260919",
-      "research-map"
+      "research-map",
+      "evolvingnav-2026"
     ]
   },
   {
@@ -616,7 +620,7 @@
     "nav": "papers",
     "summary": "相手のGP予測と衝突区間、成功5回までの評価、計時と公開コードの差を整理。",
     "published": "2026-10-14",
-    "updated": "2026-10-14",
+    "updated": "2026-10-15",
     "status": "原著v2・固定版コードの静的確認／未導入",
     "topic": "control",
     "related": [
@@ -626,7 +630,26 @@
       "research-map",
       "on-track-sysid-2024",
       "mppi-generic-2024",
-      "predictive-safety-filter-2018"
+      "predictive-safety-filter-2018",
+      "evolvingnav-2026"
+    ]
+  },
+  {
+    "slug": "evolvingnav-2026",
+    "title": "EvolvingNav：古い物体位置を、いつ確かめ直すか",
+    "category": "paper",
+    "nav": "papers",
+    "summary": "到着時の信念と可視性による更新、重複証拠の管理、探索評価と現行保持経路の境界を整理。",
+    "published": "2026-10-15",
+    "updated": "2026-10-15",
+    "status": "原著v4・固定版コードの静的確認／未導入",
+    "topic": "learning",
+    "related": [
+      "cartographer",
+      "retained-path-recovery",
+      "dodger-2026",
+      "predictive-spliner-2024",
+      "research-map"
     ]
   }
 ]

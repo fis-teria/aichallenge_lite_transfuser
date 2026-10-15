@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="到着時の信念と可視性による更新、重複証拠の管理、探索評価と現行保持経路の境界を整理。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>EvolvingNav：古い物体位置を、いつ確かめ直すか — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html" aria-current="page"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../papers.html">論文ノート</a></div>
+<span class="section-number">論文ノート</span><h1>EvolvingNav：古い物体位置を、いつ確かめ直すか</h1>
+<p class="article-lead">到着時の信念と可視性による更新、重複証拠の管理、探索評価と現行保持経路の境界を整理。</p><div class="article-meta">
+<span>公開 <time datetime="2026-10-15">2026-10-15</time></span>
+<span>更新 <time datetime="2026-10-15">2026-10-15</time></span>
+<span class="tag">原著v4・固定版コードの静的確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文詳解・意味記憶と探索</span><span class="paper-year">2026</span></div>
+<h2>EvolvingNav：古い物体位置を、いつ確かめ直すか</h2>
+<p class="authors">Mingjian Gao、Zhaocheng Li、Haoyang Huang、Wenqiao Zhang、Yingjie Niu、Hao Zhou、Chao Li、Juncheng Li、Siliang Tang、Yueting Zhuang</p>
+<p class="paper-summary">最後に見た場所へ向かっても、到着する間に物体が動くことがあります。EvolvingNavは、物体の履歴から複数の居場所の確率を持ち、到着時刻を予測し、途中の観測で探す順番を変えます。「見えなかった」を「存在しない」と断定せず、過去の否定観測にも有効な時間を持たせる設計を読み解きます。</p>
+<p>確認日：2026-10-15。対象は<a href="https://arxiv.org/html/2609.39166v4">Beyond the Remembered World: Predictive 4D Belief for Persistent Navigation in Evolving Worlds、arXiv v4（2026-10-12）</a>の§3–5、関連Appendix A.4/A.6/A.7・B.6・Dと<a href="https://arxiv.org/pdf/2609.39166v4">32頁PDFの対応箇所</a>、<a href="https://github.com/ZJU4EmbodiedAI/EvolvingNav/tree/2ed45c66bbd7f2885941240556116c9dba47716a">公式コードの固定commit 2ed45c6（2026-10-10）</a>の選択12ファイルです。<a href="https://arxiv.org/abs/2609.39166">初稿は9月30日</a>。登録済み<a href="https://arxiv.org/html/2609.39166v2">v2</a>を保全し、取得した§3の空白正規化後のHTML本文はv4と一致しました。全版・全主張・実験commitの完全照合、コード実行、独立追試、本プロジェクトへの導入は未実施です。</p>
+
+<h3>1. 記憶するのは、物体の位置と観測の時刻</h3>
+<p>入力は時刻付きRGB-D画像とカメラ姿勢です。共通の3D座標へ対応付けた物体の履歴に、最後に見えた候補場所、見えなかったという証拠、確信度、可視性を記録します。候補には棚や部屋などの状態を用い、候補外を表す<code>unknown</code>にも確率を残します。位置推定の幾何精度を上げるSLAMそのものではなく、変化した世界で何を探し直すかを扱う意味記憶です。<a href="https://arxiv.org/html/2609.39166v4#S3.SS1">§3.1</a>、<a href="https://arxiv.org/html/2609.39166v4#S3.SS2">§3.2</a></p>
+<figure class="tech-figure"><figcaption>図1　現在の信念を更新し、候補ごとに到着時を予測する（本記事の概念図）</figcaption><ol class="tech-flow four">
+<li><strong>履歴を読む</strong><p>物体・候補場所・時刻・可視性を対応させる</p></li>
+<li><strong>到着時を予測</strong><p>現在の信念から各候補のETAへ先読みする</p></li>
+<li><strong>短く移動して観測</strong><p>新しく見えた面と証拠IDを記録する</p></li>
+<li><strong>更新して再計画</strong><p>現在時刻へ進め、必要なら再確認する</p></li>
+</ol><p>到着予測は候補比較に使います。まだ経過していない未来の分布で、現在時刻の状態を置き換えません。</p></figure>
+<p>履歴エンコーダは、前に見た場所へ残る確率と、それ以外へ移る条件付き分布を分けて学習します。時刻間隔に加えて時刻帯・曜日も入力し、物体が移動して戻る場合も表現します。高位のVLMは凍結されたツール利用者ですが、履歴から信念と遷移を予測する部分には学習が必要です。論文のzero-shotという表現を、系全体が未学習という意味にはしません。<a href="https://arxiv.org/html/2609.39166v4#S3.SS3">§3.3</a>、<a href="https://arxiv.org/html/2609.39166v4#A1.SS6">Appendix A.6</a></p>
+
+<h3>2. 「見つからない」を、見え方に応じて弱い証拠にする</h3>
+<div class="table-wrap" role="region" aria-label="信念と観測更新の式" tabindex="0"><table class="tech-table"><caption>式1　原著式9・11・13–15を記事用に整理</caption><thead><tr><th scope="col">関係</th><th scope="col">意味</th></tr></thead><tbody>
+<tr><td><code>b⁻(last) = ρ</code><br><code>b⁻(i ≠ last) = (1 − ρ) π(i)</code></td><td>残留と移動先を分け、unknownも含む候補全体へ確率を配る。</td></tr>
+<tr><td><code>b_next = b_current K(Δt)</code></td><td>実際に経過した時間で現在の信念を進める。到着予測には別途K(ETAᵢ)を使う。</td></tr>
+<tr><td><code>b⁺(i) ∝ b⁻(i) (1 − rᵢ)</code></td><td>検出されなかった場合。rᵢは「そこに存在したなら検出できる確率」。全候補で正規化する。</td></tr>
+</tbody></table></div>
+<p>遮蔽が大きく検出しにくい画像では、未検出でもその場所の確率を大きく下げません。rᵢは候補表面を現在のカメラへ投影した被覆率、深度、距離、向き、画像品質などから、validationで較正します。既知候補外のunknownは、通常の未検出だけでは消しません。真の物体位置やシミュレータの可視性フラグは評価側に分けます。<a href="https://arxiv.org/html/2609.39166v4#S3.SS4">§3.4</a></p>
+<p>隣接する画像で同じ場所が何度も写っても、それを独立な未検出として掛け続けると過信が生まれます。論文は証拠IDと観測済み表面を管理し、新しい被覆が5%を超えた部分を更新へ使います。70%以上の被覆をinspectionとして数えますが、その候補を永久に除外しません。時間が進み、戻ってきた可能性が高まれば新しい証拠ラウンドで同じ場所を確認します。重複利用を防ぐ仕組みであり、残る画像間依存まで独立と証明するものではありません。<a href="https://arxiv.org/html/2609.39166v4#A1.SS4">Appendix A.4</a></p>
+
+<h3>3. 探索成功率は、世界の変わり方と試験を添えて読む</h3>
+<p>EvoWorld-Benchは54室内シーン・803,680タスクの生成基盤です。この全数が実機走行数ではありません。N1は初回候補の確認、N2は分布を使った探索、N3は可視性を使う更新と復帰を評価し、N1–N3では問い合わせ後の対象は固定です。N4は実行中も世界時計を進め、N5は未使用シーン／householdへの転移を扱います。N4の動的集合は、共通の時間窓に移動を予定したepisodeで事前固定されます。早く停止した方式だけ移動試験を免れる分母にはしません。<a href="https://arxiv.org/html/2609.39166v4#S4">§4</a>、<a href="https://arxiv.org/html/2609.39166v4#A2.SS6">Appendix B.6</a></p>
+<div class="table-wrap" role="region" aria-label="シミュレーションと実機の評価条件" tabindex="0"><table class="tech-table"><caption>表1　原著Tables 1–3の限定された結果（%）</caption><thead><tr><th scope="col">評価</th><th scope="col">First-Inspection SR</th><th scope="col">Search / Dynamic SR</th><th scope="col">条件</th></tr></thead><tbody>
+<tr><td>EvoWorld-Bench N1–N5</td><td>61.32</td><td>86.18（Search）</td><td>シミュレーション、5 seedの平均。Searchの標準偏差2.07。</td></tr>
+<tr><td>N4の事前固定動的集合</td><td>—</td><td>65.2（Dynamic）</td><td>実行中の対象移動を予定した共通集合。</td></tr>
+<tr><td>LYNX M20</td><td>34.4</td><td>48.4（Search）</td><td>方式ごと64 matched trial、360秒・最大3 inspections。</td></tr>
+</tbody></table></div>
+<p>First-Inspectionは、十分な被覆に達した最初の候補で対象を確認できた率です。そこへ至る途中で十分に観測した候補も数えます。Searchは探索予算内での最終成功。M20では未検出、移動失敗、時間超過、人の介入も失敗に含めます。実機の48.4%をシミュレーションの86.18%と同じ条件の順位にはしません。X30／Lite3の32-block転移評価と、M20全64試行も別の集合です。<a href="https://arxiv.org/html/2609.39166v4#S5.SS1">§5.1</a>、<a href="https://arxiv.org/html/2609.39166v4#A4">Appendix D</a></p>
+<p>強みは学べる時間的規則がある場面です。対になったroutine世界ではLast Seenに対するSR差が22.36 points、random世界では6.93 points。一方、static世界ではLast Seenを下回り、randomではDirect Transformerに劣る条件が報告されています。何も変化していないときにまで先回りすることや、規則が壊れた相手・環境への過信が限界になります。物理試験の長時間配達例には人による荷物の積載も含まれ、これは定量的な予測探索の試行数を増やす証拠ではありません。<a href="https://arxiv.org/html/2609.39166v4#S5.SS2">§5.2</a>、Appendix D.3–D.4</p>
+
+<h3>4. 硬い除外と、較正した更新を比較する</h3>
+<div class="table-wrap" role="region" aria-label="未検出による信念更新の比較" tabindex="0"><table class="tech-table"><caption>表2　Table 4の信念更新ablation。Top-1は状態予測の%で、走行成功率ではない</caption><thead><tr><th scope="col">更新</th><th scope="col">Top-1 ↑</th><th scope="col">NLL ↓</th><th scope="col">ECE ↓</th></tr></thead><tbody>
+<tr><td>更新なし</td><td>62.98</td><td>2.838</td><td>0.172</td></tr>
+<tr><td>Hard Removal</td><td>42.69</td><td>11.514</td><td>0.204</td></tr>
+<tr><td>Bayesian</td><td>64.71</td><td>1.497</td><td>0.151</td></tr>
+<tr><td>Bayesian + Calibration</td><td>66.93</td><td>1.530</td><td>0.130</td></tr>
+</tbody></table></div>
+<p>未検出で候補を消す方法はこの比較で悪化し、較正付き更新はTop-1とECEを改善しています。ただしNLLは較正なしの方が小さく、全指標で一様に優れる結果ではありません。検出器の誤り、自己位置・深度のずれ、物体IDの混同があると、確率更新自体が誤った証拠を強めます。可視性と較正データの品質も評価対象です。</p>
+<p>固定版の<a href="https://github.com/ZJU4EmbodiedAI/EvolvingNav/blob/2ed45c66bbd7f2885941240556116c9dba47716a/code/evolvingnav/filter.py">filter.py</a>では、<code>arrival()</code>は予測分布を返し、<code>advance()</code>が現在分布を更新します。証拠IDの重複拒否、5%の新規被覆、時間経過後の候補再開も確認できます。<a href="https://github.com/ZJU4EmbodiedAI/EvolvingNav/blob/2ed45c66bbd7f2885941240556116c9dba47716a/code/evolvingnav/coverage.py">coverage.py</a>は投影点とオンライン深度を照合し、<a href="https://github.com/ZJU4EmbodiedAI/EvolvingNav/blob/2ed45c66bbd7f2885941240556116c9dba47716a/code/evolvingnav/memory.py">memory.py</a>は時刻cutoff以前の証拠だけを履歴へ返します。これは選択処理の静的確認で、全runnerの情報漏えいがないことの独立監査ではありません。</p>
+<p><a href="https://github.com/ZJU4EmbodiedAI/EvolvingNav/blob/2ed45c66bbd7f2885941240556116c9dba47716a/code/evolvingnav/agent.py">agent.pyの候補選択</a>は到着予測・距離・時間・新しい検出機会からutilityを計算します。VLMが返した候補のutilityが最大値を下回る場合は最大候補を採る分岐もあり、VLMが自由に全行動を決める実装ではありません。コードの存在から、論文の全実験をこの版で再現できるとは判断していません。</p>
+
+<h3>5. 現行の保持経路・SLAMとの境界と、適用に必要な作業</h3>
+<p>公開main <code>300ced6</code>の<a data-source="src/aic_transfuser_lite/control/slam_mppi.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/300ced6e72ad7cf5cc9a95ebcf5a8e195b8b2362/src/aic_transfuser_lite/control/slam_mppi.py">SLAM MPPI</a>は静的占有上で参照経路を修正します。<a data-source="src/aic_transfuser_lite/control/time_path_recovery.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/300ced6e72ad7cf5cc9a95ebcf5a8e195b8b2362/src/aic_transfuser_lite/control/time_path_recovery.py">保持経路</a>は鮮度・幾何・試行時間などで選ばれる制御用の点列で、物体が棚に戻る確率を持つ意味記憶ではありません。いずれも、EvolvingNavのRGB-D・候補状態・物体ID・時刻付き証拠の契約をそのまま備えているとは言えません。</p>
+<p><a data-source="configs/control/time_path_slam_mppi_20_15_15_recovery.json" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/300ced6e72ad7cf5cc9a95ebcf5a8e195b8b2362/configs/control/time_path_slam_mppi_20_15_15_recovery.json">既存の限定AWSIM設定</a>にはplan最大age 0.5秒、controller周期0.05秒があります。これは設定値であり、高位VLMの応答をその周期に収めた実測ではありません。<a href="slam-mppi-box-20260919.html">既存SLAM MPPIの5 km/h目標の箱試験</a>にも周回成功判定はありません。今回の論文確認で既存の走行実績を拡張していません。</p>
+<ul>
+<li><strong>必要データ：</strong>センサと姿勢の時刻整列、較正された深度／3D物体観測、物体ID、候補場所、見えた面と未検出の履歴。未知領域・候補外・遮蔽を別に記録する。</li>
+<li><strong>学習とsplit：</strong>履歴信念と遷移予測を学び、検出較正をvalidationで決める。household・時系列・対になった世界・近重複queryを分け、未来状態やtest情報を入力へ混ぜない。</li>
+<li><strong>資源と接続：</strong>原著の履歴器は3層・幅128・4 heads・最大64 events。実験環境はHabitat 0.3.3とRTX 5080×3で、最小必要GPU数や車載遅延の測定ではない。Grounding DINO／SAM2、VLM、記憶・予測・較正の各処理を含む遅延と容量を別に測る。<a href="https://github.com/ZJU4EmbodiedAI/EvolvingNav/blob/2ed45c66bbd7f2885941240556116c9dba47716a/code/README.md">公式手順</a>は生成データ・checkpoint等を別途必要とするsource公開である。</li>
+<li><strong>変更と検証の候補：</strong>高位の候補選択・証拠管理インターフェースを先に設計し、観測欠損、遮蔽、ID切替、規則の崩れ、再訪時の変化、VLM待ちを試す。低位の衝突回避・停止を保持し、探索成功率と接触・停止・期限超過を別に評価する。</li>
+</ul>
+<p>上記は未実装の適用候補です。人に接近する安全性や車両の追越し保証はこの探索評価から導けません。関連記事：<a href="cartographer.html">SLAM</a>、<a href="retained-path-recovery.html">保持経路の復帰</a>、<a href="dodger-2026.html">動的障害物と実行時監視</a>、<a href="predictive-spliner-2024.html">周回する相手の予測</a>、<a href="research-map.html">調査範囲と資料台帳</a>。</p>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-15">2026-10-15</time></div>
+<h3><a href="../articles/cartographer.html">Cartographer：2D LiDAR SLAMとループ閉じ込み</a></h3>
+<p>局所的なサブマップを構築し、scan-to-submapの照合を用いてループ閉じ込みを処理する2D LiDAR SLAM。大きな環境でもリアルタイムに地図の整合を保つための手法を示します。</p><div class="card-bottom"><span>一次資料を確認</span>
+<a class="article-read" href="../articles/cartographer.html" aria-label="Cartographer：2D LiDAR SLAMとループ閉じ込みを読む">記事を読む →</a></div></article><article class="article-card" data-category="report">
+<div class="card-meta"><span class="tag">検証記録</span>
+<time datetime="2026-10-15">2026-10-15</time></div>
+<h3><a href="../articles/retained-path-recovery.html">保持経路を使う低速復帰の仕様と検証状況</a></h3>
+<p>直前の有効な経路を検査しながら使う復帰処理。コード検証とAWSIM未確認を分けて記録します。</p><div class="card-bottom"><span>実装・テスト済み</span>
+<a class="article-read" href="../articles/retained-path-recovery.html" aria-label="保持経路を使う低速復帰の仕様と検証状況を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-15">2026-10-15</time></div>
+<h3><a href="../articles/dodger-2026.html">DODGER：学習時の安全参照と、実行時の監視を分ける</a></h3>
+<p>動的障害物ナビの方策・CBF参照を分け、実機条件と公開コード、現行の停止監視との境界を確認。</p><div class="card-bottom"><span>原著・主要コードの静的確認／未導入</span>
+<a class="article-read" href="../articles/dodger-2026.html" aria-label="DODGER：学習時の安全参照と、実行時の監視を分けるを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-15">2026-10-15</time></div>
+<h3><a href="../articles/predictive-spliner-2024.html">Predictive Spliner：相手の周回を学び、追越しの場所を選ぶ</a></h3>
+<p>相手のGP予測と衝突区間、成功5回までの評価、計時と公開コードの差を整理。</p><div class="card-bottom"><span>原著v2・固定版コードの静的確認／未導入</span>
+<a class="article-read" href="../articles/predictive-spliner-2024.html" aria-label="Predictive Spliner：相手の周回を学び、追越しの場所を選ぶを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-15">2026-10-15</time></div>
+<h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
+<p>4領域・144区分の確認範囲と未調査を整理。97資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

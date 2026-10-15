@@ -49,3 +49,6 @@
 <p>公開main <code>fbb858a</code>の<a data-source="src/aic_transfuser_lite/control/slam_mppi.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/fbb858ac1cb6f3fd426cfb7d75ce2f53e99e8712/src/aic_transfuser_lite/control/slam_mppi.py">SLAM MPPI</a>は静的占有に対する参照経路の横ずらしです。未知領域を禁止し、車体の円近似などで候補を検査しますが、移動相手を予測しないと明記しています。基準への復帰もコストであり、論文の終端制約と同じではありません。現行関数の入力は参照点列、自己姿勢、占有グリッド等で、相手ID付きの将来位置・速度・不確実性を渡す契約をここでは確認できません。</p>
 <p>適用を検討するなら、相手IDと追跡の切替、観測時刻と速度の単位、周回の継ぎ目、欠損・急な進路変更、車体の掃引領域、予測が外れたときの追従／停止、全処理の期限を先に定義する必要があります。<a href="slam-mppi-box-20260919.html">既存SLAM MPPIの検証</a>は元の記事にある限定条件のまま参照してください。1:10車両の結果を現在の車両や歩行者回避の保証へ移していません。</p>
 <p>関連記事：<a href="racing-overview-2018-2026.html">レーシング研究地図</a>、<a href="forzaeth-race-stack-2024.html">ForzaETH全スタック</a>、<a href="on-track-sysid-2024.html">タイヤ同定</a>、<a href="predictive-safety-filter-2018.html">PSFの条件付き保証</a>、<a href="research-map.html">調査範囲と台帳の読み方</a>。</p>
+
+<h3>意味記憶の鮮度と再確認</h3>
+<p>2026-10-15追記。<a href="evolvingnav-2026.html">EvolvingNav</a>。周回間の相手行動を学ぶ予測と、見えない間にも移る物体の居場所を予測するEvolvingNavを比較できます。学べる規則がある条件、到着時刻、観測による再計画を分け、異なる試験の成功率を性能順位にはしません。</p>

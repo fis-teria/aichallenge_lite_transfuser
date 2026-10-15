@@ -1328,8 +1328,8 @@
     "boundary_note": "Sep 30 is first publication; latest revision is Oct 1.; 61.32% first-inspection success and 86.18% search success are EvoWorld-Bench N1-N5 results, not physical-robot success rates.; Primary M20 real-world search success is 48.4%, according to repository README.; This is predictive semantic-memory/search work, not evidence of improved SLAM accuracy or automotive autonomy.; Platform-specific collision avoidance and emergency stops remain necessary; prediction is not a safety guarantee.",
     "source_type": "preprint",
     "doi": "10.48550/arXiv.2609.39166",
-    "checked_date": "2026-10-02",
-    "checked_scope": "Read arXiv metadata, abstract and targeted full-text method/evaluation/appendix passages; opened official repository README. Did not execute code or independently reproduce results."
+    "checked_date": "2026-10-15",
+    "checked_scope": "Read arXiv metadata, abstract and targeted full-text method/evaluation/appendix passages; opened official repository README. Did not execute code or independently reproduce results. Revisited HTML §3 on2026-10-15; whitespace-normalized selected §3 text matches v4, not a full-version/PDF equivalence claim."
   },
   {
     "year": 2026,
@@ -1456,6 +1456,24 @@
     "doi": "10.48550/arXiv.2609.40244",
     "checked_date": "2026-10-02",
     "checked_scope": "Full primary HTML text I–V, Tables I–V, figures/captions, reference list and version history. No external replication."
+  },
+  {
+    "year": 2026,
+    "classification_year": 2026,
+    "publication_date": "2026-10-12",
+    "updated": "2026-10-12 v4",
+    "era": "2026",
+    "domain": "navigation",
+    "title": "Beyond the Remembered World: Predictive 4D Belief for Persistent Navigation in Evolving Worlds",
+    "study_family_id": "evolvingnav",
+    "source_id": "NEWS-ARXIV-2609.39166-v4",
+    "url": "https://arxiv.org/html/2609.39166v4",
+    "date_basis": "初稿2026-09-30を分類年に使用。publication_dateはこのv4改訂2026-10-12。主期間後の改訂追跡として旧v2と区別する。",
+    "boundary_note": "Same existing evolvingnav family; initial2026-09-30 classification retained, v4 revision after primary window tracked separately. Simulation61.32first-inspection/86.18search differs from M20 34.4/48.4 over64matched trials; no SLAM-accuracy or vehicle/pedestrian safety guarantee. Static/random worlds limit the advantage. Full experiment/code correspondence and independent reproduction unverified.",
+    "source_type": "preprint",
+    "doi": "10.48550/arXiv.2609.39166",
+    "checked_date": "2026-10-15",
+    "checked_scope": "v4 §§3–5; related A.4/A.6/A.7,B.6,D; 32-page PDF selected equations, main/ablation/robot tables, resources/protocol passages. Current/arrival separation, new-surface evidence, N1–N5 vs fixed N4 subset vs64M20 trials; no full proof/claim/version/experiment audit."
   },
   {
     "year": null,
@@ -1708,5 +1726,23 @@
     "doi": "",
     "checked_date": "2026-10-14",
     "checked_scope": "README and seven selected src/message files: opponent observation/projection, GP/CCMA branch, local prediction, single-opponent collision propagation, SQP objectives/constraints. Static reading only; no dependencies/launches executed or experiment reproduction."
+  },
+  {
+    "year": null,
+    "classification_year": null,
+    "publication_date": "",
+    "updated": "commit 2ed45c66bbd7f2885941240556116c9dba47716a (2026-10-10T03:34:44Z)",
+    "era": "undated",
+    "domain": "navigation",
+    "title": "EvolvingNav — official belief filter, memory and embodied agent source",
+    "study_family_id": "evolvingnav",
+    "source_id": "EVOLVINGNAV-CODE",
+    "url": "https://github.com/ZJU4EmbodiedAI/EvolvingNav/tree/2ed45c66bbd7f2885941240556116c9dba47716a",
+    "date_basis": "初公表年未確認。固定commit日時を初公表日へ代用せず、undatedとして年代集計から除外する。",
+    "boundary_note": "First public release date unverified; commit date is version evidence only. Same existing family; excluded from era counts. Source-only release requires external data/checkpoints; no experiment correspondence inferred.",
+    "source_type": "code",
+    "doi": "",
+    "checked_date": "2026-10-15",
+    "checked_scope": "Twelve selected README, agent, memory, filter, coverage, calibration, controller, perception, policy and transition files read. Current-time/arrival separation, evidence IDs and coverage rounds, past-only retrieval, utility-gated VLM choice. No code executed or full runner/data/experiment audit."
   }
 ]

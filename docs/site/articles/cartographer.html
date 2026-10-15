@@ -70,7 +70,7 @@
 <span class="section-number">論文ノート</span><h1>Cartographer：2D LiDAR SLAMとループ閉じ込み</h1>
 <p class="article-lead">局所的なサブマップを構築し、scan-to-submapの照合を用いてループ閉じ込みを処理する2D LiDAR SLAM。大きな環境でもリアルタイムに地図の整合を保つための手法を示します。</p><div class="article-meta">
 <span>公開 <time datetime="2026-09-27">2026-09-27</time></span>
-<span>更新 <time datetime="2026-10-02">2026-10-02</time></span>
+<span>更新 <time datetime="2026-10-15">2026-10-15</time></span>
 <span class="tag">一次資料を確認</span></div></header><div class="article-body"><div class="paper-top">
                 <span class="paper-index">05</span
                 ><span class="tag">2D SLAM</span
@@ -106,6 +106,9 @@
 
 <h2>多眼の視覚オドメトリとの関係</h2>
 <p><a href="streamrig-2026.html">StreamRig</a>は校正済みの多眼画像から相対姿勢を逐次推定する研究です。CartographerのLiDARによる地図整合やloop closureとは役割・入力が異なり、置き換えによる改善は本プロジェクトで未検証です。学習split、尺度補正、欠損区間のGT接続を含む比較条件は個別記事へ整理しました。2026-10-02、関連記事を追加しました。</p>
+
+<h3>意味記憶の鮮度と再確認</h3>
+<p>2026-10-15追記。<a href="evolvingnav-2026.html">EvolvingNav</a>。幾何地図の推定と、動く物体の居場所を履歴から予測する意味記憶を分けて説明しました。RGB-D・姿勢・物体ID・時刻付き証拠が必要で、SLAM精度改善や導入実績へ読み替えません。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
 <time datetime="2026-09-27">2026-09-27</time></div>
@@ -118,9 +121,14 @@
 <p>校正済み多眼rigと凍結3Dモデルを使うStreamRig。学習split・GT接続・尺度・実行条件を確認し、位置合わせへの適用候補と課題を整理します。</p><div class="card-bottom"><span>一次資料・公開実装を確認</span>
 <a class="article-read" href="../articles/streamrig-2026.html" aria-label="StreamRig（2026）：多眼カメラの幾何を生かす逐次オドメトリを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-14">2026-10-14</time></div>
+<time datetime="2026-10-15">2026-10-15</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
-<p>4領域・144区分の確認範囲と未調査を整理。95資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
-<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<p>4領域・144区分の確認範囲と未調査を整理。97資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-15">2026-10-15</time></div>
+<h3><a href="../articles/evolvingnav-2026.html">EvolvingNav：古い物体位置を、いつ確かめ直すか</a></h3>
+<p>到着時の信念と可視性による更新、重複証拠の管理、探索評価と現行保持経路の境界を整理。</p><div class="card-bottom"><span>原著v4・固定版コードの静的確認／未導入</span>
+<a class="article-read" href="../articles/evolvingnav-2026.html" aria-label="EvolvingNav：古い物体位置を、いつ確かめ直すかを読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

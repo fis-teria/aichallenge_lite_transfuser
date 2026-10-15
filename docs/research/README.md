@@ -245,3 +245,15 @@ FIVE-VLAのE2E時間表現からレーシングの相手予測へ移り、公式
 ### Predictive Spliner記事の公開確認
 
 記事commit `969b8b741a80220be28f256e058129385337df65` をHervararの正式Windows checkoutから既存認証で通常push。[CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/38504716732)のbuild/deployはsuccess。全40ページと3資産はHTTP200で正式生成物と完全一致。[新記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/predictive-spliner-2024.html)と関連4本を実配信320/390/768/1440pxで確認し、図1・3表・式・横スクロール・相互リンク・JS無効で問題なし。公開記録はpredictive-spliner-publication-20261014.json。対象3資料/queueをpublishedへ更新し、他92資料・20ニュースintent/batch・Roach別件原稿を保全。完全な版/実験commit照合・独立再現・導入は未確認。学習/制御/設定変更・学習/走行、SSH/WSL/他host/クラウドpush、API/Web書込み、別認証・remote変更は行っていません。
+
+## EvolvingNavの追加確認（2026-10-15）
+
+Predictive Splinerの相手予測からnavigationの意味記憶へ比較軸を移し、未照合だった公式codeと可視性/証拠更新の比較価値で選定。AD-Memoはcode未確認、NavSafeはv2のイベント/付録確認が残る候補として保持し、固定優先は設けません。旧v2を保全し主期間後v4と固定codeを同系列追加。v4§3–5・関連A.4/A.6/A.7/B.6/D、32頁PDF対応箇所と12選択ファイル、現行静的占有/保持経路/限定設定/既存試験を確認。HTML§3のみv2/v4空白正規化後一致、全版/PDF一致ではありません。
+
+台帳97資料66系列、年代83・undated14。144セル中調査済み33・未調査111、全coverage_complete=false。コードcommit日は初公表日へ代用せず、他94資料/19ニュースintentとRoach別件を保全。現在/到着信念、未検出の較正と被覆ラウンド、VLMutility制限、N1–N5/事前固定N4/実機M20全64試行と転移subsetを区別。全版・実験commit・runner/データ漏えい完全監査、著者コード実行・独立再現・導入・全pytest・学習・走行は未実施。学習/制御/ROS/設定・デザインは変更なし。
+
+共有スナップショットは実取得7版48項目、最新9/25–10/1・message10/2で前回可視範囲と同じ。元liveは未確認、共有本文/URLを転載しません。公開CI/実配信は確認後に別記録します。
+
+### EvolvingNav記事の公開前検査
+
+正式生成と一致、41ページ2053リンク/asset・62固定根拠、サイト回帰29件を確認。公式Edgeは5幅・全41ページPC/mobile・既存操作/JS無効で成功。対象6記事を4幅、図1・3表・式・横スクロール・相互リンクで確認しPC/mobile画像を目視確認。外部一次13 URLはHTTP200、arXiv節アンカー一致。研究地図144セルをJSON照合し、従来navigation2026の表示9対台帳10を補正してv4追加後11資料へ更新。台帳97/66、年代83/undated14、JSON/CSVと他94資料/19ニュースintent、記事範囲外5527ファイルを保全。記録はevolvingnav-validation-20261015.json。全体pytest・著者コード追試・導入・学習・走行は未実施。

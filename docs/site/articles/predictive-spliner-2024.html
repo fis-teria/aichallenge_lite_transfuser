@@ -70,7 +70,7 @@
 <span class="section-number">論文ノート</span><h1>Predictive Spliner：相手の周回を学び、追越しの場所を選ぶ</h1>
 <p class="article-lead">相手のGP予測と衝突区間、成功5回までの評価、計時と公開コードの差を整理。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-14">2026-10-14</time></span>
-<span>更新 <time datetime="2026-10-14">2026-10-14</time></span>
+<span>更新 <time datetime="2026-10-15">2026-10-15</time></span>
 <span class="tag">原著v2・固定版コードの静的確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文詳解・相手予測と追越し</span><span class="paper-year">2024</span></div>
 <h2>Predictive Spliner：相手の周回を学び、追越しの場所を選ぶ</h2>
 <p class="authors">Nicolas Baumann、Edoardo Ghignone、Cheng Hu、Benedict Hildisch、Tino Hämmerle、Alessandro Bettoni、Andrea Carron、Lei Xie、Michele Magno</p>
@@ -122,6 +122,9 @@
 <p>公開main <code>fbb858a</code>の<a data-source="src/aic_transfuser_lite/control/slam_mppi.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/fbb858ac1cb6f3fd426cfb7d75ce2f53e99e8712/src/aic_transfuser_lite/control/slam_mppi.py">SLAM MPPI</a>は静的占有に対する参照経路の横ずらしです。未知領域を禁止し、車体の円近似などで候補を検査しますが、移動相手を予測しないと明記しています。基準への復帰もコストであり、論文の終端制約と同じではありません。現行関数の入力は参照点列、自己姿勢、占有グリッド等で、相手ID付きの将来位置・速度・不確実性を渡す契約をここでは確認できません。</p>
 <p>適用を検討するなら、相手IDと追跡の切替、観測時刻と速度の単位、周回の継ぎ目、欠損・急な進路変更、車体の掃引領域、予測が外れたときの追従／停止、全処理の期限を先に定義する必要があります。<a href="slam-mppi-box-20260919.html">既存SLAM MPPIの検証</a>は元の記事にある限定条件のまま参照してください。1:10車両の結果を現在の車両や歩行者回避の保証へ移していません。</p>
 <p>関連記事：<a href="racing-overview-2018-2026.html">レーシング研究地図</a>、<a href="forzaeth-race-stack-2024.html">ForzaETH全スタック</a>、<a href="on-track-sysid-2024.html">タイヤ同定</a>、<a href="predictive-safety-filter-2018.html">PSFの条件付き保証</a>、<a href="research-map.html">調査範囲と台帳の読み方</a>。</p>
+
+<h3>意味記憶の鮮度と再確認</h3>
+<p>2026-10-15追記。<a href="evolvingnav-2026.html">EvolvingNav</a>。周回間の相手行動を学ぶ予測と、見えない間にも移る物体の居場所を予測するEvolvingNavを比較できます。学べる規則がある条件、到着時刻、観測による再計画を分け、異なる試験の成功率を性能順位にはしません。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
 <time datetime="2026-10-14">2026-10-14</time></div>
@@ -139,9 +142,9 @@
 <p>5 km/h目標のrollout02で箱通過と通常復帰を記録。周回成功や一般的な回避保証とは区別します。</p><div class="card-bottom"><span>限定試験で確認</span>
 <a class="article-read" href="../articles/slam-mppi-box-20260919.html" aria-label="SLAM MPPIによる静止箱通過と通常追従への復帰を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-14">2026-10-14</time></div>
+<time datetime="2026-10-15">2026-10-15</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
-<p>4領域・144区分の確認範囲と未調査を整理。95資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
+<p>4領域・144区分の確認範囲と未調査を整理。97資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
 <a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-11">2026-10-11</time></div>
@@ -157,6 +160,11 @@
 <time datetime="2026-10-12">2026-10-12</time></div>
 <h3><a href="../articles/predictive-safety-filter-2018.html">PSF：保持した経路と安全な退避計画の違い</a></h3>
 <p>予測安全フィルタの条件付き保証と、現行の停止監視・保持経路復帰との境界を整理。</p><div class="card-bottom"><span>原著の限定節確認・未導入</span>
-<a class="article-read" href="../articles/predictive-safety-filter-2018.html" aria-label="PSF：保持した経路と安全な退避計画の違いを読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/predictive-safety-filter-2018.html" aria-label="PSF：保持した経路と安全な退避計画の違いを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-15">2026-10-15</time></div>
+<h3><a href="../articles/evolvingnav-2026.html">EvolvingNav：古い物体位置を、いつ確かめ直すか</a></h3>
+<p>到着時の信念と可視性による更新、重複証拠の管理、探索評価と現行保持経路の境界を整理。</p><div class="card-bottom"><span>原著v4・固定版コードの静的確認／未導入</span>
+<a class="article-read" href="../articles/evolvingnav-2026.html" aria-label="EvolvingNav：古い物体位置を、いつ確かめ直すかを読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

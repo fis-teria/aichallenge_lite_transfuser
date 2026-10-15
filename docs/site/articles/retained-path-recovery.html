@@ -70,7 +70,7 @@
 <span class="section-number">検証記録</span><h1>保持経路を使う低速復帰の仕様と検証状況</h1>
 <p class="article-lead">直前の有効な経路を検査しながら使う復帰処理。コード検証とAWSIM未確認を分けて記録します。</p><div class="article-meta">
 <span>公開 <time datetime="2026-09-27">2026-09-27</time></span>
-<span>更新 <time datetime="2026-10-13">2026-10-13</time></span>
+<span>更新 <time datetime="2026-10-15">2026-10-15</time></span>
 <span class="tag">実装・テスト済み</span></div></header><div class="article-body"><article class="evidence">
               <div class="evidence-meta">
                 <span class="badge pending">実装・テスト済み</span
@@ -100,6 +100,9 @@
 
 <h3>学習内の記憶との違い</h3>
 <p>2026-10-13追記。<a href="five-vla-2026.html">FIVE-VLA</a>は行動tokenを再帰的に使う学習の記憶です。ここで扱う保持経路は、既存経路を鮮度・幾何・試行条件で選ぶ制御側の処理であり、同じ機能ではありません。記憶を使う方策の出力も、それだけで安全な退避計画とは呼べません。既存の検証状況を維持し、RAM実装・追加走行の実績はないことを区別します。</p>
+
+<h3>意味記憶の鮮度と再確認</h3>
+<p>2026-10-15追記。<a href="evolvingnav-2026.html">EvolvingNav</a>。EvolvingNavの記憶は、物体の居場所の確率と未検出の証拠を扱います。本記事の保持経路は鮮度・幾何で選ぶ制御点列であり、同じ機能ではありません。再確認と時刻の考え方を比較し、既存の検証条件を維持します。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
 <time datetime="2026-09-27">2026-09-27</time></div>
@@ -120,6 +123,11 @@
 <time datetime="2026-10-13">2026-10-13</time></div>
 <h3><a href="../articles/five-vla-2026.html">FIVE-VLA：行動トークンの記憶と、履歴入力の違い</a></h3>
 <p>RAMの再帰・履歴比較・非反応評価と計時条件を確認し、現行TimePathの履歴との境界を整理。</p><div class="card-bottom"><span>原著・現行コードの静的確認／FIVE実装未照合</span>
-<a class="article-read" href="../articles/five-vla-2026.html" aria-label="FIVE-VLA：行動トークンの記憶と、履歴入力の違いを読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/five-vla-2026.html" aria-label="FIVE-VLA：行動トークンの記憶と、履歴入力の違いを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-15">2026-10-15</time></div>
+<h3><a href="../articles/evolvingnav-2026.html">EvolvingNav：古い物体位置を、いつ確かめ直すか</a></h3>
+<p>到着時の信念と可視性による更新、重複証拠の管理、探索評価と現行保持経路の境界を整理。</p><div class="card-bottom"><span>原著v4・固定版コードの静的確認／未導入</span>
+<a class="article-read" href="../articles/evolvingnav-2026.html" aria-label="EvolvingNav：古い物体位置を、いつ確かめ直すかを読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

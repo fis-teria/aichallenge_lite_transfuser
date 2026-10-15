@@ -2048,10 +2048,15 @@
     "original_source_type": "author arXiv manuscript",
     "domain": "navigation",
     "era": "2026",
-    "checked_date": "2026-10-02",
-    "checked_scope": "Read arXiv metadata, abstract and targeted full-text method/evaluation/appendix passages; opened official repository README. Did not execute code or independently reproduce results.",
+    "checked_date": "2026-10-15",
+    "checked_scope": "Read arXiv metadata, abstract and targeted full-text method/evaluation/appendix passages; opened official repository README. Did not execute code or independently reproduce results. Revisited HTML §3 on2026-10-15; whitespace-normalized selected §3 text matches v4, not a full-version/PDF equivalence claim.",
     "related_articles": [
-      "research-map"
+      "research-map",
+      "evolvingnav-2026",
+      "cartographer",
+      "retained-path-recovery",
+      "dodger-2026",
+      "predictive-spliner-2024"
     ],
     "review_status": "調査済み",
     "boundary_note": "Sep 30 is first publication; latest revision is Oct 1.; 61.32% first-inspection success and 86.18% search success are EvoWorld-Bench N1-N5 results, not physical-robot success rates.; Primary M20 real-world search success is 48.4%, according to repository README.; This is predictive semantic-memory/search work, not evidence of improved SLAM accuracy or automotive autonomy.; Platform-specific collision avoidance and emergency stops remain necessary; prediction is not a safety guarantee.",
@@ -2080,10 +2085,10 @@
       }
     ],
     "code_url": "https://github.com/ZJU4EmbodiedAI/EvolvingNav",
-    "code_status": "Public repository opened; code directory and README describe runnable implementation, Habitat runners, training scripts and tests. Not executed.",
+    "code_status": "Official repository verified at fixed commit 2ed45c66bbd7f2885941240556116c9dba47716a; twelve selected README/memory/filter/coverage/calibration/agent/controller/perception/transition files read statically. Experiment correspondence not verified.",
     "code_license": null,
-    "code_commit_if_verified": null,
-    "article_status": "awaiting_fuller_review",
+    "code_commit_if_verified": "2ed45c66bbd7f2885941240556116c9dba47716a",
+    "article_status": "prepublication_checked",
     "publication_gate": "シミュレーションの探索成功率と実機64episodeの成績を分け、SLAM幾何精度改善とは言わない"
   },
   {
@@ -3069,5 +3074,97 @@
     "independent_replication": false,
     "code_commit_if_verified": "ddbfbb2312eccda7bb5d84469ec0980ddb07a5e9",
     "article_status": "published"
+  },
+  {
+    "source_id": "NEWS-ARXIV-2609.39166-v4",
+    "study_family_id": "evolvingnav",
+    "title": "Beyond the Remembered World: Predictive 4D Belief for Persistent Navigation in Evolving Worlds",
+    "authors_or_organization": "Mingjian Gao et al.; Zhejiang University, University of California San Diego, DEEP Robotics, Chinese University of Hong Kong",
+    "year": 2026,
+    "classification_year": 2026,
+    "publication_date": "2026-10-12",
+    "updated": "2026-10-12 v4",
+    "url": "https://arxiv.org/html/2609.39166v4",
+    "doi": "10.48550/arXiv.2609.39166",
+    "source_type": "preprint",
+    "original_source_type": "author arXiv manuscript",
+    "domain": "navigation",
+    "era": "2026",
+    "checked_date": "2026-10-15",
+    "checked_scope": "v4 §§3–5; related A.4/A.6/A.7,B.6,D; 32-page PDF selected equations, main/ablation/robot tables, resources/protocol passages. Current/arrival separation, new-surface evidence, N1–N5 vs fixed N4 subset vs64M20 trials; no full proof/claim/version/experiment audit.",
+    "related_articles": [
+      "evolvingnav-2026",
+      "cartographer",
+      "retained-path-recovery",
+      "dodger-2026",
+      "predictive-spliner-2024",
+      "research-map"
+    ],
+    "review_status": "調査済み",
+    "boundary_note": "Same existing evolvingnav family; initial2026-09-30 classification retained, v4 revision after primary window tracked separately. Simulation61.32first-inspection/86.18search differs from M20 34.4/48.4 over64matched trials; no SLAM-accuracy or vehicle/pedestrian safety guarantee. Static/random worlds limit the advantage. Full experiment/code correspondence and independent reproduction unverified.",
+    "date_basis": "初稿2026-09-30を分類年に使用。publication_dateはこのv4改訂2026-10-12。主期間後の改訂追跡として旧v2と区別する。",
+    "origin_ledger": "news-primary-intake-20261002",
+    "independent_replication": false,
+    "original_scope": "EvolvingNav predicts target occupancy at inspection time from timestamped 3D histories, preserving known/unknown-location uncertainty and updating beliefs with visibility-aware RGB-D evidence.",
+    "evaluation_scope": "EvoWorld-Bench has 54 scenes and 803680 task instances. FindingDory and GOAT-Bench are additional benchmarks. Real-robot evaluations use LYNX M20, X30 and Lite3; the primary M20 comparison has 64 matched episodes.",
+    "primary_metadata_url": "https://arxiv.org/abs/2609.39166",
+    "latest_version": "v4",
+    "source_evidence": [
+      {
+        "url": "https://arxiv.org/html/2609.39166v4",
+        "section": "§§3–5;A.4/A.6/A.7;B.6;D",
+        "supports": "Belief, timing/evidence contracts; conditional simulation/robot/ablation results and limitations"
+      },
+      {
+        "url": "https://arxiv.org/pdf/2609.39166v4",
+        "section": "selected equations/Tables1–4 and implementation/robot passages",
+        "supports": "PDF cross-check, not full32-page claim audit"
+      },
+      {
+        "url": "https://github.com/ZJU4EmbodiedAI/EvolvingNav/tree/2ed45c66bbd7f2885941240556116c9dba47716a",
+        "section": "twelve selected files",
+        "supports": "Static interface/code verification, no execution/reproduction"
+      }
+    ],
+    "code_url": "https://github.com/ZJU4EmbodiedAI/EvolvingNav",
+    "code_status": "Official repository verified at fixed commit 2ed45c66bbd7f2885941240556116c9dba47716a; twelve selected README/memory/filter/coverage/calibration/agent/controller/perception/transition files read statically. Experiment correspondence not verified.",
+    "code_license": null,
+    "code_commit_if_verified": "2ed45c66bbd7f2885941240556116c9dba47716a",
+    "article_status": "prepublication_checked",
+    "publication_gate": "シミュレーションの探索成功率と実機64episodeの成績を分け、SLAM幾何精度改善とは言わない",
+    "full_text_url": "https://arxiv.org/pdf/2609.39166v4"
+  },
+  {
+    "source_id": "EVOLVINGNAV-CODE",
+    "study_family_id": "evolvingnav",
+    "title": "EvolvingNav — official belief filter, memory and embodied agent source",
+    "authors_or_organization": "ZJU4EmbodiedAI / EvolvingNav authors",
+    "year": null,
+    "classification_year": null,
+    "publication_date": "",
+    "updated": "commit 2ed45c66bbd7f2885941240556116c9dba47716a (2026-10-10T03:34:44Z)",
+    "url": "https://github.com/ZJU4EmbodiedAI/EvolvingNav/tree/2ed45c66bbd7f2885941240556116c9dba47716a",
+    "doi": "",
+    "source_type": "code",
+    "original_source_type": "code",
+    "domain": "navigation",
+    "era": "undated",
+    "checked_date": "2026-10-15",
+    "checked_scope": "Twelve selected README, agent, memory, filter, coverage, calibration, controller, perception, policy and transition files read. Current-time/arrival separation, evidence IDs and coverage rounds, past-only retrieval, utility-gated VLM choice. No code executed or full runner/data/experiment audit.",
+    "related_articles": [
+      "evolvingnav-2026",
+      "cartographer",
+      "retained-path-recovery",
+      "dodger-2026",
+      "predictive-spliner-2024",
+      "research-map"
+    ],
+    "review_status": "調査済み",
+    "boundary_note": "First public release date unverified; commit date is version evidence only. Same existing family; excluded from era counts. Source-only release requires external data/checkpoints; no experiment correspondence inferred.",
+    "date_basis": "初公表年未確認。固定commit日時を初公表日へ代用せず、undatedとして年代集計から除外する。",
+    "origin_ledger": "source-ledger.json",
+    "independent_replication": false,
+    "code_commit_if_verified": "2ed45c66bbd7f2885941240556116c9dba47716a",
+    "article_status": "prepublication_checked"
   }
 ]
