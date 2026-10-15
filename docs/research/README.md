@@ -257,3 +257,7 @@ Predictive Splinerの相手予測からnavigationの意味記憶へ比較軸を�
 ### EvolvingNav記事の公開前検査
 
 正式生成と一致、41ページ2053リンク/asset・62固定根拠、サイト回帰29件を確認。公式Edgeは5幅・全41ページPC/mobile・既存操作/JS無効で成功。対象6記事を4幅、図1・3表・式・横スクロール・相互リンクで確認しPC/mobile画像を目視確認。外部一次13 URLはHTTP200、arXiv節アンカー一致。研究地図144セルをJSON照合し、従来navigation2026の表示9対台帳10を補正してv4追加後11資料へ更新。台帳97/66、年代83/undated14、JSON/CSVと他94資料/19ニュースintent、記事範囲外5527ファイルを保全。記録はevolvingnav-validation-20261015.json。全体pytest・著者コード追試・導入・学習・走行は未実施。
+
+### EvolvingNav記事の公開確認
+
+記事commit `fe68047010dadcebad254909d0367f7083657095` をHervarar正式Windows checkoutから既存認証で通常push。[CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/38673481283)のbuild/deployはsuccess。全41ページと3資産はHTTP200・正式生成物と完全一致。[新記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/evolvingnav-2026.html)と関連5本を実配信320/390/768/1440pxで確認し、図1・3表・式・横スクロール・相互リンク・JS無効は問題なし。公開記録はevolvingnav-publication-20261015.json。対象3資料/intent/queue/batchの公開状態を更新。ニュース20件は公開6・追加精読13・LOOP保留1、他94資料/19intent/他batchを保全。全版/実験対応・コード実行・独立再現・導入は未実施。学習/制御/設定変更・学習/走行、SSH/WSL/他host/クラウドpush、API/Web書込み、別認証・remote変更は行っていません。
