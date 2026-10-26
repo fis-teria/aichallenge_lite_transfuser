@@ -1,6 +1,6 @@
 {
-  "checked_date": "2026-10-15",
-  "status": "ニュース6記事は対象CI・実配信確認済み。残13件は追加精読、LOOP1件は一次資料内の不整合により保留。文献確認と記事公開を別管理。",
+  "checked_date": "2026-10-26",
+  "status": "ニュース7記事は対象CI・実配信確認済み。残12件は追加精読、LOOP1件は一次資料不整合で保留。MILEは別の既存系列記事として独立再執筆。",
   "existing_queue_policy": "Append or reconcile with the current canonical queue; do not overwrite prior user-priority corrections or treat these proposal priorities as a replacement for them.",
   "batches": [
     {
@@ -166,7 +166,7 @@
     },
     {
       "batch_id": "safety-benchmark-next",
-      "state": "次候補・公開物確認待ち",
+      "state": "公開済み：NavSafe独立再執筆版、対象CI/実配信を確認",
       "sources": [
         "2609.26618"
       ],
@@ -174,7 +174,11 @@
         {
           "candidate_slug": "navsafe-infinity-2026",
           "angle": "open-loop報酬とclosed-loop安全の乖離を事象別に測る",
-          "gate": "280scenarios/28categoriesの論文条件、policy比較、コード公開状態を精読。実車保証とはしない"
+          "gate": "280scenarios/28categoriesの論文条件、policy比較、コード公開状態を精読。実車保証とはしない",
+          "slug": "navsafe-infinity-2026",
+          "article_status": "published",
+          "publication_commit": "0e22feb4d1d5db2e46bb9e98b3d4da6410529fb0",
+          "publication_url": "https://fis-teria.github.io/aichallenge_lite_transfuser/articles/navsafe-infinity-2026.html"
         }
       ]
     },

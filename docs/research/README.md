@@ -271,3 +271,7 @@ Predictive Splinerの相手予測からnavigationの意味記憶へ比較軸を�
 ### NavSafe/MILE独立再執筆の公開前検査
 
 正式生成・一致、43ページ2181リンク/asset・65固定根拠、サイト回帰29件を確認。公式Edge5幅・全43ページPC/mobile、対象7記事×4幅・図2/表6/数式/横スクロール/相互リンク/JS無効は成功、PC/mobile画像を目視確認。外部一次17URLはHTTP200、節アンカー一致。台帳100資料66系列/年代84/undated16、144セルの表示とJSON/CSVを照合。他95既存資料/19ニュースintent、記事範囲外5531ファイルを保全。旧稿を受け取ったものとして扱わず、公式資料から現地で新規著述した2記事だけの検査。保留6記事とFormulaZero追補は変更していません。記録はindependent-rewrite-validation-20261026.json。
+
+### NavSafe/MILE独立再執筆の公開確認
+
+記事commit `0e22feb4d1d5db2e46bb9e98b3d4da6410529fb0` をHervarar正式Windows checkoutから既存認証で通常push。[対象CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/40251970164)のbuild/deployはsuccess。全43ページ+3資産はHTTP200/正式生成物完全一致。[NavSafe](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/navsafe-infinity-2026.html)・[MILE](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/mile-2022.html)と関連5本を実配信4幅で検査し、図2/表6/数式/横スクロール/相互リンク/JS無効は成功。記録はindependent-rewrite-publication-20261026.json。両記事は公式一次資料から現地で新規に著述した独立再執筆版で、旧稿の回収/コピー/推測再現ではありません。台帳100資料66系列、年代84/undated16。ニュースは公開7/追加精読12/LOOP保留1、他95資料/19intent/他batchを保全。保留6記事とFormulaZero追補は変更なし。全版/実験対応・著者コード実行・独立再現・導入・全pytest・学習/走行は未実施。remote/認証・学習/制御/ROS/設定・デザイン変更、SSH/WSL/他host/クラウドpush、API/Web書込みは行っていません。
