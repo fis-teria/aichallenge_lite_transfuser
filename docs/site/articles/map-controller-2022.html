@@ -95,6 +95,8 @@
 
 <p><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/a8b9fa7434aa47a69d1886a18ad54ee33ab2878d/src/aic_transfuser_lite/control/waypoint_controller.py" data-source="src/aic_transfuser_lite/control/waypoint_controller.py">現行の幾何baseline</a>と<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/a8b9fa7434aa47a69d1886a18ad54ee33ab2878d/src/aic_transfuser_lite/control/vehicle_motion_v1.py" data-source="src/aic_transfuser_lite/control/vehicle_motion_v1.py">現行の車両応答変換</a>を静的確認しました。後者は静的wheelbase、速度依存応答長、actuator gainを区別します。固定値の存在をタイヤ摩擦の実測結果や高速域検証の代用にしません。公開repoの同梱simulatorも線形タイヤモデルの比較用で、論文実機の非線形タイヤ実験が自動的に再現されるわけではありません。</p>
 <h3>確認範囲と関連資料</h3><p><a href="https://arxiv.org/abs/2209.04346">書誌・版履歴</a>、v2/v4の選択機構・評価・PDF単位、公式README、controller・lookup・生成scriptを確認。全版の同一性、全同定・実験データ、recipe対応・独立再現は未確認です。<a href="forzaeth-race-stack-2024.html">ForzaETH Race Stack</a>、<a href="on-track-sysid-2024.html">On-Track SysID</a>、<a href="racing-overview-2018-2026.html">レーシング概説</a>、<a href="research-map.html">研究地図</a>。</p>
+
+<h3>操舵への変換と、速度の余裕を分ける</h3><p>2026-10-26追記。<a href="stability-adaptive-vp-2026.html">Adaptive Velocity Planning</a>は位置ごとの安定性指標を速度profileへ戻す研究です。MAPの操舵LUTを更新する処理とは異なり、併用する場合も速度と操舵の整合・遅延・停止を別途検証します。独立追試・現行車両への導入は未実施です。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-26">2026-10-26</time></div>
@@ -115,6 +117,11 @@
 <time datetime="2026-10-26">2026-10-26</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
 <p>4領域・144区分の確認範囲と未調査を整理。106資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
-<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/stability-adaptive-vp-2026.html">Adaptive Velocity Planning：曲がれる余裕を、場所ごとの速度へ戻す</a></h3>
+<p>安定性から学ぶscaling factorと連続map、速度計画、実車・simulation・競技の比較条件を整理。</p><div class="card-bottom"><span>原著v1/v2確認・著者実装未照合／未導入</span>
+<a class="article-read" href="../articles/stability-adaptive-vp-2026.html" aria-label="Adaptive Velocity Planning：曲がれる余裕を、場所ごとの速度へ戻すを読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

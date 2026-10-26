@@ -74,3 +74,5 @@
 <p>関連記事：<a href="racing-overview-2018-2026.html">レーシング概観</a>、<a href="forzaeth-race-stack-2024.html">ForzaETH全スタックとMAP</a>、<a href="bayesrace-2020.html">BayesRaceの残差学習</a>、<a href="mppi-generic-2024.html">MPPI-Genericの計時範囲</a>、<a href="research-map.html">研究地図と調査範囲</a>。</p>
 
 <h3>同定したモデルをLUTへ渡す接点</h3><p>2026-10-26独立再執筆に伴う追記。<a href="map-controller-2022.html">MAP</a>では定常旋回から同定したモデルでlookup tableを作ります。On-Track SysIDの走行残差を使う更新とはデータと更新手順が異なり、現行の速度応答補償が同定済みタイヤモデルになるわけではありません。著者コード実行・独立追試・現行車両への導入は未実施です。</p>
+
+<h3>同定する物理モデルと、制御誤差を含む余裕</h3><p>2026-10-26追記。<a href="stability-adaptive-vp-2026.html">Adaptive Velocity Planning</a>では滑り・追従誤差も含むscaling factorを周回で更新します。On-Track SysIDの物理モデル同定値や、タイヤ摩擦係数そのものとは区別が必要です。独立追試・現行車両への導入は未実施です。</p>

@@ -610,6 +610,8 @@
 <h3>Smooth Model Predictive Path Integral Control without Smoothing — official selected implementation（公表年未確認）</h3><p>同系列smooth-mppi、固定版dcc6f4285069dbf8add0a111c8b936d0ef1830e6の選択処理を静的確認。初公表年を未確認のまま保ち年代集計から除外。全実験対応・実行・独立再現は未確認。</p><p><a href="https://github.com/tkkim-robot/smooth-mppi-pytorch/tree/dcc6f4285069dbf8add0a111c8b936d0ef1830e6">公式固定code</a>、<a href="smooth-mppi-2021.html">個別記事</a>。</p>
 <h3>CoVO-MPC: Theoretical analysis of sampling-based MPC and optimal covariance design — official selected implementation（公表年未確認）</h3><p>同系列covo-mpc、固定版176fb64f7277dea29471f800ab592f1b38d2f869の選択処理を静的確認。初公表年を未確認のまま保ち年代集計から除外。全実験対応・実行・独立再現は未確認。</p><p><a href="https://github.com/LeCAR-Lab/CoVO-MPC/tree/176fb64f7277dea29471f800ab592f1b38d2f869">公式固定code</a>、<a href="covo-mpc-2024.html">個別記事</a>。</p>
 <h3>Model- and Acceleration-based Pursuit Controller for High-Performance Autonomous Racing — official selected implementation（公表年未確認）</h3><p>同系列map-controller、固定版5cce3319a063e7a70c25de5d1bad3b9b8d278ee6の選択処理を静的確認。初公表年を未確認のまま保ち年代集計から除外。全実験対応・実行・独立再現は未確認。</p><p><a href="https://github.com/ETH-PBL/MAP-Controller/tree/5cce3319a063e7a70c25de5d1bad3b9b8d278ee6">公式固定code</a>、<a href="map-controller-2022.html">個別記事</a>。</p>
+
+<h3>安定性に応じた速度計画の個別確認</h3><p>2026-10-26追記。登録済みR11を入口に、<a href="stability-adaptive-vp-2026.html">Adaptive Velocity Planning</a>のv1/v2の機構・評価条件を追加確認しました。35%の初周比較と8%のbaseline平均比較、実車とsimulation、14 m/s上限と制動時の問題を区別します。研究地図の件数は登録台帳JSONに基づく106資料・66系列のままです。追加参照版・公開実装の未確認範囲は個別記事に明記しています。独立追試・現行車両への導入は未実施です。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
 <time datetime="2026-10-26">2026-10-26</time></div>
@@ -750,6 +752,11 @@
 <time datetime="2026-10-26">2026-10-26</time></div>
 <h3><a href="../articles/map-controller-2022.html">MAP：必要な横加速度を、タイヤモデルから操舵へ変える</a></h3>
 <p>L1 guidanceとタイヤLUT、F1TENTHの評価条件、現行の速度補償との違いを整理。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
-<a class="article-read" href="../articles/map-controller-2022.html" aria-label="MAP：必要な横加速度を、タイヤモデルから操舵へ変えるを読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/map-controller-2022.html" aria-label="MAP：必要な横加速度を、タイヤモデルから操舵へ変えるを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/stability-adaptive-vp-2026.html">Adaptive Velocity Planning：曲がれる余裕を、場所ごとの速度へ戻す</a></h3>
+<p>安定性から学ぶscaling factorと連続map、速度計画、実車・simulation・競技の比較条件を整理。</p><div class="card-bottom"><span>原著v1/v2確認・著者実装未照合／未導入</span>
+<a class="article-read" href="../articles/stability-adaptive-vp-2026.html" aria-label="Adaptive Velocity Planning：曲がれる余裕を、場所ごとの速度へ戻すを読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

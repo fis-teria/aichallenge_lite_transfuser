@@ -1,0 +1,37 @@
+<div class="paper-top"><span class="tag">論文詳解・レーシングの速度計画</span><span class="paper-year">2026</span></div>
+<h2>Adaptive Velocity Planning：曲がれる余裕を、場所ごとの速度へ戻す</h2>
+<p class="authors">Tamara Bergerhoff、Sebastian Baader、Pascal Meißner、Frank Deinzer</p>
+<p class="paper-summary">車両の応答が変わると、同じ経路でも走れる速度は変わります。この研究はタイヤと路面の物理的な摩擦係数を直接求める代わりに、追従誤差や滑りから実効的な余裕を学び、位置に沿って連続した速度計画へ戻します。経路追従、車両同定、周回ごとの適応を分けて読みます。</p>
+<p>確認日：2026-10-26。対象は<a href="https://arxiv.org/pdf/2606.10733v1">Pushing the Performance Limits in Autonomous Racing: Continuous Stability-Aware Adaptive Velocity Planning in Formula Student Driverless、v1（2026-06-09）</a>と<a href="https://arxiv.org/pdf/2606.10733v2">v2（2026-07-31）</a>の§III–V・関連図表です。v1の登録を保全し、本文はv2のPDFを基準に追加確認しました。<a href="https://arxiv.org/abs/2606.10733">arXiv書誌</a>はIEEE IV 2026への採択を記し、v2 PDFにはDOI <code>10.1109/IV66570.2026.11623966</code>があります。全版・式の物理的妥当性・実験recipeの完全監査、独立追試、現行車両への導入・学習・走行は未実施です。</p>
+
+<h3>1. 摩擦係数ではなく、制御誤差も含む余裕を扱う</h3>
+<p>MAPは主に必要な横加速度を操舵へ変換し、On-Track SysIDは運動モデルのずれを同定します。この論文の出力は経路に沿う速度profileです。自車速度、コース内の位置、前方およそ15 mの曲率を使い、そこで許容できる加減速と旋回の組合せを更新します。画像から経路を予測するE2E方策の代替ではありません。</p>
+<p>各場所のscaling factor θにはタイヤ・路面だけでなく、車両挙動やcontrollerの追従誤差も入ります。原著はfront/rear slip angle、longitudinal slip、経路・状態の誤差などを安定性指標の候補として挙げます。そのためθを、そのまま物理的な摩擦係数の測定値と呼ぶことはできません。指標の定義・正規化・閾値も適応する系の一部です。</p>
+<figure class="tech-figure"><figcaption>図1　走行で得た余裕を次の速度計画へ戻す（本記事の概念図）</figcaption><ol class="tech-flow four">
+<li><strong>安定性を評価</strong><p>滑りや追従誤差を正規化し、場所ごとの余裕を更新する</p></li>
+<li><strong>連続mapへ補間</strong><p>周回データをSGPRで表し、新版の計算中は旧mapを使う</p></li>
+<li><strong>加速度限界を作る</strong><p>旋回と加減速が使う余裕をGG-diagramへ反映する</p></li>
+<li><strong>速度を前後へ計算</strong><p>曲率の上限と、その手前から減速できる条件を合わせる</p></li>
+</ol><p>mapを継続して参照できる設計であっても、急な路面変化や停止までの安全を保証するものではありません。</p></figure>
+
+<h3>2. 周回の更新と、毎回の速度計画は時刻が違う</h3>
+<div class="table-wrap" role="region" aria-label="表1　原著§IIIの役割を簡略化" tabindex="0"><table class="tech-table"><caption>表1　原著§IIIの役割を簡略化</caption><thead><tr><th scope="col">関係・処理</th><th scope="col">意味と留保</th></tr></thead><tbody><tr><td><code>εℓ(d) = 1 − maxⱼ gⱼ(θ̃ℓ₋₁(d))</code></td><td>ℓは周回、dはコース位置。正規化した指標の最大値が1へ近づくようPIDでscaling factorを更新する。</td></tr><tr><td><code>θ̃ℓ₋₁(d) = SGPR(d, 前周の観測, inducing points)</code></td><td>離散観測を連続位置へ補間する。新mapは周回完了後に非同期で作り、完成するまで前周版を使う。</td></tr><tr><td><code>aᵧ(d) = v(d)² κ(d)</code></td><td>旋回に使う横加速度と、残る加減速の余裕を合わせてforward/backward計算を行う。原著式4–7の全式を実装用に再掲したものではない。</td></tr></tbody></table></div>
+
+<p>局所的に余裕が不足したとき、コース全体や区間全体を同じ率で遅くする方式より細かく調整できるのが狙いです。ただし過去の周回に基づくmapには時間差があります。新しい水たまり、タイヤ温度の変化、観測欠損を、滑らかな補間だけで解決できるとは限りません。SGPRを使うことだけで、将来の制約充足確率や信頼区間付きの安全保証が得られるわけでもありません。</p>
+<p>GG-diagramは、横方向へ力を使うと加速・制動に残る力が減る関係を表します。forward passで加速できる速度を伝え、backward passで先の曲がりまでに減速できるかを考慮します。scaling factorを増やす処理だけを切り出し、経路・制動・遅延の条件を省いて速度を上げる使い方は、この論文の構成とは異なります。</p>
+
+<h3>3. 35%と8%は、異なる比較から出た数字</h3>
+<div class="table-wrap" role="region" aria-label="表2　原著§IVの条件付き結果" tabindex="0"><table class="tech-table"><caption>表2　原著§IVの条件付き結果</caption><thead><tr><th scope="col">比較</th><th scope="col">原著報告</th><th scope="col">読む際の境界</th></tr></thead><tbody><tr><td>MF17実車、adaptiveの初周→10周目</td><td>37.15 s → 24.32 s、約35%短縮</td><td>初周は静止発進を含む。短縮全量を学習の効果へ割り当てない。</td></tr><tr><td>実車10周平均、non-adaptive→adaptive</td><td>29.30 s → 26.90 s、約8%短縮</td><td>保守的な固定scaling factorのbaselineとの比較。同じ35%の比較ではない。</td></tr><tr><td>FSATA競技の別条件</td><td>最高速度を14 m/sに制限。最終周に制動時の車輪ロックを報告</td><td>他teamとは車両・構成が異なる。競技順位を速度計画だけの因果的な優位性に置換しない。</td></tr></tbody></table></div>
+
+<p>コース全体・区間単位・連続位置の3方式の比較はsimulationです。実車の固定baseline比較とは分けます。人間driverとの比較も、初めて乗る車両・初見のtrack、異なる周回の速度profile、driverless側のcenter-line走行という条件を持ちます。人一般を上回る、安全が証明された、という結果ではありません。</p>
+<p>原著は初周から全余裕を使えないことを制限として挙げます。競技での車輪ロックの記述も残しています。車両仕様上の最高速度を実験で達成した速度として転載せず、反復回数・ばらつき・故障率が十分に示されていない箇所には新しい数値を補いません。</p>
+
+<h3>4. 現行の曲率previewと、周回で学ぶmapを分ける</h3>
+<div class="table-wrap" role="region" aria-label="表3　現行方式への導入候補と未確認点" tabindex="0"><table class="tech-table"><caption>表3　現行方式への導入候補と未確認点</caption><thead><tr><th scope="col">観点</th><th scope="col">確認できた違い</th><th scope="col">必要な作業</th></tr></thead><tbody><tr><td>速度上限</td><td>現行は曲率・残距離・遅延・固定の加速度設定から上限を作る。</td><td>場所ごとの指標とθ、周回対応、mapの初期値・鮮度・更新失敗時の扱いを別に設計する。</td></tr><tr><td>モデルとデータ</td><td>速度依存応答長は存在するが、同定済みタイヤ摩擦mapではない。</td><td>路面・速度域・旋回・制動を分けたデータ、正規化と閾値、位置ずれへの感度を調べる。</td></tr><tr><td>学習と計算</td><td>制御側の適応が候補。E2E認識モデルの再学習は必須とは限らない。</td><td>SGPR/PIDの学習・更新予算、非同期map切替、観測から指令適用までの遅延と期限超過を測る。</td></tr></tbody></table></div>
+
+<p><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/540966254e534d93414f76934418e8528f71a6a3/src/aic_transfuser_lite/control/curvature_speed_v1.py" data-source="src/aic_transfuser_lite/control/curvature_speed_v1.py">現行curvature_speed_v1.py（確認基準commit）</a>は、既存の時刻付き経路を変更せずに速度上限を求めます。<code>CurvatureSpeedConfig</code>のdefaultには横加速度1.0 m/s²、計画減速度0.7 m/s²、応答遅延0.5 sがあり、これらは設定値です。路面を実測した結果や、今回の走行で有効だった設定という意味ではありません。<a href="speed-trial-20260919.html">既存の速度試験</a>の条件・制限は元の記事のまま参照してください。</p>
+<p><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/540966254e534d93414f76934418e8528f71a6a3/src/aic_transfuser_lite/control/vehicle_motion_v1.py" data-source="src/aic_transfuser_lite/control/vehicle_motion_v1.py">現行の車両応答変換</a>は低速域での限定モデルと速度域を区別し、<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/540966254e534d93414f76934418e8528f71a6a3/src/aic_transfuser_lite/models/time_path_v1.py" data-source="src/aic_transfuser_lite/models/time_path_v1.py">TimePathV1</a>は0.1秒間隔30点のXYを予測します。これらの存在から、周回位置ごとのSGPR map、安定性指標からのPID更新、学習したGG-diagramの実装までは確認できません。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/540966254e534d93414f76934418e8528f71a6a3/src/aic_transfuser_lite/control/safety_supervisor.py" data-source="src/aic_transfuser_lite/control/safety_supervisor.py">Safety Supervisor</a>も別に保ち、mapの更新完了を待つ間の急な危険には独立した停止・故障処理が必要です。</p>
+
+<h3>公開実装・計算条件と確認範囲</h3>
+<p>原著v1/v2・arXiv書誌のリンクでは、本手法の公開著者実装URLを確認できませんでした。これは実装が存在しないという証明ではありません。著者コードのcommit、指標の具体設定、SGPR/PIDの全hyperparameter、実験dataとrecipeの対応は未確認です。原著がreal-timeと呼ぶことを、対象PCでの制御周期や期限の保証へ変えず、未確認のCPU/GPU・計算時間を推測しません。</p>
+<p>本記事は原著の機構・評価条件と現行コードの静的な境界を整理したものです。v1/v2の全文・式・実験実装の同一性は監査していません。主対象期間は2018-10-02〜2026-10-02で、今回の2版はいずれもその範囲内です。<a href="racing-overview-2018-2026.html">レーシング概説</a>、<a href="map-controller-2022.html">MAP</a>、<a href="on-track-sysid-2024.html">On-Track SysID</a>、<a href="mpc-mppi-overview.html">MPC / MPPI概説</a>、<a href="research-map.html">研究地図</a>。</p>
