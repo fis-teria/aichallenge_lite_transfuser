@@ -303,25 +303,35 @@
     "authors_or_organization": "Anthony Hu; Gianluca Corrado; Nicolas Griffiths; Zak Murez; Corina Gurau; Hudson Yeo; Alex Kendall; Roberto Cipolla; Jamie Shotton / Wayve and Cambridge",
     "year": 2022,
     "classification_year": 2022,
-    "publication_date": "",
-    "updated": "2022-11-03",
+    "publication_date": "2022-10-14",
+    "updated": "2022-11-03 v2",
     "url": "https://arxiv.org/html/2210.07729v2",
     "doi": "",
     "source_type": "preprint",
     "original_source_type": "paper-full-text",
     "domain": "e2e",
     "era": "2021-2022",
-    "checked_date": "2026-10-02",
-    "checked_scope": "introduction and model scope: offline IL, latent dynamics, action conditioning, recurrent inference; numerical results not reused",
+    "checked_date": "2026-10-26",
+    "checked_scope": "Independent local re-authoring from arXiv v2 §§3–6, selected ELBO/input/latent dynamics/training and Tables1/3; official fixed README,model,transition,agent,evaluation config read. No full appendices/proof/experiment-weight audit or reproduction.",
     "related_articles": [
       "e2e-field-overview",
-      "transfuser-cvpr2021"
+      "transfuser-cvpr2021",
+      "mile-2022",
+      "navsafe-infinity-2026",
+      "five-vla-2026",
+      "world-on-rails-2021",
+      "mpc-mppi-overview",
+      "research-map"
     ],
     "review_status": "調査済み",
-    "boundary_note": "",
+    "boundary_note": "RGB/route/speed inference and privileged BEV/expert training labels differ. CARLA Town05/10routes/4unseenweathers/3runs only. DS is not success rate; MILE infraction column is below LAV despite higherDS. Recurrent43Hz and30%imagination claims conditional. Fixed-code active_inferenceFalse and predict_action branches kept distinct.",
     "date_basis": "領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2022-10。確認した版と初稿は区別する。",
     "origin_ledger": "source-ledger.json",
-    "independent_replication": false
+    "independent_replication": false,
+    "code_url": "https://github.com/wayveai/mile",
+    "code_status": "Official fixed commit c8b245c7e83ae487d1263758436fd76b80b0cf54 selected source read statically. No author code executed, weights/data downloaded or CARLA reproduction. Independent rewrite, not recovered prior manuscript.",
+    "code_commit_if_verified": "c8b245c7e83ae487d1263758436fd76b80b0cf54",
+    "article_status": "prepublication_checked"
   },
   {
     "source_id": "E2E-UNIAD",
@@ -1884,7 +1894,10 @@
     "checked_scope": "Abstract, benchmark/protocol, result tables, toolbox and appendix-availability statements.",
     "related_articles": [
       "e2e-field-overview",
-      "research-map"
+      "research-map",
+      "navsafe-infinity-2026",
+      "mile-2022",
+      "five-vla-2026"
     ],
     "review_status": "調査済み",
     "boundary_note": "Simulation benchmark, not on-road safety certification or deployed driving system.; Several full event rules, leaderboard details, and diagnostic protocols are promised for a future appendix in the current text.",
@@ -1904,7 +1917,7 @@
     "code_status": "Abstract says benchmark/toolbox will be open-sourced; no author release URL found in checked paper.",
     "code_license": null,
     "code_commit_if_verified": null,
-    "article_status": "awaiting_fuller_review",
+    "article_status": "prepublication_checked",
     "publication_gate": "280scenarios/28categoriesの論文条件、policy比較、コード公開状態を精読。実車保証とはしない"
   },
   {
@@ -3166,5 +3179,126 @@
     "independent_replication": false,
     "code_commit_if_verified": "2ed45c66bbd7f2885941240556116c9dba47716a",
     "article_status": "published"
+  },
+  {
+    "source_id": "NEWS-ARXIV-2609.26618-v2",
+    "study_family_id": "navsafe-infinity",
+    "title": "NavSafe-∞: Benchmarking Closed-Loop Driving Safety in Photorealistic Environments",
+    "authors_or_organization": "Yuxin Bao; Hongwei Ruan; Luobin Wang; Seth Z. Zhao; Ziyang Leng; Zihan Zhang; Yu Zeng; Rowan McAllister; Henrik Christensen; Bolei Zhou",
+    "year": 2026,
+    "classification_year": 2026,
+    "publication_date": "2026-10-04",
+    "updated": "2026-10-04 v2",
+    "url": "https://arxiv.org/html/2609.26618v2",
+    "doi": "10.48550/arXiv.2609.26618",
+    "source_type": "preprint",
+    "original_source_type": "author arXiv manuscript",
+    "domain": "e2e",
+    "era": "2026",
+    "checked_date": "2026-10-26",
+    "checked_scope": "Independent local re-authoring from v2 §§3.1–3.2/4.1–4.3/6,D.3,H and selected32-pagePDF protocol/leaderboard/runtime passages; official README,termination guide,termination.py and scoring metrics. No complete recipe/checkpoint/experiment audit or code execution.",
+    "related_articles": [
+      "e2e-field-overview",
+      "research-map",
+      "navsafe-infinity-2026",
+      "mile-2022",
+      "five-vla-2026"
+    ],
+    "review_status": "調査済み",
+    "boundary_note": "Same NavSafe family,initial2026-09-22 classification; post-primary-window v2 revision separately tracked.280scenarios/28types/3seeds are simulation evidence,not realcrashrisk. Runtime is DrivoR/NuRec2x3090 path. Fixedcodecompleted includes GOAL_REACHED and HOLD_SATISFIED despite outdated narrower guide wording. Exclusions,timebudget,denominator and recipe correspondence unverified.",
+    "date_basis": "分類年は初稿2026-09-22。publication_dateは確認版v2の改訂2026-10-04。旧v1を保全した主期間後の改訂追跡。",
+    "origin_ledger": "news-primary-intake-20261002",
+    "independent_replication": false,
+    "original_scope": "Photorealistic, event-centered closed-loop driving simulation benchmark: 280 scenarios, 28 event types, four safety categories, 20 evaluated E2E policies. Interactive reconstructions from real driving logs support policy diagnosis.",
+    "evaluation_scope": "280 simulated bounded traffic events across 28 types; 20 E2E policies.",
+    "primary_metadata_url": "https://arxiv.org/abs/2609.26618",
+    "latest_version": "v2",
+    "source_evidence": [
+      {
+        "url": "https://arxiv.org/html/2609.26618v2",
+        "section": "§§3–6,D.3,H",
+        "supports": "event contracts,metrics,conditional policy comparisons and resources"
+      },
+      {
+        "url": "https://arxiv.org/pdf/2609.26618v2",
+        "section": "selected protocol/table/runtime passages",
+        "supports": "32page PDF selected cross-check only"
+      },
+      {
+        "url": "https://github.com/VAIL-UCLA/NavSafe-infty/tree/bd68458df1e2cc8e0f0dfcf62c06b71a86ae229c",
+        "section": "README,termination guide/implementation,scoring metrics",
+        "supports": "both goal/hold completion; experiment settings not reproduced"
+      }
+    ],
+    "code_url": "https://github.com/VAIL-UCLA/NavSafe-infty",
+    "code_status": "Official project links public repository; fixed bd68458df1e2cc8e0f0dfcf62c06b71a86ae229c selected evaluation files read. HOLD_SATISFIED completion verified; no code execution or experiment reproduction.",
+    "code_license": null,
+    "code_commit_if_verified": "bd68458df1e2cc8e0f0dfcf62c06b71a86ae229c",
+    "article_status": "prepublication_checked",
+    "publication_gate": "280scenarios/28categoriesの論文条件、policy比較、コード公開状態を精読。実車保証とはしない",
+    "full_text_url": "https://arxiv.org/pdf/2609.26618v2"
+  },
+  {
+    "source_id": "NAVSAFE-CODE",
+    "study_family_id": "navsafe-infinity",
+    "title": "NavSafe-infty — official event termination and scoring implementation",
+    "authors_or_organization": "VAIL-UCLA/NavSafe-infty / paper authors",
+    "year": null,
+    "classification_year": null,
+    "publication_date": "",
+    "updated": "commit bd68458df1e2cc8e0f0dfcf62c06b71a86ae229c (2026-10-21T10:31:01Z)",
+    "url": "https://github.com/VAIL-UCLA/NavSafe-infty/tree/bd68458df1e2cc8e0f0dfcf62c06b71a86ae229c",
+    "doi": "",
+    "source_type": "code",
+    "original_source_type": "code",
+    "domain": "e2e",
+    "era": "undated",
+    "checked_date": "2026-10-26",
+    "checked_scope": "README,termination guide,termination.py,scoring/metrics.py selected branches. BothGOAL_REACHED/HOLD_SATISFIED completed,explicit denominator support,doc/code wording boundary. No run or full recipe audit.",
+    "related_articles": [
+      "navsafe-infinity-2026",
+      "mile-2022",
+      "e2e-field-overview",
+      "research-map"
+    ],
+    "review_status": "調査済み",
+    "boundary_note": "First public release date unverified;commitdate is version evidence only,excluded from era counts.Same existing study family.No independent reproduction.",
+    "date_basis": "初公表年未確認。固定commit日時を初公表日へ代用せず、undatedとして年代集計から除外。",
+    "origin_ledger": "source-ledger.json",
+    "independent_replication": false,
+    "code_commit_if_verified": "bd68458df1e2cc8e0f0dfcf62c06b71a86ae229c",
+    "article_status": "prepublication_checked"
+  },
+  {
+    "source_id": "MILE-CODE",
+    "study_family_id": "mile",
+    "title": "MILE — official latent dynamics, policy and deployment implementation",
+    "authors_or_organization": "wayveai/mile / paper authors",
+    "year": null,
+    "classification_year": null,
+    "publication_date": "",
+    "updated": "commit c8b245c7e83ae487d1263758436fd76b80b0cf54 (2023-04-13T15:00:57Z)",
+    "url": "https://github.com/wayveai/mile/tree/c8b245c7e83ae487d1263758436fd76b80b0cf54",
+    "doi": "",
+    "source_type": "code",
+    "original_source_type": "code",
+    "domain": "e2e",
+    "era": "undated",
+    "checked_date": "2026-10-26",
+    "checked_scope": "README,models/mile.py,models/transition.py,agents/mile/mile_agent.py,config/evaluate.yaml selected paths. State retention,action history,active_inferenceFalse,predict_action branches. No execution/checkpoints/CARLA reproduction.",
+    "related_articles": [
+      "mile-2022",
+      "navsafe-infinity-2026",
+      "e2e-field-overview",
+      "world-on-rails-2021",
+      "research-map"
+    ],
+    "review_status": "調査済み",
+    "boundary_note": "First public release date unverified;commitdate is version evidence only,excluded from era counts.Same existing study family.No independent reproduction.",
+    "date_basis": "初公表年未確認。固定commit日時を初公表日へ代用せず、undatedとして年代集計から除外。",
+    "origin_ledger": "source-ledger.json",
+    "independent_replication": false,
+    "code_commit_if_verified": "c8b245c7e83ae487d1263758436fd76b80b0cf54",
+    "article_status": "prepublication_checked"
   }
 ]

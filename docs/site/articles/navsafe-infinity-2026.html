@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="イベント成功・違反・分母と停止保持の実装を確認し、閉ループ評価と実車保証の境界を整理。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>NavSafe-∞：軌道の点数から、事象ごとの閉ループ評価へ — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html" aria-current="page"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../papers.html">論文ノート</a></div>
+<span class="section-number">論文ノート</span><h1>NavSafe-∞：軌道の点数から、事象ごとの閉ループ評価へ</h1>
+<p class="article-lead">イベント成功・違反・分母と停止保持の実装を確認し、閉ループ評価と実車保証の境界を整理。</p><div class="article-meta">
+<span>公開 <time datetime="2026-10-26">2026-10-26</time></span>
+<span>更新 <time datetime="2026-10-26">2026-10-26</time></span>
+<span class="tag">独立再執筆・原著/固定code静的確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文詳解・閉ループ評価</span><span class="paper-year">2026</span></div>
+<h2>NavSafe-∞：軌道の点数から、事象ごとの閉ループ評価へ</h2>
+<p class="authors">Yuxin Bao、Hongwei Ruan、Luobin Wang、Seth Z. Zhao、Ziyang Leng、Zihan Zhang、Yu Zeng、Rowan McAllister、Henrik Christensen、Bolei Zhou</p>
+<p class="paper-summary">ログ上で良い軌道を出すことと、自分の操作で変わった状況から安全に動き続けることは別の評価です。NavSafe-∞は運転方策を評価する基盤で、短い交通事象ごとに成功条件を決め、操作後の観測を返します。停止を守る成功、経路を進む成功、違反と計算資源を分けて読みます。</p>
+<p>確認日：2026-10-26、公式一次資料からの独立再執筆版。対象は<a href="https://arxiv.org/html/2609.26618v2">原著arXiv v2（2026-10-04）</a>の§3–6、関連Appendix D・Hと<a href="https://arxiv.org/pdf/2609.26618v2">32頁PDFの対応箇所</a>、<a href="https://github.com/VAIL-UCLA/NavSafe-infty/tree/bd68458df1e2cc8e0f0dfcf62c06b71a86ae229c">公式コード固定版bd68458（2026-10-21）</a>のREADME・成功判定文書・終了判定・指標処理です。<a href="https://arxiv.org/abs/2609.26618">初稿は2026-09-22</a>。文献と選択コードの静的確認であり、全recipe・checkpoint・論文実験設定の対応、著者コード実行、独立再現、車両への導入・走行は未実施です。</p>
+
+<h3>1. 一度の軌道採点と、操作が次の観測を変える評価</h3>
+<p>open-loopでは記録された状態と周囲の未来を使って、提案軌道を採点できます。closed-loopでは、その軌道を実行した自車の位置・速度から次の観測が作られます。小さなずれが次の入力を変え、学習時に少なかった状態へ移るため、単発の誤差や報酬だけでは分からない失敗が現れます。NavSafeは3D Gaussian Splattingで再構成した場面、編集可能な交通要素、方策adapterを組み合わせています。<a href="https://arxiv.org/html/2609.26618v2#S3">§3</a></p>
+<figure class="tech-figure"><figcaption>図1　事象を固定し、方策が作る状態変化を追跡する（本記事の概念図）</figcaption><ol class="tech-flow four">
+<li><strong>事象を定義</strong><p>初期場面、周囲の動き、成功・終了条件を固定する</p></li>
+<li><strong>現在から描画</strong><p>自車と周囲の状態に応じたカメラ画像を作る</p></li>
+<li><strong>方策を実行</strong><p>提案を適用して次の状態へ進める</p></li>
+<li><strong>履歴から採点</strong><p>達成・違反・終了理由を保存し、事象別に集計する</p></li>
+</ol><p>写実的に見えることと、接触・センサ・人の応答を実世界同等に再現することは、別に検証する必要があります。</p></figure>
+<p>原著は280 scenarios・28 event typesを、車両衝突（TC）、歩行者等の衝突（VRUC）、交通違反（TV）、交通上の突発事象（TI）の4分類で評価します。赤信号なら指定時間を守って停止し続けること、工事なら禁止された違反を起こさず指定の迂回を完了することなど、求める行動が事象で異なります。長い経路全体の平均だけでなく、どの能力が失敗したかを見せる狙いです。</p>
+
+<h3>2. 進捗の点数、成功率、速さの比率は異なる量</h3>
+<div class="table-wrap" role="region" aria-label="NavSafe評価指標の定義" tabindex="0"><table class="tech-table"><caption>式1　原著§3.2・Appendix D.3の集計を簡略化</caption><thead><tr><th scope="col">指標</th><th scope="col">意味と分母</th></tr></thead><tbody>
+<tr><td><code>DSᵢ = EPᵢ × Π penaltiesᵢ</code></td><td>事象の進捗に接触・違反等の罰則を掛ける。進捗があっても成功とは限らない。</td></tr>
+<tr><td><code>SRₛ = 100 × Σᵢ Sᵢ,ₛ / 280</code></td><td>各seedの280事象。事象の契約を時間内に達成し、最低速度違反を除く禁止違反がなければS=1。</td></tr>
+<tr><td><code>Ability(category) = mean SR(event type)</code></td><td>分類内のevent-type別SRを等重みで平均する。</td></tr>
+</tbody></table></div>
+<p>DEは背景車両との速度比で、速度制限の遵守率ではありません。原著は、自車がcheckpointへ到達しない場合や背景速度の中央値が1.5 m/s未満の場合を平均から除き、1000%超のcheckpoint比も除外します。Comfortは加速度・jerk・yaw等の閾値を満たす2秒窓の率です。静かに停止し続ければComfortが高くなる場合もあり、SRや進捗と併せて読む必要があります。</p>
+<div class="table-wrap" role="region" aria-label="同一ベンチマーク内の限定比較" tabindex="0"><table class="tech-table"><caption>表1　Table 2の一部。3 seedの平均±標本標準偏差、同じNavSafe設定内の比較</caption><thead><tr><th scope="col">方式・参照</th><th scope="col">DS</th><th scope="col">SR %</th><th scope="col">位置付け</th></tr></thead><tbody>
+<tr><td>LTF</td><td>53.04 ± 1.92</td><td>27.74 ± 1.76</td><td>学習方策</td></tr>
+<tr><td>DrivoR</td><td>64.74 ± 1.60</td><td>50.71 ± 0.71</td><td>学習方策</td></tr>
+<tr><td>GTRS-Dense–V2-99 (SimScale)</td><td>73.54 ± 0.84</td><td>61.79 ± 1.56</td><td>摂動データを加えた方策</td></tr>
+<tr><td>PDM-Closed</td><td>90.17 ± 1.00</td><td>81.31 ± 1.03</td><td>privileged reference。入力条件を分けて扱う</td></tr>
+</tbody></table></div>
+<p>これは論文内のcheckpoint・adapter・事象集合の結果です。実車の事故確率や、異なるデータセットの世界共通順位にはできません。原著では全分類で同じ学習方策が首位になるわけでもありません。失敗例では、危険を検出しても制動が遅れる、候補中に安全な軌道があってもscorerが選ばない、将来表現から対向車が落ちる、停止という推論と実際の軌道が一致しない、といった破綻を分けています。これらは選択した診断例で、各原因の一般的な発生頻度まで示すものではありません。<a href="https://arxiv.org/html/2609.26618v2#S4">§4</a></p>
+<p>摂動データによる改善は、方策自身が訪れる状態をそのデータが覆えるかに依存します。またログの固定未来に対するRL fine-tuningでは、進捗を増やす代わりに安全余裕を削る報酬の攻略が起こり得ます。原著の方式によって改善・悪化が分かれるため、「RLなら安全」「摂動なら失敗しない」と一般化しません。</p>
+
+<h3>3. 停止成功を、経路終点への到達だけで判断しない</h3>
+<p>固定版の<a href="https://github.com/VAIL-UCLA/NavSafe-infty/blob/bd68458df1e2cc8e0f0dfcf62c06b71a86ae229c/navsafe/benchmark/termination.py">termination.py</a>では、結果へ渡す<code>completed</code>は<code>GOAL_REACHED</code>と<code>HOLD_SATISFIED</code>の両方を含みます。したがって、指定条件を満たして停止し続けた成功が、実装では必ず失敗になるという説明は誤りです。</p>
+<p>一方、同じ版の<a href="https://github.com/VAIL-UCLA/NavSafe-infty/blob/bd68458df1e2cc8e0f0dfcf62c06b71a86ae229c/docs/navsafe_termination_and_success.md">説明文書§2.1</a>にはcompletedをGOAL_REACHEDだけで説明する箇所があります。文書の短い要約、終了理由、<a href="https://github.com/VAIL-UCLA/NavSafe-infty/blob/bd68458df1e2cc8e0f0dfcf62c06b71a86ae229c/navsafe/benchmark/scoring/metrics.py">成功率・指標の処理</a>を併せて確認する必要があります。文書にはインフラ失敗の除外や時間予算の経路についても記載があり、論文の固定280分母と任意の実行結果の分母を自動的に同一視しません。今回は各recipe・時間予算・除外記録まで走らせて照合していません。</p>
+
+<h3>4. 描画と方策を含む計算時間を、制御周期へ読み替えない</h3>
+<div class="table-wrap" role="region" aria-label="NavSafe実行資源の限定測定" tabindex="0"><table class="tech-table"><caption>表2　Appendix H、DrivoR＋NuRec・semi-reactive trafficの測定</caption><thead><tr><th scope="col">項目</th><th scope="col">報告値</th><th scope="col">条件</th></tr></thead><tbody>
+<tr><td>episode評価</td><td>中央値114.0秒／p90 203.3秒</td><td>最大60秒のsimulation、280 scenarios</td></tr>
+<tr><td>steady-state frame</td><td>中央値0.510秒／最大1.032秒</td><td>描画・simulation・推論・制御・採点を含む</td></tr>
+<tr><td>worker資源</td><td>RTX 3090×2、GPUメモリ中央値24.1 GiB</td><td>描画用と方策用。メモリは2 GPU合計</td></tr>
+</tbody></table></div>
+<p>simulationは10 Hz、方策のreplanningは2 Hzで、可視化を無効にした測定です。renderer起動50秒はworkerごとに一度、再利用されます。数値はこの評価経路の資源であり、全方策の最小構成や実時間制御を保証する値ではありません。夜間・悪天候・高速道路等の被覆、センサ雑音、接触、人の応答、再構成のずれにも限界があります。写実性指標の改善だけでは、安全な相互作用まで検証したことになりません。</p>
+
+<h3>5. 現行プロジェクトへ取り入れるなら、まず評価契約をそろえる</h3>
+<p>公開main <code>5607db7</code>の<a data-source="src/aic_transfuser_lite/control/safety_supervisor.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/5607db7b800d79d7f3b45301b2cf6ca9d0c0d262/src/aic_transfuser_lite/control/safety_supervisor.py">Safety Supervisor</a>はセンサ時刻、異常値、停止距離等を監視します。この機能があることと、28種類のイベント契約を満たすことは別です。<a href="slam-mppi-box-20260919.html">既存の箱試験</a>は5 km/h目標等の限定条件で、外側の時間上限による終了を周回成功とは扱っていません。</p>
+<ul>
+<li><strong>適用候補：</strong>割込み、急制動、横断、停止保持、迂回等を短いscenarioへ分け、成功、違反、timeout、インフラ失敗の定義を保存する。</li>
+<li><strong>必要データと変更：</strong>自車・周囲・信号・接触・時間の同期trace、camera rig、車体形状、方策出力の単位、終了理由をそろえる。現行waypoint/速度出力をsimulationへ適用するadapterは未実装である。</li>
+<li><strong>学習と比較：</strong>まず方策とcheckpointを固定して評価し、摂動学習やRLFTを追加する場合は別の比較単位にする。test場面を学習・選定に流用しない。</li>
+<li><strong>資源と検証：</strong>描画、推論、指令適用、採点の時間と期限超過を分け、seed、除外、失敗、停止保持の成功を再計算可能にする。写真らしい表示や無衝突の一例だけで完了にしない。</li>
+</ul>
+<p>上記は未導入の評価設計候補です。関連記事：<a href="e2e-field-overview.html">E2E研究地図</a>、<a href="five-vla-2026.html">FIVE-VLAの評価境界</a>、<a href="mile-2022.html">MILEの世界モデル</a>、<a href="research-map.html">資料台帳と確認範囲</a>。</p>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/e2e-field-overview.html">E2E自動運転の全体像と比較の読み方</a></h3>
+<p>2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。</p><div class="card-bottom"><span>文献調査</span>
+<a class="article-read" href="../articles/e2e-field-overview.html" aria-label="E2E自動運転の全体像と比較の読み方を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/five-vla-2026.html">FIVE-VLA：行動トークンの記憶と、履歴入力の違い</a></h3>
+<p>RAMの再帰・履歴比較・非反応評価と計時条件を確認し、現行TimePathの履歴との境界を整理。</p><div class="card-bottom"><span>原著・現行コードの静的確認／FIVE実装未照合</span>
+<a class="article-read" href="../articles/five-vla-2026.html" aria-label="FIVE-VLA：行動トークンの記憶と、履歴入力の違いを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/mile-2022.html">MILE：世界の状態を学び、方策と一緒に先を想像する</a></h3>
+<p>潜在世界モデルと模倣、再帰推論と想像の経路、CARLA評価と現行TimePathの契約を整理。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
+<a class="article-read" href="../articles/mile-2022.html" aria-label="MILE：世界の状態を学び、方策と一緒に先を想像するを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
+<p>4領域・144区分の確認範囲と未調査を整理。100資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

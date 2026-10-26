@@ -470,8 +470,8 @@
   {
     "year": 2022,
     "classification_year": 2022,
-    "publication_date": "",
-    "updated": "2022-11-03",
+    "publication_date": "2022-10-14",
+    "updated": "2022-11-03 v2",
     "era": "2021-2022",
     "domain": "e2e",
     "title": "Model-Based Imitation Learning for Urban Driving",
@@ -479,11 +479,11 @@
     "source_id": "E2E-MILE",
     "url": "https://arxiv.org/html/2210.07729v2",
     "date_basis": "領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2022-10。確認した版と初稿は区別する。",
-    "boundary_note": "",
+    "boundary_note": "RGB/route/speed inference and privileged BEV/expert training labels differ. CARLA Town05/10routes/4unseenweathers/3runs only. DS is not success rate; MILE infraction column is below LAV despite higherDS. Recurrent43Hz and30%imagination claims conditional. Fixed-code active_inferenceFalse and predict_action branches kept distinct.",
     "source_type": "preprint",
     "doi": "",
-    "checked_date": "2026-10-02",
-    "checked_scope": "introduction and model scope: offline IL, latent dynamics, action conditioning, recurrent inference; numerical results not reused"
+    "checked_date": "2026-10-26",
+    "checked_scope": "Independent local re-authoring from arXiv v2 §§3–6, selected ELBO/input/latent dynamics/training and Tables1/3; official fixed README,model,transition,agent,evaluation config read. No full appendices/proof/experiment-weight audit or reproduction."
   },
   {
     "year": 2023,
@@ -1476,6 +1476,24 @@
     "checked_scope": "v4 §§3–5; related A.4/A.6/A.7,B.6,D; 32-page PDF selected equations, main/ablation/robot tables, resources/protocol passages. Current/arrival separation, new-surface evidence, N1–N5 vs fixed N4 subset vs64M20 trials; no full proof/claim/version/experiment audit."
   },
   {
+    "year": 2026,
+    "classification_year": 2026,
+    "publication_date": "2026-10-04",
+    "updated": "2026-10-04 v2",
+    "era": "2026",
+    "domain": "e2e",
+    "title": "NavSafe-∞: Benchmarking Closed-Loop Driving Safety in Photorealistic Environments",
+    "study_family_id": "navsafe-infinity",
+    "source_id": "NEWS-ARXIV-2609.26618-v2",
+    "url": "https://arxiv.org/html/2609.26618v2",
+    "date_basis": "分類年は初稿2026-09-22。publication_dateは確認版v2の改訂2026-10-04。旧v1を保全した主期間後の改訂追跡。",
+    "boundary_note": "Same NavSafe family,initial2026-09-22 classification; post-primary-window v2 revision separately tracked.280scenarios/28types/3seeds are simulation evidence,not realcrashrisk. Runtime is DrivoR/NuRec2x3090 path. Fixedcodecompleted includes GOAL_REACHED and HOLD_SATISFIED despite outdated narrower guide wording. Exclusions,timebudget,denominator and recipe correspondence unverified.",
+    "source_type": "preprint",
+    "doi": "10.48550/arXiv.2609.26618",
+    "checked_date": "2026-10-26",
+    "checked_scope": "Independent local re-authoring from v2 §§3.1–3.2/4.1–4.3/6,D.3,H and selected32-pagePDF protocol/leaderboard/runtime passages; official README,termination guide,termination.py and scoring metrics. No complete recipe/checkpoint/experiment audit or code execution."
+  },
+  {
     "year": null,
     "classification_year": null,
     "publication_date": "",
@@ -1744,5 +1762,41 @@
     "doi": "",
     "checked_date": "2026-10-15",
     "checked_scope": "Twelve selected README, agent, memory, filter, coverage, calibration, controller, perception, policy and transition files read. Current-time/arrival separation, evidence IDs and coverage rounds, past-only retrieval, utility-gated VLM choice. No code executed or full runner/data/experiment audit."
+  },
+  {
+    "year": null,
+    "classification_year": null,
+    "publication_date": "",
+    "updated": "commit bd68458df1e2cc8e0f0dfcf62c06b71a86ae229c (2026-10-21T10:31:01Z)",
+    "era": "undated",
+    "domain": "e2e",
+    "title": "NavSafe-infty — official event termination and scoring implementation",
+    "study_family_id": "navsafe-infinity",
+    "source_id": "NAVSAFE-CODE",
+    "url": "https://github.com/VAIL-UCLA/NavSafe-infty/tree/bd68458df1e2cc8e0f0dfcf62c06b71a86ae229c",
+    "date_basis": "初公表年未確認。固定commit日時を初公表日へ代用せず、undatedとして年代集計から除外。",
+    "boundary_note": "First public release date unverified;commitdate is version evidence only,excluded from era counts.Same existing study family.No independent reproduction.",
+    "source_type": "code",
+    "doi": "",
+    "checked_date": "2026-10-26",
+    "checked_scope": "README,termination guide,termination.py,scoring/metrics.py selected branches. BothGOAL_REACHED/HOLD_SATISFIED completed,explicit denominator support,doc/code wording boundary. No run or full recipe audit."
+  },
+  {
+    "year": null,
+    "classification_year": null,
+    "publication_date": "",
+    "updated": "commit c8b245c7e83ae487d1263758436fd76b80b0cf54 (2023-04-13T15:00:57Z)",
+    "era": "undated",
+    "domain": "e2e",
+    "title": "MILE — official latent dynamics, policy and deployment implementation",
+    "study_family_id": "mile",
+    "source_id": "MILE-CODE",
+    "url": "https://github.com/wayveai/mile/tree/c8b245c7e83ae487d1263758436fd76b80b0cf54",
+    "date_basis": "初公表年未確認。固定commit日時を初公表日へ代用せず、undatedとして年代集計から除外。",
+    "boundary_note": "First public release date unverified;commitdate is version evidence only,excluded from era counts.Same existing study family.No independent reproduction.",
+    "source_type": "code",
+    "doi": "",
+    "checked_date": "2026-10-26",
+    "checked_scope": "README,models/mile.py,models/transition.py,agents/mile/mile_agent.py,config/evaluate.yaml selected paths. State retention,action history,active_inferenceFalse,predict_action branches. No execution/checkpoints/CARLA reproduction."
   }
 ]

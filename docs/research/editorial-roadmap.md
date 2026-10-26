@@ -151,3 +151,9 @@ Predictive Splinerの相手予測からnavigationの意味記憶へ比較軸を�
 共有スナップショットは実取得7版48項目、最新9/25–10/1・message10/2で前回可視範囲と同じ。元liveは未確認、共有本文/URLを転載しません。公開CI/実配信は確認後に別記録します。
 
 次はE2Eの言語記憶/評価、制御の故障・期限、複数相手の予測を一次資料の確認状況と比較価値で都度選定します。
+
+## NavSafe/MILEの独立再執筆（2026-10-26）
+
+現地の公式一次資料から2記事を新規著述しました。旧稿の回収/コピーや未取得内容の推測再現ではありません。既存NavSafev1を保全してv2と公式code、既存MILEv2へ公式codeを追加。同じ研究系列を保ち100資料66系列、年代84/undated16、144セル33調査済111未調査/全complete=false。MILEのlatent/policy/再帰/想像と出力契約、NavSafeのイベント別成功/違反/分母/資源を確認。固定codeのcompletedはGOAL_REACHED/HOLD_SATISFIED両方を含むため、文書の狭い説明だけで停止成功を否定しません。
+
+全版/recipe/checkpoint/実験対応、著者コード実行・独立追試・導入・全pytest・学習/走行は未実施。学習/制御/ROS/設定・デザインは変更なし。他95既存資料/19ニュースintentを保全。対象8記事のうち、ローカル本文のないRoach/SmoothMPPI/DynaBARN/VAD/CoVO-MPC/MAPとFormulaZero追補は保留しています。公開CI/配信は確認後に別記録します。

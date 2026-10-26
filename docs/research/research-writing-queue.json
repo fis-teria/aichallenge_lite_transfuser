@@ -4,7 +4,7 @@
     "task": "3領域の概説を公開可能な本文へまとめる",
     "deliverable": "e2e-field-overview / racing-overview-2018-2026 / mpc-mppi-overview",
     "gate": "確認済み出典のみ引用し、仮説・研究メモを含めない",
-    "state": "EvolvingNavを2026-10-15に選定。前回レーシングから意味記憶の鮮度へ比較軸を移し、コード未照合と可視性/評価条件を補う。AD-MemoやNavSafe、制御/レーシングも固定優先を設けず都度比較。"
+    "state": "2026-10-26：ローカル一次資料からNavSafe/MILEの独立再執筆2記事を整備。原稿がローカルにない他6記事とFormulaZero追補は保留。未取得旧稿の推測再現・全量台帳上書きはしない。"
   },
   {
     "priority": "候補（都度選定）",
@@ -166,16 +166,20 @@
     "scope": "論文調査・記事作成。実装・学習・走行を含まない"
   },
   {
-    "priority": "候補（都度選定）",
+    "priority": "整備中",
     "task": "open-loop報酬とclosed-loop安全の乖離を事象別に測る",
     "deliverable": "navsafe-infinity-2026",
     "gate": "280scenarios/28categoriesの論文条件、policy比較、コード公開状態を精読。実車保証とはしない",
-    "state": "awaiting_fuller_review",
+    "state": "prepublication_checked：独立再執筆。公式v2/固定code確認、CI/配信待ち。",
     "source_ids": [
-      "NEWS-ARXIV-2609.26618-v1"
+      "NEWS-ARXIV-2609.26618-v1",
+      "NEWS-ARXIV-2609.26618-v2",
+      "NAVSAFE-CODE"
     ],
     "batch_id": "safety-benchmark-next",
-    "scope": "論文調査・記事作成。実装・学習・走行を含まない"
+    "scope": "論文調査・記事作成。実装・学習・走行を含まない",
+    "publication_commit": "",
+    "publication_url": ""
   },
   {
     "priority": "完了",
@@ -423,5 +427,19 @@
     "scope": "一論文の限定機構/評価とコード分岐。M-Predictive Splinerや実験再現は別範囲。",
     "publication_commit": "969b8b741a80220be28f256e058129385337df65",
     "publication_url": "https://fis-teria.github.io/aichallenge_lite_transfuser/articles/predictive-spliner-2024.html"
+  },
+  {
+    "priority": "整備中",
+    "task": "MILEの世界状態・模倣方策と再帰推論を独立再執筆",
+    "deliverable": "mile-2022",
+    "gate": "原著v2/固定版主要処理/現行契約、正式生成/回帰/表示と対象CI/配信確認",
+    "state": "prepublication_checked：独立再執筆。全付録/実験対応・追試・導入は別範囲。",
+    "source_ids": [
+      "E2E-MILE",
+      "MILE-CODE"
+    ],
+    "scope": "一次資料からHervarar上で新規著述。未取得旧稿の回収や復元ではない。",
+    "publication_commit": "",
+    "publication_url": ""
   }
 ]

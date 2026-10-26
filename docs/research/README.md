@@ -261,3 +261,13 @@ Predictive Splinerの相手予測からnavigationの意味記憶へ比較軸を�
 ### EvolvingNav記事の公開確認
 
 記事commit `fe68047010dadcebad254909d0367f7083657095` をHervarar正式Windows checkoutから既存認証で通常push。[CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/38673481283)のbuild/deployはsuccess。全41ページと3資産はHTTP200・正式生成物と完全一致。[新記事](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/evolvingnav-2026.html)と関連5本を実配信320/390/768/1440pxで確認し、図1・3表・式・横スクロール・相互リンク・JS無効は問題なし。公開記録はevolvingnav-publication-20261015.json。対象3資料/intent/queue/batchの公開状態を更新。ニュース20件は公開6・追加精読13・LOOP保留1、他94資料/19intent/他batchを保全。全版/実験対応・コード実行・独立再現・導入は未実施。学習/制御/設定変更・学習/走行、SSH/WSL/他host/クラウドpush、API/Web書込み、別認証・remote変更は行っていません。
+
+## NavSafe/MILEの独立再執筆（2026-10-26）
+
+現地の公式一次資料から2記事を新規著述しました。旧稿の回収/コピーや未取得内容の推測再現ではありません。既存NavSafev1を保全してv2と公式code、既存MILEv2へ公式codeを追加。同じ研究系列を保ち100資料66系列、年代84/undated16、144セル33調査済111未調査/全complete=false。MILEのlatent/policy/再帰/想像と出力契約、NavSafeのイベント別成功/違反/分母/資源を確認。固定codeのcompletedはGOAL_REACHED/HOLD_SATISFIED両方を含むため、文書の狭い説明だけで停止成功を否定しません。
+
+全版/recipe/checkpoint/実験対応、著者コード実行・独立追試・導入・全pytest・学習/走行は未実施。学習/制御/ROS/設定・デザインは変更なし。他95既存資料/19ニュースintentを保全。対象8記事のうち、ローカル本文のないRoach/SmoothMPPI/DynaBARN/VAD/CoVO-MPC/MAPとFormulaZero追補は保留しています。公開CI/配信は確認後に別記録します。
+
+### NavSafe/MILE独立再執筆の公開前検査
+
+正式生成・一致、43ページ2181リンク/asset・65固定根拠、サイト回帰29件を確認。公式Edge5幅・全43ページPC/mobile、対象7記事×4幅・図2/表6/数式/横スクロール/相互リンク/JS無効は成功、PC/mobile画像を目視確認。外部一次17URLはHTTP200、節アンカー一致。台帳100資料66系列/年代84/undated16、144セルの表示とJSON/CSVを照合。他95既存資料/19ニュースintent、記事範囲外5531ファイルを保全。旧稿を受け取ったものとして扱わず、公式資料から現地で新規著述した2記事だけの検査。保留6記事とFormulaZero追補は変更していません。記録はindependent-rewrite-validation-20261026.json。

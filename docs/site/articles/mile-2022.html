@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="潜在世界モデルと模倣、再帰推論と想像の経路、CARLA評価と現行TimePathの契約を整理。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>MILE：世界の状態を学び、方策と一緒に先を想像する — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html" aria-current="page"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../papers.html">論文ノート</a></div>
+<span class="section-number">論文ノート</span><h1>MILE：世界の状態を学び、方策と一緒に先を想像する</h1>
+<p class="article-lead">潜在世界モデルと模倣、再帰推論と想像の経路、CARLA評価と現行TimePathの契約を整理。</p><div class="article-meta">
+<span>公開 <time datetime="2026-10-26">2026-10-26</time></span>
+<span>更新 <time datetime="2026-10-26">2026-10-26</time></span>
+<span class="tag">独立再執筆・原著/固定code静的確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文詳解・世界モデルと模倣</span><span class="paper-year">2022</span></div>
+<h2>MILE：世界の状態を学び、方策と一緒に先を想像する</h2>
+<p class="authors">Anthony Hu、Gianluca Corrado、Nicolas Griffiths、Zak Murez、Corina Gurau、Hudson Yeo、Alex Kendall、Roberto Cipolla、Jamie Shotton</p>
+<p class="paper-summary">MILEは画像からそのまま操作を当てるだけでなく、履歴と確率的な状態を介して、画像・鳥瞰図・操作を一緒に学びます。観測で状態を更新する経路と、観測なしで未来を進める経路を持ちます。世界モデル、模倣方策、反復推論の役割を分け、CARLAでの成績を現行のwaypoint出力へ読み替えないように整理します。</p>
+<p>確認日：2026-10-26、公式一次資料からの独立再執筆版。対象は<a href="https://arxiv.org/html/2210.07729v2">Model-Based Imitation Learning for Urban Driving、arXiv v2（2022-11-03）</a>の§3–6と関連評価、<a href="https://github.com/wayveai/mile/tree/c8b245c7e83ae487d1263758436fd76b80b0cf54">公式コード固定版c8b245c（2023-04-13）</a>のREADME・model・transition・agent・評価設定です。<a href="https://arxiv.org/abs/2210.07729">初稿は2022-10-14、NeurIPS 2022</a>。選択範囲の静的確認であり、全付録・証明・実験commit/重みの完全対応、著者コード実行、独立追試、導入・学習・走行は未実施です。</p>
+
+<h3>1. 画像の圧縮に、3Dと鳥瞰図の構造を入れる</h3>
+<p>入力は前方RGB、交差点で進む方向を示すroute map、車速です。画像特徴に深度の確率分布を予測し、camera内外パラメータを使って3Dへ持ち上げ、鳥瞰（BEV）へpoolしてから小さいベクトルへ圧縮します。ここでの深度は画像から学ぶ表現で、推論時に正解のBEV segmentationを与える構成ではありません。学習では特権情報を使うRL教師の操作とBEVラベルを利用します。<a href="https://arxiv.org/html/2210.07729v2#S3">§3</a></p>
+<figure class="tech-figure"><figcaption>図1　観測と過去の操作から潜在状態を更新し、方策と予測を学ぶ（本記事の概念図）</figcaption><ol class="tech-flow four">
+<li><strong>観測を符号化</strong><p>RGB、route map、車速とcamera較正を使う</p></li>
+<li><strong>BEVから圧縮</strong><p>3Dの幾何構造を経由して低次元表現へ移す</p></li>
+<li><strong>履歴と状態</strong><p>決定的な履歴hと確率的な状態sを更新する</p></li>
+<li><strong>操作と予測</strong><p>学習した方策で操作し、未来の状態も展開する</p></li>
+</ol><p>未来を展開できることは、候補操作をコスト最小化で選ぶMPCの実装があることを意味しません。</p></figure>
+
+<h3>2. 観測によるposteriorと、未来へ進むprior</h3>
+<div class="table-wrap" role="region" aria-label="MILEの状態と学習目的" tabindex="0"><table class="tech-table"><caption>式1　原著式1・6の役割を簡略化。入力時刻と経路の違いを示す</caption><thead><tr><th scope="col">関係</th><th scope="col">役割</th></tr></thead><tbody>
+<tr><td><code>hₜ = f(hₜ₋₁, sₜ₋₁)</code></td><td>過去の状態から決定的な履歴を更新する。</td></tr>
+<tr><td><code>q(sₜ | hₜ, aₜ₋₁, e(oₜ))</code><br><code>p(sₜ | hₜ, aₜ₋₁)</code></td><td>qは現在の観測を使うposterior、pは観測を使わず進めるprior。操作を条件にする。</td></tr>
+<tr><td><code>âₜ = π(hₜ, sₜ)</code></td><td>潜在状態から方策が操作を出す。</td></tr>
+<tr><td><code>reconstruction + BEV + action − KL</code></td><td>画像再構成、BEV分類、操作模倣とprior/posteriorの整合を合わせる学習目的。</td></tr>
+</tbody></table></div>
+<p>学習目的はELBOに基づき、画像の二乗誤差、操作のL1、BEVのcross-entropy、状態分布のKLに対応します。低い画像再構成誤差が、そのまま歩行者の安全や閉ループ成功を保証するものではありません。未来を想像するときは、予測操作を次の遷移へ渡すか、与えられた操作系列を使うかも区別します。</p>
+<p>固定版<a href="https://github.com/wayveai/mile/blob/c8b245c7e83ae487d1263758436fd76b80b0cf54/mile/models/transition.py">transition.py</a>は<code>active_inference=False</code>で初期化され、その分岐では渡された操作をpriorへ入れます。<a href="https://github.com/wayveai/mile/blob/c8b245c7e83ae487d1263758436fd76b80b0cf54/mile/models/mile.py">modelのimagine処理</a>には、<code>predict_action</code>に応じて方策予測と与えた操作を切り替える経路があります。論文図の予測操作と、全コード経路の入力が常に同じだとは扱いません。</p>
+
+<h3>3. 学習・評価の町と、Driving Scoreの意味</h3>
+<p>データはCARLAのTown01/03/04/06、4天候で収集した32時間・約2.9M frames。収集は25 Hz、系列モデルには5 Hzへ間引いて使います。学習条件は長さ12、batch 64、50,000 iterations、V100×8です。推論全体が5 Hz固定という意味や、必要GPUの最小構成を示す数字ではありません。<a href="https://arxiv.org/html/2210.07729v2#S4">§4</a></p>
+<p>主評価は未学習のTown05の10 routesと4つの未学習天候で、3 runsの平均を報告します。比較には各方式の公開済み重みを使っており、全方式を同じ収集データで学び直した比較ではありません。Driving Score（DS）は経路達成と違反ペナルティを組み合わせる値で、成功episodeの割合ではありません。</p>
+<div class="table-wrap" role="region" aria-label="MILEのCARLA主評価" tabindex="0"><table class="tech-table"><caption>表1　原著Table 1の抜粋。平均±標準偏差、Town05・未学習天候の同一評価内</caption><thead><tr><th scope="col">方式</th><th scope="col">DS ↑</th><th scope="col">Route ↑</th><th scope="col">Infraction ↑</th></tr></thead><tbody>
+<tr><td>Roach</td><td>41.6 ± 1.8</td><td>96.4 ± 2.1</td><td>43.3 ± 2.8</td></tr>
+<tr><td>LAV</td><td>46.5 ± 3.0</td><td>69.8 ± 2.3</td><td>73.4 ± 2.2</td></tr>
+<tr><td>MILE</td><td>61.1 ± 3.2</td><td>97.4 ± 0.8</td><td>63.0 ± 3.0</td></tr>
+<tr><td>Expert（特権教師）</td><td>88.4 ± 0.9</td><td>97.6 ± 1.2</td><td>90.5 ± 1.2</td></tr>
+</tbody></table></div>
+<p>MILEのDSはLAVより高い一方、Infractionの列はLAVの方が高いという差があります。進捗、違反、合成指標を分ける必要があります。また各episodeの積を平均した値を、列の平均同士の積から正確に再現できるとは限りません。特権教師や別ベンチマーク、現行AWSIMの成績を横並びの性能順位へ移していません。<a href="https://arxiv.org/html/2210.07729v2#S5">§5</a></p>
+
+<h3>4. 履歴を保持する推論と、観測なしの想像</h3>
+<div class="table-wrap" role="region" aria-label="MILEの再帰推論比較" tabindex="0"><table class="tech-table"><caption>表2　Table 3、同じCARLA評価でのdeployment方式</caption><thead><tr><th scope="col">方式</th><th scope="col">DS</th><th scope="col">報告周波数 Hz</th><th scope="col">状態の扱い</th></tr></thead><tbody>
+<tr><td>Reset state</td><td>61.1 ± 3.2</td><td>6.2</td><td>直近12観測から状態を再計算</td></tr>
+<tr><td>Fully recurrent</td><td>62.1 ± 0.5</td><td>43.0</td><td>保持状態を新しい観測で更新</td></tr>
+<tr><td>Recurrent + noise</td><td>48.8 ± 1.8</td><td>43.0</td><td>過去の潜在状態へノイズを加える診断</td></tr>
+</tbody></table></div>
+<p>約7倍という値はこの推論方式の比較です。カメラから実際の操作適用までの期限保証や、任意のPCでの43 Hzを示す値ではありません。過去状態へのノイズで成績が低下する結果は、状態が使われている証拠ですが、どんな長さの履歴でも安定という証明ではありません。</p>
+<p><a href="https://github.com/wayveai/mile/blob/c8b245c7e83ae487d1263758436fd76b80b0cf54/mile/models/mile.py">deployment_forward()</a>は<code>last_h / last_sample</code>を保持し、strideに応じて観測更新や想像の経路を選びます。<a href="https://github.com/wayveai/mile/blob/c8b245c7e83ae487d1263758436fd76b80b0cf54/mile/agents/mile/mile_agent.py">agent</a>は操作履歴を用意し、モデルの<code>throttle_brake / steering</code>を環境側へ渡します。<a href="https://github.com/wayveai/mile/blob/c8b245c7e83ae487d1263758436fd76b80b0cf54/README.md">公式README</a>はCARLA 0.9.11を対象にしています。</p>
+<p>原著の「走行の30%まで想像にしても性能を保つ」は、観測と想像を切り替える選択されたCARLA実験です。30%の任意センサ故障を許容できる意味ではありません。見えていない間の急な割込み、観測の戻り方、累積誤差は別に検証する必要があります。</p>
+
+<h3>5. 現行TimePathとの接続は、入力・出力・学習目的から設計する</h3>
+<p>公開main <code>5607db7</code>の<a data-source="src/aic_transfuser_lite/models/time_path_v1.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/5607db7b800d79d7f3b45301b2cf6ca9d0c0d262/src/aic_transfuser_lite/models/time_path_v1.py">TimePathV1</a>は1回のforward内でGRUにより30点の将来XYを出します。これだけでMILEの観測間の世界状態や生成モデルを持つとは言えません。<a data-source="src/aic_transfuser_lite/runtime/input_history_v3.py" href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/5607db7b800d79d7f3b45301b2cf6ca9d0c0d262/src/aic_transfuser_lite/runtime/input_history_v3.py">現在の指令履歴</a>、MILEの操作履歴、RAMの行動token、保持した制御経路も、型と役割を分けて扱います。</p>
+<ul>
+<li><strong>適用候補：</strong>観測間の潜在状態と、操作に条件付けた予測を研究候補にする。MILEの直接操作出力をそのまま現行の主出力へ置き換える作業は行っていない。</li>
+<li><strong>必要データ：</strong>時刻をそろえたRGB・camera較正・route・車速・適用操作と、学習用BEV教師。特権ラベルと推論時入力を分離し、run/scenario単位でtrain/testを分ける。</li>
+<li><strong>再学習と資源：</strong>現行モデルへ再帰状態を足すなら損失・状態reset・長期履歴の扱いから変更が必要。画像再構成やBEV生成、状態保持のメモリ、全入力から指令までの遅延を測る。原著の8 V100を最小必要資源とはしない。</li>
+<li><strong>必要検証：</strong>未知の町・路面・対象、欠損観測、状態の破損、reset忘れ、想像から観測への復帰を分けて比較する。オフライン誤差、閉ループ達成、接触、停止、計算期限を個別に記録する。</li>
+</ul>
+<p>これらは未実装の研究候補です。学習・制御コード変更、MILEの実行・追試・学習・走行は行っていません。関連記事：<a href="e2e-field-overview.html">E2E研究地図</a>、<a href="world-on-rails-2021.html">World on Rails</a>、<a href="five-vla-2026.html">FIVE-VLA</a>、<a href="mpc-mppi-overview.html">MPC / MPPI</a>、<a href="navsafe-infinity-2026.html">NavSafeの閉ループ評価</a>、<a href="research-map.html">調査範囲</a>。</p>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/e2e-field-overview.html">E2E自動運転の全体像と比較の読み方</a></h3>
+<p>2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。</p><div class="card-bottom"><span>文献調査</span>
+<a class="article-read" href="../articles/e2e-field-overview.html" aria-label="E2E自動運転の全体像と比較の読み方を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/world-on-rails-2021.html">World on Rails：保存ログから未選択の操作にも教師を付ける</a></h3>
+<p>非反応の周囲ログから行動価値を作る教師生成。評価条件・コードの版差・TimePathへの接続を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
+<a class="article-read" href="../articles/world-on-rails-2021.html" aria-label="World on Rails：保存ログから未選択の操作にも教師を付けるを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/five-vla-2026.html">FIVE-VLA：行動トークンの記憶と、履歴入力の違い</a></h3>
+<p>RAMの再帰・履歴比較・非反応評価と計時条件を確認し、現行TimePathの履歴との境界を整理。</p><div class="card-bottom"><span>原著・現行コードの静的確認／FIVE実装未照合</span>
+<a class="article-read" href="../articles/five-vla-2026.html" aria-label="FIVE-VLA：行動トークンの記憶と、履歴入力の違いを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/mpc-mppi-overview.html">MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</a></h3>
+<p>線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="card-bottom"><span>文献俯瞰・適用候補</span>
+<a class="article-read" href="../articles/mpc-mppi-overview.html" aria-label="MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/navsafe-infinity-2026.html">NavSafe-∞：軌道の点数から、事象ごとの閉ループ評価へ</a></h3>
+<p>イベント成功・違反・分母と停止保持の実装を確認し、閉ループ評価と実車保証の境界を整理。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
+<a class="article-read" href="../articles/navsafe-infinity-2026.html" aria-label="NavSafe-∞：軌道の点数から、事象ごとの閉ループ評価へを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
+<p>4領域・144区分の確認範囲と未調査を整理。100資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>
