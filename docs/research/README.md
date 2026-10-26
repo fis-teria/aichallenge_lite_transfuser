@@ -285,3 +285,7 @@ Predictive Splinerの相手予測からnavigationの意味記憶へ比較軸を�
 ### 5記事・FormulaZero追補の公開前検査
 
 正式生成・一致、48ページ2469リンク/asset・70固定根拠、サイト回帰29件を確認。公式Edge5幅・全48ページPC/mobile、対象14記事×4幅・図5/表15/数式/横スクロール/相互リンク/JS無効は成功。PC/mobileの図表と式を目視確認し、相互リンク検査で見つけたCoVOから既存SLAM MPPIへの戻りリンクを補正後に再検査。外部一次33URLはHTTP200。台帳106資料66系列/年代85/undated21と研究地図144セル/JSON/CSVを照合し、他94資料・全20ニュースintent・記事範囲外5533ファイルを保全。DynaBARNは原典TLS証明書検証失敗で保留、Library原稿回収障害は未解決のまま保全。記録はremaining-rewrite-validation-20261026.json。
+
+### 5記事・FormulaZero追補の公開確認
+
+記事commit `f6da62ef079b251a6a7cf972b08e9c5f41d7619a` をHervarar正式Windows checkoutから既存認証で通常push。[対象CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/40255218981)のbuild/deployはsuccess。全48ページ+3資産はHTTP200・正式生成物完全一致。対象14記事を実配信4幅で検査し、図5/表15/数式/横スクロール/相互リンク/JS無効は成功。記録はremaining-rewrite-publication-20261026.json。5記事と追補は公式一次資料から独立再執筆し、旧稿の回収/コピー/推測復元はしていません。対象8記事中NavSafe/MILEと合わせ7記事+追補が公開済み。DynaBARNは原典のTLS証明書検証失敗、Library原稿回収障害は未解決。証明書検証無効化・別経路転送・旧稿置換/削除なし。106資料66系列、年代85/undated21、他94資料・全20ニュースintentを保全。全証明/実験対応・著者コード実行・独立再現・導入・全pytest・学習/走行は未実施。学習/制御/ROS/設定・デザイン、remote/認証変更、SSH/WSL/他host/クラウドpush、API/Web書込みは行っていません。
