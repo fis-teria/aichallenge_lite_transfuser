@@ -70,7 +70,7 @@
 <span class="section-number">論文ノート</span><h1>Learning by Cheating：特権教師から画像の運転方策へ</h1>
 <p class="article-lead">全分岐の教師信号とDAgger、CARLA成功率の定義、公開コードの版差、TimePathへの導入条件を解説。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-04">2026-10-04</time></span>
-<span>更新 <time datetime="2026-10-09">2026-10-09</time></span>
+<span>更新 <time datetime="2026-10-26">2026-10-26</time></span>
 <span class="tag">原著・補足・公式コード確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">模倣学習・教師と生徒</span><span class="paper-year">CoRL 2019 / PMLR 2020</span></div>
 <h2>Learning by Cheating：特権情報を学習時だけ使う</h2>
 <p class="authors">Dian Chen, Brady Zhou, Vladlen Koltun, Philipp Krähenbühl／UT Austin、Intel Labs</p>
@@ -174,6 +174,8 @@
 <h3>10. 出典と次の調査</h3>
 <p>最終確認日：2026-10-04。採択本文§1–5・Tables 1–3・Fig.1–5、公式補足§1–3・Tables 1–4、arXivの書誌と付録、固定版公式コードの教師・生徒・学習3段階・dataset・評価suite・依存・ライセンスを確認しました。補足ZIP内の動画は評価根拠に用いていません。コード実行、公開重みの照合、0.9.5の完全な実験構成、実機での計算負荷は未確認です。</p>
 <p>2026-10-09追記。<a href="world-on-rails-2021.html">World on Railsの個別解説</a>で、自車モデルと非反応の周囲ログから未選択の操作にも価値を付ける教師生成を比較しました。LBCの教師模倣とは教師の由来が異なり、両手法のCARLA版・評価条件を分けて読む必要があります。教師を強化学習で作るRoach、LBC著者の後続LAVも候補として保持します。各候補の未確認箇所を先に埋め、原則1論文1記事で扱います。現在の確認範囲と資料の関連は<a href="research-map.html">研究地図・資料年表</a>を参照してください。</p>
+
+<h3>学習した教師による蒸留の補足</h3><p>2026-10-26独立再執筆に伴う追記。<a href="roach-2021.html">Roach</a>は正解BEVを使うPPO教師を作り、カメラ学生へ操作分布や特徴を渡します。LBCの教師生成・特権情報の使い方と区別し、学生の経路情報が特徴蒸留に与える条件を確認しました。著者コード実行・独立追試・現行車両への導入は未実施です。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
 <time datetime="2026-10-26">2026-10-26</time></div>
@@ -181,7 +183,7 @@
 <p>2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。</p><div class="card-bottom"><span>文献調査</span>
 <a class="article-read" href="../articles/e2e-field-overview.html" aria-label="E2E自動運転の全体像と比較の読み方を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-04">2026-10-04</time></div>
+<time datetime="2026-10-26">2026-10-26</time></div>
 <h3><a href="../articles/dagger.html">DAgger：模倣学習で生じる分布ずれ</a></h3>
 <p>学習した方策の行動が次の観測を変えるため、教師の走行だけで学ぶと運用時に分布ずれが生じる問題を扱います。DAggerでは学習者が訪れた状態に教師の指示を付け、データを反復集約します。</p><div class="card-bottom"><span>一次資料を確認</span>
 <a class="article-read" href="../articles/dagger.html" aria-label="DAgger：模倣学習で生じる分布ずれを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
@@ -193,12 +195,17 @@
 <div class="card-meta"><span class="tag">継続資料</span>
 <time datetime="2026-10-26">2026-10-26</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
-<p>4領域・144区分の確認範囲と未調査を整理。100資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
+<p>4領域・144区分の確認範囲と未調査を整理。106資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
 <a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-26">2026-10-26</time></div>
 <h3><a href="../articles/world-on-rails-2021.html">World on Rails：保存ログから未選択の操作にも教師を付ける</a></h3>
 <p>非反応の周囲ログから行動価値を作る教師生成。評価条件・コードの版差・TimePathへの接続を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
-<a class="article-read" href="../articles/world-on-rails-2021.html" aria-label="World on Rails：保存ログから未選択の操作にも教師を付けるを読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/world-on-rails-2021.html" aria-label="World on Rails：保存ログから未選択の操作にも教師を付けるを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/roach-2021.html">Roach：よく走る教師から、教え方まで学ぶ</a></h3>
+<p>特権BEVのRL教師とカメラ学生、操作分布・特徴・価値の蒸留と評価条件を整理。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
+<a class="article-read" href="../articles/roach-2021.html" aria-label="Roach：よく走る教師から、教え方まで学ぶを読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

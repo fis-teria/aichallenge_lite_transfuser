@@ -157,3 +157,9 @@ Predictive Splinerの相手予測からnavigationの意味記憶へ比較軸を�
 現地の公式一次資料から2記事を新規著述しました。旧稿の回収/コピーや未取得内容の推測再現ではありません。既存NavSafev1を保全してv2と公式code、既存MILEv2へ公式codeを追加。同じ研究系列を保ち100資料66系列、年代84/undated16、144セル33調査済111未調査/全complete=false。MILEのlatent/policy/再帰/想像と出力契約、NavSafeのイベント別成功/違反/分母/資源を確認。固定codeのcompletedはGOAL_REACHED/HOLD_SATISFIED両方を含むため、文書の狭い説明だけで停止成功を否定しません。
 
 全版/recipe/checkpoint/実験対応、著者コード実行・独立追試・導入・全pytest・学習/走行は未実施。学習/制御/ROS/設定・デザインは変更なし。他95既存資料/19ニュースintentを保全。対象8記事のうち、ローカル本文のないRoach/SmoothMPPI/DynaBARN/VAD/CoVO-MPC/MAPとFormulaZero追補は保留しています。公開CI/配信は確認後に別記録します。
+
+## 5記事とFormulaZero追補の独立再執筆（2026-10-26）
+
+今回の公開依頼に基づきRoach、VAD、Smooth MPPI、CoVO-MPC、MAPの5記事と既存レーシング概説のFormulaZero追補を公式一次資料からHervarar上で新規著述。旧クラウド原稿の回収・コピー・推測復元ではなく、未取得旧稿は置換・削除せず保全。DynaBARNは著者大学公開原典のTLS証明書検証に失敗し、検証無効化や別経路迂回をせず保留。Libraryの正規転送障害も未解決です。
+
+既存6資料を限定増補し、MAP v2の版日付を補正して保全、v4と5公式codeを同じ系列へ追加。最新JSONから106資料・66系列、年代85・undated21、144セル中33調査済/111未調査・全coverage_complete=false。対象以外94資料と全20ニュースintentを保全。コードcommit日を初公表年へ代用しません。記事は教師/学生、開/閉ループ、入力増分と経路係数、無限サンプルの最適化解析と制御保証、同定LUTと既存速度補償を分離。全証明/実験対応・著者コード実行・独立再現・現行導入・全pytest・学習/走行は未実施。学習/制御/ROS/設定・デザインは変更なし。正式サイト検証と公開CI/配信は確認後に記録します。

@@ -4,7 +4,7 @@
     "task": "3領域の概説を公開可能な本文へまとめる",
     "deliverable": "e2e-field-overview / racing-overview-2018-2026 / mpc-mppi-overview",
     "gate": "確認済み出典のみ引用し、仮説・研究メモを含めない",
-    "state": "2026-10-26：ローカル一次資料からNavSafe/MILEの独立再執筆2記事を整備。原稿がローカルにない他6記事とFormulaZero追補は保留。未取得旧稿の推測再現・全量台帳上書きはしない。"
+    "state": "2026-10-26：NavSafe/MILEに続き、公式一次資料からRoach/VAD/Smooth MPPI/CoVO-MPC/MAPとFormulaZero追補を独立再執筆。DynaBARNは一次資料取得のTLS証明書検証に失敗し保留。旧クラウド原稿の回収障害は未解決のまま保全。"
   },
   {
     "priority": "候補（都度選定）",
@@ -352,7 +352,7 @@
     "task": "Roach・World on Rails・LAVの教師とデータ利用を比較する",
     "deliverable": "原則1論文1記事と関連比較",
     "gate": "特権情報・RL・非反応型世界・他車データの仮定と、版を揃えた評価条件を一次資料で確認",
-    "state": "World on Railsを限定本文・公式コードの静的確認へ増補。Roachの未移送原稿は別件として保持し再作成しない。LAV等は次回に同じ基準で都度選定。"
+    "state": "World on Railsを限定本文・公式コードの静的確認へ増補。Roachの未移送原稿は別件として保持し再作成しない。LAV等は次回に同じ基準で都度選定。 2026-10-26の公開依頼に基づきRoachを公式一次資料から独立再執筆。従来の未移送原稿は置換・削除せず保全。LAV等の未確認範囲は維持。"
   },
   {
     "priority": "完了",
@@ -441,5 +441,97 @@
     "scope": "一次資料からHervarar上で新規著述。未取得旧稿の回収や復元ではない。",
     "publication_commit": "0e22feb4d1d5db2e46bb9e98b3d4da6410529fb0",
     "publication_url": "https://fis-teria.github.io/aichallenge_lite_transfuser/articles/mile-2022.html"
+  },
+  {
+    "priority": "整備中",
+    "task": "Roach：よく走る教師から、教え方まで学ぶを独立再執筆",
+    "deliverable": "roach-2021",
+    "gate": "公式原著/固定codeの限定静的確認、正式生成・回帰・PC/mobile・対象commit CI/実配信確認",
+    "state": "prepublication_checked：独立再執筆。全証明/実験対応・再現・導入は別範囲。",
+    "source_ids": [
+      "E2E-ROACH",
+      "ROACH-CODE"
+    ],
+    "scope": "公式一次資料からHervarar上で新規著述。未取得旧原稿の復元ではない。学習/制御/ROS/設定・実験の変更なし。",
+    "publication_commit": "",
+    "publication_url": ""
+  },
+  {
+    "priority": "整備中",
+    "task": "VAD：道路と相手をベクトルで表し、軌道の学習へつなぐを独立再執筆",
+    "deliverable": "vad-2023",
+    "gate": "公式原著/固定codeの限定静的確認、正式生成・回帰・PC/mobile・対象commit CI/実配信確認",
+    "state": "prepublication_checked：独立再執筆。全証明/実験対応・再現・導入は別範囲。",
+    "source_ids": [
+      "E2E-VAD",
+      "VAD-CODE"
+    ],
+    "scope": "公式一次資料からHervarar上で新規著述。未取得旧原稿の復元ではない。学習/制御/ROS/設定・実験の変更なし。",
+    "publication_commit": "",
+    "publication_url": ""
+  },
+  {
+    "priority": "整備中",
+    "task": "Smooth MPPI：操作の変化を探索し、予測の中で滑らかにするを独立再執筆",
+    "deliverable": "smooth-mppi-2021",
+    "gate": "公式原著/固定codeの限定静的確認、正式生成・回帰・PC/mobile・対象commit CI/実配信確認",
+    "state": "prepublication_checked：独立再執筆。全証明/実験対応・再現・導入は別範囲。",
+    "source_ids": [
+      "C06",
+      "SMOOTH-MPPI-CODE"
+    ],
+    "scope": "公式一次資料からHervarar上で新規著述。未取得旧原稿の復元ではない。学習/制御/ROS/設定・実験の変更なし。",
+    "publication_commit": "",
+    "publication_url": ""
+  },
+  {
+    "priority": "整備中",
+    "task": "CoVO-MPC：候補の数だけでなく、探索分布の形を変えるを独立再執筆",
+    "deliverable": "covo-mpc-2024",
+    "gate": "公式原著/固定codeの限定静的確認、正式生成・回帰・PC/mobile・対象commit CI/実配信確認",
+    "state": "prepublication_checked：独立再執筆。全証明/実験対応・再現・導入は別範囲。",
+    "source_ids": [
+      "C07",
+      "COVO-MPC-CODE"
+    ],
+    "scope": "公式一次資料からHervarar上で新規著述。未取得旧原稿の復元ではない。学習/制御/ROS/設定・実験の変更なし。",
+    "publication_commit": "",
+    "publication_url": ""
+  },
+  {
+    "priority": "整備中",
+    "task": "MAP：必要な横加速度を、タイヤモデルから操舵へ変えるを独立再執筆",
+    "deliverable": "map-controller-2022",
+    "gate": "公式原著/固定codeの限定静的確認、正式生成・回帰・PC/mobile・対象commit CI/実配信確認",
+    "state": "prepublication_checked：独立再執筆。全証明/実験対応・再現・導入は別範囲。",
+    "source_ids": [
+      "R03",
+      "MAP-CONTROLLER-V4",
+      "MAP-CODE"
+    ],
+    "scope": "公式一次資料からHervarar上で新規著述。未取得旧原稿の復元ではない。学習/制御/ROS/設定・実験の変更なし。",
+    "publication_commit": "",
+    "publication_url": ""
+  },
+  {
+    "priority": "整備中",
+    "task": "FormulaZero追補を独立再執筆",
+    "deliverable": "formulazero-supplement-20261026",
+    "gate": "公式原著/固定codeの限定静的確認、正式生成・回帰・PC/mobile・対象commit CI/実配信確認",
+    "state": "prepublication_checked：独立再執筆。全証明/実験対応・再現・導入は別範囲。",
+    "source_ids": [
+      "R14"
+    ],
+    "scope": "公式一次資料からHervarar上で新規著述。未取得旧原稿の復元ではない。学習/制御/ROS/設定・実験の変更なし。",
+    "publication_commit": "",
+    "publication_url": ""
+  },
+  {
+    "priority": "保留",
+    "task": "DynaBARNの一次資料を確認し個別解説",
+    "deliverable": "dynabarn-2022",
+    "gate": "原典を正規経路で取得し本文・評価・公開実装を照合できること",
+    "state": "blocked：2026-10-26 Hervararで著者大学公開原典のTLS証明書検証失敗。証明書無効化・別経路迂回なし。本文未読のため記事・資料数を追加しない。",
+    "scope": "旧原稿のLibrary回収障害も未解決のまま保全。"
   }
 ]

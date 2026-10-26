@@ -1,0 +1,27 @@
+<div class="paper-top"><span class="tag">論文詳解・独立再執筆</span><span class="paper-year">2021</span></div>
+<h2>Roach：よく走る教師から、教え方まで学ぶ</h2>
+<p class="authors">Zhejun Zhang、Alexander Liniger、Dengxin Dai、Fisher Yu、Luc Van Gool</p>
+<p class="paper-summary">Roachは、特権的な鳥瞰情報を使う強化学習の教師を作り、その操作分布や特徴をカメラの模倣学習へ渡します。教師の走行成績、学生の汎化、教師情報を使える時点を分けて読みます。</p>
+<p>確認日：2026-10-26、公式一次資料からHervarar上で新規に著述した独立再執筆版。対象は<a href="https://arxiv.org/pdf/2108.08265v3">End-to-End Urban Driving by Imitating a Reinforcement Learning Coach、arXiv v3（2021-10-04）、§3–4・Tables 1–2</a>と、<a href="https://github.com/zhejz/carla-roach/tree/00d6f5528296900161bcb53b62197f9d5745330c">公式コード固定版00d6f55（2023-09-23）</a>の選択処理です。原著の機構・評価とコードを静的に照合しました。全証明・付録・実験commit/重みの完全対応、著者コード実行、独立追試、現行車両への導入・学習・走行は未実施です。</p>
+
+<h3>1. 特権的な教師と、カメラを使う学生</h3>
+<p>学習用シミュレータでは、道路、経路、車両、歩行者、信号などの正解状態を鳥瞰図にできます。Roachの教師はこのBEVと自車の計測から操作分布と価値を予測し、PPOで学びます。操作をBeta分布で表すことと、終了事象に応じた探索損失が学習を助けます。これは実車のカメラから正解BEVを得られるという主張ではありません。</p>
+<p>学生には単眼画像と計測・ナビゲーション情報を与えます。教師と同じ入力を与えるのではなく、教師が持つ知識を学習信号へ変えます。DAggerでは学生が訪れた状態にも教師のラベルを集めるため、教師自身が走って集めたデータだけの模倣と区別が必要です。</p>
+<figure class="tech-figure"><figcaption>図1　教師の走行能力と教える情報を分離する（本記事の概念図）</figcaption><ol class="tech-flow four"><li><strong>教師の観測</strong><p>シミュレータの正解BEVと自車計測</p></li><li><strong>RLで教師を学習</strong><p>PPO、Beta分布、終了事象の探索損失</p></li><li><strong>教師信号を収集</strong><p>学生が訪れた状態にも操作・特徴などを付与</p></li><li><strong>カメラ学生を学習</strong><p>画像と許可された計測から操作を推論</p></li></ol><p>BEV正解、報酬、教師の価値を、学生の実行時入力へ混ぜないことが前提です。</p></figure>
+
+<h3>2. 一つの正解操作より多くを教える</h3>
+<div class="table-wrap" role="region" aria-label="表1　原著§3.2の学習信号（表記を簡略化）" tabindex="0"><table class="tech-table"><caption>表1　原著§3.2の学習信号（表記を簡略化）</caption><thead><tr><th scope="col">信号</th><th scope="col">目的と条件</th></tr></thead><tbody><tr><td><code>Lₖ = KL(π_teacher || π_student)</code></td><td>一つの操作値の代わりに教師の操作分布を学ぶ。KLの向きも契約に含む。</td></tr><tr><td><code>Lꜰ = λꜰ ||j_teacher − j_student||²</code></td><td>運転に関係する潜在特徴を合わせる。学生に再構成できる情報が必要。</td></tr><tr><td><code>Lᵥ = λᵥ (v_teacher − v_student)²</code></td><td>教師の価値を補助課題として回帰する。将来の事故確率そのものではない。</td></tr></tbody></table></div>
+
+<p>原著のablationでは、特徴損失を足せば常に良くなるわけではありません。教師特徴は経路情報も含むため、学生が速度しか受け取らないNoCrash設定では一致を強いることが不利になります。commandを学生の計測側にも入れる変更を別条件として評価しています。<a href="https://github.com/zhejz/carla-roach/blob/00d6f5528296900161bcb53b62197f9d5745330c/agents/cilrs/models/utils/branched_loss.py">固定版の損失</a>には分布KL、特徴MSE、価値MSEの分岐があり、<a href="https://github.com/zhejz/carla-roach/blob/00d6f5528296900161bcb53b62197f9d5745330c/config/agent/cilrs/training/dagger.yaml">学習設定</a>と組み合わせて読む必要があります。全分岐が論文の最良行で同時に有効だったと断定しません。</p>
+<h3>3. 教師の成績と学生の成績を混ぜない</h3>
+<p>教師学習はCARLA 0.9.10.1、評価は0.9.11です。NoCrash-denseと、公開経路を使うoffline LeaderBoardを扱います。後者はonlineランキングと同じ実験ではありません。Tables 1–2は3評価seedの平均と標準偏差ですが、教師のTable 1では学習seed・runから最良checkpointを選びます。</p>
+<div class="table-wrap" role="region" aria-label="表2　原著Tables 1–2の限定した読み分け" tabindex="0"><table class="tech-table"><caption>表2　原著Tables 1–2の限定した読み分け</caption><thead><tr><th scope="col">対象・条件</th><th scope="col">原著報告</th><th scope="col">解釈</th></tr></thead><tbody><tr><td>教師Roach、NoCrash-denseの新town・新weather</td><td>成功率83 ± 3 %（Table 1）</td><td>特権BEV教師の値。カメラ学生の値ではない。</td></tr><tr><td>学生のbest <code>Lₖ + Lꜰ(c)</code>、同じ汎化区分</td><td>成功率78 ± 0 %（Table 2、DAgger iteration 5）</td><td>commandを含む条件。分散0の表記も一般的な確実性を表さない。</td></tr><tr><td>学生baseline <code>Lₐ(AP)</code>、同区分</td><td>成功率28 ± 4 %（Table 2）</td><td>著者のAutopilot教師baseline。別CARLA版の他論文と単純に差を取らない。</td></tr></tbody></table></div>
+
+<p>教師のDriving Scoreと成功率も別指標です。教師学習に約10M stepsを使った記述は、BEV、複数CARLA server、報酬・終了条件を含む特定設定の資源報告です。小さい学生モデルを用意しただけで、その教師生成と収集費用がなくなるわけではありません。</p>
+<h3>4. 現行方式へ持ち込むなら、まず教師データの契約から</h3>
+<div class="table-wrap" role="region" aria-label="表3　現行方式との接続候補と未検証点" tabindex="0"><table class="tech-table"><caption>表3　現行方式との接続候補と未検証点</caption><thead><tr><th scope="col">観点</th><th scope="col">現行の確認範囲</th><th scope="col">必要な変更・検証</th></tr></thead><tbody><tr><td>出力</td><td>TimePathV1は時刻付き30点のXYを予測する。</td><td>Roachの操作分布をそのままwaypoint教師にしない。軌道を収集する時刻・座標・欠損maskを決める。</td></tr><tr><td>特権情報</td><td>推論入力とteacher/debug-only情報を分ける設計。</td><td>BEV正解・報酬・教師特徴を学習用に分離し、学生のroute情報との整合を調べる。</td></tr><tr><td>評価・計算</td><td>本記事は既存コードの静的確認。</td><td>収集・DAgger・再学習が必要。run/scenario分割、閉ループ介入、教師の失敗、収集量とGPU/シミュレータ費用を測る。</td></tr></tbody></table></div>
+
+<p><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/a8b9fa7434aa47a69d1886a18ad54ee33ab2878d/src/aic_transfuser_lite/models/time_path_v1.py" data-source="src/aic_transfuser_lite/models/time_path_v1.py">現行TimePathV1（確認基準commit）</a>の主契約とRoachの直接操作出力は異なります。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/a8b9fa7434aa47a69d1886a18ad54ee33ab2878d/src/aic_transfuser_lite/control/safety_supervisor.py" data-source="src/aic_transfuser_lite/control/safety_supervisor.py">外部Safety Supervisor</a>も別に存在しますが、教師蒸留だけで停止能力や衝突回避が保証されることはありません。限定走行の既存結果をRoach導入の実績へ読み替えません。</p>
+<h3>確認範囲と関連資料</h3>
+<p>初稿は<a href="https://arxiv.org/abs/2108.08265">2021-08-18、ICCV 2021</a>の研究です。本文ではv3の§3–4と関連表、公式README・選択損失・分布・設定を確認しました。全補足資料、データ・重みと実験の完全対応は未確認です。</p>
+<p><a href="learning-by-cheating-2019.html">Learning by Cheating</a>、<a href="dagger.html">DAgger</a>、<a href="mile-2022.html">MILE</a>、<a href="e2e-field-overview.html">E2E研究の全体像</a>、<a href="research-map.html">研究地図</a>。</p>

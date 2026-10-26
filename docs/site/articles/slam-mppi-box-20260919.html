@@ -70,7 +70,7 @@
 <span class="section-number">検証記録</span><h1>SLAM MPPIによる静止箱通過と通常追従への復帰</h1>
 <p class="article-lead">5 km/h目標のrollout02で箱通過と通常復帰を記録。周回成功や一般的な回避保証とは区別します。</p><div class="article-meta">
 <span>公開 <time datetime="2026-09-27">2026-09-27</time></span>
-<span>更新 <time datetime="2026-10-14">2026-10-14</time></span>
+<span>更新 <time datetime="2026-10-26">2026-10-26</time></span>
 <span class="tag">限定試験で確認</span></div></header><div class="article-body"><article class="evidence">
               <div class="evidence-meta">
                 <span class="badge verified">限定試験で確認</span
@@ -96,6 +96,8 @@
 
 <h3>相手予測と追越し評価の個別確認</h3>
 <p>2026-10-14追記。<a href="predictive-spliner-2024.html">Predictive Spliner</a>。Predictive Splinerの相手予測は、ここで扱う静的占有の参照経路修正とは異なる契約です。相手ID・将来位置/速度・不確実性を使う設計候補として比較し、既存の限定試験結果は元の条件のまま維持します。導入や動的相手の追加走行は行っていません。</p>
+
+<h3>後続文献と、この試験の範囲</h3><p>2026-10-26独立再執筆に伴う追記。<a href="smooth-mppi-2021.html">Smooth MPPI</a>の操作増分探索、<a href="covo-mpc-2024.html">CoVO-MPC</a>の共分散設計は別の未導入候補です。この既存試験の条件・失敗・限定結果は維持し、両手法の導入成功や移動物体回避の実績へ読み替えません。著者コード実行・独立追試・現行車両への導入は未実施です。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
 <time datetime="2026-09-27">2026-09-27</time></div>
@@ -111,6 +113,16 @@
 <time datetime="2026-10-15">2026-10-15</time></div>
 <h3><a href="../articles/predictive-spliner-2024.html">Predictive Spliner：相手の周回を学び、追越しの場所を選ぶ</a></h3>
 <p>相手のGP予測と衝突区間、成功5回までの評価、計時と公開コードの差を整理。</p><div class="card-bottom"><span>原著v2・固定版コードの静的確認／未導入</span>
-<a class="article-read" href="../articles/predictive-spliner-2024.html" aria-label="Predictive Spliner：相手の周回を学び、追越しの場所を選ぶを読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/predictive-spliner-2024.html" aria-label="Predictive Spliner：相手の周回を学び、追越しの場所を選ぶを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/smooth-mppi-2021.html">Smooth MPPI：操作の変化を探索し、予測の中で滑らかにする</a></h3>
+<p>入力増分と操作差分コスト、CarMakerの条件、現行の経路探索との違いを整理。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
+<a class="article-read" href="../articles/smooth-mppi-2021.html" aria-label="Smooth MPPI：操作の変化を探索し、予測の中で滑らかにするを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/covo-mpc-2024.html">CoVO-MPC：候補の数だけでなく、探索分布の形を変える</a></h3>
+<p>共分散設計と条件付き最適化解析、quadrotor評価、現行の非滑らかな占有判定との境界。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
+<a class="article-read" href="../articles/covo-mpc-2024.html" aria-label="CoVO-MPC：候補の数だけでなく、探索分布の形を変えるを読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

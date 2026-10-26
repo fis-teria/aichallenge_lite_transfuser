@@ -275,3 +275,13 @@ Predictive Splinerの相手予測からnavigationの意味記憶へ比較軸を�
 ### NavSafe/MILE独立再執筆の公開確認
 
 記事commit `0e22feb4d1d5db2e46bb9e98b3d4da6410529fb0` をHervarar正式Windows checkoutから既存認証で通常push。[対象CI](https://github.com/fis-teria/aichallenge_lite_transfuser/actions/runs/40251970164)のbuild/deployはsuccess。全43ページ+3資産はHTTP200/正式生成物完全一致。[NavSafe](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/navsafe-infinity-2026.html)・[MILE](https://fis-teria.github.io/aichallenge_lite_transfuser/articles/mile-2022.html)と関連5本を実配信4幅で検査し、図2/表6/数式/横スクロール/相互リンク/JS無効は成功。記録はindependent-rewrite-publication-20261026.json。両記事は公式一次資料から現地で新規に著述した独立再執筆版で、旧稿の回収/コピー/推測再現ではありません。台帳100資料66系列、年代84/undated16。ニュースは公開7/追加精読12/LOOP保留1、他95資料/19intent/他batchを保全。保留6記事とFormulaZero追補は変更なし。全版/実験対応・著者コード実行・独立再現・導入・全pytest・学習/走行は未実施。remote/認証・学習/制御/ROS/設定・デザイン変更、SSH/WSL/他host/クラウドpush、API/Web書込みは行っていません。
+
+## 5記事とFormulaZero追補の独立再執筆（2026-10-26）
+
+今回の公開依頼に基づきRoach、VAD、Smooth MPPI、CoVO-MPC、MAPの5記事と既存レーシング概説のFormulaZero追補を公式一次資料からHervarar上で新規著述。旧クラウド原稿の回収・コピー・推測復元ではなく、未取得旧稿は置換・削除せず保全。DynaBARNは著者大学公開原典のTLS証明書検証に失敗し、検証無効化や別経路迂回をせず保留。Libraryの正規転送障害も未解決です。
+
+既存6資料を限定増補し、MAP v2の版日付を補正して保全、v4と5公式codeを同じ系列へ追加。最新JSONから106資料・66系列、年代85・undated21、144セル中33調査済/111未調査・全coverage_complete=false。対象以外94資料と全20ニュースintentを保全。コードcommit日を初公表年へ代用しません。記事は教師/学生、開/閉ループ、入力増分と経路係数、無限サンプルの最適化解析と制御保証、同定LUTと既存速度補償を分離。全証明/実験対応・著者コード実行・独立再現・現行導入・全pytest・学習/走行は未実施。学習/制御/ROS/設定・デザインは変更なし。正式サイト検証と公開CI/配信は確認後に記録します。
+
+### 5記事・FormulaZero追補の公開前検査
+
+正式生成・一致、48ページ2469リンク/asset・70固定根拠、サイト回帰29件を確認。公式Edge5幅・全48ページPC/mobile、対象14記事×4幅・図5/表15/数式/横スクロール/相互リンク/JS無効は成功。PC/mobileの図表と式を目視確認し、相互リンク検査で見つけたCoVOから既存SLAM MPPIへの戻りリンクを補正後に再検査。外部一次33URLはHTTP200。台帳106資料66系列/年代85/undated21と研究地図144セル/JSON/CSVを照合し、他94資料・全20ニュースintent・記事範囲外5533ファイルを保全。DynaBARNは原典TLS証明書検証失敗で保留、Library原稿回収障害は未解決のまま保全。記録はremaining-rewrite-validation-20261026.json。

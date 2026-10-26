@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="入力増分と操作差分コスト、CarMakerの条件、現行の経路探索との違いを整理。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>Smooth MPPI：操作の変化を探索し、予測の中で滑らかにする — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html" aria-current="page"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../papers.html">論文ノート</a></div>
+<span class="section-number">論文ノート</span><h1>Smooth MPPI：操作の変化を探索し、予測の中で滑らかにする</h1>
+<p class="article-lead">入力増分と操作差分コスト、CarMakerの条件、現行の経路探索との違いを整理。</p><div class="article-meta">
+<span>公開 <time datetime="2026-10-26">2026-10-26</time></span>
+<span>更新 <time datetime="2026-10-26">2026-10-26</time></span>
+<span class="tag">独立再執筆・原著/固定code静的確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文詳解・独立再執筆</span><span class="paper-year">2021 / 2022</span></div>
+<h2>Smooth MPPI：操作の変化を探索し、予測の中で滑らかにする</h2>
+<p class="authors">Taekyung Kim、Gyuhyun Park、Kiho Kwak、Jihwan Bae、Wonsuk Lee</p>
+<p class="paper-summary">Smooth MPPIは、最適化後の操作列へフィルタを掛ける代わりに、操作の増分を探索して予測中の変化も評価します。滑らかな軌道の幾何と、実際の操作指令の滑らかさを分けて考えます。</p>
+<p>確認日：2026-10-26、公式一次資料からHervarar上で新規に著述した独立再執筆版。対象は<a href="https://arxiv.org/pdf/2112.09988v8">Smooth Model Predictive Path Integral Control without Smoothing、arXiv v8（2025-10-13）、§III–V・Algorithm 1</a>と、<a href="https://github.com/tkkim-robot/smooth-mppi-pytorch/tree/dcc6f4285069dbf8add0a111c8b936d0ef1830e6">公式コード固定版dcc6f42（2024-04-18）</a>の選択処理です。原著の機構・評価とコードを静的に照合しました。全証明・付録・実験commit/重みの完全対応、著者コード実行、独立追試、現行車両への導入・学習・走行は未実施です。</p>
+
+<h3>1. 後から丸めると、評価した運動と変わる</h3>
+<p>MPPIは候補入力で未来を予測し、コストに応じて候補を重み付けします。得た操作を最後に平滑化すると、実際に送る操作は評価時の操作と変わります。急な減速や旋回が必要なときは、その遅れも問題になります。原著は外部フィルタによる操作変更を予測の外に置かず、探索する変数を一段持ち上げます。</p>
+<figure class="tech-figure"><figcaption>図1　増分の探索と実操作の評価（本記事の概念図）</figcaption><ol class="tech-flow four"><li><strong>増分をサンプル</strong><p>操作そのものとは別の探索変数uにノイズを加える</p></li><li><strong>操作へ反映</strong><p>保持する操作列Aに増分を反映し、上限を扱う</p></li><li><strong>運動と変化を評価</strong><p>実操作でrolloutし、状態コストと操作列の差分を評価</p></li><li><strong>先頭を実行</strong><p>重み付き更新後の先頭を送り、次の周期へ列をずらす</p></li></ol><p>予測区間に沿うt軸と、再計算の繰り返しであるi軸を区別します。</p></figure>
+
+<h3>2. 操作列を拡張状態として扱う</h3>
+<div class="table-wrap" role="region" aria-label="表1　原著式15–18の簡略表記" tabindex="0"><table class="tech-table"><caption>表1　原著式15–18の簡略表記</caption><thead><tr><th scope="col">関係</th><th scope="col">読み方</th></tr></thead><tbody><tr><td><code>uᵢ₊₁,t = uᵢ,t + Σₖ wₖ εₖ,t</code></td><td>iは最適化・制御周期の反復、tは予測区間内の位置。</td></tr><tr><td><code>aᵢ₊₁,t = aᵢ,t + uᵢ₊₁,t Δt</code></td><td>保持している操作aを増分uで更新する。単なる出力後フィルタではない。</td></tr><tr><td><code>Ω(A) = Σₜ (aₜ − aₜ₋₁)ᵀ ω (aₜ − aₜ₋₁)</code></td><td>予測区間内の操作差をコストに含める。全最適化式・重要度補正の再掲ではない。</td></tr></tbody></table></div>
+
+<p>uとaを区別することで、探索分布の入力コストとは別に、操作の変化を状態側のコストへ入れます。<a href="https://github.com/tkkim-robot/smooth-mppi-pytorch/blob/dcc6f4285069dbf8add0a111c8b936d0ef1830e6/pytorch_mppi/smooth_mppi.py">公開実装のcommand/noise_sampling/rollout</a>も<code>U</code>と<code>action_sequence</code>を別に保持し、差分コストと境界処理を持ちます。ただし固定版では<code>action_sequence += U</code>という離散増分の実装です。原著のΔtを含む単位系と同一だと仮定してコードを移植しません。</p>
+<h3>3. 振子とCarMakerの条件に限って読む</h3>
+<p>§IVは学習したNN dynamicsを使う振子の数値実験です。§VはCarMaker上のVolvo XC90モデルと、KART 2000を模したコースを使います。速度・操舵の変化や路面摩擦を含む学習データを集め、評価には事前学習済みモデルを固定しています。実車走行による検証ではありません。</p>
+<div class="table-wrap" role="region" aria-label="表2　原著§Vの設定と観測" tabindex="0"><table class="tech-table"><caption>表2　原著§Vの設定と観測</caption><thead><tr><th scope="col">項目</th><th scope="col">限定された条件・結果</th></tr></thead><tbody><tr><td>運動モデル用データ</td><td>CarMakerの35 maneuvers、計70分。train/testは70/30。別摩擦値のvalidationも使う。時間・run単位の独立性を本記事で再監査したわけではない。</td></tr><tr><td>制御条件</td><td>操舵角と目標速度を指令。下流のPIでthrottle/brakeを扱う。10 Hz、4 s horizon、10,000 samplesという著者設定。</td></tr><tr><td>Table III</td><td>6つのcorner区間の時間を比較。SMPPIの両variantは全区間を通過し、Ω付きはΩなしより各区間で短い。baselineのN/Aは未完了であり、ゼロ秒や全周lap timeへ換算しない。</td></tr></tbody></table></div>
+
+<p><a href="https://github.com/tkkim-robot/smooth-mppi-pytorch/blob/dcc6f4285069dbf8add0a111c8b936d0ef1830e6/README.md">公式README</a>と<a href="https://github.com/tkkim-robot/smooth-mppi-pytorch/blob/dcc6f4285069dbf8add0a111c8b936d0ef1830e6/gym_pendulum.py">振子用example</a>は公開されています。取得した小規模repositoryの選択ファイルだけから、CarMakerデータ、全vehicle training recipe、Table IIIの全実験がそのまま再現できるとは確認していません。v8は2025年の改訂版で、初稿2021-12-18・RA-L 2022という同一研究系列の追跡です。</p>
+<h3>4. 現行の滑らかな迂回経路とは、最適化する量が違う</h3>
+<div class="table-wrap" role="region" aria-label="表3　現行方式への接続境界" tabindex="0"><table class="tech-table"><caption>表3　現行方式への接続境界</caption><thead><tr><th scope="col">観点</th><th scope="col">現状と必要な確認</th></tr></thead><tbody><tr><td>探索空間</td><td>現行ReferenceMppiは横方向の経路係数と曲率rolloutを探索する。SMPPIの操舵・速度の入力増分探索と同じではない。</td></tr><tr><td>モデル・再学習</td><td>制御だけの候補だが、学習dynamicsを使うなら自車の速度域・路面・遅延を含む別データが必要。既存モデルへ重みを足すだけの変更ではない。</td></tr><tr><td>評価と資源</td><td>経路曲率、実操舵差分、加減速、追従誤差、衝突・停止、観測から適用までの期限超過を同時に測る。GPU性能だけで10 Hz成立を判断しない。</td></tr></tbody></table></div>
+
+<p><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/a8b9fa7434aa47a69d1886a18ad54ee33ab2878d/src/aic_transfuser_lite/control/slam_mppi.py" data-source="src/aic_transfuser_lite/control/slam_mppi.py">現行SLAM MPPI（確認基準commit）</a>は静的占有を検査し、未知領域を禁止します。形の滑らかさを持つことから、操作の全周期の滑らかさ、動く相手への回避、安全保証までは導けません。停止監視を含む下流との契約を保った限定比較が必要です。</p>
+<h3>確認範囲と関連資料</h3><p>原著v8の§III–V、式15–18・Algorithm 1・Tables I–IIIと、著者の<a href="https://www.taekyung.me/smppi">公式紹介</a>・固定codeの選択処理を確認しました。全証明・版差・CarMaker recipeの完全監査は未実施です。<a href="mpc-mppi-overview.html">MPC / MPPI概説</a>、<a href="mppi-generic-2024.html">MPPI-Generic</a>、<a href="covo-mpc-2024.html">CoVO-MPC</a>、<a href="slam-mppi-box-20260919.html">既存の限定SLAM MPPI検証</a>、<a href="research-map.html">研究地図</a>。</p>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/mpc-mppi-overview.html">MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</a></h3>
+<p>線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="card-bottom"><span>文献俯瞰・適用候補</span>
+<a class="article-read" href="../articles/mpc-mppi-overview.html" aria-label="MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-10">2026-10-10</time></div>
+<h3><a href="../articles/mppi-generic-2024.html">MPPI-Generic：GPU並列化と制御周期を分けて測る</a></h3>
+<p>CUDA実装の候補探索・計時範囲と、現行の参照空間MPPIへ接続する条件を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
+<a class="article-read" href="../articles/mppi-generic-2024.html" aria-label="MPPI-Generic：GPU並列化と制御周期を分けて測るを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/covo-mpc-2024.html">CoVO-MPC：候補の数だけでなく、探索分布の形を変える</a></h3>
+<p>共分散設計と条件付き最適化解析、quadrotor評価、現行の非滑らかな占有判定との境界。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
+<a class="article-read" href="../articles/covo-mpc-2024.html" aria-label="CoVO-MPC：候補の数だけでなく、探索分布の形を変えるを読む">記事を読む →</a></div></article><article class="article-card" data-category="report">
+<div class="card-meta"><span class="tag">検証記録</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/slam-mppi-box-20260919.html">SLAM MPPIによる静止箱通過と通常追従への復帰</a></h3>
+<p>5 km/h目標のrollout02で箱通過と通常復帰を記録。周回成功や一般的な回避保証とは区別します。</p><div class="card-bottom"><span>限定試験で確認</span>
+<a class="article-read" href="../articles/slam-mppi-box-20260919.html" aria-label="SLAM MPPIによる静止箱通過と通常追従への復帰を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
+<p>4領域・144区分の確認範囲と未調査を整理。106資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

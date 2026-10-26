@@ -137,6 +137,8 @@
 <p>2026-10-12追記。<a href="dodger-2026.html">DODGER</a>は周囲の相対運動をグラフへ集約し、CBF参照を訓練の信号にするG1のナビゲーションです。確認した現行SLAM MPPIは静的占有上の参照オフセット探索で、移動物体の予測とは異なります。論文の観測数上限解除条件、公開コードの監視設定と期限を分けて整理しました。実装変更・追試・走行は未実施です。</p>
 
 <h3>学習した未来と、最適化による操作選択</h3><p>2026-10-26追記。<a href="mile-2022.html">MILE</a>は潜在状態の未来と操作方策を学ぶ方式です。想像できることだけで、候補操作のコストを最小化するMPC実装と同じにはなりません。固定版の操作入力・想像・deployment経路と、現行waypoint契約の違いを整理しました。</p>
+
+<h3>滑らかさと探索分布を別々に考える</h3><p>2026-10-26独立再執筆に伴う追記。<a href="smooth-mppi-2021.html">Smooth MPPI</a>は操作増分と操作列の変化を扱い、<a href="covo-mpc-2024.html">CoVO-MPC</a>はHessianから共分散を設計します。現在の静的占有・経路係数探索へ同じ式を適用できるかは未検証です。最適化解析を閉ループ安全保証へ置換しません。著者コード実行・独立追試・現行車両への導入は未実施です。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-09-27">2026-09-27</time></div>
@@ -156,7 +158,7 @@
 <div class="card-meta"><span class="tag">継続資料</span>
 <time datetime="2026-10-26">2026-10-26</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
-<p>4領域・144区分の確認範囲と未調査を整理。100資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
+<p>4領域・144区分の確認範囲と未調査を整理。106資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
 <a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-08">2026-10-08</time></div>
@@ -187,6 +189,16 @@
 <time datetime="2026-10-26">2026-10-26</time></div>
 <h3><a href="../articles/mile-2022.html">MILE：世界の状態を学び、方策と一緒に先を想像する</a></h3>
 <p>潜在世界モデルと模倣、再帰推論と想像の経路、CARLA評価と現行TimePathの契約を整理。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
-<a class="article-read" href="../articles/mile-2022.html" aria-label="MILE：世界の状態を学び、方策と一緒に先を想像するを読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/mile-2022.html" aria-label="MILE：世界の状態を学び、方策と一緒に先を想像するを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/smooth-mppi-2021.html">Smooth MPPI：操作の変化を探索し、予測の中で滑らかにする</a></h3>
+<p>入力増分と操作差分コスト、CarMakerの条件、現行の経路探索との違いを整理。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
+<a class="article-read" href="../articles/smooth-mppi-2021.html" aria-label="Smooth MPPI：操作の変化を探索し、予測の中で滑らかにするを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/covo-mpc-2024.html">CoVO-MPC：候補の数だけでなく、探索分布の形を変える</a></h3>
+<p>共分散設計と条件付き最適化解析、quadrotor評価、現行の非滑らかな占有判定との境界。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
+<a class="article-read" href="../articles/covo-mpc-2024.html" aria-label="CoVO-MPC：候補の数だけでなく、探索分布の形を変えるを読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

@@ -80,7 +80,7 @@
 <p>複数解像度の画像・鳥瞰LiDAR特徴をTransformerで融合する構成を発展させ、長い経路と密な交通を含むCARLAの評価で検証。融合方式を運転結果へ結びつけて比較しています。</p><div class="card-bottom"><span>一次資料を確認</span>
 <a class="article-read" href="articles/transfuser-2022.html" aria-label="TransFuser拡張版：融合とclosed-loop評価を読む">記事を読む →</a></div></article><article class="article-card" data-category="learning">
 <div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-04">2026-10-04</time></div>
+<time datetime="2026-10-26">2026-10-26</time></div>
 <h3><a href="articles/dagger.html">DAgger：模倣学習で生じる分布ずれ</a></h3>
 <p>学習した方策の行動が次の観測を変えるため、教師の走行だけで学ぶと運用時に分布ずれが生じる問題を扱います。DAggerでは学習者が訪れた状態に教師の指示を付け、データを反復集約します。</p><div class="card-bottom"><span>一次資料を確認</span>
 <a class="article-read" href="articles/dagger.html" aria-label="DAgger：模倣学習で生じる分布ずれを読む">記事を読む →</a></div></article><article class="article-card" data-category="control">
@@ -105,7 +105,7 @@
 <p>RMPPIの名目／実状態と追従内包、条件付きfree-energy保証、実験条件の違い、導入前の検証を解説します。</p><div class="card-bottom"><span>原論文精読・未実装候補</span>
 <a class="article-read" href="articles/robust-mppi.html" aria-label="Robust MPPI：追従器を予測の内側へ入れるを読む">記事を読む →</a></div></article><article class="article-card" data-category="control">
 <div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-14">2026-10-14</time></div>
+<time datetime="2026-10-26">2026-10-26</time></div>
 <h3><a href="articles/forzaeth-race-stack-2024.html">ForzaETH Race Stack：全スタックと対戦の条件</a></h3>
 <p>2024年の全スタック論文から、MAP、評価の条件、追越しの失敗とTimePathへの適用候補を読む。</p><div class="card-bottom"><span>論文解説・未適用</span>
 <a class="article-read" href="articles/forzaeth-race-stack-2024.html" aria-label="ForzaETH Race Stack：全スタックと対戦の条件を読む">記事を読む →</a></div></article><article class="article-card" data-category="learning">
@@ -130,7 +130,7 @@
 <p>完走履歴による終端集合・残り時間・局所モデル、BARC実験と公開コードの版差、現行TimePathへの適用条件。</p><div class="card-bottom"><span>原著・公式コード確認／未実装候補</span>
 <a class="article-read" href="articles/learning-mpc-racing-2019.html" aria-label="LMPC：走行履歴から学ぶラップタイム最適化を読む">記事を読む →</a></div></article><article class="article-card" data-category="learning">
 <div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-09">2026-10-09</time></div>
+<time datetime="2026-10-26">2026-10-26</time></div>
 <h3><a href="articles/learning-by-cheating-2019.html">Learning by Cheating：特権教師から画像の運転方策へ</a></h3>
 <p>全分岐の教師信号とDAgger、CARLA成功率の定義、公開コードの版差、TimePathへの導入条件を解説。</p><div class="card-bottom"><span>原著・補足・公式コード確認／未導入</span>
 <a class="article-read" href="articles/learning-by-cheating-2019.html" aria-label="Learning by Cheating：特権教師から画像の運転方策へを読む">記事を読む →</a></div></article><article class="article-card" data-category="control">
@@ -155,7 +155,7 @@
 <p>CUDA実装の候補探索・計時範囲と、現行の参照空間MPPIへ接続する条件を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
 <a class="article-read" href="articles/mppi-generic-2024.html" aria-label="MPPI-Generic：GPU並列化と制御周期を分けて測るを読む">記事を読む →</a></div></article><article class="article-card" data-category="control">
 <div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-11">2026-10-11</time></div>
+<time datetime="2026-10-26">2026-10-26</time></div>
 <h3><a href="articles/on-track-sysid-2024.html">On-Track SysID：残差からタイヤモデルへ戻す</a></h3>
 <p>短い走行からの物理同定。予測誤差と周回、原著と公開コードの版差、TimePathへの接続条件を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
 <a class="article-read" href="articles/on-track-sysid-2024.html" aria-label="On-Track SysID：残差からタイヤモデルへ戻すを読む">記事を読む →</a></div></article><article class="article-card" data-category="control">
@@ -188,6 +188,31 @@
 <time datetime="2026-10-26">2026-10-26</time></div>
 <h3><a href="articles/mile-2022.html">MILE：世界の状態を学び、方策と一緒に先を想像する</a></h3>
 <p>潜在世界モデルと模倣、再帰推論と想像の経路、CARLA評価と現行TimePathの契約を整理。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
-<a class="article-read" href="articles/mile-2022.html" aria-label="MILE：世界の状態を学び、方策と一緒に先を想像するを読む">記事を読む →</a></div></article></div><p id="article-empty" class="note" hidden>一致する記事はありません。検索語や分類を変更してください。</p></section>
+<a class="article-read" href="articles/mile-2022.html" aria-label="MILE：世界の状態を学び、方策と一緒に先を想像するを読む">記事を読む →</a></div></article><article class="article-card" data-category="learning">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="articles/roach-2021.html">Roach：よく走る教師から、教え方まで学ぶ</a></h3>
+<p>特権BEVのRL教師とカメラ学生、操作分布・特徴・価値の蒸留と評価条件を整理。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
+<a class="article-read" href="articles/roach-2021.html" aria-label="Roach：よく走る教師から、教え方まで学ぶを読む">記事を読む →</a></div></article><article class="article-card" data-category="learning">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="articles/vad-2023.html">VAD：道路と相手をベクトルで表し、軌道の学習へつなぐ</a></h3>
+<p>vector mapとagent予測、学習損失、開ループと閉ループの指標・現行契約を整理。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
+<a class="article-read" href="articles/vad-2023.html" aria-label="VAD：道路と相手をベクトルで表し、軌道の学習へつなぐを読む">記事を読む →</a></div></article><article class="article-card" data-category="control">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="articles/smooth-mppi-2021.html">Smooth MPPI：操作の変化を探索し、予測の中で滑らかにする</a></h3>
+<p>入力増分と操作差分コスト、CarMakerの条件、現行の経路探索との違いを整理。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
+<a class="article-read" href="articles/smooth-mppi-2021.html" aria-label="Smooth MPPI：操作の変化を探索し、予測の中で滑らかにするを読む">記事を読む →</a></div></article><article class="article-card" data-category="control">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="articles/covo-mpc-2024.html">CoVO-MPC：候補の数だけでなく、探索分布の形を変える</a></h3>
+<p>共分散設計と条件付き最適化解析、quadrotor評価、現行の非滑らかな占有判定との境界。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
+<a class="article-read" href="articles/covo-mpc-2024.html" aria-label="CoVO-MPC：候補の数だけでなく、探索分布の形を変えるを読む">記事を読む →</a></div></article><article class="article-card" data-category="control">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="articles/map-controller-2022.html">MAP：必要な横加速度を、タイヤモデルから操舵へ変える</a></h3>
+<p>L1 guidanceとタイヤLUT、F1TENTHの評価条件、現行の速度補償との違いを整理。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
+<a class="article-read" href="articles/map-controller-2022.html" aria-label="MAP：必要な横加速度を、タイヤモデルから操舵へ変えるを読む">記事を読む →</a></div></article></div><p id="article-empty" class="note" hidden>一致する記事はありません。検索語や分類を変更してください。</p></section>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

@@ -1,0 +1,24 @@
+<div class="paper-top"><span class="tag">論文詳解・独立再執筆</span><span class="paper-year">2021 / 2022</span></div>
+<h2>Smooth MPPI：操作の変化を探索し、予測の中で滑らかにする</h2>
+<p class="authors">Taekyung Kim、Gyuhyun Park、Kiho Kwak、Jihwan Bae、Wonsuk Lee</p>
+<p class="paper-summary">Smooth MPPIは、最適化後の操作列へフィルタを掛ける代わりに、操作の増分を探索して予測中の変化も評価します。滑らかな軌道の幾何と、実際の操作指令の滑らかさを分けて考えます。</p>
+<p>確認日：2026-10-26、公式一次資料からHervarar上で新規に著述した独立再執筆版。対象は<a href="https://arxiv.org/pdf/2112.09988v8">Smooth Model Predictive Path Integral Control without Smoothing、arXiv v8（2025-10-13）、§III–V・Algorithm 1</a>と、<a href="https://github.com/tkkim-robot/smooth-mppi-pytorch/tree/dcc6f4285069dbf8add0a111c8b936d0ef1830e6">公式コード固定版dcc6f42（2024-04-18）</a>の選択処理です。原著の機構・評価とコードを静的に照合しました。全証明・付録・実験commit/重みの完全対応、著者コード実行、独立追試、現行車両への導入・学習・走行は未実施です。</p>
+
+<h3>1. 後から丸めると、評価した運動と変わる</h3>
+<p>MPPIは候補入力で未来を予測し、コストに応じて候補を重み付けします。得た操作を最後に平滑化すると、実際に送る操作は評価時の操作と変わります。急な減速や旋回が必要なときは、その遅れも問題になります。原著は外部フィルタによる操作変更を予測の外に置かず、探索する変数を一段持ち上げます。</p>
+<figure class="tech-figure"><figcaption>図1　増分の探索と実操作の評価（本記事の概念図）</figcaption><ol class="tech-flow four"><li><strong>増分をサンプル</strong><p>操作そのものとは別の探索変数uにノイズを加える</p></li><li><strong>操作へ反映</strong><p>保持する操作列Aに増分を反映し、上限を扱う</p></li><li><strong>運動と変化を評価</strong><p>実操作でrolloutし、状態コストと操作列の差分を評価</p></li><li><strong>先頭を実行</strong><p>重み付き更新後の先頭を送り、次の周期へ列をずらす</p></li></ol><p>予測区間に沿うt軸と、再計算の繰り返しであるi軸を区別します。</p></figure>
+
+<h3>2. 操作列を拡張状態として扱う</h3>
+<div class="table-wrap" role="region" aria-label="表1　原著式15–18の簡略表記" tabindex="0"><table class="tech-table"><caption>表1　原著式15–18の簡略表記</caption><thead><tr><th scope="col">関係</th><th scope="col">読み方</th></tr></thead><tbody><tr><td><code>uᵢ₊₁,t = uᵢ,t + Σₖ wₖ εₖ,t</code></td><td>iは最適化・制御周期の反復、tは予測区間内の位置。</td></tr><tr><td><code>aᵢ₊₁,t = aᵢ,t + uᵢ₊₁,t Δt</code></td><td>保持している操作aを増分uで更新する。単なる出力後フィルタではない。</td></tr><tr><td><code>Ω(A) = Σₜ (aₜ − aₜ₋₁)ᵀ ω (aₜ − aₜ₋₁)</code></td><td>予測区間内の操作差をコストに含める。全最適化式・重要度補正の再掲ではない。</td></tr></tbody></table></div>
+
+<p>uとaを区別することで、探索分布の入力コストとは別に、操作の変化を状態側のコストへ入れます。<a href="https://github.com/tkkim-robot/smooth-mppi-pytorch/blob/dcc6f4285069dbf8add0a111c8b936d0ef1830e6/pytorch_mppi/smooth_mppi.py">公開実装のcommand/noise_sampling/rollout</a>も<code>U</code>と<code>action_sequence</code>を別に保持し、差分コストと境界処理を持ちます。ただし固定版では<code>action_sequence += U</code>という離散増分の実装です。原著のΔtを含む単位系と同一だと仮定してコードを移植しません。</p>
+<h3>3. 振子とCarMakerの条件に限って読む</h3>
+<p>§IVは学習したNN dynamicsを使う振子の数値実験です。§VはCarMaker上のVolvo XC90モデルと、KART 2000を模したコースを使います。速度・操舵の変化や路面摩擦を含む学習データを集め、評価には事前学習済みモデルを固定しています。実車走行による検証ではありません。</p>
+<div class="table-wrap" role="region" aria-label="表2　原著§Vの設定と観測" tabindex="0"><table class="tech-table"><caption>表2　原著§Vの設定と観測</caption><thead><tr><th scope="col">項目</th><th scope="col">限定された条件・結果</th></tr></thead><tbody><tr><td>運動モデル用データ</td><td>CarMakerの35 maneuvers、計70分。train/testは70/30。別摩擦値のvalidationも使う。時間・run単位の独立性を本記事で再監査したわけではない。</td></tr><tr><td>制御条件</td><td>操舵角と目標速度を指令。下流のPIでthrottle/brakeを扱う。10 Hz、4 s horizon、10,000 samplesという著者設定。</td></tr><tr><td>Table III</td><td>6つのcorner区間の時間を比較。SMPPIの両variantは全区間を通過し、Ω付きはΩなしより各区間で短い。baselineのN/Aは未完了であり、ゼロ秒や全周lap timeへ換算しない。</td></tr></tbody></table></div>
+
+<p><a href="https://github.com/tkkim-robot/smooth-mppi-pytorch/blob/dcc6f4285069dbf8add0a111c8b936d0ef1830e6/README.md">公式README</a>と<a href="https://github.com/tkkim-robot/smooth-mppi-pytorch/blob/dcc6f4285069dbf8add0a111c8b936d0ef1830e6/gym_pendulum.py">振子用example</a>は公開されています。取得した小規模repositoryの選択ファイルだけから、CarMakerデータ、全vehicle training recipe、Table IIIの全実験がそのまま再現できるとは確認していません。v8は2025年の改訂版で、初稿2021-12-18・RA-L 2022という同一研究系列の追跡です。</p>
+<h3>4. 現行の滑らかな迂回経路とは、最適化する量が違う</h3>
+<div class="table-wrap" role="region" aria-label="表3　現行方式への接続境界" tabindex="0"><table class="tech-table"><caption>表3　現行方式への接続境界</caption><thead><tr><th scope="col">観点</th><th scope="col">現状と必要な確認</th></tr></thead><tbody><tr><td>探索空間</td><td>現行ReferenceMppiは横方向の経路係数と曲率rolloutを探索する。SMPPIの操舵・速度の入力増分探索と同じではない。</td></tr><tr><td>モデル・再学習</td><td>制御だけの候補だが、学習dynamicsを使うなら自車の速度域・路面・遅延を含む別データが必要。既存モデルへ重みを足すだけの変更ではない。</td></tr><tr><td>評価と資源</td><td>経路曲率、実操舵差分、加減速、追従誤差、衝突・停止、観測から適用までの期限超過を同時に測る。GPU性能だけで10 Hz成立を判断しない。</td></tr></tbody></table></div>
+
+<p><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/a8b9fa7434aa47a69d1886a18ad54ee33ab2878d/src/aic_transfuser_lite/control/slam_mppi.py" data-source="src/aic_transfuser_lite/control/slam_mppi.py">現行SLAM MPPI（確認基準commit）</a>は静的占有を検査し、未知領域を禁止します。形の滑らかさを持つことから、操作の全周期の滑らかさ、動く相手への回避、安全保証までは導けません。停止監視を含む下流との契約を保った限定比較が必要です。</p>
+<h3>確認範囲と関連資料</h3><p>原著v8の§III–V、式15–18・Algorithm 1・Tables I–IIIと、著者の<a href="https://www.taekyung.me/smppi">公式紹介</a>・固定codeの選択処理を確認しました。全証明・版差・CarMaker recipeの完全監査は未実施です。<a href="mpc-mppi-overview.html">MPC / MPPI概説</a>、<a href="mppi-generic-2024.html">MPPI-Generic</a>、<a href="covo-mpc-2024.html">CoVO-MPC</a>、<a href="slam-mppi-box-20260919.html">既存の限定SLAM MPPI検証</a>、<a href="research-map.html">研究地図</a>。</p>

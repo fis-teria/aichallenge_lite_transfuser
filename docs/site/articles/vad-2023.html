@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="vector mapとagent予測、学習損失、開ループと閉ループの指標・現行契約を整理。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>VAD：道路と相手をベクトルで表し、軌道の学習へつなぐ — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html" aria-current="page"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../papers.html">論文ノート</a></div>
+<span class="section-number">論文ノート</span><h1>VAD：道路と相手をベクトルで表し、軌道の学習へつなぐ</h1>
+<p class="article-lead">vector mapとagent予測、学習損失、開ループと閉ループの指標・現行契約を整理。</p><div class="article-meta">
+<span>公開 <time datetime="2026-10-26">2026-10-26</time></span>
+<span>更新 <time datetime="2026-10-26">2026-10-26</time></span>
+<span class="tag">独立再執筆・原著/固定code静的確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文詳解・独立再執筆</span><span class="paper-year">2023</span></div>
+<h2>VAD：道路と相手をベクトルで表し、軌道の学習へつなぐ</h2>
+<p class="authors">Bo Jiang、Shaoyu Chen、Qing Xu、Bencheng Liao、Jiajie Chen、Helong Zhou、Qian Zhang、Wenyu Liu、Chang Huang、Xinggang Wang</p>
+<p class="paper-summary">VADは相手の未来軌道と地図要素をベクトルとして予測し、自車の軌道学習へ接続します。学習時の制約損失、ログ上の衝突指標、実行後の閉ループ評価を区別します。</p>
+<p>確認日：2026-10-26、公式一次資料からHervarar上で新規に著述した独立再執筆版。対象は<a href="https://arxiv.org/pdf/2303.12077v3">VAD: Vectorized Scene Representation for Efficient Autonomous Driving、arXiv v3（2023-08-24）、§3–4・Tables 1–5</a>と、<a href="https://github.com/hustvl/VAD/tree/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8">公式コード固定版1688c4b（2026-01-31）</a>の選択処理です。原著の機構・評価とコードを静的に照合しました。全証明・付録・実験commit/重みの完全対応、著者コード実行、独立追試、現行車両への導入・学習・走行は未実施です。</p>
+
+<h3>1. 密な画像表現から、物体と線の単位へ</h3>
+<p>カメラ特徴からBEV特徴を作り、agent queryで相手の属性・未来軌道を、map queryで道路境界やlane dividerなどの点列を予測します。自車のqueryは相手・地図とのattentionを経て、ナビゲーション情報とともに将来軌道を出します。ベクトル化はBEV特徴抽出を消すという意味ではなく、planningに渡す場面表現を物体・線の単位にする設計です。</p>
+<figure class="tech-figure"><figcaption>図1　予測した場面を自車の軌道学習へ結ぶ（本記事の概念図）</figcaption><ol class="tech-flow four"><li><strong>画像の履歴</strong><p>複数cameraから時系列のBEV特徴を作る</p></li><li><strong>場面をベクトル化</strong><p>agentの未来軌道と地図の点列を予測</p></li><li><strong>相互作用を読む</strong><p>自車queryがagent/map queryと情報を交換</p></li><li><strong>軌道を学習</strong><p>模倣と衝突・境界・方向の損失を合わせる</p></li></ol><p>地図・相手の予測誤差は残ります。損失に制約を入れることと、実行時の実行可能性保証は別です。</p></figure>
+
+<h3>2. 制約は学習目的の中にある</h3>
+<div class="table-wrap" role="region" aria-label="表1　原著§3.3–3.4のplanning損失を簡略化" tabindex="0"><table class="tech-table"><caption>表1　原著§3.3–3.4のplanning損失を簡略化</caption><thead><tr><th scope="col">関係・項目</th><th scope="col">作用</th></tr></thead><tbody><tr><td><code>Lplan = Limi + Lcol + Lbd + Ldir</code></td><td>模倣と3種の制約損失を組み合わせる役割の表記。全損失の重み・map/motion学習は省略。</td></tr><tr><td>collision / boundary</td><td>相手の予測軌道との距離と道路境界への接近を罰する。相手の全将来分岐を保証対象にするものではない。</td></tr><tr><td>lane direction</td><td>近傍lane dividerの向きを自車の移動方向の事前情報に使う。誤認識や特殊な道路形状は別途検証が必要。</td></tr></tbody></table></div>
+
+<p>原著の衝突損失はconfidence thresholdでagentを選び、多峰予測から最高confidenceの軌道を使います。<a href="https://github.com/hustvl/VAD/blob/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8/projects/mmdet3d_plugin/VAD/utils/plan_loss.py">固定版plan_loss.py</a>ではこれらを学習損失として実装しています。Safety Filterのように毎時刻制約付き最適化を解いてから操作を許可する機構だとは扱いません。公式repoはVAD v1/v2を併載していますが、今回確認したのは<code>projects/.../VAD</code>側のv1関連処理で、VADv2を本論文の成果へ混ぜません。</p>
+<h3>3. 開ループと閉ループの結果を分ける</h3>
+<p>原著は2秒の履歴から3秒先を計画します。nuScenes valでは記録済みの世界に対してL2距離とcollisionを測り、主比較ではshortcut learningを避けるためego status特徴を外します。CARLA Town05では操作を環境へ戻す別評価を行い、navigationや信号認識を追加します。二つは同じ入力・評価契約ではありません。</p>
+<div class="table-wrap" role="region" aria-label="表2　原著Tables 1・4・5からの限定値" tabindex="0"><table class="tech-table"><caption>表2　原著Tables 1・4・5からの限定値</caption><thead><tr><th scope="col">条件</th><th scope="col">原著の値</th><th scope="col">比較上の境界</th></tr></thead><tbody><tr><td>nuScenes、VAD-Base、ego statusなし</td><td>平均L2 0.72 m、平均collision 0.22 %（Table 1）</td><td>1/2/3秒の平均。実走行の事故率ではない。</td></tr><tr><td>CARLA、VAD-Base</td><td>Town05 Short: DS 64.29 / RC 87.26。Long: DS 30.31 / RC 75.20（Table 4）</td><td>DSとRCを成功率へ置換しない。LongではLiDAR系TransFuserのDS 33.15より低い。</td></tr><tr><td>VAD-Tiny、RTX 3090×1</td><td>59.5 ms（Table 5のmodule合計）</td><td>Baseの224.3 msやUniADの別GPU測定と混同しない。実センサから操作適用までの遅延ではない。</td></tr></tbody></table></div>
+
+<p><a href="https://github.com/hustvl/VAD/blob/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8/projects/mmdet3d_plugin/VAD/planner/metric_stp3.py">固定版のmetric</a>ではGT軌道側が衝突する時点を除くマスクや、点と車体boxの衝突集計を区別します。したがってcollisionの値には実装・有効mask・分母が関係します。Table 1の全指標とこの固定commitの実験設定・重みを完全に対応付けたわけではなく、他手法や現行車両との順位表には転用しません。</p>
+<h3>4. 現行TimePathに加える対象は、出力点数よりも教師と場面表現</h3>
+<div class="table-wrap" role="region" aria-label="表3　現行方式との違いと必要な検証" tabindex="0"><table class="tech-table"><caption>表3　現行方式との違いと必要な検証</caption><thead><tr><th scope="col">観点</th><th scope="col">接続候補・未検証点</th></tr></thead><tbody><tr><td>観測と教師</td><td>現行Camera + 2D LiDARの契約に、VADの複数camera、較正、vector map、agent追跡・未来ラベルをそのまま仮定しない。必要な教師生成と欠損処理を定義する。</td></tr><tr><td>出力と再学習</td><td>同じ3秒の軌道でも座標・間隔・command条件が異なる。query/損失の追加はモデル変更と再学習を伴う。GT futureは評価・教師に限定する。</td></tr><tr><td>検証と資源</td><td>nuScenesの指標再実装を照合したうえで、相手が反応する閉ループ、認識落ち、境界外、停止・再発進、遅延とGPUメモリを測る。</td></tr></tbody></table></div>
+
+<p><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/a8b9fa7434aa47a69d1886a18ad54ee33ab2878d/src/aic_transfuser_lite/models/time_path_v1.py" data-source="src/aic_transfuser_lite/models/time_path_v1.py">現行TimePathV1</a>は0.1秒間隔30点のXYを出す設計です。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/a8b9fa7434aa47a69d1886a18ad54ee33ab2878d/src/aic_transfuser_lite/control/slam_mppi.py" data-source="src/aic_transfuser_lite/control/slam_mppi.py">現行の静的占有planner</a>にはVADのagent未来予測・vector map queryはありません。現行の停止監視も維持し、学習損失の追加を一般的な安全保証として公開しません。</p>
+<h3>確認範囲と関連資料</h3><p>初稿は<a href="https://arxiv.org/abs/2303.12077">2023-03-21</a>。原著v3の§3–4と関連表、公式README、v1の損失・metric・base設定を静的確認しました。全付録・CARLA recipe・実験重み対応と独立再現は未確認です。<a href="transfuser-2022.html">TransFuser</a>、<a href="navsafe-infinity-2026.html">NavSafe-∞</a>、<a href="e2e-field-overview.html">E2E研究の全体像</a>、<a href="research-map.html">研究地図</a>。</p>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-09-27">2026-09-27</time></div>
+<h3><a href="../articles/transfuser-2022.html">TransFuser拡張版：融合とclosed-loop評価</a></h3>
+<p>複数解像度の画像・鳥瞰LiDAR特徴をTransformerで融合する構成を発展させ、長い経路と密な交通を含むCARLAの評価で検証。融合方式を運転結果へ結びつけて比較しています。</p><div class="card-bottom"><span>一次資料を確認</span>
+<a class="article-read" href="../articles/transfuser-2022.html" aria-label="TransFuser拡張版：融合とclosed-loop評価を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/navsafe-infinity-2026.html">NavSafe-∞：軌道の点数から、事象ごとの閉ループ評価へ</a></h3>
+<p>イベント成功・違反・分母と停止保持の実装を確認し、閉ループ評価と実車保証の境界を整理。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
+<a class="article-read" href="../articles/navsafe-infinity-2026.html" aria-label="NavSafe-∞：軌道の点数から、事象ごとの閉ループ評価へを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/e2e-field-overview.html">E2E自動運転の全体像と比較の読み方</a></h3>
+<p>2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。</p><div class="card-bottom"><span>文献調査</span>
+<a class="article-read" href="../articles/e2e-field-overview.html" aria-label="E2E自動運転の全体像と比較の読み方を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
+<p>4領域・144区分の確認範囲と未調査を整理。106資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

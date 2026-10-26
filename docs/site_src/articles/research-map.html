@@ -1,7 +1,7 @@
 <h2>調査範囲と分類</h2>
 <p>確認日: 2026-10-26。初回の主対象期間2018-10-02〜2026-10-02と期間前の基礎を保全し、その後の確認を追記しています。E2E自動運転、高速自律レーシング、MPC・MPPI、移動ロボット・SLAM・人との相互作用を扱うナビゲーションを整理します。代表資料の確認であり、全領域の網羅を意味しません。</p>
 <h2>調査状態の読み方</h2><p>「調査済み」は記載した資料と確認範囲のみ。「未調査」は未確認、「資料不足」は根拠が必要条件を満たさない状態です。資料が見つからないことを、研究が存在しないことの証明にはしません。文献の確認状態と記事の作成・公開状態は別に管理します。</p>
-<p>現在は100資料・66研究系列、6時代 × 4領域 × 6資料種別の144区分です。33区分は範囲限定の調査済み、111区分は未調査で、網羅済みは0区分です。公表年不明の16資料は時代別集計から除外しています。</p>
+<p>現在は106資料・66研究系列、6時代 × 4領域 × 6資料種別の144区分です。33区分は範囲限定の調査済み、111区分は未調査で、網羅済みは0区分です。公表年不明の21資料は時代別集計から除外しています。</p>
 <h2>追加確認と個別解説</h2>
 <p><a href="mppi-generic-2024.html">MPPI-Generic：GPU並列化と制御周期を分けて測る</a>を追加しました。既存C08/C09を限定確認へ増補し、ライブラリと比較コードの固定版を同じ研究系列へ2資料追加しました。初公表年は未確認で、年代別集計へは加えません。確認日2026-10-10。追試・導入は未実施です。</p>
 <h2>タイヤ同定とコードの追加確認</h2>
@@ -11,10 +11,11 @@
 <h2>FIVE-VLAの本文・評価条件を追加確認</h2>
 <p><a href="five-vla-2026.html">FIVE-VLA：行動トークンの記憶と、履歴入力の違い</a>を追加しました。既存v1の確認範囲を増補し、93資料・66系列は不変。明示履歴のオフライン/閉ループ比較、RAMの状態交代、推論モードと計時、現行コードとの境界を確認。FIVE固有実装・重み・独立再現は未確認です。</p>
 <h2>Predictive Splinerの改訂・公式コードを追加確認</h2>
-<p><a href="predictive-spliner-2024.html">Predictive Spliner：相手の周回を学び、追越しの場所を選ぶ</a>を追加。登録済みv1を保全し、v2と固定版codeの2資料を同系列へ追加しました。現在95資料・66系列、年代集計82・公表年不明13。成功5回までの分母・方式別速度条件・計時・コード分岐を区別します。独立再現・導入・走行は未実施です。</p>
+<p><a href="predictive-spliner-2024.html">Predictive Spliner：相手の周回を学び、追越しの場所を選ぶ</a>を追加。登録済みv1を保全し、v2と固定版codeの2資料を同系列へ追加しました。当該追記時点95資料・66系列、年代集計82・公表年不明13。成功5回までの分母・方式別速度条件・計時・コード分岐を区別します。独立再現・導入・走行は未実施です。</p>
 <h2>EvolvingNavの信念・証拠更新を追加確認</h2>
-<p><a href="evolvingnav-2026.html">EvolvingNav：古い物体位置を、いつ確かめ直すか</a>を追加しました。旧v2を保全し、主期間後のv4と固定版codeを同系列へ2資料追加。現在97資料・66系列、年代集計83（初稿年分類を保つ改訂追跡を含む）・公表年不明14。到着予測と現在信念、重複証拠、可視性、シミュレーションと実機64試行を区別。独立再現・導入は未実施です。</p>
-<h2>世界モデルとイベント評価の独立再執筆</h2><p><a href="mile-2022.html">MILE</a>と<a href="navsafe-infinity-2026.html">NavSafe-∞</a>を公式一次資料から独立再執筆しました。既存MILEとNavSafe v1を保全し、NavSafe v2と両公式コードを同系列へ3資料追加。現在100資料・66系列、年代集計84（初稿分類を保つ改訂追跡を含む）・公表年不明16。全版/実験対応・独立再現・現行車両への導入は未確認です。</p>
+<p><a href="evolvingnav-2026.html">EvolvingNav：古い物体位置を、いつ確かめ直すか</a>を追加しました。旧v2を保全し、主期間後のv4と固定版codeを同系列へ2資料追加。当該追記時点97資料・66系列、年代集計83（初稿年分類を保つ改訂追跡を含む）・公表年不明14。到着予測と現在信念、重複証拠、可視性、シミュレーションと実機64試行を区別。独立再現・導入は未実施です。</p>
+<h2>世界モデルとイベント評価の独立再執筆</h2><p><a href="mile-2022.html">MILE</a>と<a href="navsafe-infinity-2026.html">NavSafe-∞</a>を公式一次資料から独立再執筆しました。既存MILEとNavSafe v1を保全し、NavSafe v2と両公式コードを同系列へ3資料追加。当該追記時点100資料・66系列、年代集計84（初稿分類を保つ改訂追跡を含む）・公表年不明16。全版/実験対応・独立再現・現行車両への導入は未確認です。</p>
+<h2>教師・場面表現・制御の独立再執筆</h2><p>2026-10-26、<a href="roach-2021.html">Roach</a>、<a href="vad-2023.html">VAD</a>、<a href="smooth-mppi-2021.html">Smooth MPPI</a>、<a href="covo-mpc-2024.html">CoVO-MPC</a>、<a href="map-controller-2022.html">MAP</a>の個別解説と<a href="racing-overview-2018-2026.html#formulazero-independent-20261026">FormulaZero追補</a>を公式一次資料から独立再執筆しました。既存MAP v2を保全し、v4と5つの公式codeを同系列へ6資料追加。現在106資料・66系列、年代集計85・公表年不明21。全版/証明/実験対応・独立再現・現行車両への導入は未確認です。</p>
 <h2>今回公開した解説と残る確認</h2><ul>
 <li><a href="world-on-rails-2021.html">World on Rails：未選択の操作への教師生成</a>：既存E2E-WORを本文の限定確認へ増補。非反応仮定・評価条件と公式コードの差、TimePathへの接続条件を整理。公式コードは同じ研究系列へ1資料追加し、公表年不明として年代集計から除外。2026-10-09追加。</li>
 <li><a href="bayesrace-2020.html">BayesRace：車両予測の残差学習</a>：既存R15の本文未確認を解消し、初稿と公式コードを同じ研究系列へ追加。平均補正・計算期限・実装の版差を確認。2026-10-08追加。</li>
@@ -40,7 +41,7 @@
 </ul>
 <h3>2021–2022</h3><ul>
 <li>E2E自動運転: 原著論文（査読あり） 調査済み（2資料・範囲限定）／プレプリント 調査済み（5資料・範囲限定）／サーベイ 未調査／公式コード・ソフトウェア 調査済み（1資料・範囲限定）／ベンチマーク・データ・競技規則 未調査／公式技術記事・講演・仕様 未調査</li>
-<li>高速自律レーシング: 原著論文（査読あり） 未調査／プレプリント 調査済み（1資料・範囲限定）／サーベイ 調査済み（1資料・範囲限定）／公式コード・ソフトウェア 未調査／ベンチマーク・データ・競技規則 未調査／公式技術記事・講演・仕様 未調査</li>
+<li>高速自律レーシング: 原著論文（査読あり） 未調査／プレプリント 調査済み（2資料・範囲限定）／サーベイ 調査済み（1資料・範囲限定）／公式コード・ソフトウェア 未調査／ベンチマーク・データ・競技規則 未調査／公式技術記事・講演・仕様 未調査</li>
 <li>MPC・MPPI・安全制御: 原著論文（査読あり） 未調査／プレプリント 調査済み（2資料・範囲限定）／サーベイ 未調査／公式コード・ソフトウェア 未調査／ベンチマーク・データ・競技規則 未調査／公式技術記事・講演・仕様 未調査</li>
 <li>移動ロボット・SLAM・Human-aware navigation: 原著論文（査読あり） 未調査／プレプリント 未調査／サーベイ 未調査／公式コード・ソフトウェア 未調査／ベンチマーク・データ・競技規則 未調査／公式技術記事・講演・仕様 未調査</li>
 </ul>
@@ -116,10 +117,7 @@
 <p><a href="https://proceedings.mlr.press/v123/o-kelly20a/o-kelly20a.pdf">一次資料</a>。DOI: 未確認 / 付与なし未判定。</p>
 <p>年の扱い: 領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。</p>
 <h3>FormulaZero: Distributionally Robust Online Adaptation via Offline Population Synthesis</h3>
-<p>Aman Sinha, Matthew O’Kelly, Hongrui Zheng, Rahul Mangharam, John Duchi, Russ Tedrake。公表年: 2020。資料種別: 原著論文（査読あり）。研究系列: formulazero。</p>
-<p>資料更新日・版: 未確認。確認日: 2026-10-02。確認範囲: PDF13pp; selected §§2–3 offline population and online robust belief update</p>
-<p><a href="https://proceedings.mlr.press/v119/sinha20a/sinha20a.pdf">一次資料</a>。DOI: 未確認 / 付与なし未判定。</p>
-<p>年の扱い: 領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。</p>
+<p>Aman Sinha, Matthew O’Kelly, Hongrui Zheng, Rahul Mangharam, John Duchi, Russ Tedrake。公表年2020、初稿分類2020、研究系列formulazero。確認版PMLR正式版、確認日2026-10-26。</p><p>確認範囲: Independent local supplement: final PMLR119 selected §§2–4, AADAPT population synthesis, categorical belief, ambiguity-set robust planning and evaluation boundaries. No full proofs, author code or experiment reproduction.。Online belief robustness within opponent prototypes is not worst-case collision guarantee. Offline population synthesis and online finite-budget adaptation differ from vehicle SysID. No numerical cross-domain comparison reused.</p><p><a href="https://proceedings.mlr.press/v119/sinha20a/sinha20a.pdf">一次資料</a>、<a href="racing-overview-2018-2026.html">個別解説/追補</a>。独立再現・導入は未実施です。</p>
 <h3>Learning How to Autonomously Race a Car: a Predictive Control Approach</h3>
 <p>Ugo Rosolia; Francesco Borrelli / UC Berkeley。公表年: 2019。資料種別: preprint。研究系列: lmpc-racing-2019。</p>
 <p>資料更新日・版: 2019-10-29 v4。確認日: 2026-10-03。確認範囲: Full v4 PDF, 7 pages; sections I–VI, equations 1–17, Table I and Figures 1–6. Method, conditional local feasibility, BARC setup, solver versus identification timing, lap fluctuations and official code links checked. No independent reproduction.</p>
@@ -148,10 +146,7 @@
 <h3>BayesRace — arXiv v2</h3>
 <p>同じbayesrace研究系列。初稿2020-05-10、v2改訂2020-11-15。2026-10-08に全12頁とHTMLの方法・評価・付録を採択本文へ照合しました。GP平均の補正を安全保証と混同せず、再現は未実施です。 <a href="https://arxiv.org/pdf/2005.04755v2">一次資料</a>。DOI: 10.48550/arXiv.2005.04755。 <a href="bayesrace-2020.html">個別解説</a></p>
 <h3>End-to-End Urban Driving by Imitating a Reinforcement Learning Coach</h3>
-<p>Zhejun Zhang; Alexander Liniger; Dengxin Dai; Fisher Yu; Luc Van Gool。公表年: 2021。資料種別: プレプリント。研究系列: roach。</p>
-<p>資料更新日・版: 2021-08-18。確認日: 2026-10-02。確認範囲: abstract and CVF introduction; teacher/student learning boundary only</p>
-<p><a href="https://arxiv.org/abs/2108.08265">一次資料</a>。DOI: 未確認 / 付与なし未判定。</p>
-<p>年の扱い: 領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2021-08。確認した版と初稿は区別する。</p>
+<p>Zhejun Zhang; Alexander Liniger; Dengxin Dai; Fisher Yu; Luc Van Gool。公表年2021、初稿分類2021、研究系列roach。確認版2021-10-04 v3、確認日2026-10-26。</p><p>確認範囲: Independent local re-authoring: v3 selected §§3–4, action/feature/value supervision, Tables1–2 and CARLA version/protocol; official fixed README, selected distribution/loss/DAgger configs read. No full supplement, experiment-weight audit or execution.。Privileged BEV RL teacher differs from camera IL student. Table1 teacher versus Table2 student,3 evaluation seeds,selected teacher checkpoint; trainCARLA0.9.10.1/eval0.9.11,offlineLeaderboard not online ranking. Feature supervision needs student route information.</p><p><a href="https://arxiv.org/pdf/2108.08265v3">一次資料</a>、<a href="roach-2021.html">個別解説/追補</a>。独立再現・導入は未実施です。</p>
 <h3>Learning to Drive from a World on Rails</h3>
 <p>Dian Chen; Vladlen Koltun; Philipp Krähenbühl。公表年: 2021。資料種別: プレプリント。研究系列: world-on-rails。</p>
 <p>初稿公表日: 2021-05-03。確認版: 2021-10-02 v3。確認日: 2026-10-09。確認範囲: §§3–5、Tables 1–5、付録A・D–G。非反応仮定・価値計算・蒸留とCARLA条件を確認。出版社版の独立照合・追試は未実施。 <a href="world-on-rails-2021.html">個別解説</a></p>
@@ -178,10 +173,7 @@
 <p><a href="https://arxiv.org/pdf/2102.09027v1">一次資料</a>。DOI: 10.1109/LRA.2021.3057563。</p>
 <p>年の扱い: 領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2021-02。確認した版と初稿は区別する。</p>
 <h3>Smooth Model Predictive Path Integral Control without Smoothing</h3>
-<p>Taekyung Kim; Gyuhyun Park; Kiho Kwak; Jihwan Bae; Wonsuk Lee / Agency for Defense Development; Gyuhyun Park also Seoul National University。公表年: 2022。資料種別: プレプリント。研究系列: smooth-mppi。</p>
-<p>資料更新日・版: 2025-10-13 v8; first arXiv 2021-12-18。確認日: 2026-10-02。確認範囲: Full PDF downloaded; introduction and input-lifting mechanism checked; version history and acceptance checked; no numerical benchmark reused</p>
-<p><a href="https://arxiv.org/pdf/2112.09988v8">一次資料</a>。DOI: 10.1109/LRA.2022.3192800。</p>
-<p>年の扱い: 領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2021-12。確認した版と初稿は区別する。</p>
+<p>Taekyung Kim; Gyuhyun Park; Kiho Kwak; Jihwan Bae; Wonsuk Lee / Agency for Defense Development; Gyuhyun Park also Seoul National University。公表年2022、初稿分類2021、研究系列smooth-mppi。確認版2025-10-13 v8; first arXiv 2021-12-18、確認日2026-10-26。</p><p>確認範囲: Independent local re-authoring: v8 selected §§III–V, Eqs15–18/Algorithm1, TablesI–III conditions; author page and fixed README,SMPPI,pendulum example. No full version/proof/CarMaker recipe audit or execution.。Initial2021/RA-L2022/v8 revised2025 same family. Pendulum and CarMaker simulation,not real-car validation. TableIII corner-segment times not whole-lap times,N/A not zero. Fixed code uses discrete increments;dt/units require separate audit.</p><p><a href="https://arxiv.org/pdf/2112.09988v8">一次資料</a>、<a href="smooth-mppi-2021.html">個別解説/追補</a>。独立再現・導入は未実施です。</p>
 <h3>TransFuser official CVPR 2021 branch</h3>
 <p>autonomousvision / TransFuser authors。公表年: 2021。資料種別: 公式コード・ソフトウェア。研究系列: transfuser。</p>
 <p>資料更新日・版: 未確認。確認日: 2026-10-02。確認範囲: README datasets and Training checkpoint caveat; branch viewed, full code execution not performed</p>
@@ -193,10 +185,8 @@
 <p><a href="https://arxiv.org/abs/2202.07008">一次資料</a>。DOI: 10.1109/OJITS.2022.3181510。</p>
 <p>年の扱い: 領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2022-02。確認した版と初稿は区別する。</p>
 <h3>Model- and Acceleration-based Pursuit Controller for High-Performance Autonomous Racing</h3>
-<p>Jonathan Becker, Nadine Imholz, Luca Schwarzenbach, Edoardo Ghignone, Nicolas Baumann, Michele Magno。公表年: 2023。資料種別: プレプリント。研究系列: map-controller。</p>
-<p>資料更新日・版: 2023-07-07。確認日: 2026-10-02。確認範囲: §§II–IV; dynamics, LUT, lookahead, experiment conditions and TableI</p>
-<p><a href="https://arxiv.org/html/2209.04346v2">一次資料</a>。DOI: 10.1109/ICRA48891.2023.10161472。</p>
-<p>年の扱い: 領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2022-09。確認した版と初稿は区別する。</p>
+<p>Jonathan Becker, Nadine Imholz, Luca Schwarzenbach, Edoardo Ghignone, Nicolas Baumann, Michele Magno。公表年2023、初稿分類2022、研究系列map-controller。確認版2023-04-25 v2、確認日2026-10-26。</p><p>確認範囲: Retained v2 record, corrected version date from arXiv history; selected §§III–IV PDF/method/evaluation passages compared with v4. No all-version equivalence/proof/data/experiment audit or execution.。Same initial2022/ICRA2023 MAP family. Preserve v2 before adding v4;v2 date2023-04-25,not v4 date2023-07-07. HTML unit loss checked against PDF;track/speed experiments not pooled. Local speed-response compensation is not identified Pacejka LUT.</p><p><a href="https://arxiv.org/html/2209.04346v2">一次資料</a>、<a href="map-controller-2022.html">個別解説/追補</a>。独立再現・導入は未実施です。</p>
+<h3>MAP controller — arXiv v4 revision</h3><p>同系列map-controllerの確認版v4（2023-07-07）。初稿分類2022を保持して年代へ追加。v2を保全し、機構・異なるtrack/速度の評価条件・PDFの単位を限定比較。全版の同一性・実験再現は未確認。</p><p><a href="https://arxiv.org/pdf/2209.04346v4">原著v4</a>、<a href="map-controller-2022.html">個別記事</a>。</p>
 <h3>Model-Based Imitation Learning for Urban Driving</h3><p>Anthony Hu; Gianluca Corrado; Nicolas Griffiths; Zak Murez; Corina Gurau; Hudson Yeo; Alex Kendall; Roberto Cipolla; Jamie Shotton / Wayve and Cambridge。初稿2022-10-14、確認版v2（2022-11-03）。研究系列mile。確認日2026-10-26。§3–6と関連Table1/3、公式固定版の選択処理。世界状態・模倣・再帰推論とCARLAの条件を確認しました。全付録・実験重み対応・独立再現は未確認。</p><p><a href="https://arxiv.org/html/2210.07729v2">原著v2</a>、<a href="mile-2022.html">独立再執筆の個別記事</a>。</p>
 <h3>Planning-oriented Autonomous Driving</h3>
 <p>Yihan Hu et al. / OpenDriveLab, Shanghai AI Laboratory and collaborators。公表年: 2023。資料種別: プレプリント。研究系列: uniad。</p>
@@ -219,15 +209,9 @@
 <p><a href="https://github.com/autonomousvision/transfuser">一次資料</a>。DOI: 未確認 / 付与なし未判定。</p>
 <p>年の扱い: 領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。</p>
 <h3>VAD: Vectorized Scene Representation for Efficient Autonomous Driving</h3>
-<p>Bo Jiang; Shaoyu Chen; Qing Xu; Bencheng Liao; Jiajie Chen; Helong Zhou; Qian Zhang; Wenyu Liu; Chang Huang; Xinggang Wang。公表年: 2023。資料種別: プレプリント。研究系列: vad。</p>
-<p>資料更新日・版: 2023-08-24。確認日: 2026-10-02。確認範囲: bibliographic and abstract-level vectorized representation concept</p>
-<p><a href="https://arxiv.org/abs/2303.12077">一次資料</a>。DOI: 10.48550/arXiv.2303.12077。</p>
-<p>年の扱い: 領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2023-03。確認した版と初稿は区別する。</p>
+<p>Bo Jiang; Shaoyu Chen; Qing Xu; Bencheng Liao; Jiajie Chen; Helong Zhou; Qian Zhang; Wenyu Liu; Chang Huang; Xinggang Wang。公表年2023、初稿分類2023、研究系列vad。確認版2023-08-24 v3、確認日2026-10-26。</p><p>確認範囲: Independent local re-authoring: v3 selected §§3–4, vector queries/planning losses, Tables1–5, nuScenes versus CARLA contracts; official fixed v1 loss,metric,base config and README read. No VADv2/full recipe/weight audit or execution.。Training losses do not certify runtime constraints. nuScenes open-loop main excludes ego status; CARLA Table4 is separate closed-loop contract and not uniform superiority over LiDAR TransFuser. Metric masks GT-colliding timesteps. VADv1 and VADv2 kept distinct; GPU/runtime conditions differ.</p><p><a href="https://arxiv.org/pdf/2303.12077v3">一次資料</a>、<a href="vad-2023.html">個別解説/追補</a>。独立再現・導入は未実施です。</p>
 <h3>CoVO-MPC: Theoretical analysis of sampling-based MPC and optimal covariance design</h3>
-<p>Zeji Yi; Chaoyi Pan; Guanqi He; Guannan Qu; Guanya Shi / Carnegie Mellon University。公表年: 2024。資料種別: 原著論文（査読あり）。研究系列: covo-mpc。</p>
-<p>資料更新日・版: 2024 PMLR 242:1122–1135。確認日: 2026-10-02。確認範囲: Full text downloaded; §§4.1–4.3, Theorem 1 infinite-sample assumptions and covariance discussion read; no cross-domain improvement percentages used</p>
-<p><a href="https://proceedings.mlr.press/v242/yi24b/yi24b.pdf">一次資料</a>。DOI: 未確認 / 付与なし未判定。</p>
-<p>年の扱い: 領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。</p>
+<p>Zeji Yi; Chaoyi Pan; Guanqi He; Guannan Qu; Guanya Shi / Carnegie Mellon University。公表年2024、初稿分類2024、研究系列covo-mpc。確認版2024 PMLR 242:1122–1135、確認日2026-10-26。</p><p>確認範囲: Independent local re-authoring: PMLR242 selected §§4–7, theorem statements/assumptions, Algorithm1 and Tables1–2; fixed official README,CoVO/MPPI controllers. No full appendix proofs, experiment correspondence or execution.。Optimization contraction with infinite samples/qualified costs is not closed-loop collision safety. Finite-sample/receding-horizon analysis remains future work. Quadrotor tracking errors not vehicle success rates;online Hessian costs/offline sim-real gap remain.</p><p><a href="https://proceedings.mlr.press/v242/yi24b/yi24b.pdf">一次資料</a>、<a href="covo-mpc-2024.html">個別解説/追補</a>。独立再現・導入は未実施です。</p>
 <h3>DiffusionDrive: Truncated Diffusion Model for End-to-End Autonomous Driving</h3>
 <p>Bencheng Liao; Shaoyu Chen; Haoran Yin; Bo Jiang; Cheng Wang; Sixu Yan; Xinbang Zhang; Xiangyu Li; Ying Zhang; Qian Zhang; Xinggang Wang。公表年: 2025。資料種別: プレプリント。研究系列: diffusiondrive。</p>
 <p>資料更新日・版: 未確認。確認日: 2026-10-02。確認範囲: truncated anchor diffusion train/inference equations 4-6; first arXiv release 2024-11-22; no FPS/PDMS reused</p>
@@ -548,3 +532,8 @@
 <p><a href="https://github.com/ZJU4EmbodiedAI/EvolvingNav/tree/2ed45c66bbd7f2885941240556116c9dba47716a">一次コード</a>、<a href="evolvingnav-2026.html">個別解説</a>。コード実行・全runner/データ監査・実験対応は未確認。</p>
 <h3>NavSafe-infty — official event termination and scoring implementation（公表年未確認）</h3><p>固定版bd68458df1e2cc8e0f0dfcf62c06b71a86ae229cの選択処理を静的確認。初公表年は未確認で年代集計から除外。実行・実験対応・再現は未確認。</p><p><a href="https://github.com/VAIL-UCLA/NavSafe-infty/tree/bd68458df1e2cc8e0f0dfcf62c06b71a86ae229c">公式固定code</a>、<a href="navsafe-infinity-2026.html">個別記事</a>。</p>
 <h3>MILE — official latent dynamics, policy and deployment implementation（公表年未確認）</h3><p>固定版c8b245c7e83ae487d1263758436fd76b80b0cf54の選択処理を静的確認。初公表年は未確認で年代集計から除外。実行・実験対応・再現は未確認。</p><p><a href="https://github.com/wayveai/mile/tree/c8b245c7e83ae487d1263758436fd76b80b0cf54">公式固定code</a>、<a href="mile-2022.html">個別記事</a>。</p>
+<h3>End-to-End Urban Driving by Imitating a Reinforcement Learning Coach — official selected implementation（公表年未確認）</h3><p>同系列roach、固定版00d6f5528296900161bcb53b62197f9d5745330cの選択処理を静的確認。初公表年を未確認のまま保ち年代集計から除外。全実験対応・実行・独立再現は未確認。</p><p><a href="https://github.com/zhejz/carla-roach/tree/00d6f5528296900161bcb53b62197f9d5745330c">公式固定code</a>、<a href="roach-2021.html">個別記事</a>。</p>
+<h3>VAD: Vectorized Scene Representation for Efficient Autonomous Driving — official selected implementation（公表年未確認）</h3><p>同系列vad、固定版1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8の選択処理を静的確認。初公表年を未確認のまま保ち年代集計から除外。全実験対応・実行・独立再現は未確認。</p><p><a href="https://github.com/hustvl/VAD/tree/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8">公式固定code</a>、<a href="vad-2023.html">個別記事</a>。</p>
+<h3>Smooth Model Predictive Path Integral Control without Smoothing — official selected implementation（公表年未確認）</h3><p>同系列smooth-mppi、固定版dcc6f4285069dbf8add0a111c8b936d0ef1830e6の選択処理を静的確認。初公表年を未確認のまま保ち年代集計から除外。全実験対応・実行・独立再現は未確認。</p><p><a href="https://github.com/tkkim-robot/smooth-mppi-pytorch/tree/dcc6f4285069dbf8add0a111c8b936d0ef1830e6">公式固定code</a>、<a href="smooth-mppi-2021.html">個別記事</a>。</p>
+<h3>CoVO-MPC: Theoretical analysis of sampling-based MPC and optimal covariance design — official selected implementation（公表年未確認）</h3><p>同系列covo-mpc、固定版176fb64f7277dea29471f800ab592f1b38d2f869の選択処理を静的確認。初公表年を未確認のまま保ち年代集計から除外。全実験対応・実行・独立再現は未確認。</p><p><a href="https://github.com/LeCAR-Lab/CoVO-MPC/tree/176fb64f7277dea29471f800ab592f1b38d2f869">公式固定code</a>、<a href="covo-mpc-2024.html">個別記事</a>。</p>
+<h3>Model- and Acceleration-based Pursuit Controller for High-Performance Autonomous Racing — official selected implementation（公表年未確認）</h3><p>同系列map-controller、固定版5cce3319a063e7a70c25de5d1bad3b9b8d278ee6の選択処理を静的確認。初公表年を未確認のまま保ち年代集計から除外。全実験対応・実行・独立再現は未確認。</p><p><a href="https://github.com/ETH-PBL/MAP-Controller/tree/5cce3319a063e7a70c25de5d1bad3b9b8d278ee6">公式固定code</a>、<a href="map-controller-2022.html">個別記事</a>。</p>

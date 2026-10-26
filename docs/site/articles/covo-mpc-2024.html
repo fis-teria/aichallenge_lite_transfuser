@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="共分散設計と条件付き最適化解析、quadrotor評価、現行の非滑らかな占有判定との境界。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>CoVO-MPC：候補の数だけでなく、探索分布の形を変える — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html" aria-current="page"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../papers.html">論文ノート</a></div>
+<span class="section-number">論文ノート</span><h1>CoVO-MPC：候補の数だけでなく、探索分布の形を変える</h1>
+<p class="article-lead">共分散設計と条件付き最適化解析、quadrotor評価、現行の非滑らかな占有判定との境界。</p><div class="article-meta">
+<span>公開 <time datetime="2026-10-26">2026-10-26</time></span>
+<span>更新 <time datetime="2026-10-26">2026-10-26</time></span>
+<span class="tag">独立再執筆・原著/固定code静的確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文詳解・独立再執筆</span><span class="paper-year">2024</span></div>
+<h2>CoVO-MPC：候補の数だけでなく、探索分布の形を変える</h2>
+<p class="authors">Zeji Yi、Chaoyi Pan、Guanqi He、Guannan Qu、Guanya Shi</p>
+<p class="paper-summary">CoVO-MPCはコストの局所的な曲がり方から、操作列をサンプルする共分散を設計します。無限サンプルでの最適化解析、有限の実装、実機の追従評価をそれぞれの条件で読みます。</p>
+<p>確認日：2026-10-26、公式一次資料からHervarar上で新規に著述した独立再執筆版。対象は<a href="https://proceedings.mlr.press/v242/yi24b/yi24b.pdf">CoVO-MPC: Theoretical Analysis of Sampling-based MPC and Optimal Covariance Design、PMLR 242:1122–1135（L4DC 2024）、§4–7</a>と、<a href="https://github.com/LeCAR-Lab/CoVO-MPC/tree/176fb64f7277dea29471f800ab592f1b38d2f869">公式コード固定版176fb64（2024-03-28）</a>の選択処理です。原著の機構・評価とコードを静的に照合しました。全証明・付録・実験commit/重みの完全対応、著者コード実行、独立追試、現行車両への導入・学習・走行は未実施です。</p>
+
+<h3>1. 等方的な探索が、コスト地形に合うとは限らない</h3>
+<p>MPPIは平均操作列の周りに候補を生成し、低コストの候補を強く重み付けします。方向によってコストの変化が違うと、同じ幅で全方向へ探索するのは効率的とは限りません。CoVO-MPCは平均列の周囲のHessianを使い、共分散の形をコスト地形へ合わせます。単にサンプル数を増やす提案とは異なります。</p>
+<figure class="tech-figure"><figcaption>図1　Hessianから共分散を設計する（本記事の概念図）</figcaption><ol class="tech-flow four"><li><strong>平均列を予測</strong><p>現在状態から名目操作列をrolloutする</p></li><li><strong>曲がり方を調べる</strong><p>総コストのHessianを計算し正定値化する</p></li><li><strong>分布を変える</strong><p>共分散を設計して候補操作列を生成</p></li><li><strong>重み付けと実行</strong><p>低コスト候補を集約し先頭だけを実行、次へshift</p></li></ol><p>offline近似では、名目controllerによる事前計算で共分散列を保持します。</p></figure>
+
+<h3>2. 定理の収束対象は、一回の最適化の操作列</h3>
+<div class="table-wrap" role="region" aria-label="表1　原著の解析と実装の対応（簡略表記）" tabindex="0"><table class="tech-table"><caption>表1　原著の解析と実装の対応（簡略表記）</caption><thead><tr><th scope="col">関係・条件</th><th scope="col">含意と限界</th></tr></thead><tbody><tr><td><code>Uₖ ∼ N(Uin, Σ)</code><br><code>wₖ ∝ exp(−J(Uₖ)/λ)</code></td><td>候補列をコストで重み付ける。更新を繰り返す制御系全体の安全性を表す式ではない。</td></tr><tr><td>Theorem 1: 二次コスト、サンプル数N → ∞</td><td>最適操作列への収縮を解析する。半正定値・ノルム・最適解の条件があり、任意の非凸問題で厳密収縮するとは一般化しない。</td></tr><tr><td>HessianからΣを設計、determinantを制約</td><td>探索体積を保つ条件で方向・相関を変える。非二次への拡張にも強凸性・滑らかさや残差条件があり、誤差項が残る。</td></tr></tbody></table></div>
+
+<p>原著§7は有限サンプル解析やreceding-horizonへの一般化を今後の課題に挙げます。有限候補で必ず大域解を得る、閉ループ安定性や障害物回避まで証明した、という読み方はできません。選択範囲の定理文を確認しましたが、付録の証明全体は独立監査していません。</p>
+<p><a href="https://github.com/LeCAR-Lab/CoVO-MPC/blob/176fb64f7277dea29471f800ab592f1b38d2f869/quadjax/controllers/covo.py">固定版covo.py</a>は自動微分でHessianを求め、対称化・固有値shiftを行って共分散を作ります。onlineとofflineの分岐があり、後者は保存した時系列の共分散を参照します。公開版のshiftは最小固有値を基準にしており、原著の「小さい正値を加える」という説明から全実装を一意に想定しません。固定版とPMLRの全実験が同一設定だったとは未確認です。</p>
+<h3>3. 改善率は、タスクと指標を伴って読む</h3>
+<p>§6はCartPole、quadrotor simulation、Crazyflie 2.1実機を扱います。quadrotorは実行困難なzig-zag参照を追従し、3軌道を各10回評価します。比較では共分散determinantをMPPIと揃えています。</p>
+<div class="table-wrap" role="region" aria-label="表2　原著Table 1、quadrotorの追従誤差［cm］" tabindex="0"><table class="tech-table"><caption>表2　原著Table 1、quadrotorの追従誤差［cm］</caption><thead><tr><th scope="col">方式</th><th scope="col">simulation</th><th scope="col">実機</th></tr></thead><tbody><tr><td>CoVO-MPC</td><td>3.71 ± 0.37</td><td>8.36 ± 4.86</td></tr><tr><td>offline近似</td><td>3.86 ± 0.34</td><td>12.09 ± 6.33</td></tr><tr><td>MPPI</td><td>6.48 ± 0.64</td><td>15.49 ± 5.82</td></tr></tbody></table></div>
+
+<p>±も原著表記のままです。これは安全達成率や自車の周回時間ではありません。online計算はHessianと共分散設計の負担を持ち、offline近似は事前計算とsim-to-realのずれを持ちます。Table 2の計算時間を、別車両・別モデル・CPU/GPU・コンパイル条件のまま期限保証へ転用しません。</p>
+<h3>4. 現行plannerでは、微分できる目的を先に考える</h3>
+<div class="table-wrap" role="region" aria-label="表3　現行方式への適用境界" tabindex="0"><table class="tech-table"><caption>表3　現行方式への適用境界</caption><thead><tr><th scope="col">項目</th><th scope="col">静的確認と必要な検証</th></tr></thead><tbody><tr><td>探索する変数</td><td>現行は経路の横offset係数と曲率rollout。CoVOの操作列空間・時間horizonとは異なる。変数と単位を先に定義する。</td></tr><tr><td>モデルとコスト</td><td>現行の占有grid参照、幾何の可否、無効候補の無限コストを、そのまま滑らかなHessian解析へ置かない。停止・未知領域の判定も残す。</td></tr><tr><td>再学習・資源</td><td>制御改善だけなら認識モデルの再学習が必須とは限らない。微分可能モデルを学ぶ場合は別データが必要。総遅延・有限候補の分散・期限超過・失敗時停止を測る。</td></tr></tbody></table></div>
+
+<p><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/a8b9fa7434aa47a69d1886a18ad54ee33ab2878d/src/aic_transfuser_lite/control/slam_mppi.py" data-source="src/aic_transfuser_lite/control/slam_mppi.py">現行SLAM MPPI（確認基準commit）</a>は固定的なnoise scaleを使う探索と静的占有検査を持ちます。共分散の最適設計だけで、移動物体予測や終端安全集合が追加されるわけではありません。まず同じ観測・候補予算・期限・障害物条件で比較する必要があります。</p>
+<h3>確認範囲と関連資料</h3><p><a href="https://proceedings.mlr.press/v242/yi24b.html">PMLRの正式書誌</a>、本文§4–7とAlgorithm 1・Tables 1–2、<a href="https://lecar-lab.github.io/CoVO-MPC/">著者紹介</a>、固定codeのcontrollerを確認。全証明・実験recipe・実機再現は未確認です。<a href="mpc-mppi-overview.html">MPC / MPPI概説</a>、<a href="smooth-mppi-2021.html">Smooth MPPI</a>、<a href="robust-mppi.html">Robust MPPI</a>、<a href="predictive-safety-filter-2018.html">PSF</a>、<a href="slam-mppi-box-20260919.html">既存SLAM MPPIの限定検証</a>、<a href="research-map.html">研究地図</a>。</p>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/mpc-mppi-overview.html">MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</a></h3>
+<p>線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="card-bottom"><span>文献俯瞰・適用候補</span>
+<a class="article-read" href="../articles/mpc-mppi-overview.html" aria-label="MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/smooth-mppi-2021.html">Smooth MPPI：操作の変化を探索し、予測の中で滑らかにする</a></h3>
+<p>入力増分と操作差分コスト、CarMakerの条件、現行の経路探索との違いを整理。</p><div class="card-bottom"><span>独立再執筆・原著/固定code静的確認／未導入</span>
+<a class="article-read" href="../articles/smooth-mppi-2021.html" aria-label="Smooth MPPI：操作の変化を探索し、予測の中で滑らかにするを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-10">2026-10-10</time></div>
+<h3><a href="../articles/robust-mppi.html">Robust MPPI：追従器を予測の内側へ入れる</a></h3>
+<p>RMPPIの名目／実状態と追従内包、条件付きfree-energy保証、実験条件の違い、導入前の検証を解説します。</p><div class="card-bottom"><span>原論文精読・未実装候補</span>
+<a class="article-read" href="../articles/robust-mppi.html" aria-label="Robust MPPI：追従器を予測の内側へ入れるを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-12">2026-10-12</time></div>
+<h3><a href="../articles/predictive-safety-filter-2018.html">PSF：保持した経路と安全な退避計画の違い</a></h3>
+<p>予測安全フィルタの条件付き保証と、現行の停止監視・保持経路復帰との境界を整理。</p><div class="card-bottom"><span>原著の限定節確認・未導入</span>
+<a class="article-read" href="../articles/predictive-safety-filter-2018.html" aria-label="PSF：保持した経路と安全な退避計画の違いを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
+<p>4領域・144区分の確認範囲と未調査を整理。106資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="report">
+<div class="card-meta"><span class="tag">検証記録</span>
+<time datetime="2026-10-26">2026-10-26</time></div>
+<h3><a href="../articles/slam-mppi-box-20260919.html">SLAM MPPIによる静止箱通過と通常追従への復帰</a></h3>
+<p>5 km/h目標のrollout02で箱通過と通常復帰を記録。周回成功や一般的な回避保証とは区別します。</p><div class="card-bottom"><span>限定試験で確認</span>
+<a class="article-read" href="../articles/slam-mppi-box-20260919.html" aria-label="SLAM MPPIによる静止箱通過と通常追従への復帰を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>
