@@ -70,7 +70,7 @@
 <span class="section-number">論文ノート</span><h1>Robust MPPI：追従器を予測の内側へ入れる</h1>
 <p class="article-lead">RMPPIの名目／実状態と追従内包、条件付きfree-energy保証、実験条件の違い、導入前の検証を解説します。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-02">2026-10-02</time></span>
-<span>更新 <time datetime="2026-10-10">2026-10-10</time></span>
+<span>更新 <time datetime="2026-10-27">2026-10-27</time></span>
 <span class="tag">原論文精読・未実装候補</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文精読・ロバスト制御</span><span class="paper-year">RA-L 2021</span></div>
 <h2>Robust MPPI：追従器を予測の内側へ入れる</h2>
 <p class="authors">Manan S. Gandhi, Bogdan Vlahov, Jason Gibson, Grady Williams, Evangelos A. Theodorou／Georgia Institute of Technology ACDS Lab、Grady WilliamsはEmbark Trucksにも所属</p>
@@ -111,6 +111,8 @@
 
 <h2>計算時間の比較へ進む</h2>
 <p>確認日2026-10-10。<a href="mppi-generic-2024.html">MPPI-Genericの個別解説</a>はVanilla MPPIのCUDA処理と計時範囲を扱います。RMPPIの保証の監査や名目・実系rollout全体のコード照合ではありません。ライブラリを選ぶ判断と、RMPPIの条件を満たす判断を分けて確認します。</p>
+
+<h3>名称から保証範囲を広げない</h3><p>2026-10-27追記。<a href="probabilistic-mpsc-2019.html">PMPSC</a>では状態/入力の確率制約と、そのためのtube・名目状態の保持を確認しました。Robust MPPIとの比較でも、対象の制約・不確実性・確率・性能の定義をそろえ、衝突回避まで保証されると読み替えません。著者実装の再現・現行車両への導入は未実施です。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-09-27">2026-09-27</time></div>
@@ -118,7 +120,7 @@
 <p>情報理論の枠組みからサンプリングに基づく最適制御を導き、候補のコストに応じた重みで制御系列を更新するMPCを構成。自動運転への適用と、cross-entropy法に基づくMPCとの比較を示します。</p><div class="card-bottom"><span>一次資料を確認</span>
 <a class="article-read" href="../articles/information-theoretic-mpc.html" aria-label="情報理論に基づくMPCとサンプリング制御を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-26">2026-10-26</time></div>
+<time datetime="2026-10-27">2026-10-27</time></div>
 <h3><a href="../articles/mpc-mppi-overview.html">MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</a></h3>
 <p>線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="card-bottom"><span>文献俯瞰・適用候補</span>
 <a class="article-read" href="../articles/mpc-mppi-overview.html" aria-label="MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
@@ -131,6 +133,11 @@
 <time datetime="2026-10-10">2026-10-10</time></div>
 <h3><a href="../articles/mppi-generic-2024.html">MPPI-Generic：GPU並列化と制御周期を分けて測る</a></h3>
 <p>CUDA実装の候補探索・計時範囲と、現行の参照空間MPPIへ接続する条件を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
-<a class="article-read" href="../articles/mppi-generic-2024.html" aria-label="MPPI-Generic：GPU並列化と制御周期を分けて測るを読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/mppi-generic-2024.html" aria-label="MPPI-Generic：GPU並列化と制御周期を分けて測るを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-27">2026-10-27</time></div>
+<h3><a href="../articles/probabilistic-mpsc-2019.html">PMPSC：確率制約と、リセットしない名目状態</a></h3>
+<p>各時刻のchance constraintと名目状態の保持、条件付き保証、数値車両例と現行実装の境界を整理。</p><div class="card-bottom"><span>原著v2限定確認・著者実装未照合／未導入</span>
+<a class="article-read" href="../articles/probabilistic-mpsc-2019.html" aria-label="PMPSC：確率制約と、リセットしない名目状態を読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

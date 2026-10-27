@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="各時刻のchance constraintと名目状態の保持、条件付き保証、数値車両例と現行実装の境界を整理。"
+    />
+    <meta name="theme-color" content="#132c32" />
+    <title>PMPSC：確率制約と、リセットしない名目状態 — AIC TransFuser Lite</title>
+    <link rel="icon" href="../assets/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <script src="../assets/site.js" defer></script>
+  </head>
+  <body data-page="article">
+    <a class="skip" href="#main">本文へ移動</a>
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="サイドメニューを開く"
+        aria-controls="project-menu"
+        aria-expanded="false"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <path
+            d="M4 6h16M4 12h16M4 18h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <a class="brand" href="../index.html"
+        ><img src="../assets/mark.svg" alt="" width="32" height="32" /><span
+          >AIC <strong>TransFuser Lite</strong></span
+        ></a
+      >
+      <div class="toplinks">
+        <span class="edition">RESEARCH NOTES / 2026</span
+        ><a href="https://github.com/fis-teria/aichallenge_lite_transfuser"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </header>
+    <div class="menu-backdrop" hidden></div>
+    <div class="shell">
+      <aside class="sidebar" id="project-menu" aria-labelledby="menu-heading">
+        <div class="sidebar-heading">
+          <p class="eyebrow" id="menu-heading">PROJECT EXPLORER</p>
+          <button
+            class="menu-close"
+            type="button"
+            aria-label="サイドメニューを閉じる"
+          >
+            ×
+          </button>
+        </div>
+        <nav aria-label="サイト内ナビゲーション"><a href="../index.html"><span>01</span>プロジェクト概要</a><a href="../articles/system-architecture.html"><span>02</span>システムの仕組み</a><a href="../results.html"><span>03</span>検証結果</a><a href="../articles/technology-stack.html"><span>04</span>技術スタック</a><a href="../papers.html" aria-current="page"><span>05</span>参考論文</a><a href="../articles/roadmap.html"><span>06</span>今後の課題</a><a href="../updates.html"><span>07</span>記事一覧・更新履歴</a></nav>
+        <div class="sidebar-note">
+          <span class="dot"></span> 開発・検証中
+          <p>最終目標は、安定した完走、<br />障害物回避、回避不能時停止。</p>
+          <a href="../index.html#sources">資料と更新方針 ↘</a>
+        </div>
+      </aside>
+      <main id="main"><article class="article-page"><header class="article-heading">
+<div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../papers.html">論文ノート</a></div>
+<span class="section-number">論文ノート</span><h1>PMPSC：確率制約と、リセットしない名目状態</h1>
+<p class="article-lead">各時刻のchance constraintと名目状態の保持、条件付き保証、数値車両例と現行実装の境界を整理。</p><div class="article-meta">
+<span>公開 <time datetime="2026-10-27">2026-10-27</time></span>
+<span>更新 <time datetime="2026-10-27">2026-10-27</time></span>
+<span class="tag">原著v2限定確認・著者実装未照合／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文詳解・確率的な予測安全機構</span><span class="paper-year">2019</span></div>
+<h2>PMPSC：確率制約と、リセットしない名目状態</h2>
+<p class="authors">Kim P. Wabersich、Lukas Hewing、Andrea Carron、Melanie N. Zeilinger / ETH Zurich</p>
+<p class="paper-summary">PMPSCは、学習器が提案する操作からの変更を抑えながら、状態と入力の制約を確率的に満たす予測計画を求めます。Gaussian noiseのように取り得る値に有限の上限がない場合を扱うため、実測状態とは別の名目状態を保持します。各時刻の制約充足と、走行全体の無事故を分けて読みます。</p>
+<p>確認日：2026-10-27。対象は<a href="https://arxiv.org/pdf/1906.10417v2">Probabilistic model predictive safety certification for learning-based control、arXiv v2（2021-01-18）</a>の§III–VI、定理IV.5と関連仮定、Lemma V.3、付録Aの選択条件です。<a href="https://arxiv.org/abs/1906.10417">初稿は2019-06-25</a>。本文・式・数値例を静的確認しました。証明全体の独立監査、刊行版との全文一致、著者実装・raw data・実験recipeの照合、独立追試、現行車両への導入・学習・走行は未実施です。</p>
+
+<h3>1. 「各時刻に確率p以上」と「全期間で安全」は異なる</h3>
+<p>有界な外乱なら、その全範囲を囲んで制約を守る設計を考えられます。しかしGaussian分布は裾が無限に続き、有限の制約内へ全ての実現値を必ず収める要求とは両立しません。PMPSCは、指定した状態集合Xと入力集合Uを各時刻に満たす確率を設計対象にします。pは選んだ集合・モデル・不確実性に関する量で、一般的な交通事故率ではありません。</p>
+<div class="table-wrap" role="region" aria-label="表1　原著式4・6–10・Lemma V.3の役割を簡略化" tabindex="0"><table class="tech-table"><caption>表1　原著式4・6–10・Lemma V.3の役割を簡略化</caption><thead><tr><th scope="col">関係</th><th scope="col">読み方と条件</th></tr></thead><tbody><tr><td><code>∀k: Pr(xₖ ∈ X) ≥ pₓ</code><br><code>∀k: Pr(uₖ ∈ U) ≥ pᵤ</code></td><td>各時刻についてのchance constraint。全時刻の同時事象 <code>Pr(∀k: xₖ ∈ X)</code> の下限を同じpで与える式ではない。</td></tr><tr><td><code>zₖ₊₁ = A zₖ + B vₖ</code><br><code>uₖ = vₖ + Kᴿ(xₖ − zₖ)</code></td><td>zは名目状態、vは名目入力。実際の状態との差eを補助feedbackで補う。初期はz₀=x₀とする。</td></tr><tr><td><code>z ∈ X ⊖ Rₓ</code><br><code>v ∈ U ⊖ KᴿRᵤ</code></td><td>誤差を囲む確率的到達集合（PRS）の分だけ名目制約を狭め、終端集合Zfへの到達を課す。最適化の全式の再掲ではない。</td></tr><tr><td><code>R = E ⊕ Rₛ</code>、確率水準 <code>pθ pₛ</code></td><td>Lemma V.3はモデル誤差の不変集合Eと外乱のPRSを、独立性を用いて合成する。各水準や独立性を確認せずに確率を掛けない。</td></tr></tbody></table></div>
+
+<p>確率は未知パラメータθと外乱の実現値に対して定義されます。独立同分布の加法外乱、モデル誤差を囲む集合、安定化feedback、PRSの確率水準が前提です。「ある走行ログで誤差が小さかった」だけでは、これらの前提を検証したことになりません。</p>
+
+<h3>2. 名目状態を実測へ戻さず、誤差の発展を保つ</h3>
+<figure class="tech-figure"><figcaption>図1　名目系の計画と確率的な誤差tube（本記事の概念図）</figcaption><ol class="tech-flow four">
+<li><strong>モデルと誤差を設計</strong><p>線形近似、モデル信頼集合、外乱と補助feedbackを定める</p></li>
+<li><strong>制約を狭める</strong><p>状態・入力のPRSと、名目終端集合を用意する</p></li>
+<li><strong>名目計画を解く</strong><p>保持するzから計画し、提案操作への変更を抑える</p></li>
+<li><strong>誤差を補って実行</strong><p>vにKᴿ(x−z)を加え、次の名目状態へ進める</p></li>
+</ol><p>保持するのはモデルで発展する名目状態です。保存した幾何経路をそのまま安全証明として使う意味ではありません。</p></figure>
+<p>原著式6eでは予測の初期値を保持中のz(k)へ固定します。各時刻の実測x(k)へzをリセットせず、最適化でもz₀を自由変数にしません。これにより誤差系 <code>eₖ₊₁ = (A + B Kᴿ)eₖ + wθ + wₛ</code> の発展を、再計画後も保ちます。現在のxはfeedbackと操作変更の目的関数へ入ります。</p>
+<p>定理IV.5は、所定のPRSと安定化feedback（仮定IV.3）、狭めた制約内で不変な名目終端集合・終端制御（仮定IV.4）、初期実行可能性の下で各時刻のchance constraintを示します。旧計画の残りに終端制御を継ぐことで、名目最適化の再帰的実行可能性を得ます。最適化が実行可能であることと、あらゆる外乱で実状態が必ず制約内にあることを同一視しません。</p>
+<p>モデル設計の§Vでは、Bayesian regressionのprior、noise model、十分に情報を含む測定が必要です。モデル選択自体は原著でも範囲外とされます。また実用的な誤差集合の構成は、大きい外側の状態・入力領域の外でも誤差が有界という仮定V.1を置きます。有限の低速データだけから、別路面・高速度域・全状態での境界が得られるわけではありません。</p>
+
+<h3>3. 車両の数値例は、実車の安全達成率ではない</h3>
+<p>§VIは操舵と加速度に一次遅れを持つ6状態・2入力の車両simulationです。周期的な参照軌道を狭い道路内で追い、Bayesian Optimizationで線形controllerを学びます。原著の保証・設計手順と、この有限の数値例の観測を分けます。</p>
+<div class="table-wrap" role="region" aria-label="表2　原著§VI・付録Aの条件と観測" tabindex="0"><table class="tech-table"><caption>表2　原著§VI・付録Aの条件と観測</caption><thead><tr><th scope="col">項目</th><th scope="col">著者の設定・報告</th><th scope="col">含意の限界</th></tr></thead><tbody><tr><td>予測とデータ</td><td>sampling time 0.1 s、N=30。モデルとPRSは30 sの状態・入力trajectoryから構成。</td><td>30 sで一般車両を安全に同定できるという条件ではない。3 s horizonは設定からの計算で、solverの実測時間ではない。</td></tr><tr><td>確率水準</td><td>状態・入力用PRSは98%という設定。Fig.4は最初の30 learning episodes。</td><td>98%は実測された無事故率ではない。図の範囲内の軌道を、全外乱に対する無違反保証へ一般化しない。</td></tr><tr><td>学習性能・資源</td><td>Fig.6は100実験のcostと平均を表示。安全機構付きはやや遅い収束・やや悪い平均性能を報告。付録の集合構成にYALMIP/MOSEKを使用。</td><td>安全機構を足せば学習性能も必ず向上するとは限らない。対象CPU/GPU・online遅延分布・期限超過率は未照合。</td></tr></tbody></table></div>
+
+<p>数値条件には留保があります。v2 PDFの本文p.10では速度制約19.8 m/s、付録p.11ではtightening後の値19.97 m/sが記載され、対応は未整合です。PDFの表示でも確認しました。本稿ではこれらを再現用の制約表へまとめたり、現行設定へ転用したりしません。原著実験の独立再現も行っていません。</p>
+
+<h3>4. 現行方式へ接続する前に、入力と確率の意味をそろえる</h3>
+<div class="table-wrap" role="region" aria-label="表3　現行方式との比較と未実装の接続条件" tabindex="0"><table class="tech-table"><caption>表3　現行方式との比較と未実装の接続条件</caption><thead><tr><th scope="col">対象</th><th scope="col">静的に確認したこと</th><th scope="col">必要な検証</th></tr></thead><tbody><tr><td>TimePathと下流制御</td><td>TimePathV1の主契約は時刻付きXY30点。PMPSCの提案入力uLとは異なる。</td><td>追従器後の操舵・加減速を境界にするか、追従器を含む状態・入力系を定義する。座標・時刻・遅延・単位をそろえる。</td></tr><tr><td>停止監視と確率</td><td>Safety Supervisorは時刻・非有限値・前方距離・上限などを検査し、指令を差し替え/clampする。</td><td>stop_probabilityやconfidenceの閾値をpₓ/pᵤやモデル信頼水準と同じ意味にしない。PMPSC後のclampもfeedbackモデルとの整合が必要。</td></tr><tr><td>保持経路と名目状態</td><td>保持経路の選択自体は動作を許可せず、指令前に新鮮な占有・制御検査を要求する。</td><td>保持経路だけではPRS、モデルで発展するz、名目終端不変性にならない。初期実行可能性と故障時の経路を別に検証する。</td></tr></tbody></table></div>
+
+<p>比較対象は公開mainの確認基準commit <code>c5b792d8cd860a9c744f33f2dffa9f35bd9d982a</code>にある<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/c5b792d8cd860a9c744f33f2dffa9f35bd9d982a/src/aic_transfuser_lite/models/time_path_v1.py" data-source="src/aic_transfuser_lite/models/time_path_v1.py">TimePathV1</a>、<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/c5b792d8cd860a9c744f33f2dffa9f35bd9d982a/src/aic_transfuser_lite/control/safety_supervisor.py" data-source="src/aic_transfuser_lite/control/safety_supervisor.py">Safety Supervisor</a>、<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/c5b792d8cd860a9c744f33f2dffa9f35bd9d982a/src/aic_transfuser_lite/control/time_path_recovery.py" data-source="src/aic_transfuser_lite/control/time_path_recovery.py">保持経路復帰</a>です。特定の実行で全機能が有効だったという確認ではありません。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/c5b792d8cd860a9c744f33f2dffa9f35bd9d982a/docs/slam_mppi_avoidance.md" data-source="docs/slam_mppi_avoidance.md">既存の限定SLAM MPPI検証</a>は静的占有などの条件を持ち、PMPSC導入の実績へ読み替えません。</p>
+<p>導入候補とする場合も、認識モデルの再学習が常に必要とは限りません。一方で運動モデル用の情報を含むデータ、prior/noiseの選択、独立したrun/scenarioでの誤差較正、終端集合、solver期限、観測欠損・飽和・計算失敗時の扱いが必要です。提案操作、filter後の操作、実際に適用した操作と時刻を分けて記録しないと、学習データの入力契約もずれます。GPUを追加するだけでこれらの条件は成立しません。</p>
+<p>移動ロボットや人を含むナビゲーションでは、他者の観測・予測・反応、車体形状、制動能力も状態・制約の定義に影響します。i.i.d.外乱やモデル信頼集合を仮定した数値車両例から、人に対する安全保証を導くことはできません。</p>
+
+<h3>確認範囲・公開実装・書誌</h3>
+<p>v2の機構、定理の記述と仮定、PRS設計の流れ、数値例と付録の選択条件を確認しました。原著本文・PDF hyperlink・書誌から、本論文の公開著者実装URL/commitは確認できていません。実装が存在しないという結論ではありません。名称の似たMPSCの外部実装を、本論文の再現として扱わず、著者コードの実行・再構成や新しいsolver licenseの取得はしていません。</p>
+<p>刊行書誌は<a href="https://api.crossref.org/works/10.1109/TAC.2021.3049335">DOI登録書誌</a>でIEEE Transactions on Automatic Control 67(1):176–188、2022-01、DOI <code>10.1109/TAC.2021.3049335</code>を確認しました。登録書誌の筆頭著者given nameはPDF/arXiv表記と差があるため、本稿の著者名は原著に従います。刊行版全文との一致は未監査です。初稿2019・確認版2021・刊行書誌2022を同一系列として区別します。</p>
+<p><a href="predictive-safety-filter-2018.html">非線形PSF</a>、<a href="mpc-mppi-overview.html">MPC / MPPI概説</a>、<a href="robust-mppi.html">Robust MPPI</a>、<a href="retained-path-recovery.html">保持経路の復帰</a>、<a href="stability-adaptive-vp-2026.html">安定性からの速度計画</a>、<a href="research-map.html">研究地図</a>。</p>
+</div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-27">2026-10-27</time></div>
+<h3><a href="../articles/predictive-safety-filter-2018.html">PSF：保持した経路と安全な退避計画の違い</a></h3>
+<p>予測安全フィルタの条件付き保証と、現行の停止監視・保持経路復帰との境界を整理。</p><div class="card-bottom"><span>原著の限定節確認・未導入</span>
+<a class="article-read" href="../articles/predictive-safety-filter-2018.html" aria-label="PSF：保持した経路と安全な退避計画の違いを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-27">2026-10-27</time></div>
+<h3><a href="../articles/mpc-mppi-overview.html">MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</a></h3>
+<p>線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="card-bottom"><span>文献俯瞰・適用候補</span>
+<a class="article-read" href="../articles/mpc-mppi-overview.html" aria-label="MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-27">2026-10-27</time></div>
+<h3><a href="../articles/robust-mppi.html">Robust MPPI：追従器を予測の内側へ入れる</a></h3>
+<p>RMPPIの名目／実状態と追従内包、条件付きfree-energy保証、実験条件の違い、導入前の検証を解説します。</p><div class="card-bottom"><span>原論文精読・未実装候補</span>
+<a class="article-read" href="../articles/robust-mppi.html" aria-label="Robust MPPI：追従器を予測の内側へ入れるを読む">記事を読む →</a></div></article><article class="article-card" data-category="report">
+<div class="card-meta"><span class="tag">検証記録</span>
+<time datetime="2026-10-27">2026-10-27</time></div>
+<h3><a href="../articles/retained-path-recovery.html">保持経路を使う低速復帰の仕様と検証状況</a></h3>
+<p>直前の有効な経路を検査しながら使う復帰処理。コード検証とAWSIM未確認を分けて記録します。</p><div class="card-bottom"><span>実装・テスト済み</span>
+<a class="article-read" href="../articles/retained-path-recovery.html" aria-label="保持経路を使う低速復帰の仕様と検証状況を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-27">2026-10-27</time></div>
+<h3><a href="../articles/stability-adaptive-vp-2026.html">Adaptive Velocity Planning：曲がれる余裕を、場所ごとの速度へ戻す</a></h3>
+<p>安定性から学ぶscaling factorと連続map、速度計画、実車・simulation・競技の比較条件を整理。</p><div class="card-bottom"><span>原著v1/v2確認・著者実装未照合／未導入</span>
+<a class="article-read" href="../articles/stability-adaptive-vp-2026.html" aria-label="Adaptive Velocity Planning：曲がれる余裕を、場所ごとの速度へ戻すを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
+<div class="card-meta"><span class="tag">継続資料</span>
+<time datetime="2026-10-27">2026-10-27</time></div>
+<h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
+<p>4領域・144区分の確認範囲と未調査を整理。107資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
+<p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

@@ -68,3 +68,5 @@
 <h3>滑らかさと探索分布を別々に考える</h3><p>2026-10-26独立再執筆に伴う追記。<a href="smooth-mppi-2021.html">Smooth MPPI</a>は操作増分と操作列の変化を扱い、<a href="covo-mpc-2024.html">CoVO-MPC</a>はHessianから共分散を設計します。現在の静的占有・経路係数探索へ同じ式を適用できるかは未検証です。最適化解析を閉ループ安全保証へ置換しません。著者コード実行・独立追試・現行車両への導入は未実施です。</p>
 
 <h3>速度の制約をどこから得るか</h3><p>2026-10-26追記。<a href="stability-adaptive-vp-2026.html">Adaptive Velocity Planning</a>は安定性と過去の周回から位置ごとの速度余裕を作ります。SGPRによる補間、GG-diagram、forward/backward solverを扱い、MPPIの探索分布や条件付き制御保証とは分けて読みます。独立追試・現行車両への導入は未実施です。</p>
+
+<h3>確率を使う目的と、保証する事象を分ける</h3><p>2026-10-27追記。<a href="probabilistic-mpsc-2019.html">PMPSC</a>は状態・入力の各時刻のchance constraintを扱います。MPPIのサンプリング分布・最適化収束と同じ保証ではありません。モデル信頼集合、PRS、名目終端集合と初期実行可能性を確認する必要があります。著者実装の再現・現行車両への導入は未実施です。</p>

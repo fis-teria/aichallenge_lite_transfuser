@@ -35,3 +35,5 @@
 <h3>公開実装・計算条件と確認範囲</h3>
 <p>原著v1/v2・arXiv書誌のリンクでは、本手法の公開著者実装URLを確認できませんでした。これは実装が存在しないという証明ではありません。著者コードのcommit、指標の具体設定、SGPR/PIDの全hyperparameter、実験dataとrecipeの対応は未確認です。原著がreal-timeと呼ぶことを、対象PCでの制御周期や期限の保証へ変えず、未確認のCPU/GPU・計算時間を推測しません。</p>
 <p>本記事は原著の機構・評価条件と現行コードの静的な境界を整理したものです。v1/v2の全文・式・実験実装の同一性は監査していません。主対象期間は2018-10-02〜2026-10-02で、今回の2版はいずれもその範囲内です。<a href="racing-overview-2018-2026.html">レーシング概説</a>、<a href="map-controller-2022.html">MAP</a>、<a href="on-track-sysid-2024.html">On-Track SysID</a>、<a href="mpc-mppi-overview.html">MPC / MPPI概説</a>、<a href="research-map.html">研究地図</a>。</p>
+
+<h3>実効的な余裕と、確率水準の違い</h3><p>2026-10-27追記。<a href="probabilistic-mpsc-2019.html">PMPSC</a>のchance constraintは、安定性指標から学ぶ速度mapのscaling factorと意味が異なります。値の大きさだけで両者を確率的な安全保証へ結び付けず、モデル・誤差・時刻・集合の仮定を確認します。著者実装の再現・現行車両への導入は未実施です。</p>
