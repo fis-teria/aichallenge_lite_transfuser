@@ -70,7 +70,7 @@
 <span class="section-number">論文ノート</span><h1>DODGER：学習時の安全参照と、実行時の監視を分ける</h1>
 <p class="article-lead">動的障害物ナビの方策・CBF参照を分け、実機条件と公開コード、現行の停止監視との境界を確認。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-12">2026-10-12</time></span>
-<span>更新 <time datetime="2026-10-15">2026-10-15</time></span>
+<span>更新 <time datetime="2026-10-28">2026-10-28</time></span>
 <span class="tag">原著・主要コードの静的確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文・実装調査／動的ナビゲーション</span><span class="paper-year">2026</span></div>
 <h2>DODGER：学習時の安全参照と、実行時の監視を分ける</h2>
 <p class="authors">Sanghyuk Park、Kwanwoo Lee、Taekyung Kim、Seohyeon Lim、Yisoo Lee</p>
@@ -138,6 +138,8 @@
 
 <h3>意味記憶の鮮度と再確認</h3>
 <p>2026-10-15追記。<a href="evolvingnav-2026.html">EvolvingNav</a>。探索先を選ぶ意味記憶と、動的障害物から移動体を守る処理は役割が異なります。EvolvingNavの可視性と信念更新、実機64試行の条件を確認し、探索成功率を人への安全保証へ移さない境界を整理しました。</p>
+
+<h3>相互作用表現との比較</h3><p>2026-10-28追記。<a href="prism-social-navigation-2026.html">PRISMの個別解説</a>。PRISMはORCAで合成した相手の譲り方を推定して方策へ渡します。DODGERの学習時ガイダンスと役割が異なり、入力の正解情報・機体・成功判定を跨いだ衝突率の順位は付けません。著者コード実行・現行系への導入・追加走行は未実施です。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-27">2026-10-27</time></div>
@@ -145,7 +147,7 @@
 <p>予測安全フィルタの条件付き保証と、現行の停止監視・保持経路復帰との境界を整理。</p><div class="card-bottom"><span>原著の限定節確認・未導入</span>
 <a class="article-read" href="../articles/predictive-safety-filter-2018.html" aria-label="PSF：保持した経路と安全な退避計画の違いを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-27">2026-10-27</time></div>
+<time datetime="2026-10-28">2026-10-28</time></div>
 <h3><a href="../articles/mpc-mppi-overview.html">MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</a></h3>
 <p>線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="card-bottom"><span>文献俯瞰・適用候補</span>
 <a class="article-read" href="../articles/mpc-mppi-overview.html" aria-label="MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
@@ -155,19 +157,24 @@
 <p>非反応の周囲ログから行動価値を作る教師生成。評価条件・コードの版差・TimePathへの接続を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
 <a class="article-read" href="../articles/world-on-rails-2021.html" aria-label="World on Rails：保存ログから未選択の操作にも教師を付けるを読む">記事を読む →</a></div></article><article class="article-card" data-category="report">
 <div class="card-meta"><span class="tag">検証記録</span>
-<time datetime="2026-10-26">2026-10-26</time></div>
+<time datetime="2026-10-28">2026-10-28</time></div>
 <h3><a href="../articles/slam-mppi-box-20260919.html">SLAM MPPIによる静止箱通過と通常追従への復帰</a></h3>
 <p>5 km/h目標のrollout02で箱通過と通常復帰を記録。周回成功や一般的な回避保証とは区別します。</p><div class="card-bottom"><span>限定試験で確認</span>
 <a class="article-read" href="../articles/slam-mppi-box-20260919.html" aria-label="SLAM MPPIによる静止箱通過と通常追従への復帰を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-27">2026-10-27</time></div>
+<time datetime="2026-10-28">2026-10-28</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
 <p>4領域・144区分の確認範囲と未調査を整理。107資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
 <a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-15">2026-10-15</time></div>
+<time datetime="2026-10-28">2026-10-28</time></div>
 <h3><a href="../articles/evolvingnav-2026.html">EvolvingNav：古い物体位置を、いつ確かめ直すか</a></h3>
 <p>到着時の信念と可視性による更新、重複証拠の管理、探索評価と現行保持経路の境界を整理。</p><div class="card-bottom"><span>原著v4・固定版コードの静的確認／未導入</span>
-<a class="article-read" href="../articles/evolvingnav-2026.html" aria-label="EvolvingNav：古い物体位置を、いつ確かめ直すかを読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/evolvingnav-2026.html" aria-label="EvolvingNav：古い物体位置を、いつ確かめ直すかを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-28">2026-10-28</time></div>
+<h3><a href="../articles/prism-social-navigation-2026.html">PRISM：譲り方の表現と「安定した推定」の限界</a></h3>
+<p>合成された相互作用の差、正解追跡の評価条件、潜在表現の安定度と現行車両への接続を整理。</p><div class="card-bottom"><span>原著v1限定確認・著者実装未照合／未導入</span>
+<a class="article-read" href="../articles/prism-social-navigation-2026.html" aria-label="PRISM：譲り方の表現と「安定した推定」の限界を読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

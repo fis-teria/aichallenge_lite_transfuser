@@ -70,11 +70,12 @@
 <span class="section-number">継続資料</span><h1>E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</h1>
 <p class="article-lead">4領域・144区分の確認範囲と未調査を整理。107資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-02">2026-10-02</time></span>
-<span>更新 <time datetime="2026-10-27">2026-10-27</time></span>
+<span>更新 <time datetime="2026-10-28">2026-10-28</time></span>
 <span class="tag">4領域・限定資料を調査</span></div></header><div class="article-body"><h2>調査範囲と分類</h2>
-<p>確認日: 2026-10-27。初回の主対象期間2018-10-02〜2026-10-02と期間前の基礎を保全し、その後の確認を追記しています。E2E自動運転、高速自律レーシング、MPC・MPPI、移動ロボット・SLAM・人との相互作用を扱うナビゲーションを整理します。代表資料の確認であり、全領域の網羅を意味しません。</p>
+<p>確認日: 2026-10-28。初回の主対象期間2018-10-02〜2026-10-02と期間前の基礎を保全し、その後の確認を追記しています。E2E自動運転、高速自律レーシング、MPC・MPPI、移動ロボット・SLAM・人との相互作用を扱うナビゲーションを整理します。代表資料の確認であり、全領域の網羅を意味しません。</p>
 <h2>調査状態の読み方</h2><p>「調査済み」は記載した資料と確認範囲のみ。「未調査」は未確認、「資料不足」は根拠が必要条件を満たさない状態です。資料が見つからないことを、研究が存在しないことの証明にはしません。文献の確認状態と記事の作成・公開状態は別に管理します。</p>
 <p>現在は107資料・66研究系列、6時代 × 4領域 × 6資料種別の144区分です。33区分は範囲限定の調査済み、111区分は未調査で、網羅済みは0区分です。公表年不明の21資料は時代別集計から除外しています。</p>
+<h2>相互作用表現と観測の正解情報を追加確認</h2><p>2026-10-28、<a href="prism-social-navigation-2026.html">PRISM</a>の方法・式・評価条件を確認しました。ORCAの合成属性、誤差のない人物位置・ID、時間的安定度αと安全確率を区別します。個別記事は公開手続き中で、CI/実配信は未確認です。既存資料の限定増補で107資料・66系列、年代86・公表年不明21は不変。C11のROSCon本文は取得拒否で未取得のまま、metadata確認を本文精読へ拡張しません。</p>
 <h2>確率制約と名目状態の保持を追加確認</h2><p>2026-10-27、<a href="probabilistic-mpsc-2019.html">PMPSC</a>を個別解説しました。既存C05の未固定URLをv2（2021-01-18）へ固定し、初稿2019と刊行書誌2022を同系列で関連付けました。旧版の既読を推測して追加計上せず、107資料・66系列、年代86・公表年不明21は不変。各時刻のchance constraintと走行全体の安全、名目状態と保持経路を区別します。全証明/刊行版全文/著者実装・実験対応は未確認で、PDF数値と登録書誌の差を留保しています。</p>
 <h2>追加確認と個別解説</h2>
 <p><a href="mppi-generic-2024.html">MPPI-Generic：GPU並列化と制御周期を分けて測る</a>を追加しました。既存C08/C09を限定確認へ増補し、ライブラリと比較コードの固定版を同じ研究系列へ2資料追加しました。初公表年は未確認で、年代別集計へは加えません。確認日2026-10-10。追試・導入は未実施です。</p>
@@ -270,10 +271,7 @@
 <p><a href="https://arxiv.org/html/2312.14150v2">一次資料</a>。DOI: 未確認 / 付与なし未判定。</p>
 <p>年の扱い: 領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2023-12。確認した版と初稿は区別する。</p>
 <h3>On Use of Nav2 MPPI Controller</h3>
-<p>Nav2 project; specific slide author not verified / Nav2 / ROSCon。公表年: 2023。資料種別: 公式技術記事・講演・仕様。研究系列: nav2-mppi。</p>
-<p>資料更新日・版: 未確認。確認日: 2026-10-02。確認範囲: Discovery/metadata only; included as implementation-community timeline link, not technical performance evidence</p>
-<p><a href="https://roscon.ros.org/2023/talks/On_Use_of_Nav2_MPPI_Controller.pdf">一次資料</a>。DOI: 未確認 / 付与なし未判定。</p>
-<p>年の扱い: 領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。</p>
+<p>Nav2 project; specific slide author not verified / Nav2 / ROSCon。分類年2023、資料種別technical、nav2-mppi系列。著者・版の追加確認はできていません。</p><p>確認範囲は旧来の発見・metadataのみ。2026-10-28に原典ROSConPDFの読取りがAnubisAccessDeniedとなり本文未取得。既存Nav2文書URLも404でした。再試行・別経路迂回はせず、本文は資料不足として保留します。技術・性能の根拠にしません。</p><p><a href="https://roscon.ros.org/2023/talks/On_Use_of_Nav2_MPPI_Controller.pdf">既存の原典参照</a>。DOI・改訂日未確認。旧確認範囲は台帳へ保全しました。</p>
 <h3>TransFuser: Imitation with Transformer-Based Sensor Fusion for Autonomous Driving</h3>
 <p>Kashyap Chitta; Aditya Prakash; Bernhard Jaeger; Zehao Yu; Katrin Renz; Andreas Geiger。公表年: 2023。資料種別: 公式コード・ソフトウェア。研究系列: transfuser。</p>
 <p>資料更新日・版: 未確認。確認日: 2026-10-02。確認範囲: README extension relationship, 2022 default branch and cvpr2021 separation; no numeric PAMI performance reused</p>
@@ -429,11 +427,7 @@
 <p>確認日2026-10-13。§3–5と関連付録、PDFの選択箇所を確認。RAMと明示履歴、非反応NC-Vと閉ループSR、98 vision tokenとLLM総入力、計時モードを区別しました。FIVE固有コード・重み/実験対応は未確認で、検索の一部は取得制限があります。</p>
 <p><a href="https://arxiv.org/html/2609.18623v1">一次資料v1</a>、<a href="https://arxiv.org/abs/2609.18623">書誌・版履歴</a>、<a href="five-vla-2026.html">個別解説</a>。DOI:10.48550/arXiv.2609.18623。原著追試・現行系への導入は未実施。</p>
 <h3>PRISM: Predictive Representation of Interaction Style and Motion for Social Robot Navigation</h3>
-<p>Bo-Han Chen; Hiromu Taketsugu; Norimichi Ukita。公表年: 2026。初稿・公表日: 2026-09-16。資料種別: プレプリント。研究系列: <code>prism-social-navigation</code>。</p>
-<p>資料更新日・版: 2026-09-16 v1。確認日: 2026-10-02。確認範囲: Abstract, simulator/observation setup, evaluation and discussion limitations.</p>
-<p><a href="https://arxiv.org/html/2609.18125v1">一次資料</a>。DOI: 10.48550/arXiv.2609.18125。</p>
-<p>年の扱い: 分類年と公表日はarXiv初稿v1。updatedとURLは確認した最新の版。ニュース掲載日を論文公表日に代用しない。</p>
-<p>記事化の状態: 追加精読待ち。確認範囲を超えた個別技術の解説は未公開です。</p>
+<p>Bo-Han Chen / National Chung Hsing University;Hiromu Taketsugu;Norimichi Ukita / Toyota Technological Institute。初稿・確認版v1:2026-09-16、確認日2026-10-28。同じprism-social-navigation系列の既存資料を増補し、重複計上しません。</p><p>§3–6、式1–6、表1–2、図2–3とPDF対応箇所を確認。合成μ、GT位置/ID、表現の時間的安定度、500episode/設定の丸めた比率と欠けた統計検証を区別。著者実装・重み・実験対応・実機/車両移植・独立再現は未確認です。</p><p><a href="https://arxiv.org/html/2609.18125v1">原著v1</a>、<a href="https://arxiv.org/abs/2609.18125">版履歴</a>、<a href="prism-social-navigation-2026.html">個別解説（公開手続き中）</a>。DOI:10.48550/arXiv.2609.18125。</p>
 <h3>DreamStream: Towards Policy-Oriented Generative Simulation for End-to-End Driving</h3>
 <p>Ziyang Leng; Sicheng Mo; Seth Z. Zhao; Haoyuan Cai; Yu Zeng; Rowan McAllister; Bolei Zhou。公表年: 2026。初稿・公表日: 2026-09-22。資料種別: プレプリント。研究系列: <code>dreamstream</code>。</p>
 <p>資料更新日・版: 2026-09-22。確認日: 2026-10-02。確認範囲: Full v1 paper and appendix read; primary claims checked in §§3–7, Eqs2–3/7–8, Tables1–5/7–8, AppendixB.1–B.3 and C.1–C.5. Mechanism, FDπ normalization, visual-gap versus driving-score distinction, 8s/5frame/K=1/IDM setup, 421/325/&gt;5k scenario conditions, score-table differences, runtime and drift limits.</p>
@@ -610,7 +604,7 @@
 <h3>安定性に応じた速度計画の個別確認</h3><p>2026-10-26追記。登録済みR11を入口に、<a href="stability-adaptive-vp-2026.html">Adaptive Velocity Planning</a>のv1/v2の機構・評価条件を追加確認しました。35%の初周比較と8%のbaseline平均比較、実車とsimulation、14 m/s上限と制動時の問題を区別します。既存R11のv1を保全し、v2をR11-V2として同じ研究系列へ登録しました。登録台帳は107資料・66系列、年代集計86・公表年不明21。2026年レーシングpreprintセルは2資料・1系列の限定調査済みです。144セル中33調査済み・111未調査、網羅済み0は維持。公開著者実装・全版/実験対応の未確認範囲は台帳と個別記事に残しています。独立追試・現行車両への導入は未実施です。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-26">2026-10-26</time></div>
+<time datetime="2026-10-28">2026-10-28</time></div>
 <h3><a href="../articles/e2e-field-overview.html">E2E自動運転の全体像と比較の読み方</a></h3>
 <p>2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。</p><div class="card-bottom"><span>文献調査</span>
 <a class="article-read" href="../articles/e2e-field-overview.html" aria-label="E2E自動運転の全体像と比較の読み方を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
@@ -620,7 +614,7 @@
 <p>F1TENTHと実車の位置推定、タイヤ同定、経路・速度、対戦、実時間を評価条件ごとに整理。</p><div class="card-bottom"><span>調査・適用候補</span>
 <a class="article-read" href="../articles/racing-overview-2018-2026.html" aria-label="高速自律レーシングの研究地図：2018–2026を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-27">2026-10-27</time></div>
+<time datetime="2026-10-28">2026-10-28</time></div>
 <h3><a href="../articles/mpc-mppi-overview.html">MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</a></h3>
 <p>線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="card-bottom"><span>文献俯瞰・適用候補</span>
 <a class="article-read" href="../articles/mpc-mppi-overview.html" aria-label="MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
@@ -695,7 +689,7 @@
 <p>短い走行からの物理同定。予測誤差と周回、原著と公開コードの版差、TimePathへの接続条件を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
 <a class="article-read" href="../articles/on-track-sysid-2024.html" aria-label="On-Track SysID：残差からタイヤモデルへ戻すを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-15">2026-10-15</time></div>
+<time datetime="2026-10-28">2026-10-28</time></div>
 <h3><a href="../articles/dodger-2026.html">DODGER：学習時の安全参照と、実行時の監視を分ける</a></h3>
 <p>動的障害物ナビの方策・CBF参照を分け、実機条件と公開コード、現行の停止監視との境界を確認。</p><div class="card-bottom"><span>原著・主要コードの静的確認／未導入</span>
 <a class="article-read" href="../articles/dodger-2026.html" aria-label="DODGER：学習時の安全参照と、実行時の監視を分けるを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
@@ -710,7 +704,7 @@
 <p>相手のGP予測と衝突区間、成功5回までの評価、計時と公開コードの差を整理。</p><div class="card-bottom"><span>原著v2・固定版コードの静的確認／未導入</span>
 <a class="article-read" href="../articles/predictive-spliner-2024.html" aria-label="Predictive Spliner：相手の周回を学び、追越しの場所を選ぶを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-15">2026-10-15</time></div>
+<time datetime="2026-10-28">2026-10-28</time></div>
 <h3><a href="../articles/evolvingnav-2026.html">EvolvingNav：古い物体位置を、いつ確かめ直すか</a></h3>
 <p>到着時の信念と可視性による更新、重複証拠の管理、探索評価と現行保持経路の境界を整理。</p><div class="card-bottom"><span>原著v4・固定版コードの静的確認／未導入</span>
 <a class="article-read" href="../articles/evolvingnav-2026.html" aria-label="EvolvingNav：古い物体位置を、いつ確かめ直すかを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
@@ -758,6 +752,11 @@
 <time datetime="2026-10-27">2026-10-27</time></div>
 <h3><a href="../articles/probabilistic-mpsc-2019.html">PMPSC：確率制約と、リセットしない名目状態</a></h3>
 <p>各時刻のchance constraintと名目状態の保持、条件付き保証、数値車両例と現行実装の境界を整理。</p><div class="card-bottom"><span>原著v2限定確認・著者実装未照合／未導入</span>
-<a class="article-read" href="../articles/probabilistic-mpsc-2019.html" aria-label="PMPSC：確率制約と、リセットしない名目状態を読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/probabilistic-mpsc-2019.html" aria-label="PMPSC：確率制約と、リセットしない名目状態を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-28">2026-10-28</time></div>
+<h3><a href="../articles/prism-social-navigation-2026.html">PRISM：譲り方の表現と「安定した推定」の限界</a></h3>
+<p>合成された相互作用の差、正解追跡の評価条件、潜在表現の安定度と現行車両への接続を整理。</p><div class="card-bottom"><span>原著v1限定確認・著者実装未照合／未導入</span>
+<a class="article-read" href="../articles/prism-social-navigation-2026.html" aria-label="PRISM：譲り方の表現と「安定した推定」の限界を読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

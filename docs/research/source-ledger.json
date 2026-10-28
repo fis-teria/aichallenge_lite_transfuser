@@ -1467,16 +1467,17 @@
     "original_source_type": "official conference presentation",
     "domain": "control",
     "era": "2023-2024",
-    "checked_date": "2026-10-02",
-    "checked_scope": "Discovery/metadata only; included as implementation-community timeline link, not technical performance evidence",
+    "checked_date": "2026-10-28",
+    "checked_scope": "Discovery/metadata only; included as implementation-community timeline link, not technical performance evidence. 2026-10-28 full-slide acquisition attempted but AnubisAccessDenied;no slide content/author attribution inspected,no retry or alternate route.",
     "related_articles": [
       "mpc-mppi-overview"
     ],
     "review_status": "調査済み",
-    "boundary_note": "Author attribution and full slides not inspected; retain limited scope.",
+    "boundary_note": "Author attribution and full slides not inspected; retain limited scope. 2026-10-28: originalROSConPDF not acquired (AnubisAccessDenied);existingNav2documentationURL404.Preserve metadata-only scope;technical content remains資料不足,not a new implementation/performance finding.",
     "date_basis": "領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。",
     "origin_ledger": "source-ledger.json",
-    "independent_replication": false
+    "independent_replication": false,
+    "original_scope": "2026-10-02: Discovery/metadata only; included as implementation-community timeline link, not technical performance evidence"
   },
   {
     "source_id": "C12",
@@ -1682,7 +1683,7 @@
     "source_id": "NEWS-ARXIV-2609.18125-v1",
     "study_family_id": "prism-social-navigation",
     "title": "PRISM: Predictive Representation of Interaction Style and Motion for Social Robot Navigation",
-    "authors_or_organization": "Bo-Han Chen; Hiromu Taketsugu; Norimichi Ukita",
+    "authors_or_organization": "Bo-Han Chen / National Chung Hsing University;Hiromu Taketsugu;Norimichi Ukita / Toyota Technological Institute",
     "year": 2026,
     "classification_year": 2026,
     "publication_date": "2026-09-16",
@@ -1693,30 +1694,46 @@
     "original_source_type": "author arXiv manuscript",
     "domain": "navigation",
     "era": "2026",
-    "checked_date": "2026-10-02",
-    "checked_scope": "Abstract, simulator/observation setup, evaluation and discussion limitations.",
+    "checked_date": "2026-10-28",
+    "checked_scope": "v1 §§3–6,Eq1–6,Tables1–2,Figures2–3;10pagePDF corresponding method/evaluation/discussion passages,renderedPDFpp4,5,7,8;arXiv version history and PDFURI inventory.Current TimePathV1/supervisor/limitedSLAMprofile/staticboxscenario/report statically at4b904bc.No author-code/weights/experiment correspondence or independent reproduction.",
     "related_articles": [
-      "research-map"
+      "research-map",
+      "prism-social-navigation-2026",
+      "dodger-2026",
+      "evolvingnav-2026",
+      "slam-mppi-box-20260919",
+      "mpc-mppi-overview",
+      "e2e-field-overview"
     ],
     "review_status": "調査済み",
-    "boundary_note": "This is not validated human personality recognition. Social stiffness is a synthetic ORCA parameter.; No real-world human-trait inference or hardware-navigation evaluation is established.; Paper notes missing confidence intervals, independent PPO training seeds and closed-loop component ablations.",
+    "boundary_note": "This is not validated human personality recognition. Social stiffness is a synthetic ORCA parameter.; No real-world human-trait inference or hardware-navigation evaluation is established.; Paper notes missing confidence intervals, independent PPO training seeds and closed-loop component ablations. Alpha is temporal latent stability,not calibrated correctness/collision probability;syntheticORCA mu teacher trains representation,GT mu not supplied to policy but GT tracking remains privileged.10^5frames is representation data,not allPPO budget.All five rounded collision/success rows checked;more-crowded path length10.18->10.20 not improved.No significance/real-human/vehicle/safety guarantee.",
     "date_basis": "分類年と公表日はarXiv初稿v1。updatedとURLは確認した最新の版。ニュース掲載日を論文公表日に代用しない。",
     "origin_ledger": "news-primary-intake-20261002",
     "independent_replication": false,
-    "original_scope": "Interaction-style latent features augment a HEIGHT navigation policy in custom PyBullet simulations of a Turtlebot among ORCA pedestrians. Trajectory encoder sees noise-free simulator pedestrian positions and identities; 500 randomized episodes per setting.",
-    "evaluation_scope": "PyBullet/ORCA simulated Turtlebot with privileged noise-free pedestrian observations.",
+    "original_scope": "Interaction-style latent features augment a HEIGHT navigation policy in custom PyBullet simulations of a Turtlebot among ORCA pedestrians. Trajectory encoder sees noise-free simulator pedestrian positions and identities; 500 randomized episodes per setting. Prior checked_scope(2026-10-02): Abstract, simulator/observation setup, evaluation and discussion limitations.",
+    "evaluation_scope": "CustomPyBullet9mx9m;nonholonomicTurtlebot0.5m/s;ORCApedestrians;noise-freeGTpositions/identities toPRISM,finite-differencevelocity;policy uses simulated2DLiDAR;500randomizedepisodes/setting.No detection/tracking/hardware validation.",
     "primary_metadata_url": "https://arxiv.org/abs/2609.18125",
     "latest_version": "v1",
     "source_evidence": [
       "arXiv title and submission history",
-      "HTML §4.1, §4.2, §5"
+      "HTML §4.1, §4.2, §5",
+      {
+        "url": "https://arxiv.org/html/2609.18125v1",
+        "section": "§§3–6,Eq1–6,Tables1–2,Figures2–3",
+        "supports": "latent/context,ordinalsupervision,stabilityscore,GTtracking/ORCA/Turtlebot protocol,500episode rates and limitations"
+      },
+      {
+        "url": "https://arxiv.org/pdf/2609.18125v1",
+        "section": "PDFpp3–8,renderedpp4,5,7,8",
+        "supports": "equations,ablation/data/evaluation table and discussion visually cross-checked;not fullHTML/PDF equivalence"
+      }
     ],
     "code_url": null,
-    "code_status": "No author code/project link found in checked arXiv abstract or full text.",
+    "code_status": "No official author implementation URL/commit verified in checked v1HTML/PDFURI/arXivmetadata and targetedsearch;not a nonexistence claim;similarly named PRISM/HEIGHT code not assumed equivalent.No code executed or reconstructed.",
     "code_license": null,
     "code_commit_if_verified": null,
-    "article_status": "awaiting_fuller_review",
-    "publication_gate": "人格認識や実歩行者への検証と誤記しない。Turtlebot/ORCA・GTtracking条件を確認"
+    "article_status": "prepared_for_publication",
+    "publication_gate": "Original scope reviewed;official generation/tests/PCmobile/CI/live verification pending before marking published.Independent author implementation/experiment reproduction not claimed."
   },
   {
     "source_id": "NEWS-ARXIV-2609.18623-v1",

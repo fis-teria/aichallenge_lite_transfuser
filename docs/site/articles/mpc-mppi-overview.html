@@ -70,7 +70,7 @@
 <span class="section-number">継続資料</span><h1>MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</h1>
 <p class="article-lead">線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-02">2026-10-02</time></span>
-<span>更新 <time datetime="2026-10-27">2026-10-27</time></span>
+<span>更新 <time datetime="2026-10-28">2026-10-28</time></span>
 <span class="tag">文献俯瞰・適用候補</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">制御分野俯瞰</span><span class="paper-year">2018–2026</span></div>
 <h2>MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を分けて読む</h2>
 <p class="paper-summary">MPCは毎周期、有限の未来を予測して最初の操作を実行する枠組みです。MPPIはその最適化をサンプリングで近似する一群です。線形／非線形、ロバスト／確率的、学習モデル／物理モデルは別の分類軸であり、「新しい手法ほど安全・高速」という順序にはなりません。</p>
@@ -143,6 +143,8 @@
 <h3>速度の制約をどこから得るか</h3><p>2026-10-26追記。<a href="stability-adaptive-vp-2026.html">Adaptive Velocity Planning</a>は安定性と過去の周回から位置ごとの速度余裕を作ります。SGPRによる補間、GG-diagram、forward/backward solverを扱い、MPPIの探索分布や条件付き制御保証とは分けて読みます。独立追試・現行車両への導入は未実施です。</p>
 
 <h3>確率を使う目的と、保証する事象を分ける</h3><p>2026-10-27追記。<a href="probabilistic-mpsc-2019.html">PMPSC</a>は状態・入力の各時刻のchance constraintを扱います。MPPIのサンプリング分布・最適化収束と同じ保証ではありません。モデル信頼集合、PRS、名目終端集合と初期実行可能性を確認する必要があります。著者実装の再現・現行車両への導入は未実施です。</p>
+
+<h3>潜在表現の安定度と安全確率</h3><p>2026-10-28追記。<a href="prism-social-navigation-2026.html">PRISMの個別解説</a>。PRISMのαは相手の潜在表現の時間的な安定度です。MPPIのコスト、停止監視のconfidence、確率制約の水準と同じ意味にせず、定義と失敗時の扱いを揃えて比較します。著者コード実行・現行系への導入・追加走行は未実施です。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-09-27">2026-09-27</time></div>
@@ -160,7 +162,7 @@
 <p>Camera・2D LiDAR・車両状態からの経路予測と、モデル外の制御・安全監視を整理します。</p><div class="card-bottom"><span>継続資料</span>
 <a class="article-read" href="../articles/system-architecture.html" aria-label="システム構成とTimePathの入出力を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-27">2026-10-27</time></div>
+<time datetime="2026-10-28">2026-10-28</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
 <p>4領域・144区分の確認範囲と未調査を整理。107資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
 <a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
@@ -185,7 +187,7 @@
 <p>CUDA実装の候補探索・計時範囲と、現行の参照空間MPPIへ接続する条件を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
 <a class="article-read" href="../articles/mppi-generic-2024.html" aria-label="MPPI-Generic：GPU並列化と制御周期を分けて測るを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-15">2026-10-15</time></div>
+<time datetime="2026-10-28">2026-10-28</time></div>
 <h3><a href="../articles/dodger-2026.html">DODGER：学習時の安全参照と、実行時の監視を分ける</a></h3>
 <p>動的障害物ナビの方策・CBF参照を分け、実機条件と公開コード、現行の停止監視との境界を確認。</p><div class="card-bottom"><span>原著・主要コードの静的確認／未導入</span>
 <a class="article-read" href="../articles/dodger-2026.html" aria-label="DODGER：学習時の安全参照と、実行時の監視を分けるを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
@@ -213,6 +215,11 @@
 <time datetime="2026-10-27">2026-10-27</time></div>
 <h3><a href="../articles/probabilistic-mpsc-2019.html">PMPSC：確率制約と、リセットしない名目状態</a></h3>
 <p>各時刻のchance constraintと名目状態の保持、条件付き保証、数値車両例と現行実装の境界を整理。</p><div class="card-bottom"><span>原著v2限定確認・著者実装未照合／未導入</span>
-<a class="article-read" href="../articles/probabilistic-mpsc-2019.html" aria-label="PMPSC：確率制約と、リセットしない名目状態を読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/probabilistic-mpsc-2019.html" aria-label="PMPSC：確率制約と、リセットしない名目状態を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-28">2026-10-28</time></div>
+<h3><a href="../articles/prism-social-navigation-2026.html">PRISM：譲り方の表現と「安定した推定」の限界</a></h3>
+<p>合成された相互作用の差、正解追跡の評価条件、潜在表現の安定度と現行車両への接続を整理。</p><div class="card-bottom"><span>原著v1限定確認・著者実装未照合／未導入</span>
+<a class="article-read" href="../articles/prism-social-navigation-2026.html" aria-label="PRISM：譲り方の表現と「安定した推定」の限界を読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

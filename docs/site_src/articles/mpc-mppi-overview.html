@@ -70,3 +70,5 @@
 <h3>速度の制約をどこから得るか</h3><p>2026-10-26追記。<a href="stability-adaptive-vp-2026.html">Adaptive Velocity Planning</a>は安定性と過去の周回から位置ごとの速度余裕を作ります。SGPRによる補間、GG-diagram、forward/backward solverを扱い、MPPIの探索分布や条件付き制御保証とは分けて読みます。独立追試・現行車両への導入は未実施です。</p>
 
 <h3>確率を使う目的と、保証する事象を分ける</h3><p>2026-10-27追記。<a href="probabilistic-mpsc-2019.html">PMPSC</a>は状態・入力の各時刻のchance constraintを扱います。MPPIのサンプリング分布・最適化収束と同じ保証ではありません。モデル信頼集合、PRS、名目終端集合と初期実行可能性を確認する必要があります。著者実装の再現・現行車両への導入は未実施です。</p>
+
+<h3>潜在表現の安定度と安全確率</h3><p>2026-10-28追記。<a href="prism-social-navigation-2026.html">PRISMの個別解説</a>。PRISMのαは相手の潜在表現の時間的な安定度です。MPPIのコスト、停止監視のconfidence、確率制約の水準と同じ意味にせず、定義と失敗時の扱いを揃えて比較します。著者コード実行・現行系への導入・追加走行は未実施です。</p>

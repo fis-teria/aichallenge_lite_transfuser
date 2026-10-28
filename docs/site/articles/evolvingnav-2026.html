@@ -70,7 +70,7 @@
 <span class="section-number">論文ノート</span><h1>EvolvingNav：古い物体位置を、いつ確かめ直すか</h1>
 <p class="article-lead">到着時の信念と可視性による更新、重複証拠の管理、探索評価と現行保持経路の境界を整理。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-15">2026-10-15</time></span>
-<span>更新 <time datetime="2026-10-15">2026-10-15</time></span>
+<span>更新 <time datetime="2026-10-28">2026-10-28</time></span>
 <span class="tag">原著v4・固定版コードの静的確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文詳解・意味記憶と探索</span><span class="paper-year">2026</span></div>
 <h2>EvolvingNav：古い物体位置を、いつ確かめ直すか</h2>
 <p class="authors">Mingjian Gao、Zhaocheng Li、Haoyang Huang、Wenqiao Zhang、Yingjie Niu、Hao Zhou、Chao Li、Juncheng Li、Siliang Tang、Yueting Zhuang</p>
@@ -127,6 +127,8 @@
 <li><strong>変更と検証の候補：</strong>高位の候補選択・証拠管理インターフェースを先に設計し、観測欠損、遮蔽、ID切替、規則の崩れ、再訪時の変化、VLM待ちを試す。低位の衝突回避・停止を保持し、探索成功率と接触・停止・期限超過を別に評価する。</li>
 </ul>
 <p>上記は未実装の適用候補です。人に接近する安全性や車両の追越し保証はこの探索評価から導けません。関連記事：<a href="cartographer.html">SLAM</a>、<a href="retained-path-recovery.html">保持経路の復帰</a>、<a href="dodger-2026.html">動的障害物と実行時監視</a>、<a href="predictive-spliner-2024.html">周回する相手の予測</a>、<a href="research-map.html">調査範囲と資料台帳</a>。</p>
+
+<h3>他者の履歴と意味記憶の区別</h3><p>2026-10-28追記。<a href="prism-social-navigation-2026.html">PRISMの個別解説</a>。PRISMの人物別の短い相互作用履歴と、EvolvingNavの物体・場所についての意味記憶は保持対象と用途が異なります。推定が安定したこと、探索先が見つかったこと、人に安全に接近できることを区別します。著者コード実行・現行系への導入・追加走行は未実施です。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-10-15">2026-10-15</time></div>
@@ -139,7 +141,7 @@
 <p>直前の有効な経路を検査しながら使う復帰処理。コード検証とAWSIM未確認を分けて記録します。</p><div class="card-bottom"><span>実装・テスト済み</span>
 <a class="article-read" href="../articles/retained-path-recovery.html" aria-label="保持経路を使う低速復帰の仕様と検証状況を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-15">2026-10-15</time></div>
+<time datetime="2026-10-28">2026-10-28</time></div>
 <h3><a href="../articles/dodger-2026.html">DODGER：学習時の安全参照と、実行時の監視を分ける</a></h3>
 <p>動的障害物ナビの方策・CBF参照を分け、実機条件と公開コード、現行の停止監視との境界を確認。</p><div class="card-bottom"><span>原著・主要コードの静的確認／未導入</span>
 <a class="article-read" href="../articles/dodger-2026.html" aria-label="DODGER：学習時の安全参照と、実行時の監視を分けるを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
@@ -149,9 +151,14 @@
 <p>相手のGP予測と衝突区間、成功5回までの評価、計時と公開コードの差を整理。</p><div class="card-bottom"><span>原著v2・固定版コードの静的確認／未導入</span>
 <a class="article-read" href="../articles/predictive-spliner-2024.html" aria-label="Predictive Spliner：相手の周回を学び、追越しの場所を選ぶを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-10-27">2026-10-27</time></div>
+<time datetime="2026-10-28">2026-10-28</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
 <p>4領域・144区分の確認範囲と未調査を整理。107資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
-<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-28">2026-10-28</time></div>
+<h3><a href="../articles/prism-social-navigation-2026.html">PRISM：譲り方の表現と「安定した推定」の限界</a></h3>
+<p>合成された相互作用の差、正解追跡の評価条件、潜在表現の安定度と現行車両への接続を整理。</p><div class="card-bottom"><span>原著v1限定確認・著者実装未照合／未導入</span>
+<a class="article-read" href="../articles/prism-social-navigation-2026.html" aria-label="PRISM：譲り方の表現と「安定した推定」の限界を読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

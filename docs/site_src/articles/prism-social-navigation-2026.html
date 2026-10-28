@@ -1,0 +1,53 @@
+<div class="paper-top"><span class="tag">論文詳解・人を考慮したナビゲーション</span><span class="paper-year">2026</span></div>
+<h2>PRISM：譲り方の表現と「安定した推定」の限界</h2>
+<p class="authors">Bo-Han Chen / National Chung Hsing University、Hiromu Taketsugu・Norimichi Ukita / Toyota Technological Institute</p>
+<p class="paper-summary">同じ位置・速度に見える相手でも、出会ったときの譲り方が異なるかもしれません。PRISMは周囲の相互作用を受動的に観測し、その違いを潜在表現としてナビゲーション方策へ渡します。ただし原著の評価は、合成したORCA歩行者と誤差のない追跡情報を使う数値実験です。実在する人の性格認識や、衝突しないことの保証とは区別します。</p>
+<p>確認日：2026-10-28。対象は<a href="https://arxiv.org/html/2609.18125v1">PRISM: Predictive Representation of Interaction Style and Motion for Social Robot Navigation、arXiv v1</a>の§3–6、式1–6、表1–2、図2–3と、<a href="https://arxiv.org/pdf/2609.18125v1">10ページの原著PDF</a>の対応箇所です。<a href="https://arxiv.org/abs/2609.18125">初公表・確認版は2026-09-16</a>。著者実装URL/commit、重み、実験設定・データとの対応は未確認で、独立再現・現行系への導入・学習・走行は行っていません。</p>
+
+<h3>1. 推定するのは、シミュレータが定義した相互作用の差</h3>
+<p>背景にある課題は、位置・速度だけでは相手の反応傾向が暗黙のままになることです。PRISMは相手へ試験的に接近して反応を引き出すのでなく、観測済みの相互作用から表現を作ります。未来位置を直接予測する手法との比較では、下流の閉ループ方策へ渡す状態変数を学ぶ点が異なります。</p>
+<p>原著のsocial stiffness <code>μ ∈ [0,1]</code> は、ORCAの時間ホライズン・安全余白・近傍検出範囲を補間する合成属性です。<code>Φ = μ Φcautious + (1−μ) Φaggressive</code> とし、μ=0は短いホライズン・小さい余白、μ=1は長いホライズン・大きい余白です。人間の性格を測定した教師ラベルではなく、現実の行動がこの一本の軸で表せるとも示していません。</p>
+
+<h3>2. 過去の軌跡を圧縮し、変化の大きさを添える</h3>
+<figure class="tech-figure"><figcaption>図1　PRISMの表現とナビゲーション方策の分担（本記事の概念図）</figcaption><ol class="tech-flow four">
+<li><strong>同じ相手の履歴を集める</strong><p>位置・速度30フレームと、他の近傍・ロボットの文脈をそろえる</p></li>
+<li><strong>相互作用を符号化</strong><p>時間方向の注意と文脈への注意から128次元の表現を作る</p></li>
+<li><strong>表現と安定度を渡す</strong><p>8次元への射影とαを、相手ごとの幾何特徴へ追加する</p></li>
+<li><strong>方策を学んで移動する</strong><p>凍結したencoderを使い、拡張した入力でHEIGHT方策を学ぶ</p></li>
+</ol><p>原著では位置とIDはシミュレータの正解情報です。人物検出・追跡の成功を実証した図ではありません。</p></figure>
+
+<div class="table-wrap" role="region" aria-label="表1　原著の入力・学習・安定度の意味" tabindex="0"><table class="tech-table"><caption>表1　原著§3、式2–6の要点。RnCの全式は省略</caption><thead><tr><th scope="col">関係</th><th scope="col">役割と読み方</th></tr></thead><tbody>
+<tr><td><code>Xᵢ ∈ R^(30×4)</code><br><code>xᵢ = [pₓ, pᵧ, vₓ, vᵧ]</code></td><td>10 fpsの過去30フレーム、原著では3.0 s。初期ロボット位置・速度方向に合わせた局所座標を使い、他者の文脈もattentionへ入れる。未来の自車経路30点とは異なる。</td></tr>
+<tr><td><code>L = Lrecon + LRnC + 0.1 Lreg</code></td><td>軌跡再構成、μの差による順位を反映するRank-N-Contrast、μ回帰を併用。表現学習にはシミュレータのμを使う。回帰headは方策学習・推論の入力にはしない。</td></tr>
+<tr><td><code>σₜ² = (1−β) σₜ₋₁² + β ||ẑₜ − zₜ₋₁||²</code><br><code>αₜ = exp(−σₜ² / (2γ²))</code></td><td>式5–6。β=0.1、γ=1.0。瞬時の表現ẑと前の平滑化表現zとの差を蓄積し、変化が大きいとαを下げる。αは時間的安定度であり、正しさや無事故の較正済み確率ではない。</td></tr>
+</tbody></table></div>
+<p>encoderは対象の時間方向のself-attention、他の近傍とロボットへのcross-attentionを使い、無効・padding tokenをmaskします。128次元の表現を8次元へ射影し、αと合わせて相手一人につき9値をHEIGHTの幾何特徴へ追加します。推論時にμの正解ラベルは渡しませんが、観測の位置・ID自体が正解情報である点は残ります。</p>
+<p>原著では推定を10制御ステップごとに更新し、間では保持します。履歴30フレームが揃うまではゼロ表現とα=0、2.5 m以内に近傍がいない間は推定を保持する設計です。更新周期をそのまま推論遅延とみなさず、実測時間とも区別します。式の形からも、安定して誤った表現を出す場合にαが低下するとは限りません。これは本記事の解釈で、原著の安全保証ではありません。</p>
+<p>表1の表現学習評価では、Full Modelのμ MAEは0.203、距離とμ差のSpearman相関は0.183、再構成ADEは0.027 mです。再構成だけならADEは0.006 m、RnC+回帰なら相関は0.189と、全指標を一律に改善したわけではありません。表現の順位・再構成・回帰のトレードオフであり、このablationを各要素の閉ループ効果の独立検証へ読み替えません。</p>
+
+<h3>3. 結果はORCA群衆・正解追跡の条件で読む</h3>
+<p>§4の環境は9 m×9 mのPyBullet、非ホロノミックなTurtlebot、最大並進速度0.5 m/sです。方策には360度・25 mの模擬2D LiDARを使います。一方PRISMの人物位置には観測ノイズがなく、速度は位置の差分、人物IDはシミュレータが提供します。遮蔽・誤検出・IDの入れ替わりの評価は含みません。</p>
+<p>表現学習は10万interaction framesとμ教師を使い、その後encoderを凍結してナビゲーション方策を学びます。評価は各設定500ランダムepisode。成功は衝突せず目標へ到達した割合、衝突は衝突で終了した割合、timeoutは制限時間内にどちらにも至らない割合です。HEIGHTと同じ設定での表内比較として示し、他研究や自動運転ベンチマークとの順位は付けません。</p>
+<div class="table-wrap" role="region" aria-label="表2　原著表2の同一設定内比較" tabindex="0"><table class="tech-table"><caption>表2　各設定500 episode。HEIGHT → PRISM、原著の丸めた比率</caption><thead><tr><th scope="col">環境条件</th><th scope="col">全衝突率</th><th scope="col">成功率</th></tr></thead><tbody>
+<tr><td>訓練分布内：歩行者5–9、静止障害物8–12</td><td>0.19 → 0.12</td><td>0.81 → 0.88</td></tr>
+<tr><td>歩行者が少ない：0–4、静止障害物8–12</td><td>0.11 → 0.05</td><td>0.89 → 0.95</td></tr>
+<tr><td>歩行者が多い：10–14、静止障害物8–12</td><td>0.26 → 0.20</td><td>0.74 → 0.80</td></tr>
+<tr><td>静止障害物が少ない：歩行者5–9、障害物3–7</td><td>0.13 → 0.11</td><td>0.87 → 0.89</td></tr>
+<tr><td>静止障害物が多い：歩行者5–9、障害物13–17</td><td>0.27 → 0.23</td><td>0.73 → 0.77</td></tr>
+</tbody></table></div>
+<p>訓練分布内では、表の全衝突率に7 percentage pointsの差があります。衝突がなくなったわけではありません。所要時間にも小さい改善が報告されますが、歩行者が多い条件の経路長は10.18 m → 10.20 mと短くなっていません。丸めた比率から整数の失敗件数を復元せず、同一乱数の対比較や統計的な有意差も主張しません。</p>
+<p>§5は信頼区間、独立したPPO学習seed、oracle μを含む閉ループの要素別ablationがないことを明記します。実在する人の多次元・状況依存の振る舞い、人物追跡誤差、実機評価は今後の課題です。GPU/CPU、学習時間、オンライン推論遅延・メモリ・期限超過率は今回確認した原著と公開物から照合できていません。10万フレームはPPOの全学習予算や必要な実世界データ量を表しません。</p>
+
+<h3>4. 現行車両へは観測・方策・制御の接続が必要</h3>
+<div class="table-wrap" role="region" aria-label="表3　現行方式との差と導入前条件" tabindex="0"><table class="tech-table"><caption>表3　固定commitの静的確認と、未実装の設計候補</caption><thead><tr><th scope="col">対象</th><th scope="col">確認した違い</th><th scope="col">必要なデータ・変更・検証</th></tr></thead><tbody>
+<tr><td>人物ごとの履歴</td><td>確認したTimePath契約は未来の自車XY30点で、PRISMが使う人物ID付き過去位置・速度列とは意味が異なる。</td><td>人物検出・追跡、座標・時刻・速度推定、不確かさ・欠損maskを別に設計。遮蔽、ID switch、再出現、観測遅延を評価する。</td></tr>
+<tr><td>confidenceと停止監視</td><td>Safety Supervisorにはconfidenceを受けて減速する処理がある。PRISMのαとは定義も入力契約も異なる。</td><td>αをそのまま安全閾値へ接続せず、履歴不足・古い推定・安定した誤推定を試す。停止距離・時刻・有限値の既存検査と別に評価する。</td></tr>
+<tr><td>方策と車両モデル</td><td>PRISMはHEIGHTの入力を拡張して方策を学ぶ。確認したSLAM MPPI設定・単一box scenarioは静止障害物の限定AWSIM用。</td><td>人物latentを使う方策の再学習と出力境界を設計。車体の掃引領域、操舵・制動・追従誤差を含め、非ホロノミックという共通点だけで移植しない。</td></tr>
+</tbody></table></div>
+<p>基準は公開mainのcommit <code>4b904bc5131cdc109845c9b504019eaf1a3f7b3e</code>。<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/4b904bc5131cdc109845c9b504019eaf1a3f7b3e/src/aic_transfuser_lite/models/time_path_v1.py" data-source="src/aic_transfuser_lite/models/time_path_v1.py">TimePathV1</a>、<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/4b904bc5131cdc109845c9b504019eaf1a3f7b3e/src/aic_transfuser_lite/control/safety_supervisor.py" data-source="src/aic_transfuser_lite/control/safety_supervisor.py">Safety Supervisor</a>、<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/4b904bc5131cdc109845c9b504019eaf1a3f7b3e/configs/control/time_path_slam_mppi.json" data-source="configs/control/time_path_slam_mppi.json">限定SLAM MPPI設定</a>、<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/4b904bc5131cdc109845c9b504019eaf1a3f7b3e/configs/scenarios/slam_mppi_single_box.yaml" data-source="configs/scenarios/slam_mppi_single_box.yaml">単一静止box scenario</a>、<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/4b904bc5131cdc109845c9b504019eaf1a3f7b3e/docs/slam_mppi_avoidance.md" data-source="docs/slam_mppi_avoidance.md">既存SLAM MPPI検証記録</a>を読みました。設定の存在は現在の全走行で有効だった証拠ではなく、既存の限定試験をPRISMや人回避の実績へ読み替えません。</p>
+<p>導入を検討するなら、位置・速度・ID・観測時刻と評価用正解を分離して保存し、run/scenario単位で学習・検証を分けます。合成μへの依存、実データでの教師や自己教師の設計、幾何だけのbaseline、latentなし・αなし・正解μの比較、認識誤差、未見の密度・行動を段階的に評価する必要があります。encoder追加だけで既存方策が使えるわけではありません。GPU追加による効果も、認識から指令適用までの遅延と学習予算を測るまで未確認です。</p>
+<p>SLAMは位置・地図の推定を扱い、PRISMの相互作用表現とは役割が異なります。SLAMが安定したこと、群衆シミュレーションで衝突率が低下したこと、高速車両や実歩行者に対して安全に走れることを同じ達成としません。今回の成果は論文の技術解説と現行契約との比較であり、実装変更・再学習・走行実験ではありません。</p>
+
+<h3>出典と未確認の公開実装</h3>
+<p>原著v1の方法・式・表・制約を確認し、PDFの式と表も目視しました。arXivのコメント欄はECCV 2026 Workshop on Agent in Worldと記載しますが、独立した採択版・会議録本文との一致は未照合です。読んだ原著本文・PDF hyperlink・arXiv書誌と今回の検索から、本論文の著者実装URL/commitは確認できていません。存在しないという断定ではなく、同名の別PRISMやHEIGHTのコードを本論文の再現として扱いません。</p>
+<p>関連記事：<a href="dodger-2026.html">DODGERの学習時ガイダンスと実行時の境界</a>、<a href="evolvingnav-2026.html">EvolvingNavの意味記憶と再確認</a>、<a href="slam-mppi-box-20260919.html">限定SLAM MPPI試験</a>、<a href="mpc-mppi-overview.html">MPC / MPPI概説</a>、<a href="e2e-field-overview.html">E2E学習の比較</a>、<a href="research-map.html">研究地図と確認範囲</a>。</p>
