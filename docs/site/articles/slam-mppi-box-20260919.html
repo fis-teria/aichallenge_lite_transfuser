@@ -70,7 +70,7 @@
 <span class="section-number">検証記録</span><h1>SLAM MPPIによる静止箱通過と通常追従への復帰</h1>
 <p class="article-lead">5 km/h目標のrollout02で箱通過と通常復帰を記録。周回成功や一般的な回避保証とは区別します。</p><div class="article-meta">
 <span>公開 <time datetime="2026-09-27">2026-09-27</time></span>
-<span>更新 <time datetime="2026-10-28">2026-10-28</time></span>
+<span>更新 <time datetime="2026-10-29">2026-10-29</time></span>
 <span class="tag">限定試験で確認</span></div></header><div class="article-body"><article class="evidence">
               <div class="evidence-meta">
                 <span class="badge verified">限定試験で確認</span
@@ -100,6 +100,8 @@
 <h3>後続文献と、この試験の範囲</h3><p>2026-10-26独立再執筆に伴う追記。<a href="smooth-mppi-2021.html">Smooth MPPI</a>の操作増分探索、<a href="covo-mpc-2024.html">CoVO-MPC</a>の共分散設計は別の未導入候補です。この既存試験の条件・失敗・限定結果は維持し、両手法の導入成功や移動物体回避の実績へ読み替えません。著者コード実行・独立追試・現行車両への導入は未実施です。</p>
 
 <h3>静止box試験から群衆へ広げない</h3><p>2026-10-28追記。<a href="prism-social-navigation-2026.html">PRISMの個別解説</a>。PRISMの原著は正解の人物位置・IDを使うORCA群衆simulationです。本記事の静止box条件と衝突率を比較せず、人物追跡・反応モデル・車両制御への接続を未実装の検証項目として整理しました。著者コード実行・現行系への導入・追加走行は未実施です。</p>
+
+<h3>複数相手の予測と評価条件</h3><p>2026-10-29追記。<a href="m-predictive-spliner-2025.html">M-Predictive Spliner</a>は相手ごとの追跡・GPと、最も近い相手1台の時間方向衝突領域を組み合わせます。単一相手の成功率、2台の限定試験、現行の静止障害物試験を区別します。導入・独立再現は未実施です。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
 <time datetime="2026-09-27">2026-09-27</time></div>
@@ -112,7 +114,7 @@
 <p>保持経路による復帰、予測短縮、反復評価、画像表現の比較を、検証できる単位に整理します。</p><div class="card-bottom"><span>継続資料</span>
 <a class="article-read" href="../articles/roadmap.html" aria-label="次に検証する課題と判断基準を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-15">2026-10-15</time></div>
+<time datetime="2026-10-29">2026-10-29</time></div>
 <h3><a href="../articles/predictive-spliner-2024.html">Predictive Spliner：相手の周回を学び、追越しの場所を選ぶ</a></h3>
 <p>相手のGP予測と衝突区間、成功5回までの評価、計時と公開コードの差を整理。</p><div class="card-bottom"><span>原著v2・固定版コードの静的確認／未導入</span>
 <a class="article-read" href="../articles/predictive-spliner-2024.html" aria-label="Predictive Spliner：相手の周回を学び、追越しの場所を選ぶを読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
@@ -130,6 +132,11 @@
 <time datetime="2026-10-28">2026-10-28</time></div>
 <h3><a href="../articles/prism-social-navigation-2026.html">PRISM：譲り方の表現と「安定した推定」の限界</a></h3>
 <p>合成された相互作用の差、正解追跡の評価条件、潜在表現の安定度と現行車両への接続を整理。</p><div class="card-bottom"><span>原著v1限定確認・著者実装未照合／未導入</span>
-<a class="article-read" href="../articles/prism-social-navigation-2026.html" aria-label="PRISM：譲り方の表現と「安定した推定」の限界を読む">記事を読む →</a></div></article></div></section></article>
+<a class="article-read" href="../articles/prism-social-navigation-2026.html" aria-label="PRISM：譲り方の表現と「安定した推定」の限界を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
+<div class="card-meta"><span class="tag">論文ノート</span>
+<time datetime="2026-10-29">2026-10-29</time></div>
+<h3><a href="../articles/m-predictive-spliner-2025.html">M-Predictive Spliner：複数の相手と先頭の衝突領域</a></h3>
+<p>複数相手の追跡・予測と先頭1台の衝突領域、実験条件と実装の境界を整理。</p><div class="card-bottom"><span>原著v1・公式planner限定確認／未導入</span>
+<a class="article-read" href="../articles/m-predictive-spliner-2025.html" aria-label="M-Predictive Spliner：複数の相手と先頭の衝突領域を読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>

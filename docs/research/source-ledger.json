@@ -925,7 +925,7 @@
     "authors_or_organization": "Nadine Imholz, Maurice Brunner, Nicolas Baumann, Edoardo Ghignone, Michele Magno",
     "year": 2025,
     "classification_year": 2025,
-    "publication_date": "",
+    "publication_date": "2025-06-19",
     "updated": "2025-06-19",
     "url": "https://arxiv.org/html/2506.16301v1",
     "doi": "10.48550/arXiv.2506.16301",
@@ -933,16 +933,23 @@
     "original_source_type": "preprint",
     "domain": "racing",
     "era": "2025",
-    "checked_date": "2026-10-02",
-    "checked_scope": "Full HTML retrieved; §I code statement, §III tracker mechanism, §IV offline tracker and physical overtaking protocol",
+    "checked_date": "2026-10-29",
+    "checked_scope": "v1 §§III–IV,Eq1–5,TablesII–V,PDFpp3–6 rendered;official planner README,GP,collision,SQP,package/config statically at c180f286;current TimePath/recovery/SLAM report statically at 2cd899b.No author code execution or experimental reproduction.",
     "related_articles": [
-      "racing-overview-2018-2026"
+      "racing-overview-2018-2026",
+      "m-predictive-spliner-2025",
+      "predictive-spliner-2024",
+      "forzaeth-race-stack-2024",
+      "retained-path-recovery",
+      "slam-mppi-box-20260919",
+      "research-map"
     ],
     "review_status": "調査済み",
-    "boundary_note": "Distinct extension, related family ForzaETH. v1 code link is github.com/ForzaETH/notavailableyet; do not claim code available from that alone.",
+    "boundary_note": "Distinct extension, related family ForzaETH. v1 code link is github.com/ForzaETH/notavailableyet; do not claim code available from that alone. Single opponent four-behavior average91.65%;five successes stopping rule;centerline Smax differs76.4/77.1. Two-opponent three runs,mean lap9.275s,total37.1s. TableV Ryzen7PRO7840U16.12±47.77ms differs onboard NUC. One nearest-opponent temporal RoC. Published code commit not verified as experiment version;package license TODO.",
     "date_basis": "領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2025-06。確認した版と初稿は区別する。",
     "origin_ledger": "source-ledger.json",
-    "independent_replication": false
+    "independent_replication": false,
+    "original_scope": "2026-10-02: Full HTML retrieved; §I code statement, §III tracker mechanism, §IV offline tracker and physical overtaking protocol; Distinct extension, related family ForzaETH. v1 code link is github.com/ForzaETH/notavailableyet; do not claim code available from that alone."
   },
   {
     "source_id": "R10",
@@ -3616,5 +3623,33 @@
         "supports": "per-lap SGPR/scaling,conditional experiments,14m/s cap and wheel-lock limitation;no verified author implementation or computation recipe"
       }
     ]
+  },
+  {
+    "source_id": "R09-CODE",
+    "study_family_id": "m-predictive-spliner",
+    "title": "M-Predictive Spliner — official planner implementation",
+    "authors_or_organization": "ForzaETH / ETH Zurich",
+    "year": null,
+    "classification_year": null,
+    "publication_date": "",
+    "updated": "2025-10-21 commit",
+    "url": "https://github.com/ForzaETH/multiopponent-pspliner/tree/c180f2862500f4c482f19b4f5ec5606606f53f40",
+    "doi": "",
+    "source_type": "code",
+    "original_source_type": "official repository",
+    "domain": "racing",
+    "era": "undated",
+    "checked_date": "2026-10-29",
+    "checked_scope": "Pinned README,package,CMake,GP,collision,SQP,config and helper sources read statically.No execution or experiment-version equivalence.",
+    "related_articles": [
+      "m-predictive-spliner-2025",
+      "predictive-spliner-2024",
+      "research-map"
+    ],
+    "review_status": "調査済み",
+    "boundary_note": "First public release date unverified; commit date is version evidence only. Same research family; package.xml license TODO and no LICENSE file in checked tree. Tracker/full experiment correspondence unverified.",
+    "date_basis": "初公表日未確認。commit日は版の確認日であり、公表年に代用しない。",
+    "origin_ledger": "source-ledger.json",
+    "independent_replication": false
   }
 ]
