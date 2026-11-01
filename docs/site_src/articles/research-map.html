@@ -1,7 +1,8 @@
 <h2>調査範囲と分類</h2>
-<p>確認日: 2026-10-29。初回の主対象期間2018-10-02〜2026-10-02と期間前の基礎を保全し、その後の確認を追記しています。E2E自動運転、高速自律レーシング、MPC・MPPI、移動ロボット・SLAM・人との相互作用を扱うナビゲーションを整理します。代表資料の確認であり、全領域の網羅を意味しません。</p>
+<p>確認日: 2026-11-01。初回の主対象期間2018-10-02〜2026-10-02と期間前の基礎を保全し、その後の確認を追記しています。E2E自動運転、高速自律レーシング、MPC・MPPI、移動ロボット・SLAM・人との相互作用を扱うナビゲーションを整理します。代表資料の確認であり、全領域の網羅を意味しません。</p>
 <h2>調査状態の読み方</h2><p>「調査済み」は記載した資料と確認範囲のみ。「未調査」は未確認、「資料不足」は根拠が必要条件を満たさない状態です。資料が見つからないことを、研究が存在しないことの証明にはしません。文献の確認状態と記事の作成・公開状態は別に管理します。</p>
-<p>現在は107資料・66研究系列、6時代 × 4領域 × 6資料種別の144区分です。33区分は範囲限定の調査済み、111区分は未調査で、網羅済みは0区分です。公表年不明の21資料は時代別集計から除外しています。</p>
+<p>現在は108資料・66研究系列、6時代 × 4領域 × 6資料種別の144区分です。33区分は範囲限定の調査済み、111区分は未調査で、網羅済みは0区分です。公表年不明の22資料は時代別集計から除外しています。</p>
+<h2>DiffusionDriveの再現条件を追加確認</h2><p>2026-11-01、<a href="diffusiondrive-2025.html">DiffusionDrive</a>の既存資料を限定増補しました。評価条件と固定コード、参照DDIM版の遷移を分け、依存版の未固定と最終decoder予測の返却を記録。108資料・66系列、年代86・公表年不明22は不変で、網羅済み区分は増やしていません。</p>
 <h2>複数相手の追跡と衝突領域を追加確認</h2><p>2026-10-29、<a href="m-predictive-spliner-2025.html">M-Predictive Spliner</a>の原著と公式planner固定版を確認。単一相手4挙動の平均と2台の3回試験、車載機と計測機を区別します。公式codeを同系列へ1資料追加し、108資料・66系列、年代86・公表年不明22。追跡器・実験commit対応と独立再現は未確認です。</p>
 <h2>相互作用表現と観測の正解情報を追加確認</h2><p>2026-10-28、<a href="prism-social-navigation-2026.html">PRISM</a>の方法・式・評価条件を確認しました。ORCAの合成属性、誤差のない人物位置・ID、時間的安定度αと安全確率を区別します。個別記事の対象commitのCIと実配信を2026-10-28に確認しました。既存資料の限定増補で107資料・66系列、年代86・公表年不明21は不変。C11のROSCon本文は取得拒否で未取得のまま、metadata確認を本文精読へ拡張しません。</p>
 <h2>確率制約と名目状態の保持を追加確認</h2><p>2026-10-27、<a href="probabilistic-mpsc-2019.html">PMPSC</a>を個別解説しました。既存C05の未固定URLをv2（2021-01-18）へ固定し、初稿2019と刊行書誌2022を同系列で関連付けました。旧版の既読を推測して追加計上せず、107資料・66系列、年代86・公表年不明21は不変。各時刻のchance constraintと走行全体の安全、名目状態と保持経路を区別します。全証明/刊行版全文/著者実装・実験対応は未確認で、PDF数値と登録書誌の差を留保しています。</p>
@@ -211,7 +212,7 @@
 <p>Zeji Yi; Chaoyi Pan; Guanqi He; Guannan Qu; Guanya Shi / Carnegie Mellon University。公表年2024、初稿分類2024、研究系列covo-mpc。確認版2024 PMLR 242:1122–1135、確認日2026-10-26。</p><p>確認範囲: Independent local re-authoring: PMLR242 selected §§4–7, theorem statements/assumptions, Algorithm1 and Tables1–2; fixed official README,CoVO/MPPI controllers. No full appendix proofs, experiment correspondence or execution.。Optimization contraction with infinite samples/qualified costs is not closed-loop collision safety. Finite-sample/receding-horizon analysis remains future work. Quadrotor tracking errors not vehicle success rates;online Hessian costs/offline sim-real gap remain.</p><p><a href="https://proceedings.mlr.press/v242/yi24b/yi24b.pdf">一次資料</a>、<a href="covo-mpc-2024.html">個別解説/追補</a>。独立再現・導入は未実施です。</p>
 <h3>DiffusionDrive: Truncated Diffusion Model for End-to-End Autonomous Driving</h3>
 <p>Bencheng Liao; Shaoyu Chen; Haoran Yin; Bo Jiang; Cheng Wang; Sixu Yan; Xinbang Zhang; Xiangyu Li; Ying Zhang; Qian Zhang; Xinggang Wang。公表年: 2025。資料種別: プレプリント。研究系列: diffusiondrive。</p>
-<p>資料更新日・版: 未確認。確認日: 2026-10-02。確認範囲: truncated anchor diffusion train/inference equations 4-6; first arXiv release 2024-11-22; no FPS/PDMS reused</p>
+<p>資料更新日・版: arXiv v2（2025-03-24）。確認日: 2026-11-01。§§3–4・式4–6・表1–7のHTML、固定著者コードの学習/推論/config/導入と依存定義を追加確認。NAVSIM非反応型とnuScenes open-loop、計時範囲、ノイズ時刻・外側時刻列・返却値を区別しました。参照DDIM v0.30.3は実験時の依存版と特定していません。v3/採択版全文・表画像・重みとの対応、実行・独立再現は未確認です。<a href="diffusiondrive-2025.html">個別解説</a>。</p>
 <p><a href="https://arxiv.org/html/2411.15139v2">一次資料</a>。DOI: 未確認 / 付与なし未判定。</p>
 <p>年の扱い: 領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2024-11。確認した版と初稿は区別する。</p>
 <h3>ForzaETH Race Stack — Scaled Autonomous Head-to-Head Racing on Fully Commercial Off-the-Shelf Hardware</h3>

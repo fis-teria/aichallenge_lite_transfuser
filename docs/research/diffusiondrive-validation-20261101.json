@@ -1,0 +1,133 @@
+{
+  "checked_date": "2026-11-01",
+  "baseline_commit": "79e43700fc0325e5df8b6789a23312d50e38967e",
+  "article": "diffusiondrive-2025",
+  "environment": "Hervarar Windows; approved C drive checkout; existing Git remote and authentication",
+  "checks": {
+    "site_build_check": "passed, zero generated differences",
+    "site_validation": {
+      "pages": 53,
+      "links_assets": 2804,
+      "pinned_sources": 87
+    },
+    "site_unittest": {
+      "passed": 29
+    },
+    "existing_edge_browser": "passed: 5 widths, all 53 pages at desktop/mobile, navigation, search, keyboard, legacy hashes and JS disabled",
+    "article_edge_browser": [
+      {
+        "width": 320,
+        "figure": 1,
+        "tables": 3,
+        "overflow": false,
+        "table_focus_scroll": true
+      },
+      {
+        "width": 390,
+        "figure": 1,
+        "tables": 3,
+        "overflow": false,
+        "table_focus_scroll": true
+      },
+      {
+        "width": 768,
+        "figure": 1,
+        "tables": 3,
+        "overflow": false,
+        "table_focus_scroll": true
+      },
+      {
+        "width": 1440,
+        "figure": 1,
+        "tables": 3,
+        "overflow": false,
+        "table_focus_scroll": true
+      }
+    ],
+    "article_reciprocal_links": [
+      "e2e-field-overview",
+      "research-map"
+    ],
+    "article_js_disabled": true,
+    "browser_errors": [],
+    "primary_urls": [
+      {
+        "url": "https://arxiv.org/abs/2411.15139",
+        "status": 200,
+        "bytes": 44214
+      },
+      {
+        "url": "https://arxiv.org/html/2411.15139v2",
+        "status": 200,
+        "bytes": 291380,
+        "missing_fragments": []
+      },
+      {
+        "url": "https://github.com/fis-teria/aichallenge_lite_transfuser/blob/79e43700fc0325e5df8b6789a23312d50e38967e/src/aic_transfuser_lite/models/time_path_v1.py",
+        "status": 200,
+        "bytes": 277964
+      },
+      {
+        "url": "https://github.com/huggingface/diffusers/blob/v0.30.3/src/diffusers/schedulers/scheduling_ddim.py",
+        "status": 200,
+        "bytes": 514859
+      },
+      {
+        "url": "https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/docs/install.md",
+        "status": 200,
+        "bytes": 180888
+      },
+      {
+        "url": "https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/docs/train_eval.md",
+        "status": 200,
+        "bytes": 198636
+      },
+      {
+        "url": "https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/environment.yml",
+        "status": 200,
+        "bytes": 179287
+      },
+      {
+        "url": "https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/navsim/agents/diffusiondrive/transfuser_config.py",
+        "status": 200,
+        "bytes": 291293
+      },
+      {
+        "url": "https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/navsim/agents/diffusiondrive/transfuser_model_v2.py",
+        "status": 200,
+        "bytes": 567560
+      },
+      {
+        "url": "https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/requirements.txt",
+        "status": 200,
+        "bytes": 199421
+      },
+      {
+        "url": "https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/scripts/evaluation/run_transfuser.sh",
+        "status": 200,
+        "bytes": 182031
+      },
+      {
+        "url": "https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/scripts/training/run_transfuser_training.sh",
+        "status": 200,
+        "bytes": 180603
+      },
+      {
+        "url": "https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/setup.py",
+        "status": 200,
+        "bytes": 190666
+      }
+    ],
+    "json_csv": "all 108 ledger/timeline records and 144 coverage cells match",
+    "research_preservation": "only E2E-DIFFUSIONDRIVE record and its timeline/coverage cell changed; 108 sources / 66 families / 144 cells, 86 dated / 22 undated, none coverage_complete",
+    "code_config": "unchanged"
+  },
+  "limitations": [
+    "arXiv v2 HTML and fixed public code were read statically; v3/accepted PDF/table-image comparison incomplete",
+    "Prior CVF HTTP403 was not retried or bypassed",
+    "Reference diffusers v0.30.3 is not identified as the experiment dependency",
+    "No author-code execution, independent replication, full pytest, training, AWSIM or real driving",
+    "R10/IU-ARS drafts and unrelated work were not replaced"
+  ],
+  "publication_status": "pending commit, CI and live delivery checks"
+}

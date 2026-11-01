@@ -1,0 +1,49 @@
+<div class="paper-top"><span class="tag">論文詳解・生成型E2E</span><span class="paper-year">2024 / 2025</span></div>
+<h2>DiffusionDrive：軌道候補の生成を短縮し、再現する経路を確かめる</h2>
+<p class="authors">Bencheng Liao、Shaoyu Chen、Haoran Yin、Bo Jiang、Cheng Wang、Sixu Yan、Xinbang Zhang、Xiangyu Li、Ying Zhang、Qian Zhang、Xinggang Wang / Huazhong University of Science &amp; Technology、Horizon Robotics</p>
+<p class="paper-summary">走り方の代表軌道を出発点にして、少量のノイズから複数の軌道候補を復元する研究です。反復を短縮する設計と、公開コードの時刻・scheduler・返却値を分けて読み、導入時に合わせるべき契約を整理します。</p>
+<p>確認日：2026-11-01。<a href="https://arxiv.org/html/2411.15139v2">arXiv v2</a>の§§3–4、式4–6、表1–7のHTMLと、著者コードの固定commit <code>9b52ed0ec06b073d82d6f392ab084c7b301c8681</code>を静的に確認しました。<a href="https://arxiv.org/abs/2411.15139">arXivの履歴</a>では初稿は2024-11-22、v2は2025-03-24です。v3とCVPR採択版全文の照合、実験時の依存版・重みとの対応、著者コードの実行と独立再現は未実施です。</p>
+
+<h3>仕組み：純粋なノイズからの復元を短くする</h3>
+<p>通常の拡散方策をそのまま使うと、異なるノイズから似た軌道へ集まることと、反復の計算量が課題になります。DiffusionDriveは訓練軌道をクラスタリングしたanchorの周囲へノイズを加え、場面に応じた候補へ復元します。近い代表軌道から始めることで、最初から全分布を復元する負担を減らす発想です。<a href="https://arxiv.org/html/2411.15139v2#S3.SS2">§3.2</a>、<a href="https://arxiv.org/html/2411.15139v2#S3.SS3">§3.3</a></p>
+<figure class="tech-figure"><figcaption>図1　代表軌道から候補選択まで（本記事の概念図）</figcaption><ol class="tech-flow four"><li><strong>20個のanchor</strong><p>訓練軌道から走り方の代表を作る</p></li><li><strong>少量のノイズ</strong><p>代表の周囲から復元を開始</p></li><li><strong>場面との照合</strong><p>BEV特徴と物体queryを使って候補を更新</p></li><li><strong>top-1を返す</strong><p>最後の分類scoreで軌道を選ぶ</p></li></ol></figure>
+<p>原著の学習は、正解に最も近いanchorの軌道再構成と候補分類を組み合わせます。NAVSIM条件のdecoderはBEV特徴・物体queryと相互作用し、内部で2層のcascadeを持ちます。この層数と、推論時に復元を2回呼ぶことは別の数です。最大scoreを選ぶ仕組みだけで、校正済みの衝突確率や安全な制御が得られるわけではありません。<a href="https://arxiv.org/html/2411.15139v2#S3.SS4">§3.4</a>、<a href="https://arxiv.org/html/2411.15139v2#S4.SS2">§4.2</a></p>
+
+<h3>評価条件：PDMS、軌道誤差、計算時間を分ける</h3>
+<div class="table-wrap" role="region" aria-label="表1 原著の評価と計時の範囲" tabindex="0"><table class="tech-table"><caption>表1　原著v2の著者報告。独立再測定ではない</caption><thead><tr><th scope="col">対象</th><th scope="col">入力・評価条件</th><th scope="col">報告と読み方</th></tr></thead><tbody>
+<tr><td>NAVSIM navtest</td><td>前方cameraとLiDAR、ResNet-34。非反応型simulationでtop-1の8点・4秒軌道を評価。</td><td>表1のPDMSは88.1。進捗、衝突、走行可能領域などを組み合わせた評価で、実車での成功率ではない。</td></tr>
+<tr><td>nuScenes</td><td>camera-only、ResNet-50。表7はopen-loopの軌道誤差と衝突指標。</td><td>NAVSIMとセンサ・表現・評価器が異なる。PDMSと同じ順位表へまとめない。</td></tr>
+<tr><td>計算時間</td><td>表2はNVIDIA 4090で測定。</td><td>planning module合計7.6 msとモデルの45 FPSは計時範囲が違う。Orin NanoやROS、センサ取得、制御、安全監視を含む周期の実測ではない。</td></tr>
+</tbody></table></div>
+<p>PDMSは各構成要素を含む短時間の計画評価です。多様な候補があること、最高scoreの候補が高得点なこと、他車が反応する環境で安全に走れることは別々に確かめます。本文の数値はHTMLで読めた範囲に限定し、原著表の画像目視と採択版PDFの照合は未完了です。<a href="https://arxiv.org/html/2411.15139v2#S3.T1">表1</a>、<a href="https://arxiv.org/html/2411.15139v2#S3.T2">表2</a>、<a href="https://arxiv.org/html/2411.15139v2#S4.T7">表7</a></p>
+
+<h3>固定コード：加ノイズ時刻、復元時刻、返却値は別々に読む</h3>
+<p>著者の<a href="https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/navsim/agents/diffusiondrive/transfuser_config.py">config</a>は4秒・0.5秒間隔を指定し、anchorとbackbone重みのパスには著者環境の絶対パスが残ります。モデルは20候補を前提とし、anchorのXYとdecoderの姿勢出力を使います。このconfigを置くだけで手元のセンサ・環境に適合するとは言えません。</p>
+<div class="table-wrap" role="region" aria-label="表2 固定実装の時刻と返却経路" tabindex="0"><table class="tech-table"><caption>表2　固定commitの静的読解。拡散時刻は実時間の秒ではない</caption><thead><tr><th scope="col">段階</th><th scope="col">確認した定義</th><th scope="col">区別する点</th></tr></thead><tbody>
+<tr><td>学習時のノイズ</td><td>総時刻数1000。ランダムに0以上50未満の時刻を選ぶ。</td><td>推論の初期加ノイズ時刻と同一の選択方法ではない。</td></tr>
+<tr><td>推論の初期化</td><td>anchorに時刻8のノイズを付与。</td><td>外側のdecoder呼出し時刻列とは別に定義される。</td></tr>
+<tr><td>推論の外側ループ</td><td>schedulerに1000段を設定し、decoderとstepを時刻10、0の順に呼ぶ。</td><td>schedulerの内部遷移が10→0になるとは限らない。</td></tr>
+<tr><td>最終出力</td><td>最後の分類値のargmaxで選んだdecoderの<code>poses_reg</code>を返す。</td><td>最後に更新した<code>img</code>そのものを返す経路ではない。</td></tr>
+</tbody></table></div>
+<p>この返却経路では、1回目のscheduler更新が次回decoderへの入力になります。最終の<code>prev_sample</code>は計算されても、返却値は最後のdecoder予測から選択されます。「2段DDIMの最終サンプルをそのまま返す」という要約では、この経路を正確に説明できません。これはテンソルの由来の区別で、両者の数値差や性能差を実測した主張ではありません。<a href="https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/navsim/agents/diffusiondrive/transfuser_model_v2.py#L395-L558">著者モデルの学習・推論</a></p>
+
+<h3>参照DDIM版で遷移式を追う</h3>
+<p>固定commitの<a href="https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/docs/install.md">導入手順</a>はdiffusersとeinopsを版指定なしで追加します。確認した<a href="https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/requirements.txt">requirements.txt</a>、<a href="https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/environment.yml">environment.yml</a>、<a href="https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/setup.py">setup.py</a>にもDDIM依存版の固定は見当たりません。この4ファイルの確認から、実験環境の全情報が存在しないとまでは主張しません。</p>
+<p>参照用に<a href="https://github.com/huggingface/diffusers/blob/v0.30.3/src/diffusers/schedulers/scheduling_ddim.py#L340-L465">diffusers v0.30.3のDDIMScheduler</a>を読みました。前時刻の式は<code>t_prev = t − T_train // N_infer</code>です。著者コードの設定では<code>1000 // 1000 = 1</code>なので、時刻10のstepは9を参照し、時刻0のstepは負の時刻用の終端alphaを参照します。外側ループの10・0という列と、scheduler内部の1回ごとの遷移を同一視できません。</p>
+<p><strong>この版は再現条件を説明するための参照です。</strong>論文実験で使われた依存版を特定したものではありません。初期分布、時刻列、更新式、返却テンソルを揃える必要があるという静的な確認であり、この差だけをバグ、性能低下、論文の誤りとは断定しません。</p>
+<p>また、<a href="https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/docs/train_eval.md">正式な学習・評価手順</a>は<code>diffusiondrive_agent</code>を指定します。既存の<a href="https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/scripts/training/run_transfuser_training.sh">TransFuser学習スクリプト</a>と<a href="https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/scripts/evaluation/run_transfuser.sh">評価スクリプト</a>は<code>transfuser_agent</code>です。似た名前のスクリプトを実行するだけでDiffusionDriveの追試にはなりません。</p>
+
+<h3>現行TimePathへ適用する前に合わせる契約</h3>
+<p>比較対象は公開main <code>79e43700fc0325e5df8b6789a23312d50e38967e</code>の<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/79e43700fc0325e5df8b6789a23312d50e38967e/src/aic_transfuser_lite/models/time_path_v1.py" data-source="src/aic_transfuser_lite/models/time_path_v1.py">TimePathV1の1ファイル</a>です。30点・0.1秒刻み、観測時の<code>base_link</code>座標で、<code>runtime_ready=false</code>を明示します。<code>interval_speed</code>は隣接点の弦長を時間で割った速度の大きさであり、学習済みの速度headや停止確率ではありません。</p>
+<div class="table-wrap" role="region" aria-label="表3 導入前に確認する契約" tabindex="0"><table class="tech-table"><caption>表3　本プロジェクトへの適用を考える際の工学的検討項目</caption><thead><tr><th scope="col">契約</th><th scope="col">必要な確認</th></tr></thead><tbody>
+<tr><td>時間と座標</td><td>8点・4秒と30点・3秒の違い、観測時刻と基準座標、補間、遅延と再計画周期。</td></tr>
+<tr><td>出力の意味</td><td>XY・姿勢と速度・停止判断の関係。shapeを合わせるだけで制御入力にしない。</td></tr>
+<tr><td>教師と候補</td><td>訓練用anchor、ラベル座標、split、入力から未来・teacher専用情報を分離する条件。</td></tr>
+<tr><td>追従と安全監視</td><td>操舵・制動の実行可能性、車体の掃引領域、センサ欠損、期限超過、異常出力時の停止。</td></tr>
+</tbody></table></div>
+<p>この比較はTimePathファイルの静的な契約確認に限ります。現行ランタイムや全設定を監査したものではなく、DiffusionDriveの実装・重みを組み込んでいません。センサ条件とデータを合わせた再学習や、下流追従を含む検証の必要性は別途判断します。</p>
+
+<h3>未確認事項と次の検証</h3>
+<p>採択版PDFは先行調査でHTTP 403となり、再試行・迂回せず未取得のままです。表の画像目視、v3との差分、完全な実験recipe・checkpoint・commit対応、著者実装の実行と独立再現は残っています。論文の速度やPDMSを本プロジェクトの実績として扱いません。</p>
+<p>次に実験を行う場合は、別途許可された環境で依存版・重み・設定を固定し、固定入力と固定乱数について初期ノイズ、各時刻のscheduler前後、返却値を追跡するのが確認案です。時刻列に合わせたscheduler変更は元条件と分けた比較とし、実施前から「修正」と呼びません。今回の作業は文献・公開コードの静的確認と記事作成のみで、モデル・制御・ROSの変更、全体pytest、学習、AWSIM・実車走行は行っていません。</p>
+<p>関連記事：<a href="e2e-field-overview.html">E2E研究の概説</a>、<a href="transfuser-cvpr2021.html">TransFuser原著</a>、<a href="system-architecture.html">システム構成とTimePath</a>、<a href="research-map.html">研究地図</a>。</p>

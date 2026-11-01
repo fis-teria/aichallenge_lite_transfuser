@@ -484,23 +484,35 @@
     "year": 2025,
     "classification_year": 2024,
     "publication_date": "",
-    "updated": "",
+    "updated": "2025-03-24 (arXiv v2)",
     "url": "https://arxiv.org/html/2411.15139v2",
     "doi": "",
     "source_type": "preprint",
     "original_source_type": "paper-full-text",
     "domain": "e2e",
     "era": "2023-2024",
-    "checked_date": "2026-10-02",
-    "checked_scope": "truncated anchor diffusion train/inference equations 4-6; first arXiv release 2024-11-22; no FPS/PDMS reused",
+    "checked_date": "2026-11-01",
+    "checked_scope": "arXiv v2 §§3–4, equations4–6 and Tables1–7 HTML; NAVSIM camera+LiDAR R34 nonreactive top-1 versus nuScenes camera-only R50 open-loop; 7.6ms planner versus 45FPS model. Fixed official 9b52ed0 model/config/install/dependency/train-eval files and TransFuser helper scripts; noise t8, calls10/0, final decoder return. Reference diffusers v0.30.3 step formula only, not experiment dependency identification. No accepted-PDF/table-image audit, execution or replication.",
     "related_articles": [
-      "e2e-field-overview"
+      "e2e-field-overview",
+      "diffusiondrive-2025"
     ],
     "review_status": "調査済み",
-    "boundary_note": "",
+    "boundary_note": "CVPR 2025 Highlight stated in arXiv metadata; accepted PDF unavailable after prior HTTP403, no retry/bypass. v3 not compared; table-image visual audit incomplete. DDIM v0.30.3 is a reference, not identified experiment dependency.",
     "date_basis": "領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2024-11。確認した版と初稿は区別する。",
     "origin_ledger": "source-ledger.json",
-    "independent_replication": false
+    "independent_replication": false,
+    "original_scope": "truncated anchor diffusion train/inference equations 4-6; first arXiv release 2024-11-22; no FPS/PDMS reused",
+    "evaluation_scope": "Author-reported NAVSIM nonreactive PDMS and nuScenes open-loop; no local training, driving, or numerical reproduction.",
+    "code_url": "https://github.com/hustvl/DiffusionDrive/tree/9b52ed0ec06b073d82d6f392ab084c7b301c8681",
+    "code_status": "Fixed public code read statically; experiment commit, dependency version and checkpoint correspondence unverified.",
+    "code_commit_if_verified": "9b52ed0ec06b073d82d6f392ab084c7b301c8681",
+    "latest_version": "arXiv v3 (2025-04-10) metadata only; full-text review remains v2",
+    "supporting_urls": [
+      "https://arxiv.org/abs/2411.15139",
+      "https://github.com/hustvl/DiffusionDrive/blob/9b52ed0ec06b073d82d6f392ab084c7b301c8681/navsim/agents/diffusiondrive/transfuser_model_v2.py",
+      "https://github.com/huggingface/diffusers/blob/v0.30.3/src/diffusers/schedulers/scheduling_ddim.py"
+    ]
   },
   {
     "source_id": "E2E-DRIVETRANSFORMER",
