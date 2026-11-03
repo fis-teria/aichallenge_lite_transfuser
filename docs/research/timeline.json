@@ -1942,5 +1942,41 @@
     "doi": "",
     "checked_date": "2026-10-29",
     "checked_scope": "Pinned README,package,CMake,GP,collision,SQP,config and helper sources read statically.No execution or experiment-version equivalence."
+  },
+  {
+    "year": null,
+    "classification_year": null,
+    "publication_date": "",
+    "updated": "Live documentation read 2026-11-03; version not pinned",
+    "era": "undated",
+    "domain": "control",
+    "title": "acados Python Interface — RTI phase timing and residual diagnostics",
+    "study_family_id": "acados-framework",
+    "source_id": "C03-API-RTI",
+    "url": "https://docs.acados.org/python_interface/index.html",
+    "date_basis": "初公表年未確認。確認日や固定commitを初公表年へ代用せず、年代集計から除外。",
+    "boundary_note": "Current API / pinned auxiliary code, separate from retained C03 paper-era review. First publication date unverified; excluded from era counts. No installation, execution, performance reproduction, vehicle integration or experiments.",
+    "source_type": "technical",
+    "doi": "",
+    "checked_date": "2026-11-03",
+    "checked_scope": "options_set rti_phase 0/1/2 (SQP_RTI); get_stats time_tot previous-call CPU versus last time_preparation/time_feedback; get_residuals recompute warning about overwriting AS-RTI linearization/qp_in. Only these methods reviewed; no paper-era equivalence or current-release-wide audit."
+  },
+  {
+    "year": null,
+    "classification_year": null,
+    "publication_date": "",
+    "updated": "commit 51db6db146217e6624d7575f34e0421f28bc76a0",
+    "era": "undated",
+    "domain": "control",
+    "title": "acados — pinned pendulum AS-RTI phase example and SQP/RTI residual test",
+    "study_family_id": "acados-framework",
+    "source_id": "C03-CODE-RTI",
+    "url": "https://github.com/acados/acados/blob/51db6db146217e6624d7575f34e0421f28bc76a0/examples/acados_python/pendulum_on_cart/as_rti/as_rti_closed_loop_example.py",
+    "date_basis": "初公表年未確認。確認日や固定commitを初公表年へ代用せず、年代集計から除外。",
+    "boundary_note": "Current API / pinned auxiliary code, separate from retained C03 paper-era review. First publication date unverified; excluded from era counts. No installation, execution, performance reproduction, vehicle integration or experiments.",
+    "source_type": "code",
+    "doi": "",
+    "checked_date": "2026-11-03",
+    "checked_scope": "Static reading of as_rti_closed_loop_example.py, especially preparation solve -> initial lbx/ubx update -> feedback solve and separate time_tot reads; full test_rti_sqp_residuals.py residual-history comparisons. Pendulum only, no general map/parameter-update reuse guarantee and no safe AS-RTI diagnostic insertion inference."
   }
 ]

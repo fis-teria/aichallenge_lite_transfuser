@@ -1,0 +1,81 @@
+{
+  "checked_date": "2026-11-03",
+  "baseline_commit": "a58f35fa50b53059a538d875bf5d1dded4116db7",
+  "article": "mpc-mppi-overview#acados-rti-timing",
+  "source_commit": "51db6db146217e6624d7575f34e0421f28bc76a0",
+  "scope": "Small supplement in existing MPC overview: RTI preparation/feedback timing and residual-recomputation side effects. No new paper article.",
+  "checks": {
+    "generated_match": "passed; zero differences",
+    "site_links": {
+      "pages": 53,
+      "links_assets": 2814,
+      "pinned_sources": 87
+    },
+    "site_unittest_passed": 29,
+    "edge_widths": [
+      {
+        "width": 320,
+        "supplement_table_rows": 3,
+        "overflow": false,
+        "table_keyboard_focus_scroll": true,
+        "research_map_link": true
+      },
+      {
+        "width": 390,
+        "supplement_table_rows": 3,
+        "overflow": false,
+        "table_keyboard_focus_scroll": true,
+        "research_map_link": true
+      },
+      {
+        "width": 768,
+        "supplement_table_rows": 3,
+        "overflow": false,
+        "table_keyboard_focus_scroll": true,
+        "research_map_link": true
+      },
+      {
+        "width": 1440,
+        "supplement_table_rows": 3,
+        "overflow": false,
+        "table_keyboard_focus_scroll": true,
+        "research_map_link": true
+      }
+    ],
+    "js_disabled": true,
+    "browser_errors": [],
+    "visual_review": "Desktop and mobile supplement screenshots inspected; table supports keyboard focus and horizontal scrolling",
+    "primary_sources": [
+      {
+        "url": "https://docs.acados.org/python_interface/index.html",
+        "status": 200,
+        "sha256": "9c1ebc5b18ad864ee3cbfaad10d64666d542c30f57518c0674110580138c7371",
+        "verified_fragments": [
+          "acados_template.acados_ocp_solver.AcadosOcpSolver.options_set",
+          "acados_template.acados_ocp_solver.AcadosOcpSolver.get_stats",
+          "acados_template.acados_ocp_solver.AcadosOcpSolver.get_residuals"
+        ]
+      },
+      {
+        "url": "https://github.com/acados/acados/blob/51db6db146217e6624d7575f34e0421f28bc76a0/examples/acados_python/pendulum_on_cart/as_rti/as_rti_closed_loop_example.py",
+        "status": 200,
+        "sha256": "3c72bb92a56eee4bcd8b77bc5b8cdf3bc5a9a4534f65231ae86824bd988e3517",
+        "verified_fragments": []
+      },
+      {
+        "url": "https://github.com/acados/acados/blob/51db6db146217e6624d7575f34e0421f28bc76a0/examples/acados_python/tests/test_rti_sqp_residuals.py",
+        "status": 200,
+        "sha256": "e2b55f01994a39d4c624ac519b36f6a7e6c029b61c05a6ad88ea1fff124dda65",
+        "verified_fragments": []
+      }
+    ],
+    "research_preservation": "All 108 existing records including C03 retained exactly; two undated acados-framework sources added; 110 sources / 66 families / 86 dated / 24 undated; 144 coverage cells unchanged; JSON/CSV match"
+  },
+  "limitations": [
+    "Current live API version not pinned; documentation digest retained as retrieval evidence",
+    "C03 paper record retained without extending its read scope to current API",
+    "Pinned pendulum example and residual test read statically only; no general map/parameter-change reuse guarantee",
+    "No acados installation/execution/performance reproduction, full pytest, learning/control code changes, or driving experiments"
+  ],
+  "publication_status": "pending commit, CI and live delivery check"
+}
