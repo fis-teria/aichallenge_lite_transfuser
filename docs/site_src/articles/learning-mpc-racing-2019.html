@@ -93,3 +93,11 @@
 
 <h3>BayesRaceとの比較を追加</h3>
 <p>2026-10-08追記。<a href="bayesrace-2020.html">BayesRace</a>は拡張運動学モデルの一段残差をGPで補い、MPCの予測へ戻します。LMPCの終端集合・残り時間・局所回帰とは、走行履歴を使う位置が異なります。BayesRaceの評価はシミュレーションであり、上記BARC実験とのラップタイム比較は行いません。既存のLMPC読解・実装確認・試験の範囲はそのままです。</p>
+
+<section id="lmpc-solver-output" aria-labelledby="lmpc-solver-gate">
+<h3 id="lmpc-solver-gate">終了状態の記録と、指令を採用する分岐は別に確かめる</h3>
+<p>2026-11-04追記。著者RacingLMPCの固定commit <code>b49c95e7795ef6f343efacedb6b90a69c7855b32</code>で、QPの返却からシミュレーション入力までを追加確認しました。<a href="https://github.com/urosolia/RacingLMPC/blob/b49c95e7795ef6f343efacedb6b90a69c7855b32/src/fnc/controller/PredictiveControllers.py#L259-L283">osqp_solve_qp</a>は、<code>status_val == 1</code>なら<code>feasible=1</code>、それ以外は0と記録した後、いずれも<code>res.x</code>を<code>Solution</code>へ代入します。呼出し元の<a href="https://github.com/urosolia/RacingLMPC/blob/b49c95e7795ef6f343efacedb6b90a69c7855b32/src/fnc/controller/PredictiveControllers.py#L110-L136">MPC.solve</a>は、その直後に<code>unpackSolution</code>を呼びます。</p>
+<figure class="tech-figure"><figcaption>追加確認した入力までの経路（固定コードの静的読解）</figcaption><ol class="tech-flow four"><li><strong>QPの返却</strong><p>終了状態とres.xを受け取る</p></li><li><strong>記録と展開</strong><p>feasibleを記録しSolutionをunpack</p></li><li><strong>先頭操作</strong><p>simがuPredの先頭を取得</p></li><li><strong>模擬モデルへ</strong><p>取得した操作をdynModelへ渡す</p></li></ol></figure>
+<p>確認した<a href="https://github.com/urosolia/RacingLMPC/blob/b49c95e7795ef6f343efacedb6b90a69c7855b32/src/fnc/simulator/SysModel.py#L22-L40">Simulator.sim</a>には、<code>feasible</code>によって先頭操作を棄却する分岐は見当たりません。ただし、これは2ファイルの経路に関する観察です。失敗状態で<code>res.x</code>がどの値・形になるか、展開が完了するか、実際に失敗や指令適用が起きたかは確認していません。論文実験や実車に危険な指令が出た、論文が誤りだという主張にはしません。</p>
+<p>OSQPの終了状態整数は版で異なります。<code>solved inaccurate</code>は設定した許容誤差の10倍の条件で成立する状態で、通常のsolvedと同じ精度ではありません。<a href="mpc-mppi-overview.html#osqp-status-timing">概説の版別表と計時範囲</a>を参照し、依存版・状態名・残差・slack・指令採否を対応させて読みます。今回の固定コードが論文実験の依存版と一致するかは未確認です。コード実行、ソフト導入、失敗注入、性能再現、学習・制御コードの変更、走行実験は行っていません。</p>
+</section>

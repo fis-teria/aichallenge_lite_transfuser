@@ -1,0 +1,133 @@
+{
+  "checked_date": "2026-11-04",
+  "baseline_commit": "34d1fbbf2e905c2470f855fb7280eef248314d84",
+  "articles": [
+    "learning-mpc-racing-2019#lmpc-solver-gate",
+    "mpc-mppi-overview#osqp-status-timing"
+  ],
+  "source_commit": "b49c95e7795ef6f343efacedb6b90a69c7855b32",
+  "scope": "Small supplements in two existing articles: OSQP versioned statuses, inaccurate tolerance and timing; RacingLMPC feasible/Solution/unpack/uPred simulation path.",
+  "checks": {
+    "generated_match": "passed; zero differences",
+    "site_links": {
+      "pages": 53,
+      "links_assets": 2827,
+      "pinned_sources": 87
+    },
+    "site_unittest_passed": 29,
+    "edge_browser": [
+      {
+        "article": "learning-mpc-racing-2019",
+        "width": 320,
+        "overflow": false,
+        "diagram_or_status_table": true,
+        "research_map_link": true
+      },
+      {
+        "article": "learning-mpc-racing-2019",
+        "width": 390,
+        "overflow": false,
+        "diagram_or_status_table": true,
+        "research_map_link": true
+      },
+      {
+        "article": "learning-mpc-racing-2019",
+        "width": 768,
+        "overflow": false,
+        "diagram_or_status_table": true,
+        "research_map_link": true
+      },
+      {
+        "article": "learning-mpc-racing-2019",
+        "width": 1440,
+        "overflow": false,
+        "diagram_or_status_table": true,
+        "research_map_link": true
+      },
+      {
+        "article": "mpc-mppi-overview",
+        "width": 320,
+        "overflow": false,
+        "diagram_or_status_table": true,
+        "research_map_link": true
+      },
+      {
+        "article": "mpc-mppi-overview",
+        "width": 390,
+        "overflow": false,
+        "diagram_or_status_table": true,
+        "research_map_link": true
+      },
+      {
+        "article": "mpc-mppi-overview",
+        "width": 768,
+        "overflow": false,
+        "diagram_or_status_table": true,
+        "research_map_link": true
+      },
+      {
+        "article": "mpc-mppi-overview",
+        "width": 1440,
+        "overflow": false,
+        "diagram_or_status_table": true,
+        "research_map_link": true
+      }
+    ],
+    "js_disabled": true,
+    "reciprocal_links": true,
+    "browser_errors": [],
+    "visual_review": "Mobile flow and status table; desktop status table inspected. Horizontal table scrolling and no page overflow checked at all four widths.",
+    "primary_sources": [
+      {
+        "url": "https://github.com/urosolia/RacingLMPC/blob/b49c95e7795ef6f343efacedb6b90a69c7855b32/src/fnc/controller/PredictiveControllers.py",
+        "status": 200,
+        "sha256": "16f61299818bfe6299daa4ca629786eed4a1b68f9795c527c1ad7e6ca571d84d",
+        "verified_fragments": []
+      },
+      {
+        "url": "https://github.com/urosolia/RacingLMPC/blob/b49c95e7795ef6f343efacedb6b90a69c7855b32/src/fnc/simulator/SysModel.py",
+        "status": 200,
+        "sha256": "ee91b1857847c89264bbe543beed8f30c1e8e7e1bff8d1875190c96f9fe1fe84",
+        "verified_fragments": []
+      },
+      {
+        "url": "https://osqp.org/docs/interfaces/python.html",
+        "status": 200,
+        "sha256": "5b32769ad58a3a445e829841d97239b0dce7dbee74926336ccbe3b67494a67fc",
+        "verified_fragments": [
+          "solve"
+        ]
+      },
+      {
+        "url": "https://osqp.org/docs/interfaces/solver_settings.html",
+        "status": 200,
+        "sha256": "b4cc6f10214c700480b765d3d2cb82bc4fefc398b404ac556cfd3a16d73de9dc",
+        "verified_fragments": []
+      },
+      {
+        "url": "https://osqp.org/docs/interfaces/status_values.html",
+        "status": 200,
+        "sha256": "db86d118252098fe8e209ef7f0607fd6379d1c2de9e3f8bd4d4c1fa814981294",
+        "verified_fragments": []
+      },
+      {
+        "url": "https://osqp.org/docs/release-0.6.3/interfaces/status_values.html",
+        "status": 200,
+        "sha256": "0465c8fc0aba544c803e0a7b56e02613d4ee18f78189fb1f8eab1b2f17d7ed9f",
+        "verified_fragments": []
+      }
+    ],
+    "preservation": "C10/C16 scopes extended without changing existing family IDs or old scope/bibliography; other 108 source records unchanged; prior article bodies including acados retained as exact prefixes; 110 sources / 66 families / 24 undated; coverage JSON/CSV unchanged; ledger/timeline JSON/CSV match"
+  },
+  "news_intake": {
+    "body_readable_lines": 0,
+    "new_items": "undetermined",
+    "private_body_or_shared_url_published": false
+  },
+  "limitations": [
+    "Current OSQP documentation is live; release-0.6.3 status reference is separate",
+    "Only fixed controller/simulator paths read statically; res.x under failure, successful unpack, failure occurrence, real-vehicle commands and experiment dependencies unverified",
+    "No software installation, author-code execution, failure injection, performance reproduction, training/control code changes, full pytest or driving experiments"
+  ],
+  "publication_status": "pending commit, CI and live delivery check"
+}

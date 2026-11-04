@@ -70,7 +70,7 @@
 <span class="section-number">継続資料</span><h1>MPC / MPPIをどう選ぶか：モデル・制約・探索・保証</h1>
 <p class="article-lead">線形・非線形・ロバスト・確率的・学習ベースMPCを分類し、2018–2026の研究と現行reference-space MPPIの境界を整理します。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-02">2026-10-02</time></span>
-<span>更新 <time datetime="2026-11-03">2026-11-03</time></span>
+<span>更新 <time datetime="2026-11-04">2026-11-04</time></span>
 <span class="tag">文献俯瞰・適用候補</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">制御分野俯瞰</span><span class="paper-year">2018–2026</span></div>
 <h2>MPC / MPPIをどう選ぶか：モデル・制約・探索・保証を分けて読む</h2>
 <p class="paper-summary">MPCは毎周期、有限の未来を予測して最初の操作を実行する枠組みです。MPPIはその最適化をサンプリングで近似する一群です。線形／非線形、ロバスト／確率的、学習モデル／物理モデルは別の分類軸であり、「新しい手法ほど安全・高速」という順序にはなりません。</p>
@@ -160,6 +160,20 @@
 <p>公式<a href="https://docs.acados.org/python_interface/index.html#acados_template.acados_ocp_solver.AcadosOcpSolver.get_residuals">get_residuals</a>は、<code>recompute=True</code>で最新の問題データに対する残差を再計算します。その際、AS-RTIが必要とする<code>qp_in</code>などの線形化情報を上書きし得ると明記されています。ログ取得だから状態を変えないと仮定せず、診断を挿す位置と設定も再現条件に含めます。</p>
 <p>固定版の<a href="https://github.com/acados/acados/blob/51db6db146217e6624d7575f34e0421f28bc76a0/examples/acados_python/tests/test_rti_sqp_residuals.py">残差テスト</a>では、SQP/SQP_RTIの残差履歴を照合し、途中で再計算も行います。このファイルを静的に読んだことは、任意のAS-RTI実行箇所へ診断を追加してもよいという証拠にはしません。今回、acadosのインストール、コード実行、性能再現、学習・制御コードの変更、走行実験は行っていません。</p>
 </section>
+
+<section id="osqp-status-addendum" aria-labelledby="osqp-status-timing">
+<h3 id="osqp-status-timing">OSQP：終了状態は版と一緒に読み、計時範囲を固定する</h3>
+<p>2026-11-04追記。公式の<a href="https://osqp.org/docs/interfaces/status_values.html">現行終了状態表</a>と<a href="https://osqp.org/docs/release-0.6.3/interfaces/status_values.html">release-0.6.3の表</a>では、同じ状態でも整数値が異なります。たとえば「負値だけを失敗とする」という判定を、版を確認せず移植できません。下表は代表例で、全状態を列挙したものではありません。</p>
+<div class="table-wrap" role="region" aria-label="OSQP終了状態の版別代表値" tabindex="0"><table><caption>OSQPの終了状態：旧版と現在の公式文書を区別する</caption><thead><tr><th scope="col">状態名</th><th scope="col">0.6.3</th><th scope="col">現行文書</th></tr></thead><tbody>
+<tr><td>solved</td><td>1</td><td>1</td></tr>
+<tr><td>solved inaccurate</td><td>2</td><td>2</td></tr>
+<tr><td>maximum iterations reached</td><td>−2</td><td>7</td></tr>
+<tr><td>run time limit reached</td><td>−6</td><td>8</td></tr>
+</tbody></table></div>
+<p>両版の文書で、inaccurateは設定された許容誤差の10倍の条件で判定されます。<code>solved inaccurate</code>を通常のsolvedと同じ精度・制約適合と扱わず、<a href="https://osqp.org/docs/interfaces/solver_settings.html">設定値</a>の<code>eps_abs/eps_rel</code>などと残差を一緒に記録します。解の採否や期限超過時の扱いは導入先で設計・検証する項目であり、状態名だけから車両の安全性は決まりません。</p>
+<p>公式<a href="https://osqp.org/docs/interfaces/python.html#solve">Python API</a>では、<code>solve_time</code>はsolveの時間、<code>run_time</code>はsetup/update・solve・polishを含む総時間です。同じsetupから複数回solveする場合、初回後のrun_timeはupdate・solve・polishの和になります。どちらも観測から指令適用までの全周期ではありません。行列構築、状態推定、通信、出力検査まで含める外側の時間は別に測ります。</p>
+<p><a href="learning-mpc-racing-2019.html#lmpc-solver-gate">LMPC記事の追補</a>では、固定コードの状態フラグ記録と指令採用経路を区別しました。上記は公式資料・コードの静的確認で、依存版と実験版の対応、失敗の実発生、計算時間や走行性能の再現は未確認です。既存のacados追補とは別のソルバ仕様として扱います。</p>
+</section>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
 <time datetime="2026-09-27">2026-09-27</time></div>
@@ -177,12 +191,12 @@
 <p>Camera・2D LiDAR・車両状態からの経路予測と、モデル外の制御・安全監視を整理します。</p><div class="card-bottom"><span>継続資料</span>
 <a class="article-read" href="../articles/system-architecture.html" aria-label="システム構成とTimePathの入出力を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-11-03">2026-11-03</time></div>
+<time datetime="2026-11-04">2026-11-04</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
 <p>4領域・144区分の確認範囲と未調査を整理。110資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
 <a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
 <div class="card-meta"><span class="tag">論文ノート</span>
-<time datetime="2026-10-08">2026-10-08</time></div>
+<time datetime="2026-11-04">2026-11-04</time></div>
 <h3><a href="../articles/learning-mpc-racing-2019.html">LMPC：走行履歴から学ぶラップタイム最適化</a></h3>
 <p>完走履歴による終端集合・残り時間・局所モデル、BARC実験と公開コードの版差、現行TimePathへの適用条件。</p><div class="card-bottom"><span>原著・公式コード確認／未実装候補</span>
 <a class="article-read" href="../articles/learning-mpc-racing-2019.html" aria-label="LMPC：走行履歴から学ぶラップタイム最適化を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">

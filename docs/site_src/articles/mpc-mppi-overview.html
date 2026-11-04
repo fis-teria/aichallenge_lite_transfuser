@@ -87,3 +87,17 @@
 <p>公式<a href="https://docs.acados.org/python_interface/index.html#acados_template.acados_ocp_solver.AcadosOcpSolver.get_residuals">get_residuals</a>は、<code>recompute=True</code>で最新の問題データに対する残差を再計算します。その際、AS-RTIが必要とする<code>qp_in</code>などの線形化情報を上書きし得ると明記されています。ログ取得だから状態を変えないと仮定せず、診断を挿す位置と設定も再現条件に含めます。</p>
 <p>固定版の<a href="https://github.com/acados/acados/blob/51db6db146217e6624d7575f34e0421f28bc76a0/examples/acados_python/tests/test_rti_sqp_residuals.py">残差テスト</a>では、SQP/SQP_RTIの残差履歴を照合し、途中で再計算も行います。このファイルを静的に読んだことは、任意のAS-RTI実行箇所へ診断を追加してもよいという証拠にはしません。今回、acadosのインストール、コード実行、性能再現、学習・制御コードの変更、走行実験は行っていません。</p>
 </section>
+
+<section id="osqp-status-addendum" aria-labelledby="osqp-status-timing">
+<h3 id="osqp-status-timing">OSQP：終了状態は版と一緒に読み、計時範囲を固定する</h3>
+<p>2026-11-04追記。公式の<a href="https://osqp.org/docs/interfaces/status_values.html">現行終了状態表</a>と<a href="https://osqp.org/docs/release-0.6.3/interfaces/status_values.html">release-0.6.3の表</a>では、同じ状態でも整数値が異なります。たとえば「負値だけを失敗とする」という判定を、版を確認せず移植できません。下表は代表例で、全状態を列挙したものではありません。</p>
+<div class="table-wrap" role="region" aria-label="OSQP終了状態の版別代表値" tabindex="0"><table><caption>OSQPの終了状態：旧版と現在の公式文書を区別する</caption><thead><tr><th scope="col">状態名</th><th scope="col">0.6.3</th><th scope="col">現行文書</th></tr></thead><tbody>
+<tr><td>solved</td><td>1</td><td>1</td></tr>
+<tr><td>solved inaccurate</td><td>2</td><td>2</td></tr>
+<tr><td>maximum iterations reached</td><td>−2</td><td>7</td></tr>
+<tr><td>run time limit reached</td><td>−6</td><td>8</td></tr>
+</tbody></table></div>
+<p>両版の文書で、inaccurateは設定された許容誤差の10倍の条件で判定されます。<code>solved inaccurate</code>を通常のsolvedと同じ精度・制約適合と扱わず、<a href="https://osqp.org/docs/interfaces/solver_settings.html">設定値</a>の<code>eps_abs/eps_rel</code>などと残差を一緒に記録します。解の採否や期限超過時の扱いは導入先で設計・検証する項目であり、状態名だけから車両の安全性は決まりません。</p>
+<p>公式<a href="https://osqp.org/docs/interfaces/python.html#solve">Python API</a>では、<code>solve_time</code>はsolveの時間、<code>run_time</code>はsetup/update・solve・polishを含む総時間です。同じsetupから複数回solveする場合、初回後のrun_timeはupdate・solve・polishの和になります。どちらも観測から指令適用までの全周期ではありません。行列構築、状態推定、通信、出力検査まで含める外側の時間は別に測ります。</p>
+<p><a href="learning-mpc-racing-2019.html#lmpc-solver-gate">LMPC記事の追補</a>では、固定コードの状態フラグ記録と指令採用経路を区別しました。上記は公式資料・コードの静的確認で、依存版と実験版の対応、失敗の実発生、計算時間や走行性能の再現は未確認です。既存のacados追補とは別のソルバ仕様として扱います。</p>
+</section>

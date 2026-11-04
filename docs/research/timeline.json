@@ -1551,7 +1551,7 @@
     "year": null,
     "classification_year": null,
     "publication_date": "",
-    "updated": "live documentation checked 2026-10-02",
+    "updated": "live documentation checked 2026-11-04; release-0.6.3 status reference",
     "era": "undated",
     "domain": "control",
     "title": "OSQP official solver, MPC and Python warm-start documentation",
@@ -1562,8 +1562,8 @@
     "boundary_note": "No solver runtime or project compatibility tested. Separate docs of same implementation are one family.",
     "source_type": "technical",
     "doi": "",
-    "checked_date": "2026-10-02",
-    "checked_scope": "QP form, automatic primal/dual warm start, MPC example; source also https://osqp.org/docs/ and https://github.com/osqp/osqp/blob/master/docs/examples/mpc.rst"
+    "checked_date": "2026-11-04",
+    "checked_scope": "2026-10-02: QP form, automatic primal/dual warm start, MPC example; source also https://osqp.org/docs/ and https://github.com/osqp/osqp/blob/master/docs/examples/mpc.rst / 2026-11-04: Current and release-0.6.3 status tables; different integer codes, inaccurate tolerances x10; current Python solve_time/run_time scope and repeated-solve update+solve+polish; solver_settings tolerance and time-limit definitions. Static documentation review only; live current version not pinned; no installation or runtime compatibility test."
   },
   {
     "year": null,
@@ -1616,8 +1616,8 @@
     "boundary_note": "初公表日未確認。確認commitの日付を公開日へ代用しない。原著実車実験の設定とは異なる。main.pyの教育・研究用途の条件を確認し、独立LICENSEファイルはtreeに見つからない。",
     "source_type": "code",
     "doi": "",
-    "checked_date": "2026-10-03",
-    "checked_scope": "Pinned tree, README, src/main.py, initControllerParameters.py, PredictiveControllers.py, PredictiveModel.py and simulator/SysModel.py. Static inspection of initialization, horizon, history selection, slack constraints, OSQP setup and local regression. No execution."
+    "checked_date": "2026-11-04",
+    "checked_scope": "2026-10-03: Pinned tree, README, src/main.py, initControllerParameters.py, PredictiveControllers.py, PredictiveModel.py and simulator/SysModel.py. Static inspection of initialization, horizon, history selection, slack constraints, OSQP setup and local regression. No execution. / 2026-11-04: Pinned PredictiveControllers.py osqp_solve_qp records feasible only for status_val==1, then assigns res.x to Solution; inherited MPC.solve unpacks next. SysModel.py Simulator.sim takes uPred[0] and passes it to dynModel without a feasible rejection branch in the checked path. Static observation of these two files only; no failure occurrence, real-vehicle command, experiment dependency equivalence or execution inferred."
   },
   {
     "year": null,
