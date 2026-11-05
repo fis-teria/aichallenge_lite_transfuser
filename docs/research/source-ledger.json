@@ -381,8 +381,8 @@
     "original_source_type": "paper",
     "domain": "e2e",
     "era": "2023-2024",
-    "checked_date": "2026-10-26",
-    "checked_scope": "Independent local re-authoring: v3 selected §§3–4, vector queries/planning losses, Tables1–5, nuScenes versus CARLA contracts; official fixed v1 loss,metric,base config and README read. No VADv2/full recipe/weight audit or execution.",
+    "checked_date": "2026-11-05",
+    "checked_scope": "Independent local re-authoring: v3 selected §§3–4, vector queries/planning losses, Tables1–5, nuScenes versus CARLA contracts; official fixed v1 loss,metric,base config and README read. No VADv2/full recipe/weight audit or execution. 2026-11-05 supplement: fixed VAD.py compute_planner_metric_stp3 (prefix 2/4/6 samples), metric_stp3.py compute_L2/evaluate_coll (GT collision excluded from numerator, retained in temporal denominator), and dataset evaluate (fut_valid_flag sample selection) independently read statically; no execution or full paper/weight correspondence.",
     "related_articles": [
       "e2e-field-overview",
       "vad-2023",
@@ -3495,8 +3495,8 @@
     "original_source_type": "code",
     "domain": "e2e",
     "era": "undated",
-    "checked_date": "2026-10-26",
-    "checked_scope": "Independent local re-authoring: v3 selected §§3–4, vector queries/planning losses, Tables1–5, nuScenes versus CARLA contracts; official fixed v1 loss,metric,base config and README read. No VADv2/full recipe/weight audit or execution.",
+    "checked_date": "2026-11-05",
+    "checked_scope": "Independent local re-authoring: v3 selected §§3–4, vector queries/planning losses, Tables1–5, nuScenes versus CARLA contracts; official fixed v1 loss,metric,base config and README read. No VADv2/full recipe/weight audit or execution. 2026-11-05 supplement: fixed VAD.py compute_planner_metric_stp3 (prefix 2/4/6 samples), metric_stp3.py compute_L2/evaluate_coll (GT collision excluded from numerator, retained in temporal denominator), and dataset evaluate (fut_valid_flag sample selection) independently read statically; no execution or full paper/weight correspondence.",
     "related_articles": [
       "vad-2023",
       "research-map"
@@ -3731,5 +3731,32 @@
     "supporting_urls": [
       "https://github.com/acados/acados/blob/51db6db146217e6624d7575f34e0421f28bc76a0/examples/acados_python/tests/test_rti_sqp_residuals.py"
     ]
+  },
+  {
+    "source_id": "UNIAD-PLANNING-METRIC-NOTICE",
+    "study_family_id": "uniad",
+    "title": "UniAD Issue 29: notice on open-loop planning metric comparison",
+    "authors_or_organization": "ilnehc / OpenDriveLab UniAD contributor",
+    "year": 2023,
+    "classification_year": 2023,
+    "publication_date": "2023-09-13",
+    "updated": "2023-09-13 comment; live issue checked 2026-11-05",
+    "url": "https://github.com/OpenDriveLab/UniAD/issues/29#issuecomment-1717594344",
+    "doi": "",
+    "source_type": "technical",
+    "original_source_type": "technical",
+    "domain": "e2e",
+    "era": "2023-2024",
+    "checked_date": "2026-11-05",
+    "checked_scope": "Selected Sep 13 notice on pointwise UniAD vs prefix-average VAD/ST-P3 metrics read; VAD fixed implementation separately checked. Other discussion claims and UniAD code/weights not independently audited.",
+    "related_articles": [
+      "vad-2023",
+      "research-map"
+    ],
+    "review_status": "調査済み",
+    "boundary_note": "Author-side explanation, not an independently reproduced benchmark; no reranking. Existing uniad family retained. Live issue is not immutable.",
+    "date_basis": "Dated author-side comment, not paper publication date.",
+    "origin_ledger": "source-ledger.json",
+    "independent_replication": false
   }
 ]

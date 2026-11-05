@@ -590,8 +590,26 @@
     "boundary_note": "Training losses do not certify runtime constraints. nuScenes open-loop main excludes ego status; CARLA Table4 is separate closed-loop contract and not uniform superiority over LiDAR TransFuser. Metric masks GT-colliding timesteps. VADv1 and VADv2 kept distinct; GPU/runtime conditions differ.",
     "source_type": "preprint",
     "doi": "10.48550/arXiv.2303.12077",
-    "checked_date": "2026-10-26",
-    "checked_scope": "Independent local re-authoring: v3 selected §§3–4, vector queries/planning losses, Tables1–5, nuScenes versus CARLA contracts; official fixed v1 loss,metric,base config and README read. No VADv2/full recipe/weight audit or execution."
+    "checked_date": "2026-11-05",
+    "checked_scope": "Independent local re-authoring: v3 selected §§3–4, vector queries/planning losses, Tables1–5, nuScenes versus CARLA contracts; official fixed v1 loss,metric,base config and README read. No VADv2/full recipe/weight audit or execution. 2026-11-05 supplement: fixed VAD.py compute_planner_metric_stp3 (prefix 2/4/6 samples), metric_stp3.py compute_L2/evaluate_coll (GT collision excluded from numerator, retained in temporal denominator), and dataset evaluate (fut_valid_flag sample selection) independently read statically; no execution or full paper/weight correspondence."
+  },
+  {
+    "year": 2023,
+    "classification_year": 2023,
+    "publication_date": "2023-09-13",
+    "updated": "2023-09-13 comment; live issue checked 2026-11-05",
+    "era": "2023-2024",
+    "domain": "e2e",
+    "title": "UniAD Issue 29: notice on open-loop planning metric comparison",
+    "study_family_id": "uniad",
+    "source_id": "UNIAD-PLANNING-METRIC-NOTICE",
+    "url": "https://github.com/OpenDriveLab/UniAD/issues/29#issuecomment-1717594344",
+    "date_basis": "Dated author-side comment, not paper publication date.",
+    "boundary_note": "Author-side explanation, not an independently reproduced benchmark; no reranking. Existing uniad family retained. Live issue is not immutable.",
+    "source_type": "technical",
+    "doi": "",
+    "checked_date": "2026-11-05",
+    "checked_scope": "Selected Sep 13 notice on pointwise UniAD vs prefix-average VAD/ST-P3 metrics read; VAD fixed implementation separately checked. Other discussion claims and UniAD code/weights not independently audited."
   },
   {
     "year": 2024,
@@ -1868,8 +1886,8 @@
     "boundary_note": "First public release date unverified;commit date is version evidence only,excluded from era counts.Same existing study family.Static selected source only,no execution or experiment reproduction.",
     "source_type": "code",
     "doi": "",
-    "checked_date": "2026-10-26",
-    "checked_scope": "Independent local re-authoring: v3 selected §§3–4, vector queries/planning losses, Tables1–5, nuScenes versus CARLA contracts; official fixed v1 loss,metric,base config and README read. No VADv2/full recipe/weight audit or execution."
+    "checked_date": "2026-11-05",
+    "checked_scope": "Independent local re-authoring: v3 selected §§3–4, vector queries/planning losses, Tables1–5, nuScenes versus CARLA contracts; official fixed v1 loss,metric,base config and README read. No VADv2/full recipe/weight audit or execution. 2026-11-05 supplement: fixed VAD.py compute_planner_metric_stp3 (prefix 2/4/6 samples), metric_stp3.py compute_L2/evaluate_coll (GT collision excluded from numerator, retained in temporal denominator), and dataset evaluate (fut_valid_flag sample selection) independently read statically; no execution or full paper/weight correspondence."
   },
   {
     "year": null,

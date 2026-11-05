@@ -1,0 +1,137 @@
+{
+  "checked_date": "2026-11-05",
+  "baseline_commit": "c6b43ea01e69fd59c36e22ed302e41fa25957897",
+  "articles": [
+    "vad-2023#vad-planning-metrics",
+    "research-map"
+  ],
+  "source_commit": "1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8",
+  "selection_reason": "Recent control and racing supplements already published; choose E2E evaluation comparability for this small update without fixed topic priority.",
+  "scope": "VAD temporal prefix averages, valid-sample aggregation, GT collision numerator versus denominator and author-side UniAD comparison notice.",
+  "preservation": "108 other source records unchanged; 111 sources / 66 families / 24 undated; 144 cells, all coverage_complete=false. Only one formerly empty cell gains a narrowly scoped technical notice.",
+  "checks": {
+    "primary_sources": [
+      {
+        "url": "https://raw.githubusercontent.com/hustvl/VAD/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8/projects/mmdet3d_plugin/VAD/VAD.py",
+        "status": 200,
+        "sha256": "e50cb55c6894ea386168e5e91c0810dc427414d71f769d25182af8410d6b892e",
+        "verified_fragments": [
+          "cur_time = (i+1)*2",
+          "obj_box_coll.mean().item()"
+        ]
+      },
+      {
+        "url": "https://raw.githubusercontent.com/hustvl/VAD/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8/projects/mmdet3d_plugin/VAD/planner/metric_stp3.py",
+        "status": 200,
+        "sha256": "d492b2bee64b84e4980f772b06d293851118ac05e0b7b7bc904ab4e5cb0aad57",
+        "verified_fragments": [
+          "/ pred_len",
+          "m2 = torch.logical_not(gt_box_coll)"
+        ]
+      },
+      {
+        "url": "https://raw.githubusercontent.com/hustvl/VAD/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8/projects/mmdet3d_plugin/datasets/nuscenes_vad_dataset.py",
+        "status": 200,
+        "sha256": "303745ced08745eb4f4136bf76a9c23ee4757677ad866151d1b8d4d1a8493ed5",
+        "verified_fragments": [
+          "if res['metric_results']['fut_valid_flag']:",
+          "metric_dict[k] = metric_dict[k] / num_valid"
+        ]
+      },
+      {
+        "url": "https://github.com/OpenDriveLab/UniAD/issues/29",
+        "status": 200,
+        "sha256": "7d1dc8bb769900dcef76ddecf2829930e78207d0cfabe6bc8e82ba38720057f2",
+        "verified_fragments": [
+          "1717594344",
+          "already-averaged"
+        ]
+      }
+    ],
+    "generated_match": "passed",
+    "site_links": {
+      "pages": 53,
+      "links_assets": 2833,
+      "pinned_sources": 87
+    },
+    "site_unittest_passed": 29,
+    "illustrative_calculation": {
+      "distances_m": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "prefix_average_m": 2.5,
+      "endpoint_average_m": 4.0,
+      "not_measured": true
+    },
+    "ledger_csv_json": "passed; 111 sources / 66 families / 24 undated / 87 dated; 144 cells; 34 scoped / 110 unreviewed; zero complete",
+    "edge_browser": [
+      {
+        "article": "vad-2023",
+        "width": 320,
+        "overflow": false,
+        "anchor_and_links": true
+      },
+      {
+        "article": "vad-2023",
+        "width": 390,
+        "overflow": false,
+        "anchor_and_links": true
+      },
+      {
+        "article": "vad-2023",
+        "width": 768,
+        "overflow": false,
+        "anchor_and_links": true
+      },
+      {
+        "article": "vad-2023",
+        "width": 1440,
+        "overflow": false,
+        "anchor_and_links": true
+      },
+      {
+        "article": "research-map",
+        "width": 320,
+        "overflow": false,
+        "anchor_and_links": true
+      },
+      {
+        "article": "research-map",
+        "width": 390,
+        "overflow": false,
+        "anchor_and_links": true
+      },
+      {
+        "article": "research-map",
+        "width": 768,
+        "overflow": false,
+        "anchor_and_links": true
+      },
+      {
+        "article": "research-map",
+        "width": 1440,
+        "overflow": false,
+        "anchor_and_links": true
+      }
+    ],
+    "js_disabled": true,
+    "reciprocal_links": true,
+    "browser_errors": [],
+    "screenshots": [
+      "C:\\Users\\euPHo\\AppData\\Local\\Temp\\e2e-vad-qa-20261105\\vad-supplement-1440.png",
+      "C:\\Users\\euPHo\\AppData\\Local\\Temp\\e2e-vad-qa-20261105\\vad-supplement-390.png"
+    ],
+    "visual_review": "390px and 1440px screenshots inspected; supplement, equations, text wrapping and adjacent table readable. Tables retain intentional horizontal scrolling at narrow widths."
+  },
+  "limitations": [
+    "Static selected-source inspection and illustrative arithmetic only",
+    "UniAD full code/checkpoint alignment, author-code execution, full pytest, independent reproduction, training and driving experiments not performed",
+    "Shared news conversation body not obtained"
+  ],
+  "publication_status": "prepublication validation complete; commit CI and live delivery checked separately"
+}

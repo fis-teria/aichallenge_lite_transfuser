@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="vector mapとagent予測、学習損失、開ループと閉ループの指標・現行契約を整理。"
+      content="vector mapとagent予測、学習損失、計画指標の時間平均・有効maskと閉ループ評価の境界を整理。"
     />
     <meta name="theme-color" content="#132c32" />
     <title>VAD：道路と相手をベクトルで表し、軌道の学習へつなぐ — AIC TransFuser Lite</title>
@@ -68,9 +68,9 @@
       <main id="main"><article class="article-page"><header class="article-heading">
 <div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../papers.html">論文ノート</a></div>
 <span class="section-number">論文ノート</span><h1>VAD：道路と相手をベクトルで表し、軌道の学習へつなぐ</h1>
-<p class="article-lead">vector mapとagent予測、学習損失、開ループと閉ループの指標・現行契約を整理。</p><div class="article-meta">
+<p class="article-lead">vector mapとagent予測、学習損失、計画指標の時間平均・有効maskと閉ループ評価の境界を整理。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-26">2026-10-26</time></span>
-<span>更新 <time datetime="2026-10-26">2026-10-26</time></span>
+<span>更新 <time datetime="2026-11-05">2026-11-05</time></span>
 <span class="tag">独立再執筆・原著/固定code静的確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文詳解・独立再執筆</span><span class="paper-year">2023</span></div>
 <h2>VAD：道路と相手をベクトルで表し、軌道の学習へつなぐ</h2>
 <p class="authors">Bo Jiang、Shaoyu Chen、Qing Xu、Bencheng Liao、Jiajie Chen、Helong Zhou、Qian Zhang、Wenyu Liu、Chang Huang、Xinggang Wang</p>
@@ -87,9 +87,14 @@
 <p>原著の衝突損失はconfidence thresholdでagentを選び、多峰予測から最高confidenceの軌道を使います。<a href="https://github.com/hustvl/VAD/blob/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8/projects/mmdet3d_plugin/VAD/utils/plan_loss.py">固定版plan_loss.py</a>ではこれらを学習損失として実装しています。Safety Filterのように毎時刻制約付き最適化を解いてから操作を許可する機構だとは扱いません。公式repoはVAD v1/v2を併載していますが、今回確認したのは<code>projects/.../VAD</code>側のv1関連処理で、VADv2を本論文の成果へ混ぜません。</p>
 <h3>3. 開ループと閉ループの結果を分ける</h3>
 <p>原著は2秒の履歴から3秒先を計画します。nuScenes valでは記録済みの世界に対してL2距離とcollisionを測り、主比較ではshortcut learningを避けるためego status特徴を外します。CARLA Town05では操作を環境へ戻す別評価を行い、navigationや信号認識を追加します。二つは同じ入力・評価契約ではありません。</p>
-<div class="table-wrap" role="region" aria-label="表2　原著Tables 1・4・5からの限定値" tabindex="0"><table class="tech-table"><caption>表2　原著Tables 1・4・5からの限定値</caption><thead><tr><th scope="col">条件</th><th scope="col">原著の値</th><th scope="col">比較上の境界</th></tr></thead><tbody><tr><td>nuScenes、VAD-Base、ego statusなし</td><td>平均L2 0.72 m、平均collision 0.22 %（Table 1）</td><td>1/2/3秒の平均。実走行の事故率ではない。</td></tr><tr><td>CARLA、VAD-Base</td><td>Town05 Short: DS 64.29 / RC 87.26。Long: DS 30.31 / RC 75.20（Table 4）</td><td>DSとRCを成功率へ置換しない。LongではLiDAR系TransFuserのDS 33.15より低い。</td></tr><tr><td>VAD-Tiny、RTX 3090×1</td><td>59.5 ms（Table 5のmodule合計）</td><td>Baseの224.3 msやUniADの別GPU測定と混同しない。実センサから操作適用までの遅延ではない。</td></tr></tbody></table></div>
+<div class="table-wrap" role="region" aria-label="表2　原著Tables 1・4・5からの限定値" tabindex="0"><table class="tech-table"><caption>表2　原著Tables 1・4・5からの限定値</caption><thead><tr><th scope="col">条件</th><th scope="col">原著の値</th><th scope="col">比較上の境界</th></tr></thead><tbody><tr><td>nuScenes、VAD-Base、ego statusなし</td><td>平均L2 0.72 m、平均collision 0.22 %（Table 1）</td><td>1/2/3秒までの時間平均をさらに平均（下の追補参照）。実走行の事故率ではない。</td></tr><tr><td>CARLA、VAD-Base</td><td>Town05 Short: DS 64.29 / RC 87.26。Long: DS 30.31 / RC 75.20（Table 4）</td><td>DSとRCを成功率へ置換しない。LongではLiDAR系TransFuserのDS 33.15より低い。</td></tr><tr><td>VAD-Tiny、RTX 3090×1</td><td>59.5 ms（Table 5のmodule合計）</td><td>Baseの224.3 msやUniADの別GPU測定と混同しない。実センサから操作適用までの遅延ではない。</td></tr></tbody></table></div>
 
 <p><a href="https://github.com/hustvl/VAD/blob/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8/projects/mmdet3d_plugin/VAD/planner/metric_stp3.py">固定版のmetric</a>ではGT軌道側が衝突する時点を除くマスクや、点と車体boxの衝突集計を区別します。したがってcollisionの値には実装・有効mask・分母が関係します。Table 1の全指標とこの固定commitの実験設定・重みを完全に対応付けたわけではなく、他手法や現行車両との順位表には転用しません。</p>
+<h4 id="vad-planning-metrics">追補：同じ「2秒L2」でも平均する範囲が違う</h4>
+<p>2026-11-05確認。<a href="https://github.com/OpenDriveLab/UniAD/issues/29#issuecomment-1717594344">UniAD作者側の比較説明（2023-09-13）</a>では、UniADの各時点の値と、VAD / ST-P3側の各時点までの平均を区別しています。今回、VAD v1の固定版1688c4bを独立に静的確認しました。<a href="https://github.com/hustvl/VAD/blob/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8/projects/mmdet3d_plugin/VAD/VAD.py#L585-L634">評価呼出し</a>は1・2・3秒に対して先頭2・4・6点を渡し、<a href="https://github.com/hustvl/VAD/blob/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8/projects/mmdet3d_plugin/VAD/planner/metric_stp3.py#L266-L284">compute_L2</a>は渡された全点の距離を点数で割ります。したがって2秒の値は、0.5・1・1.5・2秒の4点平均です。</p>
+<p>0.5秒刻みの距離誤差を<code>d1,…,d6</code>とすると、VAD方式は<code>A1=(d1+d2)/2</code>、<code>A2=(d1+…+d4)/4</code>、<code>A3=(d1+…+d6)/6</code>を作り、表のAvg.は<code>(A1+A2+A3)/3</code>です。たとえば誤差を仮に1〜6 mと置く説明例では2.5 mとなり、1・2・3秒の端点だけの平均4 mとは一致しません。この例は著者の実測値ではなく、集計差を示す計算です。</p>
+<p>collisionも同じ呼出し内で対象区間の配列を時間平均します。<a href="https://github.com/hustvl/VAD/blob/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8/projects/mmdet3d_plugin/VAD/planner/metric_stp3.py#L243-L265">GT車体が衝突する時点</a>は予測衝突の加算から除かれますが、その時点を時間平均の分母から取り除く処理ではありません。また<a href="https://github.com/hustvl/VAD/blob/1688c4b1c3a9e2e7873ca9700ff8058170c0e3c8/projects/mmdet3d_plugin/datasets/nuscenes_vad_dataset.py#L1674-L1689">datasetの集計</a>は<code>fut_valid_flag</code>が真のサンプルだけを加算し、その件数で割ります。無効サンプルの0を全件平均へ混ぜる方式とも異なります。</p>
+<p>比較時は、時間間隔・端点か区間平均か・有効サンプル・GT衝突mask・点かboxかを揃えてから評価します。元表の値はそのまま保全し、UniADの全コード・重みとの対応や同条件での再評価を確認したとは扱いません。今回の追補は実装読解と説明用計算のみで、著者コード実行、学習、閉ループ・車両試験は未実施です。</p>
 <h3>4. 現行TimePathに加える対象は、出力点数よりも教師と場面表現</h3>
 <div class="table-wrap" role="region" aria-label="表3　現行方式との違いと必要な検証" tabindex="0"><table class="tech-table"><caption>表3　現行方式との違いと必要な検証</caption><thead><tr><th scope="col">観点</th><th scope="col">接続候補・未検証点</th></tr></thead><tbody><tr><td>観測と教師</td><td>現行Camera + 2D LiDARの契約に、VADの複数camera、較正、vector map、agent追跡・未来ラベルをそのまま仮定しない。必要な教師生成と欠損処理を定義する。</td></tr><tr><td>出力と再学習</td><td>同じ3秒の軌道でも座標・間隔・command条件が異なる。query/損失の追加はモデル変更と再学習を伴う。GT futureは評価・教師に限定する。</td></tr><tr><td>検証と資源</td><td>nuScenesの指標再実装を照合したうえで、相手が反応する閉ループ、認識落ち、境界外、停止・再発進、遅延とGPUメモリを測る。</td></tr></tbody></table></div>
 
@@ -112,9 +117,9 @@
 <p>2018年後半から2026年までの代表研究を、学習境界・教師・時間・評価で整理する。</p><div class="card-bottom"><span>文献調査</span>
 <a class="article-read" href="../articles/e2e-field-overview.html" aria-label="E2E自動運転の全体像と比較の読み方を読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-11-04">2026-11-04</time></div>
+<time datetime="2026-11-05">2026-11-05</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
-<p>4領域・144区分の確認範囲と未調査を整理。110資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
+<p>4領域・144区分の確認範囲と未調査を整理。111資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
 <a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article></div></section></article>
 <footer><span>AIC TransFuser Lite / Research Notes</span><a href="#main">ページの先頭へ ↑</a>
 <p>Research in progress. Evidence before claims.</p></footer></main></div></body></html>
