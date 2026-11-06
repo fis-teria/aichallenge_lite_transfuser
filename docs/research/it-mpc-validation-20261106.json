@@ -1,0 +1,120 @@
+{
+  "checked_date": "2026-11-06",
+  "baseline_commit": "57a91185a2a9dc190560c3c23641052f5e7e8fd7",
+  "articles": [
+    "information-theoretic-mpc#it-mpc-importance-weights",
+    "research-map"
+  ],
+  "source_commit": "798fa3fc75669705ccd57209e6b68c94c5179935",
+  "selection_reason": "Compare three domains at current state: E2E VAD metrics supplemented Nov5; racing SysID already detailed; choose a missing importance-weight explanation in an existing short control foundation article without fixed priority.",
+  "scope": "Small method supplement: proposal density ratio, stabilized weights, later author-library selected routines, current reference-space candidates and mean-path admission.",
+  "checks": {
+    "generated_match": "passed",
+    "site_links": {
+      "pages": 53,
+      "links_assets": 2853,
+      "pinned_sources": 89
+    },
+    "site_unittest_passed": 29,
+    "primary_sources": [
+      {
+        "url": "https://arxiv.org/html/1707.02342v1",
+        "status": 200,
+        "sha256": "32a2c7a0352055e5a8bfa1e0d130786940f854d142e060a521dfa96bc24b5179",
+        "verified_fragments": [
+          "S3.SS2",
+          "S3.SS3",
+          "S3.SS4.SSS1"
+        ]
+      },
+      {
+        "url": "https://github.com/ACDSLab/MPPI-Generic/blob/798fa3fc75669705ccd57209e6b68c94c5179935/include/mppi/sampling_distributions/gaussian/gaussian.cu",
+        "status": 200,
+        "sha256": "a49ac8677e22cf5fac4e73e0a79fc2f111571ffd21407d08925ad94fa31aacb8",
+        "verified_fragments": []
+      },
+      {
+        "url": "https://github.com/ACDSLab/MPPI-Generic/blob/798fa3fc75669705ccd57209e6b68c94c5179935/include/mppi/controllers/MPPI/mppi_controller.cu",
+        "status": 200,
+        "sha256": "d4be856556607ffc278a63e50390fb61c6dc9b0a04b34e3625e80b8b857fdf21",
+        "verified_fragments": []
+      }
+    ],
+    "illustrative_weights": [
+      0.25,
+      0.7499999999999999
+    ],
+    "baseline_shift_invariant": true,
+    "edge_browser": [
+      {
+        "article": "information-theoretic-mpc",
+        "width": 320,
+        "overflow": false,
+        "figure_equations_and_links": true
+      },
+      {
+        "article": "information-theoretic-mpc",
+        "width": 390,
+        "overflow": false,
+        "figure_equations_and_links": true
+      },
+      {
+        "article": "information-theoretic-mpc",
+        "width": 768,
+        "overflow": false,
+        "figure_equations_and_links": true
+      },
+      {
+        "article": "information-theoretic-mpc",
+        "width": 1440,
+        "overflow": false,
+        "figure_equations_and_links": true
+      },
+      {
+        "article": "research-map",
+        "width": 320,
+        "overflow": false,
+        "figure_equations_and_links": true
+      },
+      {
+        "article": "research-map",
+        "width": 390,
+        "overflow": false,
+        "figure_equations_and_links": true
+      },
+      {
+        "article": "research-map",
+        "width": 768,
+        "overflow": false,
+        "figure_equations_and_links": true
+      },
+      {
+        "article": "research-map",
+        "width": 1440,
+        "overflow": false,
+        "figure_equations_and_links": true
+      }
+    ],
+    "table_keyboard_scroll": true,
+    "js_disabled": true,
+    "browser_errors": [],
+    "preservation": "109 other source records unchanged; original IT-MPC body retained verbatim; 111 sources / 66 families / 24 undated / 87 dated; 144 cells, 34 scoped / 110 unreviewed / 0 complete; JSON and CSV equal",
+    "screenshots": [
+      "C:\\Users\\euPHo\\AppData\\Local\\Temp\\e2e-itmpc-qa-20261106\\current-planner-1440.png",
+      "C:\\Users\\euPHo\\AppData\\Local\\Temp\\e2e-itmpc-qa-20261106\\current-planner-390.png",
+      "C:\\Users\\euPHo\\AppData\\Local\\Temp\\e2e-itmpc-qa-20261106\\weights-1440.png",
+      "C:\\Users\\euPHo\\AppData\\Local\\Temp\\e2e-itmpc-qa-20261106\\weights-390.png"
+    ],
+    "visual_review": "Desktop/mobile weights and table inspected; full mobile figure screenshot confirms four readable vertical steps; equations retain keyboard-scrollable table at 320px.",
+    "source_scope_boundary": "C01 abstract scope retained and selected v1 sections appended; C08-CODE remains later separate family; no count/era/family changes.",
+    "project_changes": "Documentation and generated site only; no learning/control/ROS/config/test code changes",
+    "formal_browser_regression": "passed: 5 widths, catalog/sidebar/keyboard/resize/article navigation, all53 pages at1440px and390px, legacy links, JS-disabled navigation, zero missing resources/script errors"
+  },
+  "limitations": [
+    "ArXiv v1 selected sections only; no full proof or journal-version audit",
+    "Later MPPI-Generic code is not the original 2017 experimental commit; full likelihood-call/sign/config equivalence unverified",
+    "No author-code execution, CUDA build, full pytest, learning/control/ROS/config changes, performance reproduction or driving experiments",
+    "Shared news body not obtained; no verified news delta"
+  ],
+  "publication_status": "prepublication validation complete; commit CI and live delivery checked separately"
+}

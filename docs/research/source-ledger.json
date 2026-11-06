@@ -1170,17 +1170,19 @@
     "original_source_type": "journal paper / preprint",
     "domain": "control",
     "era": "foundation",
-    "checked_date": "2026-10-02",
-    "checked_scope": "Primary abstract; year/DOI cross-checked institutional author publication record; existing site article inspected",
+    "checked_date": "2026-11-06",
+    "checked_scope": "Primary abstract; year/DOI cross-checked institutional author publication record; existing site article inspected 2026-11-06: selected arXiv v1 III-B/C/D and Algorithms1–2 read for KL direction, importance ratio, finite-sample approximation and baseline shifting; PDF p5 equation21 text/formula cross-checked with official HTML. No new performance claims, full proof audit, journal-version comparison or reproduction.",
     "related_articles": [
       "information-theoretic-mpc",
-      "mpc-mppi-overview"
+      "mpc-mppi-overview",
+      "research-map"
     ],
     "review_status": "調査済み",
-    "boundary_note": "2017 arXiv and 2018 TRO are one study family. No new full-text performance claims from this source.",
+    "boundary_note": "2017 arXiv and 2018 TRO are one study family. No new full-text performance claims from this source. Supplemental method reading uses arXiv v1 only; 2017 is pre-window background. Later MPPI-Generic selected implementation is a separate existing family, not the original experimental commit.",
     "date_basis": "領域別台帳の書誌年。初稿年・正式刊行年・改訂年は一致しない場合がある。 arXiv識別子の初回年月: 2017-07。確認した版と初稿は区別する。",
     "origin_ledger": "source-ledger.json",
-    "independent_replication": false
+    "independent_replication": false,
+    "full_text_url": "https://arxiv.org/html/1707.02342v1"
   },
   {
     "source_id": "C02",
@@ -3013,12 +3015,13 @@
     "original_source_type": "author-code",
     "domain": "control",
     "era": "undated",
-    "checked_date": "2026-10-10",
-    "checked_scope": "Pinned README, BSD-2-Clause LICENSE, CMake options; Vanilla MPPI kernel selection and computeControl, base controller transfers and Gaussian weighted update read statically. Partial audit; no build, install or execution.",
+    "checked_date": "2026-11-06",
+    "checked_scope": "Pinned README, BSD-2-Clause LICENSE, CMake options; Vanilla MPPI kernel selection and computeControl, base controller transfers and Gaussian weighted update read statically. Partial audit; no build, install or execution. 2026-11-06: Gaussian computeLikelihoodRatioCost and weighted-update routines, Vanilla computeControl baseline/normExp/normalizer/update call sequence read statically as a later comparison; no full likelihood-call/sign equivalence audit or CUDA execution.",
     "related_articles": [
       "mppi-generic-2024",
       "mpc-mppi-overview",
-      "robust-mppi"
+      "robust-mppi",
+      "information-theoretic-mpc"
     ],
     "review_status": "調査済み",
     "boundary_note": "This main commit postdates paper v4. CPU baseline/normalizer work and GPU transfers are visible; it is not the benchmark gitlink c57427e58ee8eec08a6689f2b49bf6d9a76a8940. Experiment correspondence and worst-case execution time unverified. No experiment execution or independent reproduction.",

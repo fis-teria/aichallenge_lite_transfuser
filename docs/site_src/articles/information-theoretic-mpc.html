@@ -30,3 +30,21 @@
               <a class="paper-source" href="https://arxiv.org/abs/1707.02342"
                 >arXivで原論文を読む ↗</a
               >
+
+<h3 id="it-mpc-importance-weights">追補：指数重みには、候補を出した分布も関係する</h3>
+<p>2026-11-06確認。対象は<a href="https://arxiv.org/html/1707.02342v1#S3.SS2">arXiv v1の§III-B–D、式16–22</a>とAlgorithms 1–2の選択箇所です。2017-07-07の初稿を、2018年の雑誌版やその実験コードと完全に照合した確認ではありません。</p>
+<p>Vを操作系列、pを基準分布、qを候補の生成分布、Sを状態軌道のコストとすると、原著式21の重みは<code>exp(−S(V)/λ)</code>に<code>p(V)/q(V)</code>を掛けます。qが必要な領域を覆う等の仮定の下、目標分布へ近づけるための補正です。Sだけを使う式と区別するため、以下では補正込みのコストをJと書きます。<a href="https://arxiv.org/html/1707.02342v1#S3.SS3">原著§III-C</a></p>
+<div class="table-wrap" role="region" aria-label="重要度重みを読むための式" tabindex="0"><table class="tech-table"><caption>式1　原著式21の有限候補による近似を、記事用の記号で整理</caption><thead><tr><th scope="col">関係</th><th scope="col">意味</th></tr></thead><tbody>
+<tr><td><code>J(V) = S(V) − λ log(p(V)/q(V))</code></td><td>候補分布の比をコストへまとめた表記。SとJを同じ名前で扱わない。</td></tr>
+<tr><td><code>ρ = minₖ J(Vₖ)</code><br><code>aₖ = exp(−(J(Vₖ)−ρ)/λ)</code></td><td>λ&gt;0。最小値を引くのは指数の数値安定化で、正規化後の比は変わらない。</td></tr>
+<tr><td><code>wₖ = aₖ / Σⱼ aⱼ</code><br><code>uₜ ≈ Σₖ wₖ vₖ,ₜ</code></td><td>有限サンプルで期待値を近似する。候補不足のまま大域最適性を主張しない。</td></tr>
+</tbody></table></div>
+<p>例として、同じSの候補2個で分布比が1と3なら、補正を含む正規化重みは0.25と0.75、Sだけなら0.5ずつです。これは式の違いを示す説明用計算で、走行結果ではありません。<a href="https://arxiv.org/html/1707.02342v1#S3.SS4.SSS1">最小コストを引く処理</a>だけでは、候補分布の相違は補正されません。</p>
+<h4>後続の著者ライブラリも、単なる指数計算と分けて読む</h4>
+<p><a href="https://github.com/ACDSLab/MPPI-Generic/blob/798fa3fc75669705ccd57209e6b68c94c5179935/include/mppi/sampling_distributions/gaussian/gaussian.cu">MPPI-Generic固定版798fa3fのGaussian sampler</a>には、平均・標準偏差・候補番号を参照する<code>computeLikelihoodRatioCost</code>と、重み付きの分布更新が別にあります。<a href="https://github.com/ACDSLab/MPPI-Generic/blob/798fa3fc75669705ccd57209e6b68c94c5179935/include/mppi/controllers/MPPI/mppi_controller.cu">Vanilla MPPIのcomputeControl</a>もbaseline、指数変換、normalizer、分布更新を順に呼びます。これは後続ライブラリの選択経路の静的確認で、2017年の実験実装ではありません。尤度比項の全呼出し・符号・設定を原著式へ一対一に対応付けた監査や、CUDA実行は未実施です。</p>
+<h4>現行のreference-space探索で確認できた範囲</h4>
+<p>公開mainの確認版<code>57a91185a2a9dc190560c3c23641052f5e7e8fd7</code>の<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/57a91185a2a9dc190560c3c23641052f5e7e8fd7/src/aic_transfuser_lite/control/slam_mppi.py" data-source="src/aic_transfuser_lite/control/slam_mppi.py">ReferenceMppi</a>は、横方向形状の4係数を探索します。通常経路では各反復にGaussian雑音を使う一方、固定の回避形状や継続候補も明示的に挿入します。したがって全候補を同一のGaussianから独立に得た原著の操作系列として扱えません。</p>
+<figure class="tech-figure"><figcaption>図1　現行の通常経路で、平均と採用を分ける（本記事のコード読解図）</figcaption><ol class="tech-flow four"><li><strong>候補を作る</strong><p>雑音に固定形状・継続候補も加える</p></li><li><strong>成立を調べる</strong><p>曲率・占有・未知領域で棄却する</p></li><li><strong>平均を更新</strong><p>有限コストだけで指数重みを計算</p></li><li><strong>再検査して採用</strong><p>平均が成立しbestより低コストなら更新</p></li></ol></figure>
+<p>確認した重みは<code>exp(−(cost−min(cost))/0.35)</code>です。0.35はこのcost尺度の定数で、原著のλとして校正した値だとは確認していません。この経路には上のp/qを明示的に計算する項は見当たりません。形状係数の平均を再評価し、不成立なら検査済みbestを保持します。成立候補同士の平均も障害物を横切り得るため、重みの正規化を安全性の検査の代わりにはできません。この説明は現行コードの適用範囲の分析で、元の制御則との数学的同値性を示したものではありません。</p>
+<p><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/57a91185a2a9dc190560c3c23641052f5e7e8fd7/configs/control/time_path_slam_mppi.json" data-source="configs/control/time_path_slam_mppi.json">配布されている低速設定</a>は<code>fixed_5kmh</code>、制御周期設定0.05 s、計画鮮度0.5 s、限定AWSIM試験用です。これは今回測った遅延・安全域ではありません。原著の操作系列rolloutへ接続する案では、操舵・速度・適用時刻と観測を同期し、車体応答モデル、候補分布、補正コスト、飽和を定義し直す必要があります。再学習が必須とは限らず、まずモデルとコストを固定した比較から検討する設計案です。</p>
+<p>今回の変更は文書のみです。重みの説明用計算と静的読解を行い、原著の全実験・雑誌版・実験commit/重み対応、著者コード実行、全pytest、学習・走行は未確認です。関連記事：<a href="mpc-mppi-overview.html">MPC / MPPI概説</a>、<a href="mppi-generic-2024.html">後続CUDA実装の計時範囲</a>、<a href="robust-mppi.html">Robust MPPIの保証条件</a>、<a href="research-map.html">研究地図</a>。</p>
