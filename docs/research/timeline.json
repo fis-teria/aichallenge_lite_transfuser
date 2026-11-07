@@ -716,8 +716,8 @@
     "boundary_note": "Initial arXiv v1 is 2024-11-26; metadata lists RA-L volume10 issue2 February2025, DOI10.1109/LRA.2025.3527336. One family; article numbers use v1. 30s data plus3s six-iteration training is reported for the paper setup, not current code or current project. Physical NLS has smallest yaw-rate RMSE but N.C. laps. Slip-angle data limit and known geometry/mass remain. No safety or arbitrary-model convergence guarantee inferred.",
     "source_type": "preprint",
     "doi": "10.48550/arXiv.2411.17508",
-    "checked_date": "2026-10-11",
-    "checked_scope": "arXiv metadata/version/license; introduction and related-work context, §§III–V mechanism, assumptions, one-step evaluation and physical/adaptation conditions; Fig.5–6, Tables I–II cross-checked with PDF pages 5–6. Not a journal-version comparison or independent reproduction."
+    "checked_date": "2026-11-07",
+    "checked_scope": "arXiv metadata/version/license; introduction and related-work context, §§III–V mechanism, assumptions, one-step evaluation and physical/adaptation conditions; Fig.5–6, Tables I–II cross-checked with PDF pages 5–6. Not a journal-version comparison or independent reproduction. 2026-11-07: selected v1 III-C and IV-B.1 reread for noncausal filtering, mirrored augmentation and separate-run same-track evaluation. No new numerical performance or journal-version claims."
   },
   {
     "year": 2024,
@@ -770,8 +770,8 @@
     "boundary_note": "Code commit postdates arXiv v1; experiment correspondence unverified. NN4-8-8-2 has130 parameters vs paper4-8-2/58. YAML30s vs README50s; stamp-free latest-callback sampling, fixed dt, noncausal processing, mirrored seam and force normalization need validation. least_squares callback returns scalar SSE; default objective is half SSE squared. LUT/plots are separate from reported3s training.",
     "source_type": "code",
     "doi": "",
-    "checked_date": "2026-10-11",
-    "checked_scope": "Pinned README, package/launch/YAML, collection callbacks, filter/mirror, residual teachers, SimpleNN and training, virtual-data and Pacejka fit, save/load and LUT/dynamics inspected statically. Partial audit; no install, ROS launch, training, LUT generation or execution."
+    "checked_date": "2026-11-07",
+    "checked_scope": "Pinned README, package/launch/YAML, collection callbacks, filter/mirror, residual teachers, SimpleNN and training, virtual-data and Pacejka fit, save/load and LUT/dynamics inspected statically. Partial audit; no install, ROS launch, training, LUT generation or execution. 2026-11-07: process_data/negate_data then generate_training_set, generate_predictions length-1 and dt0.02, generate_inputs_errors adjacent slices, and nn_train full-data training loss statically traced. Concatenated N+N rows yield2N-1 pairs including one cross-segment pair; segmentwise proposal yields2(N-1). Symbolic row-label arithmetic only, no author-code execution or impact measurement."
   },
   {
     "year": 2024,

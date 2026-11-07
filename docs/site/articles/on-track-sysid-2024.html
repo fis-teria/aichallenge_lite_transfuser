@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="短い走行からの物理同定。予測誤差と周回、原著と公開コードの版差、TimePathへの接続条件を整理。"
+      content="残差NNからタイヤ係数へ戻す機構と、鏡像データの時系列境界・別run評価、現行車体モデルとの違いを整理。"
     />
     <meta name="theme-color" content="#132c32" />
     <title>On-Track SysID：残差からタイヤモデルへ戻す — AIC TransFuser Lite</title>
@@ -68,9 +68,9 @@
       <main id="main"><article class="article-page"><header class="article-heading">
 <div class="breadcrumbs"><a href="../index.html">ホーム</a><span>/</span><a href="../papers.html">論文ノート</a></div>
 <span class="section-number">論文ノート</span><h1>On-Track SysID：残差からタイヤモデルへ戻す</h1>
-<p class="article-lead">短い走行からの物理同定。予測誤差と周回、原著と公開コードの版差、TimePathへの接続条件を整理。</p><div class="article-meta">
+<p class="article-lead">残差NNからタイヤ係数へ戻す機構と、鏡像データの時系列境界・別run評価、現行車体モデルとの違いを整理。</p><div class="article-meta">
 <span>公開 <time datetime="2026-10-11">2026-10-11</time></span>
-<span>更新 <time datetime="2026-10-26">2026-10-26</time></span>
+<span>更新 <time datetime="2026-11-07">2026-11-07</time></span>
 <span class="tag">原著・公式コードの静的確認／未導入</span></div></header><div class="article-body"><div class="paper-top"><span class="tag">論文詳解・タイヤ同定</span><span class="paper-year">2024 / RA-L 2025</span></div>
 <h2>On-Track SysID：残差からタイヤモデルへ戻す</h2>
 <p class="authors">Onur Dikici、Edoardo Ghignone、Cheng Hu、Nicolas Baumann、Lei Xie、Andrea Carron、Michele Magno、Matteo Corno</p>
@@ -149,6 +149,21 @@
 <h3>同定したモデルをLUTへ渡す接点</h3><p>2026-10-26独立再執筆に伴う追記。<a href="map-controller-2022.html">MAP</a>では定常旋回から同定したモデルでlookup tableを作ります。On-Track SysIDの走行残差を使う更新とはデータと更新手順が異なり、現行の速度応答補償が同定済みタイヤモデルになるわけではありません。著者コード実行・独立追試・現行車両への導入は未実施です。</p>
 
 <h3>同定する物理モデルと、制御誤差を含む余裕</h3><p>2026-10-26追記。<a href="stability-adaptive-vp-2026.html">Adaptive Velocity Planning</a>では滑り・追従誤差も含むscaling factorを周回で更新します。On-Track SysIDの物理モデル同定値や、タイヤ摩擦係数そのものとは区別が必要です。独立追試・現行車両への導入は未実施です。</p>
+
+<h3 id="sysid-sequence-boundaries">追補：鏡像を増やしても、時系列の端はつながらない</h3>
+<p>2026-11-07確認。原著v1の<a href="https://arxiv.org/html/2411.17508v1#S3.SS3">§III-C</a>は非因果フィルタの後に左右対称性を仮定してデータを鏡像化し、<a href="https://arxiv.org/html/2411.17508v1#S4.SS2.SSS1">§IV-B.1</a>は同じ走路の別runで一段予測を評価します。鏡像化による件数の増加と、独立した評価runの増加は別です。ここでは前に挙げた連結境界の注意を、公式固定版7b2b712の処理順まで具体化します。</p>
+<p><a href="https://github.com/ForzaETH/On-Track-SysID/blob/7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2/src/helpers/train_model.py">process_data / negate_data</a>は、処理後N行の元系列の後ろに鏡像N行を連結します。その後<a href="https://github.com/ForzaETH/On-Track-SysID/blob/7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2/src/helpers/generate_predictions.py">generate_predictions</a>は最後の行を除く各行から0.02 s先を予測し、<a href="https://github.com/ForzaETH/On-Track-SysID/blob/7b2b712f4e5da2f10b1aa753ee538484fa9fe4a2/src/helpers/generate_inputs_errors.py">generate_inputs_errors</a>は<code>data[:-1]</code>を入力、<code>data[1:]</code>の横速度・ヨーレートとの差を残差教師にします。確認した経路に系列境界を除くmaskはなく、元系列の末尾から鏡像の先頭への対も含まれます。</p>
+<div class="table-wrap" role="region" aria-label="鏡像連結の隣接対を数える例" tabindex="0"><table class="tech-table"><caption>表3　フィルタ処理後の行ラベルを使う説明例（著者データ・学習結果ではない）</caption><thead><tr><th scope="col">構成</th><th scope="col">N=3の隣接対</th><th scope="col">一般形（N≥2）</th></tr></thead><tbody>
+<tr><td>連結後に全隣接行を使う</td><td><code>A0→A1、A1→A2、A2→M0、M0→M1、M1→M2</code></td><td><code>2N−1</code>対。A2→M0は系列の境界をまたぐ。</td></tr>
+<tr><td>元と鏡像を別系列として扱う案</td><td><code>A0→A1、A1→A2</code>と<code>M0→M1、M1→M2</code></td><td><code>2(N−1)</code>対。境界をまたぐ1対を作らない。</td></tr>
+</tbody></table></div>
+<p>Aは元の行、Mは対応する鏡像行です。前後の値が偶然近くても、連結位置が実際の0.02 s後の観測になるわけではありません。この件数は選択コードからの構造的な読解です。誤差や学習への影響の大きさ、論文実験でも同じ処理が使われたかは未確認で、既存のRMSEや周回結果を否定・再計算する根拠にはしません。</p>
+<h4>学習損失、別run評価、未見条件への一般化を分ける</h4>
+<p>固定版の<code>nn_train</code>内の<code>train_loss</code>は、渡された全<code>X_train</code>と残差教師へのMSEです。これは原著の別runでのtest RMSEではありません。鏡像を元runとは別の独立runとしてtrain/testへ分けたり、全ログをフィルタしてから分割したりする検証案では、由来や非因果処理による混入を別途点検する必要があります。</p>
+<figure class="tech-figure"><figcaption>図2　現行プロジェクトへ取り込む場合のデータ準備案（未実装）</figcaption><ol class="tech-flow four"><li><strong>runを分ける</strong><p>元データの由来でtrain/validation/testを固定</p></li><li><strong>run内で処理</strong><p>時刻・欠損を確認し、分割をまたいでフィルタしない</p></li><li><strong>鏡像を同じ側へ</strong><p>元runと同じsplitで、別の系列として保持</p></li><li><strong>系列内で対を作る</strong><p>隣接時刻だけを教師へ使い、別runで評価</p></li></ol></figure>
+<p>公開main確認版<code>2f7bfbf7d8e27f633474c3b235e8380ee8a72979</code>の<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/2f7bfbf7d8e27f633474c3b235e8380ee8a72979/src/aic_transfuser_lite/data/time_split_v1.py" data-source="src/aic_transfuser_lite/data/time_split_v1.py">time_split_v1</a>にはrun単位の割当てと原bagのpath/hash重複検査があります。ただし同一course・同条件のholdoutであり、新しい路面・速度域への一般化や、このSysID教師生成の実装を意味しません。上の準備案を使う場合も、系列ID・時刻・座標・単位を教師の入口まで保つ必要があります。</p>
+<p><a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/2f7bfbf7d8e27f633474c3b235e8380ee8a72979/src/aic_transfuser_lite/control/vehicle_motion_v1.py" data-source="src/aic_transfuser_lite/control/vehicle_motion_v1.py">現在の車体応答モデル</a>と<a href="https://github.com/fis-teria/aichallenge_lite_transfuser/blob/2f7bfbf7d8e27f633474c3b235e8380ee8a72979/configs/control/time_path_vehicle_model_5kmh_20260913.json" data-source="configs/control/time_path_vehicle_model_5kmh_20260913.json">限定5 km/h設定</a>はPacejkaの同定ループではありません。導入候補では横速度・ヨーレート・実操舵を同期し、鏡像対称性の妥当性と観測位置を照合することが先です。NNを使う案は学習と別run評価を伴いますが、必要データ量・対象PCでの資源・所要時間は未測定です。</p>
+<p>今回行ったのは原著の選択節と固定コードの静的照合、行ラベルによる件数の説明計算、文書更新です。著者コードの実行、NN学習、境界を除いた場合の性能比較、雑誌版・実験commitの完全対応、全pytest・走行試験は未実施です。現行の<a href="bayesrace-2020.html">BayesRaceの残差学習との比較</a>と<a href="research-map.html">研究地図</a>も参照してください。</p>
 </div><section class="related-articles"><h2>関連記事</h2><div class="article-grid"><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
 <time datetime="2026-10-29">2026-10-29</time></div>
@@ -171,7 +186,7 @@
 <p>CUDA実装の候補探索・計時範囲と、現行の参照空間MPPIへ接続する条件を整理。</p><div class="card-bottom"><span>原著・公式コードの静的確認／未導入</span>
 <a class="article-read" href="../articles/mppi-generic-2024.html" aria-label="MPPI-Generic：GPU並列化と制御周期を分けて測るを読む">記事を読む →</a></div></article><article class="article-card" data-category="guide">
 <div class="card-meta"><span class="tag">継続資料</span>
-<time datetime="2026-11-06">2026-11-06</time></div>
+<time datetime="2026-11-07">2026-11-07</time></div>
 <h3><a href="../articles/research-map.html">E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳</a></h3>
 <p>4領域・144区分の確認範囲と未調査を整理。111資料・66研究系列を管理し、主期間と改訂追跡を区別します。</p><div class="card-bottom"><span>4領域・限定資料を調査</span>
 <a class="article-read" href="../articles/research-map.html" aria-label="E2E・レーシング・MPC・ナビゲーションの調査範囲と資料台帳を読む">記事を読む →</a></div></article><article class="article-card" data-category="paper">
